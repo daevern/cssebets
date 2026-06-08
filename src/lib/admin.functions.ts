@@ -269,12 +269,21 @@ export const syncFootballData = createServerFn({ method: "POST" })
       return { upserted: 0, total: 0, live: 0, warning: warningFor(comp.status, "/competitions") };
     }
 
-    // Step 2: fetch all matches in window across competitions the key can access.
-    const now = new Date();
-    const from = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
-    const to = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    // Step 2: fetch matches in a validated YYYY-MM-DD window.
+    // Free tier rejects ranges wider than ~10 days with 400, so cap at 10 days.
     const fmt = (d: Date) => d.toISOString().slice(0, 10);
-    const url = `https://api.football-data.org/v4/matches?dateFrom=${fmt(from)}&dateTo=${fmt(to)}`;
+    const now = new Date();
+    const dateFrom = fmt(new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000));
+    const dateTo = fmt(new Date(now.getTime() + 8 * 24 * 60 * 60 * 1000));
+
+    const ymd = /^\d{4}-\d{2}-\d{2}$/;
+    if (!ymd.test(dateFrom) || !ymd.test(dateTo) || new Date(dateFrom) > new Date(dateTo)) {
+      console.error(`[football-data:sync.matches] invalid dates dateFrom=${dateFrom} dateTo=${dateTo} — skipping API call`);
+      return { upserted: 0, total: 0, live: 0, warning: `Invalid date window (${dateFrom}..${dateTo}); sync aborted.` };
+    }
+
+    const url = `https://api.football-data.org/v4/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`;
+    console.log(`[football-data:sync.matches] final URL ${url}`);
     const matchesRes = await callFD("sync.matches", url);
     if (matchesRes.status !== 200) {
       await supabaseAdmin.from("audit_log").insert({
@@ -287,7 +296,7 @@ export const syncFootballData = createServerFn({ method: "POST" })
     const json = JSON.parse(matchesRes.body) as { matches?: any[] };
     const matches = json.matches ?? [];
     if (matches.length === 0) {
-      console.log(`[football-data:sync] 200 OK but no matches in window ${fmt(from)}..${fmt(to)}`);
+      console.log(`[football-data:sync] 200 OK but no matches in window ${dateFrom}..${dateTo}`);
     }
 
     let upserted = 0;
