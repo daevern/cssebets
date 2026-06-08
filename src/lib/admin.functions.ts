@@ -208,9 +208,14 @@ export const syncFootballData = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     await requireAdmin(supabase, userId);
-    const apiKey = process.env.FOOTBALL_DATA_API_KEY;
+    const apiKey = process.env.FOOTBALL_DATA_API_KEY?.trim();
     if (!apiKey) {
-      throw new Error("Football-Data API key not configured. Ask the admin to add FOOTBALL_DATA_API_KEY.");
+      return {
+        upserted: 0,
+        total: 0,
+        live: 0,
+        warning: "Football-Data API key is not configured yet. Existing matches remain available.",
+      };
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -224,7 +229,22 @@ export const syncFootballData = createServerFn({ method: "POST" })
     const res = await fetch(url, { headers: { "X-Auth-Token": apiKey } });
     if (!res.ok) {
       const body = await res.text();
-      throw new Error(`Football-Data error ${res.status}: ${body.slice(0, 200)}`);
+      console.error(`Football-Data sync failed ${res.status}: ${body.slice(0, 500)}`);
+      await supabaseAdmin.from("audit_log").insert({
+        user_id: userId,
+        action: "matches.sync_failed",
+        entity: "matches",
+        entity_id: null,
+        metadata: { status: res.status, body: body.slice(0, 500) },
+      });
+      return {
+        upserted: 0,
+        total: 0,
+        live: 0,
+        warning: res.status === 400 || res.status === 401
+          ? "Football-Data rejected the API token. Existing matches are still available; update FOOTBALL_DATA_API_KEY with a valid token and sync again."
+          : `Football-Data sync failed (${res.status}). Existing matches are still available.`,
+      };
     }
     const json = (await res.json()) as { matches?: any[] };
     const matches = json.matches ?? [];

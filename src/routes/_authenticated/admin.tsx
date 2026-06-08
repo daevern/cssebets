@@ -58,7 +58,11 @@ function AdminPage() {
 
   const syncMut = useMutation({
     mutationFn: () => sync({}),
-    onSuccess: (r: any) => { toast.success(`Synced ${r.upserted}/${r.total} matches`); qc.invalidateQueries({ queryKey: ["admin-matches"] }); },
+    onSuccess: (r: any) => {
+      if (r.warning) toast.warning(r.warning);
+      else toast.success(`Synced ${r.upserted}/${r.total} matches`);
+      qc.invalidateQueries({ queryKey: ["admin-matches"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
