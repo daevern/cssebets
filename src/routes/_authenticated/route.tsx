@@ -24,6 +24,15 @@ function AuthedLayout() {
   const queryClient = useQueryClient();
   const location = useLocation();
 
+  const showBalance = isMember || isAdmin;
+  const walletFn = useServerFn(getMyWallet);
+  const wallet = useQuery({
+    queryKey: ["my-wallet"],
+    queryFn: () => walletFn({}),
+    enabled: showBalance,
+    refetchOnWindowFocus: true,
+  });
+
   async function signOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
@@ -66,14 +75,8 @@ function AuthedLayout() {
     ...(isAdmin ? [{ to: "/admin-wallet", label: "Points", icon: WalletIcon }] : []),
   ] as const;
 
-  const showBalance = isMember || isAdmin;
-  const walletFn = useServerFn(getMyWallet);
-  const wallet = useQuery({
-    queryKey: ["my-wallet"],
-    queryFn: () => walletFn({}),
-    enabled: showBalance,
-    refetchOnWindowFocus: true,
-  });
+
+
 
   return (
     <div className="min-h-screen flex flex-col pb-20 md:pb-0">
