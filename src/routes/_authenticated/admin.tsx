@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listPendingUsers, approveUser, makeAdmin, syncFootballData, settleMatch } from "@/lib/admin.functions";
+import { listPendingUsers, approveUser, makeAdmin, syncFootballData, settleMatch, testFootballData } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
