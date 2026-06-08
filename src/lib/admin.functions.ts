@@ -213,7 +213,8 @@ export const syncFootballData = createServerFn({ method: "POST" })
     const matches = json.matches ?? [];
     let upserted = 0;
     for (const m of matches) {
-      const status = m.status === "FINISHED" ? "finished"
+      const status: "scheduled" | "live" | "finished" | "postponed" | "cancelled" =
+        m.status === "FINISHED" ? "finished"
         : m.status === "IN_PLAY" || m.status === "PAUSED" ? "live"
         : m.status === "POSTPONED" ? "postponed"
         : m.status === "CANCELLED" ? "cancelled"
