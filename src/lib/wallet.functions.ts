@@ -139,7 +139,7 @@ export const adminRejectRequest = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.rpc("wallet_reject_request", {
       p_request_id: data.requestId,
       p_admin_id: userId,
-      p_note: data.note ?? null,
+      p_note: data.note ?? undefined,
     });
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("audit_log").insert({
