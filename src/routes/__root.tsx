@@ -81,10 +81,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "WC26 Pool — Private World Cup Predictions" },
       { name: "description", content: "Private World Cup 2026 prediction pool for friends. Virtual stakes only, no real money." },
-      { property: "og:title", content: "WC26 Pool" },
-      { property: "og:description", content: "Private World Cup 2026 prediction pool for friends." },
+      { property: "og:title", content: "WC26 Pool — Private World Cup Predictions" },
+      { property: "og:description", content: "Private World Cup 2026 prediction pool for friends. Virtual stakes only, no real money." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "WC26 Pool — Private World Cup Predictions" },
+      { name: "twitter:description", content: "Private World Cup 2026 prediction pool for friends. Virtual stakes only, no real money." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9c868361-deda-4fd6-ae97-260286bf8f25/id-preview-00ec4b3a--9a7d8431-a21b-4be7-aa5c-77435c44e420.lovable.app-1780916547939.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9c868361-deda-4fd6-ae97-260286bf8f25/id-preview-00ec4b3a--9a7d8431-a21b-4be7-aa5c-77435c44e420.lovable.app-1780916547939.png" },
     ],
     links: [
       {
