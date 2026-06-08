@@ -66,6 +66,18 @@ function AdminPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const test = useServerFn(testFootballData);
+  const testMut = useMutation({
+    mutationFn: () => test({}),
+    onSuccess: (r: any) => {
+      const msg = `key_exists=${r.keyExists} length=${r.keyLength} status=${r.status}`;
+      if (r.status === 200) toast.success(msg);
+      else toast.error(`${msg} — ${String(r.body).slice(0, 160)}`);
+      console.log("[football-data:test]", r);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
