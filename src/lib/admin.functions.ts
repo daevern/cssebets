@@ -307,8 +307,10 @@ export const syncFootballData = createServerFn({ method: "POST" })
       console.log(`[football-data:sync] 200 OK but no matches in window ${dateFrom}..${dateTo}`);
     }
 
+    const { settlePredictionsForMatch } = await import("@/lib/settlement.server");
     let upserted = 0;
     let live = 0;
+    let autoSettled = 0;
     for (const m of matches) {
       const status: "scheduled" | "live" | "finished" | "postponed" | "cancelled" =
         m.status === "FINISHED"
@@ -322,10 +324,9 @@ export const syncFootballData = createServerFn({ method: "POST" })
                 : "scheduled";
       if (status === "live") live++;
 
-      // Preserve existing reference_odds if already set (admin may have edited).
       const { data: existing } = await supabaseAdmin
         .from("matches")
-        .select("reference_odds")
+        .select("id, reference_odds, status")
         .eq("external_id", String(m.id))
         .maybeSingle();
 
@@ -335,6 +336,13 @@ export const syncFootballData = createServerFn({ method: "POST" })
           ? `${competition} · ${m.stage}`
           : m.stage
         : competition;
+
+      const homeScore = m.score?.fullTime?.home ?? null;
+      const awayScore = m.score?.fullTime?.away ?? null;
+      const winner =
+        status === "finished" && homeScore !== null && awayScore !== null
+          ? homeScore > awayScore ? "HOME" : homeScore < awayScore ? "AWAY" : "DRAW"
+          : null;
 
       const payload = {
         external_id: String(m.id),
@@ -346,15 +354,26 @@ export const syncFootballData = createServerFn({ method: "POST" })
         away_crest: m.awayTeam?.crest ?? null,
         kickoff_at: m.utcDate,
         status,
-        home_score: m.score?.fullTime?.home ?? null,
-        away_score: m.score?.fullTime?.away ?? null,
+        home_score: homeScore,
+        away_score: awayScore,
+        winner,
         reference_odds: existing?.reference_odds ?? generateOdds(),
         updated_at: new Date().toISOString(),
       };
-      const { error } = await supabaseAdmin
+      const { data: upRow, error } = await supabaseAdmin
         .from("matches")
-        .upsert(payload, { onConflict: "external_id" });
+        .upsert(payload, { onConflict: "external_id" })
+        .select("id")
+        .single();
       if (!error) upserted++;
+
+      // Auto-settle as soon as we see a finished match with a final score.
+      // Only pending predictions are touched, so re-runs are idempotent — no duplicate payouts.
+      const matchId = upRow?.id ?? existing?.id;
+      if (matchId && status === "finished" && homeScore !== null && awayScore !== null) {
+        const n = await settlePredictionsForMatch(matchId, homeScore, awayScore);
+        autoSettled += n;
+      }
     }
 
     await supabaseAdmin.from("audit_log").insert({
