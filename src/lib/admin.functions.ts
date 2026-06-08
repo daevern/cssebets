@@ -203,12 +203,34 @@ function generateOdds(): { home: number; draw: number; away: number } {
 // Sync fixtures from football-data.org across all competitions the API key
 // has access to (free tier: WC, CL, EC, PL, BL1, SA, PD, FL1, DED, PPL, CLI, BSA).
 // Pulls a window of upcoming + live + recently-finished matches.
+export const testFootballData = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await requireAdmin(supabase, userId);
+    const raw = process.env.FOOTBALL_DATA_API_KEY;
+    const apiKey = raw?.trim();
+    console.log(`[football-data:test] key_exists=${!!apiKey} key_length=${apiKey?.length ?? 0} raw_length=${raw?.length ?? 0}`);
+    if (!apiKey) {
+      return { keyExists: false, keyLength: 0, status: 0, body: "FOOTBALL_DATA_API_KEY is not set" };
+    }
+    const res = await fetch("https://api.football-data.org/v4/competitions", {
+      headers: { "X-Auth-Token": apiKey },
+    });
+    const body = await res.text();
+    console.log(`[football-data:test] GET /competitions status=${res.status}`);
+    console.log(`[football-data:test] body=${body.slice(0, 1000)}`);
+    return { keyExists: true, keyLength: apiKey.length, status: res.status, body: body.slice(0, 2000) };
+  });
+
 export const syncFootballData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     await requireAdmin(supabase, userId);
-    const apiKey = process.env.FOOTBALL_DATA_API_KEY?.trim();
+    const raw = process.env.FOOTBALL_DATA_API_KEY;
+    const apiKey = raw?.trim();
+    console.log(`[football-data:sync] key_exists=${!!apiKey} key_length=${apiKey?.length ?? 0}`);
     if (!apiKey) {
       return {
         upserted: 0,
@@ -220,16 +242,16 @@ export const syncFootballData = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const now = new Date();
-    const from = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); // 2 days back (catch live/just-finished)
-    const to = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days ahead
+    const from = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+    const to = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     const fmt = (d: Date) => d.toISOString().slice(0, 10);
 
-    // /v4/matches returns matches across ALL competitions the key has access to.
     const url = `https://api.football-data.org/v4/matches?dateFrom=${fmt(from)}&dateTo=${fmt(to)}`;
     const res = await fetch(url, { headers: { "X-Auth-Token": apiKey } });
+    console.log(`[football-data:sync] GET ${url} status=${res.status}`);
     if (!res.ok) {
       const body = await res.text();
-      console.error(`Football-Data sync failed ${res.status}: ${body.slice(0, 500)}`);
+      console.error(`[football-data:sync] failed status=${res.status} body=${body.slice(0, 500)}`);
       await supabaseAdmin.from("audit_log").insert({
         user_id: userId,
         action: "matches.sync_failed",
