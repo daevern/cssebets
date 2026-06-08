@@ -381,8 +381,8 @@ export const syncFootballData = createServerFn({ method: "POST" })
       action: "matches.sync",
       entity: "matches",
       entity_id: null,
-      metadata: { upserted, total: matches.length, live },
+      metadata: { upserted, total: matches.length, live, autoSettled },
     });
 
-    return { upserted, total: matches.length, live };
+    return { upserted, total: matches.length, live, autoSettled };
   });
