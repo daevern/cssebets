@@ -24,6 +24,15 @@ function AuthedLayout() {
   const queryClient = useQueryClient();
   const location = useLocation();
 
+  const showBalance = isMember || isAdmin;
+  const walletFn = useServerFn(getMyWallet);
+  const wallet = useQuery({
+    queryKey: ["my-wallet"],
+    queryFn: () => walletFn({}),
+    enabled: showBalance,
+    refetchOnWindowFocus: true,
+  });
+
   async function signOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
