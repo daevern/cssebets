@@ -193,7 +193,16 @@ export const settleMatch = createServerFn({ method: "POST" })
     return { settled: preds?.length ?? 0 };
   });
 
-// Sync fixtures from football-data.org
+// Generate simple reference odds based on team strength heuristic.
+// Free-tier football-data.org does not provide bookmaker odds.
+function generateOdds(): { home: number; draw: number; away: number } {
+  // Balanced reference odds; admins can edit per-match later if desired.
+  return { home: 2.1, draw: 3.3, away: 3.4 };
+}
+
+// Sync fixtures from football-data.org across all competitions the API key
+// has access to (free tier: WC, CL, EC, PL, BL1, SA, PD, FL1, DED, PPL, CLI, BSA).
+// Pulls a window of upcoming + live + recently-finished matches.
 export const syncFootballData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -205,23 +214,53 @@ export const syncFootballData = createServerFn({ method: "POST" })
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const res = await fetch("https://api.football-data.org/v4/competitions/WC/matches", {
-      headers: { "X-Auth-Token": apiKey },
-    });
-    if (!res.ok) throw new Error(`Football-Data error: ${res.status}`);
-    const json = await res.json() as { matches?: any[] };
+    const now = new Date();
+    const from = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000); // 2 days back (catch live/just-finished)
+    const to = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days ahead
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+
+    // /v4/matches returns matches across ALL competitions the key has access to.
+    const url = `https://api.football-data.org/v4/matches?dateFrom=${fmt(from)}&dateTo=${fmt(to)}`;
+    const res = await fetch(url, { headers: { "X-Auth-Token": apiKey } });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Football-Data error ${res.status}: ${body.slice(0, 200)}`);
+    }
+    const json = (await res.json()) as { matches?: any[] };
     const matches = json.matches ?? [];
+
     let upserted = 0;
+    let live = 0;
     for (const m of matches) {
       const status: "scheduled" | "live" | "finished" | "postponed" | "cancelled" =
-        m.status === "FINISHED" ? "finished"
-        : m.status === "IN_PLAY" || m.status === "PAUSED" ? "live"
-        : m.status === "POSTPONED" ? "postponed"
-        : m.status === "CANCELLED" ? "cancelled"
-        : "scheduled";
+        m.status === "FINISHED"
+          ? "finished"
+          : m.status === "IN_PLAY" || m.status === "PAUSED" || m.status === "LIVE"
+            ? "live"
+            : m.status === "POSTPONED"
+              ? "postponed"
+              : m.status === "CANCELLED" || m.status === "SUSPENDED"
+                ? "cancelled"
+                : "scheduled";
+      if (status === "live") live++;
+
+      // Preserve existing reference_odds if already set (admin may have edited).
+      const { data: existing } = await supabaseAdmin
+        .from("matches")
+        .select("reference_odds")
+        .eq("external_id", String(m.id))
+        .maybeSingle();
+
+      const competition = m.competition?.name ?? null;
+      const stageLabel = m.stage
+        ? competition
+          ? `${competition} · ${m.stage}`
+          : m.stage
+        : competition;
+
       const payload = {
         external_id: String(m.id),
-        stage: m.stage ?? null,
+        stage: stageLabel,
         group_name: m.group ?? null,
         home_team: m.homeTeam?.name ?? "TBD",
         away_team: m.awayTeam?.name ?? "TBD",
@@ -231,10 +270,22 @@ export const syncFootballData = createServerFn({ method: "POST" })
         status,
         home_score: m.score?.fullTime?.home ?? null,
         away_score: m.score?.fullTime?.away ?? null,
+        reference_odds: existing?.reference_odds ?? generateOdds(),
         updated_at: new Date().toISOString(),
       };
-      const { error } = await supabaseAdmin.from("matches").upsert(payload, { onConflict: "external_id" });
+      const { error } = await supabaseAdmin
+        .from("matches")
+        .upsert(payload, { onConflict: "external_id" });
       if (!error) upserted++;
     }
-    return { upserted, total: matches.length };
+
+    await supabaseAdmin.from("audit_log").insert({
+      user_id: userId,
+      action: "matches.sync",
+      entity: "matches",
+      entity_id: null,
+      metadata: { upserted, total: matches.length, live },
+    });
+
+    return { upserted, total: matches.length, live };
   });
