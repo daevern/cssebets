@@ -151,61 +151,17 @@ export const settleMatch = createServerFn({ method: "POST" })
     }).eq("id", data.matchId);
     if (upErr) throw new Error(upErr.message);
 
-    const { data: preds } = await supabaseAdmin
-      .from("predictions").select("*").eq("match_id", data.matchId).eq("status", "pending");
-
-    for (const p of preds ?? []) {
-      let won = false;
-      let points = 0;
-      if (p.market === "result") {
-        won = p.outcome === winner;
-        if (won) points = 3;
-      } else if (p.market === "correct_score") {
-        won = p.outcome === `${data.homeScore}-${data.awayScore}`;
-        if (won) points = 5;
-      } else if (p.market === "total_goals") {
-        const m = /^(OVER|UNDER)_(\d+(\.\d+)?)$/.exec(p.outcome);
-        if (m) {
-          const total = data.homeScore + data.awayScore;
-          const line = parseFloat(m[2]);
-          won = m[1] === "OVER" ? total > line : total < line;
-          if (won) points = 2;
-        }
-      } else if (p.market === "btts") {
-        const both = data.homeScore > 0 && data.awayScore > 0;
-        won = (p.outcome === "YES" && both) || (p.outcome === "NO" && !both);
-        if (won) points = 2;
-      }
-
-      await supabaseAdmin.from("predictions").update({
-        status: won ? "won" : "lost",
-        points,
-        settled_at: new Date().toISOString(),
-      }).eq("id", p.id);
-
-      // Credit payout (potential_return = stake * odds) on win. Losers get nothing.
-      if (won) {
-        const payout = Number(p.potential_return ?? Number(p.virtual_stake) * Number(p.reference_odds));
-        if (payout > 0) {
-          await supabaseAdmin.rpc("wallet_apply_change", {
-            p_user_id: p.user_id,
-            p_type: "credit",
-            p_amount: payout,
-            p_reference_type: "bet_settlement",
-            p_reference_id: p.id,
-            p_note: `Win payout: ${p.market} ${p.outcome}`,
-          });
-        }
-      }
-    }
+    const { settlePredictionsForMatch } = await import("@/lib/settlement.server");
+    const settled = await settlePredictionsForMatch(data.matchId, data.homeScore, data.awayScore);
 
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId, action: "match.settle", entity: "match", entity_id: data.matchId,
       metadata: { homeScore: data.homeScore, awayScore: data.awayScore },
     });
 
-    return { settled: preds?.length ?? 0 };
+    return { settled };
   });
+
 
 // Mark a match as cancelled/void and refund all pending stakes.
 export const voidMatch = createServerFn({ method: "POST" })
