@@ -34,6 +34,24 @@ function WalletPage() {
   const txns = useQuery({ queryKey: ["my-txns"], queryFn: () => tFn({ data: { limit: 50 } }) });
   const reqs = useQuery({ queryKey: ["my-point-requests"], queryFn: () => rFn({}) });
 
+  // Real-time: refresh wallet, txns, and predictions on any insert/update.
+  useEffect(() => {
+    const ch = supabase
+      .channel("wallet-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "wallets" }, () => {
+        qc.invalidateQueries({ queryKey: ["my-wallet"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "wallet_transactions" }, () => {
+        qc.invalidateQueries({ queryKey: ["my-txns"] });
+        qc.invalidateQueries({ queryKey: ["my-wallet"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "predictions" }, () => {
+        qc.invalidateQueries({ queryKey: ["my-predictions"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
+
   const [amount, setAmount] = useState("100");
   const [reason, setReason] = useState("");
 
