@@ -7,6 +7,7 @@ import { getMyWallet } from "@/lib/wallet.functions";
 import { Trophy, Home, ListChecks, History, BarChart3, Shield, LogOut, Loader2, Wallet as WalletIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
