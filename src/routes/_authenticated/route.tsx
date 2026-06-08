@@ -75,6 +75,16 @@ function AuthedLayout() {
     ...(isAdmin ? [{ to: "/admin-wallet", label: "Points", icon: WalletIcon }] : []),
   ] as const;
 
+  const mobileNavItems = isAdmin
+    ? [
+        { to: "/", label: "Home", icon: Home },
+        { to: "/matches", label: "Matches", icon: ListChecks },
+        { to: "/admin", label: "Admin", icon: Shield },
+        { to: "/admin-wallet", label: "Points", icon: WalletIcon },
+        { to: "/wallet", label: "Wallet", icon: WalletIcon },
+      ]
+    : navItems.slice(0, 5);
+
 
 
 
@@ -100,6 +110,16 @@ function AuthedLayout() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="md:hidden grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                title="Admin"
+                aria-label="Admin"
+              >
+                <Shield className="h-4 w-4" />
+              </Link>
+            )}
             {showBalance && (
               <Link
                 to="/wallet"
@@ -125,7 +145,7 @@ function AuthedLayout() {
       {/* Bottom nav mobile */}
       <nav className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t bg-background/95 backdrop-blur">
         <div className="grid grid-cols-5 max-w-md mx-auto">
-          {navItems.slice(0, 5).map((item) => {
+          {mobileNavItems.map((item) => {
             const active = item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to);
             const Icon = item.icon;
             return (
