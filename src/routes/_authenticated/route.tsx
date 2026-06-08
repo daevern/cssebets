@@ -60,18 +60,29 @@ function AuthedLayout() {
     { to: "/", label: "Home", icon: Home },
     { to: "/matches", label: "Matches", icon: ListChecks },
     { to: "/my-predictions", label: "Picks", icon: History },
+    { to: "/wallet", label: "Wallet", icon: WalletIcon },
     { to: "/leaderboard", label: "Board", icon: BarChart3 },
     ...(isAdmin ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
+    ...(isAdmin ? [{ to: "/admin-wallet", label: "Points", icon: WalletIcon }] : []),
   ] as const;
+
+  const showBalance = isMember || isAdmin;
+  const walletFn = useServerFn(getMyWallet);
+  const wallet = useQuery({
+    queryKey: ["my-wallet"],
+    queryFn: () => walletFn({}),
+    enabled: showBalance,
+    refetchOnWindowFocus: true,
+  });
 
   return (
     <div className="min-h-screen flex flex-col pb-20 md:pb-0">
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
           <Link to="/" className="flex items-center gap-2 font-bold">
             <Trophy className="h-5 w-5 text-primary" />
-            <span>WC26 Pool</span>
+            <span className="hidden sm:inline">WC26 Pool</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item) => (
@@ -85,9 +96,22 @@ function AuthedLayout() {
               </Link>
             ))}
           </nav>
-          <Button variant="ghost" size="sm" onClick={signOut}>
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {showBalance && (
+              <Link
+                to="/wallet"
+                className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold tabular-nums hover:bg-muted/80"
+                title="Your points balance"
+              >
+                <WalletIcon className="h-3.5 w-3.5 text-primary" />
+                {wallet.isLoading ? "…" : (wallet.data?.balance ?? 0).toLocaleString()}
+                <span className="text-muted-foreground font-normal">pts</span>
+              </Link>
+            )}
+            <Button variant="ghost" size="sm" onClick={signOut}>
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
