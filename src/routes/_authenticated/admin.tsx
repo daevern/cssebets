@@ -112,9 +112,14 @@ function AdminPage() {
       <Card className="p-5 space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Fixtures</h2>
-          <Button size="sm" variant="outline" onClick={() => syncMut.mutate()} disabled={syncMut.isPending}>
-            <RefreshCw className={`h-4 w-4 mr-1 ${syncMut.isPending ? "animate-spin" : ""}`} /> Sync football-data
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" variant="ghost" onClick={() => testMut.mutate()} disabled={testMut.isPending}>
+              Test API key
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => syncMut.mutate()} disabled={syncMut.isPending}>
+              <RefreshCw className={`h-4 w-4 mr-1 ${syncMut.isPending ? "animate-spin" : ""}`} /> Sync football-data
+            </Button>
+          </div>
         </div>
         {matches.isLoading ? <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" /> : (
           <div className="space-y-2">
