@@ -1,8 +1,10 @@
 import { createFileRoute, Outlet, redirect, Link, useRouter, useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useQueryClient } from "@tanstack/react-query";
-import { Trophy, Home, ListChecks, History, BarChart3, Shield, LogOut, Loader2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getMyWallet } from "@/lib/wallet.functions";
+import { Trophy, Home, ListChecks, History, BarChart3, Shield, LogOut, Loader2, Wallet as WalletIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
