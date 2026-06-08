@@ -30,6 +30,7 @@ function Dashboard() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {tiles.map((t) => (
+          // @ts-expect-error routes are added in a later step
           <Link key={t.to} to={t.to}>
             <Card className="p-5 transition hover:border-primary hover:shadow-lg">
               <t.icon className="mb-3 h-6 w-6 text-primary" />
