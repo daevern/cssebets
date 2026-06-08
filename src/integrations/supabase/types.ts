@@ -14,16 +14,265 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          entity: string | null
+          entity_id: string | null
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity?: string | null
+          entity_id?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity?: string | null
+          entity_id?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      league_members: {
+        Row: {
+          joined_at: string
+          league_id: string
+          user_id: string
+        }
+        Insert: {
+          joined_at?: string
+          league_id: string
+          user_id: string
+        }
+        Update: {
+          joined_at?: string
+          league_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_members_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leagues: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      matches: {
+        Row: {
+          away_crest: string | null
+          away_score: number | null
+          away_team: string
+          created_at: string
+          external_id: string | null
+          group_name: string | null
+          home_crest: string | null
+          home_score: number | null
+          home_team: string
+          id: string
+          kickoff_at: string
+          reference_odds: Json | null
+          stage: string | null
+          status: Database["public"]["Enums"]["match_status"]
+          updated_at: string
+          winner: string | null
+        }
+        Insert: {
+          away_crest?: string | null
+          away_score?: number | null
+          away_team: string
+          created_at?: string
+          external_id?: string | null
+          group_name?: string | null
+          home_crest?: string | null
+          home_score?: number | null
+          home_team: string
+          id?: string
+          kickoff_at: string
+          reference_odds?: Json | null
+          stage?: string | null
+          status?: Database["public"]["Enums"]["match_status"]
+          updated_at?: string
+          winner?: string | null
+        }
+        Update: {
+          away_crest?: string | null
+          away_score?: number | null
+          away_team?: string
+          created_at?: string
+          external_id?: string | null
+          group_name?: string | null
+          home_crest?: string | null
+          home_score?: number | null
+          home_team?: string
+          id?: string
+          kickoff_at?: string
+          reference_odds?: Json | null
+          stage?: string | null
+          status?: Database["public"]["Enums"]["match_status"]
+          updated_at?: string
+          winner?: string | null
+        }
+        Relationships: []
+      }
+      predictions: {
+        Row: {
+          created_at: string
+          id: string
+          market: Database["public"]["Enums"]["prediction_market"]
+          match_id: string | null
+          outcome: string
+          points: number
+          potential_return: number
+          reference_odds: number
+          settled_at: string | null
+          status: Database["public"]["Enums"]["prediction_status"]
+          user_id: string
+          virtual_stake: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          market: Database["public"]["Enums"]["prediction_market"]
+          match_id?: string | null
+          outcome: string
+          points?: number
+          potential_return?: number
+          reference_odds?: number
+          settled_at?: string | null
+          status?: Database["public"]["Enums"]["prediction_status"]
+          user_id: string
+          virtual_stake?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          market?: Database["public"]["Enums"]["prediction_market"]
+          match_id?: string | null
+          outcome?: string
+          points?: number
+          potential_return?: number
+          reference_odds?: number
+          settled_at?: string | null
+          status?: Database["public"]["Enums"]["prediction_status"]
+          user_id?: string
+          virtual_stake?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "predictions_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string
+          id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name: string
+          id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "member" | "pending"
+      match_status:
+        | "scheduled"
+        | "live"
+        | "finished"
+        | "postponed"
+        | "cancelled"
+      prediction_market:
+        | "result"
+        | "correct_score"
+        | "total_goals"
+        | "btts"
+        | "first_scorer"
+        | "tournament_winner"
+        | "group_winner"
+      prediction_status: "pending" | "won" | "lost" | "void"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +399,19 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "member", "pending"],
+      match_status: ["scheduled", "live", "finished", "postponed", "cancelled"],
+      prediction_market: [
+        "result",
+        "correct_score",
+        "total_goals",
+        "btts",
+        "first_scorer",
+        "tournament_winner",
+        "group_winner",
+      ],
+      prediction_status: ["pending", "won", "lost", "void"],
+    },
   },
 } as const
