@@ -148,6 +148,42 @@ export type Database = {
         }
         Relationships: []
       }
+      point_requests: {
+        Row: {
+          id: string
+          reason: string | null
+          requested_amount: number
+          requested_at: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["point_request_status"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          reason?: string | null
+          requested_amount: number
+          requested_at?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["point_request_status"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          reason?: string | null
+          requested_amount?: number
+          requested_at?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["point_request_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       predictions: {
         Row: {
           created_at: string
@@ -243,6 +279,66 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at: string
+          id: string
+          note: string | null
+          reference_id: string | null
+          reference_type: Database["public"]["Enums"]["wallet_ref_type"]
+          type: Database["public"]["Enums"]["wallet_txn_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          reference_id?: string | null
+          reference_type: Database["public"]["Enums"]["wallet_ref_type"]
+          type: Database["public"]["Enums"]["wallet_txn_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          reference_id?: string | null
+          reference_type?: Database["public"]["Enums"]["wallet_ref_type"]
+          type?: Database["public"]["Enums"]["wallet_txn_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -255,6 +351,28 @@ export type Database = {
         }
         Returns: boolean
       }
+      wallet_apply_change: {
+        Args: {
+          p_amount: number
+          p_note?: string
+          p_reference_id: string
+          p_reference_type: Database["public"]["Enums"]["wallet_ref_type"]
+          p_type: Database["public"]["Enums"]["wallet_txn_type"]
+          p_user_id: string
+        }
+        Returns: {
+          new_balance: number
+          txn_id: string
+        }[]
+      }
+      wallet_approve_request: {
+        Args: { p_admin_id: string; p_note?: string; p_request_id: string }
+        Returns: number
+      }
+      wallet_reject_request: {
+        Args: { p_admin_id: string; p_note?: string; p_request_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "member" | "pending"
@@ -264,6 +382,7 @@ export type Database = {
         | "finished"
         | "postponed"
         | "cancelled"
+      point_request_status: "pending" | "approved" | "rejected"
       prediction_market:
         | "result"
         | "correct_score"
@@ -273,6 +392,12 @@ export type Database = {
         | "tournament_winner"
         | "group_winner"
       prediction_status: "pending" | "won" | "lost" | "void"
+      wallet_ref_type:
+        | "point_request"
+        | "bet_placement"
+        | "bet_settlement"
+        | "admin_adjustment"
+      wallet_txn_type: "credit" | "debit" | "refund" | "adjustment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -402,6 +527,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "member", "pending"],
       match_status: ["scheduled", "live", "finished", "postponed", "cancelled"],
+      point_request_status: ["pending", "approved", "rejected"],
       prediction_market: [
         "result",
         "correct_score",
@@ -412,6 +538,13 @@ export const Constants = {
         "group_winner",
       ],
       prediction_status: ["pending", "won", "lost", "void"],
+      wallet_ref_type: [
+        "point_request",
+        "bet_placement",
+        "bet_settlement",
+        "admin_adjustment",
+      ],
+      wallet_txn_type: ["credit", "debit", "refund", "adjustment"],
     },
   },
 } as const
