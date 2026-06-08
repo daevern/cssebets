@@ -36,7 +36,10 @@ export const submitPrediction = createServerFn({ method: "POST" })
 
     const potentialReturn = Number((data.virtualStake * data.referenceOdds).toFixed(2));
 
-    const { data: inserted, error } = await supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Create the prediction first so we have a stable reference_id for the debit txn
+    const { data: inserted, error } = await supabaseAdmin
       .from("predictions")
       .insert({
         user_id: userId,
@@ -52,8 +55,24 @@ export const submitPrediction = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
 
-    // Audit log
-    await supabase.from("audit_log").insert({
+    // Atomically debit the wallet. If insufficient balance, roll back the prediction.
+    const { error: walletErr } = await supabaseAdmin.rpc("wallet_apply_change", {
+      p_user_id: userId,
+      p_type: "debit",
+      p_amount: data.virtualStake,
+      p_reference_type: "bet_placement",
+      p_reference_id: inserted.id,
+      p_note: `Bet placed: ${data.market} ${data.outcome}`,
+    });
+    if (walletErr) {
+      await supabaseAdmin.from("predictions").delete().eq("id", inserted.id);
+      if (walletErr.message?.includes("INSUFFICIENT_BALANCE")) {
+        throw new Error("Insufficient points balance. Request more points to place this bet.");
+      }
+      throw new Error(walletErr.message);
+    }
+
+    await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
       action: "prediction.submit",
       entity: "prediction",
