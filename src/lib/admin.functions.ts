@@ -241,35 +241,54 @@ export const syncFootballData = createServerFn({ method: "POST" })
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const headers = { "X-Auth-Token": apiKey };
+    const callFD = async (caller: string, url: string) => {
+      const r = await fetch(url, { headers });
+      const body = await r.text();
+      console.log(`[football-data:${caller}] GET ${url} status=${r.status}`);
+      console.log(`[football-data:${caller}] body=${body.slice(0, 1000)}`);
+      return { status: r.status, body };
+    };
+
+    const warningFor = (status: number, ctx: string) => {
+      if (status === 401 || status === 403)
+        return `Football-Data authentication/plan issue (${status}) on ${ctx}. Check FOOTBALL_DATA_API_KEY plan access.`;
+      if (status === 429) return `Football-Data rate limit hit (429) on ${ctx}. Wait a minute and retry.`;
+      if (status === 404) return `Football-Data endpoint or competition code not found (404) on ${ctx}.`;
+      if (status === 400) return `Football-Data rejected the query (400) on ${ctx}. Check date range or parameters.`;
+      return `Football-Data sync failed (${status}) on ${ctx}.`;
+    };
+
+    // Step 1: verify access via /competitions (auth + plan check).
+    const comp = await callFD("sync.competitions", "https://api.football-data.org/v4/competitions");
+    if (comp.status !== 200) {
+      await supabaseAdmin.from("audit_log").insert({
+        user_id: userId, action: "matches.sync_failed", entity: "matches", entity_id: null,
+        metadata: { step: "competitions", status: comp.status, body: comp.body.slice(0, 500) },
+      });
+      return { upserted: 0, total: 0, live: 0, warning: warningFor(comp.status, "/competitions") };
+    }
+
+    // Step 2: fetch all matches in window across competitions the key can access.
     const now = new Date();
     const from = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
     const to = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
     const fmt = (d: Date) => d.toISOString().slice(0, 10);
-
     const url = `https://api.football-data.org/v4/matches?dateFrom=${fmt(from)}&dateTo=${fmt(to)}`;
-    const res = await fetch(url, { headers: { "X-Auth-Token": apiKey } });
-    console.log(`[football-data:sync] GET ${url} status=${res.status}`);
-    if (!res.ok) {
-      const body = await res.text();
-      console.error(`[football-data:sync] failed status=${res.status} body=${body.slice(0, 500)}`);
+    const matchesRes = await callFD("sync.matches", url);
+    if (matchesRes.status !== 200) {
       await supabaseAdmin.from("audit_log").insert({
-        user_id: userId,
-        action: "matches.sync_failed",
-        entity: "matches",
-        entity_id: null,
-        metadata: { status: res.status, body: body.slice(0, 500) },
+        user_id: userId, action: "matches.sync_failed", entity: "matches", entity_id: null,
+        metadata: { step: "matches", status: matchesRes.status, body: matchesRes.body.slice(0, 500), url },
       });
-      return {
-        upserted: 0,
-        total: 0,
-        live: 0,
-        warning: res.status === 400 || res.status === 401
-          ? "Football-Data rejected the API token. Existing matches are still available; update FOOTBALL_DATA_API_KEY with a valid token and sync again."
-          : `Football-Data sync failed (${res.status}). Existing matches are still available.`,
-      };
+      return { upserted: 0, total: 0, live: 0, warning: warningFor(matchesRes.status, "/matches") };
     }
-    const json = (await res.json()) as { matches?: any[] };
+
+    const json = JSON.parse(matchesRes.body) as { matches?: any[] };
     const matches = json.matches ?? [];
+    if (matches.length === 0) {
+      console.log(`[football-data:sync] 200 OK but no matches in window ${fmt(from)}..${fmt(to)}`);
+    }
 
     let upserted = 0;
     let live = 0;
