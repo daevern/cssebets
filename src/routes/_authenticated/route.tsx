@@ -7,6 +7,7 @@ import { getMyWallet } from "@/lib/wallet.functions";
 import { Trophy, Home, ListChecks, History, BarChart3, Shield, LogOut, Loader2, Wallet as WalletIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -32,6 +33,22 @@ function AuthedLayout() {
     enabled: showBalance,
     refetchOnWindowFocus: true,
   });
+
+  // Live wallet balance: refresh whenever wallets or transactions change.
+  useEffect(() => {
+    if (!showBalance) return;
+    const ch = supabase
+      .channel("nav-wallet-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "wallets" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["my-wallet"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "wallet_transactions" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["my-wallet"] });
+        queryClient.invalidateQueries({ queryKey: ["my-txns"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [showBalance, queryClient]);
 
   async function signOut() {
     await queryClient.cancelQueries();
