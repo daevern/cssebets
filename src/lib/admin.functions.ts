@@ -164,7 +164,6 @@ export const settleMatch = createServerFn({ method: "POST" })
         won = p.outcome === `${data.homeScore}-${data.awayScore}`;
         if (won) points = 5;
       } else if (p.market === "total_goals") {
-        // outcome like "OVER_2.5" or "UNDER_2.5"
         const m = /^(OVER|UNDER)_(\d+(\.\d+)?)$/.exec(p.outcome);
         if (m) {
           const total = data.homeScore + data.awayScore;
@@ -183,6 +182,21 @@ export const settleMatch = createServerFn({ method: "POST" })
         points,
         settled_at: new Date().toISOString(),
       }).eq("id", p.id);
+
+      // Credit payout (potential_return = stake * odds) on win. Losers get nothing.
+      if (won) {
+        const payout = Number(p.potential_return ?? Number(p.virtual_stake) * Number(p.reference_odds));
+        if (payout > 0) {
+          await supabaseAdmin.rpc("wallet_apply_change", {
+            p_user_id: p.user_id,
+            p_type: "credit",
+            p_amount: payout,
+            p_reference_type: "bet_settlement",
+            p_reference_id: p.id,
+            p_note: `Win payout: ${p.market} ${p.outcome}`,
+          });
+        }
+      }
     }
 
     await supabaseAdmin.from("audit_log").insert({
@@ -191,6 +205,44 @@ export const settleMatch = createServerFn({ method: "POST" })
     });
 
     return { settled: preds?.length ?? 0 };
+  });
+
+// Mark a match as cancelled/void and refund all pending stakes.
+export const voidMatch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ matchId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireAdmin(supabase, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    await supabaseAdmin.from("matches").update({
+      status: "cancelled", updated_at: new Date().toISOString(),
+    }).eq("id", data.matchId);
+
+    const { data: preds } = await supabaseAdmin
+      .from("predictions").select("*").eq("match_id", data.matchId).eq("status", "pending");
+
+    for (const p of preds ?? []) {
+      await supabaseAdmin.from("predictions").update({
+        status: "void", points: 0, settled_at: new Date().toISOString(),
+      }).eq("id", p.id);
+
+      await supabaseAdmin.rpc("wallet_apply_change", {
+        p_user_id: p.user_id,
+        p_type: "refund",
+        p_amount: Number(p.virtual_stake),
+        p_reference_type: "bet_settlement",
+        p_reference_id: p.id,
+        p_note: `Refund: match voided`,
+      });
+    }
+
+    await supabaseAdmin.from("audit_log").insert({
+      user_id: userId, action: "match.void", entity: "match", entity_id: data.matchId,
+      metadata: { refunded: preds?.length ?? 0 },
+    });
+    return { refunded: preds?.length ?? 0 };
   });
 
 // Generate simple reference odds based on team strength heuristic.
