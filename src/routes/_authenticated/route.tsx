@@ -34,6 +34,22 @@ function AuthedLayout() {
     refetchOnWindowFocus: true,
   });
 
+  // Live wallet balance: refresh whenever wallets or transactions change.
+  useEffect(() => {
+    if (!showBalance) return;
+    const ch = supabase
+      .channel("nav-wallet-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "wallets" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["my-wallet"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "wallet_transactions" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["my-wallet"] });
+        queryClient.invalidateQueries({ queryKey: ["my-txns"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [showBalance, queryClient]);
+
   async function signOut() {
     await queryClient.cancelQueries();
     queryClient.clear();
