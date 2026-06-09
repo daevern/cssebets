@@ -3,12 +3,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPrediction } from "@/lib/predictions.functions";
+import { refreshMatches } from "@/lib/matches.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/matches")({
   head: () => ({ meta: [{ title: "Matches — WC26 Pool" }] }),
@@ -29,6 +31,9 @@ type Match = {
 };
 
 function MatchesPage() {
+  const qc = useQueryClient();
+  const refresh = useServerFn(refreshMatches);
+
   const { data, isLoading } = useQuery({
     queryKey: ["matches"],
     queryFn: async () => {
@@ -40,6 +45,27 @@ function MatchesPage() {
       return data as Match[];
     },
   });
+
+  // Trigger a live sync on mount + every 30s so finished matches reflect quickly.
+  useEffect(() => {
+    let cancelled = false;
+    const run = () => refresh({}).catch(() => {});
+    run();
+    const id = setInterval(run, 30_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [refresh]);
+
+  // Realtime: any matches row change → refetch.
+  useEffect(() => {
+    const channel = supabase
+      .channel("matches-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "matches" }, () => {
+        qc.invalidateQueries({ queryKey: ["matches"] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
+
 
   if (isLoading) {
     return <div className="grid place-items-center py-20"><Loader2 className="animate-spin h-6 w-6 text-muted-foreground" /></div>;
