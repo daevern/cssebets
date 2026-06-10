@@ -127,6 +127,50 @@ export type Database = {
         }
         Relationships: []
       }
+      match_odds_snapshots: {
+        Row: {
+          away_odds: number
+          created_at: string
+          draw_odds: number
+          home_odds: number
+          id: string
+          match_id: string
+          raw_bookmaker_count: number | null
+          sampled_at: string
+          source: string
+        }
+        Insert: {
+          away_odds: number
+          created_at?: string
+          draw_odds: number
+          home_odds: number
+          id?: string
+          match_id: string
+          raw_bookmaker_count?: number | null
+          sampled_at?: string
+          source?: string
+        }
+        Update: {
+          away_odds?: number
+          created_at?: string
+          draw_odds?: number
+          home_odds?: number
+          id?: string
+          match_id?: string
+          raw_bookmaker_count?: number | null
+          sampled_at?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_odds_snapshots_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           away_crest: string | null
@@ -236,6 +280,7 @@ export type Database = {
           points: number
           potential_return: number
           reference_odds: number
+          reference_odds_snapshot_id: string | null
           settled_at: string | null
           status: Database["public"]["Enums"]["prediction_status"]
           user_id: string
@@ -250,6 +295,7 @@ export type Database = {
           points?: number
           potential_return?: number
           reference_odds?: number
+          reference_odds_snapshot_id?: string | null
           settled_at?: string | null
           status?: Database["public"]["Enums"]["prediction_status"]
           user_id: string
@@ -264,6 +310,7 @@ export type Database = {
           points?: number
           potential_return?: number
           reference_odds?: number
+          reference_odds_snapshot_id?: string | null
           settled_at?: string | null
           status?: Database["public"]["Enums"]["prediction_status"]
           user_id?: string
@@ -275,6 +322,13 @@ export type Database = {
             columns: ["match_id"]
             isOneToOne: false
             referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "predictions_reference_odds_snapshot_id_fkey"
+            columns: ["reference_odds_snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "match_odds_snapshots"
             referencedColumns: ["id"]
           },
         ]
