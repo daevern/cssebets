@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthedLayout() {
-  const { isAdmin, isMember, isPending, loading, user } = useAuth();
+  const { isAdmin, isAdminTier, isMember, isPending, loading, user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const location = useLocation();
@@ -88,11 +88,11 @@ function AuthedLayout() {
     { to: "/my-predictions", label: "Picks", icon: History },
     { to: "/wallet", label: "Wallet", icon: WalletIcon },
     { to: "/leaderboard", label: "Board", icon: BarChart3 },
-    ...(isAdmin ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
+    ...(isAdminTier ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
     ...(isAdmin ? [{ to: "/admin-wallet", label: "Points", icon: WalletIcon }] : []),
   ] as const;
 
-  const mobileNavItems = isAdmin
+  const mobileNavItems = isAdminTier
     ? [
         { to: "/", label: "Home", icon: Home },
         { to: "/matches", label: "Matches", icon: ListChecks },
@@ -127,7 +127,7 @@ function AuthedLayout() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            {isAdmin && (
+            {isAdminTier && (
               <Link
                 to="/admin"
                 className="md:hidden grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90"

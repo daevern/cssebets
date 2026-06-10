@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_reauth: {
+        Row: {
+          expires_at: string
+          issued_at: string
+          two_factor_placeholder: boolean
+          user_id: string
+        }
+        Insert: {
+          expires_at: string
+          issued_at?: string
+          two_factor_placeholder?: boolean
+          user_id: string
+        }
+        Update: {
+          expires_at?: string
+          issued_at?: string
+          two_factor_placeholder?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -21,7 +42,12 @@ export type Database = {
           entity: string | null
           entity_id: string | null
           id: string
+          ip: string | null
           metadata: Json | null
+          new_value: Json | null
+          old_value: Json | null
+          reason: string | null
+          user_agent: string | null
           user_id: string | null
         }
         Insert: {
@@ -30,7 +56,12 @@ export type Database = {
           entity?: string | null
           entity_id?: string | null
           id?: string
+          ip?: string | null
           metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Update: {
@@ -39,7 +70,12 @@ export type Database = {
           entity?: string | null
           entity_id?: string | null
           id?: string
+          ip?: string | null
           metadata?: Json | null
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -243,18 +279,21 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          suspended: boolean
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           display_name: string
           id: string
+          suspended?: boolean
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string
           id?: string
+          suspended?: boolean
         }
         Relationships: []
       }
@@ -368,7 +407,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "member" | "pending"
+      app_role: "admin" | "member" | "pending" | "super_admin" | "viewer"
       match_status:
         | "scheduled"
         | "live"
@@ -518,7 +557,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "member", "pending"],
+      app_role: ["admin", "member", "pending", "super_admin", "viewer"],
       match_status: ["scheduled", "live", "finished", "postponed", "cancelled"],
       point_request_status: ["pending", "approved", "rejected"],
       prediction_market: [

@@ -1,80 +1,90 @@
+## Admin Management Dashboard
 
-# World Cup 2026 Prediction Pool — Plan
+Build a dedicated admin area on top of the existing pool app. Virtual credits only — no real money, deposits, withdrawals, payments, or bookmaker profit math.
 
-A private, invite-only web app where friends predict WC 2026 matches with virtual stakes. No real money. Dark sports-dashboard look, mobile-first, big match cards.
+### Roles
+Extend the `app_role` enum with `super_admin` and `viewer` (keeping existing `admin`, `member`, `pending`).
+- **super_admin**: everything, including role changes and destructive actions
+- **admin**: day-to-day moderation (settle, void, suspend, edit names, reset balance)
+- **viewer**: read-only access to all admin screens
 
-## Stack
-- TanStack Start + React + Tailwind + shadcn (existing template)
-- Lovable Cloud (Supabase) — auth, DB, server functions
-- Football-Data.org API for fixtures/live scores (admin-triggered sync via server function; key stored as secret)
-- No odds API (Football-Data has none) — "Reference odds" column will be a static/admin-entered field, clearly labeled "Reference only"
+Helper `private.has_any_admin_role(uid)` for gating; `private.has_role(uid,'super_admin')` for sensitive actions.
 
-## Auth & roles
-- Supabase email/password auth
-- `profiles` table (display name, avatar)
-- `user_roles` table + `app_role` enum (`admin`, `member`, `pending`) + `has_role()` security-definer function
-- Signup creates profile with role `pending`; admin approves to `member` from Admin Panel
-- Pending users see a "Waiting for approval" screen
-- First admin seeded manually (insert into `user_roles`)
+### Security
+- Sensitive server fns (role change, reset balance, suspend, void, manual settle) require a fresh password re-auth token (sign in with email+password again within the last 5 min). Stored as `admin_reauth` row keyed by user, with `expires_at`.
+- 2FA placeholder: a toggle on the admin profile that just records intent (no enforcement yet) — clearly labeled "Coming soon".
+- Every mutating admin action writes to `audit_log` with: admin_id, action, entity, entity_id, old_value, new_value, reason (required for sensitive ops), ip placeholder, user_agent placeholder, timestamp.
 
-## Database schema
-- `profiles(id, display_name, avatar_url, created_at)`
-- `user_roles(user_id, role)` — admin/member/pending
-- `leagues(id, name, created_by, created_at)` — supports multiple leagues; default "Main Pool"
-- `league_members(league_id, user_id, joined_at)`
-- `matches(id, external_id, stage, group_name, home_team, away_team, kickoff_at, status, home_score, away_score, winner)` — synced from API
-- `predictions(id, user_id, match_id, market, outcome, reference_odds, virtual_stake, potential_return, status, created_at)`
-  - `market`: `result | correct_score | total_goals | btts | first_scorer | tournament_winner`
-  - `outcome`: text (e.g. "HOME", "2-1", "OVER_2.5", "YES", "Mbappé", "France")
-  - `status`: `pending | won | lost | void`
-- `audit_log(id, user_id, action, entity, entity_id, metadata, created_at)` — every prediction insert + admin actions
-- RLS on all tables; members read league data, write own predictions only when `kickoff_at > now()` and prediction doesn't already exist for that (user, match, market)
+### Routes (under `/_authenticated/admin/`)
+```text
+/admin                  -> overview (metrics cards)
+/admin/users            -> user table + search + drawer
+/admin/predictions      -> predictions table + filters
+/admin/matches          -> matches table + manual controls
+/admin/audit            -> audit log table
+/admin/settings         -> reauth, 2FA placeholder, role list (super_admin only)
+```
+Shared `AdminLayout` with a left sidebar (collapsible on mobile). Existing `/admin` page is replaced.
 
-## Scoring (virtual P&L)
-- On settlement, `won` predictions credit `virtual_stake * reference_odds`; `lost` credits 0; `void` refunds stake
-- Bonus point scoring per spec (3/5/10/25) tracked separately as a `points` column on prediction for the leaderboard
-- Leaderboard ranks by total points (primary) and net virtual P&L (secondary)
+### Pages
 
-## Server functions (`src/lib/*.functions.ts`)
-- `syncMatches` (admin) — fetch fixtures from Football-Data, upsert
-- `syncLiveScores` — pull live + finished match scores (admin button; optional cron later)
-- `submitPrediction` — validates kickoff lock, inserts prediction + audit row
-- `settleMatch` (admin or auto when status=FINISHED) — marks predictions won/lost, awards points
-- `approveUser` / `setRole` (admin)
-- `createLeague`, `addMember` (admin)
+**Overview** — metric cards:
+- Total users, active users (24h), total predictions, total virtual stake, total virtual payouts, net movement, unsettled count, voided count
+- Top 5 virtual winners + top 5 losers (by lifetime points)
+- Match-by-match exposure table (virtual stake totals per market per match)
 
-All protected with `requireSupabaseAuth`; admin-only ones check `has_role(userId, 'admin')`.
+**Users** — search by display_name; columns: name, roles, balance, predictions count, status. Row drawer with: prediction history, balance, actions (rename, suspend/unsuspend, reset balance to default, promote/demote — super_admin only). Reason required on every action.
 
-## Routes
-- `/auth` — login/register
-- `/_authenticated/` layout (gate)
-  - `/` Dashboard — next match, your standing, recent predictions
-  - `/matches` — list (upcoming/live/finished tabs), big cards
-  - `/matches/$id` — match details + prediction form (market selector → outcome → virtual stake → confirm); locked banner if kicked off
-  - `/my-predictions` — history with won/lost color indicators
-  - `/leaderboard` — points + virtual P&L
-  - `/admin` — admin-only: pending users, sync matches, settle results, manage leagues
+**Predictions** — filters: user, match, market, status. Columns: user, match, market, outcome, stake, odds ref, status, placed_at, settled_at. Actions: void (with reason), manual settle pass-through to match.
 
-## UI
-- Dark theme, green (#22c55e) win / red (#ef4444) loss accents, large rounded match cards, bottom tab nav on mobile
-- Prediction flow ≤4 taps: card → market chip → outcome → confirm
-- "Reference odds" badge styled muted with tooltip "For reference only — no real money involved"
+**Matches** — list with status pills. Actions: refresh fixtures (existing sync), refresh single match score, set status manually, settle (existing flow).
 
-## Secrets needed
-- `FOOTBALL_DATA_API_KEY` — requested after Cloud is enabled
+**Audit log** — filterable table of all entries.
 
-## Build order
-1. Enable Lovable Cloud
-2. Migration: enum, tables, RLS, grants, `has_role`, seed Main league
-3. Auth pages + `_authenticated` layout + pending-approval screen
-4. Server functions (sync, submit, settle, admin)
-5. Pages: Dashboard, Matches, Match Details, My Predictions, Leaderboard
-6. Admin Panel
-7. Wire Football-Data sync, request API key
-8. Polish, dark theme, mobile nav
+**Settings** — password re-auth form (issues 5-min token), 2FA placeholder toggle, role assignments list (super_admin only).
 
-## Out of scope (explicit)
-- Real money, wallets, withdrawals
-- Live odds API (none free; static reference column instead)
-- Push notifications, mobile native
-- Automatic cron sync (manual admin button v1; can add pg_cron later)
+### Server functions (new file `src/lib/admin-dashboard.functions.ts`)
+All guarded by `requireAdminRole(['admin','super_admin','viewer'])` for reads and stricter sets for writes. Sensitive writes also call `requireFreshReauth(userId)`.
+
+- `getAdminMetrics`
+- `listUsersAdmin({ search, limit, offset })`
+- `getUserDetail({ userId })`
+- `updateUserDisplayName({ userId, name, reason })`
+- `setUserSuspended({ userId, suspended, reason })`
+- `resetUserBalance({ userId, reason })`
+- `setUserRole({ userId, role, reason })` — super_admin only
+- `listPredictionsAdmin({ filters })`
+- `voidPrediction({ predictionId, reason })`
+- `refreshMatchScore({ matchId })` — single-match football-data fetch
+- `setMatchStatus({ matchId, status, reason })`
+- `listAuditLog({ filters })`
+- `issueReauth({ password })` / `getReauthStatus()`
+- `setTwoFactorPlaceholder({ enabled })`
+
+### Database (single migration)
+1. `ALTER TYPE app_role ADD VALUE 'super_admin'; ADD VALUE 'viewer';` (if absent)
+2. Seed: promote existing `admin`s by inserting `super_admin` for one bootstrap user (the first admin) so the dashboard isn't locked out.
+3. `profiles` add `suspended boolean default false`.
+4. New table `public.admin_reauth(user_id pk fk auth.users, issued_at, expires_at)` — RLS: row owner only.
+5. Extend `audit_log` with `old_value jsonb`, `new_value jsonb`, `reason text`, `ip text`, `user_agent text` (nullable, additive).
+6. `private.has_any_admin_role(uid)` helper.
+7. RLS policies updated where needed so viewers can read user/prediction/match/audit data via admin server fns (server fns use `supabaseAdmin`, so RLS is bypassed — keep public RLS unchanged for normal users).
+8. GRANTs included for all new tables; `EXECUTE` revoked from anon/PUBLIC on all new SECURITY DEFINER funcs.
+
+### Auto-settle & locking (already partly present)
+- Predictions are blocked post-kickoff in `placePrediction` — confirm and keep.
+- Auto-settle continues via existing `settlePredictionsForMatch` on sync.
+
+### Design
+- Sidebar: dark surface, items: Overview, Users, Predictions, Matches, Audit, Settings. Collapses to icons on `<md`.
+- Cards: muted background, large numeric, small label, trend hidden for now.
+- Tables: shadcn `Table`, sticky header, row hover, drawer for details.
+- All semantic tokens; no hardcoded colors.
+
+### Out of scope (per request)
+No deposits, withdrawals, cashout, payment, real-money wallet, or bookmaker profit calculations.
+
+### Technical notes
+- Reuses `wallet_apply_change` for balance reset (debit/credit to a target default of 1000).
+- Single migration; followed by code changes.
+- Replaces current `src/routes/_authenticated/admin.tsx` with `admin.index.tsx` (overview) + new child routes under `admin/`.

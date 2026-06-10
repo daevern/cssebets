@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "member" | "pending";
+export type AppRole = "admin" | "super_admin" | "viewer" | "member" | "pending";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -15,7 +15,6 @@ export function useAuth() {
       if (!active) return;
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Defer to avoid deadlock
         setTimeout(() => loadRoles(session.user.id), 0);
       } else {
         setRoles([]);
@@ -40,12 +39,23 @@ export function useAuth() {
     return () => { active = false; subscription.unsubscribe(); };
   }, []);
 
+  const isSuperAdmin = roles.includes("super_admin");
+  const isAdmin = roles.includes("admin") || isSuperAdmin;
+  const isViewer = roles.includes("viewer");
+  const isAdminTier = isAdmin || isViewer;
+  const isMember = roles.includes("member") || isAdmin;
+
   return {
     user,
     roles,
     loading,
-    isAdmin: roles.includes("admin"),
-    isMember: roles.includes("member") || roles.includes("admin"),
-    isPending: roles.length === 0 || (roles.includes("pending") && !roles.includes("member") && !roles.includes("admin")),
+    isAdmin,
+    isSuperAdmin,
+    isViewer,
+    isAdminTier,
+    isMember,
+    isPending:
+      roles.length === 0 ||
+      (roles.includes("pending") && !isMember && !isAdminTier),
   };
 }
