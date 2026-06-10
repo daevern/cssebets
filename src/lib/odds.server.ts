@@ -7,12 +7,32 @@ const ENDPOINT =
   "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup/odds" +
   "?regions=eu&markets=h2h&oddsFormat=decimal";
 
+// Aliases handle cases where football-data.org and The Odds API spell
+// the same nation differently (e.g. "Czechia" vs "Czech Republic").
+const TEAM_ALIASES: Record<string, string> = {
+  czechia: "czechrepublic",
+  czechrep: "czechrepublic",
+  unitedstates: "usa",
+  unitedstatesofamerica: "usa",
+  southkorea: "korearepublic",
+  korea: "korearepublic",
+  republicofkorea: "korearepublic",
+  northkorea: "koreadprrepublic",
+  ivorycoast: "cotedivoire",
+  capeverde: "caboverde",
+  curacao: "curacao",
+  bosniaherzegovina: "bosniaandherzegovina",
+  drcongo: "congodr",
+  congodemocraticrepublic: "congodr",
+};
+
 function normalize(name: string) {
-  return name
+  const base = name
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]/g, "");
+  return TEAM_ALIASES[base] ?? base;
 }
 
 function median(nums: number[]): number {
