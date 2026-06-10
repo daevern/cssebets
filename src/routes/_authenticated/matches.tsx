@@ -28,7 +28,18 @@ type Match = {
   stage: string | null;
   group_name: string | null;
   reference_odds: { home: number; draw: number; away: number } | null;
+  odds_updated_at: string | null;
+  odds_source: string | null;
 };
+
+function timeAgo(iso: string | null): string {
+  if (!iso) return "never";
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return `${s}s ago`;
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
 
 function MatchesPage() {
   const qc = useQueryClient();
@@ -134,7 +145,7 @@ function MatchCard({ match }: { match: Match }) {
         </span>
         <span>{match.away_team}</span>
       </div>
-      {!locked && (
+      {!locked && match.reference_odds && (
         <div className="space-y-2">
           <div className="grid grid-cols-3 gap-2">
             {(["HOME", "DRAW", "AWAY"] as const).map((p) => (
@@ -152,9 +163,18 @@ function MatchCard({ match }: { match: Match }) {
               {mut.isPending ? "..." : "Submit"}
             </Button>
           </div>
+          <div className="text-[10px] text-muted-foreground">
+            {match.odds_source === "the-odds-api"
+              ? `Live odds via The Odds API · updated ${timeAgo(match.odds_updated_at)}`
+              : "Reference odds (awaiting live market sync)"}
+          </div>
         </div>
       )}
-      {locked && <div className="text-xs text-muted-foreground">Predictions locked.</div>}
+      {locked && (
+        <div className="text-xs text-muted-foreground font-medium">
+          {match.status === "finished" ? "Match finished." : "Betting closed — kickoff passed."}
+        </div>
+      )}
     </Card>
   );
 }
