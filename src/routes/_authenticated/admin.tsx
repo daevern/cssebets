@@ -8,6 +8,7 @@ import {
   ScrollText,
   Settings,
   Shield,
+  LineChart as LineChartIcon,
   Menu,
   X,
 } from "lucide-react";
@@ -34,6 +35,7 @@ const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean }> = [
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/predictions", label: "Predictions", icon: ListChecks },
   { to: "/admin/matches", label: "Matches", icon: CalendarDays },
+  { to: "/admin/simulator", label: "Simulator", icon: LineChartIcon },
   { to: "/admin/audit", label: "Audit", icon: ScrollText },
   { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
