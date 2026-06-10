@@ -21,25 +21,9 @@ export const submitPrediction = createServerFn({ method: "POST" })
     const isMember = (roles ?? []).some((r) => r.role === "member" || r.role === "admin");
     if (!isMember) throw new Error("Your account isn't approved yet.");
 
-    // Validate kickoff lock
-    if (data.matchId) {
-      const { data: match, error: mErr } = await supabase
-        .from("matches")
-        .select("id, kickoff_at, status")
-        .eq("id", data.matchId)
-        .single();
-      if (mErr || !match) throw new Error("Match not found");
-      if (new Date(match.kickoff_at).getTime() <= Date.now() || match.status !== "scheduled") {
-        throw new Error("This match has already kicked off. Predictions are locked.");
-      }
-    }
-
-    const potentialReturn = Number((data.virtualStake * data.referenceOdds).toFixed(2));
-
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Find latest odds snapshot for the match (if any) to permanently link this bet to
-    // the exact odds we showed the user.
+    // Latest odds snapshot to permanently link to
     let snapshotId: string | null = null;
     if (data.matchId) {
       const { data: snap } = await supabaseAdmin
@@ -52,46 +36,30 @@ export const submitPrediction = createServerFn({ method: "POST" })
       snapshotId = (snap as any)?.id ?? null;
     }
 
-    // Create the prediction first so we have a stable reference_id for the debit txn
-    const { data: inserted, error } = await supabaseAdmin
-      .from("predictions")
-      .insert({
-        user_id: userId,
-        match_id: data.matchId,
-        market: data.market,
-        outcome: data.outcome,
-        reference_odds: data.referenceOdds,
-        reference_odds_snapshot_id: snapshotId,
-        virtual_stake: data.virtualStake,
-        potential_return: potentialReturn,
-      } as any)
-      .select()
-      .single();
-
-    if (error) throw new Error(error.message);
-
-    // Atomically debit the wallet. If insufficient balance, roll back the prediction.
-    const { error: walletErr } = await supabaseAdmin.rpc("wallet_apply_change", {
+    // Atomic: wallet debit + prediction insert + platform credit + exposure check + liability recalc
+    const { data: predId, error } = await (supabaseAdmin as any).rpc("place_bet_atomic", {
       p_user_id: userId,
-      p_type: "debit",
-      p_amount: data.virtualStake,
-      p_reference_type: "bet_placement",
-      p_reference_id: inserted.id,
-      p_note: `Bet placed: ${data.market} ${data.outcome}`,
+      p_match_id: data.matchId,
+      p_market: data.market,
+      p_outcome: data.outcome,
+      p_odds: data.referenceOdds,
+      p_stake: data.virtualStake,
+      p_snapshot_id: snapshotId,
     });
-    if (walletErr) {
-      await supabaseAdmin.from("predictions").delete().eq("id", inserted.id);
-      if (walletErr.message?.includes("INSUFFICIENT_BALANCE")) {
-        throw new Error("Insufficient points balance. Request more points to place this bet.");
-      }
-      throw new Error(walletErr.message);
+
+    if (error) {
+      const msg = error.message ?? "";
+      if (msg.includes("INSUFFICIENT_BALANCE")) throw new Error("Insufficient points balance. Request more points to place this bet.");
+      if (msg.includes("MAX_EXPOSURE_REACHED")) throw new Error("Maximum bookmaker exposure reached for this market.");
+      if (msg.includes("MATCH_LOCKED")) throw new Error("This match has already kicked off. Predictions are locked.");
+      throw new Error(msg || "Could not place bet.");
     }
 
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
       action: "prediction.submit",
       entity: "prediction",
-      entity_id: inserted.id,
+      entity_id: predId as any,
       metadata: {
         market: data.market,
         outcome: data.outcome,
@@ -100,5 +68,5 @@ export const submitPrediction = createServerFn({ method: "POST" })
       },
     });
 
-    return { id: inserted.id };
+    return { id: predId };
   });
