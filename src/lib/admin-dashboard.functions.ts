@@ -565,3 +565,77 @@ export const refreshMatchScore = createServerFn({ method: "POST" })
     const result = await runFootballDataSync({ userId });
     return { ok: true, ...result, matchId: data.matchId };
   });
+
+// ============== WALLET LEDGER (admin) ==============
+
+export const listWalletLedgerAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      userId: z.string().uuid().optional(),
+      type: z.string().max(40).optional(),
+      from: z.string().datetime().optional(),
+      to: z.string().datetime().optional(),
+      limit: z.number().int().min(1).max(1000).default(300),
+    }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireTier(supabase, userId, ADMIN_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin
+      .from("wallet_transactions")
+      .select("id, user_id, type, amount, balance_before, balance_after, reference_type, reference_id, note, created_at")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    if (data.userId) q = q.eq("user_id", data.userId);
+    if (data.type) q = q.eq("type", data.type as any);
+    if (data.from) q = q.gte("created_at", data.from);
+    if (data.to) q = q.lte("created_at", data.to);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    const uids = Array.from(new Set((rows ?? []).map((r: any) => r.user_id)));
+    const { data: profiles } = uids.length
+      ? await supabaseAdmin.from("profiles").select("id, display_name").in("id", uids)
+      : { data: [] as any[] };
+    return {
+      transactions: (rows ?? []).map((r: any) => ({
+        ...r,
+        display_name: profiles?.find((p: any) => p.id === r.user_id)?.display_name ?? r.user_id.slice(0, 8),
+      })),
+    };
+  });
+
+// ============== ODDS SNAPSHOTS (admin) ==============
+
+export const listMatchOddsHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ matchId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireTier(supabase, userId, ADMIN_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("match_odds_snapshots")
+      .select("id, source, home_odds, draw_odds, away_odds, raw_bookmaker_count, sampled_at")
+      .eq("match_id", data.matchId)
+      .order("sampled_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return { snapshots: rows ?? [] };
+  });
+
+export const listMatchesForOdds = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await requireTier(supabase, userId, ADMIN_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("matches")
+      .select("id, home_team, away_team, kickoff_at, status, reference_odds, odds_updated_at")
+      .order("kickoff_at", { ascending: false })
+      .limit(80);
+    if (error) throw new Error(error.message);
+    return { matches: data ?? [] };
+  });
