@@ -19,11 +19,13 @@ import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminWalletRouteImport } from './routes/_authenticated/admin-wallet'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminWalletLedgerRouteImport } from './routes/_authenticated/admin.wallet-ledger'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminSimulatorRouteImport } from './routes/_authenticated/admin.simulator'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminRiskRouteImport } from './routes/_authenticated/admin.risk'
 import { Route as AuthenticatedAdminPredictionsRouteImport } from './routes/_authenticated/admin.predictions'
+import { Route as AuthenticatedAdminOddsHistoryRouteImport } from './routes/_authenticated/admin.odds-history'
 import { Route as AuthenticatedAdminMatchesRouteImport } from './routes/_authenticated/admin.matches'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 
@@ -79,6 +81,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminWalletLedgerRoute =
+  AuthenticatedAdminWalletLedgerRouteImport.update({
+    id: '/wallet-ledger',
+    path: '/wallet-ledger',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -107,6 +115,12 @@ const AuthenticatedAdminPredictionsRoute =
     path: '/predictions',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminOddsHistoryRoute =
+  AuthenticatedAdminOddsHistoryRouteImport.update({
+    id: '/odds-history',
+    path: '/odds-history',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminMatchesRoute =
   AuthenticatedAdminMatchesRouteImport.update({
     id: '/matches',
@@ -130,11 +144,13 @@ export interface FileRoutesByFullPath {
   '/wallet': typeof AuthenticatedWalletRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/matches': typeof AuthenticatedAdminMatchesRoute
+  '/admin/odds-history': typeof AuthenticatedAdminOddsHistoryRoute
   '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
   '/admin/risk': typeof AuthenticatedAdminRiskRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/simulator': typeof AuthenticatedAdminSimulatorRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin/wallet-ledger': typeof AuthenticatedAdminWalletLedgerRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -147,11 +163,13 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/matches': typeof AuthenticatedAdminMatchesRoute
+  '/admin/odds-history': typeof AuthenticatedAdminOddsHistoryRoute
   '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
   '/admin/risk': typeof AuthenticatedAdminRiskRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/simulator': typeof AuthenticatedAdminSimulatorRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/admin/wallet-ledger': typeof AuthenticatedAdminWalletLedgerRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -167,11 +185,13 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/matches': typeof AuthenticatedAdminMatchesRoute
+  '/_authenticated/admin/odds-history': typeof AuthenticatedAdminOddsHistoryRoute
   '/_authenticated/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
   '/_authenticated/admin/risk': typeof AuthenticatedAdminRiskRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/simulator': typeof AuthenticatedAdminSimulatorRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/admin/wallet-ledger': typeof AuthenticatedAdminWalletLedgerRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -187,11 +207,13 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/admin/audit'
     | '/admin/matches'
+    | '/admin/odds-history'
     | '/admin/predictions'
     | '/admin/risk'
     | '/admin/settings'
     | '/admin/simulator'
     | '/admin/users'
+    | '/admin/wallet-ledger'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -204,11 +226,13 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/audit'
     | '/admin/matches'
+    | '/admin/odds-history'
     | '/admin/predictions'
     | '/admin/risk'
     | '/admin/settings'
     | '/admin/simulator'
     | '/admin/users'
+    | '/admin/wallet-ledger'
     | '/admin'
   id:
     | '__root__'
@@ -223,11 +247,13 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/matches'
+    | '/_authenticated/admin/odds-history'
     | '/_authenticated/admin/predictions'
     | '/_authenticated/admin/risk'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/simulator'
     | '/_authenticated/admin/users'
+    | '/_authenticated/admin/wallet-ledger'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -308,6 +334,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/wallet-ledger': {
+      id: '/_authenticated/admin/wallet-ledger'
+      path: '/wallet-ledger'
+      fullPath: '/admin/wallet-ledger'
+      preLoaderRoute: typeof AuthenticatedAdminWalletLedgerRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/users': {
       id: '/_authenticated/admin/users'
       path: '/users'
@@ -343,6 +376,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminPredictionsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/odds-history': {
+      id: '/_authenticated/admin/odds-history'
+      path: '/odds-history'
+      fullPath: '/admin/odds-history'
+      preLoaderRoute: typeof AuthenticatedAdminOddsHistoryRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/matches': {
       id: '/_authenticated/admin/matches'
       path: '/matches'
@@ -363,22 +403,26 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminMatchesRoute: typeof AuthenticatedAdminMatchesRoute
+  AuthenticatedAdminOddsHistoryRoute: typeof AuthenticatedAdminOddsHistoryRoute
   AuthenticatedAdminPredictionsRoute: typeof AuthenticatedAdminPredictionsRoute
   AuthenticatedAdminRiskRoute: typeof AuthenticatedAdminRiskRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminSimulatorRoute: typeof AuthenticatedAdminSimulatorRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedAdminWalletLedgerRoute: typeof AuthenticatedAdminWalletLedgerRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminMatchesRoute: AuthenticatedAdminMatchesRoute,
+  AuthenticatedAdminOddsHistoryRoute: AuthenticatedAdminOddsHistoryRoute,
   AuthenticatedAdminPredictionsRoute: AuthenticatedAdminPredictionsRoute,
   AuthenticatedAdminRiskRoute: AuthenticatedAdminRiskRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminSimulatorRoute: AuthenticatedAdminSimulatorRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedAdminWalletLedgerRoute: AuthenticatedAdminWalletLedgerRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
 }
 

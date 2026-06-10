@@ -62,9 +62,9 @@ function AdminOddsHistoryPage() {
             <Badge variant="outline" className="uppercase">{current.status}</Badge>
             {current.reference_odds && (
               <span className="text-muted-foreground">
-                Latest: H {Number(current.reference_odds.home).toFixed(2)} · D{" "}
-                {Number(current.reference_odds.draw).toFixed(2)} · A{" "}
-                {Number(current.reference_odds.away).toFixed(2)}
+                Latest: H {Number((current.reference_odds as any).home).toFixed(2)} · D{" "}
+                {Number((current.reference_odds as any).draw).toFixed(2)} · A{" "}
+                {Number((current.reference_odds as any).away).toFixed(2)}
               </span>
             )}
             {current.odds_updated_at && (
