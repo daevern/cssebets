@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthedLayout() {
-  const { isAdmin, isMember, isPending, loading, user } = useAuth();
+  const { isAdmin, isAdminTier, isMember, isPending, loading, user } = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const location = useLocation();
