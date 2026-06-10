@@ -5,7 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const ADMIN_TIERS = ["admin", "super_admin", "viewer"] as const;
 
 async function requireTier(supabase: any, userId: string) {
-  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId) as { data: { role: string }[] | null };
   const roles = (data ?? []).map((r: any) => r.role as string);
   if (!roles.some((r) => ADMIN_TIERS.includes(r as any))) throw new Error("Forbidden");
 }
@@ -98,6 +98,7 @@ export const getRiskDashboard = createServerFn({ method: "GET" })
 
     const byMatch = new Map<string, any[]>();
     for (const p of preds ?? []) {
+      if (!p.match_id) continue;
       const arr = byMatch.get(p.match_id) ?? [];
       arr.push(p);
       byMatch.set(p.match_id, arr);
