@@ -247,8 +247,8 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       .limit(data.limit);
     if (data.userId) q = q.eq("user_id", data.userId);
     if (data.matchId) q = q.eq("match_id", data.matchId);
-    if (data.market) q = q.eq("market", data.market);
-    if (data.status) q = q.eq("status", data.status);
+    if (data.market) q = q.eq("market", data.market as any);
+    if (data.status) q = q.eq("status", data.status as any);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
 
