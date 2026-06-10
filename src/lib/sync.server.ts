@@ -79,5 +79,9 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
     metadata: { upserted, total: matches.length, live, autoSettled },
   });
 
-  return { upserted, total: matches.length, live, autoSettled };
+  // Refresh real odds (throttled to once every 2h to stay within free tier).
+  let odds: Awaited<ReturnType<typeof runOddsSync>> | null = null;
+  try { odds = await runOddsSync(); } catch (e) { console.log("[odds] sync failed", e); }
+
+  return { upserted, total: matches.length, live, autoSettled, odds };
 }
