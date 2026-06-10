@@ -145,7 +145,7 @@ function MatchCard({ match }: { match: Match }) {
         </span>
         <span>{match.away_team}</span>
       </div>
-      {!locked && (
+      {!locked && match.reference_odds && (
         <div className="space-y-2">
           <div className="grid grid-cols-3 gap-2">
             {(["HOME", "DRAW", "AWAY"] as const).map((p) => (
@@ -163,9 +163,18 @@ function MatchCard({ match }: { match: Match }) {
               {mut.isPending ? "..." : "Submit"}
             </Button>
           </div>
+          <div className="text-[10px] text-muted-foreground">
+            {match.odds_source === "the-odds-api"
+              ? `Live odds via The Odds API · updated ${timeAgo(match.odds_updated_at)}`
+              : "Reference odds (awaiting live market sync)"}
+          </div>
         </div>
       )}
-      {locked && <div className="text-xs text-muted-foreground">Predictions locked.</div>}
+      {locked && (
+        <div className="text-xs text-muted-foreground font-medium">
+          {match.status === "finished" ? "Match finished." : "Betting closed — kickoff passed."}
+        </div>
+      )}
     </Card>
   );
 }
