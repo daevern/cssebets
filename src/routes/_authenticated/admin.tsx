@@ -38,6 +38,8 @@ const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean }> = [
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/predictions", label: "Predictions", icon: ListChecks },
   { to: "/admin/matches", label: "Matches", icon: CalendarDays },
+  { to: "/admin/odds-history", label: "Odds history", icon: TrendingUp },
+  { to: "/admin/wallet-ledger", label: "Wallet ledger", icon: Wallet },
   { to: "/admin/simulator", label: "Simulator", icon: LineChartIcon },
   { to: "/admin/risk", label: "Risk", icon: ShieldAlert },
   { to: "/admin/audit", label: "Audit", icon: ScrollText },
