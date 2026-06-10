@@ -140,6 +140,8 @@ export type Database = {
           home_team: string
           id: string
           kickoff_at: string
+          odds_source: string | null
+          odds_updated_at: string | null
           reference_odds: Json | null
           stage: string | null
           status: Database["public"]["Enums"]["match_status"]
@@ -158,6 +160,8 @@ export type Database = {
           home_team: string
           id?: string
           kickoff_at: string
+          odds_source?: string | null
+          odds_updated_at?: string | null
           reference_odds?: Json | null
           stage?: string | null
           status?: Database["public"]["Enums"]["match_status"]
@@ -176,6 +180,8 @@ export type Database = {
           home_team?: string
           id?: string
           kickoff_at?: string
+          odds_source?: string | null
+          odds_updated_at?: string | null
           reference_odds?: Json | null
           stage?: string | null
           status?: Database["public"]["Enums"]["match_status"]
