@@ -9,6 +9,8 @@ import {
   Settings,
   Shield,
   ShieldAlert,
+  Wallet,
+  TrendingUp,
   LineChart as LineChartIcon,
   Menu,
   X,
