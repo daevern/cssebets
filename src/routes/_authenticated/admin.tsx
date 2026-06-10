@@ -29,14 +29,14 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
-const NAV = [
+const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean }> = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/predictions", label: "Predictions", icon: ListChecks },
   { to: "/admin/matches", label: "Matches", icon: CalendarDays },
   { to: "/admin/audit", label: "Audit", icon: ScrollText },
   { to: "/admin/settings", label: "Settings", icon: Settings },
-] as const;
+];
 
 function AdminLayout() {
   const location = useLocation();
