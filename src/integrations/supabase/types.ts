@@ -174,12 +174,15 @@ export type Database = {
       matches: {
         Row: {
           away_crest: string | null
+          away_liability: number
           away_score: number | null
           away_team: string
           created_at: string
+          draw_liability: number
           external_id: string | null
           group_name: string | null
           home_crest: string | null
+          home_liability: number
           home_score: number | null
           home_team: string
           id: string
@@ -191,15 +194,19 @@ export type Database = {
           status: Database["public"]["Enums"]["match_status"]
           updated_at: string
           winner: string | null
+          worst_case_exposure: number
         }
         Insert: {
           away_crest?: string | null
+          away_liability?: number
           away_score?: number | null
           away_team: string
           created_at?: string
+          draw_liability?: number
           external_id?: string | null
           group_name?: string | null
           home_crest?: string | null
+          home_liability?: number
           home_score?: number | null
           home_team: string
           id?: string
@@ -211,15 +218,19 @@ export type Database = {
           status?: Database["public"]["Enums"]["match_status"]
           updated_at?: string
           winner?: string | null
+          worst_case_exposure?: number
         }
         Update: {
           away_crest?: string | null
+          away_liability?: number
           away_score?: number | null
           away_team?: string
           created_at?: string
+          draw_liability?: number
           external_id?: string | null
           group_name?: string | null
           home_crest?: string | null
+          home_liability?: number
           home_score?: number | null
           home_team?: string
           id?: string
@@ -231,8 +242,87 @@ export type Database = {
           status?: Database["public"]["Enums"]["match_status"]
           updated_at?: string
           winner?: string | null
+          worst_case_exposure?: number
         }
         Relationships: []
+      }
+      platform_bankroll: {
+        Row: {
+          balance: number
+          created_at: string
+          id: number
+          total_payouts_paid: number
+          total_stakes_collected: number
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: number
+          total_payouts_paid?: number
+          total_stakes_collected?: number
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: number
+          total_payouts_paid?: number
+          total_stakes_collected?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      platform_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          bet_id: string | null
+          created_at: string
+          id: string
+          match_id: string | null
+          note: string | null
+          transaction_type: Database["public"]["Enums"]["platform_txn_type"]
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          balance_before: number
+          bet_id?: string | null
+          created_at?: string
+          id?: string
+          match_id?: string | null
+          note?: string | null
+          transaction_type: Database["public"]["Enums"]["platform_txn_type"]
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          balance_before?: number
+          bet_id?: string | null
+          created_at?: string
+          id?: string
+          match_id?: string | null
+          note?: string | null
+          transaction_type?: Database["public"]["Enums"]["platform_txn_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_transactions_bet_id_fkey"
+            columns: ["bet_id"]
+            isOneToOne: false
+            referencedRelation: "predictions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_transactions_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       point_requests: {
         Row: {
@@ -443,6 +533,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      place_bet_atomic: {
+        Args: {
+          p_market: Database["public"]["Enums"]["prediction_market"]
+          p_match_id: string
+          p_odds: number
+          p_outcome: string
+          p_snapshot_id?: string
+          p_stake: number
+          p_user_id: string
+        }
+        Returns: string
+      }
+      platform_apply_change: {
+        Args: {
+          p_amount: number
+          p_bet_id?: string
+          p_match_id?: string
+          p_note?: string
+          p_type: Database["public"]["Enums"]["platform_txn_type"]
+        }
+        Returns: number
+      }
+      recalc_match_liabilities: {
+        Args: { p_match_id: string }
+        Returns: undefined
+      }
+      settle_match_atomic: {
+        Args: { p_away_score: number; p_home_score: number; p_match_id: string }
+        Returns: number
+      }
+      void_match_atomic: { Args: { p_match_id: string }; Returns: number }
       wallet_apply_change: {
         Args: {
           p_amount: number
@@ -474,6 +595,12 @@ export type Database = {
         | "finished"
         | "postponed"
         | "cancelled"
+      platform_txn_type:
+        | "stake_collected"
+        | "payout_paid"
+        | "void_refund"
+        | "admin_topup"
+        | "admin_withdrawal"
       point_request_status: "pending" | "approved" | "rejected"
       prediction_market:
         | "result"
@@ -619,6 +746,13 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "member", "pending", "super_admin", "viewer"],
       match_status: ["scheduled", "live", "finished", "postponed", "cancelled"],
+      platform_txn_type: [
+        "stake_collected",
+        "payout_paid",
+        "void_refund",
+        "admin_topup",
+        "admin_withdrawal",
+      ],
       point_request_status: ["pending", "approved", "rejected"],
       prediction_market: [
         "result",

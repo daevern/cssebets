@@ -141,29 +141,22 @@ export const settleMatch = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const winner = data.homeScore > data.awayScore ? "HOME" : data.homeScore < data.awayScore ? "AWAY" : "DRAW";
-
-    const { error: upErr } = await supabaseAdmin.from("matches").update({
-      home_score: data.homeScore,
-      away_score: data.awayScore,
-      status: "finished",
-      winner,
-      updated_at: new Date().toISOString(),
-    }).eq("id", data.matchId);
-    if (upErr) throw new Error(upErr.message);
+    // Set the winner label (settle_match_atomic also writes status/scores and zeros liabilities)
+    await supabaseAdmin.from("matches").update({ winner }).eq("id", data.matchId);
 
     const { settlePredictionsForMatch } = await import("@/lib/settlement.server");
     const settled = await settlePredictionsForMatch(data.matchId, data.homeScore, data.awayScore);
 
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId, action: "match.settle", entity: "match", entity_id: data.matchId,
-      metadata: { homeScore: data.homeScore, awayScore: data.awayScore },
+      metadata: { homeScore: data.homeScore, awayScore: data.awayScore, settled },
     });
 
     return { settled };
   });
 
 
-// Mark a match as cancelled/void and refund all pending stakes.
+// Mark a match as cancelled/void and refund all pending stakes + debit platform bankroll.
 export const voidMatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ matchId: z.string().uuid() }).parse(i))
@@ -171,34 +164,13 @@ export const voidMatch = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await requireAdmin(supabase, userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    await supabaseAdmin.from("matches").update({
-      status: "cancelled", updated_at: new Date().toISOString(),
-    }).eq("id", data.matchId);
-
-    const { data: preds } = await supabaseAdmin
-      .from("predictions").select("*").eq("match_id", data.matchId).eq("status", "pending");
-
-    for (const p of preds ?? []) {
-      await supabaseAdmin.from("predictions").update({
-        status: "void", points: 0, settled_at: new Date().toISOString(),
-      }).eq("id", p.id);
-
-      await supabaseAdmin.rpc("wallet_apply_change", {
-        p_user_id: p.user_id,
-        p_type: "refund",
-        p_amount: Number(p.virtual_stake),
-        p_reference_type: "bet_settlement",
-        p_reference_id: p.id,
-        p_note: `Refund: match voided`,
-      });
-    }
-
+    const { voidMatch: voidMatchRpc } = await import("@/lib/settlement.server");
+    const refunded = await voidMatchRpc(data.matchId);
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId, action: "match.void", entity: "match", entity_id: data.matchId,
-      metadata: { refunded: preds?.length ?? 0 },
+      metadata: { refunded },
     });
-    return { refunded: preds?.length ?? 0 };
+    return { refunded };
   });
 
 // Generate simple reference odds based on team strength heuristic.
