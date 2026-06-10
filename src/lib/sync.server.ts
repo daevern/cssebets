@@ -1,6 +1,7 @@
 // Shared football-data sync logic. Server-only.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { settlePredictionsForMatch } from "@/lib/settlement.server";
+import { runOddsSync } from "@/lib/odds.server";
 
 function generateOdds() {
   return { home: 2.1, draw: 3.3, away: 3.4 };
