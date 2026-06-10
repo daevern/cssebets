@@ -88,7 +88,7 @@ function AuthedLayout() {
     { to: "/my-predictions", label: "Picks", icon: History },
     { to: "/wallet", label: "Wallet", icon: WalletIcon },
     { to: "/leaderboard", label: "Board", icon: BarChart3 },
-    ...(isAdmin ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
+    ...(isAdminTier ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
     ...(isAdmin ? [{ to: "/admin-wallet", label: "Points", icon: WalletIcon }] : []),
   ] as const;
 
