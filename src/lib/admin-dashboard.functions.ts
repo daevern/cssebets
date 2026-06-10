@@ -356,18 +356,20 @@ export const setTwoFactorPlaceholder = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await requireTier(supabase, userId, ADMIN_TIERS);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin
-      .from("admin_reauth")
-      .upsert({
+    const { data: existing } = await supabaseAdmin
+      .from("admin_reauth").select("user_id").eq("user_id", userId).maybeSingle();
+    if (existing) {
+      await supabaseAdmin
+        .from("admin_reauth")
+        .update({ two_factor_placeholder: data.enabled })
+        .eq("user_id", userId);
+    } else {
+      await supabaseAdmin.from("admin_reauth").insert({
         user_id: userId,
         expires_at: new Date(Date.now() - 1000).toISOString(),
         two_factor_placeholder: data.enabled,
-      }, { onConflict: "user_id", ignoreDuplicates: false });
-    // upsert won't merge — do a plain update too
-    await supabaseAdmin
-      .from("admin_reauth")
-      .update({ two_factor_placeholder: data.enabled })
-      .eq("user_id", userId);
+      });
+    }
     return { ok: true };
   });
 
