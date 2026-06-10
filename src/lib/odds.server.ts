@@ -128,13 +128,26 @@ export async function runOddsSync(opts: { force?: boolean } = {}) {
       away: Number(median(awayPrices).toFixed(2)),
     };
 
+    const nowIso = new Date().toISOString();
+
+    // Write a snapshot row for audit/history (every sync, full history).
+    await supabaseAdmin.from("match_odds_snapshots").insert({
+      match_id: m.id,
+      source: "the-odds-api",
+      home_odds: reference_odds.home,
+      draw_odds: reference_odds.draw,
+      away_odds: reference_odds.away,
+      raw_bookmaker_count: ev.bookmakers?.length ?? null,
+      sampled_at: nowIso,
+    });
+
     await supabaseAdmin
       .from("matches")
       .update({
         reference_odds,
-        odds_updated_at: new Date().toISOString(),
+        odds_updated_at: nowIso,
         odds_source: "the-odds-api",
-        updated_at: new Date().toISOString(),
+        updated_at: nowIso,
       } as any)
       .eq("id", m.id);
     updated++;

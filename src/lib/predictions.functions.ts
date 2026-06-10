@@ -38,6 +38,20 @@ export const submitPrediction = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Find latest odds snapshot for the match (if any) to permanently link this bet to
+    // the exact odds we showed the user.
+    let snapshotId: string | null = null;
+    if (data.matchId) {
+      const { data: snap } = await supabaseAdmin
+        .from("match_odds_snapshots")
+        .select("id")
+        .eq("match_id", data.matchId)
+        .order("sampled_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      snapshotId = (snap as any)?.id ?? null;
+    }
+
     // Create the prediction first so we have a stable reference_id for the debit txn
     const { data: inserted, error } = await supabaseAdmin
       .from("predictions")
@@ -47,9 +61,10 @@ export const submitPrediction = createServerFn({ method: "POST" })
         market: data.market,
         outcome: data.outcome,
         reference_odds: data.referenceOdds,
+        reference_odds_snapshot_id: snapshotId,
         virtual_stake: data.virtualStake,
         potential_return: potentialReturn,
-      })
+      } as any)
       .select()
       .single();
 
