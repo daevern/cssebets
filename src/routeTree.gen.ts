@@ -22,6 +22,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminSimulatorRouteImport } from './routes/_authenticated/admin.simulator'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
+import { Route as AuthenticatedAdminRiskRouteImport } from './routes/_authenticated/admin.risk'
 import { Route as AuthenticatedAdminPredictionsRouteImport } from './routes/_authenticated/admin.predictions'
 import { Route as AuthenticatedAdminMatchesRouteImport } from './routes/_authenticated/admin.matches'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
@@ -95,6 +96,11 @@ const AuthenticatedAdminSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminRiskRoute = AuthenticatedAdminRiskRouteImport.update({
+  id: '/risk',
+  path: '/risk',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 const AuthenticatedAdminPredictionsRoute =
   AuthenticatedAdminPredictionsRouteImport.update({
     id: '/predictions',
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/matches': typeof AuthenticatedAdminMatchesRoute
   '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
+  '/admin/risk': typeof AuthenticatedAdminRiskRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/simulator': typeof AuthenticatedAdminSimulatorRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/matches': typeof AuthenticatedAdminMatchesRoute
   '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
+  '/admin/risk': typeof AuthenticatedAdminRiskRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/simulator': typeof AuthenticatedAdminSimulatorRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/matches': typeof AuthenticatedAdminMatchesRoute
   '/_authenticated/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
+  '/_authenticated/admin/risk': typeof AuthenticatedAdminRiskRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/simulator': typeof AuthenticatedAdminSimulatorRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/matches'
     | '/admin/predictions'
+    | '/admin/risk'
     | '/admin/settings'
     | '/admin/simulator'
     | '/admin/users'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/matches'
     | '/admin/predictions'
+    | '/admin/risk'
     | '/admin/settings'
     | '/admin/simulator'
     | '/admin/users'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/matches'
     | '/_authenticated/admin/predictions'
+    | '/_authenticated/admin/risk'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/simulator'
     | '/_authenticated/admin/users'
@@ -317,6 +329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/risk': {
+      id: '/_authenticated/admin/risk'
+      path: '/risk'
+      fullPath: '/admin/risk'
+      preLoaderRoute: typeof AuthenticatedAdminRiskRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/predictions': {
       id: '/_authenticated/admin/predictions'
       path: '/predictions'
@@ -345,6 +364,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminMatchesRoute: typeof AuthenticatedAdminMatchesRoute
   AuthenticatedAdminPredictionsRoute: typeof AuthenticatedAdminPredictionsRoute
+  AuthenticatedAdminRiskRoute: typeof AuthenticatedAdminRiskRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminSimulatorRoute: typeof AuthenticatedAdminSimulatorRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
@@ -355,6 +375,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminMatchesRoute: AuthenticatedAdminMatchesRoute,
   AuthenticatedAdminPredictionsRoute: AuthenticatedAdminPredictionsRoute,
+  AuthenticatedAdminRiskRoute: AuthenticatedAdminRiskRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminSimulatorRoute: AuthenticatedAdminSimulatorRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,

@@ -8,6 +8,7 @@ import {
   ScrollText,
   Settings,
   Shield,
+  ShieldAlert,
   LineChart as LineChartIcon,
   Menu,
   X,
@@ -36,6 +37,7 @@ const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean }> = [
   { to: "/admin/predictions", label: "Predictions", icon: ListChecks },
   { to: "/admin/matches", label: "Matches", icon: CalendarDays },
   { to: "/admin/simulator", label: "Simulator", icon: LineChartIcon },
+  { to: "/admin/risk", label: "Risk", icon: ShieldAlert },
   { to: "/admin/audit", label: "Audit", icon: ScrollText },
   { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
