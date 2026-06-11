@@ -34,7 +34,7 @@ function AdminOverview() {
           <Metric icon={Activity} label="Active (24h)" value={m.data.activeUsers} />
           <Metric icon={ListChecks} label="Predictions" value={m.data.totalPredictions} />
           <Metric icon={AlertCircle} label="Unsettled" value={m.data.unsettled} />
-          <Metric icon={Coins} label="Virtual stake" value={m.data.totalStake.toLocaleString()} />
+          <Metric icon={Coins} label="Stake" value={m.data.totalStake.toLocaleString()} />
           <Metric icon={TrendingUp} label="Virtual payouts" value={m.data.totalPayouts.toLocaleString()} />
           <Metric
             icon={TrendingUp}
@@ -92,7 +92,7 @@ function AdminOverview() {
                   <TableHead>Kickoff</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Preds</TableHead>
-                  <TableHead className="text-right">Virtual stake</TableHead>
+                  <TableHead className="text-right">Stake</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
