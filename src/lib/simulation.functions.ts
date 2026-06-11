@@ -331,7 +331,7 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
 
     const { data: matches } = await (supabaseAdmin as any)
       .from("matches")
-      .select("id, reference_odds")
+      .select("id, reference_odds, home_team, away_team")
       .eq("is_simulation", true)
       .eq("status", "scheduled")
       .order("kickoff_at", { ascending: true });
@@ -393,79 +393,208 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
     const errorSamples: string[] = [];
     let stoppedAtCap = false;
     const brokeUsers = new Set<string>();
+    const matchDiagnostics: Array<{
+      matchId: string;
+      match: string;
+      betsCreated: number;
+      failedAttempts: number;
+      failureReason: string | null;
+      poolCreated: boolean;
+    }> = [];
 
-    for (const m of slice as any[]) {
-      // Fill pass respects the 60% exposure target; coverage pass only stops
-      // at the 95% emergency cap so every match gets its minimum bets first.
-      if (!isCoverage && globalExposure >= exposureCap) { stoppedAtCap = true; break; }
-      if (isCoverage && globalExposure >= emergencyCap) { stoppedAtCap = true; break; }
+    if (isCoverage) {
+      // =====================================================
+      // COVERAGE PASS — deterministic round-robin allocation.
+      // userIndex = (matchIndex * coverageMinBetsPerMatch + betIndex) % users.length
+      // Skips unfunded users, never stops the whole pass on a single failure,
+      // and records a per-match failure reason.
+      // =====================================================
+      const { data: walletRows } = await (supabaseAdmin as any)
+        .from("wallets").select("user_id, balance").in("user_id", userIds);
+      const balances = new Map<string, number>(
+        (walletRows ?? []).map((w: any) => [w.user_id, Number(w.balance ?? 0)]),
+      );
 
-      const ro = m.reference_odds ?? { home: 2, draw: 3, away: 2 };
-      const existing = existingByMatch.get(m.id) ?? { count: 0, userIds: new Set() };
+      for (let si = 0; si < slice.length; si++) {
+        const m: any = slice[si];
+        const matchIndex = data.matchOffset + si; // GLOBAL index → deterministic across calls
+        const ro = m.reference_odds ?? null;
+        const existing = existingByMatch.get(m.id) ?? { count: 0, userIds: new Set<string>() };
+        const diag = {
+          matchId: m.id,
+          match: `${m.home_team ?? "?"} vs ${m.away_team ?? "?"}`,
+          betsCreated: 0,
+          failedAttempts: 0,
+          failureReason: null as string | null,
+          poolCreated: false,
+        };
 
-      let target: number;
-      if (isCoverage) {
-        // Bring this match up to coverageMinBetsPerMatch predictions
-        target = Math.max(0, data.coverageMinBetsPerMatch - existing.count);
-        if (target <= 0) continue;
-      } else {
-        // Add 0..(maxU-minU) extra predictions on top of what's already there
-        target = Math.floor(Math.random() * (maxU - minU + 1));
-        if (target <= 0) continue;
-      }
+        const need = Math.max(0, data.coverageMinBetsPerMatch - existing.count);
+        if (need <= 0) { matchDiagnostics.push(diag); continue; }
 
-      const eligible = userIds.filter((u) => !brokeUsers.has(u) && !existing.userIds.has(u));
-      const pool = [...eligible].sort(() => Math.random() - 0.5);
-      const usedThisMatch = new Set<string>();
-      let placed = 0;
-      let cursor = 0;
-      const PARALLEL = 10;
+        const oddsOk = ro && Number(ro.home) > 1 && Number(ro.draw) > 1 && Number(ro.away) > 1;
+        if (!oddsOk) {
+          diag.failureReason = "invalid odds";
+          predictionsFailed += need;
+          matchDiagnostics.push(diag);
+          continue;
+        }
 
-      while (placed < target && cursor < pool.length) {
-        if (!isCoverage && globalExposure >= exposureCap) { stoppedAtCap = true; break; }
-        if (isCoverage && globalExposure >= emergencyCap) { stoppedAtCap = true; break; }
+        const usedThisMatch = new Set<string>(existing.userIds as Set<string>);
+        let matchAborted = false;
 
-        const need = target - placed;
-        const batch = pool.slice(cursor, cursor + Math.min(PARALLEL, need)).filter((u) => !usedThisMatch.has(u));
-        cursor += PARALLEL;
-        if (!batch.length) continue;
-        batch.forEach((u) => usedThisMatch.add(u));
+        for (let betIndex = 0; betIndex < need && !matchAborted; betIndex++) {
+          if (globalExposure >= emergencyCap) {
+            stoppedAtCap = true;
+            diag.failureReason = diag.failureReason ?? "exposure emergency cap";
+            break;
+          }
 
-        const results = await Promise.all(batch.map((uid) => {
+          const baseIdx = (matchIndex * data.coverageMinBetsPerMatch + betIndex) % userIds.length;
+          const stake = stakeMin + Math.floor(Math.random() * (stakeMax - stakeMin + 1));
           const r = Math.random();
           const outcome = r < 0.4 ? "HOME" : r < 0.7 ? "AWAY" : "DRAW";
-          const odds = outcome === "HOME" ? ro.home : outcome === "DRAW" ? ro.draw : ro.away;
-          const stake = stakeMin + Math.floor(Math.random() * (stakeMax - stakeMin + 1));
-          return (supabaseAdmin as any).rpc("place_bet_atomic", {
-            p_user_id: uid,
-            p_match_id: m.id,
-            p_market: "result",
-            p_outcome: outcome,
-            p_odds: odds,
-            p_stake: stake,
-            p_snapshot_id: null,
-            // Coverage pass relaxes the DB exposure check to the 95% emergency cap
-            p_cap_pct: isCoverage ? EMERGENCY_CAP_PCT : 1.0,
-          }).then((res: any) => ({ uid, ok: !res.error, stake, odds, err: res.error?.message }));
-        }));
+          const odds = outcome === "HOME" ? Number(ro.home) : outcome === "DRAW" ? Number(ro.draw) : Number(ro.away);
 
-        for (const r of results) {
-          if (r.ok) {
-            predictionsCreated++;
-            placed++;
-            totalStakes += r.stake;
-            totalExposure += r.stake * (r.odds - 1);
-            globalExposure += r.stake * (r.odds - 1);
-          } else {
-            predictionsFailed++;
-            const msg = r.err ?? "";
-            if (msg.includes("INSUFFICIENT_BALANCE")) {
-              brokeUsers.add(r.uid);
-            } else if (msg.includes("MAX_EXPOSURE_REACHED")) {
-              stoppedAtCap = true;
-              if (!isCoverage) break;
+          let placedThis = false;
+          let lastReason: string | null = null;
+
+          // Walk the user ring from the deterministic start until a funded
+          // user successfully places the bet.
+          for (let probe = 0; probe < userIds.length; probe++) {
+            const uid = userIds[(baseIdx + probe) % userIds.length];
+            if (usedThisMatch.has(uid)) continue;
+            if ((balances.get(uid) ?? 0) < stake) { lastReason = lastReason ?? "no funded users"; continue; }
+
+            const res: any = await (supabaseAdmin as any).rpc("place_bet_atomic", {
+              p_user_id: uid,
+              p_match_id: m.id,
+              p_market: "result",
+              p_outcome: outcome,
+              p_odds: odds,
+              p_stake: stake,
+              p_snapshot_id: null,
+              p_cap_pct: EMERGENCY_CAP_PCT,
+            });
+
+            if (!res.error) {
+              placedThis = true;
+              usedThisMatch.add(uid);
+              balances.set(uid, (balances.get(uid) ?? 0) - stake);
+              predictionsCreated++;
+              diag.betsCreated++;
+              totalStakes += stake;
+              totalExposure += stake * (odds - 1);
+              globalExposure += stake * (odds - 1);
+              break;
             }
+
+            // Failed attempt — classify, log, and keep going.
+            predictionsFailed++;
+            diag.failedAttempts++;
+            const msg = res.error?.message ?? "";
             if (msg && errorSamples.length < 5) errorSamples.push(msg);
+
+            if (msg.includes("INSUFFICIENT_BALANCE")) {
+              balances.set(uid, 0);
+              brokeUsers.add(uid);
+              lastReason = "no funded users";
+              continue; // try next user
+            }
+            if (msg.includes("MATCH_LOCKED")) {
+              lastReason = "match locked";
+              matchAborted = true; // locked for everyone — stop this match only
+              break;
+            }
+            if (msg.includes("MAX_EXPOSURE_REACHED")) {
+              lastReason = "exposure emergency cap";
+              stoppedAtCap = true;
+              matchAborted = true;
+              break;
+            }
+            lastReason = "place_bet_atomic rejected";
+            continue; // try next user
+          }
+
+          if (!placedThis) {
+            diag.failureReason = lastReason ?? "unknown error";
+          }
+        }
+
+        matchDiagnostics.push(diag);
+      }
+
+      // Pool created Yes/No for the diagnostic table
+      if (sliceIds.length) {
+        const { data: pools } = await (supabaseAdmin as any)
+          .from("match_stake_pools").select("match_id").in("match_id", sliceIds);
+        const poolSet = new Set((pools ?? []).map((p: any) => p.match_id));
+        for (const d of matchDiagnostics) d.poolCreated = poolSet.has(d.matchId);
+      }
+    } else {
+      // =====================================================
+      // FILL PASS — random extra predictions, respects 60% cap
+      // =====================================================
+      for (const m of slice as any[]) {
+        if (globalExposure >= exposureCap) { stoppedAtCap = true; break; }
+
+        const ro = m.reference_odds ?? { home: 2, draw: 3, away: 2 };
+        const existing = existingByMatch.get(m.id) ?? { count: 0, userIds: new Set() };
+
+        const target = Math.floor(Math.random() * (maxU - minU + 1));
+        if (target <= 0) continue;
+
+        const eligible = userIds.filter((u) => !brokeUsers.has(u) && !existing.userIds.has(u));
+        const pool = [...eligible].sort(() => Math.random() - 0.5);
+        const usedThisMatch = new Set<string>();
+        let placed = 0;
+        let cursor = 0;
+        const PARALLEL = 10;
+
+        while (placed < target && cursor < pool.length) {
+          if (globalExposure >= exposureCap) { stoppedAtCap = true; break; }
+
+          const need = target - placed;
+          const batch = pool.slice(cursor, cursor + Math.min(PARALLEL, need)).filter((u) => !usedThisMatch.has(u));
+          cursor += PARALLEL;
+          if (!batch.length) continue;
+          batch.forEach((u) => usedThisMatch.add(u));
+
+          const results = await Promise.all(batch.map((uid) => {
+            const r = Math.random();
+            const outcome = r < 0.4 ? "HOME" : r < 0.7 ? "AWAY" : "DRAW";
+            const odds = outcome === "HOME" ? ro.home : outcome === "DRAW" ? ro.draw : ro.away;
+            const stake = stakeMin + Math.floor(Math.random() * (stakeMax - stakeMin + 1));
+            return (supabaseAdmin as any).rpc("place_bet_atomic", {
+              p_user_id: uid,
+              p_match_id: m.id,
+              p_market: "result",
+              p_outcome: outcome,
+              p_odds: odds,
+              p_stake: stake,
+              p_snapshot_id: null,
+              p_cap_pct: 1.0,
+            }).then((res: any) => ({ uid, ok: !res.error, stake, odds, err: res.error?.message }));
+          }));
+
+          for (const r of results) {
+            if (r.ok) {
+              predictionsCreated++;
+              placed++;
+              totalStakes += r.stake;
+              totalExposure += r.stake * (r.odds - 1);
+              globalExposure += r.stake * (r.odds - 1);
+            } else {
+              predictionsFailed++;
+              const msg = r.err ?? "";
+              if (msg.includes("INSUFFICIENT_BALANCE")) {
+                brokeUsers.add(r.uid);
+              } else if (msg.includes("MAX_EXPOSURE_REACHED")) {
+                stoppedAtCap = true;
+                break;
+              }
+              if (msg && errorSamples.length < 5) errorSamples.push(msg);
+            }
           }
         }
       }
@@ -485,6 +614,7 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
       pass: data.pass,
       coverageMinBetsPerMatch: data.coverageMinBetsPerMatch,
       coverageStakeRange: [data.coverageMinStake, data.coverageMaxStake],
+      matchDiagnostics,
     };
   });
 
