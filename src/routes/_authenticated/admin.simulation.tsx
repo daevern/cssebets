@@ -230,6 +230,7 @@ function SimulationPage() {
       let coverageCreated = 0;
       let coverageFailed = 0;
       let coverageEmergencyCapHit = false;
+      const coverageDiagnostics: any[] = [];
       {
         let offset = 0;
         for (let iter = 0; iter < 100; iter++) {
@@ -250,6 +251,7 @@ function SimulationPage() {
           coverageCreated += pr.predictionsCreated ?? 0;
           coverageFailed += pr.predictionsFailed ?? 0;
           if (pr.stoppedAtCap) coverageEmergencyCapHit = true;
+          if (Array.isArray(pr.matchDiagnostics)) coverageDiagnostics.push(...pr.matchDiagnostics);
           offset = pr.nextOffset;
           if (pr.done) break;
         }
@@ -259,7 +261,11 @@ function SimulationPage() {
       const covSum: any = await seedSummaryFn();
       const matchesCoveredAfterCoverage = covSum.matchesWithBets ?? 0;
       const matchesMissingAfterCoverage = covSum.matchesWithoutBets ?? 0;
+      const failedMatches = coverageDiagnostics.filter((d) => d.failureReason);
       if (matchesMissingAfterCoverage > 0) {
+        const detail = failedMatches
+          .map((d) => `${d.match}: ${d.failureReason}`)
+          .join("; ") || "unknown error";
         setSeedSummary({
           ...covSum,
           status: "failed",
@@ -273,8 +279,12 @@ function SimulationPage() {
           coverageCapHit: coverageEmergencyCapHit,
           fillCapHit: false,
           exposureCapHit: coverageEmergencyCapHit,
+          coverageDiagnostics,
         });
-        throw new Error(`COVERAGE_PASS_FAILED — Coverage pass failed: ${matchesMissingAfterCoverage} match(es) still have zero predictions before fill pass.`);
+        throw new Error(`COVERAGE_PASS_FAILED — ${matchesMissingAfterCoverage} match(es) still have zero predictions. ${detail}`);
+      }
+      if (failedMatches.length > 0) {
+        toast.warning(`Coverage incomplete on ${failedMatches.length} match(es): ${failedMatches.map((d) => `${d.match} (${d.failureReason})`).join(", ")}`);
       }
       toast.success(`Coverage pass complete: ${matchesCoveredAfterCoverage}/${covSum.matches} matches covered (${coverageCreated} predictions).`);
 
@@ -327,6 +337,7 @@ function SimulationPage() {
         coverageStakeRange: `${COVERAGE_MIN_STAKE}–${COVERAGE_MAX_STAKE}`,
         matchesCoveredAfterCoverage,
         matchesMissingAfterCoverage,
+        coverageDiagnostics,
       };
       setSeedSummary(merged);
       if (sum.predictions === 0 || sum.poolTxns === 0 || sum.stakeDebits === 0) {
@@ -485,6 +496,35 @@ function SimulationPage() {
             {seedSummary.matchesWithoutBets > 0 && seedSummary.coverageCompleted !== false && (
               <div className="mt-3 text-sm font-medium text-destructive">
                 Simulation seed issue: {seedSummary.matchesWithoutBets} match(es) have no predictions after seeding.
+              </div>
+            )}
+            {Array.isArray(seedSummary.coverageDiagnostics) && seedSummary.coverageDiagnostics.length > 0 && (
+              <div className="mt-4">
+                <div className="text-sm font-semibold mb-1">Coverage diagnostics</div>
+                <div className="max-h-64 overflow-auto rounded border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Match</TableHead>
+                        <TableHead className="text-right">Coverage Bets Created</TableHead>
+                        <TableHead className="text-right">Failed Attempts</TableHead>
+                        <TableHead>Failure Reason</TableHead>
+                        <TableHead>Pool Created</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {seedSummary.coverageDiagnostics.map((d: any) => (
+                        <TableRow key={d.matchId} className={d.failureReason ? "bg-destructive/10" : undefined}>
+                          <TableCell className="font-medium">{d.match}</TableCell>
+                          <TableCell className="text-right">{d.betsCreated}</TableCell>
+                          <TableCell className="text-right">{d.failedAttempts}</TableCell>
+                          <TableCell>{d.failureReason ?? "—"}</TableCell>
+                          <TableCell>{d.poolCreated ? "Yes" : "No"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
             )}
           </AlertDescription>
