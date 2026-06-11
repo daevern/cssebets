@@ -444,30 +444,45 @@ export const getSimulationUsers = createServerFn({ method: "GET" })
     const ids: string[] = (profs ?? []).map((p: any) => p.id);
     if (!ids.length) return { users: [] };
 
-    const [{ data: wallets }, { data: preds }, { data: walletTxns }] = await Promise.all([
+    const [{ data: wallets }, { data: preds }] = await Promise.all([
       (supabaseAdmin as any).from("wallets").select("user_id, balance, updated_at").in("user_id", ids),
-      (supabaseAdmin as any).from("predictions").select("user_id").in("user_id", ids).eq("is_simulation", true),
-      (supabaseAdmin as any).from("wallet_transactions").select("user_id, type, amount").in("user_id", ids).eq("is_simulation", true),
+      (supabaseAdmin as any).from("predictions")
+        .select("user_id, status, virtual_stake, potential_return")
+        .in("user_id", ids).eq("is_simulation", true),
     ]);
     const wMap = new Map((wallets ?? []).map((w: any) => [w.user_id, w]));
     const predCount = new Map<string, number>();
-    for (const p of preds ?? []) predCount.set(p.user_id, (predCount.get(p.user_id) ?? 0) + 1);
-    const plMap = new Map<string, number>();
-    for (const t of walletTxns ?? []) {
-      const sign = ["credit", "refund"].includes(t.type) ? 1 : -1;
-      plMap.set(t.user_id, (plMap.get(t.user_id) ?? 0) + sign * Number(t.amount));
+    const pendingStakes = new Map<string, number>();
+    const settledPL = new Map<string, number>();
+    for (const p of preds ?? []) {
+      predCount.set(p.user_id, (predCount.get(p.user_id) ?? 0) + 1);
+      const stake = Number(p.virtual_stake || 0);
+      if (p.status === "pending") {
+        pendingStakes.set(p.user_id, (pendingStakes.get(p.user_id) ?? 0) + stake);
+      } else if (p.status === "won") {
+        settledPL.set(p.user_id, (settledPL.get(p.user_id) ?? 0) + (Number(p.potential_return || 0) - stake));
+      } else if (p.status === "lost") {
+        settledPL.set(p.user_id, (settledPL.get(p.user_id) ?? 0) - stake);
+      }
     }
     return {
-      users: (profs ?? []).map((p: any, idx: number) => ({
-        id: p.id,
-        displayName: p.display_name,
-        email: simEmail(idx + 1),
-        password: SIM_PASSWORD,
-        balance: Number((wMap.get(p.id) as any)?.balance ?? 0),
-        predictionCount: predCount.get(p.id) ?? 0,
-        profitLoss: (plMap.get(p.id) ?? 0) - SIM_STARTING_BALANCE,
-        lastActivity: (wMap.get(p.id) as any)?.updated_at ?? null,
-      })),
+      users: (profs ?? []).map((p: any, idx: number) => {
+        const pStakes = pendingStakes.get(p.id) ?? 0;
+        const sPL = settledPL.get(p.id) ?? 0;
+        return {
+          id: p.id,
+          displayName: p.display_name,
+          email: simEmail(idx + 1),
+          password: SIM_PASSWORD,
+          balance: Number((wMap.get(p.id) as any)?.balance ?? 0),
+          predictionCount: predCount.get(p.id) ?? 0,
+          pendingStakes: pStakes,
+          settledPL: sPL,
+          totalPL: sPL - pStakes,
+          profitLoss: sPL - pStakes, // back-compat for any existing UI
+          lastActivity: (wMap.get(p.id) as any)?.updated_at ?? null,
+        };
+      }),
     };
   });
 
