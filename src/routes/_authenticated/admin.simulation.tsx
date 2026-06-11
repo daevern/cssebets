@@ -230,6 +230,7 @@ function SimulationPage() {
       let coverageCreated = 0;
       let coverageFailed = 0;
       let coverageEmergencyCapHit = false;
+      const coverageDiagnostics: any[] = [];
       {
         let offset = 0;
         for (let iter = 0; iter < 100; iter++) {
@@ -250,6 +251,7 @@ function SimulationPage() {
           coverageCreated += pr.predictionsCreated ?? 0;
           coverageFailed += pr.predictionsFailed ?? 0;
           if (pr.stoppedAtCap) coverageEmergencyCapHit = true;
+          if (Array.isArray(pr.matchDiagnostics)) coverageDiagnostics.push(...pr.matchDiagnostics);
           offset = pr.nextOffset;
           if (pr.done) break;
         }
@@ -259,7 +261,11 @@ function SimulationPage() {
       const covSum: any = await seedSummaryFn();
       const matchesCoveredAfterCoverage = covSum.matchesWithBets ?? 0;
       const matchesMissingAfterCoverage = covSum.matchesWithoutBets ?? 0;
+      const failedMatches = coverageDiagnostics.filter((d) => d.failureReason);
       if (matchesMissingAfterCoverage > 0) {
+        const detail = failedMatches
+          .map((d) => `${d.match}: ${d.failureReason}`)
+          .join("; ") || "unknown error";
         setSeedSummary({
           ...covSum,
           status: "failed",
@@ -273,8 +279,12 @@ function SimulationPage() {
           coverageCapHit: coverageEmergencyCapHit,
           fillCapHit: false,
           exposureCapHit: coverageEmergencyCapHit,
+          coverageDiagnostics,
         });
-        throw new Error(`COVERAGE_PASS_FAILED — Coverage pass failed: ${matchesMissingAfterCoverage} match(es) still have zero predictions before fill pass.`);
+        throw new Error(`COVERAGE_PASS_FAILED — ${matchesMissingAfterCoverage} match(es) still have zero predictions. ${detail}`);
+      }
+      if (failedMatches.length > 0) {
+        toast.warning(`Coverage incomplete on ${failedMatches.length} match(es): ${failedMatches.map((d) => `${d.match} (${d.failureReason})`).join(", ")}`);
       }
       toast.success(`Coverage pass complete: ${matchesCoveredAfterCoverage}/${covSum.matches} matches covered (${coverageCreated} predictions).`);
 
