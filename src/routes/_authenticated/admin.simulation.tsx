@@ -24,7 +24,9 @@ import {
   getSimulationOverview,
   getSimulationUsers,
   getSimulationMatches,
+  validateSimulationSeed,
 } from "@/lib/simulation.functions";
+
 
 export const Route = createFileRoute("/_authenticated/admin/simulation")({
   component: SimulationPage,
@@ -42,12 +44,15 @@ function SimulationPage() {
   const seedPredsFn = useServerFn(seedSimulationPredictions);
   const tickFn = useServerFn(runSimulationTick);
   const resetFn = useServerFn(resetSimulationData);
+  const validateFn = useServerFn(validateSimulationSeed);
 
   const [running, setRunning] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [durationMin, setDurationMin] = useState<number>(1);
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [showConfig, setShowConfig] = useState(false);
+  const [validation, setValidation] = useState<{ configured: number; average: number; total: number; users: number } | null>(null);
+
   const setBankrollFn = useServerFn(setSimulationBankroll);
 
   // Seed configuration (admin-tunable)
@@ -120,11 +125,15 @@ function SimulationPage() {
 
   async function handleSeed() {
     setSeeding(true);
+    setValidation(null);
     try {
+      toast.info("Resetting prior simulation data…");
+      await resetFn();
+
       toast.info(`Setting simulation bankroll to ${cfg.bankroll.toLocaleString()} pts…`);
       await setBankrollFn({ data: { balance: cfg.bankroll } });
 
-      toast.info(`Seeding ${cfg.totalUsers} simulation users (in batches)…`);
+      toast.info(`Seeding ${cfg.totalUsers} simulation users @ ${cfg.startingBalance} pts each…`);
       for (let start = 1; start <= cfg.totalUsers; start += 25) {
         const batch = Math.min(25, cfg.totalUsers - start + 1);
         const res: any = await seedUsersFn({ data: {
@@ -134,6 +143,21 @@ function SimulationPage() {
         }});
         toast.message(`Users ${res.processedRange[0]}-${res.processedRange[1]}: ${res.created} new, ${res.skipped} existing`);
       }
+
+      // Validate actual vs configured starting balance
+      const v: any = await validateFn();
+      setValidation({
+        configured: cfg.startingBalance,
+        average: v.averageBalance,
+        total: v.totalIssued,
+        users: v.userCount,
+      });
+      if (Math.abs((v.averageBalance ?? 0) - cfg.startingBalance) > 0.5) {
+        toast.warning(`Avg starting balance ${Math.round(v.averageBalance)} ≠ configured ${cfg.startingBalance}`);
+      } else {
+        toast.success(`Starting balance verified: ${cfg.startingBalance} pts × ${v.userCount} users = ${v.totalIssued.toLocaleString()} pts`);
+      }
+
       toast.info(`Seeding ${cfg.matchCount} simulation matches…`);
       await seedMatchesFn({ data: { matchCount: cfg.matchCount } });
       toast.info("Placing random predictions (will stop at exposure target)…");
@@ -156,6 +180,7 @@ function SimulationPage() {
       setSeeding(false);
     }
   }
+
 
   const o = overview.data;
 
@@ -226,6 +251,18 @@ function SimulationPage() {
         </Collapsible>
       </Card>
 
+      {validation && (
+        <Alert variant={Math.abs(validation.average - validation.configured) > 0.5 ? "destructive" : "default"}>
+          <AlertTitle>Seed validation</AlertTitle>
+          <AlertDescription>
+            Configured starting balance: <b>{validation.configured.toLocaleString()} pts</b> ·
+            Actual avg: <b>{Math.round(validation.average).toLocaleString()} pts</b> ·
+            Total issued: <b>{Math.round(validation.total).toLocaleString()} pts</b> across <b>{validation.users}</b> users.
+          </AlertDescription>
+        </Alert>
+      )}
+
+
       {o && o.bankroll.safetyRatio !== null && o.bankroll.safetyRatio < 1.1 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
@@ -283,12 +320,13 @@ function SimulationPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Timer</TableHead>
                   <TableHead>Odds H/D/A</TableHead>
-                  <TableHead className="text-right">Pool</TableHead>
+                  <TableHead className="text-right">Original Pool</TableHead>
                   <TableHead className="text-right">H/D/A pool</TableHead>
+                  <TableHead className="text-right">Remaining</TableHead>
                   <TableHead className="text-right">Worst</TableHead>
                   <TableHead>Score</TableHead>
                   <TableHead className="text-right">Payouts</TableHead>
-                  <TableHead className="text-right">P/L</TableHead>
+                  <TableHead className="text-right">Match P/L</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -314,18 +352,22 @@ function SimulationPage() {
                       <TableCell><Badge variant="outline" className="capitalize">{m.status}</Badge></TableCell>
                       <TableCell className="text-xs whitespace-nowrap">{timer}</TableCell>
                       <TableCell className="text-xs">{m.odds?.home}/{m.odds?.draw}/{m.odds?.away}</TableCell>
-                      <TableCell className="text-right">{fmt(m.totalPool)}</TableCell>
+                      <TableCell className="text-right">{fmt(m.originalPool ?? m.totalPool)}</TableCell>
                       <TableCell className="text-right text-xs">{fmt(m.homePool)}/{fmt(m.drawPool)}/{fmt(m.awayPool)}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{fmt(m.remainingPool ?? 0)}</TableCell>
                       <TableCell className="text-right">{fmt(m.worst)}</TableCell>
                       <TableCell>{m.finalScore ?? "—"}</TableCell>
                       <TableCell className="text-right">{fmt(m.payouts)}</TableCell>
-                      <TableCell className={`text-right font-medium ${m.profitLoss >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(m.profitLoss)}</TableCell>
+                      <TableCell className={`text-right font-medium ${m.settled ? (m.profitLoss >= 0 ? "text-emerald-600" : "text-destructive") : "text-muted-foreground"}`}>
+                        {m.settled ? fmt(m.profitLoss) : "—"}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
                 {!matches.data?.matches?.length && (
-                  <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground">No simulation matches.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={12} className="text-center text-muted-foreground">No simulation matches.</TableCell></TableRow>
                 )}
+
               </TableBody>
             </Table>
           </Card>
