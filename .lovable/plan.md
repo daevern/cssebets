@@ -1,90 +1,96 @@
-## Admin Management Dashboard
+# Phase 1 & 2 — Security, Integrity, and Data Model Hardening
 
-Build a dedicated admin area on top of the existing pool app. Virtual credits only — no real money, deposits, withdrawals, payments, or bookmaker profit math.
+This is a large body of work. I'll deliver it in **two migrations + one app-code pass per phase**, validating after each step so nothing regresses for live users.
 
-### Roles
-Extend the `app_role` enum with `super_admin` and `viewer` (keeping existing `admin`, `member`, `pending`).
-- **super_admin**: everything, including role changes and destructive actions
-- **admin**: day-to-day moderation (settle, void, suspend, edit names, reset balance)
-- **viewer**: read-only access to all admin screens
+---
 
-Helper `private.has_any_admin_role(uid)` for gating; `private.has_role(uid,'super_admin')` for sensitive actions.
+## Phase 1 — Critical Security & Accounting Integrity
 
-### Security
-- Sensitive server fns (role change, reset balance, suspend, void, manual settle) require a fresh password re-auth token (sign in with email+password again within the last 5 min). Stored as `admin_reauth` row keyed by user, with `expires_at`.
-- 2FA placeholder: a toggle on the admin profile that just records intent (no enforcement yet) — clearly labeled "Coming soon".
-- Every mutating admin action writes to `audit_log` with: admin_id, action, entity, entity_id, old_value, new_value, reason (required for sensitive ops), ip placeholder, user_agent placeholder, timestamp.
+### 1.1 Secure bet placement (`place_bet_atomic`)
+- Drop the `p_user_id` argument. Replace it with `auth.uid()` read inside the function. Reject if NULL.
+- Re-create as `SECURITY INVOKER` where possible; keep `SECURITY DEFINER` only for the cross-table writes, but always gate by `auth.uid()`.
+- Update `src/lib/predictions.functions.ts` to stop sending `p_user_id` (server function already authenticates via `requireSupabaseAuth`).
+- Same treatment for: `wallet_approve_request`, `wallet_reject_request`, `payout_approve_atomic`, `payout_user_reject_atomic`, `set_house_user`, `reset_simulation_data`, `update_platform_settings` — derive admin/user id from `auth.uid()` instead of trusting `p_admin_id` / `p_user_id`.
 
-### Routes (under `/_authenticated/admin/`)
-```text
-/admin                  -> overview (metrics cards)
-/admin/users            -> user table + search + drawer
-/admin/predictions      -> predictions table + filters
-/admin/matches          -> matches table + manual controls
-/admin/audit            -> audit log table
-/admin/settings         -> reauth, 2FA placeholder, role list (super_admin only)
-```
-Shared `AdminLayout` with a left sidebar (collapsible on mobile). Existing `/admin` page is replaced.
+### 1.2 Atomicity
+- Audit `place_bet_atomic`, `settle_match_atomic`, `void_match_atomic`, `wallet_apply_change`, `platform_apply_change`, `pool_apply_change` — they already run inside a single PL/pgSQL transaction. Verify lock order (match → pool → wallet → bankroll) is consistent everywhere to avoid deadlocks. Add explicit `FOR UPDATE` where missing.
 
-### Pages
+### 1.3 Idempotency
+- Bet placement already uses `client_request_id`. Extend with a UNIQUE index on `(user_id, client_request_id)` if not present.
+- Add idempotency to:
+  - `wallet_approve_request` / `wallet_reject_request` — guarded by `status='pending'` row lock (already partially in place; verify).
+  - `payout_approve_atomic` — same.
+  - `settle_match_atomic` — already guarded by `match_stake_pools.settled`. Verify.
+  - `void_match_atomic` — guarded by `status<>'cancelled'`. Add explicit check.
+  - `platform_apply_change` — add optional `p_external_ref` UNIQUE to prevent double credit on retried admin top-ups.
 
-**Overview** — metric cards:
-- Total users, active users (24h), total predictions, total virtual stake, total virtual payouts, net movement, unsettled count, voided count
-- Top 5 virtual winners + top 5 losers (by lifetime points)
-- Match-by-match exposure table (virtual stake totals per market per match)
+### 1.4 Settlement & Void correctness
+- Re-running `settle_match_atomic` must short-circuit when pool is `settled=true` (already true — confirm).
+- `void_match_atomic` must refund from pool if not yet drained, from bankroll if already settled. Already implemented — add a "void cannot follow settle for finished matches" guard unless explicitly forced.
 
-**Users** — search by display_name; columns: name, roles, balance, predictions count, status. Row drawer with: prediction history, balance, actions (rename, suspend/unsuspend, reset balance to default, promote/demote — super_admin only). Reason required on every action.
+### 1.5 RLS hardening
+Audit and tighten policies for: `profiles`, `wallets`, `wallet_transactions`, `predictions`, `matches`, `point_requests`, `payout_requests`, `audit_log`, `platform_bankroll`, `platform_transactions`, `match_stake_pools`, `match_pool_transactions`, `match_odds_snapshots`, `platform_settings`, `tournaments`, `tournament_outrights`, `user_roles`.
 
-**Predictions** — filters: user, match, market, status. Columns: user, match, market, outcome, stake, odds ref, status, placed_at, settled_at. Actions: void (with reason), manual settle pass-through to match.
+Rules enforced:
+- Users `SELECT` only their own private rows.
+- Users `INSERT` only with `user_id = auth.uid()`.
+- Users **never** `UPDATE/DELETE` wallets, balances, predictions after creation, or admin tables.
+- Admin/super_admin checks go through `private.has_role(auth.uid(), …)` — never client claims.
+- `platform_bankroll`, `platform_transactions`, `match_stake_pools`, `audit_log`: read = admin only, write = service_role only.
 
-**Matches** — list with status pills. Actions: refresh fixtures (existing sync), refresh single match score, set status manually, settle (existing flow).
+### 1.6 Storage security (`point-request-proofs`, `payout-proofs`)
+- Policies on `storage.objects`:
+  - Path convention `{auth.uid()}/...` enforced via `(storage.foldername(name))[1] = auth.uid()::text`.
+  - Users INSERT/SELECT only their own folder. No UPDATE/DELETE by users.
+  - Admins SELECT all.
+- File-type + 10MB limit enforced client-side (server-side limit is bucket setting).
 
-**Audit log** — filterable table of all entries.
+### 1.7 UI double-submit protection
+- Audit submit handlers in: `wallet.tsx`, `payout.tsx`, `matches.tsx` (bet placement), `admin-wallet.tsx`, `admin-payout.tsx`, `admin.matches.tsx`, `admin.bankroll.tsx`, `admin.risk-settings.tsx`.
+- Standardize on `useMutation` + `disabled={isPending}` + sonner toasts. Add a single `client_request_id` (uuid) per attempt where applicable.
 
-**Settings** — password re-auth form (issues 5-min token), 2FA placeholder toggle, role assignments list (super_admin only).
+---
 
-### Server functions (new file `src/lib/admin-dashboard.functions.ts`)
-All guarded by `requireAdminRole(['admin','super_admin','viewer'])` for reads and stricter sets for writes. Sensitive writes also call `requireFreshReauth(userId)`.
+## Phase 2 — Data Model Cleanup
 
-- `getAdminMetrics`
-- `listUsersAdmin({ search, limit, offset })`
-- `getUserDetail({ userId })`
-- `updateUserDisplayName({ userId, name, reason })`
-- `setUserSuspended({ userId, suspended, reason })`
-- `resetUserBalance({ userId, reason })`
-- `setUserRole({ userId, role, reason })` — super_admin only
-- `listPredictionsAdmin({ filters })`
-- `voidPrediction({ predictionId, reason })`
-- `refreshMatchScore({ matchId })` — single-match football-data fetch
-- `setMatchStatus({ matchId, status, reason })`
-- `listAuditLog({ filters })`
-- `issueReauth({ password })` / `getReauthStatus()`
-- `setTwoFactorPlaceholder({ enabled })`
+### 2.1 Migrations
+- I will **not** rewrite history (migrations are append-only in production). Instead, I'll add one consolidating migration that:
+  - Drops any orphaned/duplicate policies discovered during the audit.
+  - Re-asserts canonical CHECK constraints and indexes.
+  - Is safe to re-run (uses `IF NOT EXISTS` / `DROP POLICY IF EXISTS`).
 
-### Database (single migration)
-1. `ALTER TYPE app_role ADD VALUE 'super_admin'; ADD VALUE 'viewer';` (if absent)
-2. Seed: promote existing `admin`s by inserting `super_admin` for one bootstrap user (the first admin) so the dashboard isn't locked out.
-3. `profiles` add `suspended boolean default false`.
-4. New table `public.admin_reauth(user_id pk fk auth.users, issued_at, expires_at)` — RLS: row owner only.
-5. Extend `audit_log` with `old_value jsonb`, `new_value jsonb`, `reason text`, `ip text`, `user_agent text` (nullable, additive).
-6. `private.has_any_admin_role(uid)` helper.
-7. RLS policies updated where needed so viewers can read user/prediction/match/audit data via admin server fns (server fns use `supabaseAdmin`, so RLS is bypassed — keep public RLS unchanged for normal users).
-8. GRANTs included for all new tables; `EXECUTE` revoked from anon/PUBLIC on all new SECURITY DEFINER funcs.
+### 2.2 Constraints
+- `wallets.balance >= 0` (CHECK).
+- `predictions.virtual_stake > 0`, `reference_odds >= 1`, `potential_return >= 0`.
+- `predictions.status` already enum — confirm.
+- `point_requests.requested_amount > 0`.
+- `platform_bankroll` row 1: allow negative (per current design) — leave as is, add comment.
+- `match_stake_pools` totals `>= 0`.
+- Settlement-once guard: partial UNIQUE index on `match_stake_pools(match_id) WHERE settled = true` is implicit (PK is match_id).
 
-### Auto-settle & locking (already partly present)
-- Predictions are blocked post-kickoff in `placePrediction` — confirm and keep.
-- Auto-settle continues via existing `settlePredictionsForMatch` on sync.
+### 2.3 Indexes
+- `predictions(user_id, created_at DESC)`
+- `predictions(match_id, status)`
+- `wallet_transactions(user_id, created_at DESC)`
+- `point_requests(status, created_at DESC)`
+- `matches(status, kickoff_at)`
+- `audit_log(action, created_at DESC)`
+- `match_odds_snapshots(match_id, sampled_at DESC)`
+- `platform_transactions(transaction_type, created_at DESC)`
 
-### Design
-- Sidebar: dark surface, items: Overview, Users, Predictions, Matches, Audit, Settings. Collapses to icons on `<md`.
-- Cards: muted background, large numeric, small label, trend hidden for now.
-- Tables: shadcn `Table`, sticky header, row hover, drawer for details.
-- All semantic tokens; no hardcoded colors.
+---
 
-### Out of scope (per request)
-No deposits, withdrawals, cashout, payment, real-money wallet, or bookmaker profit calculations.
+## Execution order
 
-### Technical notes
-- Reuses `wallet_apply_change` for balance reset (debit/credit to a target default of 1000).
-- Single migration; followed by code changes.
-- Replaces current `src/routes/_authenticated/admin.tsx` with `admin.index.tsx` (overview) + new child routes under `admin/`.
+1. **Migration A** — Phase 1.1, 1.3, 1.5, 1.6, 2.2, 2.3 (DB-only: function signatures, RLS, constraints, indexes). Submit for your approval.
+2. **App code pass** — update every server function and client mutation to match the new `place_bet_atomic` / approve/reject signatures, plus UI disabled-while-pending + toasts.
+3. **Migration B** (optional, if audit finds orphaned policies) — cleanup pass.
+4. Verify: build, run `supabase--linter`, smoke-test bet placement / approval / settlement flows.
+
+## Risks / call-outs
+
+- Changing `place_bet_atomic`'s signature is a **breaking RPC change**. All callers will be updated in the same turn, but any in-flight bets at deploy time will get a single retryable error.
+- Removing `p_admin_id` from approve/reject RPCs means admins must be signed in as themselves (no impersonation) — that's the intended security posture.
+- RLS tightening on `wallet_transactions` / `platform_*` will break any admin UI page that currently reads via the user's session instead of the admin server fn. I'll update those to go through admin server fns.
+
+**Confirm and I'll start with Migration A.**
