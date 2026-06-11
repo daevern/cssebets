@@ -174,7 +174,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
         away_team: away,
         kickoff_at: kickoff,
         status: "scheduled",
-        competition: "Simulation Cup",
+        stage: "Simulation Cup",
         is_simulation: true,
         reference_odds: { home: homeOdds, draw: drawOdds, away: awayOdds },
       });
