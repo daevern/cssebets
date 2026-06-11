@@ -51,6 +51,7 @@ const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeK
   { to: "/admin/odds-history", label: "Odds history", icon: TrendingUp },
   { to: "/admin/wallet-ledger", label: "Wallet ledger", icon: Wallet },
   { to: "/admin/bankroll", label: "Bankroll", icon: TrendingUp },
+  { to: "/admin/risk-settings", label: "Risk settings", icon: ShieldAlert },
   { to: "/admin/match-pools", label: "Match pools", icon: Wallet },
   { to: "/admin/simulation", label: "Simulation Mode", icon: ShieldAlert },
   { to: "/admin/audit", label: "Audit", icon: ScrollText },
