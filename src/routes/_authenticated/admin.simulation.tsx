@@ -359,6 +359,28 @@ function SimulationPage() {
         </Alert>
       )}
 
+      {seedSummary && (
+        <Alert variant={seedSummary.status === "success" ? "default" : "destructive"}>
+          <AlertTitle>
+            Seed summary — Prediction generation: {seedSummary.status === "success" ? "✓ Success" : "✗ Failed"}
+          </AlertTitle>
+          <AlertDescription>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-sm">
+              <div>Users: <b>{seedSummary.users}</b></div>
+              <div>Matches: <b>{seedSummary.matches}</b></div>
+              <div>Predictions: <b>{seedSummary.predictions}</b></div>
+              <div>Wallet Txns: <b>{seedSummary.walletTxns}</b></div>
+              <div>Pool Txns: <b>{seedSummary.poolTxns}</b></div>
+              <div>Stake Debits: <b>{seedSummary.stakeDebits}</b></div>
+              <div>Total Stakes: <b>{Math.round(seedSummary.totalStakes).toLocaleString()} pts</b></div>
+              <div>Exposure: <b>{Math.round(seedSummary.totalExposure).toLocaleString()} pts</b></div>
+              <div>Matches w/ bets: <b>{seedSummary.matchesWithBets}</b></div>
+              <div>Matches w/o bets: <b>{seedSummary.matchesWithoutBets}</b></div>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
 
       {o && o.bankroll.safetyRatio !== null && o.bankroll.safetyRatio < 1.1 && (
         <Alert variant="destructive">
