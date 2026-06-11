@@ -450,37 +450,55 @@ export type Database = {
         Row: {
           id: string
           is_simulation: boolean
+          proof_file_name: string | null
+          proof_file_path: string | null
+          proof_file_size: number | null
+          proof_file_type: string | null
           reason: string | null
+          rejection_reason: string | null
           requested_amount: number
           requested_at: string
           review_note: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           status: Database["public"]["Enums"]["point_request_status"]
+          submitted_at: string | null
           user_id: string
         }
         Insert: {
           id?: string
           is_simulation?: boolean
+          proof_file_name?: string | null
+          proof_file_path?: string | null
+          proof_file_size?: number | null
+          proof_file_type?: string | null
           reason?: string | null
+          rejection_reason?: string | null
           requested_amount: number
           requested_at?: string
           review_note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["point_request_status"]
+          submitted_at?: string | null
           user_id: string
         }
         Update: {
           id?: string
           is_simulation?: boolean
+          proof_file_name?: string | null
+          proof_file_path?: string | null
+          proof_file_size?: number | null
+          proof_file_type?: string | null
           reason?: string | null
+          rejection_reason?: string | null
           requested_amount?: number
           requested_at?: string
           review_note?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["point_request_status"]
+          submitted_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -786,7 +804,11 @@ export type Database = {
         | "admin_topup"
         | "admin_withdrawal"
         | "match_pool_collected"
-      point_request_status: "pending" | "approved" | "rejected"
+      point_request_status:
+        | "pending_upload"
+        | "pending"
+        | "approved"
+        | "rejected"
       prediction_market:
         | "result"
         | "correct_score"
@@ -940,7 +962,12 @@ export const Constants = {
         "admin_withdrawal",
         "match_pool_collected",
       ],
-      point_request_status: ["pending", "approved", "rejected"],
+      point_request_status: [
+        "pending_upload",
+        "pending",
+        "approved",
+        "rejected",
+      ],
       prediction_market: [
         "result",
         "correct_score",

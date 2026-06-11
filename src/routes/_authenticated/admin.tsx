@@ -1,5 +1,8 @@
 import { createFileRoute, redirect, Outlet, Link, useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getPendingPointRequestCount } from "@/lib/wallet.functions";
 import {
   LayoutDashboard,
   Users,
@@ -33,9 +36,10 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
-const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean }> = [
+const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeKey?: "pendingPointRequests" }> = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/admin/users", label: "Users", icon: Users },
+  { to: "/admin-wallet", label: "Point Requests", icon: Wallet, badgeKey: "pendingPointRequests" },
   { to: "/admin/predictions", label: "Predictions", icon: ListChecks },
   { to: "/admin/matches", label: "Matches", icon: CalendarDays },
   { to: "/admin/odds-history", label: "Odds history", icon: TrendingUp },
@@ -53,6 +57,15 @@ const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean }> = [
 function AdminLayout() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const countFn = useServerFn(getPendingPointRequestCount);
+  const pendingCount = useQuery({
+    queryKey: ["pending-point-request-count"],
+    queryFn: () => countFn({}),
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+  });
+  const badges = { pendingPointRequests: pendingCount.data?.count ?? 0 } as const;
+
 
   return (
     <div className="flex gap-4 min-h-[calc(100vh-7rem)]">
@@ -85,6 +98,7 @@ function AdminLayout() {
               ? location.pathname === item.to
               : location.pathname.startsWith(item.to);
             const Icon = item.icon;
+            const badge = item.badgeKey ? badges[item.badgeKey] : 0;
             return (
               <Link
                 key={item.to}
@@ -98,11 +112,17 @@ function AdminLayout() {
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {badge > 0 && (
+                  <span className="ml-auto inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-semibold text-destructive-foreground tabular-nums">
+                    {badge}
+                  </span>
+                )}
               </Link>
             );
           })}
         </nav>
+
       </aside>
 
       <div className="flex-1 min-w-0">
