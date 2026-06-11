@@ -29,28 +29,50 @@ function WalletPage() {
   const rFn = useServerFn(listMyRequests);
   const reqFn = useServerFn(requestPoints);
   const qc = useQueryClient();
+  const { user } = useAuth();
+  const uid = user?.id;
 
-  const wallet = useQuery({ queryKey: ["my-wallet"], queryFn: () => wFn({}) });
-  const txns = useQuery({ queryKey: ["my-txns"], queryFn: () => tFn({ data: { limit: 50 } }) });
-  const reqs = useQuery({ queryKey: ["my-point-requests"], queryFn: () => rFn({}) });
+  const wallet = useQuery({
+    queryKey: ["my-wallet", uid],
+    queryFn: () => wFn({}),
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
+  const txns = useQuery({
+    queryKey: ["my-txns", uid],
+    queryFn: () => tFn({ data: { limit: 50 } }),
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    staleTime: 0,
+  });
+  const reqs = useQuery({
+    queryKey: ["my-point-requests", uid],
+    queryFn: () => rFn({}),
+    enabled: !!uid,
+  });
 
-  // Real-time: refresh wallet, txns, and predictions on any insert/update.
+  // Real-time: refresh wallet, txns, and predictions on any insert/update for THIS user.
   useEffect(() => {
+    if (!uid) return;
     const ch = supabase
-      .channel("wallet-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "wallets" }, () => {
-        qc.invalidateQueries({ queryKey: ["my-wallet"] });
+      .channel(`wallet-live-${uid}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "wallets", filter: `user_id=eq.${uid}` }, () => {
+        qc.invalidateQueries({ queryKey: ["my-wallet", uid] });
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "wallet_transactions" }, () => {
-        qc.invalidateQueries({ queryKey: ["my-txns"] });
-        qc.invalidateQueries({ queryKey: ["my-wallet"] });
+      .on("postgres_changes", { event: "*", schema: "public", table: "wallet_transactions", filter: `user_id=eq.${uid}` }, () => {
+        qc.invalidateQueries({ queryKey: ["my-txns", uid] });
+        qc.invalidateQueries({ queryKey: ["my-wallet", uid] });
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "predictions" }, () => {
-        qc.invalidateQueries({ queryKey: ["my-predictions"] });
+      .on("postgres_changes", { event: "*", schema: "public", table: "predictions", filter: `user_id=eq.${uid}` }, () => {
+        qc.invalidateQueries({ queryKey: ["my-predictions", uid] });
+        qc.invalidateQueries({ queryKey: ["my-wallet", uid] });
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [qc]);
+  }, [qc, uid]);
 
   const [amount, setAmount] = useState("100");
   const [reason, setReason] = useState("");
