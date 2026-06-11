@@ -55,13 +55,15 @@ export const seedSimulationUsers = createServerFn({ method: "POST" })
     z.object({
       start: z.number().int().min(1).default(1),
       count: z.number().int().min(1).max(50).default(25),
+      totalUsers: z.number().int().min(1).max(500).default(SIM_USER_COUNT),
+      startingBalance: z.number().int().min(0).default(SIM_STARTING_BALANCE),
     }).parse(i ?? {}),
   )
   .handler(async ({ data, context }) => {
     await requireAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const end = Math.min(data.start + data.count - 1, SIM_USER_COUNT);
+    const end = Math.min(data.start + data.count - 1, data.totalUsers);
     let created = 0;
     let skipped = 0;
     const createdIds: string[] = [];
@@ -70,15 +72,13 @@ export const seedSimulationUsers = createServerFn({ method: "POST" })
       const email = simEmail(i);
       const name = simName(i);
 
-      // check if already exists
       const { data: existingProfile } = await (supabaseAdmin as any)
         .from("profiles").select("id, is_simulation").eq("display_name", name).maybeSingle();
       if (existingProfile?.id) {
-        // ensure flag + topup wallet to starting balance if zero
         if (!existingProfile.is_simulation) {
           await (supabaseAdmin as any).from("profiles").update({ is_simulation: true }).eq("id", existingProfile.id);
         }
-        await ensureSimWallet(supabaseAdmin, existingProfile.id);
+        await ensureSimWallet(supabaseAdmin, existingProfile.id, data.startingBalance);
         createdIds.push(existingProfile.id);
         skipped++;
         continue;
@@ -90,40 +90,32 @@ export const seedSimulationUsers = createServerFn({ method: "POST" })
         email_confirm: true,
         user_metadata: { display_name: name, simulation: true },
       });
-      if (createErr) {
-        // Could be user already exists with same email
-        console.error("simseed user err", email, createErr.message);
-        skipped++;
-        continue;
-      }
+      if (createErr) { console.error("simseed user err", email, createErr.message); skipped++; continue; }
       const uid = createdUser?.user?.id;
       if (!uid) { skipped++; continue; }
 
-      // Mark profile / wallet as simulation; promote role to 'member'
       await (supabaseAdmin as any).from("profiles")
         .update({ display_name: name, is_simulation: true }).eq("id", uid);
       await (supabaseAdmin as any).from("user_roles")
         .upsert({ user_id: uid, role: "member" }, { onConflict: "user_id,role" });
-      // remove pending role
       await (supabaseAdmin as any).from("user_roles")
         .delete().eq("user_id", uid).eq("role", "pending");
 
-      await ensureSimWallet(supabaseAdmin, uid);
+      await ensureSimWallet(supabaseAdmin, uid, data.startingBalance);
       createdIds.push(uid);
       created++;
     }
 
-    return { created, skipped, processedRange: [data.start, end], done: end >= SIM_USER_COUNT };
+    return { created, skipped, processedRange: [data.start, end], done: end >= data.totalUsers };
   });
 
-async function ensureSimWallet(supabaseAdmin: any, uid: string) {
+async function ensureSimWallet(supabaseAdmin: any, uid: string, startingBalance: number = SIM_STARTING_BALANCE) {
   await supabaseAdmin.from("wallets")
     .upsert({ user_id: uid, is_simulation: true }, { onConflict: "user_id" });
-  // top up to starting balance if balance is zero
   const { data: w } = await supabaseAdmin.from("wallets").select("balance").eq("user_id", uid).maybeSingle();
   const bal = Number(w?.balance ?? 0);
-  if (bal < SIM_STARTING_BALANCE) {
-    const topup = SIM_STARTING_BALANCE - bal;
+  if (bal < startingBalance) {
+    const topup = startingBalance - bal;
     await supabaseAdmin.rpc("wallet_apply_change", {
       p_user_id: uid,
       p_type: "credit",
@@ -136,21 +128,39 @@ async function ensureSimWallet(supabaseAdmin: any, uid: string) {
   }
 }
 
+// Set / reset the simulation bankroll to a specific value
+export const setSimulationBankroll = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ balance: z.number().min(0) }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await (supabaseAdmin as any).from("platform_bankroll")
+      .upsert({ id: 2, balance: data.balance, updated_at: new Date().toISOString() }, { onConflict: "id" });
+    return { balance: data.balance };
+  });
+
 // =========================================================
 //  SEED matches (creates 25 staggered scheduled sim matches)
 // =========================================================
 export const seedSimulationMatches = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((i: unknown) =>
+    z.object({
+      matchCount: z.number().int().min(1).max(200).default(SIM_MATCH_COUNT),
+    }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     await requireAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // skip if already seeded this batch
     const { count } = await (supabaseAdmin as any).from("matches")
       .select("id", { count: "exact", head: true })
       .eq("is_simulation", true)
       .in("status", ["scheduled", "live"]);
-    if ((count ?? 0) >= SIM_MATCH_COUNT) {
+    if ((count ?? 0) >= data.matchCount) {
       return { created: 0, skipped: count, message: "Already seeded" };
     }
 
@@ -158,7 +168,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
     const rows: any[] = [];
     const usedTeams = new Set<string>();
     let teamIdx = 0;
-    for (let i = 0; i < SIM_MATCH_COUNT; i++) {
+    for (let i = 0; i < data.matchCount; i++) {
       let home = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
       let away = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
       while (usedTeams.has(home + away) || home === away) {
@@ -184,7 +194,6 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
       .from("matches").insert(rows).select("id, reference_odds");
     if (error) throw new Error(error.message);
 
-    // odds snapshots
     const snaps = (inserted ?? []).map((m: any) => ({
       match_id: m.id,
       home_odds: m.reference_odds?.home,
@@ -204,7 +213,16 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
 // =========================================================
 export const seedSimulationPredictions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((i: unknown) =>
+    z.object({
+      minUsersPerMatch: z.number().int().min(1).default(10),
+      maxUsersPerMatch: z.number().int().min(1).default(30),
+      minStake: z.number().int().min(1).default(50),
+      maxStake: z.number().int().min(1).default(300),
+      exposureTargetPct: z.number().min(0).max(1).default(0.6),
+    }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     await requireAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -221,26 +239,44 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
 
     if (!matches?.length) return { error: "No scheduled sim matches" };
 
+    // Bankroll exposure cap
+    const { data: bankrollRow } = await (supabaseAdmin as any)
+      .from("platform_bankroll").select("balance").eq("id", 2).maybeSingle();
+    const bankroll = Number(bankrollRow?.balance ?? 0);
+    const exposureCap = bankroll * data.exposureTargetPct;
+
+    const minU = Math.min(data.minUsersPerMatch, data.maxUsersPerMatch);
+    const maxU = Math.max(data.minUsersPerMatch, data.maxUsersPerMatch);
+    const minS = Math.min(data.minStake, data.maxStake);
+    const maxS = Math.max(data.minStake, data.maxStake);
+
     let predictionsCreated = 0;
     let predictionsFailed = 0;
+    let stoppedAtCap = false;
 
     for (const m of matches as any[]) {
-      // skip if predictions already exist for this match
       const { count: existing } = await (supabaseAdmin as any).from("predictions")
         .select("id", { count: "exact", head: true })
         .eq("match_id", m.id);
       if ((existing ?? 0) > 0) continue;
 
+      // Check current global exposure against cap before each match
+      const { data: liveMatches } = await (supabaseAdmin as any)
+        .from("matches").select("worst_case_exposure")
+        .eq("is_simulation", true).in("status", ["scheduled", "live"]);
+      const globalExposure = (liveMatches ?? []).reduce(
+        (s: number, x: any) => s + Number(x.worst_case_exposure || 0), 0);
+      if (globalExposure >= exposureCap) { stoppedAtCap = true; break; }
+
       const ro = m.reference_odds ?? { home: 2, draw: 3, away: 2 };
-      // randomly select 30-80 users
-      const pickN = 30 + Math.floor(Math.random() * 51);
+      const pickN = minU + Math.floor(Math.random() * (maxU - minU + 1));
       const shuffled = [...userIds].sort(() => Math.random() - 0.5).slice(0, pickN);
 
       for (const uid of shuffled) {
         const r = Math.random();
         const outcome = r < 0.4 ? "HOME" : r < 0.7 ? "AWAY" : "DRAW";
         const odds = outcome === "HOME" ? ro.home : outcome === "DRAW" ? ro.draw : ro.away;
-        const stake = 50 + Math.floor(Math.random() * 951);
+        const stake = minS + Math.floor(Math.random() * (maxS - minS + 1));
 
         const { error: betErr } = await (supabaseAdmin as any).rpc("place_bet_atomic", {
           p_user_id: uid,
@@ -255,8 +291,10 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
         else predictionsCreated++;
       }
     }
-    return { predictionsCreated, predictionsFailed, matchesProcessed: matches.length };
+    return { predictionsCreated, predictionsFailed, matchesProcessed: matches.length, stoppedAtCap, exposureCap };
   });
+
+
 
 // =========================================================
 //  TICK — advances scheduled/live sim matches; settles due
@@ -315,14 +353,14 @@ export const getSimulationOverview = createServerFn({ method: "GET" })
       { data: matches },
       { count: predCount },
       { data: pools },
-      { data: walletTxns },
+      { data: allPreds },
     ] = await Promise.all([
       (supabaseAdmin as any).from("platform_bankroll").select("*").eq("id", 2).maybeSingle(),
       (supabaseAdmin as any).from("profiles").select("id", { count: "exact", head: true }).eq("is_simulation", true),
       (supabaseAdmin as any).from("matches").select("id, status, worst_case_exposure").eq("is_simulation", true),
       (supabaseAdmin as any).from("predictions").select("id", { count: "exact", head: true }).eq("is_simulation", true),
       (supabaseAdmin as any).from("match_stake_pools").select("total_pool, settled").eq("is_simulation", true),
-      (supabaseAdmin as any).from("wallet_transactions").select("user_id, type, amount").eq("is_simulation", true),
+      (supabaseAdmin as any).from("predictions").select("user_id, status, virtual_stake, potential_return").eq("is_simulation", true),
     ]);
 
     const balance = Number((bankroll as any)?.balance ?? 0);
@@ -339,20 +377,33 @@ export const getSimulationOverview = createServerFn({ method: "GET" })
     const byStatus = { scheduled: 0, live: 0, finished: 0, cancelled: 0 };
     for (const m of matches ?? []) byStatus[m.status as keyof typeof byStatus] = (byStatus[m.status as keyof typeof byStatus] ?? 0) + 1;
 
-    // per-user P/L for highest/lowest
-    const userPL = new Map<string, number>();
-    for (const t of walletTxns ?? []) {
-      const sign = ["credit", "refund"].includes(t.type) ? 1 : -1;
-      // ignore the starting-balance credit (admin_adjustment) so P/L reflects betting only
-      userPL.set(t.user_id, (userPL.get(t.user_id) ?? 0) + sign * Number(t.amount));
+    // Per-user settled P/L and pending stakes — derived from predictions, independent of starting balance
+    const settledPLMap = new Map<string, number>();
+    const pendingStakesMap = new Map<string, number>();
+    for (const p of allPreds ?? []) {
+      const stake = Number(p.virtual_stake || 0);
+      if (p.status === "pending") {
+        pendingStakesMap.set(p.user_id, (pendingStakesMap.get(p.user_id) ?? 0) + stake);
+      } else if (p.status === "won") {
+        const payout = Number(p.potential_return || 0);
+        settledPLMap.set(p.user_id, (settledPLMap.get(p.user_id) ?? 0) + (payout - stake));
+      } else if (p.status === "lost") {
+        settledPLMap.set(p.user_id, (settledPLMap.get(p.user_id) ?? 0) - stake);
+      }
+      // 'void' is neutral
     }
-    // remove starting balance influence: subtract starting credit
-    for (const uid of userPL.keys()) {
-      userPL.set(uid, (userPL.get(uid) ?? 0) - SIM_STARTING_BALANCE);
-    }
+
+    const anySettled = (byStatus.finished + byStatus.cancelled) > 0
+      && Array.from(settledPLMap.values()).some((v) => v !== 0);
+
+    // Rank: by settled P/L if anything settled, otherwise by total P/L (settled - pending)
+    const allUserIds = new Set<string>([...settledPLMap.keys(), ...pendingStakesMap.keys()]);
     let topWin: { user_id: string; pl: number } | null = null;
     let topLoss: { user_id: string; pl: number } | null = null;
-    for (const [uid, pl] of userPL.entries()) {
+    for (const uid of allUserIds) {
+      const pl = anySettled
+        ? (settledPLMap.get(uid) ?? 0)
+        : (settledPLMap.get(uid) ?? 0) - (pendingStakesMap.get(uid) ?? 0);
       if (!topWin || pl > topWin.pl) topWin = { user_id: uid, pl };
       if (!topLoss || pl < topLoss.pl) topLoss = { user_id: uid, pl };
     }
@@ -374,6 +425,7 @@ export const getSimulationOverview = createServerFn({ method: "GET" })
       users: { total: userCount ?? 0 },
       matches: { total: matches?.length ?? 0, ...byStatus },
       predictions: { total: predCount ?? 0 },
+      anySettled,
       highestWinner: topWin ? { displayName: profMap[topWin.user_id] ?? topWin.user_id.slice(0, 8), pl: topWin.pl } : null,
       lowestLoser: topLoss ? { displayName: profMap[topLoss.user_id] ?? topLoss.user_id.slice(0, 8), pl: topLoss.pl } : null,
     };
@@ -392,30 +444,45 @@ export const getSimulationUsers = createServerFn({ method: "GET" })
     const ids: string[] = (profs ?? []).map((p: any) => p.id);
     if (!ids.length) return { users: [] };
 
-    const [{ data: wallets }, { data: preds }, { data: walletTxns }] = await Promise.all([
+    const [{ data: wallets }, { data: preds }] = await Promise.all([
       (supabaseAdmin as any).from("wallets").select("user_id, balance, updated_at").in("user_id", ids),
-      (supabaseAdmin as any).from("predictions").select("user_id").in("user_id", ids).eq("is_simulation", true),
-      (supabaseAdmin as any).from("wallet_transactions").select("user_id, type, amount").in("user_id", ids).eq("is_simulation", true),
+      (supabaseAdmin as any).from("predictions")
+        .select("user_id, status, virtual_stake, potential_return")
+        .in("user_id", ids).eq("is_simulation", true),
     ]);
     const wMap = new Map((wallets ?? []).map((w: any) => [w.user_id, w]));
     const predCount = new Map<string, number>();
-    for (const p of preds ?? []) predCount.set(p.user_id, (predCount.get(p.user_id) ?? 0) + 1);
-    const plMap = new Map<string, number>();
-    for (const t of walletTxns ?? []) {
-      const sign = ["credit", "refund"].includes(t.type) ? 1 : -1;
-      plMap.set(t.user_id, (plMap.get(t.user_id) ?? 0) + sign * Number(t.amount));
+    const pendingStakes = new Map<string, number>();
+    const settledPL = new Map<string, number>();
+    for (const p of preds ?? []) {
+      predCount.set(p.user_id, (predCount.get(p.user_id) ?? 0) + 1);
+      const stake = Number(p.virtual_stake || 0);
+      if (p.status === "pending") {
+        pendingStakes.set(p.user_id, (pendingStakes.get(p.user_id) ?? 0) + stake);
+      } else if (p.status === "won") {
+        settledPL.set(p.user_id, (settledPL.get(p.user_id) ?? 0) + (Number(p.potential_return || 0) - stake));
+      } else if (p.status === "lost") {
+        settledPL.set(p.user_id, (settledPL.get(p.user_id) ?? 0) - stake);
+      }
     }
     return {
-      users: (profs ?? []).map((p: any, idx: number) => ({
-        id: p.id,
-        displayName: p.display_name,
-        email: simEmail(idx + 1),
-        password: SIM_PASSWORD,
-        balance: Number((wMap.get(p.id) as any)?.balance ?? 0),
-        predictionCount: predCount.get(p.id) ?? 0,
-        profitLoss: (plMap.get(p.id) ?? 0) - SIM_STARTING_BALANCE,
-        lastActivity: (wMap.get(p.id) as any)?.updated_at ?? null,
-      })),
+      users: (profs ?? []).map((p: any, idx: number) => {
+        const pStakes = pendingStakes.get(p.id) ?? 0;
+        const sPL = settledPL.get(p.id) ?? 0;
+        return {
+          id: p.id,
+          displayName: p.display_name,
+          email: simEmail(idx + 1),
+          password: SIM_PASSWORD,
+          balance: Number((wMap.get(p.id) as any)?.balance ?? 0),
+          predictionCount: predCount.get(p.id) ?? 0,
+          pendingStakes: pStakes,
+          settledPL: sPL,
+          totalPL: sPL - pStakes,
+          profitLoss: sPL - pStakes, // back-compat for any existing UI
+          lastActivity: (wMap.get(p.id) as any)?.updated_at ?? null,
+        };
+      }),
     };
   });
 

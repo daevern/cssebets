@@ -11,11 +11,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, Play, Pause, RotateCcw, Sprout, Zap, Loader2, FastForward } from "lucide-react";
+import { AlertTriangle, Play, Pause, RotateCcw, Sprout, Zap, Loader2, FastForward, Settings2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   seedSimulationUsers,
   seedSimulationMatches,
   seedSimulationPredictions,
+  setSimulationBankroll,
   runSimulationTick,
   resetSimulationData,
   getSimulationOverview,
@@ -44,6 +47,22 @@ function SimulationPage() {
   const [seeding, setSeeding] = useState(false);
   const [durationMin, setDurationMin] = useState<number>(1);
   const [nowTs, setNowTs] = useState(() => Date.now());
+  const [showConfig, setShowConfig] = useState(false);
+  const setBankrollFn = useServerFn(setSimulationBankroll);
+
+  // Seed configuration (admin-tunable)
+  const [cfg, setCfg] = useState({
+    totalUsers: 100,
+    matchCount: 25,
+    startingBalance: 1000,
+    bankroll: 50000,
+    minUsersPerMatch: 10,
+    maxUsersPerMatch: 30,
+    minStake: 50,
+    maxStake: 300,
+    exposureTargetPct: 60, // %
+  });
+  const setCfgField = (k: keyof typeof cfg, v: number) => setCfg((c) => ({ ...c, [k]: v }));
 
   // 1s clock for visible countdown timers
   useEffect(() => {
@@ -102,16 +121,34 @@ function SimulationPage() {
   async function handleSeed() {
     setSeeding(true);
     try {
-      toast.info("Seeding 100 simulation users (in batches)…");
-      for (let start = 1; start <= 100; start += 25) {
-        const res: any = await seedUsersFn({ data: { start, count: 25 } });
+      toast.info(`Setting simulation bankroll to ${cfg.bankroll.toLocaleString()} pts…`);
+      await setBankrollFn({ data: { balance: cfg.bankroll } });
+
+      toast.info(`Seeding ${cfg.totalUsers} simulation users (in batches)…`);
+      for (let start = 1; start <= cfg.totalUsers; start += 25) {
+        const batch = Math.min(25, cfg.totalUsers - start + 1);
+        const res: any = await seedUsersFn({ data: {
+          start, count: batch,
+          totalUsers: cfg.totalUsers,
+          startingBalance: cfg.startingBalance,
+        }});
         toast.message(`Users ${res.processedRange[0]}-${res.processedRange[1]}: ${res.created} new, ${res.skipped} existing`);
       }
-      toast.info("Seeding 25 simulation matches…");
-      await seedMatchesFn();
-      toast.info("Placing random predictions…");
-      const pr: any = await seedPredsFn();
-      toast.success(`Done. ${pr.predictionsCreated ?? 0} predictions placed (${pr.predictionsFailed ?? 0} failed).`);
+      toast.info(`Seeding ${cfg.matchCount} simulation matches…`);
+      await seedMatchesFn({ data: { matchCount: cfg.matchCount } });
+      toast.info("Placing random predictions (will stop at exposure target)…");
+      const pr: any = await seedPredsFn({ data: {
+        minUsersPerMatch: cfg.minUsersPerMatch,
+        maxUsersPerMatch: cfg.maxUsersPerMatch,
+        minStake: cfg.minStake,
+        maxStake: cfg.maxStake,
+        exposureTargetPct: cfg.exposureTargetPct / 100,
+      }});
+      if (pr.stoppedAtCap) {
+        toast.warning(`Stopped at ${cfg.exposureTargetPct}% exposure cap after ${pr.predictionsCreated} predictions.`);
+      } else {
+        toast.success(`Done. ${pr.predictionsCreated ?? 0} predictions placed (${pr.predictionsFailed ?? 0} failed).`);
+      }
       qc.invalidateQueries();
     } catch (e: any) {
       toast.error(e.message ?? "Seed failed");
@@ -133,11 +170,14 @@ function SimulationPage() {
         </AlertDescription>
       </Alert>
 
-      <Card className="p-4">
+      <Card className="p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={handleSeed} disabled={seeding}>
             {seeding ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sprout className="h-4 w-4 mr-2" />}
-            Seed Simulation (25 matches + 100 users + bets)
+            Seed Simulation ({cfg.matchCount} matches · {cfg.totalUsers} users)
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowConfig((v) => !v)}>
+            <Settings2 className="h-4 w-4 mr-2" /> {showConfig ? "Hide" : "Configure"} Seed Settings
           </Button>
           <Button variant={running ? "secondary" : "default"} onClick={() => setRunning((v) => !v)}>
             {running ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
@@ -165,7 +205,36 @@ function SimulationPage() {
             <RotateCcw className="h-4 w-4 mr-2" /> Reset Simulation
           </Button>
         </div>
+
+        <Collapsible open={showConfig}>
+          <CollapsibleContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t">
+              <CfgInput label="Users" v={cfg.totalUsers} on={(n) => setCfgField("totalUsers", n)} />
+              <CfgInput label="Matches" v={cfg.matchCount} on={(n) => setCfgField("matchCount", n)} />
+              <CfgInput label="Starting balance (pts)" v={cfg.startingBalance} on={(n) => setCfgField("startingBalance", n)} />
+              <CfgInput label="Sim bankroll (pts)" v={cfg.bankroll} on={(n) => setCfgField("bankroll", n)} />
+              <CfgInput label="Min users / match" v={cfg.minUsersPerMatch} on={(n) => setCfgField("minUsersPerMatch", n)} />
+              <CfgInput label="Max users / match" v={cfg.maxUsersPerMatch} on={(n) => setCfgField("maxUsersPerMatch", n)} />
+              <CfgInput label="Min stake" v={cfg.minStake} on={(n) => setCfgField("minStake", n)} />
+              <CfgInput label="Max stake" v={cfg.maxStake} on={(n) => setCfgField("maxStake", n)} />
+              <CfgInput label="Exposure target (%)" v={cfg.exposureTargetPct} on={(n) => setCfgField("exposureTargetPct", n)} />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Seeding stops creating predictions once global exposure reaches {cfg.exposureTargetPct}% of the simulation bankroll, so matches can settle before bankroll is fully committed.
+            </p>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
+
+      {o && o.bankroll.safetyRatio !== null && o.bankroll.safetyRatio < 1.1 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Simulation bankroll is almost fully exposed</AlertTitle>
+          <AlertDescription>
+            Safety ratio is {o.bankroll.safetyRatio.toFixed(2)}×. New predictions may be rejected until matches settle or the bankroll is topped up.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {o && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -181,8 +250,20 @@ function SimulationPage() {
           <Stat label="Users" value={String(o.users.total)} />
           <Stat label="Matches" value={`${o.matches.total} (sched ${o.matches.scheduled}/live ${o.matches.live}/fin ${o.matches.finished})`} />
           <Stat label="Predictions" value={String(o.predictions.total)} />
-          {o.highestWinner && <Stat label={`Top Winner — ${o.highestWinner.displayName}`} value={fmt(o.highestWinner.pl)} tone="ok" />}
-          {o.lowestLoser && <Stat label={`Top Loser — ${o.lowestLoser.displayName}`} value={fmt(o.lowestLoser.pl)} tone="bad" />}
+          {o.highestWinner && (
+            <Stat
+              label={`${o.anySettled ? "Top Winner" : "Best Current P/L"} — ${o.highestWinner.displayName}`}
+              value={fmt(o.highestWinner.pl)}
+              tone={o.highestWinner.pl >= 0 ? "ok" : undefined}
+            />
+          )}
+          {o.lowestLoser && (
+            <Stat
+              label={`${o.anySettled ? "Top Loser" : "Worst Current P/L"} — ${o.lowestLoser.displayName}`}
+              value={fmt(o.lowestLoser.pl)}
+              tone={o.lowestLoser.pl < 0 ? "bad" : undefined}
+            />
+          )}
         </div>
       )}
 
@@ -258,9 +339,11 @@ function SimulationPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Password</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
+                  <TableHead className="text-right">Wallet Balance</TableHead>
                   <TableHead className="text-right">Bets</TableHead>
-                  <TableHead className="text-right">P/L</TableHead>
+                  <TableHead className="text-right">Pending Stakes</TableHead>
+                  <TableHead className="text-right">Settled P/L</TableHead>
+                  <TableHead className="text-right">Total P/L</TableHead>
                   <TableHead>Last activity</TableHead>
                 </TableRow>
               </TableHeader>
@@ -272,18 +355,34 @@ function SimulationPage() {
                     <TableCell className="text-xs"><code>{u.password}</code></TableCell>
                     <TableCell className="text-right">{fmt(u.balance)}</TableCell>
                     <TableCell className="text-right">{u.predictionCount}</TableCell>
-                    <TableCell className={`text-right ${u.profitLoss >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(u.profitLoss)}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{fmt(u.pendingStakes ?? 0)}</TableCell>
+                    <TableCell className={`text-right ${(u.settledPL ?? 0) >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(u.settledPL ?? 0)}</TableCell>
+                    <TableCell className={`text-right font-medium ${(u.totalPL ?? 0) >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(u.totalPL ?? 0)}</TableCell>
                     <TableCell className="text-xs">{u.lastActivity ? new Date(u.lastActivity).toLocaleString() : "—"}</TableCell>
                   </TableRow>
                 ))}
                 {!users.data?.users?.length && (
-                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No simulation users. Click Seed.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground">No simulation users. Click Seed.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
           </Card>
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function CfgInput({ label, v, on }: { label: string; v: number; on: (n: number) => void }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Input
+        type="number"
+        value={v}
+        onChange={(e) => on(Number(e.target.value) || 0)}
+        className="h-8"
+      />
     </div>
   );
 }
