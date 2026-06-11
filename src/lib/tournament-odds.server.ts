@@ -1,6 +1,7 @@
 // Server-only: sync FIFA World Cup outright (tournament winner) odds
 // from The Odds API into public.tournament_outrights.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { applyOutrightMargin } from "./odds-margin.server";
 
 const ENDPOINT =
   "https://api.the-odds-api.com/v4/sports/soccer_fifa_world_cup_winner/odds" +
@@ -65,18 +66,24 @@ export async function runTournamentOddsSync(opts: { force?: boolean; tournamentK
     }
   }
 
-  let updated = 0;
-  const nowIso = new Date().toISOString();
+  // Build raw median-odds list, then apply outright margin in one pass.
+  const rawList: Array<{ team: string; odds: number }> = [];
   for (const [team, prices] of teamPrices) {
     if (!prices.length) continue;
-    const odds = Number(median(prices).toFixed(2));
+    rawList.push({ team, odds: Number(median(prices).toFixed(2)) });
+  }
+  const adjusted = await applyOutrightMargin(rawList);
+
+  let updated = 0;
+  const nowIso = new Date().toISOString();
+  for (const row of adjusted) {
     const { error } = await supabaseAdmin
       .from("tournament_outrights")
       .upsert(
         {
           tournament_key: tournamentKey,
-          team,
-          odds,
+          team: row.team,
+          odds: row.odds,
           source: "the-odds-api",
           updated_at: nowIso,
         } as any,

@@ -1,6 +1,7 @@
 // The Odds API integration. Server-only.
 // Free tier: 500 requests/month. We throttle to once every 2 hours.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { apply3WayMargin } from "./odds-margin.server";
 
 const THROTTLE_MS = 2 * 60 * 60 * 1000; // 2 hours
 const ENDPOINT =
@@ -122,11 +123,13 @@ export async function runOddsSync(opts: { force?: boolean } = {}) {
     }
     if (!homePrices.length || !awayPrices.length || !drawPrices.length) continue;
 
-    const reference_odds = {
+    const rawOdds = {
       home: Number(median(homePrices).toFixed(2)),
       draw: Number(median(drawPrices).toFixed(2)),
       away: Number(median(awayPrices).toFixed(2)),
     };
+    // Apply house margin (configurable via platform_settings) before persisting.
+    const reference_odds = await apply3WayMargin(rawOdds);
 
     const nowIso = new Date().toISOString();
 
