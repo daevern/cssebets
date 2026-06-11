@@ -114,19 +114,22 @@ async function ensureSimWallet(supabaseAdmin: any, uid: string, startingBalance:
     .upsert({ user_id: uid, is_simulation: true }, { onConflict: "user_id" });
   const { data: w } = await supabaseAdmin.from("wallets").select("balance").eq("user_id", uid).maybeSingle();
   const bal = Number(w?.balance ?? 0);
-  if (bal < startingBalance) {
-    const topup = startingBalance - bal;
+  const delta = startingBalance - bal;
+  if (delta > 0) {
     await supabaseAdmin.rpc("wallet_apply_change", {
-      p_user_id: uid,
-      p_type: "credit",
-      p_amount: topup,
-      p_reference_type: "admin_adjustment",
-      p_reference_id: null,
-      p_note: "Simulation starting balance",
-      p_is_simulation: true,
+      p_user_id: uid, p_type: "credit", p_amount: delta,
+      p_reference_type: "admin_adjustment", p_reference_id: null,
+      p_note: "Simulation starting balance (credit to target)", p_is_simulation: true,
+    });
+  } else if (delta < 0) {
+    await supabaseAdmin.rpc("wallet_apply_change", {
+      p_user_id: uid, p_type: "debit", p_amount: -delta,
+      p_reference_type: "admin_adjustment", p_reference_id: null,
+      p_note: "Simulation starting balance (debit to target)", p_is_simulation: true,
     });
   }
 }
+
 
 // Set / reset the simulation bankroll to a specific value
 export const setSimulationBankroll = createServerFn({ method: "POST" })
