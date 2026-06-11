@@ -72,6 +72,7 @@ function SimulationPage() {
 
   // Stress metrics poll
   const stress = useQuery({ queryKey: ["sim-stress"], queryFn: () => stressFn(), refetchInterval: 5000 });
+  const analytics = useQuery({ queryKey: ["sim-analytics"], queryFn: () => analyticsFn(), refetchInterval: 5000 });
 
 
   // Seed configuration (admin-tunable)
