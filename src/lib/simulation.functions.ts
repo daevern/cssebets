@@ -165,7 +165,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
         away = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
       }
       usedTeams.add(home + away);
-      const kickoff = new Date(now + (i + 1) * SIM_INTERVAL_MIN * 60_000).toISOString();
+      const kickoff = new Date(now + i * SIM_INTERVAL_MIN * 60_000).toISOString();
       const homeOdds = +(1.5 + Math.random() * 3).toFixed(2);
       const drawOdds = +(2.8 + Math.random() * 2.2).toFixed(2);
       const awayOdds = +(1.5 + Math.random() * 3).toFixed(2);
