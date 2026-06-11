@@ -389,6 +389,16 @@ export const getSimulationSeedSummary = createServerFn({ method: "GET" })
     const totalStakes = (predRows ?? []).reduce((s: number, p: any) => s + Number(p.virtual_stake || 0), 0);
     const totalExposure = (predRows ?? []).reduce((s: number, p: any) => s + (Number(p.potential_return || 0) - Number(p.virtual_stake || 0)), 0);
 
+    // per-match bet distribution
+    const perMatch = new Map<string, number>();
+    for (const m of (matchRows ?? [])) perMatch.set(m.id, 0);
+    for (const p of (predRows ?? [])) perMatch.set(p.match_id, (perMatch.get(p.match_id) ?? 0) + 1);
+    const counts = Array.from(perMatch.values());
+    const withBets = counts.filter((c) => c > 0);
+    const minBetsPerMatch = withBets.length ? Math.min(...withBets) : 0;
+    const maxBetsPerMatch = counts.length ? Math.max(...counts) : 0;
+    const avgBetsPerMatch = counts.length ? counts.reduce((a, b) => a + b, 0) / counts.length : 0;
+
     return {
       users: users ?? 0,
       matches: matches ?? 0,
@@ -400,6 +410,9 @@ export const getSimulationSeedSummary = createServerFn({ method: "GET" })
       totalExposure,
       matchesWithBets: matchIdsWithBets.size,
       matchesWithoutBets: (matchRows ?? []).filter((m: any) => !matchIdsWithBets.has(m.id)).length,
+      minBetsPerMatch,
+      maxBetsPerMatch,
+      avgBetsPerMatch: +avgBetsPerMatch.toFixed(2),
       status: (predictions ?? 0) > 0 && (poolTxns ?? 0) > 0 && (stakeDebits ?? 0) > 0 ? "success" : "failed",
     };
   });
