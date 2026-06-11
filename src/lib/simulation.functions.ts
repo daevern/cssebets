@@ -224,10 +224,10 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) =>
     z.object({
-      minUsersPerMatch: z.number().int().min(1).default(10),
-      maxUsersPerMatch: z.number().int().min(1).default(30),
-      minStake: z.number().int().min(1).default(50),
-      maxStake: z.number().int().min(1).default(300),
+      minUsersPerMatch: z.number().int().min(1).default(5),
+      maxUsersPerMatch: z.number().int().min(1).default(15),
+      minStake: z.number().int().min(1).default(25),
+      maxStake: z.number().int().min(1).default(150),
       exposureTargetPct: z.number().min(0).max(1).default(0.6),
       matchOffset: z.number().int().min(0).default(0),
       matchLimit: z.number().int().min(1).max(50).default(5),
@@ -255,7 +255,7 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
     const slice = matches.slice(data.matchOffset, data.matchOffset + data.matchLimit);
     const nextOffset = data.matchOffset + slice.length;
 
-    // Bankroll exposure cap — checked once per batch (not per match)
+    // Bankroll exposure cap — checked per match
     const { data: bankrollRow } = await (supabaseAdmin as any)
       .from("platform_bankroll").select("balance").eq("id", 2).maybeSingle();
     const bankroll = Number(bankrollRow?.balance ?? 0);
@@ -278,40 +278,67 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
     let totalExposure = 0;
     const errorSamples: string[] = [];
     let stoppedAtCap = false;
+    // Track per-user balance failures so we don't keep retrying broke users.
+    const brokeUsers = new Set<string>();
 
+    // Per-match: keep trying user pools until we hit pickN successes,
+    // run out of solvent users, or hit the exposure cap.
     for (const m of slice as any[]) {
       if (globalExposure >= exposureCap) { stoppedAtCap = true; break; }
 
       const ro = m.reference_odds ?? { home: 2, draw: 3, away: 2 };
-      const pickN = minU + Math.floor(Math.random() * (maxU - minU + 1));
-      const shuffled = [...userIds].sort(() => Math.random() - 0.5).slice(0, pickN);
+      const target = minU + Math.floor(Math.random() * (maxU - minU + 1));
 
-      // Parallelize per-user bets within a match
-      const results = await Promise.all(shuffled.map((uid) => {
-        const r = Math.random();
-        const outcome = r < 0.4 ? "HOME" : r < 0.7 ? "AWAY" : "DRAW";
-        const odds = outcome === "HOME" ? ro.home : outcome === "DRAW" ? ro.draw : ro.away;
-        const stake = minS + Math.floor(Math.random() * (maxS - minS + 1));
-        return (supabaseAdmin as any).rpc("place_bet_atomic", {
-          p_user_id: uid,
-          p_match_id: m.id,
-          p_market: "result",
-          p_outcome: outcome,
-          p_odds: odds,
-          p_stake: stake,
-          p_snapshot_id: null,
-        }).then((res: any) => ({ ok: !res.error, stake, odds, err: res.error?.message }));
-      }));
+      // Eligible pool excludes known-broke users; reshuffle fresh per match.
+      const eligible = userIds.filter((u) => !brokeUsers.has(u));
+      const pool = [...eligible].sort(() => Math.random() - 0.5);
+      const usedThisMatch = new Set<string>();
+      let placed = 0;
+      let cursor = 0;
+      const PARALLEL = 10;
 
-      for (const r of results) {
-        if (r.ok) {
-          predictionsCreated++;
-          totalStakes += r.stake;
-          totalExposure += r.stake * (r.odds - 1);
-          globalExposure += r.stake * (r.odds - 1); // approximate
-        } else {
-          predictionsFailed++;
-          if (r.err && errorSamples.length < 3) errorSamples.push(r.err);
+      while (placed < target && cursor < pool.length) {
+        if (globalExposure >= exposureCap) { stoppedAtCap = true; break; }
+
+        const need = target - placed;
+        const batch = pool.slice(cursor, cursor + Math.min(PARALLEL, need)).filter((u) => !usedThisMatch.has(u));
+        cursor += PARALLEL;
+        if (!batch.length) continue;
+        batch.forEach((u) => usedThisMatch.add(u));
+
+        const results = await Promise.all(batch.map((uid) => {
+          const r = Math.random();
+          const outcome = r < 0.4 ? "HOME" : r < 0.7 ? "AWAY" : "DRAW";
+          const odds = outcome === "HOME" ? ro.home : outcome === "DRAW" ? ro.draw : ro.away;
+          const stake = minS + Math.floor(Math.random() * (maxS - minS + 1));
+          return (supabaseAdmin as any).rpc("place_bet_atomic", {
+            p_user_id: uid,
+            p_match_id: m.id,
+            p_market: "result",
+            p_outcome: outcome,
+            p_odds: odds,
+            p_stake: stake,
+            p_snapshot_id: null,
+          }).then((res: any) => ({ uid, ok: !res.error, stake, odds, err: res.error?.message }));
+        }));
+
+        for (const r of results) {
+          if (r.ok) {
+            predictionsCreated++;
+            placed++;
+            totalStakes += r.stake;
+            totalExposure += r.stake * (r.odds - 1);
+            globalExposure += r.stake * (r.odds - 1);
+          } else {
+            predictionsFailed++;
+            const msg = r.err ?? "";
+            if (msg.includes("INSUFFICIENT_BALANCE")) {
+              brokeUsers.add(r.uid);
+            } else if (msg.includes("MAX_EXPOSURE_REACHED")) {
+              stoppedAtCap = true;
+            }
+            if (msg && errorSamples.length < 5) errorSamples.push(msg);
+          }
         }
       }
     }
@@ -324,6 +351,7 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
       stoppedAtCap, exposureCap,
       nextOffset, totalMatches, done,
       errorSamples,
+      brokeUserCount: brokeUsers.size,
     };
   });
 
