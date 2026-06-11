@@ -17,7 +17,7 @@ import {
   Wallet,
   Banknote,
   TrendingUp,
-  LineChart as LineChartIcon,
+  
   Menu,
   X,
 } from "lucide-react";
