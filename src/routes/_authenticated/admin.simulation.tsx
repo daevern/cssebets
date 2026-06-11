@@ -52,6 +52,7 @@ function SimulationPage() {
   const validateFn = useServerFn(validateSimulationSeed);
   const batchFn = useServerFn(runSimulationBatchSettle);
   const stressFn = useServerFn(getSimulationStressMetrics);
+  const analyticsFn = useServerFn(getSimulationOutcomeAnalytics);
   const summaryFn = useServerFn(getSimulationSettlementSummary);
   const seedSummaryFn = useServerFn(getSimulationSeedSummary);
 
