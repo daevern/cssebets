@@ -267,6 +267,7 @@ export const adminApproveRequest = createServerFn({ method: "POST" })
       .eq("id", data.requestId)
       .maybeSingle();
     if (!row) throw new Error("Request not found");
+    if (row.user_id === userId) throw new Error("Cannot approve your own request");
     if (!row.proof_file_path) throw new Error("Proof file missing");
     const { data: result, error } = await supabaseAdmin.rpc("wallet_approve_request", {
       p_request_id: data.requestId,
