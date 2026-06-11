@@ -396,7 +396,7 @@ function SimulationPage() {
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle>Simulation Mode — test data only.</AlertTitle>
         <AlertDescription>
-          Virtual points only. Fake users, fake matches, random results. Login: <code>simuser001@test.local</code> … <code>simuser100@test.local</code> · password <code>123456789</code>.
+          Fake users, fake matches, random results. Login: <code>simuser001@test.local</code> … <code>simuser100@test.local</code> · password <code>123456789</code>.
           Do not use shared passwords outside local/test simulation environments.
         </AlertDescription>
       </Alert>

@@ -183,7 +183,7 @@ function WalletPage() {
           {wallet.isLoading ? "…" : (wallet.data?.balance ?? 0).toLocaleString()}
           <span className="text-base font-medium text-muted-foreground ml-2">pts</span>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">Fantasy points only — no real money.</p>
+        
       </Card>
 
       <Card className="p-5 space-y-4">

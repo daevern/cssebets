@@ -68,7 +68,7 @@ function RiskPage() {
         <div>
           <h1 className="text-2xl font-bold">Risk Management</h1>
           <p className="text-sm text-muted-foreground">
-            Live exposure per match and per outcome. Virtual credits only.
+            Live exposure per match and per outcome.
           </p>
         </div>
         <Button onClick={refresh} disabled={loading} variant="outline">
