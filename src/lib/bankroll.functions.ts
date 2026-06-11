@@ -18,7 +18,7 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
     await requireTier(supabase, userId, ADMIN_TIERS);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [{ data: bankroll }, { data: matches }, { count: openBets }, { count: settledBets }, { count: voidBets }] =
+    const [{ data: bankroll }, { data: matches }, { data: exposureRows }, { count: openBets }, { count: settledBets }, { count: voidBets }] =
       await Promise.all([
         (supabaseAdmin as any).from("platform_bankroll").select("*").eq("id", 1).maybeSingle(),
         supabaseAdmin
@@ -27,35 +27,37 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
           .gt("worst_case_exposure" as any, 0)
           .order("worst_case_exposure" as any, { ascending: false })
           .limit(20),
+        (supabaseAdmin as any)
+          .from("matches")
+          .select("worst_case_exposure, status")
+          .in("status", ["scheduled", "live"])
+          .gt("worst_case_exposure", 0),
         supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).in("status", ["won", "lost"]),
         supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "void"),
       ]);
 
     const houseUserId = (bankroll as any)?.house_user_id ?? null;
-    let house: { id: string; displayName: string; walletBalance: number } | null = null;
+    let house: { id: string; displayName: string } | null = null;
     if (houseUserId) {
-      const [{ data: prof }, { data: wal }] = await Promise.all([
-        supabaseAdmin.from("profiles").select("id, display_name").eq("id", houseUserId).maybeSingle(),
-        (supabaseAdmin as any).from("wallets").select("balance").eq("user_id", houseUserId).maybeSingle(),
-      ]);
+      const { data: prof } = await supabaseAdmin
+        .from("profiles").select("id, display_name").eq("id", houseUserId).maybeSingle();
       house = {
         id: houseUserId,
         displayName: (prof as any)?.display_name ?? "House user",
-        walletBalance: Number((wal as any)?.balance ?? 0),
       };
     }
-
 
     const balance = Number((bankroll as any)?.balance ?? 0);
     const totalStakes = Number((bankroll as any)?.total_stakes_collected ?? 0);
     const totalPayouts = Number((bankroll as any)?.total_payouts_paid ?? 0);
     const netPL = totalStakes - totalPayouts;
-    const totalExposure = (matches ?? []).reduce(
+    const globalExposure = (exposureRows ?? []).reduce(
       (s: number, m: any) => s + Number(m.worst_case_exposure || 0),
       0,
     );
-    const available = balance - totalExposure;
+    const availableBalance = balance - globalExposure;
+    const safetyRatio = globalExposure > 0 ? balance / globalExposure : null;
 
     const topMatch = (matches ?? [])[0] as any;
     const topOutcome = topMatch
@@ -71,16 +73,19 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
     return {
       bankroll: {
         balance,
+        platformBalance: balance,
         totalStakes,
         totalPayouts,
         netPL,
-        totalExposure,
-        available,
+        globalExposure,
+        availableBalance,
+        safetyRatio,
+        totalExposure: globalExposure,
+        available: availableBalance,
         updatedAt: (bankroll as any)?.updated_at ?? null,
       },
       house,
       bets: { open: openBets ?? 0, settled: settledBets ?? 0, void: voidBets ?? 0 },
-
       topLiabilityMatch: topMatch
         ? {
             id: topMatch.id,
