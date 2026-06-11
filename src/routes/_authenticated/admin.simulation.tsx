@@ -231,6 +231,9 @@ function SimulationPage() {
       let coverageFailed = 0;
       let coverageEmergencyCapHit = false;
       const coverageDiagnostics: any[] = [];
+      let rawMatchesCount = 0;
+      let uniqueMatchesCount = 0;
+      let duplicateMatchIdsCount = 0;
       {
         let offset = 0;
         for (let iter = 0; iter < 100; iter++) {
@@ -252,9 +255,26 @@ function SimulationPage() {
           coverageFailed += pr.predictionsFailed ?? 0;
           if (pr.stoppedAtCap) coverageEmergencyCapHit = true;
           if (Array.isArray(pr.matchDiagnostics)) coverageDiagnostics.push(...pr.matchDiagnostics);
+          rawMatchesCount = pr.rawMatchesCount ?? rawMatchesCount;
+          uniqueMatchesCount = pr.uniqueMatchesCount ?? uniqueMatchesCount;
+          duplicateMatchIdsCount = pr.duplicateMatchIdsCount ?? duplicateMatchIdsCount;
           offset = pr.nextOffset;
           if (pr.done) break;
         }
+      }
+
+      // Defensive: deduplicate diagnostics by match_id (paginated calls could repeat).
+      const diagSeen = new Set<string>();
+      const dedupedDiagnostics = coverageDiagnostics.filter((d) => {
+        if (diagSeen.has(d.matchId)) return false;
+        diagSeen.add(d.matchId);
+        return true;
+      });
+      coverageDiagnostics.length = 0;
+      coverageDiagnostics.push(...dedupedDiagnostics);
+
+      if (duplicateMatchIdsCount > 0) {
+        toast.warning(`Detected ${duplicateMatchIdsCount} duplicate match row(s) during coverage — deduplicated by match.id.`);
       }
 
       // ---- Coverage validation: every match must have predictions BEFORE fill ----
@@ -280,6 +300,9 @@ function SimulationPage() {
           fillCapHit: false,
           exposureCapHit: coverageEmergencyCapHit,
           coverageDiagnostics,
+          rawMatchesCount,
+          uniqueMatchesCount,
+          duplicateMatchIdsCount,
         });
         throw new Error(`COVERAGE_PASS_FAILED — ${matchesMissingAfterCoverage} match(es) still have zero predictions. ${detail}`);
       }
@@ -338,6 +361,9 @@ function SimulationPage() {
         matchesCoveredAfterCoverage,
         matchesMissingAfterCoverage,
         coverageDiagnostics,
+        rawMatchesCount,
+        uniqueMatchesCount,
+        duplicateMatchIdsCount,
       };
       setSeedSummary(merged);
       if (sum.predictions === 0 || sum.poolTxns === 0 || sum.stakeDebits === 0) {
@@ -487,6 +513,11 @@ function SimulationPage() {
               <div>Missing after coverage: <b>{seedSummary.matchesMissingAfterCoverage ?? "—"}</b></div>
               <div>Emergency cap (coverage): <b>{seedSummary.coverageCapHit ? "Yes" : "No"}</b></div>
               <div>Fill stopped by cap: <b>{seedSummary.fillCapHit ? "Yes" : "No"}</b></div>
+              <div>Raw matches count: <b>{seedSummary.rawMatchesCount ?? "—"}</b></div>
+              <div>Unique matches count: <b>{seedSummary.uniqueMatchesCount ?? "—"}</b></div>
+              <div className={seedSummary.duplicateMatchIdsCount > 0 ? "text-destructive font-medium" : undefined}>
+                Duplicate match IDs: <b>{seedSummary.duplicateMatchIdsCount ?? 0}</b>
+              </div>
             </div>
             {seedSummary.coverageCompleted === false && (
               <div className="mt-3 text-sm font-medium text-destructive">
@@ -505,6 +536,7 @@ function SimulationPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Match ID</TableHead>
                         <TableHead>Match</TableHead>
                         <TableHead className="text-right">Coverage Bets Created</TableHead>
                         <TableHead className="text-right">Failed Attempts</TableHead>
@@ -515,6 +547,7 @@ function SimulationPage() {
                     <TableBody>
                       {seedSummary.coverageDiagnostics.map((d: any) => (
                         <TableRow key={d.matchId} className={d.failureReason ? "bg-destructive/10" : undefined}>
+                          <TableCell className="font-mono text-xs">{String(d.matchId).slice(0, 8)}…</TableCell>
                           <TableCell className="font-medium">{d.match}</TableCell>
                           <TableCell className="text-right">{d.betsCreated}</TableCell>
                           <TableCell className="text-right">{d.failedAttempts}</TableCell>
