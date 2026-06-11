@@ -653,6 +653,14 @@ function SimulationPage() {
                       <TableCell><Badge variant="outline" className="capitalize">{m.status}</Badge></TableCell>
                       <TableCell className="text-xs whitespace-nowrap">{timer}</TableCell>
                       <TableCell className="text-xs">{m.odds?.home}/{m.odds?.draw}/{m.odds?.away}</TableCell>
+                      <TableCell className="text-right text-xs whitespace-nowrap">
+                        {m.adjustedMargin != null ? `${Number(m.adjustedMargin).toFixed(2)}%` : "—"}
+                        {m.marginAdjusted && (
+                          <span className="ml-1 text-amber-600" title={`Original margin: ${Number(m.originalMargin).toFixed(2)}% · Original odds: ${m.originalOdds?.home}/${m.originalOdds?.draw}/${m.originalOdds?.away}`}>
+                            (adj from {Number(m.originalMargin).toFixed(2)}%)
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">{fmt(m.originalPool ?? m.totalPool)}</TableCell>
                       <TableCell className="text-right text-xs">{fmt(m.homePool)}/{fmt(m.drawPool)}/{fmt(m.awayPool)}</TableCell>
                       <TableCell className="text-right text-muted-foreground">{fmt(m.remainingPool ?? 0)}</TableCell>
