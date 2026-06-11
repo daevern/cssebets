@@ -47,6 +47,7 @@ const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeK
   { to: "/admin-payout", label: "Payouts", icon: Banknote, badgeKey: "pendingPayouts" },
   { to: "/admin/predictions", label: "Predictions", icon: ListChecks },
   { to: "/admin/matches", label: "Matches", icon: CalendarDays },
+  { to: "/admin/tournament", label: "Tournament", icon: Shield },
   { to: "/admin/odds-history", label: "Odds history", icon: TrendingUp },
   { to: "/admin/wallet-ledger", label: "Wallet ledger", icon: Wallet },
   { to: "/admin/bankroll", label: "Bankroll", icon: TrendingUp },
