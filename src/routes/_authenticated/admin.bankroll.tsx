@@ -122,8 +122,12 @@ function BankrollPage() {
             />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Metric label="Pending match pools" value={fmt((o.bankroll as any).pendingMatchPools ?? 0)} />
+            <Metric label="Total point issuance" value={fmt((o.bankroll as any).totalIssuance ?? 0)} />
             <Metric label="Total stakes collected" value={fmt(o.bankroll.totalStakes)} />
             <Metric label="Total payouts paid" value={fmt(o.bankroll.totalPayouts)} />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Metric
               label="Net platform P/L"
               value={fmt(o.bankroll.netPL)}
@@ -137,7 +141,7 @@ function BankrollPage() {
           </div>
 
           <div className="text-xs text-muted-foreground">
-            Open / Settled / Void bets: {o.bets.open} / {o.bets.settled} / {o.bets.void}
+            Virtual points only — no real-money payments are processed. Open / Settled / Void bets: {o.bets.open} / {o.bets.settled} / {o.bets.void}
           </div>
 
 
