@@ -79,10 +79,10 @@ function SimulationPage() {
     matchCount: 25,
     startingBalance: 1000,
     bankroll: 50000,
-    minUsersPerMatch: 10,
-    maxUsersPerMatch: 30,
-    minStake: 50,
-    maxStake: 300,
+    minUsersPerMatch: 5,
+    maxUsersPerMatch: 15,
+    minStake: 25,
+    maxStake: 150,
     exposureTargetPct: 60, // %
   });
   const setCfgField = (k: keyof typeof cfg, v: number) => setCfg((c) => ({ ...c, [k]: v }));
@@ -245,11 +245,16 @@ function SimulationPage() {
 
       // Seed summary + sanity validation
       const sum: any = await seedSummaryFn();
-      setSeedSummary(sum);
+      const merged = { ...sum, exposureCapHit: cappedOut };
+      setSeedSummary(merged);
       if (sum.predictions === 0 || sum.poolTxns === 0 || sum.stakeDebits === 0) {
         throw new Error("SIMULATION_SEED_FAILED: Simulation users and matches were created but no predictions were generated.");
       }
-      toast.success(`Seed OK: ${sum.predictions} predictions · ${sum.matchesWithBets}/${sum.matches} matches with bets`);
+      if (sum.matchesWithoutBets > 0 && !cappedOut) {
+        toast.error(`Simulation seed issue: ${sum.matchesWithoutBets} match(es) received no predictions even though exposure cap was not reached.`);
+      } else {
+        toast.success(`Seed OK: ${sum.predictions} predictions · ${sum.matchesWithBets}/${sum.matches} matches with bets`);
+      }
 
       setSimStartedAt(Date.now());
       setSummary(null);
@@ -376,7 +381,16 @@ function SimulationPage() {
               <div>Exposure: <b>{Math.round(seedSummary.totalExposure).toLocaleString()} pts</b></div>
               <div>Matches w/ bets: <b>{seedSummary.matchesWithBets}</b></div>
               <div>Matches w/o bets: <b>{seedSummary.matchesWithoutBets}</b></div>
+              <div>Min bets / match: <b>{seedSummary.minBetsPerMatch ?? 0}</b></div>
+              <div>Max bets / match: <b>{seedSummary.maxBetsPerMatch ?? 0}</b></div>
+              <div>Avg bets / match: <b>{seedSummary.avgBetsPerMatch ?? 0}</b></div>
+              <div>Exposure cap hit: <b>{seedSummary.exposureCapHit ? "Yes" : "No"}</b></div>
             </div>
+            {seedSummary.matchesWithoutBets > 0 && !seedSummary.exposureCapHit && (
+              <div className="mt-3 text-sm font-medium text-destructive">
+                Simulation seed issue: {seedSummary.matchesWithoutBets} match(es) received no predictions even though exposure cap was not reached.
+              </div>
+            )}
           </AlertDescription>
         </Alert>
       )}
