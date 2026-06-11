@@ -112,9 +112,14 @@ function BankrollPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Metric label="Total stakes collected" value={fmt(o.bankroll.totalStakes)} />
             <Metric label="Total payouts paid" value={fmt(o.bankroll.totalPayouts)} />
-            <Metric label="Open bets" value={String(o.bets.open)} />
-            <Metric label={`Settled / Void`} value={`${o.bets.settled} / ${o.bets.void}`} />
+            <Metric
+              label={o.house ? `House wallet (${o.house.displayName})` : "House wallet"}
+              value={o.house ? fmt(o.house.walletBalance) : "Not set"}
+              tone={o.house ? "good" : "bad"}
+            />
+            <Metric label={`Open / Settled / Void`} value={`${o.bets.open} / ${o.bets.settled} / ${o.bets.void}`} />
           </div>
+
 
           {!bankrollHealthy && (
             <Card className="p-3 border-destructive/40 bg-destructive/5 text-destructive text-sm flex items-start gap-2">
