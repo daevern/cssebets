@@ -8,6 +8,22 @@ async function requireAdmin(supabase: any, userId: string) {
   if (!isAdmin) throw new Error("Admin only");
 }
 
+export const getPendingUserCount = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const isAdmin = (roles ?? []).some((r: any) => r.role === "admin");
+    if (!isAdmin) return { count: 0 };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { count, error } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id", { count: "exact", head: true })
+      .eq("role", "pending");
+    if (error) throw new Error(error.message);
+    return { count: count ?? 0 };
+  });
+
 export const listPendingUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
