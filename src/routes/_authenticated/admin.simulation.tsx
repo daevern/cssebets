@@ -207,18 +207,37 @@ function SimulationPage() {
 
       toast.info(`Seeding ${cfg.matchCount} simulation matches (${simMode} mode)…`);
       await seedMatchesFn({ data: { matchCount: cfg.matchCount, mode: simMode } });
-      toast.info("Placing random predictions (will stop at exposure target)…");
-      const pr: any = await seedPredsFn({ data: {
-        minUsersPerMatch: cfg.minUsersPerMatch,
-        maxUsersPerMatch: cfg.maxUsersPerMatch,
-        minStake: cfg.minStake,
-        maxStake: cfg.maxStake,
-        exposureTargetPct: cfg.exposureTargetPct / 100,
-      }});
-      if (pr.stoppedAtCap) {
-        toast.warning(`Stopped at ${cfg.exposureTargetPct}% exposure cap after ${pr.predictionsCreated} predictions.`);
+      toast.info("Placing random predictions in batches (will stop at exposure target)…");
+      let offset = 0;
+      let totalCreated = 0;
+      let totalFailed = 0;
+      let cappedOut = false;
+      // Chunk: 5 matches per call to stay well under upstream timeout
+      // (each call parallelises ~10–30 bets/match internally).
+      // Loop until server reports done.
+      // Safety cap on iterations to prevent infinite loops.
+      for (let iter = 0; iter < 100; iter++) {
+        const pr: any = await seedPredsFn({ data: {
+          minUsersPerMatch: cfg.minUsersPerMatch,
+          maxUsersPerMatch: cfg.maxUsersPerMatch,
+          minStake: cfg.minStake,
+          maxStake: cfg.maxStake,
+          exposureTargetPct: cfg.exposureTargetPct / 100,
+          matchOffset: offset,
+          matchLimit: 5,
+        }});
+        if (pr.error) { toast.error(pr.error); break; }
+        totalCreated += pr.predictionsCreated ?? 0;
+        totalFailed += pr.predictionsFailed ?? 0;
+        cappedOut = !!pr.stoppedAtCap;
+        toast.message(`Predictions ${pr.nextOffset}/${pr.totalMatches}: ${totalCreated} placed`);
+        offset = pr.nextOffset;
+        if (pr.done) break;
+      }
+      if (cappedOut) {
+        toast.warning(`Stopped at ${cfg.exposureTargetPct}% exposure cap after ${totalCreated} predictions.`);
       } else {
-        toast.success(`Done. ${pr.predictionsCreated ?? 0} predictions placed (${pr.predictionsFailed ?? 0} failed).`);
+        toast.success(`Done. ${totalCreated} predictions placed (${totalFailed} failed).`);
       }
       setSimStartedAt(Date.now());
       setSummary(null);
