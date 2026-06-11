@@ -536,7 +536,6 @@ function SimulationPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                      <TableRow>
                         <TableHead>Match ID</TableHead>
                         <TableHead>Match</TableHead>
                         <TableHead className="text-right">Coverage Bets Created</TableHead>
