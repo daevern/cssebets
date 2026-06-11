@@ -8,7 +8,9 @@ const SubmitSchema = z.object({
   outcome: z.string().min(1).max(80),
   referenceOdds: z.number().min(1).max(100000),
   virtualStake: z.number().min(1).max(1_000_000),
+  clientRequestId: z.string().uuid().optional(),
 });
+
 
 export const submitPrediction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
