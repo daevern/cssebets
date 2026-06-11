@@ -220,9 +220,10 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
     let wcMatchesUsed = 0;
 
     for (let i = 0; i < data.matchCount; i++) {
-      // Batch: all matches kick off ~90s out so predictions land before lock,
-      // then settle together via batch tick. Sequential: stagger 1 min apart.
-      const offsetMs = data.mode === "batch" ? 90_000 : i * SIM_INTERVAL_MIN * 60_000;
+      // Batch: kick off 30 min out so seeding (coverage + fill passes) can
+      // never race the kickoff lock — batch settle force-starts matches anyway.
+      // Sequential: stagger 1 min apart.
+      const offsetMs = data.mode === "batch" ? 30 * 60_000 : i * SIM_INTERVAL_MIN * 60_000;
       const kickoff = new Date(now + offsetMs).toISOString();
 
       const wc = wcFixtures[i];
@@ -314,7 +315,9 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
       matchOffset: z.number().int().min(0).default(0),
       matchLimit: z.number().int().min(1).max(50).default(5),
       pass: z.enum(["coverage", "fill"]).default("fill"),
-      coverageFallback: z.boolean().default(false),
+      coverageMinBetsPerMatch: z.number().int().min(1).default(3),
+      coverageMinStake: z.number().int().min(1).default(10),
+      coverageMaxStake: z.number().int().min(1).default(25),
     }).parse(i ?? {}),
   )
   .handler(async ({ data, context }) => {
@@ -356,13 +359,13 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
     const maxS = Math.max(data.minStake, data.maxStake);
 
     // Pass-specific stake range.
-    // Coverage pass uses smaller stakes; fallback uses very small stakes
-    // when the standard coverage stakes still trip the exposure cap.
+    // Coverage pass ALWAYS uses tiny stakes (default 10–25) and ignores the
+    // normal exposure target — only a hard 95%-of-bankroll emergency cap applies.
     const isCoverage = data.pass === "coverage";
-    const coverageMin = data.coverageFallback ? 10 : minS;
-    const coverageMax = data.coverageFallback ? 25 : Math.min(maxS, 75);
-    const stakeMin = isCoverage ? Math.min(coverageMin, coverageMax) : minS;
-    const stakeMax = isCoverage ? Math.max(coverageMin, coverageMax) : maxS;
+    const EMERGENCY_CAP_PCT = 0.95;
+    const emergencyCap = bankroll * EMERGENCY_CAP_PCT;
+    const stakeMin = isCoverage ? Math.min(data.coverageMinStake, data.coverageMaxStake) : minS;
+    const stakeMax = isCoverage ? Math.max(data.coverageMinStake, data.coverageMaxStake) : maxS;
 
     // For fill pass, look up existing pending bets per match in slice so
     // we add extra users (not duplicates) and respect per-user uniqueness.
@@ -392,17 +395,18 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
     const brokeUsers = new Set<string>();
 
     for (const m of slice as any[]) {
-      // Fill pass respects exposure cap; coverage pass pushes through
-      // (we still report stoppedAtCap if any RPC rejects with MAX_EXPOSURE_REACHED).
+      // Fill pass respects the 60% exposure target; coverage pass only stops
+      // at the 95% emergency cap so every match gets its minimum bets first.
       if (!isCoverage && globalExposure >= exposureCap) { stoppedAtCap = true; break; }
+      if (isCoverage && globalExposure >= emergencyCap) { stoppedAtCap = true; break; }
 
       const ro = m.reference_odds ?? { home: 2, draw: 3, away: 2 };
       const existing = existingByMatch.get(m.id) ?? { count: 0, userIds: new Set() };
 
       let target: number;
       if (isCoverage) {
-        // Bring this match up to minU predictions
-        target = Math.max(0, minU - existing.count);
+        // Bring this match up to coverageMinBetsPerMatch predictions
+        target = Math.max(0, data.coverageMinBetsPerMatch - existing.count);
         if (target <= 0) continue;
       } else {
         // Add 0..(maxU-minU) extra predictions on top of what's already there
@@ -419,6 +423,7 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
 
       while (placed < target && cursor < pool.length) {
         if (!isCoverage && globalExposure >= exposureCap) { stoppedAtCap = true; break; }
+        if (isCoverage && globalExposure >= emergencyCap) { stoppedAtCap = true; break; }
 
         const need = target - placed;
         const batch = pool.slice(cursor, cursor + Math.min(PARALLEL, need)).filter((u) => !usedThisMatch.has(u));
@@ -439,6 +444,8 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
             p_odds: odds,
             p_stake: stake,
             p_snapshot_id: null,
+            // Coverage pass relaxes the DB exposure check to the 95% emergency cap
+            p_cap_pct: isCoverage ? EMERGENCY_CAP_PCT : 1.0,
           }).then((res: any) => ({ uid, ok: !res.error, stake, odds, err: res.error?.message }));
         }));
 
@@ -476,7 +483,8 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
       errorSamples,
       brokeUserCount: brokeUsers.size,
       pass: data.pass,
-      coverageFallback: data.coverageFallback,
+      coverageMinBetsPerMatch: data.coverageMinBetsPerMatch,
+      coverageStakeRange: [data.coverageMinStake, data.coverageMaxStake],
     };
   });
 

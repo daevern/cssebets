@@ -222,16 +222,16 @@ function SimulationPage() {
         );
       }
 
-      // ---- Pass 1: minimum coverage ----
-      toast.info("Coverage pass: ensuring every match has minimum predictions…");
+      // ---- Pass 1: minimum coverage (no 60% cap — 95% emergency cap only) ----
+      const COVERAGE_MIN_BETS = 3;
+      const COVERAGE_MIN_STAKE = 10;
+      const COVERAGE_MAX_STAKE = 25;
+      toast.info(`Coverage pass: guaranteeing ≥${COVERAGE_MIN_BETS} predictions per match (stakes ${COVERAGE_MIN_STAKE}–${COVERAGE_MAX_STAKE})…`);
       let coverageCreated = 0;
       let coverageFailed = 0;
-      let coverageCapHit = false;
-      const runCoverage = async (fallback: boolean) => {
+      let coverageEmergencyCapHit = false;
+      {
         let offset = 0;
-        let created = 0;
-        let failed = 0;
-        let cap = false;
         for (let iter = 0; iter < 100; iter++) {
           const pr: any = await seedPredsFn({ data: {
             minUsersPerMatch: cfg.minUsersPerMatch,
@@ -242,30 +242,43 @@ function SimulationPage() {
             matchOffset: offset,
             matchLimit: 5,
             pass: "coverage",
-            coverageFallback: fallback,
+            coverageMinBetsPerMatch: COVERAGE_MIN_BETS,
+            coverageMinStake: COVERAGE_MIN_STAKE,
+            coverageMaxStake: COVERAGE_MAX_STAKE,
           }});
           if (pr.error) { toast.error(pr.error); break; }
-          created += pr.predictionsCreated ?? 0;
-          failed += pr.predictionsFailed ?? 0;
-          if (pr.stoppedAtCap) cap = true;
+          coverageCreated += pr.predictionsCreated ?? 0;
+          coverageFailed += pr.predictionsFailed ?? 0;
+          if (pr.stoppedAtCap) coverageEmergencyCapHit = true;
           offset = pr.nextOffset;
           if (pr.done) break;
         }
-        return { created, failed, cap };
-      };
-      const cov1 = await runCoverage(false);
-      coverageCreated += cov1.created;
-      coverageFailed += cov1.failed;
-      coverageCapHit = cov1.cap;
-      if (cov1.cap) {
-        toast.warning("Coverage pass hit exposure cap — retrying with smaller fallback stakes (10–25).");
-        const cov2 = await runCoverage(true);
-        coverageCreated += cov2.created;
-        coverageFailed += cov2.failed;
       }
-      toast.success(`Coverage pass: ${coverageCreated} predictions across all matches.`);
 
-      // ---- Pass 2: random fill ----
+      // ---- Coverage validation: every match must have predictions BEFORE fill ----
+      const covSum: any = await seedSummaryFn();
+      const matchesCoveredAfterCoverage = covSum.matchesWithBets ?? 0;
+      const matchesMissingAfterCoverage = covSum.matchesWithoutBets ?? 0;
+      if (matchesMissingAfterCoverage > 0) {
+        setSeedSummary({
+          ...covSum,
+          status: "failed",
+          coverageCompleted: false,
+          coverageMinBets: COVERAGE_MIN_BETS,
+          coverageStakeRange: `${COVERAGE_MIN_STAKE}–${COVERAGE_MAX_STAKE}`,
+          matchesCoveredAfterCoverage,
+          matchesMissingAfterCoverage,
+          coveragePredictions: coverageCreated,
+          fillPredictions: 0,
+          coverageCapHit: coverageEmergencyCapHit,
+          fillCapHit: false,
+          exposureCapHit: coverageEmergencyCapHit,
+        });
+        throw new Error(`COVERAGE_PASS_FAILED — Coverage pass failed: ${matchesMissingAfterCoverage} match(es) still have zero predictions before fill pass.`);
+      }
+      toast.success(`Coverage pass complete: ${matchesCoveredAfterCoverage}/${covSum.matches} matches covered (${coverageCreated} predictions).`);
+
+      // ---- Pass 2: random fill (respects 60% exposure target) ----
       toast.info("Fill pass: adding random extra predictions up to exposure cap…");
       let fillCreated = 0;
       let fillFailed = 0;
@@ -282,7 +295,6 @@ function SimulationPage() {
             matchOffset: offset,
             matchLimit: 5,
             pass: "fill",
-            coverageFallback: false,
           }});
           if (pr.error) { toast.error(pr.error); break; }
           fillCreated += pr.predictionsCreated ?? 0;
@@ -296,7 +308,7 @@ function SimulationPage() {
       const totalCreated = coverageCreated + fillCreated;
       const totalFailed = coverageFailed + fillFailed;
       if (fillCapHit) {
-        toast.warning(`Fill pass stopped at ${cfg.exposureTargetPct}% exposure cap after ${totalCreated} predictions.`);
+        toast.warning(`Fill pass stopped at ${cfg.exposureTargetPct}% exposure cap after ${totalCreated} predictions (coverage already complete).`);
       } else {
         toast.success(`Done. ${totalCreated} predictions placed (${totalFailed} failed).`);
       }
@@ -305,18 +317,23 @@ function SimulationPage() {
       const sum: any = await seedSummaryFn();
       const merged = {
         ...sum,
-        exposureCapHit: coverageCapHit || fillCapHit,
+        exposureCapHit: coverageEmergencyCapHit || fillCapHit,
         coveragePredictions: coverageCreated,
         fillPredictions: fillCreated,
-        coverageCapHit,
+        coverageCapHit: coverageEmergencyCapHit,
         fillCapHit,
+        coverageCompleted: true,
+        coverageMinBets: COVERAGE_MIN_BETS,
+        coverageStakeRange: `${COVERAGE_MIN_STAKE}–${COVERAGE_MAX_STAKE}`,
+        matchesCoveredAfterCoverage,
+        matchesMissingAfterCoverage,
       };
       setSeedSummary(merged);
       if (sum.predictions === 0 || sum.poolTxns === 0 || sum.stakeDebits === 0) {
         throw new Error("SIMULATION_SEED_FAILED: Simulation users and matches were created but no predictions were generated.");
       }
-      if (sum.matchesWithoutBets > 0 && !coverageCapHit) {
-        toast.error(`Simulation seed issue: ${sum.matchesWithoutBets} match(es) received no predictions even though coverage pass did not hit the cap.`);
+      if (sum.matchesWithoutBets > 0) {
+        toast.error(`Simulation seed issue: ${sum.matchesWithoutBets} match(es) have no predictions after seeding.`);
       } else {
         toast.success(`Seed OK: ${sum.predictions} predictions · ${sum.matchesWithBets}/${sum.matches} matches with bets`);
       }
@@ -452,12 +469,22 @@ function SimulationPage() {
               <div>Exposure cap hit: <b>{seedSummary.exposureCapHit ? "Yes" : "No"}</b></div>
               <div>Coverage preds: <b>{seedSummary.coveragePredictions ?? 0}</b></div>
               <div>Fill preds: <b>{seedSummary.fillPredictions ?? 0}</b></div>
-              <div>Cap hit (coverage): <b>{seedSummary.coverageCapHit ? "Yes" : "No"}</b></div>
-              <div>Cap hit (fill): <b>{seedSummary.fillCapHit ? "Yes" : "No"}</b></div>
+              <div>Coverage completed: <b>{seedSummary.coverageCompleted ? "Yes" : "No"}</b></div>
+              <div>Coverage min bets/match: <b>{seedSummary.coverageMinBets ?? 3}</b></div>
+              <div>Coverage stake range: <b>{seedSummary.coverageStakeRange ?? "10–25"} pts</b></div>
+              <div>Covered after coverage: <b>{seedSummary.matchesCoveredAfterCoverage ?? "—"}</b></div>
+              <div>Missing after coverage: <b>{seedSummary.matchesMissingAfterCoverage ?? "—"}</b></div>
+              <div>Emergency cap (coverage): <b>{seedSummary.coverageCapHit ? "Yes" : "No"}</b></div>
+              <div>Fill stopped by cap: <b>{seedSummary.fillCapHit ? "Yes" : "No"}</b></div>
             </div>
-            {seedSummary.matchesWithoutBets > 0 && !seedSummary.coverageCapHit && (
+            {seedSummary.coverageCompleted === false && (
               <div className="mt-3 text-sm font-medium text-destructive">
-                Simulation seed issue: {seedSummary.matchesWithoutBets} match(es) received no predictions even though coverage pass did not hit the cap.
+                COVERAGE_PASS_FAILED — Coverage pass failed: some matches still have zero predictions before fill pass.
+              </div>
+            )}
+            {seedSummary.matchesWithoutBets > 0 && seedSummary.coverageCompleted !== false && (
+              <div className="mt-3 text-sm font-medium text-destructive">
+                Simulation seed issue: {seedSummary.matchesWithoutBets} match(es) have no predictions after seeding.
               </div>
             )}
           </AlertDescription>

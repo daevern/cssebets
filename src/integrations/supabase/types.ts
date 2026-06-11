@@ -683,6 +683,7 @@ export type Database = {
       }
       place_bet_atomic: {
         Args: {
+          p_cap_pct?: number
           p_market: Database["public"]["Enums"]["prediction_market"]
           p_match_id: string
           p_odds: number
