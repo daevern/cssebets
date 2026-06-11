@@ -778,12 +778,17 @@ export const getSimulationMatches = createServerFn({ method: "GET" })
         const originalPool = homePool + drawPool + awayPool;
         const payouts = payoutsByMatch.get(m.id) ?? 0;
         const isSettled = !!pool?.settled;
+        const ro = m.reference_odds ?? {};
         return {
           id: m.id,
           label: `${m.home_team} vs ${m.away_team}`,
           kickoff: m.kickoff_at,
           status: m.status,
-          odds: m.reference_odds,
+          odds: { home: ro.home, draw: ro.draw, away: ro.away },
+          originalOdds: ro.original ?? null,
+          originalMargin: ro.original_margin ?? null,
+          adjustedMargin: ro.adjusted_margin ?? null,
+          marginAdjusted: !!ro.margin_adjusted,
           originalPool,
           remainingPool,
           totalPool: originalPool, // back-compat
