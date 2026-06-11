@@ -28,27 +28,33 @@ function AuthedLayout() {
   const showBalance = isMember || isAdmin;
   const walletFn = useServerFn(getMyWallet);
   const wallet = useQuery({
-    queryKey: ["my-wallet"],
+    queryKey: ["my-wallet", user?.id],
     queryFn: () => walletFn({}),
-    enabled: showBalance,
+    enabled: showBalance && !!user?.id,
     refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    staleTime: 0,
   });
 
-  // Live wallet balance: refresh whenever wallets or transactions change.
+  // Live wallet balance: refresh whenever this user's wallet/txns/predictions change.
   useEffect(() => {
-    if (!showBalance) return;
+    if (!showBalance || !user?.id) return;
     const ch = supabase
-      .channel("nav-wallet-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "wallets" }, () => {
-        queryClient.invalidateQueries({ queryKey: ["my-wallet"] });
+      .channel(`nav-wallet-live-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "wallets", filter: `user_id=eq.${user.id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["my-wallet", user.id] });
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "wallet_transactions" }, () => {
-        queryClient.invalidateQueries({ queryKey: ["my-wallet"] });
-        queryClient.invalidateQueries({ queryKey: ["my-txns"] });
+      .on("postgres_changes", { event: "*", schema: "public", table: "wallet_transactions", filter: `user_id=eq.${user.id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["my-wallet", user.id] });
+        queryClient.invalidateQueries({ queryKey: ["my-txns", user.id] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "predictions", filter: `user_id=eq.${user.id}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ["my-predictions", user.id] });
+        queryClient.invalidateQueries({ queryKey: ["my-wallet", user.id] });
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [showBalance, queryClient]);
+  }, [showBalance, queryClient, user?.id]);
 
   async function signOut() {
     await queryClient.cancelQueries();
