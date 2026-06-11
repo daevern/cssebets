@@ -82,8 +82,10 @@ function TournamentWinnerPage() {
           outcome: pick,
           referenceOdds: Number(row.odds),
           virtualStake: Number(stake),
+          clientRequestId: crypto.randomUUID(),
         },
       });
+
     },
     onSuccess: () => {
       toast.success("Prediction submitted");

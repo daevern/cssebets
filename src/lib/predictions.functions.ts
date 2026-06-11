@@ -8,7 +8,9 @@ const SubmitSchema = z.object({
   outcome: z.string().min(1).max(80),
   referenceOdds: z.number().min(1).max(100000),
   virtualStake: z.number().min(1).max(1_000_000),
+  clientRequestId: z.string().uuid().optional(),
 });
+
 
 export const submitPrediction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -100,7 +102,9 @@ export const submitPrediction = createServerFn({ method: "POST" })
       throw new Error("Odds exceed allowed range.");
     }
 
-    // Atomic: wallet debit + prediction insert + platform credit + exposure check + liability recalc
+    // Atomic: wallet debit + prediction insert + platform credit + exposure check + liability recalc.
+    // p_client_request_id provides idempotency: a duplicate submission with the same key returns the
+    // existing prediction id instead of creating/charging a second bet.
     const { data: predId, error } = await (supabaseAdmin as any).rpc("place_bet_atomic", {
       p_user_id: userId,
       p_match_id: data.matchId,
@@ -109,6 +113,7 @@ export const submitPrediction = createServerFn({ method: "POST" })
       p_odds: trustedOdds,
       p_stake: data.virtualStake,
       p_snapshot_id: snapshotId,
+      p_client_request_id: data.clientRequestId ?? null,
     });
 
     if (error) {
@@ -116,8 +121,10 @@ export const submitPrediction = createServerFn({ method: "POST" })
       if (msg.includes("INSUFFICIENT_BALANCE")) throw new Error("Insufficient points balance. Request more points to place this bet.");
       if (msg.includes("MAX_EXPOSURE_REACHED")) throw new Error("The platform does not currently have enough virtual bankroll to safely accept this prediction.");
       if (msg.includes("MATCH_LOCKED")) throw new Error("This match has already kicked off. Predictions are locked.");
+      if (msg.includes("DUPLICATE_REQUEST")) throw new Error("Duplicate bet detected. Please refresh and try again.");
       throw new Error(msg || "Could not place bet.");
     }
+
 
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
