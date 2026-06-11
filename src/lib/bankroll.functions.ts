@@ -183,3 +183,51 @@ export const voidMatchAdmin = createServerFn({ method: "POST" })
     });
     return { refunded };
   });
+
+export const listEligibleHouseUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await requireTier(supabase, userId, WRITE_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id, role")
+      .in("role", ["admin", "super_admin"] as any);
+    const ids = Array.from(new Set((roles ?? []).map((r: any) => r.user_id)));
+    if (!ids.length) return { users: [] };
+    const { data: profs } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", ids);
+    return {
+      users: (profs ?? []).map((p: any) => ({ id: p.id, displayName: p.display_name ?? p.id.slice(0, 8) })),
+    };
+  });
+
+export const setHouseUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ houseUserId: z.string().uuid(), reason: z.string().trim().min(3).max(500) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    // super_admin only — enforced again in the RPC
+    await requireTier(supabase, userId, ["super_admin"]);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: result, error } = await (supabaseAdmin as any).rpc("set_house_user", {
+      p_admin_id: userId,
+      p_house_user_id: data.houseUserId,
+    });
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("audit_log").insert({
+      user_id: userId,
+      action: "bankroll.set_house_user",
+      entity: "platform_bankroll",
+      entity_id: data.houseUserId,
+      reason: data.reason,
+      new_value: { house_user_id: result },
+    });
+    return { houseUserId: result };
+  });
+
