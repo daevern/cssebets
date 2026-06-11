@@ -250,8 +250,20 @@ function SimulationPage() {
           <Stat label="Users" value={String(o.users.total)} />
           <Stat label="Matches" value={`${o.matches.total} (sched ${o.matches.scheduled}/live ${o.matches.live}/fin ${o.matches.finished})`} />
           <Stat label="Predictions" value={String(o.predictions.total)} />
-          {o.highestWinner && <Stat label={`Top Winner — ${o.highestWinner.displayName}`} value={fmt(o.highestWinner.pl)} tone="ok" />}
-          {o.lowestLoser && <Stat label={`Top Loser — ${o.lowestLoser.displayName}`} value={fmt(o.lowestLoser.pl)} tone="bad" />}
+          {o.highestWinner && (
+            <Stat
+              label={`${o.anySettled ? "Top Winner" : "Best Current P/L"} — ${o.highestWinner.displayName}`}
+              value={fmt(o.highestWinner.pl)}
+              tone={o.highestWinner.pl >= 0 ? "ok" : undefined}
+            />
+          )}
+          {o.lowestLoser && (
+            <Stat
+              label={`${o.anySettled ? "Top Loser" : "Worst Current P/L"} — ${o.lowestLoser.displayName}`}
+              value={fmt(o.lowestLoser.pl)}
+              tone={o.lowestLoser.pl < 0 ? "bad" : undefined}
+            />
+          )}
         </div>
       )}
 
