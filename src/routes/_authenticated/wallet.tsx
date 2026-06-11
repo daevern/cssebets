@@ -23,7 +23,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/wallet")({
   ssr: false,
-  head: () => ({ meta: [{ title: "My Wallet — WC26 Pool" }] }),
+  head: () => ({ meta: [{ title: "My Wallet — cssebets" }] }),
   component: WalletPage,
 });
 

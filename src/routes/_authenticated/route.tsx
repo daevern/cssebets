@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyWallet } from "@/lib/wallet.functions";
-import { Trophy, Home, ListChecks, History, BarChart3, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote } from "lucide-react";
+import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect } from "react";
@@ -94,7 +94,6 @@ function AuthedLayout() {
     { to: "/my-predictions", label: "Picks", icon: History },
     { to: "/wallet", label: "Wallet", icon: WalletIcon },
     { to: "/payout", label: "Payout", icon: Banknote },
-    { to: "/leaderboard", label: "Board", icon: BarChart3 },
     ...(isAdminTier ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
     ...(isAdmin ? [{ to: "/admin-wallet", label: "Points", icon: WalletIcon }] : []),
   ] as const;
@@ -119,7 +118,7 @@ function AuthedLayout() {
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
           <Link to="/" className="flex items-center gap-2 font-bold">
             <Trophy className="h-5 w-5 text-primary" />
-            <span className="hidden sm:inline">WC26 Pool</span>
+            <span className="hidden sm:inline">cssebets</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item) => (

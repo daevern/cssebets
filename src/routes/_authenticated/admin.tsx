@@ -34,7 +34,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
     );
     if (!has) throw redirect({ to: "/" });
   },
-  head: () => ({ meta: [{ title: "Admin — WC26 Pool" }] }),
+  head: () => ({ meta: [{ title: "Admin — cssebets" }] }),
   component: AdminLayout,
 });
 
