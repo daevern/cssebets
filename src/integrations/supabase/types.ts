@@ -747,36 +747,21 @@ export type Database = {
         Returns: number
       }
       void_match_atomic: { Args: { p_match_id: string }; Returns: number }
-      wallet_apply_change:
-        | {
-            Args: {
-              p_amount: number
-              p_note?: string
-              p_reference_id: string
-              p_reference_type: Database["public"]["Enums"]["wallet_ref_type"]
-              p_type: Database["public"]["Enums"]["wallet_txn_type"]
-              p_user_id: string
-            }
-            Returns: {
-              new_balance: number
-              txn_id: string
-            }[]
-          }
-        | {
-            Args: {
-              p_amount: number
-              p_is_simulation?: boolean
-              p_note?: string
-              p_reference_id: string
-              p_reference_type: Database["public"]["Enums"]["wallet_ref_type"]
-              p_type: Database["public"]["Enums"]["wallet_txn_type"]
-              p_user_id: string
-            }
-            Returns: {
-              new_balance: number
-              txn_id: string
-            }[]
-          }
+      wallet_apply_change: {
+        Args: {
+          p_amount: number
+          p_is_simulation?: boolean
+          p_note?: string
+          p_reference_id: string
+          p_reference_type: Database["public"]["Enums"]["wallet_ref_type"]
+          p_type: Database["public"]["Enums"]["wallet_txn_type"]
+          p_user_id: string
+        }
+        Returns: {
+          new_balance: number
+          txn_id: string
+        }[]
+      }
       wallet_approve_request: {
         Args: { p_admin_id: string; p_note?: string; p_request_id: string }
         Returns: number
