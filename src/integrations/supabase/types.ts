@@ -670,7 +670,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_simulation_outcome_analytics: { Args: never; Returns: Json }
       get_simulation_stress_metrics: { Args: never; Returns: Json }
+      pick_odds_weighted_score: {
+        Args: { p_match_id: string }
+        Returns: {
+          away_score: number
+          home_score: number
+          outcome: string
+          outcome_prob: number
+        }[]
+      }
       place_bet_atomic: {
         Args: {
           p_market: Database["public"]["Enums"]["prediction_market"]
