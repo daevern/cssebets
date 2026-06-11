@@ -381,7 +381,16 @@ function SimulationPage() {
               <div>Exposure: <b>{Math.round(seedSummary.totalExposure).toLocaleString()} pts</b></div>
               <div>Matches w/ bets: <b>{seedSummary.matchesWithBets}</b></div>
               <div>Matches w/o bets: <b>{seedSummary.matchesWithoutBets}</b></div>
+              <div>Min bets / match: <b>{seedSummary.minBetsPerMatch ?? 0}</b></div>
+              <div>Max bets / match: <b>{seedSummary.maxBetsPerMatch ?? 0}</b></div>
+              <div>Avg bets / match: <b>{seedSummary.avgBetsPerMatch ?? 0}</b></div>
+              <div>Exposure cap hit: <b>{seedSummary.exposureCapHit ? "Yes" : "No"}</b></div>
             </div>
+            {seedSummary.matchesWithoutBets > 0 && !seedSummary.exposureCapHit && (
+              <div className="mt-3 text-sm font-medium text-destructive">
+                Simulation seed issue: {seedSummary.matchesWithoutBets} match(es) received no predictions even though exposure cap was not reached.
+              </div>
+            )}
           </AlertDescription>
         </Alert>
       )}
