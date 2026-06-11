@@ -53,6 +53,7 @@ function SimulationPage() {
   const batchFn = useServerFn(runSimulationBatchSettle);
   const stressFn = useServerFn(getSimulationStressMetrics);
   const summaryFn = useServerFn(getSimulationSettlementSummary);
+  const seedSummaryFn = useServerFn(getSimulationSeedSummary);
 
   const [running, setRunning] = useState(false);
   const [seeding, setSeeding] = useState(false);
@@ -64,6 +65,7 @@ function SimulationPage() {
   const [simStartedAt, setSimStartedAt] = useState<number | null>(null);
   const [lastBatchTiming, setLastBatchTiming] = useState<{ duration_ms: number; avg_ms_per_match: number; client_round_trip_ms: number; settled: number; predictions_settled: number } | null>(null);
   const [summary, setSummary] = useState<any>(null);
+  const [seedSummary, setSeedSummary] = useState<any>(null);
 
   const setBankrollFn = useServerFn(setSimulationBankroll);
 
