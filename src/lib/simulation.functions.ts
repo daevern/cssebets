@@ -55,13 +55,15 @@ export const seedSimulationUsers = createServerFn({ method: "POST" })
     z.object({
       start: z.number().int().min(1).default(1),
       count: z.number().int().min(1).max(50).default(25),
+      totalUsers: z.number().int().min(1).max(500).default(SIM_USER_COUNT),
+      startingBalance: z.number().int().min(0).default(SIM_STARTING_BALANCE),
     }).parse(i ?? {}),
   )
   .handler(async ({ data, context }) => {
     await requireAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const end = Math.min(data.start + data.count - 1, SIM_USER_COUNT);
+    const end = Math.min(data.start + data.count - 1, data.totalUsers);
     let created = 0;
     let skipped = 0;
     const createdIds: string[] = [];
@@ -70,15 +72,13 @@ export const seedSimulationUsers = createServerFn({ method: "POST" })
       const email = simEmail(i);
       const name = simName(i);
 
-      // check if already exists
       const { data: existingProfile } = await (supabaseAdmin as any)
         .from("profiles").select("id, is_simulation").eq("display_name", name).maybeSingle();
       if (existingProfile?.id) {
-        // ensure flag + topup wallet to starting balance if zero
         if (!existingProfile.is_simulation) {
           await (supabaseAdmin as any).from("profiles").update({ is_simulation: true }).eq("id", existingProfile.id);
         }
-        await ensureSimWallet(supabaseAdmin, existingProfile.id);
+        await ensureSimWallet(supabaseAdmin, existingProfile.id, data.startingBalance);
         createdIds.push(existingProfile.id);
         skipped++;
         continue;
@@ -90,40 +90,32 @@ export const seedSimulationUsers = createServerFn({ method: "POST" })
         email_confirm: true,
         user_metadata: { display_name: name, simulation: true },
       });
-      if (createErr) {
-        // Could be user already exists with same email
-        console.error("simseed user err", email, createErr.message);
-        skipped++;
-        continue;
-      }
+      if (createErr) { console.error("simseed user err", email, createErr.message); skipped++; continue; }
       const uid = createdUser?.user?.id;
       if (!uid) { skipped++; continue; }
 
-      // Mark profile / wallet as simulation; promote role to 'member'
       await (supabaseAdmin as any).from("profiles")
         .update({ display_name: name, is_simulation: true }).eq("id", uid);
       await (supabaseAdmin as any).from("user_roles")
         .upsert({ user_id: uid, role: "member" }, { onConflict: "user_id,role" });
-      // remove pending role
       await (supabaseAdmin as any).from("user_roles")
         .delete().eq("user_id", uid).eq("role", "pending");
 
-      await ensureSimWallet(supabaseAdmin, uid);
+      await ensureSimWallet(supabaseAdmin, uid, data.startingBalance);
       createdIds.push(uid);
       created++;
     }
 
-    return { created, skipped, processedRange: [data.start, end], done: end >= SIM_USER_COUNT };
+    return { created, skipped, processedRange: [data.start, end], done: end >= data.totalUsers };
   });
 
-async function ensureSimWallet(supabaseAdmin: any, uid: string) {
+async function ensureSimWallet(supabaseAdmin: any, uid: string, startingBalance: number = SIM_STARTING_BALANCE) {
   await supabaseAdmin.from("wallets")
     .upsert({ user_id: uid, is_simulation: true }, { onConflict: "user_id" });
-  // top up to starting balance if balance is zero
   const { data: w } = await supabaseAdmin.from("wallets").select("balance").eq("user_id", uid).maybeSingle();
   const bal = Number(w?.balance ?? 0);
-  if (bal < SIM_STARTING_BALANCE) {
-    const topup = SIM_STARTING_BALANCE - bal;
+  if (bal < startingBalance) {
+    const topup = startingBalance - bal;
     await supabaseAdmin.rpc("wallet_apply_change", {
       p_user_id: uid,
       p_type: "credit",
@@ -135,6 +127,20 @@ async function ensureSimWallet(supabaseAdmin: any, uid: string) {
     });
   }
 }
+
+// Set / reset the simulation bankroll to a specific value
+export const setSimulationBankroll = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ balance: z.number().min(0) }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await (supabaseAdmin as any).from("platform_bankroll")
+      .upsert({ id: 2, balance: data.balance, updated_at: new Date().toISOString() }, { onConflict: "id" });
+    return { balance: data.balance };
+  });
 
 // =========================================================
 //  SEED matches (creates 25 staggered scheduled sim matches)
