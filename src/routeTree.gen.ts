@@ -22,6 +22,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminWalletLedgerRouteImport } from './routes/_authenticated/admin.wallet-ledger'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminSimulatorRouteImport } from './routes/_authenticated/admin.simulator'
+import { Route as AuthenticatedAdminSimulationRouteImport } from './routes/_authenticated/admin.simulation'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminRiskRouteImport } from './routes/_authenticated/admin.risk'
 import { Route as AuthenticatedAdminPredictionsRouteImport } from './routes/_authenticated/admin.predictions'
@@ -100,6 +101,12 @@ const AuthenticatedAdminSimulatorRoute =
     path: '/simulator',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminSimulationRoute =
+  AuthenticatedAdminSimulationRouteImport.update({
+    id: '/simulation',
+    path: '/simulation',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
     id: '/settings',
@@ -164,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
   '/admin/risk': typeof AuthenticatedAdminRiskRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/simulation': typeof AuthenticatedAdminSimulationRoute
   '/admin/simulator': typeof AuthenticatedAdminSimulatorRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/wallet-ledger': typeof AuthenticatedAdminWalletLedgerRoute
@@ -185,6 +193,7 @@ export interface FileRoutesByTo {
   '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
   '/admin/risk': typeof AuthenticatedAdminRiskRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/simulation': typeof AuthenticatedAdminSimulationRoute
   '/admin/simulator': typeof AuthenticatedAdminSimulatorRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/wallet-ledger': typeof AuthenticatedAdminWalletLedgerRoute
@@ -209,6 +218,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
   '/_authenticated/admin/risk': typeof AuthenticatedAdminRiskRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/admin/simulation': typeof AuthenticatedAdminSimulationRoute
   '/_authenticated/admin/simulator': typeof AuthenticatedAdminSimulatorRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/wallet-ledger': typeof AuthenticatedAdminWalletLedgerRoute
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/admin/predictions'
     | '/admin/risk'
     | '/admin/settings'
+    | '/admin/simulation'
     | '/admin/simulator'
     | '/admin/users'
     | '/admin/wallet-ledger'
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/admin/predictions'
     | '/admin/risk'
     | '/admin/settings'
+    | '/admin/simulation'
     | '/admin/simulator'
     | '/admin/users'
     | '/admin/wallet-ledger'
@@ -277,6 +289,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/predictions'
     | '/_authenticated/admin/risk'
     | '/_authenticated/admin/settings'
+    | '/_authenticated/admin/simulation'
     | '/_authenticated/admin/simulator'
     | '/_authenticated/admin/users'
     | '/_authenticated/admin/wallet-ledger'
@@ -381,6 +394,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSimulatorRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/simulation': {
+      id: '/_authenticated/admin/simulation'
+      path: '/simulation'
+      fullPath: '/admin/simulation'
+      preLoaderRoute: typeof AuthenticatedAdminSimulationRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/settings': {
       id: '/_authenticated/admin/settings'
       path: '/settings'
@@ -449,6 +469,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminPredictionsRoute: typeof AuthenticatedAdminPredictionsRoute
   AuthenticatedAdminRiskRoute: typeof AuthenticatedAdminRiskRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedAdminSimulationRoute: typeof AuthenticatedAdminSimulationRoute
   AuthenticatedAdminSimulatorRoute: typeof AuthenticatedAdminSimulatorRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminWalletLedgerRoute: typeof AuthenticatedAdminWalletLedgerRoute
@@ -464,6 +485,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminPredictionsRoute: AuthenticatedAdminPredictionsRoute,
   AuthenticatedAdminRiskRoute: AuthenticatedAdminRiskRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+  AuthenticatedAdminSimulationRoute: AuthenticatedAdminSimulationRoute,
   AuthenticatedAdminSimulatorRoute: AuthenticatedAdminSimulatorRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAdminWalletLedgerRoute: AuthenticatedAdminWalletLedgerRoute,
@@ -503,3 +525,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

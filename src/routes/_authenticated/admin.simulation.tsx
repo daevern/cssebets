@@ -1,0 +1,236 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AlertTriangle, Play, Pause, RotateCcw, Sprout, Zap, Loader2 } from "lucide-react";
+import {
+  seedSimulationUsers,
+  seedSimulationMatches,
+  seedSimulationPredictions,
+  runSimulationTick,
+  resetSimulationData,
+  getSimulationOverview,
+  getSimulationUsers,
+  getSimulationMatches,
+} from "@/lib/simulation.functions";
+
+export const Route = createFileRoute("/_authenticated/admin/simulation")({
+  component: SimulationPage,
+});
+
+const fmt = (n: number) => (n >= 0 ? "" : "-") + `${Math.abs(Math.round(n)).toLocaleString()} pts`;
+
+function SimulationPage() {
+  const qc = useQueryClient();
+  const overviewFn = useServerFn(getSimulationOverview);
+  const usersFn = useServerFn(getSimulationUsers);
+  const matchesFn = useServerFn(getSimulationMatches);
+  const seedUsersFn = useServerFn(seedSimulationUsers);
+  const seedMatchesFn = useServerFn(seedSimulationMatches);
+  const seedPredsFn = useServerFn(seedSimulationPredictions);
+  const tickFn = useServerFn(runSimulationTick);
+  const resetFn = useServerFn(resetSimulationData);
+
+  const [running, setRunning] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+
+  const overview = useQuery({ queryKey: ["sim-overview"], queryFn: () => overviewFn(), refetchInterval: 5000 });
+  const users = useQuery({ queryKey: ["sim-users"], queryFn: () => usersFn(), refetchInterval: 15000 });
+  const matches = useQuery({ queryKey: ["sim-matches"], queryFn: () => matchesFn(), refetchInterval: 5000 });
+
+  // Auto-tick when running
+  useEffect(() => {
+    if (!running) return;
+    const id = setInterval(async () => {
+      try { await tickFn(); qc.invalidateQueries({ queryKey: ["sim-overview"] }); qc.invalidateQueries({ queryKey: ["sim-matches"] }); } catch (e: any) { /* swallow */ }
+    }, 30_000);
+    return () => clearInterval(id);
+  }, [running, tickFn, qc]);
+
+  const tickMut = useMutation({
+    mutationFn: () => tickFn(),
+    onSuccess: (r: any) => {
+      toast.success(`Tick: started ${r?.started ?? 0}, settled ${r?.settled ?? 0}`);
+      qc.invalidateQueries();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const resetMut = useMutation({
+    mutationFn: () => resetFn(),
+    onSuccess: () => { toast.success("Simulation data reset"); qc.invalidateQueries(); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  async function handleSeed() {
+    setSeeding(true);
+    try {
+      toast.info("Seeding 100 simulation users (in batches)…");
+      for (let start = 1; start <= 100; start += 25) {
+        const res: any = await seedUsersFn({ data: { start, count: 25 } });
+        toast.message(`Users ${res.processedRange[0]}-${res.processedRange[1]}: ${res.created} new, ${res.skipped} existing`);
+      }
+      toast.info("Seeding 25 simulation matches…");
+      await seedMatchesFn();
+      toast.info("Placing random predictions…");
+      const pr: any = await seedPredsFn();
+      toast.success(`Done. ${pr.predictionsCreated ?? 0} predictions placed (${pr.predictionsFailed ?? 0} failed).`);
+      qc.invalidateQueries();
+    } catch (e: any) {
+      toast.error(e.message ?? "Seed failed");
+    } finally {
+      setSeeding(false);
+    }
+  }
+
+  const o = overview.data;
+
+  return (
+    <div className="space-y-4">
+      <Alert variant="destructive">
+        <AlertTriangle className="h-4 w-4" />
+        <AlertTitle>Simulation Mode — test data only.</AlertTitle>
+        <AlertDescription>
+          Virtual points only. Fake users, fake matches, random results. Login: <code>simuser001@test.local</code> … <code>simuser100@test.local</code> · password <code>123456789</code>.
+          Do not use shared passwords outside local/test simulation environments.
+        </AlertDescription>
+      </Alert>
+
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button onClick={handleSeed} disabled={seeding}>
+            {seeding ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sprout className="h-4 w-4 mr-2" />}
+            Seed Simulation (25 matches + 100 users + bets)
+          </Button>
+          <Button variant={running ? "secondary" : "default"} onClick={() => setRunning((v) => !v)}>
+            {running ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
+            {running ? "Pause Auto-Tick" : "Start Auto-Tick (30s)"}
+          </Button>
+          <Button variant="outline" onClick={() => tickMut.mutate()} disabled={tickMut.isPending}>
+            <Zap className="h-4 w-4 mr-2" /> Run Tick Now
+          </Button>
+          <Button variant="destructive" onClick={() => { if (confirm("Delete ALL simulation data?")) resetMut.mutate(); }} disabled={resetMut.isPending}>
+            <RotateCcw className="h-4 w-4 mr-2" /> Reset Simulation
+          </Button>
+        </div>
+      </Card>
+
+      {o && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Stat label="Sim Bankroll" value={fmt(o.bankroll.balance)} />
+          <Stat label="Global Exposure" value={fmt(o.bankroll.globalExposure)} />
+          <Stat label="Available" value={fmt(o.bankroll.availableBalance)} tone={o.bankroll.availableBalance < 0 ? "bad" : "ok"} />
+          <Stat label="Safety Ratio" value={o.bankroll.safetyRatio ? o.bankroll.safetyRatio.toFixed(2) + "×" : "—"} tone={o.bankroll.safetyRatio !== null && o.bankroll.safetyRatio < 1.25 ? "warn" : undefined} />
+          <Stat label="Pending Pools" value={fmt(o.bankroll.pendingPools)} />
+          <Stat label="Settled Pools" value={String(o.bankroll.settledPools)} />
+          <Stat label="Total Stakes" value={fmt(o.bankroll.totalStakes)} />
+          <Stat label="Total Payouts" value={fmt(o.bankroll.totalPayouts)} />
+          <Stat label="Sim Net P/L" value={fmt(o.bankroll.netPL)} tone={o.bankroll.netPL >= 0 ? "ok" : "bad"} />
+          <Stat label="Users" value={String(o.users.total)} />
+          <Stat label="Matches" value={`${o.matches.total} (sched ${o.matches.scheduled}/live ${o.matches.live}/fin ${o.matches.finished})`} />
+          <Stat label="Predictions" value={String(o.predictions.total)} />
+          {o.highestWinner && <Stat label={`Top Winner — ${o.highestWinner.displayName}`} value={fmt(o.highestWinner.pl)} tone="ok" />}
+          {o.lowestLoser && <Stat label={`Top Loser — ${o.lowestLoser.displayName}`} value={fmt(o.lowestLoser.pl)} tone="bad" />}
+        </div>
+      )}
+
+      <Tabs defaultValue="matches">
+        <TabsList>
+          <TabsTrigger value="matches">Matches</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="matches">
+          <Card className="p-3 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Match</TableHead>
+                  <TableHead>Kickoff</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Odds H/D/A</TableHead>
+                  <TableHead className="text-right">Pool</TableHead>
+                  <TableHead className="text-right">H/D/A pool</TableHead>
+                  <TableHead className="text-right">Worst</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead className="text-right">Payouts</TableHead>
+                  <TableHead className="text-right">P/L</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(matches.data?.matches ?? []).map((m: any) => (
+                  <TableRow key={m.id}>
+                    <TableCell className="font-medium">{m.label}</TableCell>
+                    <TableCell className="text-xs">{new Date(m.kickoff).toLocaleTimeString()}</TableCell>
+                    <TableCell><Badge variant="outline" className="capitalize">{m.status}</Badge></TableCell>
+                    <TableCell className="text-xs">{m.odds?.home}/{m.odds?.draw}/{m.odds?.away}</TableCell>
+                    <TableCell className="text-right">{fmt(m.totalPool)}</TableCell>
+                    <TableCell className="text-right text-xs">{fmt(m.homePool)}/{fmt(m.drawPool)}/{fmt(m.awayPool)}</TableCell>
+                    <TableCell className="text-right">{fmt(m.worst)}</TableCell>
+                    <TableCell>{m.finalScore ?? "—"}</TableCell>
+                    <TableCell className="text-right">{fmt(m.payouts)}</TableCell>
+                    <TableCell className={`text-right font-medium ${m.profitLoss >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(m.profitLoss)}</TableCell>
+                  </TableRow>
+                ))}
+                {!matches.data?.matches?.length && (
+                  <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground">No simulation matches.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="users">
+          <Card className="p-3 overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Password</TableHead>
+                  <TableHead className="text-right">Balance</TableHead>
+                  <TableHead className="text-right">Bets</TableHead>
+                  <TableHead className="text-right">P/L</TableHead>
+                  <TableHead>Last activity</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {(users.data?.users ?? []).map((u: any) => (
+                  <TableRow key={u.id}>
+                    <TableCell className="font-medium">{u.displayName}</TableCell>
+                    <TableCell className="text-xs"><code>{u.email}</code></TableCell>
+                    <TableCell className="text-xs"><code>{u.password}</code></TableCell>
+                    <TableCell className="text-right">{fmt(u.balance)}</TableCell>
+                    <TableCell className="text-right">{u.predictionCount}</TableCell>
+                    <TableCell className={`text-right ${u.profitLoss >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(u.profitLoss)}</TableCell>
+                    <TableCell className="text-xs">{u.lastActivity ? new Date(u.lastActivity).toLocaleString() : "—"}</TableCell>
+                  </TableRow>
+                ))}
+                {!users.data?.users?.length && (
+                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No simulation users. Click Seed.</TableCell></TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+function Stat({ label, value, tone }: { label: string; value: string; tone?: "ok" | "bad" | "warn" }) {
+  const color = tone === "ok" ? "text-emerald-600" : tone === "bad" ? "text-destructive" : tone === "warn" ? "text-amber-600" : "";
+  return (
+    <Card className="p-3">
+      <div className="text-xs text-muted-foreground truncate">{label}</div>
+      <div className={`text-lg font-semibold ${color}`}>{value}</div>
+    </Card>
+  );
+}
