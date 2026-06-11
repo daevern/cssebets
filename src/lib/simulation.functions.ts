@@ -168,52 +168,100 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
       return { created: 0, skipped: count, message: "Already seeded" };
     }
 
+    // Pull real World Cup 2026 matchday-1 fixtures + odds; fall back to
+    // generic fake teams if the upstream APIs are unavailable.
+    const { fetchWorldCupMatchday1Fixtures } = await import("@/lib/sim-worldcup.server");
+    let wcWarning: string | undefined;
+    let wcFixtures: Awaited<ReturnType<typeof fetchWorldCupMatchday1Fixtures>>["fixtures"] = [];
+    try {
+      const res = await fetchWorldCupMatchday1Fixtures();
+      wcFixtures = res.fixtures;
+      wcWarning = res.warning;
+    } catch (e) {
+      wcWarning = (e as Error).message;
+    }
+
     const now = Date.now();
     const rows: any[] = [];
     const usedTeams = new Set<string>();
     let teamIdx = 0;
+    let realOddsCount = 0;
+    let wcMatchesUsed = 0;
+
     for (let i = 0; i < data.matchCount; i++) {
-      let home = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
-      let away = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
-      while (usedTeams.has(home + away) || home === away) {
-        away = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
-      }
-      usedTeams.add(home + away);
-      // Batch mode: all matches kick off ~90s in the future so predictions
-      // can be placed before MATCH_LOCKED, then settle together via batch tick.
-      // Sequential mode: stagger 1 min apart.
+      // Batch: all matches kick off ~90s out so predictions land before lock,
+      // then settle together via batch tick. Sequential: stagger 1 min apart.
       const offsetMs = data.mode === "batch" ? 90_000 : i * SIM_INTERVAL_MIN * 60_000;
       const kickoff = new Date(now + offsetMs).toISOString();
-      const homeOdds = +(1.5 + Math.random() * 3).toFixed(2);
-      const drawOdds = +(2.8 + Math.random() * 2.2).toFixed(2);
-      const awayOdds = +(1.5 + Math.random() * 3).toFixed(2);
-      rows.push({
-        home_team: home,
-        away_team: away,
-        kickoff_at: kickoff,
-        status: "scheduled",
-        stage: data.mode === "batch" ? "Simulation Cup (Batch)" : "Simulation Cup",
-        is_simulation: true,
-        reference_odds: { home: homeOdds, draw: drawOdds, away: awayOdds },
-      });
+
+      const wc = wcFixtures[i];
+      if (wc) {
+        wcMatchesUsed++;
+        if (wc.odds_source === "the-odds-api") realOddsCount++;
+        rows.push({
+          home_team: wc.home_team,
+          away_team: wc.away_team,
+          home_crest: wc.home_crest,
+          away_crest: wc.away_crest,
+          group_name: wc.group_name,
+          kickoff_at: kickoff,
+          status: "scheduled",
+          stage: data.mode === "batch"
+            ? `${wc.stage} (Sim Batch)`
+            : `${wc.stage} (Sim)`,
+          is_simulation: true,
+          reference_odds: wc.reference_odds,
+          odds_source: wc.odds_source === "the-odds-api" ? "the-odds-api" : "simulation",
+          odds_updated_at: new Date().toISOString(),
+        });
+      } else {
+        // Fallback: generic placeholder teams + random odds
+        let home = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
+        let away = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
+        while (usedTeams.has(home + away) || home === away) {
+          away = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
+        }
+        usedTeams.add(home + away);
+        rows.push({
+          home_team: home,
+          away_team: away,
+          kickoff_at: kickoff,
+          status: "scheduled",
+          stage: data.mode === "batch" ? "Simulation Cup (Batch)" : "Simulation Cup",
+          is_simulation: true,
+          reference_odds: {
+            home: +(1.5 + Math.random() * 3).toFixed(2),
+            draw: +(2.8 + Math.random() * 2.2).toFixed(2),
+            away: +(1.5 + Math.random() * 3).toFixed(2),
+          },
+        });
+      }
     }
 
     const { data: inserted, error } = await (supabaseAdmin as any)
       .from("matches").insert(rows).select("id, reference_odds");
     if (error) throw new Error(error.message);
 
-    const snaps = (inserted ?? []).map((m: any) => ({
+    const snaps = (inserted ?? []).map((m: any, idx: number) => ({
       match_id: m.id,
       home_odds: m.reference_odds?.home,
       draw_odds: m.reference_odds?.draw,
       away_odds: m.reference_odds?.away,
-      source: "simulation",
+      source: rows[idx]?.odds_source === "the-odds-api" ? "the-odds-api" : "simulation",
+      raw_bookmaker_count: wcFixtures[idx]?.raw_bookmaker_count ?? null,
       sampled_at: new Date().toISOString(),
     }));
     if (snaps.length) {
       await (supabaseAdmin as any).from("match_odds_snapshots").insert(snaps);
     }
-    return { created: inserted?.length ?? 0, mode: data.mode };
+    return {
+      created: inserted?.length ?? 0,
+      mode: data.mode,
+      worldCupFixturesUsed: wcMatchesUsed,
+      realOddsCount,
+      fallbackCount: (inserted?.length ?? 0) - wcMatchesUsed,
+      warning: wcWarning,
+    };
   });
 
 
