@@ -361,6 +361,9 @@ function SimulationPage() {
         matchesCoveredAfterCoverage,
         matchesMissingAfterCoverage,
         coverageDiagnostics,
+        rawMatchesCount,
+        uniqueMatchesCount,
+        duplicateMatchIdsCount,
       };
       setSeedSummary(merged);
       if (sum.predictions === 0 || sum.poolTxns === 0 || sum.stakeDebits === 0) {
