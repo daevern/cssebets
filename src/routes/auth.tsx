@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({ meta: [{ title: "Sign in — WC26 Pool" }] }),
+  head: () => ({ meta: [{ title: "Sign in — cssebets" }] }),
   component: AuthPage,
 });
 
@@ -55,7 +55,7 @@ function AuthPage() {
           <div className="h-14 w-14 rounded-2xl bg-primary/20 grid place-items-center">
             <Trophy className="h-7 w-7 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">WC26 Pool</h1>
+          <h1 className="text-2xl font-bold">cssebets</h1>
           <p className="text-sm text-muted-foreground text-center">
             Private World Cup 2026 prediction pool. Virtual stakes only.
           </p>

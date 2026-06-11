@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/admin-wallet")({
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
     if (!(roles ?? []).some((r) => r.role === "admin")) throw redirect({ to: "/" });
   },
-  head: () => ({ meta: [{ title: "Point Requests — WC26 Pool" }] }),
+  head: () => ({ meta: [{ title: "Point Requests — cssebets" }] }),
   component: AdminWalletPage,
 });
 

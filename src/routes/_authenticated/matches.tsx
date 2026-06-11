@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 
 export const Route = createFileRoute("/_authenticated/matches")({
-  head: () => ({ meta: [{ title: "Matches — WC26 Pool" }] }),
+  head: () => ({ meta: [{ title: "Matches — cssebets" }] }),
   component: MatchesPage,
 });
 

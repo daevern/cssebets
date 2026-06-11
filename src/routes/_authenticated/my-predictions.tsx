@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated/my-predictions")({
-  head: () => ({ meta: [{ title: "My Predictions — WC26 Pool" }] }),
+  head: () => ({ meta: [{ title: "My Predictions — cssebets" }] }),
   component: MyPredictionsPage,
 });
 

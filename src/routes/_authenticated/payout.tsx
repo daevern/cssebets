@@ -25,7 +25,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/payout")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Payout — WC26 Pool" }] }),
+  head: () => ({ meta: [{ title: "Payout — cssebets" }] }),
   component: PayoutPage,
 });
 
