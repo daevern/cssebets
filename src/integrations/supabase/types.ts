@@ -1000,28 +1000,17 @@ export type Database = {
             }
             Returns: string
           }
-      platform_apply_change:
-        | {
-            Args: {
-              p_amount: number
-              p_bet_id?: string
-              p_match_id?: string
-              p_note?: string
-              p_type: Database["public"]["Enums"]["platform_txn_type"]
-            }
-            Returns: number
-          }
-        | {
-            Args: {
-              p_amount: number
-              p_bet_id?: string
-              p_is_simulation?: boolean
-              p_match_id?: string
-              p_note?: string
-              p_type: Database["public"]["Enums"]["platform_txn_type"]
-            }
-            Returns: number
-          }
+      platform_apply_change: {
+        Args: {
+          p_amount: number
+          p_bet_id?: string
+          p_is_simulation?: boolean
+          p_match_id?: string
+          p_note?: string
+          p_type: Database["public"]["Enums"]["platform_txn_type"]
+        }
+        Returns: number
+      }
       pool_apply_change: {
         Args: {
           p_amount: number

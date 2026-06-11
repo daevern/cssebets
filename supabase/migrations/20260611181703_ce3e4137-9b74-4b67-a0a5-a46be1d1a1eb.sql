@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.platform_apply_change(public.platform_txn_type, numeric, uuid, uuid, text);
