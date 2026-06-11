@@ -200,6 +200,7 @@ function SimulationPage() {
                   <TableHead>Match</TableHead>
                   <TableHead>Kickoff</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Timer</TableHead>
                   <TableHead>Odds H/D/A</TableHead>
                   <TableHead className="text-right">Pool</TableHead>
                   <TableHead className="text-right">H/D/A pool</TableHead>
@@ -210,22 +211,39 @@ function SimulationPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(matches.data?.matches ?? []).map((m: any) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium">{m.label}</TableCell>
-                    <TableCell className="text-xs">{new Date(m.kickoff).toLocaleTimeString()}</TableCell>
-                    <TableCell><Badge variant="outline" className="capitalize">{m.status}</Badge></TableCell>
-                    <TableCell className="text-xs">{m.odds?.home}/{m.odds?.draw}/{m.odds?.away}</TableCell>
-                    <TableCell className="text-right">{fmt(m.totalPool)}</TableCell>
-                    <TableCell className="text-right text-xs">{fmt(m.homePool)}/{fmt(m.drawPool)}/{fmt(m.awayPool)}</TableCell>
-                    <TableCell className="text-right">{fmt(m.worst)}</TableCell>
-                    <TableCell>{m.finalScore ?? "—"}</TableCell>
-                    <TableCell className="text-right">{fmt(m.payouts)}</TableCell>
-                    <TableCell className={`text-right font-medium ${m.profitLoss >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(m.profitLoss)}</TableCell>
-                  </TableRow>
-                ))}
+                {(matches.data?.matches ?? []).map((m: any) => {
+                  const kickoffMs = new Date(m.kickoff).getTime();
+                  const settleMs = kickoffMs + durationMin * 60_000;
+                  let timer = "—";
+                  if (m.status === "scheduled") {
+                    const s = Math.max(0, Math.ceil((kickoffMs - nowTs) / 1000));
+                    timer = s > 0 ? `Starts in ${s}s` : "Starting…";
+                  } else if (m.status === "live") {
+                    const s = Math.max(0, Math.ceil((settleMs - nowTs) / 1000));
+                    timer = s > 0 ? `Settles in ${s}s` : "Settling…";
+                  } else if (m.status === "finished") {
+                    timer = "Settled";
+                  } else if (m.status === "cancelled") {
+                    timer = "Voided";
+                  }
+                  return (
+                    <TableRow key={m.id}>
+                      <TableCell className="font-medium">{m.label}</TableCell>
+                      <TableCell className="text-xs">{new Date(m.kickoff).toLocaleTimeString()}</TableCell>
+                      <TableCell><Badge variant="outline" className="capitalize">{m.status}</Badge></TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">{timer}</TableCell>
+                      <TableCell className="text-xs">{m.odds?.home}/{m.odds?.draw}/{m.odds?.away}</TableCell>
+                      <TableCell className="text-right">{fmt(m.totalPool)}</TableCell>
+                      <TableCell className="text-right text-xs">{fmt(m.homePool)}/{fmt(m.drawPool)}/{fmt(m.awayPool)}</TableCell>
+                      <TableCell className="text-right">{fmt(m.worst)}</TableCell>
+                      <TableCell>{m.finalScore ?? "—"}</TableCell>
+                      <TableCell className="text-right">{fmt(m.payouts)}</TableCell>
+                      <TableCell className={`text-right font-medium ${m.profitLoss >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(m.profitLoss)}</TableCell>
+                    </TableRow>
+                  );
+                })}
                 {!matches.data?.matches?.length && (
-                  <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground">No simulation matches.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground">No simulation matches.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
