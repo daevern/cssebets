@@ -141,11 +141,26 @@ function SimulationPage() {
           </Button>
           <Button variant={running ? "secondary" : "default"} onClick={() => setRunning((v) => !v)}>
             {running ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
-            {running ? "Pause Auto-Tick" : "Start Auto-Tick (30s)"}
+            {running ? "Pause Auto-Tick" : "Start Auto-Tick (10s)"}
           </Button>
           <Button variant="outline" onClick={() => tickMut.mutate()} disabled={tickMut.isPending}>
             <Zap className="h-4 w-4 mr-2" /> Run Tick Now
           </Button>
+          <Button variant="outline" onClick={() => settleAllMut.mutate()} disabled={settleAllMut.isPending}>
+            <FastForward className="h-4 w-4 mr-2" /> Settle All Due Matches Now
+          </Button>
+          <div className="flex items-center gap-2 ml-2">
+            <Label className="text-xs text-muted-foreground">Match duration</Label>
+            <Select value={String(durationMin)} onValueChange={(v) => setDurationMin(Number(v))}>
+              <SelectTrigger className="w-[120px] h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 minute</SelectItem>
+                <SelectItem value="2">2 minutes</SelectItem>
+                <SelectItem value="5">5 minutes</SelectItem>
+                <SelectItem value="10">10 minutes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Button variant="destructive" onClick={() => { if (confirm("Delete ALL simulation data?")) resetMut.mutate(); }} disabled={resetMut.isPending}>
             <RotateCcw className="h-4 w-4 mr-2" /> Reset Simulation
           </Button>
