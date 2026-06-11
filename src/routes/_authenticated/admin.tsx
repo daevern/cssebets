@@ -39,10 +39,10 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
-type BadgeKey = "pendingPointRequests" | "pendingPayouts";
+type BadgeKey = "pendingPointRequests" | "pendingPayouts" | "pendingUsers";
 const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeKey?: BadgeKey }> = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/admin/users", label: "Users", icon: Users },
+  { to: "/admin/users", label: "Users", icon: Users, badgeKey: "pendingUsers" },
   { to: "/admin-wallet", label: "Point Requests", icon: Wallet, badgeKey: "pendingPointRequests" },
   { to: "/admin-payout", label: "Payouts", icon: Banknote, badgeKey: "pendingPayouts" },
   { to: "/admin/predictions", label: "Predictions", icon: ListChecks },
