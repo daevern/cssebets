@@ -498,6 +498,35 @@ function SimulationPage() {
                 Simulation seed issue: {seedSummary.matchesWithoutBets} match(es) have no predictions after seeding.
               </div>
             )}
+            {Array.isArray(seedSummary.coverageDiagnostics) && seedSummary.coverageDiagnostics.length > 0 && (
+              <div className="mt-4">
+                <div className="text-sm font-semibold mb-1">Coverage diagnostics</div>
+                <div className="max-h-64 overflow-auto rounded border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Match</TableHead>
+                        <TableHead className="text-right">Coverage Bets Created</TableHead>
+                        <TableHead className="text-right">Failed Attempts</TableHead>
+                        <TableHead>Failure Reason</TableHead>
+                        <TableHead>Pool Created</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {seedSummary.coverageDiagnostics.map((d: any) => (
+                        <TableRow key={d.matchId} className={d.failureReason ? "bg-destructive/10" : undefined}>
+                          <TableCell className="font-medium">{d.match}</TableCell>
+                          <TableCell className="text-right">{d.betsCreated}</TableCell>
+                          <TableCell className="text-right">{d.failedAttempts}</TableCell>
+                          <TableCell>{d.failureReason ?? "—"}</TableCell>
+                          <TableCell>{d.poolCreated ? "Yes" : "No"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
           </AlertDescription>
         </Alert>
       )}
