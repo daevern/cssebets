@@ -66,6 +66,8 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
       (s: number, m: any) => s + Number(m.worst_case_exposure || 0),
       0,
     );
+    const pendingMatchPools = (poolRows ?? []).reduce((s: number, p: any) => s + Number(p.total_pool || 0), 0);
+    const totalIssuance = (issuanceRows ?? []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
     const availableBalance = balance - globalExposure;
     const safetyRatio = globalExposure > 0 ? balance / globalExposure : null;
 
