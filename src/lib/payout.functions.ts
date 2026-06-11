@@ -28,6 +28,19 @@ export const getMyPayouts = createServerFn({ method: "GET" })
     return { payouts: data ?? [], active };
   });
 
+export const getMyPayoutActionCount = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { count, error } = await supabase
+      .from("payout_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "proof_uploaded");
+    if (error) throw new Error(error.message);
+    return { count: count ?? 0 };
+  });
+
 export const createPayoutRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) =>
