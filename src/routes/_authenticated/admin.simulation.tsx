@@ -263,8 +263,22 @@ function SimulationPage() {
             <Zap className="h-4 w-4 mr-2" /> Run Tick Now
           </Button>
           <Button variant="outline" onClick={() => settleAllMut.mutate()} disabled={settleAllMut.isPending}>
-            <FastForward className="h-4 w-4 mr-2" /> Settle All Due Matches Now
+            <FastForward className="h-4 w-4 mr-2" /> Settle All Due (Sequential)
           </Button>
+          <Button variant="default" onClick={() => batchSettleMut.mutate()} disabled={batchSettleMut.isPending}>
+            {batchSettleMut.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Rocket className="h-4 w-4 mr-2" />}
+            Batch Settle All Now
+          </Button>
+          <div className="flex items-center gap-2 ml-2">
+            <Label className="text-xs text-muted-foreground">Sim Mode</Label>
+            <Select value={simMode} onValueChange={(v) => setSimMode(v as any)}>
+              <SelectTrigger className="w-[180px] h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="batch">Batch Settlement</SelectItem>
+                <SelectItem value="sequential">Sequential Settlement</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center gap-2 ml-2">
             <Label className="text-xs text-muted-foreground">Match duration</Label>
             <Select value={String(durationMin)} onValueChange={(v) => setDurationMin(Number(v))}>
@@ -281,6 +295,7 @@ function SimulationPage() {
             <RotateCcw className="h-4 w-4 mr-2" /> Reset Simulation
           </Button>
         </div>
+
 
         <Collapsible open={showConfig}>
           <CollapsibleContent>
