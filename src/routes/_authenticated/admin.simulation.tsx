@@ -47,6 +47,22 @@ function SimulationPage() {
   const [seeding, setSeeding] = useState(false);
   const [durationMin, setDurationMin] = useState<number>(1);
   const [nowTs, setNowTs] = useState(() => Date.now());
+  const [showConfig, setShowConfig] = useState(false);
+  const setBankrollFn = useServerFn(setSimulationBankroll);
+
+  // Seed configuration (admin-tunable)
+  const [cfg, setCfg] = useState({
+    totalUsers: 100,
+    matchCount: 25,
+    startingBalance: 1000,
+    bankroll: 50000,
+    minUsersPerMatch: 10,
+    maxUsersPerMatch: 30,
+    minStake: 50,
+    maxStake: 300,
+    exposureTargetPct: 60, // %
+  });
+  const setCfgField = (k: keyof typeof cfg, v: number) => setCfg((c) => ({ ...c, [k]: v }));
 
   // 1s clock for visible countdown timers
   useEffect(() => {
