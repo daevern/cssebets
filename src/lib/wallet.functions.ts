@@ -267,6 +267,7 @@ export const adminApproveRequest = createServerFn({ method: "POST" })
       .eq("id", data.requestId)
       .maybeSingle();
     if (!row) throw new Error("Request not found");
+    if (row.user_id === userId) throw new Error("Cannot approve your own request");
     if (!row.proof_file_path) throw new Error("Proof file missing");
     const { data: result, error } = await supabaseAdmin.rpc("wallet_approve_request", {
       p_request_id: data.requestId,
@@ -296,6 +297,9 @@ export const adminRejectRequest = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("point_requests").select("user_id").eq("id", data.requestId).maybeSingle();
+    if (row?.user_id === userId) throw new Error("Cannot reject your own request");
     const { error } = await supabaseAdmin.rpc("wallet_reject_request", {
       p_request_id: data.requestId,
       p_admin_id: userId,
@@ -328,6 +332,7 @@ export const adminAdjustWallet = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
+    if (data.targetUserId === userId) throw new Error("Cannot adjust your own wallet");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const type = data.amount > 0 ? "credit" : "debit";
     const { data: result, error } = await supabaseAdmin.rpc("wallet_apply_change", {
