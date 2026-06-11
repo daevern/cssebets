@@ -27,6 +27,7 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminTournamentRouteImport } from './routes/_authenticated/admin.tournament'
 import { Route as AuthenticatedAdminSimulationRouteImport } from './routes/_authenticated/admin.simulation'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
+import { Route as AuthenticatedAdminRiskSettingsRouteImport } from './routes/_authenticated/admin.risk-settings'
 import { Route as AuthenticatedAdminPredictionsRouteImport } from './routes/_authenticated/admin.predictions'
 import { Route as AuthenticatedAdminOddsHistoryRouteImport } from './routes/_authenticated/admin.odds-history'
 import { Route as AuthenticatedAdminMatchesRouteImport } from './routes/_authenticated/admin.matches'
@@ -132,6 +133,12 @@ const AuthenticatedAdminSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminRiskSettingsRoute =
+  AuthenticatedAdminRiskSettingsRouteImport.update({
+    id: '/risk-settings',
+    path: '/risk-settings',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminPredictionsRoute =
   AuthenticatedAdminPredictionsRouteImport.update({
     id: '/predictions',
@@ -192,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/admin/matches': typeof AuthenticatedAdminMatchesRoute
   '/admin/odds-history': typeof AuthenticatedAdminOddsHistoryRoute
   '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
+  '/admin/risk-settings': typeof AuthenticatedAdminRiskSettingsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/simulation': typeof AuthenticatedAdminSimulationRoute
   '/admin/tournament': typeof AuthenticatedAdminTournamentRoute
@@ -217,6 +225,7 @@ export interface FileRoutesByTo {
   '/admin/matches': typeof AuthenticatedAdminMatchesRoute
   '/admin/odds-history': typeof AuthenticatedAdminOddsHistoryRoute
   '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
+  '/admin/risk-settings': typeof AuthenticatedAdminRiskSettingsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/simulation': typeof AuthenticatedAdminSimulationRoute
   '/admin/tournament': typeof AuthenticatedAdminTournamentRoute
@@ -245,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/matches': typeof AuthenticatedAdminMatchesRoute
   '/_authenticated/admin/odds-history': typeof AuthenticatedAdminOddsHistoryRoute
   '/_authenticated/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
+  '/_authenticated/admin/risk-settings': typeof AuthenticatedAdminRiskSettingsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/simulation': typeof AuthenticatedAdminSimulationRoute
   '/_authenticated/admin/tournament': typeof AuthenticatedAdminTournamentRoute
@@ -273,6 +283,7 @@ export interface FileRouteTypes {
     | '/admin/matches'
     | '/admin/odds-history'
     | '/admin/predictions'
+    | '/admin/risk-settings'
     | '/admin/settings'
     | '/admin/simulation'
     | '/admin/tournament'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/admin/matches'
     | '/admin/odds-history'
     | '/admin/predictions'
+    | '/admin/risk-settings'
     | '/admin/settings'
     | '/admin/simulation'
     | '/admin/tournament'
@@ -325,6 +337,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/matches'
     | '/_authenticated/admin/odds-history'
     | '/_authenticated/admin/predictions'
+    | '/_authenticated/admin/risk-settings'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/simulation'
     | '/_authenticated/admin/tournament'
@@ -468,6 +481,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/risk-settings': {
+      id: '/_authenticated/admin/risk-settings'
+      path: '/risk-settings'
+      fullPath: '/admin/risk-settings'
+      preLoaderRoute: typeof AuthenticatedAdminRiskSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/predictions': {
       id: '/_authenticated/admin/predictions'
       path: '/predictions'
@@ -527,6 +547,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminMatchesRoute: typeof AuthenticatedAdminMatchesRoute
   AuthenticatedAdminOddsHistoryRoute: typeof AuthenticatedAdminOddsHistoryRoute
   AuthenticatedAdminPredictionsRoute: typeof AuthenticatedAdminPredictionsRoute
+  AuthenticatedAdminRiskSettingsRoute: typeof AuthenticatedAdminRiskSettingsRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminSimulationRoute: typeof AuthenticatedAdminSimulationRoute
   AuthenticatedAdminTournamentRoute: typeof AuthenticatedAdminTournamentRoute
@@ -542,6 +563,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminMatchesRoute: AuthenticatedAdminMatchesRoute,
   AuthenticatedAdminOddsHistoryRoute: AuthenticatedAdminOddsHistoryRoute,
   AuthenticatedAdminPredictionsRoute: AuthenticatedAdminPredictionsRoute,
+  AuthenticatedAdminRiskSettingsRoute: AuthenticatedAdminRiskSettingsRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminSimulationRoute: AuthenticatedAdminSimulationRoute,
   AuthenticatedAdminTournamentRoute: AuthenticatedAdminTournamentRoute,

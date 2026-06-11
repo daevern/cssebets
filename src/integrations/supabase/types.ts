@@ -545,6 +545,36 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_settings: {
+        Row: {
+          apply_margin_to_real: boolean
+          exposure_cap_pct: number
+          id: number
+          margin_pct: number
+          max_potential_payout: number
+          max_stake_per_bet: number
+          updated_at: string
+        }
+        Insert: {
+          apply_margin_to_real?: boolean
+          exposure_cap_pct?: number
+          id?: number
+          margin_pct?: number
+          max_potential_payout?: number
+          max_stake_per_bet?: number
+          updated_at?: string
+        }
+        Update: {
+          apply_margin_to_real?: boolean
+          exposure_cap_pct?: number
+          id?: number
+          margin_pct?: number
+          max_potential_payout?: number
+          max_stake_per_bet?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       platform_transactions: {
         Row: {
           amount: number
@@ -1038,6 +1068,31 @@ export type Database = {
       settle_tournament_winner_atomic: {
         Args: { p_tournament_key: string; p_winner_team: string }
         Returns: number
+      }
+      update_platform_settings: {
+        Args: {
+          p_admin_id: string
+          p_apply_margin_to_real: boolean
+          p_exposure_cap_pct: number
+          p_margin_pct: number
+          p_max_potential_payout: number
+          p_max_stake_per_bet: number
+        }
+        Returns: {
+          apply_margin_to_real: boolean
+          exposure_cap_pct: number
+          id: number
+          margin_pct: number
+          max_potential_payout: number
+          max_stake_per_bet: number
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "platform_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       void_match_atomic: { Args: { p_match_id: string }; Returns: number }
       wallet_apply_change: {
