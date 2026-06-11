@@ -629,6 +629,10 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
       coverageMinBetsPerMatch: data.coverageMinBetsPerMatch,
       coverageStakeRange: [data.coverageMinStake, data.coverageMaxStake],
       matchDiagnostics,
+      rawMatchesCount,
+      uniqueMatchesCount: totalMatches,
+      duplicateMatchIdsCount: duplicateMatchIds.length,
+      duplicateMatchIds,
     };
   });
 
