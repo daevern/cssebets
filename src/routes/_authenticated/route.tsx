@@ -75,6 +75,9 @@ function AuthedLayout() {
     (pendingPayouts.data?.count ?? 0) +
     (pendingUsers.data?.count ?? 0);
   const payoutBadge = myPayoutAction.data?.count ?? 0;
+
+  // Live wallet balance: refresh whenever this user's wallet/txns/predictions change.
+  useEffect(() => {
     if (!showBalance || !user?.id) return;
     const ch = supabase
       .channel(`nav-wallet-live-${user.id}`)
