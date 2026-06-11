@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyWallet } from "@/lib/wallet.functions";
-import { Trophy, Home, ListChecks, History, BarChart3, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote } from "lucide-react";
+import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect } from "react";
