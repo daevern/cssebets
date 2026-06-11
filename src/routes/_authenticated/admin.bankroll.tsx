@@ -169,16 +169,16 @@ function BankrollPage() {
 
           <Card className="p-4 space-y-3">
             <div className="font-medium flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-primary" /> House user (bankroll wallet)
+              <ShieldCheck className="h-4 w-4 text-primary" /> House user (bankroll owner)
             </div>
             <p className="text-xs text-muted-foreground">
-              Every stake collected credits this user's points wallet, and every payout debits it. Top-ups and withdrawals
-              also mirror here. Super admin only.
+              Metadata only — designates which admin is responsible for the platform bankroll. The user's own wallet
+              is unaffected; the bankroll is tracked exclusively on the platform ledger. Super admin only.
             </p>
             <div className="text-sm">
               Current:{" "}
               <span className="font-medium">
-                {o.house ? `${o.house.displayName} — ${fmt(o.house.walletBalance)} pts` : "Not set"}
+                {o.house ? o.house.displayName : "Not set"}
               </span>
             </div>
             <div className="grid md:grid-cols-3 gap-3">
