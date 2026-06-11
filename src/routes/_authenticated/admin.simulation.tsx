@@ -339,6 +339,85 @@ function SimulationPage() {
         </Alert>
       )}
 
+      {/* Live simulation state cards */}
+      {o && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <Stat label="Active Sim Matches" value={String((o.matches as any).scheduled + (o.matches as any).live)} />
+          <Stat label="Awaiting Settlement" value={String((o.matches as any).live)} tone={(o.matches as any).live > 0 ? "warn" : undefined} />
+          <Stat label="Matches Settled" value={String((o.matches as any).finished)} tone="ok" />
+          <Stat
+            label="Simulation Runtime"
+            value={simStartedAt ? `${Math.floor((nowTs - simStartedAt) / 1000)}s` : "—"}
+          />
+          <Stat
+            label="Batch ETA"
+            value={
+              simMode === "batch" && simStartedAt && !summary
+                ? `${Math.max(0, Math.ceil((simStartedAt + 60_000 - nowTs) / 1000))}s`
+                : summary ? "Settled" : "—"
+            }
+            tone={simMode === "batch" && simStartedAt && !summary ? "warn" : undefined}
+          />
+        </div>
+      )}
+
+      {/* Stress test metrics */}
+      {stress.data && (
+        <Card className="p-3">
+          <div className="flex items-center gap-2 mb-2 text-sm font-medium">
+            <BarChart3 className="h-4 w-4" /> Stress Test Metrics
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+            <Stat label="Wallet Txns" value={Number(stress.data.wallet_txns).toLocaleString()} />
+            <Stat label="Platform Txns" value={Number(stress.data.platform_txns).toLocaleString()} />
+            <Stat label="Pool Txns" value={Number(stress.data.pool_txns).toLocaleString()} />
+            <Stat label="Predictions Settled" value={`${Number(stress.data.predictions_settled).toLocaleString()} / ${Number(stress.data.predictions_total).toLocaleString()}`} />
+            <Stat label="Pools Settled" value={Number(stress.data.pools_settled).toLocaleString()} />
+            {lastBatchTiming && (
+              <>
+                <Stat label="Batch Duration (server)" value={`${Math.round(lastBatchTiming.duration_ms)} ms`} tone="ok" />
+                <Stat label="Avg / Match" value={`${lastBatchTiming.avg_ms_per_match.toFixed(1)} ms`} />
+                <Stat label="Round-trip" value={`${lastBatchTiming.client_round_trip_ms} ms`} />
+                <Stat label="Matches in Batch" value={String(lastBatchTiming.settled)} />
+                <Stat label="Predictions in Batch" value={String(lastBatchTiming.predictions_settled)} />
+              </>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* Settlement summary (after batch settle) */}
+      {summary && (
+        <Card className="p-3 border-emerald-500/40">
+          <div className="text-sm font-medium mb-2">Settlement Summary</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Stat label="Matches Settled" value={String(summary.matchesSettled)} />
+            <Stat label="Predictions Settled" value={String(summary.predictionsSettled)} />
+            <Stat label="Total Stakes" value={fmt(summary.totalStakes)} />
+            <Stat label="Total Payouts" value={fmt(summary.totalPayouts)} />
+            <Stat label="Net Platform P/L" value={fmt(summary.netPlatformPL)} tone={summary.netPlatformPL >= 0 ? "ok" : "bad"} />
+            <Stat label="Bankroll Balance" value={fmt(summary.bankrollBalance)} />
+            {summary.biggestWinner && (
+              <Stat label={`Biggest Winner — ${summary.biggestWinner.name}`} value={fmt(summary.biggestWinner.pl)} tone="ok" />
+            )}
+            {summary.biggestLoser && (
+              <Stat label={`Biggest Loser — ${summary.biggestLoser.name}`} value={fmt(summary.biggestLoser.pl)} tone="bad" />
+            )}
+            {summary.highestPayoutMatch && (
+              <Stat label={`Highest Payout — ${summary.highestPayoutMatch.label}`} value={fmt(summary.highestPayoutMatch.payout)} />
+            )}
+            {summary.highestProfitMatch && (
+              <Stat label={`Top Profit Match — ${summary.highestProfitMatch.label}`} value={fmt(summary.highestProfitMatch.pl)} tone="ok" />
+            )}
+            {summary.highestLossMatch && (
+              <Stat label={`Top Loss Match — ${summary.highestLossMatch.label}`} value={fmt(summary.highestLossMatch.pl)} tone="bad" />
+            )}
+          </div>
+        </Card>
+      )}
+
+
+
       {o && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Stat label="Sim Bankroll" value={fmt(o.bankroll.balance)} />
