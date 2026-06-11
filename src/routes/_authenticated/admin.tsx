@@ -36,9 +36,10 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
-const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean }> = [
+const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeKey?: "pendingPointRequests" }> = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/admin/users", label: "Users", icon: Users },
+  { to: "/admin-wallet", label: "Point Requests", icon: Wallet, badgeKey: "pendingPointRequests" },
   { to: "/admin/predictions", label: "Predictions", icon: ListChecks },
   { to: "/admin/matches", label: "Matches", icon: CalendarDays },
   { to: "/admin/odds-history", label: "Odds history", icon: TrendingUp },
@@ -56,6 +57,15 @@ const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean }> = [
 function AdminLayout() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const countFn = useServerFn(getPendingPointRequestCount);
+  const pendingCount = useQuery({
+    queryKey: ["pending-point-request-count"],
+    queryFn: () => countFn({}),
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+  });
+  const badges = { pendingPointRequests: pendingCount.data?.count ?? 0 } as const;
+
 
   return (
     <div className="flex gap-4 min-h-[calc(100vh-7rem)]">
