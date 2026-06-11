@@ -64,6 +64,7 @@ function AdminLayout() {
   const [open, setOpen] = useState(false);
   const countFn = useServerFn(getPendingPointRequestCount);
   const payoutCountFn = useServerFn(getPendingPayoutCount);
+  const userCountFn = useServerFn(getPendingUserCount);
   const pendingCount = useQuery({
     queryKey: ["pending-point-request-count"],
     queryFn: () => countFn({}),
@@ -76,9 +77,16 @@ function AdminLayout() {
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
   });
+  const pendingUserCount = useQuery({
+    queryKey: ["pending-user-count"],
+    queryFn: () => userCountFn({}),
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+  });
   const badges = {
     pendingPointRequests: pendingCount.data?.count ?? 0,
     pendingPayouts: pendingPayoutCount.data?.count ?? 0,
+    pendingUsers: pendingUserCount.data?.count ?? 0,
   } as const;
 
 
