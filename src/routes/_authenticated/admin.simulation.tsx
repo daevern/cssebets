@@ -513,6 +513,11 @@ function SimulationPage() {
               <div>Missing after coverage: <b>{seedSummary.matchesMissingAfterCoverage ?? "—"}</b></div>
               <div>Emergency cap (coverage): <b>{seedSummary.coverageCapHit ? "Yes" : "No"}</b></div>
               <div>Fill stopped by cap: <b>{seedSummary.fillCapHit ? "Yes" : "No"}</b></div>
+              <div>Raw matches count: <b>{seedSummary.rawMatchesCount ?? "—"}</b></div>
+              <div>Unique matches count: <b>{seedSummary.uniqueMatchesCount ?? "—"}</b></div>
+              <div className={seedSummary.duplicateMatchIdsCount > 0 ? "text-destructive font-medium" : undefined}>
+                Duplicate match IDs: <b>{seedSummary.duplicateMatchIdsCount ?? 0}</b>
+              </div>
             </div>
             {seedSummary.coverageCompleted === false && (
               <div className="mt-3 text-sm font-medium text-destructive">
