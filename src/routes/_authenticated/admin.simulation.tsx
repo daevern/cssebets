@@ -44,12 +44,15 @@ function SimulationPage() {
   const seedPredsFn = useServerFn(seedSimulationPredictions);
   const tickFn = useServerFn(runSimulationTick);
   const resetFn = useServerFn(resetSimulationData);
+  const validateFn = useServerFn(validateSimulationSeed);
 
   const [running, setRunning] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [durationMin, setDurationMin] = useState<number>(1);
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [showConfig, setShowConfig] = useState(false);
+  const [validation, setValidation] = useState<{ configured: number; average: number; total: number; users: number } | null>(null);
+
   const setBankrollFn = useServerFn(setSimulationBankroll);
 
   // Seed configuration (admin-tunable)
