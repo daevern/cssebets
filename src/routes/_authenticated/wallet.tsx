@@ -208,20 +208,17 @@ function WalletPage() {
       {isAdmin && (
         <Card className="p-6 border-primary/30">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Landmark className="h-4 w-4" /> House bankroll (you are the bankroller)
+            <Landmark className="h-4 w-4" /> House P/L (you are the bankroller)
           </div>
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <div className="text-xs text-muted-foreground">Real bankroll</div>
-              <div className="text-3xl font-bold tabular-nums">
-                {house.isLoading ? "…" : (house.data?.real.balance ?? 0).toLocaleString()}
+              <div className="text-xs text-muted-foreground">Real bankroll P/L</div>
+              <div className={`text-3xl font-bold tabular-nums ${(house.data?.real.balance ?? 0) >= 0 ? "text-green-500" : "text-destructive"}`}>
+                {house.isLoading ? "…" : `${(house.data?.real.balance ?? 0) > 0 ? "+" : ""}${Number(house.data?.real.balance ?? 0).toLocaleString()}`}
                 <span className="text-sm font-medium text-muted-foreground ml-1">pts</span>
               </div>
               <div className="text-xs text-muted-foreground mt-1 tabular-nums">
-                Stakes {Number(house.data?.real.totalStakes ?? 0).toLocaleString()} · Payouts {Number(house.data?.real.totalPayouts ?? 0).toLocaleString()} · Net{" "}
-                <span className={(house.data?.real.netPL ?? 0) >= 0 ? "text-green-500" : "text-destructive"}>
-                  {Number(house.data?.real.netPL ?? 0).toLocaleString()}
-                </span>
+                Stakes collected {Number(house.data?.real.totalStakes ?? 0).toLocaleString()} · Payouts paid {Number(house.data?.real.totalPayouts ?? 0).toLocaleString()}
               </div>
             </div>
             <div>
@@ -239,7 +236,7 @@ function WalletPage() {
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-3">
-            Updates every 5s. Simulation activity moves the simulation bankroll; real bets move the real bankroll.
+            Starts at 0. Positive = house profit after all stakes collected and payouts paid. Negative = house loss.
           </p>
         </Card>
       )}
