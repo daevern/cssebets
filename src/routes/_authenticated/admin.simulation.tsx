@@ -134,9 +134,41 @@ function SimulationPage() {
 
   const resetMut = useMutation({
     mutationFn: () => resetFn(),
-    onSuccess: () => { toast.success("Simulation data reset"); qc.invalidateQueries(); },
+    onSuccess: () => { toast.success("Simulation data reset"); setSimStartedAt(null); setSummary(null); setLastBatchTiming(null); qc.invalidateQueries(); },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const batchSettleMut = useMutation({
+    mutationFn: async () => {
+      const r: any = await batchFn();
+      const s: any = await summaryFn();
+      return { r, s };
+    },
+    onSuccess: ({ r, s }) => {
+      setLastBatchTiming({
+        duration_ms: r.duration_ms,
+        avg_ms_per_match: r.avg_ms_per_match,
+        client_round_trip_ms: r.client_round_trip_ms,
+        settled: r.settled,
+        predictions_settled: r.predictions_settled,
+      });
+      setSummary(s);
+      toast.success(`Batch settled ${r.settled} matches · ${r.predictions_settled} predictions · ${Math.round(r.duration_ms)} ms`);
+      qc.invalidateQueries();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  // Auto batch-settle in batch mode after 60s elapsed since seed
+  useEffect(() => {
+    if (simMode !== "batch" || !simStartedAt || summary) return;
+    const elapsed = nowTs - simStartedAt;
+    if (elapsed >= 60_000 && !batchSettleMut.isPending) {
+      batchSettleMut.mutate();
+    }
+  }, [nowTs, simMode, simStartedAt, summary, batchSettleMut]);
+
+
 
   async function handleSeed() {
     setSeeding(true);
