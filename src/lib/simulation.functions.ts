@@ -147,16 +147,20 @@ export const setSimulationBankroll = createServerFn({ method: "POST" })
 // =========================================================
 export const seedSimulationMatches = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((i: unknown) =>
+    z.object({
+      matchCount: z.number().int().min(1).max(200).default(SIM_MATCH_COUNT),
+    }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     await requireAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // skip if already seeded this batch
     const { count } = await (supabaseAdmin as any).from("matches")
       .select("id", { count: "exact", head: true })
       .eq("is_simulation", true)
       .in("status", ["scheduled", "live"]);
-    if ((count ?? 0) >= SIM_MATCH_COUNT) {
+    if ((count ?? 0) >= data.matchCount) {
       return { created: 0, skipped: count, message: "Already seeded" };
     }
 
@@ -164,7 +168,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
     const rows: any[] = [];
     const usedTeams = new Set<string>();
     let teamIdx = 0;
-    for (let i = 0; i < SIM_MATCH_COUNT; i++) {
+    for (let i = 0; i < data.matchCount; i++) {
       let home = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
       let away = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
       while (usedTeams.has(home + away) || home === away) {
@@ -190,7 +194,6 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
       .from("matches").insert(rows).select("id, reference_odds");
     if (error) throw new Error(error.message);
 
-    // odds snapshots
     const snaps = (inserted ?? []).map((m: any) => ({
       match_id: m.id,
       home_odds: m.reference_odds?.home,
@@ -210,7 +213,16 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
 // =========================================================
 export const seedSimulationPredictions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((i: unknown) =>
+    z.object({
+      minUsersPerMatch: z.number().int().min(1).default(10),
+      maxUsersPerMatch: z.number().int().min(1).default(30),
+      minStake: z.number().int().min(1).default(50),
+      maxStake: z.number().int().min(1).default(300),
+      exposureTargetPct: z.number().min(0).max(1).default(0.6),
+    }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     await requireAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -227,26 +239,44 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
 
     if (!matches?.length) return { error: "No scheduled sim matches" };
 
+    // Bankroll exposure cap
+    const { data: bankrollRow } = await (supabaseAdmin as any)
+      .from("platform_bankroll").select("balance").eq("id", 2).maybeSingle();
+    const bankroll = Number(bankrollRow?.balance ?? 0);
+    const exposureCap = bankroll * data.exposureTargetPct;
+
+    const minU = Math.min(data.minUsersPerMatch, data.maxUsersPerMatch);
+    const maxU = Math.max(data.minUsersPerMatch, data.maxUsersPerMatch);
+    const minS = Math.min(data.minStake, data.maxStake);
+    const maxS = Math.max(data.minStake, data.maxStake);
+
     let predictionsCreated = 0;
     let predictionsFailed = 0;
+    let stoppedAtCap = false;
 
     for (const m of matches as any[]) {
-      // skip if predictions already exist for this match
       const { count: existing } = await (supabaseAdmin as any).from("predictions")
         .select("id", { count: "exact", head: true })
         .eq("match_id", m.id);
       if ((existing ?? 0) > 0) continue;
 
+      // Check current global exposure against cap before each match
+      const { data: liveMatches } = await (supabaseAdmin as any)
+        .from("matches").select("worst_case_exposure")
+        .eq("is_simulation", true).in("status", ["scheduled", "live"]);
+      const globalExposure = (liveMatches ?? []).reduce(
+        (s: number, x: any) => s + Number(x.worst_case_exposure || 0), 0);
+      if (globalExposure >= exposureCap) { stoppedAtCap = true; break; }
+
       const ro = m.reference_odds ?? { home: 2, draw: 3, away: 2 };
-      // randomly select 30-80 users
-      const pickN = 30 + Math.floor(Math.random() * 51);
+      const pickN = minU + Math.floor(Math.random() * (maxU - minU + 1));
       const shuffled = [...userIds].sort(() => Math.random() - 0.5).slice(0, pickN);
 
       for (const uid of shuffled) {
         const r = Math.random();
         const outcome = r < 0.4 ? "HOME" : r < 0.7 ? "AWAY" : "DRAW";
         const odds = outcome === "HOME" ? ro.home : outcome === "DRAW" ? ro.draw : ro.away;
-        const stake = 50 + Math.floor(Math.random() * 951);
+        const stake = minS + Math.floor(Math.random() * (maxS - minS + 1));
 
         const { error: betErr } = await (supabaseAdmin as any).rpc("place_bet_atomic", {
           p_user_id: uid,
@@ -261,8 +291,10 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
         else predictionsCreated++;
       }
     }
-    return { predictionsCreated, predictionsFailed, matchesProcessed: matches.length };
+    return { predictionsCreated, predictionsFailed, matchesProcessed: matches.length, stoppedAtCap, exposureCap };
   });
+
+
 
 // =========================================================
 //  TICK — advances scheduled/live sim matches; settles due
