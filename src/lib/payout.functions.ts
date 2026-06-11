@@ -121,39 +121,24 @@ export const userRejectPayoutProof = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: row, error: e1 } = await supabase
-      .from("payout_requests")
-      .select("id, user_id, status, amount")
-      .eq("id", data.payoutId)
-      .maybeSingle();
-    if (e1) throw new Error(e1.message);
-    if (!row || row.user_id !== userId) throw new Error("Not found");
-    if (row.status !== "proof_uploaded") throw new Error("Not awaiting your decision");
-
-    // Refund debited points
-    const { error: rpcErr } = await supabaseAdmin.rpc("wallet_apply_change", {
+    const { error: rpcErr } = await supabaseAdmin.rpc("payout_user_reject_atomic" as any, {
+      p_payout_id: data.payoutId,
       p_user_id: userId,
-      p_type: "credit",
-      p_amount: Number(row.amount),
-      p_reference_type: "payout",
-      p_reference_id: row.id,
-      p_note: `Payout proof rejected: ${data.reason.slice(0, 200)}`,
+      p_reason: data.reason,
     });
     if (rpcErr) throw new Error(rpcErr.message);
-
-    const { error } = await supabaseAdmin
-      .from("payout_requests")
-      .update({
-        status: "rejected_by_user",
-        user_decision_at: new Date().toISOString(),
-        user_rejection_reason: data.reason,
-      })
-      .eq("id", data.payoutId);
-    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("audit_log").insert({
+      user_id: userId,
+      action: "payout.user_reject",
+      entity: "payout_request",
+      entity_id: data.payoutId,
+      metadata: { reason: data.reason.slice(0, 200) },
+    });
     return { ok: true };
   });
+
 
 // ---------------- ADMIN ----------------
 
