@@ -32,6 +32,21 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
         supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "void"),
       ]);
 
+    const houseUserId = (bankroll as any)?.house_user_id ?? null;
+    let house: { id: string; displayName: string; walletBalance: number } | null = null;
+    if (houseUserId) {
+      const [{ data: prof }, { data: wal }] = await Promise.all([
+        supabaseAdmin.from("profiles").select("id, display_name").eq("id", houseUserId).maybeSingle(),
+        (supabaseAdmin as any).from("wallets").select("balance").eq("user_id", houseUserId).maybeSingle(),
+      ]);
+      house = {
+        id: houseUserId,
+        displayName: (prof as any)?.display_name ?? "House user",
+        walletBalance: Number((wal as any)?.balance ?? 0),
+      };
+    }
+
+
     const balance = Number((bankroll as any)?.balance ?? 0);
     const totalStakes = Number((bankroll as any)?.total_stakes_collected ?? 0);
     const totalPayouts = Number((bankroll as any)?.total_payouts_paid ?? 0);
