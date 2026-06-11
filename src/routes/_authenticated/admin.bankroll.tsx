@@ -81,7 +81,12 @@ function BankrollPage() {
 
 
   const o = overview.data;
-  const bankrollHealthy = o ? o.bankroll.available >= 0 : true;
+  const platformBalance = o?.bankroll.platformBalance ?? 0;
+  const globalExposure = o?.bankroll.globalExposure ?? 0;
+  const availableBalance = o?.bankroll.availableBalance ?? 0;
+  const safetyRatio = o?.bankroll.safetyRatio ?? null;
+  const overexposed = availableBalance < 0;
+  const lowCoverage = !overexposed && safetyRatio !== null && safetyRatio < 1.25;
 
   return (
     <div className="space-y-6">
@@ -90,7 +95,7 @@ function BankrollPage() {
           <Wallet className="h-5 w-5 text-primary" /> Bookmaker bankroll
         </h1>
         <p className="text-sm text-muted-foreground">
-          Virtual house bank: collected stakes, paid payouts, current exposure.
+          Virtual house reserve: platform balance, global exposure, and safety coverage.
         </p>
       </div>
 
@@ -99,33 +104,55 @@ function BankrollPage() {
       ) : o ? (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Metric label="Platform balance" value={fmt(o.bankroll.balance)} />
-            <Metric label="Available bankroll" value={fmt(o.bankroll.available)} tone={bankrollHealthy ? "good" : "bad"} />
-            <Metric label="Current exposure" value={fmt(o.bankroll.totalExposure)} />
+            <Metric label="Platform balance" value={fmt(platformBalance)} />
+            <Metric label="Global exposure" value={fmt(globalExposure)} />
             <Metric
-              label="Net P/L"
-              value={fmt(o.bankroll.netPL)}
-              tone={o.bankroll.netPL >= 0 ? "good" : "bad"}
-              icon={o.bankroll.netPL >= 0 ? TrendingUp : TrendingDown}
+              label="Available balance"
+              value={fmt(availableBalance)}
+              tone={overexposed ? "bad" : "good"}
+            />
+            <Metric
+              label="Safety ratio"
+              value={
+                globalExposure === 0
+                  ? "No exposure"
+                  : `${Math.round((safetyRatio ?? 0) * 100)}%`
+              }
+              tone={overexposed ? "bad" : lowCoverage ? "bad" : "good"}
             />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Metric label="Total stakes collected" value={fmt(o.bankroll.totalStakes)} />
             <Metric label="Total payouts paid" value={fmt(o.bankroll.totalPayouts)} />
             <Metric
-              label={o.house ? `House wallet (${o.house.displayName})` : "House wallet"}
-              value={o.house ? fmt(o.house.walletBalance) : "Not set"}
-              tone={o.house ? "good" : "bad"}
+              label="Net platform P/L"
+              value={fmt(o.bankroll.netPL)}
+              tone={o.bankroll.netPL >= 0 ? "good" : "bad"}
+              icon={o.bankroll.netPL >= 0 ? TrendingUp : TrendingDown}
             />
-            <Metric label={`Open / Settled / Void`} value={`${o.bets.open} / ${o.bets.settled} / ${o.bets.void}`} />
+            <Metric
+              label="House user"
+              value={o.house ? o.house.displayName : "Not set"}
+            />
+          </div>
+
+          <div className="text-xs text-muted-foreground">
+            Open / Settled / Void bets: {o.bets.open} / {o.bets.settled} / {o.bets.void}
           </div>
 
 
-          {!bankrollHealthy && (
+
+          {overexposed && (
             <Card className="p-3 border-destructive/40 bg-destructive/5 text-destructive text-sm flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 mt-0.5" />
-              Exposure exceeds available bankroll. New bets on the riskiest market will be rejected with
-              "Maximum bookmaker exposure reached".
+              Warning: platform exposure exceeds available bankroll. New predictions may be rejected until
+              exposure decreases or bankroll is topped up.
+            </Card>
+          )}
+          {lowCoverage && (
+            <Card className="p-3 border-amber-500/40 bg-amber-500/5 text-amber-700 dark:text-amber-400 text-sm flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 mt-0.5" />
+              Caution: platform bankroll coverage is low compared to open exposure.
             </Card>
           )}
 
@@ -142,16 +169,16 @@ function BankrollPage() {
 
           <Card className="p-4 space-y-3">
             <div className="font-medium flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-primary" /> House user (bankroll wallet)
+              <ShieldCheck className="h-4 w-4 text-primary" /> House user (bankroll owner)
             </div>
             <p className="text-xs text-muted-foreground">
-              Every stake collected credits this user's points wallet, and every payout debits it. Top-ups and withdrawals
-              also mirror here. Super admin only.
+              Metadata only — designates which admin is responsible for the platform bankroll. The user's own wallet
+              is unaffected; the bankroll is tracked exclusively on the platform ledger. Super admin only.
             </p>
             <div className="text-sm">
               Current:{" "}
               <span className="font-medium">
-                {o.house ? `${o.house.displayName} — ${fmt(o.house.walletBalance)} pts` : "Not set"}
+                {o.house ? o.house.displayName : "Not set"}
               </span>
             </div>
             <div className="grid md:grid-cols-3 gap-3">
