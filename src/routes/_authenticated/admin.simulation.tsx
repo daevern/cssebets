@@ -337,6 +337,7 @@ function SimulationPage() {
         coverageStakeRange: `${COVERAGE_MIN_STAKE}–${COVERAGE_MAX_STAKE}`,
         matchesCoveredAfterCoverage,
         matchesMissingAfterCoverage,
+        coverageDiagnostics,
       };
       setSeedSummary(merged);
       if (sum.predictions === 0 || sum.poolTxns === 0 || sum.stakeDebits === 0) {
