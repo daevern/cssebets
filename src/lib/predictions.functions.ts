@@ -50,7 +50,7 @@ export const submitPrediction = createServerFn({ method: "POST" })
     if (error) {
       const msg = error.message ?? "";
       if (msg.includes("INSUFFICIENT_BALANCE")) throw new Error("Insufficient points balance. Request more points to place this bet.");
-      if (msg.includes("MAX_EXPOSURE_REACHED")) throw new Error("Maximum bookmaker exposure reached for this market.");
+      if (msg.includes("MAX_EXPOSURE_REACHED")) throw new Error("The platform does not currently have enough virtual bankroll to safely accept this prediction.");
       if (msg.includes("MATCH_LOCKED")) throw new Error("This match has already kicked off. Predictions are locked.");
       throw new Error(msg || "Could not place bet.");
     }
