@@ -6,7 +6,7 @@ const SubmitSchema = z.object({
   matchId: z.string().uuid().nullable(),
   market: z.enum(["result", "correct_score", "total_goals", "btts", "first_scorer", "tournament_winner", "group_winner"]),
   outcome: z.string().min(1).max(80),
-  referenceOdds: z.number().min(1).max(1000),
+  referenceOdds: z.number().min(1).max(100000),
   virtualStake: z.number().min(1).max(1_000_000),
 });
 
