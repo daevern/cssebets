@@ -213,12 +213,12 @@ function WalletPage() {
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <div className="text-xs text-muted-foreground">Real bankroll P/L</div>
-              <div className={`text-3xl font-bold tabular-nums ${(house.data?.real.balance ?? 0) >= 0 ? "text-green-500" : "text-destructive"}`}>
-                {house.isLoading ? "…" : `${(house.data?.real.balance ?? 0) > 0 ? "+" : ""}${Number(house.data?.real.balance ?? 0).toLocaleString()}`}
+              <div className={`text-3xl font-bold tabular-nums ${(house.data?.real.netPL ?? 0) >= 0 ? "text-green-500" : "text-destructive"}`}>
+                {house.isLoading ? "…" : `${(house.data?.real.netPL ?? 0) > 0 ? "+" : ""}${Number(house.data?.real.netPL ?? 0).toLocaleString()}`}
                 <span className="text-sm font-medium text-muted-foreground ml-1">pts</span>
               </div>
               <div className="text-xs text-muted-foreground mt-1 tabular-nums">
-                Stakes collected {Number(house.data?.real.totalStakes ?? 0).toLocaleString()} · Payouts paid {Number(house.data?.real.totalPayouts ?? 0).toLocaleString()}
+                Stakes collected {Number(house.data?.real.totalStakes ?? 0).toLocaleString()} · Payouts paid {Number(house.data?.real.totalPayouts ?? 0).toLocaleString()} · Seed {Number((house.data?.real.balance ?? 0) - (house.data?.real.netPL ?? 0)).toLocaleString()}
               </div>
             </div>
             <div>
