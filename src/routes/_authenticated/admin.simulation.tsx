@@ -11,11 +11,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, Play, Pause, RotateCcw, Sprout, Zap, Loader2, FastForward } from "lucide-react";
+import { AlertTriangle, Play, Pause, RotateCcw, Sprout, Zap, Loader2, FastForward, Settings2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   seedSimulationUsers,
   seedSimulationMatches,
   seedSimulationPredictions,
+  setSimulationBankroll,
   runSimulationTick,
   resetSimulationData,
   getSimulationOverview,
