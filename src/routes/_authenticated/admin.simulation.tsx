@@ -251,6 +251,18 @@ function SimulationPage() {
         </Collapsible>
       </Card>
 
+      {validation && (
+        <Alert variant={Math.abs(validation.average - validation.configured) > 0.5 ? "destructive" : "default"}>
+          <AlertTitle>Seed validation</AlertTitle>
+          <AlertDescription>
+            Configured starting balance: <b>{validation.configured.toLocaleString()} pts</b> ·
+            Actual avg: <b>{Math.round(validation.average).toLocaleString()} pts</b> ·
+            Total issued: <b>{Math.round(validation.total).toLocaleString()} pts</b> across <b>{validation.users}</b> users.
+          </AlertDescription>
+        </Alert>
+      )}
+
+
       {o && o.bankroll.safetyRatio !== null && o.bankroll.safetyRatio < 1.1 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
