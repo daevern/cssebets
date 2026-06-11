@@ -566,7 +566,7 @@ export const validateSimulationSeed = createServerFn({ method: "GET" })
     const { data: wallets } = await (supabaseAdmin as any)
       .from("wallets").select("user_id, balance").in("user_id", ids);
     const balances = (wallets ?? []).map((w: any) => Number(w.balance || 0));
-    const total = balances.reduce((s, b) => s + b, 0);
+    const total = balances.reduce((s: number, b: number) => s + b, 0);
     return {
       userCount: ids.length,
       averageBalance: balances.length ? total / balances.length : 0,
