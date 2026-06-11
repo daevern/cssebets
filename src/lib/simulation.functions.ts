@@ -46,6 +46,37 @@ const SIM_TEAMS = [
   "Lantern FC", "Beacon United",
 ];
 
+// Ensure simulation match has at least MIN_MARGIN house margin.
+// Adjusts odds proportionally (preserves probability ratios) so overround = 1.02.
+const MIN_OVERROUND = 1.02;
+function applyMarginFloor(odds: { home: number; draw: number; away: number }) {
+  const h = Number(odds.home), d = Number(odds.draw), a = Number(odds.away);
+  const overround = 1 / h + 1 / d + 1 / a;
+  const originalMargin = +(((overround - 1) * 100)).toFixed(2);
+  if (overround >= MIN_OVERROUND) {
+    return {
+      home: +h.toFixed(2), draw: +d.toFixed(2), away: +a.toFixed(2),
+      original: { home: +h.toFixed(2), draw: +d.toFixed(2), away: +a.toFixed(2) },
+      original_margin: originalMargin,
+      adjusted_margin: originalMargin,
+      margin_adjusted: false,
+    };
+  }
+  // Scale odds: new_odds = old * (overround / MIN_OVERROUND)
+  const k = overround / MIN_OVERROUND;
+  const nh = +(h * k).toFixed(2);
+  const nd = +(d * k).toFixed(2);
+  const na = +(a * k).toFixed(2);
+  const newOverround = 1 / nh + 1 / nd + 1 / na;
+  return {
+    home: nh, draw: nd, away: na,
+    original: { home: +h.toFixed(2), draw: +d.toFixed(2), away: +a.toFixed(2) },
+    original_margin: originalMargin,
+    adjusted_margin: +(((newOverround - 1) * 100)).toFixed(2),
+    margin_adjusted: true,
+  };
+}
+
 // =========================================================
 //  SEED users (idempotent, batched)
 // =========================================================
@@ -198,6 +229,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
       if (wc) {
         wcMatchesUsed++;
         if (wc.odds_source === "the-odds-api") realOddsCount++;
+        const adjusted = applyMarginFloor(wc.reference_odds);
         rows.push({
           home_team: wc.home_team,
           away_team: wc.away_team,
@@ -210,7 +242,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
             ? `${wc.stage} (Sim Batch)`
             : `${wc.stage} (Sim)`,
           is_simulation: true,
-          reference_odds: wc.reference_odds,
+          reference_odds: adjusted,
           odds_source: wc.odds_source === "the-odds-api" ? "the-odds-api" : "simulation",
           odds_updated_at: new Date().toISOString(),
         });
@@ -222,6 +254,11 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
           away = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
         }
         usedTeams.add(home + away);
+        const adjusted = applyMarginFloor({
+          home: +(1.5 + Math.random() * 3).toFixed(2),
+          draw: +(2.8 + Math.random() * 2.2).toFixed(2),
+          away: +(1.5 + Math.random() * 3).toFixed(2),
+        });
         rows.push({
           home_team: home,
           away_team: away,
@@ -229,11 +266,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
           status: "scheduled",
           stage: data.mode === "batch" ? "Simulation Cup (Batch)" : "Simulation Cup",
           is_simulation: true,
-          reference_odds: {
-            home: +(1.5 + Math.random() * 3).toFixed(2),
-            draw: +(2.8 + Math.random() * 2.2).toFixed(2),
-            away: +(1.5 + Math.random() * 3).toFixed(2),
-          },
+          reference_odds: adjusted,
         });
       }
     }
@@ -260,6 +293,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
       worldCupFixturesUsed: wcMatchesUsed,
       realOddsCount,
       fallbackCount: (inserted?.length ?? 0) - wcMatchesUsed,
+      marginAdjustedCount: rows.filter((r: any) => r.reference_odds?.margin_adjusted).length,
       warning: wcWarning,
     };
   });
@@ -744,12 +778,17 @@ export const getSimulationMatches = createServerFn({ method: "GET" })
         const originalPool = homePool + drawPool + awayPool;
         const payouts = payoutsByMatch.get(m.id) ?? 0;
         const isSettled = !!pool?.settled;
+        const ro = m.reference_odds ?? {};
         return {
           id: m.id,
           label: `${m.home_team} vs ${m.away_team}`,
           kickoff: m.kickoff_at,
           status: m.status,
-          odds: m.reference_odds,
+          odds: { home: ro.home, draw: ro.draw, away: ro.away },
+          originalOdds: ro.original ?? null,
+          originalMargin: ro.original_margin ?? null,
+          adjustedMargin: ro.adjusted_margin ?? null,
+          marginAdjusted: !!ro.margin_adjusted,
           originalPool,
           remainingPool,
           totalPool: originalPool, // back-compat
