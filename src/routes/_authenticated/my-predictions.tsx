@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated/my-predictions")({
   head: () => ({ meta: [{ title: "My Predictions — WC26 Pool" }] }),
@@ -13,19 +14,35 @@ export const Route = createFileRoute("/_authenticated/my-predictions")({
 
 function MyPredictionsPage() {
   const { user } = useAuth();
+  const qc = useQueryClient();
+  const uid = user?.id;
   const { data, isLoading } = useQuery({
-    queryKey: ["my-predictions", user?.id],
-    enabled: !!user?.id,
+    queryKey: ["my-predictions", uid],
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    staleTime: 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("predictions")
         .select("*, matches(home_team, away_team, kickoff_at)")
-        .eq("user_id", user!.id)
+        .eq("user_id", uid!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as any[];
     },
   });
+
+  useEffect(() => {
+    if (!uid) return;
+    const ch = supabase
+      .channel(`my-predictions-live-${uid}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "predictions", filter: `user_id=eq.${uid}` }, () => {
+        qc.invalidateQueries({ queryKey: ["my-predictions", uid] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc, uid]);
 
   if (isLoading) return <div className="grid place-items-center py-20"><Loader2 className="animate-spin h-6 w-6 text-muted-foreground" /></div>;
 
