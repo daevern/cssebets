@@ -250,6 +250,7 @@ export type Database = {
         Row: {
           balance: number
           created_at: string
+          house_user_id: string | null
           id: number
           total_payouts_paid: number
           total_stakes_collected: number
@@ -258,6 +259,7 @@ export type Database = {
         Insert: {
           balance?: number
           created_at?: string
+          house_user_id?: string | null
           id?: number
           total_payouts_paid?: number
           total_stakes_collected?: number
@@ -266,6 +268,7 @@ export type Database = {
         Update: {
           balance?: number
           created_at?: string
+          house_user_id?: string | null
           id?: number
           total_payouts_paid?: number
           total_stakes_collected?: number
@@ -559,6 +562,10 @@ export type Database = {
         Args: { p_match_id: string }
         Returns: undefined
       }
+      set_house_user: {
+        Args: { p_admin_id: string; p_house_user_id: string }
+        Returns: string
+      }
       settle_match_atomic: {
         Args: { p_away_score: number; p_home_score: number; p_match_id: string }
         Returns: number
@@ -616,6 +623,7 @@ export type Database = {
         | "bet_placement"
         | "bet_settlement"
         | "admin_adjustment"
+        | "house_bankroll"
       wallet_txn_type: "credit" | "debit" | "refund" | "adjustment"
     }
     CompositeTypes: {
@@ -769,6 +777,7 @@ export const Constants = {
         "bet_placement",
         "bet_settlement",
         "admin_adjustment",
+        "house_bankroll",
       ],
       wallet_txn_type: ["credit", "debit", "refund", "adjustment"],
     },

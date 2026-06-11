@@ -6,12 +6,15 @@ import {
   getBankrollOverview,
   listPlatformTransactions,
   adjustBankroll,
+  listEligibleHouseUsers,
+  setHouseUser,
 } from "@/lib/bankroll.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -27,6 +30,8 @@ function BankrollPage() {
   const overviewFn = useServerFn(getBankrollOverview);
   const txnsFn = useServerFn(listPlatformTransactions);
   const adjustFn = useServerFn(adjustBankroll);
+  const listHouseFn = useServerFn(listEligibleHouseUsers);
+  const setHouseFn = useServerFn(setHouseUser);
   const qc = useQueryClient();
 
   const overview = useQuery({
@@ -39,9 +44,26 @@ function BankrollPage() {
     queryFn: () => txnsFn({ data: {} }),
     refetchInterval: 15_000,
   });
+  const eligibles = useQuery({
+    queryKey: ["bankroll-eligible-house"],
+    queryFn: () => listHouseFn(),
+  });
 
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
+  const [houseChoice, setHouseChoice] = useState("");
+  const [houseReason, setHouseReason] = useState("");
+
+  const houseMut = useMutation({
+    mutationFn: () => setHouseFn({ data: { houseUserId: houseChoice, reason: houseReason } }),
+    onSuccess: () => {
+      toast.success("House user updated. Bankroll movements now mirror this wallet.");
+      setHouseReason("");
+      qc.invalidateQueries({ queryKey: ["bankroll-overview"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Failed to set house user"),
+  });
+
 
   const mut = useMutation({
     mutationFn: (action: "topup" | "withdraw") =>
@@ -52,9 +74,11 @@ function BankrollPage() {
       setReason("");
       qc.invalidateQueries({ queryKey: ["bankroll-overview"] });
       qc.invalidateQueries({ queryKey: ["platform-txns"] });
+      qc.invalidateQueries({ queryKey: ["wallet"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Adjustment failed"),
   });
+
 
   const o = overview.data;
   const bankrollHealthy = o ? o.bankroll.available >= 0 : true;
@@ -88,9 +112,14 @@ function BankrollPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Metric label="Total stakes collected" value={fmt(o.bankroll.totalStakes)} />
             <Metric label="Total payouts paid" value={fmt(o.bankroll.totalPayouts)} />
-            <Metric label="Open bets" value={String(o.bets.open)} />
-            <Metric label={`Settled / Void`} value={`${o.bets.settled} / ${o.bets.void}`} />
+            <Metric
+              label={o.house ? `House wallet (${o.house.displayName})` : "House wallet"}
+              value={o.house ? fmt(o.house.walletBalance) : "Not set"}
+              tone={o.house ? "good" : "bad"}
+            />
+            <Metric label={`Open / Settled / Void`} value={`${o.bets.open} / ${o.bets.settled} / ${o.bets.void}`} />
           </div>
+
 
           {!bankrollHealthy && (
             <Card className="p-3 border-destructive/40 bg-destructive/5 text-destructive text-sm flex items-start gap-2">
@@ -110,6 +139,51 @@ function BankrollPage() {
               </div>
             </Card>
           )}
+
+          <Card className="p-4 space-y-3">
+            <div className="font-medium flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary" /> House user (bankroll wallet)
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Every stake collected credits this user's points wallet, and every payout debits it. Top-ups and withdrawals
+              also mirror here. Super admin only.
+            </p>
+            <div className="text-sm">
+              Current:{" "}
+              <span className="font-medium">
+                {o.house ? `${o.house.displayName} — ${fmt(o.house.walletBalance)} pts` : "Not set"}
+              </span>
+            </div>
+            <div className="grid md:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">Designate user</Label>
+                <select
+                  value={houseChoice}
+                  onChange={(e) => setHouseChoice(e.target.value)}
+                  className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                >
+                  <option value="">— pick an admin —</option>
+                  {(eligibles.data?.users ?? []).map((u: any) => (
+                    <option key={u.id} value={u.id}>
+                      {u.displayName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-xs">Reason (audit)</Label>
+                <Textarea rows={2} value={houseReason} onChange={(e) => setHouseReason(e.target.value)} />
+              </div>
+            </div>
+            <Button
+              onClick={() => houseMut.mutate()}
+              disabled={houseMut.isPending || !houseChoice || houseReason.length < 3}
+            >
+              Set house user
+            </Button>
+          </Card>
+
+
 
           <Card className="p-4 space-y-3">
             <div className="font-medium flex items-center gap-2">
