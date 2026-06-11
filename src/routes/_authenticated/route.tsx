@@ -4,6 +4,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyWallet } from "@/lib/wallet.functions";
+import { getPendingPointRequestCount } from "@/lib/wallet.functions";
+import { getPendingPayoutCount, getMyPayoutActionCount } from "@/lib/payout.functions";
+import { getPendingUserCount } from "@/lib/admin.functions";
 import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,6 +38,43 @@ function AuthedLayout() {
     refetchOnMount: "always",
     staleTime: 0,
   });
+
+  // Pending-action badges
+  const pointReqFn = useServerFn(getPendingPointRequestCount);
+  const payoutAdminFn = useServerFn(getPendingPayoutCount);
+  const pendingUserFn = useServerFn(getPendingUserCount);
+  const myPayoutActionFn = useServerFn(getMyPayoutActionCount);
+
+  const pendingPoints = useQuery({
+    queryKey: ["pending-point-request-count"],
+    queryFn: () => pointReqFn({}),
+    enabled: isAdmin,
+    refetchInterval: 20000,
+  });
+  const pendingPayouts = useQuery({
+    queryKey: ["pending-payout-count"],
+    queryFn: () => payoutAdminFn({}),
+    enabled: isAdmin,
+    refetchInterval: 20000,
+  });
+  const pendingUsers = useQuery({
+    queryKey: ["pending-user-count"],
+    queryFn: () => pendingUserFn({}),
+    enabled: isAdmin,
+    refetchInterval: 20000,
+  });
+  const myPayoutAction = useQuery({
+    queryKey: ["my-payout-action-count", user?.id],
+    queryFn: () => myPayoutActionFn({}),
+    enabled: !!user?.id,
+    refetchInterval: 20000,
+  });
+
+  const adminBadge =
+    (pendingPoints.data?.count ?? 0) +
+    (pendingPayouts.data?.count ?? 0) +
+    (pendingUsers.data?.count ?? 0);
+  const payoutBadge = myPayoutAction.data?.count ?? 0;
 
   // Live wallet balance: refresh whenever this user's wallet/txns/predictions change.
   useEffect(() => {
@@ -121,26 +161,42 @@ function AuthedLayout() {
             <span className="hidden sm:inline">cssebets</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="px-3 py-1.5 rounded-md text-sm hover:bg-muted [&.active]:bg-muted [&.active]:text-primary"
-                activeOptions={{ exact: item.to === "/" }}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const badge =
+                item.to === "/admin" ? adminBadge :
+                item.to === "/admin-wallet" ? (pendingPoints.data?.count ?? 0) :
+                item.to === "/payout" ? payoutBadge : 0;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="relative px-3 py-1.5 rounded-md text-sm hover:bg-muted [&.active]:bg-muted [&.active]:text-primary"
+                  activeOptions={{ exact: item.to === "/" }}
+                >
+                  {item.label}
+                  {badge > 0 && (
+                    <span className="absolute -top-1 -right-1 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground tabular-nums">
+                      {badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </nav>
           <div className="flex items-center gap-2">
             {isAdminTier && (
               <Link
                 to="/admin"
-                className="md:hidden grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                className="relative md:hidden grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
                 title="Admin"
                 aria-label="Admin"
               >
                 <Shield className="h-4 w-4" />
+                {adminBadge > 0 && (
+                  <span className="absolute -top-1 -right-1 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground tabular-nums">
+                    {adminBadge}
+                  </span>
+                )}
               </Link>
             )}
             {showBalance && (
@@ -171,13 +227,24 @@ function AuthedLayout() {
           {mobileNavItems.map((item) => {
             const active = item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to);
             const Icon = item.icon;
+            const badge =
+              item.to === "/admin" ? adminBadge :
+              item.to === "/admin-wallet" ? (pendingPoints.data?.count ?? 0) :
+              item.to === "/payout" ? payoutBadge : 0;
             return (
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex flex-col items-center gap-0.5 py-2.5 text-[10px] ${active ? "text-primary" : "text-muted-foreground"}`}
+                className={`relative flex flex-col items-center gap-0.5 py-2.5 text-[10px] ${active ? "text-primary" : "text-muted-foreground"}`}
               >
-                <Icon className="h-5 w-5" />
+                <div className="relative">
+                  <Icon className="h-5 w-5" />
+                  {badge > 0 && (
+                    <span className="absolute -top-1.5 -right-2 inline-flex min-w-[16px] h-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-semibold text-destructive-foreground tabular-nums">
+                      {badge}
+                    </span>
+                  )}
+                </div>
                 {item.label}
               </Link>
             );

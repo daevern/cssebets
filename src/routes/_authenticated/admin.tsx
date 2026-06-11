@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getPendingPointRequestCount } from "@/lib/wallet.functions";
 import { getPendingPayoutCount } from "@/lib/payout.functions";
+import { getPendingUserCount } from "@/lib/admin.functions";
 import {
   LayoutDashboard,
   Users,
@@ -38,10 +39,10 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
-type BadgeKey = "pendingPointRequests" | "pendingPayouts";
+type BadgeKey = "pendingPointRequests" | "pendingPayouts" | "pendingUsers";
 const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeKey?: BadgeKey }> = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/admin/users", label: "Users", icon: Users },
+  { to: "/admin/users", label: "Users", icon: Users, badgeKey: "pendingUsers" },
   { to: "/admin-wallet", label: "Point Requests", icon: Wallet, badgeKey: "pendingPointRequests" },
   { to: "/admin-payout", label: "Payouts", icon: Banknote, badgeKey: "pendingPayouts" },
   { to: "/admin/predictions", label: "Predictions", icon: ListChecks },
@@ -63,6 +64,7 @@ function AdminLayout() {
   const [open, setOpen] = useState(false);
   const countFn = useServerFn(getPendingPointRequestCount);
   const payoutCountFn = useServerFn(getPendingPayoutCount);
+  const userCountFn = useServerFn(getPendingUserCount);
   const pendingCount = useQuery({
     queryKey: ["pending-point-request-count"],
     queryFn: () => countFn({}),
@@ -75,9 +77,16 @@ function AdminLayout() {
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
   });
+  const pendingUserCount = useQuery({
+    queryKey: ["pending-user-count"],
+    queryFn: () => userCountFn({}),
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+  });
   const badges = {
     pendingPointRequests: pendingCount.data?.count ?? 0,
     pendingPayouts: pendingPayoutCount.data?.count ?? 0,
+    pendingUsers: pendingUserCount.data?.count ?? 0,
   } as const;
 
 
