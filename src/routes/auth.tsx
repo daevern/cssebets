@@ -57,7 +57,7 @@ function AuthPage() {
           </div>
           <h1 className="text-2xl font-bold">cssebets</h1>
           <p className="text-sm text-muted-foreground text-center">
-            Private World Cup 2026 prediction pool.
+            Competitive Strategy Starts Everywhere!
           </p>
         </div>
 
