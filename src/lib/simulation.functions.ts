@@ -7,11 +7,18 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // Simulation user password: pulled from env if provided, otherwise a strong random
-// generated per server boot. Avoids hardcoded credentials in source.
-const SIM_PASSWORD =
-  process.env.SIM_USER_PASSWORD && process.env.SIM_USER_PASSWORD.length >= 12
-    ? process.env.SIM_USER_PASSWORD
-    : `sim-${crypto.randomUUID()}-${crypto.randomUUID()}`;
+// generated lazily on first use. Cannot generate random values at module scope
+// (Cloudflare Workers disallow I/O / randomness in global scope).
+let _simPassword: string | undefined;
+function getSimPassword(): string {
+  if (_simPassword) return _simPassword;
+  const env = process.env.SIM_USER_PASSWORD;
+  _simPassword =
+    env && env.length >= 12
+      ? env
+      : `sim-${crypto.randomUUID()}-${crypto.randomUUID()}`;
+  return _simPassword;
+}
 const SIM_USER_COUNT = 100;
 const SIM_MATCH_COUNT = 25;
 const SIM_STARTING_BALANCE = 10_000;
@@ -122,7 +129,7 @@ export const seedSimulationUsers = createServerFn({ method: "POST" })
 
       const { data: createdUser, error: createErr } = await (supabaseAdmin as any).auth.admin.createUser({
         email,
-        password: SIM_PASSWORD,
+        password: getSimPassword(),
         email_confirm: true,
         user_metadata: { display_name: name, simulation: true },
       });
@@ -884,7 +891,7 @@ export const getSimulationUsers = createServerFn({ method: "GET" })
           id: p.id,
           displayName: p.display_name,
           email: simEmail(idx + 1),
-          password: SIM_PASSWORD,
+          password: getSimPassword(),
           balance: Number((wMap.get(p.id) as any)?.balance ?? 0),
           predictionCount: predCount.get(p.id) ?? 0,
           pendingStakes: pStakes,
