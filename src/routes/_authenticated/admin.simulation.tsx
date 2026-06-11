@@ -300,6 +300,9 @@ function SimulationPage() {
           fillCapHit: false,
           exposureCapHit: coverageEmergencyCapHit,
           coverageDiagnostics,
+          rawMatchesCount,
+          uniqueMatchesCount,
+          duplicateMatchIdsCount,
         });
         throw new Error(`COVERAGE_PASS_FAILED — ${matchesMissingAfterCoverage} match(es) still have zero predictions. ${detail}`);
       }
