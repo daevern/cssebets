@@ -63,10 +63,12 @@ function TournamentWinnerPage() {
     },
   });
 
-  // Trigger throttled sync on mount.
+  // Trigger throttled sync on mount, then refetch odds.
   useEffect(() => {
-    refresh({}).catch(() => {});
-  }, [refresh]);
+    refresh({})
+      .then(() => qc.invalidateQueries({ queryKey: ["tournament-outrights"] }))
+      .catch(() => {});
+  }, [refresh, qc]);
 
   const mut = useMutation({
     mutationFn: async () => {
