@@ -39,8 +39,42 @@ function AuthedLayout() {
     staleTime: 0,
   });
 
-  // Live wallet balance: refresh whenever this user's wallet/txns/predictions change.
-  useEffect(() => {
+  // Pending-action badges
+  const pointReqFn = useServerFn(getPendingPointRequestCount);
+  const payoutAdminFn = useServerFn(getPendingPayoutCount);
+  const pendingUserFn = useServerFn(getPendingUserCount);
+  const myPayoutActionFn = useServerFn(getMyPayoutActionCount);
+
+  const pendingPoints = useQuery({
+    queryKey: ["pending-point-request-count"],
+    queryFn: () => pointReqFn({}),
+    enabled: isAdmin,
+    refetchInterval: 20000,
+  });
+  const pendingPayouts = useQuery({
+    queryKey: ["pending-payout-count"],
+    queryFn: () => payoutAdminFn({}),
+    enabled: isAdmin,
+    refetchInterval: 20000,
+  });
+  const pendingUsers = useQuery({
+    queryKey: ["pending-user-count"],
+    queryFn: () => pendingUserFn({}),
+    enabled: isAdmin,
+    refetchInterval: 20000,
+  });
+  const myPayoutAction = useQuery({
+    queryKey: ["my-payout-action-count", user?.id],
+    queryFn: () => myPayoutActionFn({}),
+    enabled: !!user?.id,
+    refetchInterval: 20000,
+  });
+
+  const adminBadge =
+    (pendingPoints.data?.count ?? 0) +
+    (pendingPayouts.data?.count ?? 0) +
+    (pendingUsers.data?.count ?? 0);
+  const payoutBadge = myPayoutAction.data?.count ?? 0;
     if (!showBalance || !user?.id) return;
     const ch = supabase
       .channel(`nav-wallet-live-${user.id}`)
