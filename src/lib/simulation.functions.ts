@@ -263,14 +263,19 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
 // =========================================================
 export const runSimulationTick = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((i: unknown) =>
+    z.object({
+      durationMinutes: z.number().int().min(1).max(60).default(SIM_MATCH_DURATION_MIN),
+    }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     await requireAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await (supabaseAdmin as any).rpc("run_simulation_tick", {
-      p_match_duration_minutes: SIM_MATCH_DURATION_MIN,
+    const { data: result, error } = await (supabaseAdmin as any).rpc("run_simulation_tick", {
+      p_match_duration_minutes: data.durationMinutes,
     });
     if (error) throw new Error(error.message);
-    return data;
+    return result;
   });
 
 // =========================================================
