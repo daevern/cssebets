@@ -153,6 +153,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       matchCount: z.number().int().min(1).max(200).default(SIM_MATCH_COUNT),
+      mode: z.enum(["sequential", "batch"]).default("batch"),
     }).parse(i ?? {}),
   )
   .handler(async ({ data, context }) => {
@@ -178,7 +179,10 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
         away = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
       }
       usedTeams.add(home + away);
-      const kickoff = new Date(now + i * SIM_INTERVAL_MIN * 60_000).toISOString();
+      // Batch mode: all matches kick off at now() so they go live together.
+      // Sequential mode: stagger 1 min apart.
+      const offsetMs = data.mode === "batch" ? 0 : i * SIM_INTERVAL_MIN * 60_000;
+      const kickoff = new Date(now + offsetMs).toISOString();
       const homeOdds = +(1.5 + Math.random() * 3).toFixed(2);
       const drawOdds = +(2.8 + Math.random() * 2.2).toFixed(2);
       const awayOdds = +(1.5 + Math.random() * 3).toFixed(2);
@@ -187,7 +191,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
         away_team: away,
         kickoff_at: kickoff,
         status: "scheduled",
-        stage: "Simulation Cup",
+        stage: data.mode === "batch" ? "Simulation Cup (Batch)" : "Simulation Cup",
         is_simulation: true,
         reference_odds: { home: homeOdds, draw: drawOdds, away: awayOdds },
       });
@@ -208,8 +212,9 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
     if (snaps.length) {
       await (supabaseAdmin as any).from("match_odds_snapshots").insert(snaps);
     }
-    return { created: inserted?.length ?? 0 };
+    return { created: inserted?.length ?? 0, mode: data.mode };
   });
+
 
 // =========================================================
 //  SEED random predictions for all scheduled sim matches
