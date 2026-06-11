@@ -124,6 +124,26 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
     };
   });
 
+export const getHouseBankrollSummary = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await requireTier(supabase, userId, ADMIN_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: real }, { data: sim }] = await Promise.all([
+      (supabaseAdmin as any).from("platform_bankroll").select("balance, total_stakes_collected, total_payouts_paid, updated_at").eq("id", 1).maybeSingle(),
+      (supabaseAdmin as any).from("platform_bankroll").select("balance, total_stakes_collected, total_payouts_paid, updated_at").eq("id", 2).maybeSingle(),
+    ]);
+    const toRow = (r: any) => ({
+      balance: Number(r?.balance ?? 0),
+      totalStakes: Number(r?.total_stakes_collected ?? 0),
+      totalPayouts: Number(r?.total_payouts_paid ?? 0),
+      netPL: Number(r?.total_stakes_collected ?? 0) - Number(r?.total_payouts_paid ?? 0),
+      updatedAt: r?.updated_at ?? null,
+    });
+    return { real: toRow(real), simulation: toRow(sim) };
+  });
+
 export const listPlatformTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) =>

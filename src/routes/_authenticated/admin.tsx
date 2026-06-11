@@ -17,7 +17,7 @@ import {
   Wallet,
   Banknote,
   TrendingUp,
-  LineChart as LineChartIcon,
+  
   Menu,
   X,
 } from "lucide-react";
@@ -51,10 +51,7 @@ const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeK
   { to: "/admin/wallet-ledger", label: "Wallet ledger", icon: Wallet },
   { to: "/admin/bankroll", label: "Bankroll", icon: TrendingUp },
   { to: "/admin/match-pools", label: "Match pools", icon: Wallet },
-  { to: "/admin/simulator", label: "Simulator", icon: LineChartIcon },
   { to: "/admin/simulation", label: "Simulation Mode", icon: ShieldAlert },
-
-  { to: "/admin/risk", label: "Risk", icon: ShieldAlert },
   { to: "/admin/audit", label: "Audit", icon: ScrollText },
   { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
