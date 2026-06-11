@@ -670,6 +670,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_simulation_stress_metrics: { Args: never; Returns: Json }
       place_bet_atomic: {
         Args: {
           p_market: Database["public"]["Enums"]["prediction_market"]
@@ -721,6 +722,7 @@ export type Database = {
         Returns: undefined
       }
       reset_simulation_data: { Args: { p_admin_id: string }; Returns: Json }
+      run_simulation_batch_settle: { Args: never; Returns: Json }
       run_simulation_tick: {
         Args: { p_match_duration_minutes?: number }
         Returns: Json
