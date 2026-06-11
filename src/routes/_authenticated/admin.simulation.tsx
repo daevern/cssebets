@@ -28,6 +28,7 @@ import {
   runSimulationBatchSettle,
   getSimulationStressMetrics,
   getSimulationSettlementSummary,
+  getSimulationSeedSummary,
 } from "@/lib/simulation.functions";
 
 
@@ -52,6 +53,7 @@ function SimulationPage() {
   const batchFn = useServerFn(runSimulationBatchSettle);
   const stressFn = useServerFn(getSimulationStressMetrics);
   const summaryFn = useServerFn(getSimulationSettlementSummary);
+  const seedSummaryFn = useServerFn(getSimulationSeedSummary);
 
   const [running, setRunning] = useState(false);
   const [seeding, setSeeding] = useState(false);
@@ -63,6 +65,7 @@ function SimulationPage() {
   const [simStartedAt, setSimStartedAt] = useState<number | null>(null);
   const [lastBatchTiming, setLastBatchTiming] = useState<{ duration_ms: number; avg_ms_per_match: number; client_round_trip_ms: number; settled: number; predictions_settled: number } | null>(null);
   const [summary, setSummary] = useState<any>(null);
+  const [seedSummary, setSeedSummary] = useState<any>(null);
 
   const setBankrollFn = useServerFn(setSimulationBankroll);
 
@@ -239,6 +242,15 @@ function SimulationPage() {
       } else {
         toast.success(`Done. ${totalCreated} predictions placed (${totalFailed} failed).`);
       }
+
+      // Seed summary + sanity validation
+      const sum: any = await seedSummaryFn();
+      setSeedSummary(sum);
+      if (sum.predictions === 0 || sum.poolTxns === 0 || sum.stakeDebits === 0) {
+        throw new Error("SIMULATION_SEED_FAILED: Simulation users and matches were created but no predictions were generated.");
+      }
+      toast.success(`Seed OK: ${sum.predictions} predictions · ${sum.matchesWithBets}/${sum.matches} matches with bets`);
+
       setSimStartedAt(Date.now());
       setSummary(null);
       setLastBatchTiming(null);
@@ -343,6 +355,28 @@ function SimulationPage() {
             Configured starting balance: <b>{validation.configured.toLocaleString()} pts</b> ·
             Actual avg: <b>{Math.round(validation.average).toLocaleString()} pts</b> ·
             Total issued: <b>{Math.round(validation.total).toLocaleString()} pts</b> across <b>{validation.users}</b> users.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {seedSummary && (
+        <Alert variant={seedSummary.status === "success" ? "default" : "destructive"}>
+          <AlertTitle>
+            Seed summary — Prediction generation: {seedSummary.status === "success" ? "✓ Success" : "✗ Failed"}
+          </AlertTitle>
+          <AlertDescription>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2 text-sm">
+              <div>Users: <b>{seedSummary.users}</b></div>
+              <div>Matches: <b>{seedSummary.matches}</b></div>
+              <div>Predictions: <b>{seedSummary.predictions}</b></div>
+              <div>Wallet Txns: <b>{seedSummary.walletTxns}</b></div>
+              <div>Pool Txns: <b>{seedSummary.poolTxns}</b></div>
+              <div>Stake Debits: <b>{seedSummary.stakeDebits}</b></div>
+              <div>Total Stakes: <b>{Math.round(seedSummary.totalStakes).toLocaleString()} pts</b></div>
+              <div>Exposure: <b>{Math.round(seedSummary.totalExposure).toLocaleString()} pts</b></div>
+              <div>Matches w/ bets: <b>{seedSummary.matchesWithBets}</b></div>
+              <div>Matches w/o bets: <b>{seedSummary.matchesWithoutBets}</b></div>
+            </div>
           </AlertDescription>
         </Alert>
       )}
