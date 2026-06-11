@@ -227,13 +227,24 @@ function AuthedLayout() {
           {mobileNavItems.map((item) => {
             const active = item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to);
             const Icon = item.icon;
+            const badge =
+              item.to === "/admin" ? adminBadge :
+              item.to === "/admin-wallet" ? (pendingPoints.data?.count ?? 0) :
+              item.to === "/payout" ? payoutBadge : 0;
             return (
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex flex-col items-center gap-0.5 py-2.5 text-[10px] ${active ? "text-primary" : "text-muted-foreground"}`}
+                className={`relative flex flex-col items-center gap-0.5 py-2.5 text-[10px] ${active ? "text-primary" : "text-muted-foreground"}`}
               >
-                <Icon className="h-5 w-5" />
+                <div className="relative">
+                  <Icon className="h-5 w-5" />
+                  {badge > 0 && (
+                    <span className="absolute -top-1.5 -right-2 inline-flex min-w-[16px] h-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-semibold text-destructive-foreground tabular-nums">
+                      {badge}
+                    </span>
+                  )}
+                </div>
                 {item.label}
               </Link>
             );
