@@ -332,6 +332,7 @@ export const adminAdjustWallet = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
+    if (data.targetUserId === userId) throw new Error("Cannot adjust your own wallet");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const type = data.amount > 0 ? "credit" : "debit";
     const { data: result, error } = await supabaseAdmin.rpc("wallet_apply_change", {
