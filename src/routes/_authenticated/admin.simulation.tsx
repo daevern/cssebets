@@ -170,11 +170,14 @@ function SimulationPage() {
         </AlertDescription>
       </Alert>
 
-      <Card className="p-4">
+      <Card className="p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={handleSeed} disabled={seeding}>
             {seeding ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sprout className="h-4 w-4 mr-2" />}
-            Seed Simulation (25 matches + 100 users + bets)
+            Seed Simulation ({cfg.matchCount} matches · {cfg.totalUsers} users)
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setShowConfig((v) => !v)}>
+            <Settings2 className="h-4 w-4 mr-2" /> {showConfig ? "Hide" : "Configure"} Seed Settings
           </Button>
           <Button variant={running ? "secondary" : "default"} onClick={() => setRunning((v) => !v)}>
             {running ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
@@ -202,7 +205,36 @@ function SimulationPage() {
             <RotateCcw className="h-4 w-4 mr-2" /> Reset Simulation
           </Button>
         </div>
+
+        <Collapsible open={showConfig}>
+          <CollapsibleContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t">
+              <CfgInput label="Users" v={cfg.totalUsers} on={(n) => setCfgField("totalUsers", n)} />
+              <CfgInput label="Matches" v={cfg.matchCount} on={(n) => setCfgField("matchCount", n)} />
+              <CfgInput label="Starting balance (pts)" v={cfg.startingBalance} on={(n) => setCfgField("startingBalance", n)} />
+              <CfgInput label="Sim bankroll (pts)" v={cfg.bankroll} on={(n) => setCfgField("bankroll", n)} />
+              <CfgInput label="Min users / match" v={cfg.minUsersPerMatch} on={(n) => setCfgField("minUsersPerMatch", n)} />
+              <CfgInput label="Max users / match" v={cfg.maxUsersPerMatch} on={(n) => setCfgField("maxUsersPerMatch", n)} />
+              <CfgInput label="Min stake" v={cfg.minStake} on={(n) => setCfgField("minStake", n)} />
+              <CfgInput label="Max stake" v={cfg.maxStake} on={(n) => setCfgField("maxStake", n)} />
+              <CfgInput label="Exposure target (%)" v={cfg.exposureTargetPct} on={(n) => setCfgField("exposureTargetPct", n)} />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Seeding stops creating predictions once global exposure reaches {cfg.exposureTargetPct}% of the simulation bankroll, so matches can settle before bankroll is fully committed.
+            </p>
+          </CollapsibleContent>
+        </Collapsible>
       </Card>
+
+      {o && o.bankroll.safetyRatio !== null && o.bankroll.safetyRatio < 1.1 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Simulation bankroll is almost fully exposed</AlertTitle>
+          <AlertDescription>
+            Safety ratio is {o.bankroll.safetyRatio.toFixed(2)}×. New predictions may be rejected until matches settle or the bankroll is topped up.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {o && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
