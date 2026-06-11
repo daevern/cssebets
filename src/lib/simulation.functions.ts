@@ -522,23 +522,55 @@ export const getSimulationMatches = createServerFn({ method: "GET" })
     return {
       matches: (matches ?? []).map((m: any) => {
         const pool = pMap.get(m.id) as any;
-        const totalPool = Number(pool?.total_pool ?? 0);
+        const homePool = Number(pool?.home_pool ?? 0);
+        const drawPool = Number(pool?.draw_pool ?? 0);
+        const awayPool = Number(pool?.away_pool ?? 0);
+        const remainingPool = Number(pool?.total_pool ?? 0);
+        // Original pool survives settlement because pool_apply_change only mutates
+        // home/draw/away_pool when outcome matches; settlement uses outcome=NULL.
+        const originalPool = homePool + drawPool + awayPool;
         const payouts = payoutsByMatch.get(m.id) ?? 0;
+        const isSettled = !!pool?.settled;
         return {
           id: m.id,
           label: `${m.home_team} vs ${m.away_team}`,
           kickoff: m.kickoff_at,
           status: m.status,
           odds: m.reference_odds,
-          totalPool,
-          homePool: Number(pool?.home_pool ?? 0),
-          drawPool: Number(pool?.draw_pool ?? 0),
-          awayPool: Number(pool?.away_pool ?? 0),
+          originalPool,
+          remainingPool,
+          totalPool: originalPool, // back-compat
+          homePool, drawPool, awayPool,
           worst: Number(m.worst_case_exposure ?? 0),
           finalScore: m.status === "finished" ? `${m.home_score}-${m.away_score}` : null,
           payouts,
-          profitLoss: (pool?.settled ? totalPool : 0) - payouts,
+          settled: isSettled,
+          profitLoss: isSettled ? originalPool - payouts : 0,
         };
       }),
     };
   });
+
+// =========================================================
+//  Validate seed — actual vs configured starting balance
+// =========================================================
+export const validateSimulationSeed = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profs } = await (supabaseAdmin as any)
+      .from("profiles").select("id").eq("is_simulation", true);
+    const ids: string[] = (profs ?? []).map((p: any) => p.id);
+    if (!ids.length) return { userCount: 0, averageBalance: 0, totalIssued: 0 };
+    const { data: wallets } = await (supabaseAdmin as any)
+      .from("wallets").select("user_id, balance").in("user_id", ids);
+    const balances = (wallets ?? []).map((w: any) => Number(w.balance || 0));
+    const total = balances.reduce((s, b) => s + b, 0);
+    return {
+      userCount: ids.length,
+      averageBalance: balances.length ? total / balances.length : 0,
+      totalIssued: total,
+    };
+  });
+
