@@ -229,6 +229,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
       if (wc) {
         wcMatchesUsed++;
         if (wc.odds_source === "the-odds-api") realOddsCount++;
+        const adjusted = applyMarginFloor(wc.reference_odds);
         rows.push({
           home_team: wc.home_team,
           away_team: wc.away_team,
@@ -241,7 +242,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
             ? `${wc.stage} (Sim Batch)`
             : `${wc.stage} (Sim)`,
           is_simulation: true,
-          reference_odds: wc.reference_odds,
+          reference_odds: adjusted,
           odds_source: wc.odds_source === "the-odds-api" ? "the-odds-api" : "simulation",
           odds_updated_at: new Date().toISOString(),
         });
@@ -253,6 +254,11 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
           away = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
         }
         usedTeams.add(home + away);
+        const adjusted = applyMarginFloor({
+          home: +(1.5 + Math.random() * 3).toFixed(2),
+          draw: +(2.8 + Math.random() * 2.2).toFixed(2),
+          away: +(1.5 + Math.random() * 3).toFixed(2),
+        });
         rows.push({
           home_team: home,
           away_team: away,
@@ -260,11 +266,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
           status: "scheduled",
           stage: data.mode === "batch" ? "Simulation Cup (Batch)" : "Simulation Cup",
           is_simulation: true,
-          reference_odds: {
-            home: +(1.5 + Math.random() * 3).toFixed(2),
-            draw: +(2.8 + Math.random() * 2.2).toFixed(2),
-            away: +(1.5 + Math.random() * 3).toFixed(2),
-          },
+          reference_odds: adjusted,
         });
       }
     }
@@ -291,6 +293,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
       worldCupFixturesUsed: wcMatchesUsed,
       realOddsCount,
       fallbackCount: (inserted?.length ?? 0) - wcMatchesUsed,
+      marginAdjustedCount: rows.filter((r: any) => r.reference_odds?.margin_adjusted).length,
       warning: wcWarning,
     };
   });
