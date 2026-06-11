@@ -54,7 +54,7 @@ function MatchPoolsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(q.data?.pools ?? []).map((p) => (
+                {(q.data?.pools ?? []).map((p: any) => (
                   <TableRow key={p.matchId}>
                     <TableCell className="font-medium">
                       {p.label}

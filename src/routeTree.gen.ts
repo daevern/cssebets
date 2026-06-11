@@ -27,6 +27,7 @@ import { Route as AuthenticatedAdminRiskRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminPredictionsRouteImport } from './routes/_authenticated/admin.predictions'
 import { Route as AuthenticatedAdminOddsHistoryRouteImport } from './routes/_authenticated/admin.odds-history'
 import { Route as AuthenticatedAdminMatchesRouteImport } from './routes/_authenticated/admin.matches'
+import { Route as AuthenticatedAdminMatchPoolsRouteImport } from './routes/_authenticated/admin.match-pools'
 import { Route as AuthenticatedAdminBankrollRouteImport } from './routes/_authenticated/admin.bankroll'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
 
@@ -128,6 +129,12 @@ const AuthenticatedAdminMatchesRoute =
     path: '/matches',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminMatchPoolsRoute =
+  AuthenticatedAdminMatchPoolsRouteImport.update({
+    id: '/match-pools',
+    path: '/match-pools',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminBankrollRoute =
   AuthenticatedAdminBankrollRouteImport.update({
     id: '/bankroll',
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/wallet': typeof AuthenticatedWalletRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/bankroll': typeof AuthenticatedAdminBankrollRoute
+  '/admin/match-pools': typeof AuthenticatedAdminMatchPoolsRoute
   '/admin/matches': typeof AuthenticatedAdminMatchesRoute
   '/admin/odds-history': typeof AuthenticatedAdminOddsHistoryRoute
   '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
@@ -171,6 +179,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/bankroll': typeof AuthenticatedAdminBankrollRoute
+  '/admin/match-pools': typeof AuthenticatedAdminMatchPoolsRoute
   '/admin/matches': typeof AuthenticatedAdminMatchesRoute
   '/admin/odds-history': typeof AuthenticatedAdminOddsHistoryRoute
   '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
@@ -194,6 +203,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/bankroll': typeof AuthenticatedAdminBankrollRoute
+  '/_authenticated/admin/match-pools': typeof AuthenticatedAdminMatchPoolsRoute
   '/_authenticated/admin/matches': typeof AuthenticatedAdminMatchesRoute
   '/_authenticated/admin/odds-history': typeof AuthenticatedAdminOddsHistoryRoute
   '/_authenticated/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/admin/audit'
     | '/admin/bankroll'
+    | '/admin/match-pools'
     | '/admin/matches'
     | '/admin/odds-history'
     | '/admin/predictions'
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/audit'
     | '/admin/bankroll'
+    | '/admin/match-pools'
     | '/admin/matches'
     | '/admin/odds-history'
     | '/admin/predictions'
@@ -259,6 +271,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/bankroll'
+    | '/_authenticated/admin/match-pools'
     | '/_authenticated/admin/matches'
     | '/_authenticated/admin/odds-history'
     | '/_authenticated/admin/predictions'
@@ -403,6 +416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminMatchesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/match-pools': {
+      id: '/_authenticated/admin/match-pools'
+      path: '/match-pools'
+      fullPath: '/admin/match-pools'
+      preLoaderRoute: typeof AuthenticatedAdminMatchPoolsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/bankroll': {
       id: '/_authenticated/admin/bankroll'
       path: '/bankroll'
@@ -423,6 +443,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
   AuthenticatedAdminBankrollRoute: typeof AuthenticatedAdminBankrollRoute
+  AuthenticatedAdminMatchPoolsRoute: typeof AuthenticatedAdminMatchPoolsRoute
   AuthenticatedAdminMatchesRoute: typeof AuthenticatedAdminMatchesRoute
   AuthenticatedAdminOddsHistoryRoute: typeof AuthenticatedAdminOddsHistoryRoute
   AuthenticatedAdminPredictionsRoute: typeof AuthenticatedAdminPredictionsRoute
@@ -437,6 +458,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
   AuthenticatedAdminBankrollRoute: AuthenticatedAdminBankrollRoute,
+  AuthenticatedAdminMatchPoolsRoute: AuthenticatedAdminMatchPoolsRoute,
   AuthenticatedAdminMatchesRoute: AuthenticatedAdminMatchesRoute,
   AuthenticatedAdminOddsHistoryRoute: AuthenticatedAdminOddsHistoryRoute,
   AuthenticatedAdminPredictionsRoute: AuthenticatedAdminPredictionsRoute,
