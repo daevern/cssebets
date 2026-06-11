@@ -203,8 +203,46 @@ function WalletPage() {
           {wallet.isLoading ? "…" : (wallet.data?.balance ?? 0).toLocaleString()}
           <span className="text-base font-medium text-muted-foreground ml-2">pts</span>
         </div>
-        
       </Card>
+
+      {isAdmin && (
+        <Card className="p-6 border-primary/30">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Landmark className="h-4 w-4" /> House bankroll (you are the bankroller)
+          </div>
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs text-muted-foreground">Real bankroll</div>
+              <div className="text-3xl font-bold tabular-nums">
+                {house.isLoading ? "…" : (house.data?.real.balance ?? 0).toLocaleString()}
+                <span className="text-sm font-medium text-muted-foreground ml-1">pts</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 tabular-nums">
+                Stakes {Number(house.data?.real.totalStakes ?? 0).toLocaleString()} · Payouts {Number(house.data?.real.totalPayouts ?? 0).toLocaleString()} · Net{" "}
+                <span className={(house.data?.real.netPL ?? 0) >= 0 ? "text-green-500" : "text-destructive"}>
+                  {Number(house.data?.real.netPL ?? 0).toLocaleString()}
+                </span>
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">Simulation bankroll</div>
+              <div className="text-3xl font-bold tabular-nums">
+                {house.isLoading ? "…" : (house.data?.simulation.balance ?? 0).toLocaleString()}
+                <span className="text-sm font-medium text-muted-foreground ml-1">pts</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 tabular-nums">
+                Stakes {Number(house.data?.simulation.totalStakes ?? 0).toLocaleString()} · Payouts {Number(house.data?.simulation.totalPayouts ?? 0).toLocaleString()} · Net{" "}
+                <span className={(house.data?.simulation.netPL ?? 0) >= 0 ? "text-green-500" : "text-destructive"}>
+                  {Number(house.data?.simulation.netPL ?? 0).toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            Updates every 5s. Simulation activity moves the simulation bankroll; real bets move the real bankroll.
+          </p>
+        </Card>
+      )}
 
       <Card className="p-5 space-y-4">
         <h2 className="font-semibold flex items-center gap-2"><Plus className="h-4 w-4" /> Request Points</h2>
