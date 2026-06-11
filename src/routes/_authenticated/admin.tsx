@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getPendingPointRequestCount } from "@/lib/wallet.functions";
+import { getPendingPayoutCount } from "@/lib/payout.functions";
 import {
   LayoutDashboard,
   Users,
@@ -13,6 +14,7 @@ import {
   Shield,
   ShieldAlert,
   Wallet,
+  Banknote,
   TrendingUp,
   LineChart as LineChartIcon,
   Menu,
@@ -36,10 +38,12 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
-const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeKey?: "pendingPointRequests" }> = [
+type BadgeKey = "pendingPointRequests" | "pendingPayouts";
+const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeKey?: BadgeKey }> = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin-wallet", label: "Point Requests", icon: Wallet, badgeKey: "pendingPointRequests" },
+  { to: "/admin-payout", label: "Payouts", icon: Banknote, badgeKey: "pendingPayouts" },
   { to: "/admin/predictions", label: "Predictions", icon: ListChecks },
   { to: "/admin/matches", label: "Matches", icon: CalendarDays },
   { to: "/admin/odds-history", label: "Odds history", icon: TrendingUp },
@@ -58,13 +62,23 @@ function AdminLayout() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
   const countFn = useServerFn(getPendingPointRequestCount);
+  const payoutCountFn = useServerFn(getPendingPayoutCount);
   const pendingCount = useQuery({
     queryKey: ["pending-point-request-count"],
     queryFn: () => countFn({}),
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
   });
-  const badges = { pendingPointRequests: pendingCount.data?.count ?? 0 } as const;
+  const pendingPayoutCount = useQuery({
+    queryKey: ["pending-payout-count"],
+    queryFn: () => payoutCountFn({}),
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+  });
+  const badges = {
+    pendingPointRequests: pendingCount.data?.count ?? 0,
+    pendingPayouts: pendingPayoutCount.data?.count ?? 0,
+  } as const;
 
 
   return (

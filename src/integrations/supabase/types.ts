@@ -362,6 +362,72 @@ export type Database = {
         }
         Relationships: []
       }
+      payout_requests: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          bank_account_number: string
+          bank_name: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          proof_file_name: string | null
+          proof_file_path: string | null
+          proof_file_size: number | null
+          proof_file_type: string | null
+          proof_uploaded_at: string | null
+          rejection_reason: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["payout_request_status"]
+          updated_at: string
+          user_decision_at: string | null
+          user_id: string
+          user_rejection_reason: string | null
+        }
+        Insert: {
+          amount: number
+          approved_at?: string | null
+          bank_account_number: string
+          bank_name: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          proof_file_name?: string | null
+          proof_file_path?: string | null
+          proof_file_size?: number | null
+          proof_file_type?: string | null
+          proof_uploaded_at?: string | null
+          rejection_reason?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["payout_request_status"]
+          updated_at?: string
+          user_decision_at?: string | null
+          user_id: string
+          user_rejection_reason?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          bank_account_number?: string
+          bank_name?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          proof_file_name?: string | null
+          proof_file_path?: string | null
+          proof_file_size?: number | null
+          proof_file_type?: string | null
+          proof_uploaded_at?: string | null
+          rejection_reason?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["payout_request_status"]
+          updated_at?: string
+          user_decision_at?: string | null
+          user_id?: string
+          user_rejection_reason?: string | null
+        }
+        Relationships: []
+      }
       platform_bankroll: {
         Row: {
           balance: number
@@ -797,6 +863,13 @@ export type Database = {
         | "finished"
         | "postponed"
         | "cancelled"
+      payout_request_status:
+        | "pending"
+        | "approved"
+        | "proof_uploaded"
+        | "completed"
+        | "rejected_by_admin"
+        | "rejected_by_user"
       platform_txn_type:
         | "stake_collected"
         | "payout_paid"
@@ -824,6 +897,7 @@ export type Database = {
         | "bet_settlement"
         | "admin_adjustment"
         | "house_bankroll"
+        | "payout"
       wallet_txn_type: "credit" | "debit" | "refund" | "adjustment"
     }
     CompositeTypes: {
@@ -954,6 +1028,14 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "member", "pending", "super_admin", "viewer"],
       match_status: ["scheduled", "live", "finished", "postponed", "cancelled"],
+      payout_request_status: [
+        "pending",
+        "approved",
+        "proof_uploaded",
+        "completed",
+        "rejected_by_admin",
+        "rejected_by_user",
+      ],
       platform_txn_type: [
         "stake_collected",
         "payout_paid",
@@ -984,6 +1066,7 @@ export const Constants = {
         "bet_settlement",
         "admin_adjustment",
         "house_bankroll",
+        "payout",
       ],
       wallet_txn_type: ["credit", "debit", "refund", "adjustment"],
     },
