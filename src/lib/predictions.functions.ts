@@ -72,8 +72,31 @@ export const submitPrediction = createServerFn({ method: "POST" })
         .limit(1)
         .maybeSingle();
       snapshotId = (snap as any)?.id ?? null;
+    } else if (data.market === "tournament_winner") {
+      // No match attached; validate against tournament_outrights for the open tournament.
+      const { data: t } = await supabaseAdmin
+        .from("tournaments")
+        .select("key,status")
+        .eq("status", "open")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!t) throw new Error("No tournament is currently open for betting.");
+      const { data: outright } = await supabaseAdmin
+        .from("tournament_outrights")
+        .select("odds")
+        .eq("tournament_key", (t as any).key)
+        .ilike("team", data.outcome)
+        .maybeSingle();
+      if (!outright) throw new Error("This team is not available in tournament odds.");
+      const serverOdds = Number((outright as any).odds);
+      if (!Number.isFinite(serverOdds) || serverOdds < 1) {
+        throw new Error("Tournament odds unavailable for this team.");
+      }
+      const drift = Math.abs(data.referenceOdds - serverOdds) / serverOdds;
+      if (drift > 0.05) throw new Error("Odds have changed. Please refresh and try again.");
+      trustedOdds = serverOdds;
     } else if (data.referenceOdds > 50) {
-      // No match attached and odds above safety ceiling — reject.
       throw new Error("Odds exceed allowed range.");
     }
 

@@ -1,21 +1,31 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
-import { Trophy, ListChecks, History } from "lucide-react";
+import { ListChecks, Trophy } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/")({
+export const Route = createFileRoute("/_authenticated/bets")({
   head: () => ({
     meta: [
-      { title: "cssebets" },
-      { name: "description", content: "Private prediction pool for the 2026 World Cup." },
+      { title: "Bets — cssebets" },
+      { name: "description", content: "Place predictions on matches or the tournament winner." },
     ],
   }),
-  component: Dashboard,
+  component: BetsHub,
 });
 
-function Dashboard() {
+function BetsHub() {
   const tiles = [
-    { to: "/bets", icon: ListChecks, label: "Bets", desc: "Match & tournament-winner predictions" },
-    { to: "/my-predictions", icon: History, label: "My Predictions", desc: "Track your entries" },
+    {
+      to: "/matches",
+      icon: ListChecks,
+      label: "Matches",
+      desc: "Bet on individual match outcomes",
+    },
+    {
+      to: "/tournament-winner",
+      icon: Trophy,
+      label: "Tournament Winner",
+      desc: "Bet on who lifts the trophy",
+    },
   ] as const;
 
   return (
@@ -23,10 +33,11 @@ function Dashboard() {
       <div className="flex items-center gap-3">
         <Trophy className="h-8 w-8 text-primary" />
         <div>
-          <h1 className="text-2xl font-bold">cssebets</h1>
+          <h1 className="text-2xl font-bold">Bets</h1>
+          <p className="text-sm text-muted-foreground">Pick a market to start.</p>
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         {tiles.map((t) => (
           <Link key={t.to} to={t.to as string}>
             <Card className="p-5 transition hover:border-primary hover:shadow-lg">

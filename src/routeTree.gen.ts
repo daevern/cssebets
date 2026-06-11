@@ -13,15 +13,18 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
+import { Route as AuthenticatedTournamentWinnerRouteImport } from './routes/_authenticated/tournament-winner'
 import { Route as AuthenticatedPayoutRouteImport } from './routes/_authenticated/payout'
 import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
 import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
+import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/bets'
 import { Route as AuthenticatedAdminWalletRouteImport } from './routes/_authenticated/admin-wallet'
 import { Route as AuthenticatedAdminPayoutRouteImport } from './routes/_authenticated/admin-payout'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminWalletLedgerRouteImport } from './routes/_authenticated/admin.wallet-ledger'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedAdminTournamentRouteImport } from './routes/_authenticated/admin.tournament'
 import { Route as AuthenticatedAdminSimulationRouteImport } from './routes/_authenticated/admin.simulation'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminPredictionsRouteImport } from './routes/_authenticated/admin.predictions'
@@ -51,6 +54,12 @@ const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTournamentWinnerRoute =
+  AuthenticatedTournamentWinnerRouteImport.update({
+    id: '/tournament-winner',
+    path: '/tournament-winner',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPayoutRoute = AuthenticatedPayoutRouteImport.update({
   id: '/payout',
   path: '/payout',
@@ -65,6 +74,11 @@ const AuthenticatedMyPredictionsRoute =
 const AuthenticatedMatchesRoute = AuthenticatedMatchesRouteImport.update({
   id: '/matches',
   path: '/matches',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBetsRoute = AuthenticatedBetsRouteImport.update({
+  id: '/bets',
+  path: '/bets',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminWalletRoute =
@@ -100,6 +114,12 @@ const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminTournamentRoute =
+  AuthenticatedAdminTournamentRouteImport.update({
+    id: '/tournament',
+    path: '/tournament',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminSimulationRoute =
   AuthenticatedAdminSimulationRouteImport.update({
     id: '/simulation',
@@ -160,9 +180,11 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/admin-payout': typeof AuthenticatedAdminPayoutRoute
   '/admin-wallet': typeof AuthenticatedAdminWalletRoute
+  '/bets': typeof AuthenticatedBetsRoute
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
+  '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/bankroll': typeof AuthenticatedAdminBankrollRoute
@@ -172,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/simulation': typeof AuthenticatedAdminSimulationRoute
+  '/admin/tournament': typeof AuthenticatedAdminTournamentRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/wallet-ledger': typeof AuthenticatedAdminWalletLedgerRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
@@ -181,9 +204,11 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/admin-payout': typeof AuthenticatedAdminPayoutRoute
   '/admin-wallet': typeof AuthenticatedAdminWalletRoute
+  '/bets': typeof AuthenticatedBetsRoute
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
+  '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/': typeof AuthenticatedIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
@@ -194,6 +219,7 @@ export interface FileRoutesByTo {
   '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/simulation': typeof AuthenticatedAdminSimulationRoute
+  '/admin/tournament': typeof AuthenticatedAdminTournamentRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/admin/wallet-ledger': typeof AuthenticatedAdminWalletLedgerRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
@@ -206,9 +232,11 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/admin-payout': typeof AuthenticatedAdminPayoutRoute
   '/_authenticated/admin-wallet': typeof AuthenticatedAdminWalletRoute
+  '/_authenticated/bets': typeof AuthenticatedBetsRoute
   '/_authenticated/matches': typeof AuthenticatedMatchesRoute
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/_authenticated/payout': typeof AuthenticatedPayoutRoute
+  '/_authenticated/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
@@ -219,6 +247,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/simulation': typeof AuthenticatedAdminSimulationRoute
+  '/_authenticated/admin/tournament': typeof AuthenticatedAdminTournamentRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/admin/wallet-ledger': typeof AuthenticatedAdminWalletLedgerRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
@@ -232,9 +261,11 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-payout'
     | '/admin-wallet'
+    | '/bets'
     | '/matches'
     | '/my-predictions'
     | '/payout'
+    | '/tournament-winner'
     | '/wallet'
     | '/admin/audit'
     | '/admin/bankroll'
@@ -244,6 +275,7 @@ export interface FileRouteTypes {
     | '/admin/predictions'
     | '/admin/settings'
     | '/admin/simulation'
+    | '/admin/tournament'
     | '/admin/users'
     | '/admin/wallet-ledger'
     | '/admin/'
@@ -253,9 +285,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/admin-payout'
     | '/admin-wallet'
+    | '/bets'
     | '/matches'
     | '/my-predictions'
     | '/payout'
+    | '/tournament-winner'
     | '/wallet'
     | '/'
     | '/admin/audit'
@@ -266,6 +300,7 @@ export interface FileRouteTypes {
     | '/admin/predictions'
     | '/admin/settings'
     | '/admin/simulation'
+    | '/admin/tournament'
     | '/admin/users'
     | '/admin/wallet-ledger'
     | '/admin'
@@ -277,9 +312,11 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/admin-payout'
     | '/_authenticated/admin-wallet'
+    | '/_authenticated/bets'
     | '/_authenticated/matches'
     | '/_authenticated/my-predictions'
     | '/_authenticated/payout'
+    | '/_authenticated/tournament-winner'
     | '/_authenticated/wallet'
     | '/_authenticated/'
     | '/_authenticated/admin/audit'
@@ -290,6 +327,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/predictions'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/simulation'
+    | '/_authenticated/admin/tournament'
     | '/_authenticated/admin/users'
     | '/_authenticated/admin/wallet-ledger'
     | '/_authenticated/admin/'
@@ -332,6 +370,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWalletRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/tournament-winner': {
+      id: '/_authenticated/tournament-winner'
+      path: '/tournament-winner'
+      fullPath: '/tournament-winner'
+      preLoaderRoute: typeof AuthenticatedTournamentWinnerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/payout': {
       id: '/_authenticated/payout'
       path: '/payout'
@@ -351,6 +396,13 @@ declare module '@tanstack/react-router' {
       path: '/matches'
       fullPath: '/matches'
       preLoaderRoute: typeof AuthenticatedMatchesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bets': {
+      id: '/_authenticated/bets'
+      path: '/bets'
+      fullPath: '/bets'
+      preLoaderRoute: typeof AuthenticatedBetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin-wallet': {
@@ -393,6 +445,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/tournament': {
+      id: '/_authenticated/admin/tournament'
+      path: '/tournament'
+      fullPath: '/admin/tournament'
+      preLoaderRoute: typeof AuthenticatedAdminTournamentRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/simulation': {
@@ -470,6 +529,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminPredictionsRoute: typeof AuthenticatedAdminPredictionsRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminSimulationRoute: typeof AuthenticatedAdminSimulationRoute
+  AuthenticatedAdminTournamentRoute: typeof AuthenticatedAdminTournamentRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedAdminWalletLedgerRoute: typeof AuthenticatedAdminWalletLedgerRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -484,6 +544,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminPredictionsRoute: AuthenticatedAdminPredictionsRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminSimulationRoute: AuthenticatedAdminSimulationRoute,
+  AuthenticatedAdminTournamentRoute: AuthenticatedAdminTournamentRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedAdminWalletLedgerRoute: AuthenticatedAdminWalletLedgerRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
@@ -496,9 +557,11 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAdminPayoutRoute: typeof AuthenticatedAdminPayoutRoute
   AuthenticatedAdminWalletRoute: typeof AuthenticatedAdminWalletRoute
+  AuthenticatedBetsRoute: typeof AuthenticatedBetsRoute
   AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRoute
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
   AuthenticatedPayoutRoute: typeof AuthenticatedPayoutRoute
+  AuthenticatedTournamentWinnerRoute: typeof AuthenticatedTournamentWinnerRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
@@ -507,9 +570,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedAdminPayoutRoute: AuthenticatedAdminPayoutRoute,
   AuthenticatedAdminWalletRoute: AuthenticatedAdminWalletRoute,
+  AuthenticatedBetsRoute: AuthenticatedBetsRoute,
   AuthenticatedMatchesRoute: AuthenticatedMatchesRoute,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
   AuthenticatedPayoutRoute: AuthenticatedPayoutRoute,
+  AuthenticatedTournamentWinnerRoute: AuthenticatedTournamentWinnerRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }

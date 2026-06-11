@@ -773,6 +773,74 @@ export type Database = {
         }
         Relationships: []
       }
+      tournament_outrights: {
+        Row: {
+          id: string
+          odds: number
+          source: string | null
+          team: string
+          tournament_key: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          odds: number
+          source?: string | null
+          team: string
+          tournament_key: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          odds?: number
+          source?: string | null
+          team?: string
+          tournament_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_outrights_tournament_key_fkey"
+            columns: ["tournament_key"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      tournaments: {
+        Row: {
+          created_at: string
+          key: string
+          locks_at: string | null
+          name: string
+          settled_at: string | null
+          status: string
+          updated_at: string
+          winner_team: string | null
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          locks_at?: string | null
+          name: string
+          settled_at?: string | null
+          status?: string
+          updated_at?: string
+          winner_team?: string | null
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          locks_at?: string | null
+          name?: string
+          settled_at?: string | null
+          status?: string
+          updated_at?: string
+          winner_team?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -964,6 +1032,10 @@ export type Database = {
       }
       settle_match_atomic: {
         Args: { p_away_score: number; p_home_score: number; p_match_id: string }
+        Returns: number
+      }
+      settle_tournament_winner_atomic: {
+        Args: { p_tournament_key: string; p_winner_team: string }
         Returns: number
       }
       void_match_atomic: { Args: { p_match_id: string }; Returns: number }

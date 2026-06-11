@@ -130,7 +130,7 @@ function AuthedLayout() {
 
   const navItems = [
     { to: "/", label: "Home", icon: Home },
-    { to: "/matches", label: "Matches", icon: ListChecks },
+    { to: "/bets", label: "Bets", icon: ListChecks },
     { to: "/my-predictions", label: "Picks", icon: History },
     { to: "/wallet", label: "Wallet", icon: WalletIcon },
     { to: "/payout", label: "Payout", icon: Banknote },
@@ -141,7 +141,7 @@ function AuthedLayout() {
   const mobileNavItems = isAdminTier
     ? [
         { to: "/", label: "Home", icon: Home },
-        { to: "/matches", label: "Matches", icon: ListChecks },
+        { to: "/bets", label: "Bets", icon: ListChecks },
         { to: "/admin", label: "Admin", icon: Shield },
         { to: "/admin-wallet", label: "Points", icon: WalletIcon },
         { to: "/wallet", label: "Wallet", icon: WalletIcon },
