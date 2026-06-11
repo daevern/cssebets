@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.wallet_apply_change(uuid, public.wallet_txn_type, numeric, public.wallet_ref_type, uuid, text);
