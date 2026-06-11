@@ -353,14 +353,14 @@ export const getSimulationOverview = createServerFn({ method: "GET" })
       { data: matches },
       { count: predCount },
       { data: pools },
-      { data: walletTxns },
+      { data: allPreds },
     ] = await Promise.all([
       (supabaseAdmin as any).from("platform_bankroll").select("*").eq("id", 2).maybeSingle(),
       (supabaseAdmin as any).from("profiles").select("id", { count: "exact", head: true }).eq("is_simulation", true),
       (supabaseAdmin as any).from("matches").select("id, status, worst_case_exposure").eq("is_simulation", true),
       (supabaseAdmin as any).from("predictions").select("id", { count: "exact", head: true }).eq("is_simulation", true),
       (supabaseAdmin as any).from("match_stake_pools").select("total_pool, settled").eq("is_simulation", true),
-      (supabaseAdmin as any).from("wallet_transactions").select("user_id, type, amount").eq("is_simulation", true),
+      (supabaseAdmin as any).from("predictions").select("user_id, status, virtual_stake, potential_return").eq("is_simulation", true),
     ]);
 
     const balance = Number((bankroll as any)?.balance ?? 0);
@@ -377,20 +377,33 @@ export const getSimulationOverview = createServerFn({ method: "GET" })
     const byStatus = { scheduled: 0, live: 0, finished: 0, cancelled: 0 };
     for (const m of matches ?? []) byStatus[m.status as keyof typeof byStatus] = (byStatus[m.status as keyof typeof byStatus] ?? 0) + 1;
 
-    // per-user P/L for highest/lowest
-    const userPL = new Map<string, number>();
-    for (const t of walletTxns ?? []) {
-      const sign = ["credit", "refund"].includes(t.type) ? 1 : -1;
-      // ignore the starting-balance credit (admin_adjustment) so P/L reflects betting only
-      userPL.set(t.user_id, (userPL.get(t.user_id) ?? 0) + sign * Number(t.amount));
+    // Per-user settled P/L and pending stakes — derived from predictions, independent of starting balance
+    const settledPLMap = new Map<string, number>();
+    const pendingStakesMap = new Map<string, number>();
+    for (const p of allPreds ?? []) {
+      const stake = Number(p.virtual_stake || 0);
+      if (p.status === "pending") {
+        pendingStakesMap.set(p.user_id, (pendingStakesMap.get(p.user_id) ?? 0) + stake);
+      } else if (p.status === "won") {
+        const payout = Number(p.potential_return || 0);
+        settledPLMap.set(p.user_id, (settledPLMap.get(p.user_id) ?? 0) + (payout - stake));
+      } else if (p.status === "lost") {
+        settledPLMap.set(p.user_id, (settledPLMap.get(p.user_id) ?? 0) - stake);
+      }
+      // 'void' is neutral
     }
-    // remove starting balance influence: subtract starting credit
-    for (const uid of userPL.keys()) {
-      userPL.set(uid, (userPL.get(uid) ?? 0) - SIM_STARTING_BALANCE);
-    }
+
+    const anySettled = (byStatus.finished + byStatus.cancelled) > 0
+      && Array.from(settledPLMap.values()).some((v) => v !== 0);
+
+    // Rank: by settled P/L if anything settled, otherwise by total P/L (settled - pending)
+    const allUserIds = new Set<string>([...settledPLMap.keys(), ...pendingStakesMap.keys()]);
     let topWin: { user_id: string; pl: number } | null = null;
     let topLoss: { user_id: string; pl: number } | null = null;
-    for (const [uid, pl] of userPL.entries()) {
+    for (const uid of allUserIds) {
+      const pl = anySettled
+        ? (settledPLMap.get(uid) ?? 0)
+        : (settledPLMap.get(uid) ?? 0) - (pendingStakesMap.get(uid) ?? 0);
       if (!topWin || pl > topWin.pl) topWin = { user_id: uid, pl };
       if (!topLoss || pl < topLoss.pl) topLoss = { user_id: uid, pl };
     }
@@ -412,6 +425,7 @@ export const getSimulationOverview = createServerFn({ method: "GET" })
       users: { total: userCount ?? 0 },
       matches: { total: matches?.length ?? 0, ...byStatus },
       predictions: { total: predCount ?? 0 },
+      anySettled,
       highestWinner: topWin ? { displayName: profMap[topWin.user_id] ?? topWin.user_id.slice(0, 8), pl: topWin.pl } : null,
       lowestLoser: topLoss ? { displayName: profMap[topLoss.user_id] ?? topLoss.user_id.slice(0, 8), pl: topLoss.pl } : null,
     };
