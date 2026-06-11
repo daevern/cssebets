@@ -536,6 +536,8 @@ function SimulationPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                      <TableRow>
+                        <TableHead>Match ID</TableHead>
                         <TableHead>Match</TableHead>
                         <TableHead className="text-right">Coverage Bets Created</TableHead>
                         <TableHead className="text-right">Failed Attempts</TableHead>
@@ -546,6 +548,7 @@ function SimulationPage() {
                     <TableBody>
                       {seedSummary.coverageDiagnostics.map((d: any) => (
                         <TableRow key={d.matchId} className={d.failureReason ? "bg-destructive/10" : undefined}>
+                          <TableCell className="font-mono text-xs">{String(d.matchId).slice(0, 8)}…</TableCell>
                           <TableCell className="font-medium">{d.match}</TableCell>
                           <TableCell className="text-right">{d.betsCreated}</TableCell>
                           <TableCell className="text-right">{d.failedAttempts}</TableCell>
