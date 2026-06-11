@@ -79,10 +79,10 @@ function SimulationPage() {
     matchCount: 25,
     startingBalance: 1000,
     bankroll: 50000,
-    minUsersPerMatch: 10,
-    maxUsersPerMatch: 30,
-    minStake: 50,
-    maxStake: 300,
+    minUsersPerMatch: 5,
+    maxUsersPerMatch: 15,
+    minStake: 25,
+    maxStake: 150,
     exposureTargetPct: 60, // %
   });
   const setCfgField = (k: keyof typeof cfg, v: number) => setCfg((c) => ({ ...c, [k]: v }));
