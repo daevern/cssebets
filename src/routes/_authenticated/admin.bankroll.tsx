@@ -142,11 +142,17 @@ function BankrollPage() {
 
 
 
-          {!bankrollHealthy && (
+          {overexposed && (
             <Card className="p-3 border-destructive/40 bg-destructive/5 text-destructive text-sm flex items-start gap-2">
               <AlertTriangle className="h-4 w-4 mt-0.5" />
-              Exposure exceeds available bankroll. New bets on the riskiest market will be rejected with
-              "Maximum bookmaker exposure reached".
+              Warning: platform exposure exceeds available bankroll. New predictions may be rejected until
+              exposure decreases or bankroll is topped up.
+            </Card>
+          )}
+          {lowCoverage && (
+            <Card className="p-3 border-amber-500/40 bg-amber-500/5 text-amber-700 dark:text-amber-400 text-sm flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 mt-0.5" />
+              Caution: platform bankroll coverage is low compared to open exposure.
             </Card>
           )}
 
