@@ -329,14 +329,28 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
     const userIds: string[] = (users ?? []).map((u: any) => u.id);
     if (!userIds.length) return { error: "No sim users — seed users first", done: true };
 
-    const { data: matches } = await (supabaseAdmin as any)
+    const { data: rawMatches } = await (supabaseAdmin as any)
       .from("matches")
       .select("id, reference_odds, home_team, away_team")
       .eq("is_simulation", true)
       .eq("status", "scheduled")
-      .order("kickoff_at", { ascending: true });
+      .order("kickoff_at", { ascending: true })
+      .order("id", { ascending: true });
 
-    if (!matches?.length) return { error: "No scheduled sim matches", done: true };
+    if (!rawMatches?.length) return { error: "No scheduled sim matches", done: true };
+
+    // Deduplicate by primary key match.id. In batch mode every match shares
+    // the same kickoff_at, which made `ORDER BY kickoff_at` non-deterministic
+    // across paginated calls and produced duplicate rows in slices.
+    const rawMatchesCount = rawMatches.length;
+    const seenIds = new Set<string>();
+    const matches: any[] = [];
+    const duplicateMatchIds: string[] = [];
+    for (const m of rawMatches) {
+      if (seenIds.has(m.id)) { duplicateMatchIds.push(m.id); continue; }
+      seenIds.add(m.id);
+      matches.push(m);
+    }
 
     const totalMatches = matches.length;
     const slice = matches.slice(data.matchOffset, data.matchOffset + data.matchLimit);
