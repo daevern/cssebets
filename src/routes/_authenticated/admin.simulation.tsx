@@ -26,7 +26,7 @@ import {
   getSimulationMatches,
   validateSimulationSeed,
   runSimulationBatchSettle,
-  getSimulationStressMetrics,
+  getSimulationStressMetrics, getSimulationOutcomeAnalytics,
   getSimulationSettlementSummary,
   getSimulationSeedSummary,
 } from "@/lib/simulation.functions";
@@ -52,6 +52,7 @@ function SimulationPage() {
   const validateFn = useServerFn(validateSimulationSeed);
   const batchFn = useServerFn(runSimulationBatchSettle);
   const stressFn = useServerFn(getSimulationStressMetrics);
+  const analyticsFn = useServerFn(getSimulationOutcomeAnalytics);
   const summaryFn = useServerFn(getSimulationSettlementSummary);
   const seedSummaryFn = useServerFn(getSimulationSeedSummary);
 
@@ -71,6 +72,7 @@ function SimulationPage() {
 
   // Stress metrics poll
   const stress = useQuery({ queryKey: ["sim-stress"], queryFn: () => stressFn(), refetchInterval: 5000 });
+  const analytics = useQuery({ queryKey: ["sim-analytics"], queryFn: () => analyticsFn(), refetchInterval: 5000 });
 
 
   // Seed configuration (admin-tunable)
@@ -515,7 +517,26 @@ function SimulationPage() {
                 <Stat label="Matches in Batch" value={String(lastBatchTiming.settled)} />
                 <Stat label="Predictions in Batch" value={String(lastBatchTiming.predictions_settled)} />
               </>
-            )}
+      )}
+
+      {/* Outcome analytics — odds vs actual */}
+      {analytics.data && Number(analytics.data.matches_finished) > 0 && (
+        <Card className="p-3">
+          <div className="flex items-center gap-2 mb-2 text-sm font-medium">
+            <BarChart3 className="h-4 w-4" /> Outcome Analytics (Odds vs Actual)
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+            <Stat label="Matches Finished" value={String(analytics.data.matches_finished)} />
+            <Stat label="Favorite Wins" value={`${Number(analytics.data.favorite_wins_pct).toFixed(1)}% (exp ${Number(analytics.data.expected_favorite_pct).toFixed(1)}%)`} />
+            <Stat label="Draws" value={`${Number(analytics.data.draws_pct).toFixed(1)}% (exp ${Number(analytics.data.expected_draw_pct).toFixed(1)}%)`} />
+            <Stat label="Underdog Wins" value={`${Number(analytics.data.underdog_wins_pct).toFixed(1)}% (exp ${Number(analytics.data.expected_underdog_pct).toFixed(1)}%)`} />
+            <Stat label="Avg House Margin" value={`${Number(analytics.data.avg_house_margin_pct).toFixed(2)}%`} />
+            <Stat label="Min Margin" value={`${Number(analytics.data.min_house_margin_pct).toFixed(2)}%`} />
+            <Stat label="Max Margin" value={`${Number(analytics.data.max_house_margin_pct).toFixed(2)}%`} />
+            <Stat label="Avg / Max Surprise" value={`${Number(analytics.data.avg_surprise_index).toFixed(2)}x / ${Number(analytics.data.max_surprise_index).toFixed(2)}x`} />
+          </div>
+        </Card>
+      )}
           </div>
         </Card>
       )}

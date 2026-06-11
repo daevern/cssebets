@@ -816,6 +816,20 @@ export const getSimulationStressMetrics = createServerFn({ method: "GET" })
   });
 
 // =========================================================
+//  Outcome analytics (odds-vs-actual)
+// =========================================================
+export const getSimulationOutcomeAnalytics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await (supabaseAdmin as any).rpc("get_simulation_outcome_analytics");
+    if (error) throw new Error(error.message);
+    return data as Record<string, number>;
+  });
+
+
+// =========================================================
 //  Settlement summary (post-batch)
 // =========================================================
 export const getSimulationSettlementSummary = createServerFn({ method: "GET" })
