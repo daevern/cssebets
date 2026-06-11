@@ -49,6 +49,9 @@ function SimulationPage() {
   const tickFn = useServerFn(runSimulationTick);
   const resetFn = useServerFn(resetSimulationData);
   const validateFn = useServerFn(validateSimulationSeed);
+  const batchFn = useServerFn(runSimulationBatchSettle);
+  const stressFn = useServerFn(getSimulationStressMetrics);
+  const summaryFn = useServerFn(getSimulationSettlementSummary);
 
   const [running, setRunning] = useState(false);
   const [seeding, setSeeding] = useState(false);
@@ -56,8 +59,16 @@ function SimulationPage() {
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [showConfig, setShowConfig] = useState(false);
   const [validation, setValidation] = useState<{ configured: number; average: number; total: number; users: number } | null>(null);
+  const [simMode, setSimMode] = useState<"batch" | "sequential">("batch");
+  const [simStartedAt, setSimStartedAt] = useState<number | null>(null);
+  const [lastBatchTiming, setLastBatchTiming] = useState<{ duration_ms: number; avg_ms_per_match: number; client_round_trip_ms: number; settled: number; predictions_settled: number } | null>(null);
+  const [summary, setSummary] = useState<any>(null);
 
   const setBankrollFn = useServerFn(setSimulationBankroll);
+
+  // Stress metrics poll
+  const stress = useQuery({ queryKey: ["sim-stress"], queryFn: () => stressFn(), refetchInterval: 5000 });
+
 
   // Seed configuration (admin-tunable)
   const [cfg, setCfg] = useState({
