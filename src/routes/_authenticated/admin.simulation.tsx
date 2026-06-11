@@ -209,7 +209,16 @@ function SimulationPage() {
       }
 
       toast.info(`Seeding ${cfg.matchCount} simulation matches (${simMode} mode)…`);
-      await seedMatchesFn({ data: { matchCount: cfg.matchCount, mode: simMode } });
+      const matchesRes: any = await seedMatchesFn({ data: { matchCount: cfg.matchCount, mode: simMode } });
+      if (matchesRes?.warning) {
+        toast.warning(`World Cup fixtures: ${matchesRes.warning} — using fallback teams`);
+      }
+      if (matchesRes?.worldCupFixturesUsed) {
+        toast.success(
+          `World Cup 2026 matchday 1: ${matchesRes.worldCupFixturesUsed} fixtures, ` +
+          `${matchesRes.realOddsCount} with live odds, ${matchesRes.fallbackCount} filler`
+        );
+      }
 
       // ---- Pass 1: minimum coverage ----
       toast.info("Coverage pass: ensuring every match has minimum predictions…");
