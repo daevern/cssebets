@@ -74,9 +74,11 @@ function BankrollPage() {
       setReason("");
       qc.invalidateQueries({ queryKey: ["bankroll-overview"] });
       qc.invalidateQueries({ queryKey: ["platform-txns"] });
+      qc.invalidateQueries({ queryKey: ["wallet"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Adjustment failed"),
   });
+
 
   const o = overview.data;
   const bankrollHealthy = o ? o.bankroll.available >= 0 : true;
