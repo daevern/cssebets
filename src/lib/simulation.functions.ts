@@ -129,7 +129,7 @@ export const seedSimulationUsers = createServerFn({ method: "POST" })
 
       const { data: createdUser, error: createErr } = await (supabaseAdmin as any).auth.admin.createUser({
         email,
-        password: SIM_PASSWORD,
+        password: getSimPassword(),
         email_confirm: true,
         user_metadata: { display_name: name, simulation: true },
       });
@@ -891,7 +891,7 @@ export const getSimulationUsers = createServerFn({ method: "GET" })
           id: p.id,
           displayName: p.display_name,
           email: simEmail(idx + 1),
-          password: SIM_PASSWORD,
+          password: getSimPassword(),
           balance: Number((wMap.get(p.id) as any)?.balance ?? 0),
           predictionCount: predCount.get(p.id) ?? 0,
           pendingStakes: pStakes,
