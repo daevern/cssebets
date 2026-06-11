@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/")({
 
 function Dashboard() {
   const tiles = [
-    { to: "/matches", icon: ListChecks, label: "Matches", desc: "Browse fixtures & predict" },
+    { to: "/bets", icon: ListChecks, label: "Bets", desc: "Match & tournament-winner predictions" },
     { to: "/my-predictions", icon: History, label: "My Predictions", desc: "Track your entries" },
   ] as const;
 
