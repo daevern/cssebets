@@ -46,6 +46,37 @@ const SIM_TEAMS = [
   "Lantern FC", "Beacon United",
 ];
 
+// Ensure simulation match has at least MIN_MARGIN house margin.
+// Adjusts odds proportionally (preserves probability ratios) so overround = 1.02.
+const MIN_OVERROUND = 1.02;
+function applyMarginFloor(odds: { home: number; draw: number; away: number }) {
+  const h = Number(odds.home), d = Number(odds.draw), a = Number(odds.away);
+  const overround = 1 / h + 1 / d + 1 / a;
+  const originalMargin = +(((overround - 1) * 100)).toFixed(2);
+  if (overround >= MIN_OVERROUND) {
+    return {
+      home: +h.toFixed(2), draw: +d.toFixed(2), away: +a.toFixed(2),
+      original: { home: +h.toFixed(2), draw: +d.toFixed(2), away: +a.toFixed(2) },
+      original_margin: originalMargin,
+      adjusted_margin: originalMargin,
+      margin_adjusted: false,
+    };
+  }
+  // Scale odds: new_odds = old * (overround / MIN_OVERROUND)
+  const k = overround / MIN_OVERROUND;
+  const nh = +(h * k).toFixed(2);
+  const nd = +(d * k).toFixed(2);
+  const na = +(a * k).toFixed(2);
+  const newOverround = 1 / nh + 1 / nd + 1 / na;
+  return {
+    home: nh, draw: nd, away: na,
+    original: { home: +h.toFixed(2), draw: +d.toFixed(2), away: +a.toFixed(2) },
+    original_margin: originalMargin,
+    adjusted_margin: +(((newOverround - 1) * 100)).toFixed(2),
+    margin_adjusted: true,
+  };
+}
+
 // =========================================================
 //  SEED users (idempotent, batched)
 // =========================================================
