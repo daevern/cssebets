@@ -81,7 +81,12 @@ function BankrollPage() {
 
 
   const o = overview.data;
-  const bankrollHealthy = o ? o.bankroll.available >= 0 : true;
+  const platformBalance = o?.bankroll.platformBalance ?? 0;
+  const globalExposure = o?.bankroll.globalExposure ?? 0;
+  const availableBalance = o?.bankroll.availableBalance ?? 0;
+  const safetyRatio = o?.bankroll.safetyRatio ?? null;
+  const overexposed = availableBalance < 0;
+  const lowCoverage = !overexposed && safetyRatio !== null && safetyRatio < 1.25;
 
   return (
     <div className="space-y-6">
@@ -90,7 +95,7 @@ function BankrollPage() {
           <Wallet className="h-5 w-5 text-primary" /> Bookmaker bankroll
         </h1>
         <p className="text-sm text-muted-foreground">
-          Virtual house bank: collected stakes, paid payouts, current exposure.
+          Virtual house reserve: platform balance, global exposure, and safety coverage.
         </p>
       </div>
 
@@ -99,26 +104,42 @@ function BankrollPage() {
       ) : o ? (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Metric label="Platform balance" value={fmt(o.bankroll.balance)} />
-            <Metric label="Available bankroll" value={fmt(o.bankroll.available)} tone={bankrollHealthy ? "good" : "bad"} />
-            <Metric label="Current exposure" value={fmt(o.bankroll.totalExposure)} />
+            <Metric label="Platform balance" value={fmt(platformBalance)} />
+            <Metric label="Global exposure" value={fmt(globalExposure)} />
             <Metric
-              label="Net P/L"
-              value={fmt(o.bankroll.netPL)}
-              tone={o.bankroll.netPL >= 0 ? "good" : "bad"}
-              icon={o.bankroll.netPL >= 0 ? TrendingUp : TrendingDown}
+              label="Available balance"
+              value={fmt(availableBalance)}
+              tone={overexposed ? "bad" : "good"}
+            />
+            <Metric
+              label="Safety ratio"
+              value={
+                globalExposure === 0
+                  ? "No exposure"
+                  : `${Math.round((safetyRatio ?? 0) * 100)}%`
+              }
+              tone={overexposed ? "bad" : lowCoverage ? "bad" : "good"}
             />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Metric label="Total stakes collected" value={fmt(o.bankroll.totalStakes)} />
             <Metric label="Total payouts paid" value={fmt(o.bankroll.totalPayouts)} />
             <Metric
-              label={o.house ? `House wallet (${o.house.displayName})` : "House wallet"}
-              value={o.house ? fmt(o.house.walletBalance) : "Not set"}
-              tone={o.house ? "good" : "bad"}
+              label="Net platform P/L"
+              value={fmt(o.bankroll.netPL)}
+              tone={o.bankroll.netPL >= 0 ? "good" : "bad"}
+              icon={o.bankroll.netPL >= 0 ? TrendingUp : TrendingDown}
             />
-            <Metric label={`Open / Settled / Void`} value={`${o.bets.open} / ${o.bets.settled} / ${o.bets.void}`} />
+            <Metric
+              label="House user"
+              value={o.house ? o.house.displayName : "Not set"}
+            />
           </div>
+
+          <div className="text-xs text-muted-foreground">
+            Open / Settled / Void bets: {o.bets.open} / {o.bets.settled} / {o.bets.void}
+          </div>
+
 
 
           {!bankrollHealthy && (
