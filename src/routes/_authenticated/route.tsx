@@ -161,26 +161,42 @@ function AuthedLayout() {
             <span className="hidden sm:inline">cssebets</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="px-3 py-1.5 rounded-md text-sm hover:bg-muted [&.active]:bg-muted [&.active]:text-primary"
-                activeOptions={{ exact: item.to === "/" }}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const badge =
+                item.to === "/admin" ? adminBadge :
+                item.to === "/admin-wallet" ? (pendingPoints.data?.count ?? 0) :
+                item.to === "/payout" ? payoutBadge : 0;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="relative px-3 py-1.5 rounded-md text-sm hover:bg-muted [&.active]:bg-muted [&.active]:text-primary"
+                  activeOptions={{ exact: item.to === "/" }}
+                >
+                  {item.label}
+                  {badge > 0 && (
+                    <span className="absolute -top-1 -right-1 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground tabular-nums">
+                      {badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </nav>
           <div className="flex items-center gap-2">
             {isAdminTier && (
               <Link
                 to="/admin"
-                className="md:hidden grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                className="relative md:hidden grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
                 title="Admin"
                 aria-label="Admin"
               >
                 <Shield className="h-4 w-4" />
+                {adminBadge > 0 && (
+                  <span className="absolute -top-1 -right-1 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground tabular-nums">
+                    {adminBadge}
+                  </span>
+                )}
               </Link>
             )}
             {showBalance && (
