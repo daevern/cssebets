@@ -353,11 +353,13 @@ export const resetSimulationData = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
 
-    // re-top-up all sim user wallets back to starting balance
+    // re-top-up sim user wallets back to starting balance (parallel chunks)
     const { data: users } = await (supabaseAdmin as any)
       .from("profiles").select("id").eq("is_simulation", true);
-    for (const u of users ?? []) {
-      await ensureSimWallet(supabaseAdmin, u.id);
+    const ids = (users ?? []).map((u: any) => u.id);
+    const chunkSize = 20;
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      await Promise.all(ids.slice(i, i + chunkSize).map((id: string) => ensureSimWallet(supabaseAdmin, id)));
     }
     return { deleted: data };
   });
