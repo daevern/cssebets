@@ -231,6 +231,8 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
       exposureTargetPct: z.number().min(0).max(1).default(0.6),
       matchOffset: z.number().int().min(0).default(0),
       matchLimit: z.number().int().min(1).max(50).default(5),
+      pass: z.enum(["coverage", "fill"]).default("fill"),
+      coverageFallback: z.boolean().default(false),
     }).parse(i ?? {}),
   )
   .handler(async ({ data, context }) => {
@@ -255,7 +257,6 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
     const slice = matches.slice(data.matchOffset, data.matchOffset + data.matchLimit);
     const nextOffset = data.matchOffset + slice.length;
 
-    // Bankroll exposure cap — checked per match
     const { data: bankrollRow } = await (supabaseAdmin as any)
       .from("platform_bankroll").select("balance").eq("id", 2).maybeSingle();
     const bankroll = Number(bankrollRow?.balance ?? 0);
@@ -272,25 +273,62 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
     const minS = Math.min(data.minStake, data.maxStake);
     const maxS = Math.max(data.minStake, data.maxStake);
 
+    // Pass-specific stake range.
+    // Coverage pass uses smaller stakes; fallback uses very small stakes
+    // when the standard coverage stakes still trip the exposure cap.
+    const isCoverage = data.pass === "coverage";
+    const coverageMin = data.coverageFallback ? 10 : minS;
+    const coverageMax = data.coverageFallback ? 25 : Math.min(maxS, 75);
+    const stakeMin = isCoverage ? Math.min(coverageMin, coverageMax) : minS;
+    const stakeMax = isCoverage ? Math.max(coverageMin, coverageMax) : maxS;
+
+    // For fill pass, look up existing pending bets per match in slice so
+    // we add extra users (not duplicates) and respect per-user uniqueness.
+    const sliceIds = slice.map((m: any) => m.id);
+    const existingByMatch = new Map<string, { count: number; userIds: Set<string> }>();
+    if (sliceIds.length) {
+      const { data: existingPreds } = await (supabaseAdmin as any)
+        .from("predictions")
+        .select("match_id, user_id")
+        .eq("is_simulation", true)
+        .eq("status", "pending")
+        .in("match_id", sliceIds);
+      for (const id of sliceIds) existingByMatch.set(id, { count: 0, userIds: new Set() });
+      for (const p of (existingPreds ?? [])) {
+        const e = existingByMatch.get(p.match_id)!;
+        e.count++;
+        e.userIds.add(p.user_id);
+      }
+    }
+
     let predictionsCreated = 0;
     let predictionsFailed = 0;
     let totalStakes = 0;
     let totalExposure = 0;
     const errorSamples: string[] = [];
     let stoppedAtCap = false;
-    // Track per-user balance failures so we don't keep retrying broke users.
     const brokeUsers = new Set<string>();
 
-    // Per-match: keep trying user pools until we hit pickN successes,
-    // run out of solvent users, or hit the exposure cap.
     for (const m of slice as any[]) {
-      if (globalExposure >= exposureCap) { stoppedAtCap = true; break; }
+      // Fill pass respects exposure cap; coverage pass pushes through
+      // (we still report stoppedAtCap if any RPC rejects with MAX_EXPOSURE_REACHED).
+      if (!isCoverage && globalExposure >= exposureCap) { stoppedAtCap = true; break; }
 
       const ro = m.reference_odds ?? { home: 2, draw: 3, away: 2 };
-      const target = minU + Math.floor(Math.random() * (maxU - minU + 1));
+      const existing = existingByMatch.get(m.id) ?? { count: 0, userIds: new Set() };
 
-      // Eligible pool excludes known-broke users; reshuffle fresh per match.
-      const eligible = userIds.filter((u) => !brokeUsers.has(u));
+      let target: number;
+      if (isCoverage) {
+        // Bring this match up to minU predictions
+        target = Math.max(0, minU - existing.count);
+        if (target <= 0) continue;
+      } else {
+        // Add 0..(maxU-minU) extra predictions on top of what's already there
+        target = Math.floor(Math.random() * (maxU - minU + 1));
+        if (target <= 0) continue;
+      }
+
+      const eligible = userIds.filter((u) => !brokeUsers.has(u) && !existing.userIds.has(u));
       const pool = [...eligible].sort(() => Math.random() - 0.5);
       const usedThisMatch = new Set<string>();
       let placed = 0;
@@ -298,7 +336,7 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
       const PARALLEL = 10;
 
       while (placed < target && cursor < pool.length) {
-        if (globalExposure >= exposureCap) { stoppedAtCap = true; break; }
+        if (!isCoverage && globalExposure >= exposureCap) { stoppedAtCap = true; break; }
 
         const need = target - placed;
         const batch = pool.slice(cursor, cursor + Math.min(PARALLEL, need)).filter((u) => !usedThisMatch.has(u));
@@ -310,7 +348,7 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
           const r = Math.random();
           const outcome = r < 0.4 ? "HOME" : r < 0.7 ? "AWAY" : "DRAW";
           const odds = outcome === "HOME" ? ro.home : outcome === "DRAW" ? ro.draw : ro.away;
-          const stake = minS + Math.floor(Math.random() * (maxS - minS + 1));
+          const stake = stakeMin + Math.floor(Math.random() * (stakeMax - stakeMin + 1));
           return (supabaseAdmin as any).rpc("place_bet_atomic", {
             p_user_id: uid,
             p_match_id: m.id,
@@ -336,6 +374,7 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
               brokeUsers.add(r.uid);
             } else if (msg.includes("MAX_EXPOSURE_REACHED")) {
               stoppedAtCap = true;
+              if (!isCoverage) break;
             }
             if (msg && errorSamples.length < 5) errorSamples.push(msg);
           }
@@ -343,7 +382,9 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
       }
     }
 
-    const done = nextOffset >= totalMatches || stoppedAtCap;
+    // Coverage pass always advances through every match so the client can
+    // keep walking the full list (and retry with fallback stakes if cap hit).
+    const done = nextOffset >= totalMatches || (!isCoverage && stoppedAtCap);
     return {
       predictionsCreated, predictionsFailed,
       totalStakes, totalExposure,
@@ -352,6 +393,8 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
       nextOffset, totalMatches, done,
       errorSamples,
       brokeUserCount: brokeUsers.size,
+      pass: data.pass,
+      coverageFallback: data.coverageFallback,
     };
   });
 
