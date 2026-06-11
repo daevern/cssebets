@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, Play, Pause, RotateCcw, Sprout, Zap, Loader2, FastForward, Settings2 } from "lucide-react";
+import { AlertTriangle, Play, Pause, RotateCcw, Sprout, Zap, Loader2, FastForward, Settings2, Rocket, BarChart3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -25,7 +25,11 @@ import {
   getSimulationUsers,
   getSimulationMatches,
   validateSimulationSeed,
+  runSimulationBatchSettle,
+  getSimulationStressMetrics,
+  getSimulationSettlementSummary,
 } from "@/lib/simulation.functions";
+
 
 
 export const Route = createFileRoute("/_authenticated/admin/simulation")({
@@ -45,6 +49,9 @@ function SimulationPage() {
   const tickFn = useServerFn(runSimulationTick);
   const resetFn = useServerFn(resetSimulationData);
   const validateFn = useServerFn(validateSimulationSeed);
+  const batchFn = useServerFn(runSimulationBatchSettle);
+  const stressFn = useServerFn(getSimulationStressMetrics);
+  const summaryFn = useServerFn(getSimulationSettlementSummary);
 
   const [running, setRunning] = useState(false);
   const [seeding, setSeeding] = useState(false);
@@ -52,8 +59,16 @@ function SimulationPage() {
   const [nowTs, setNowTs] = useState(() => Date.now());
   const [showConfig, setShowConfig] = useState(false);
   const [validation, setValidation] = useState<{ configured: number; average: number; total: number; users: number } | null>(null);
+  const [simMode, setSimMode] = useState<"batch" | "sequential">("batch");
+  const [simStartedAt, setSimStartedAt] = useState<number | null>(null);
+  const [lastBatchTiming, setLastBatchTiming] = useState<{ duration_ms: number; avg_ms_per_match: number; client_round_trip_ms: number; settled: number; predictions_settled: number } | null>(null);
+  const [summary, setSummary] = useState<any>(null);
 
   const setBankrollFn = useServerFn(setSimulationBankroll);
+
+  // Stress metrics poll
+  const stress = useQuery({ queryKey: ["sim-stress"], queryFn: () => stressFn(), refetchInterval: 5000 });
+
 
   // Seed configuration (admin-tunable)
   const [cfg, setCfg] = useState({
@@ -119,9 +134,41 @@ function SimulationPage() {
 
   const resetMut = useMutation({
     mutationFn: () => resetFn(),
-    onSuccess: () => { toast.success("Simulation data reset"); qc.invalidateQueries(); },
+    onSuccess: () => { toast.success("Simulation data reset"); setSimStartedAt(null); setSummary(null); setLastBatchTiming(null); qc.invalidateQueries(); },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const batchSettleMut = useMutation({
+    mutationFn: async () => {
+      const r: any = await batchFn();
+      const s: any = await summaryFn();
+      return { r, s };
+    },
+    onSuccess: ({ r, s }) => {
+      setLastBatchTiming({
+        duration_ms: r.duration_ms,
+        avg_ms_per_match: r.avg_ms_per_match,
+        client_round_trip_ms: r.client_round_trip_ms,
+        settled: r.settled,
+        predictions_settled: r.predictions_settled,
+      });
+      setSummary(s);
+      toast.success(`Batch settled ${r.settled} matches · ${r.predictions_settled} predictions · ${Math.round(r.duration_ms)} ms`);
+      qc.invalidateQueries();
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  // Auto batch-settle in batch mode after 60s elapsed since seed
+  useEffect(() => {
+    if (simMode !== "batch" || !simStartedAt || summary) return;
+    const elapsed = nowTs - simStartedAt;
+    if (elapsed >= 60_000 && !batchSettleMut.isPending) {
+      batchSettleMut.mutate();
+    }
+  }, [nowTs, simMode, simStartedAt, summary, batchSettleMut]);
+
+
 
   async function handleSeed() {
     setSeeding(true);
@@ -158,8 +205,8 @@ function SimulationPage() {
         toast.success(`Starting balance verified: ${cfg.startingBalance} pts × ${v.userCount} users = ${v.totalIssued.toLocaleString()} pts`);
       }
 
-      toast.info(`Seeding ${cfg.matchCount} simulation matches…`);
-      await seedMatchesFn({ data: { matchCount: cfg.matchCount } });
+      toast.info(`Seeding ${cfg.matchCount} simulation matches (${simMode} mode)…`);
+      await seedMatchesFn({ data: { matchCount: cfg.matchCount, mode: simMode } });
       toast.info("Placing random predictions (will stop at exposure target)…");
       const pr: any = await seedPredsFn({ data: {
         minUsersPerMatch: cfg.minUsersPerMatch,
@@ -173,7 +220,11 @@ function SimulationPage() {
       } else {
         toast.success(`Done. ${pr.predictionsCreated ?? 0} predictions placed (${pr.predictionsFailed ?? 0} failed).`);
       }
+      setSimStartedAt(Date.now());
+      setSummary(null);
+      setLastBatchTiming(null);
       qc.invalidateQueries();
+
     } catch (e: any) {
       toast.error(e.message ?? "Seed failed");
     } finally {
@@ -212,8 +263,22 @@ function SimulationPage() {
             <Zap className="h-4 w-4 mr-2" /> Run Tick Now
           </Button>
           <Button variant="outline" onClick={() => settleAllMut.mutate()} disabled={settleAllMut.isPending}>
-            <FastForward className="h-4 w-4 mr-2" /> Settle All Due Matches Now
+            <FastForward className="h-4 w-4 mr-2" /> Settle All Due (Sequential)
           </Button>
+          <Button variant="default" onClick={() => batchSettleMut.mutate()} disabled={batchSettleMut.isPending}>
+            {batchSettleMut.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Rocket className="h-4 w-4 mr-2" />}
+            Batch Settle All Now
+          </Button>
+          <div className="flex items-center gap-2 ml-2">
+            <Label className="text-xs text-muted-foreground">Sim Mode</Label>
+            <Select value={simMode} onValueChange={(v) => setSimMode(v as any)}>
+              <SelectTrigger className="w-[180px] h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="batch">Batch Settlement</SelectItem>
+                <SelectItem value="sequential">Sequential Settlement</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex items-center gap-2 ml-2">
             <Label className="text-xs text-muted-foreground">Match duration</Label>
             <Select value={String(durationMin)} onValueChange={(v) => setDurationMin(Number(v))}>
@@ -230,6 +295,7 @@ function SimulationPage() {
             <RotateCcw className="h-4 w-4 mr-2" /> Reset Simulation
           </Button>
         </div>
+
 
         <Collapsible open={showConfig}>
           <CollapsibleContent>
@@ -272,6 +338,85 @@ function SimulationPage() {
           </AlertDescription>
         </Alert>
       )}
+
+      {/* Live simulation state cards */}
+      {o && (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <Stat label="Active Sim Matches" value={String((o.matches as any).scheduled + (o.matches as any).live)} />
+          <Stat label="Awaiting Settlement" value={String((o.matches as any).live)} tone={(o.matches as any).live > 0 ? "warn" : undefined} />
+          <Stat label="Matches Settled" value={String((o.matches as any).finished)} tone="ok" />
+          <Stat
+            label="Simulation Runtime"
+            value={simStartedAt ? `${Math.floor((nowTs - simStartedAt) / 1000)}s` : "—"}
+          />
+          <Stat
+            label="Batch ETA"
+            value={
+              simMode === "batch" && simStartedAt && !summary
+                ? `${Math.max(0, Math.ceil((simStartedAt + 60_000 - nowTs) / 1000))}s`
+                : summary ? "Settled" : "—"
+            }
+            tone={simMode === "batch" && simStartedAt && !summary ? "warn" : undefined}
+          />
+        </div>
+      )}
+
+      {/* Stress test metrics */}
+      {stress.data && (
+        <Card className="p-3">
+          <div className="flex items-center gap-2 mb-2 text-sm font-medium">
+            <BarChart3 className="h-4 w-4" /> Stress Test Metrics
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+            <Stat label="Wallet Txns" value={Number(stress.data.wallet_txns).toLocaleString()} />
+            <Stat label="Platform Txns" value={Number(stress.data.platform_txns).toLocaleString()} />
+            <Stat label="Pool Txns" value={Number(stress.data.pool_txns).toLocaleString()} />
+            <Stat label="Predictions Settled" value={`${Number(stress.data.predictions_settled).toLocaleString()} / ${Number(stress.data.predictions_total).toLocaleString()}`} />
+            <Stat label="Pools Settled" value={Number(stress.data.pools_settled).toLocaleString()} />
+            {lastBatchTiming && (
+              <>
+                <Stat label="Batch Duration (server)" value={`${Math.round(lastBatchTiming.duration_ms)} ms`} tone="ok" />
+                <Stat label="Avg / Match" value={`${lastBatchTiming.avg_ms_per_match.toFixed(1)} ms`} />
+                <Stat label="Round-trip" value={`${lastBatchTiming.client_round_trip_ms} ms`} />
+                <Stat label="Matches in Batch" value={String(lastBatchTiming.settled)} />
+                <Stat label="Predictions in Batch" value={String(lastBatchTiming.predictions_settled)} />
+              </>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* Settlement summary (after batch settle) */}
+      {summary && (
+        <Card className="p-3 border-emerald-500/40">
+          <div className="text-sm font-medium mb-2">Settlement Summary</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Stat label="Matches Settled" value={String(summary.matchesSettled)} />
+            <Stat label="Predictions Settled" value={String(summary.predictionsSettled)} />
+            <Stat label="Total Stakes" value={fmt(summary.totalStakes)} />
+            <Stat label="Total Payouts" value={fmt(summary.totalPayouts)} />
+            <Stat label="Net Platform P/L" value={fmt(summary.netPlatformPL)} tone={summary.netPlatformPL >= 0 ? "ok" : "bad"} />
+            <Stat label="Bankroll Balance" value={fmt(summary.bankrollBalance)} />
+            {summary.biggestWinner && (
+              <Stat label={`Biggest Winner — ${summary.biggestWinner.name}`} value={fmt(summary.biggestWinner.pl)} tone="ok" />
+            )}
+            {summary.biggestLoser && (
+              <Stat label={`Biggest Loser — ${summary.biggestLoser.name}`} value={fmt(summary.biggestLoser.pl)} tone="bad" />
+            )}
+            {summary.highestPayoutMatch && (
+              <Stat label={`Highest Payout — ${summary.highestPayoutMatch.label}`} value={fmt(summary.highestPayoutMatch.payout)} />
+            )}
+            {summary.highestProfitMatch && (
+              <Stat label={`Top Profit Match — ${summary.highestProfitMatch.label}`} value={fmt(summary.highestProfitMatch.pl)} tone="ok" />
+            )}
+            {summary.highestLossMatch && (
+              <Stat label={`Top Loss Match — ${summary.highestLossMatch.label}`} value={fmt(summary.highestLossMatch.pl)} tone="bad" />
+            )}
+          </div>
+        </Card>
+      )}
+
+
 
       {o && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

@@ -153,6 +153,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       matchCount: z.number().int().min(1).max(200).default(SIM_MATCH_COUNT),
+      mode: z.enum(["sequential", "batch"]).default("batch"),
     }).parse(i ?? {}),
   )
   .handler(async ({ data, context }) => {
@@ -178,7 +179,10 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
         away = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
       }
       usedTeams.add(home + away);
-      const kickoff = new Date(now + i * SIM_INTERVAL_MIN * 60_000).toISOString();
+      // Batch mode: all matches kick off at now() so they go live together.
+      // Sequential mode: stagger 1 min apart.
+      const offsetMs = data.mode === "batch" ? 0 : i * SIM_INTERVAL_MIN * 60_000;
+      const kickoff = new Date(now + offsetMs).toISOString();
       const homeOdds = +(1.5 + Math.random() * 3).toFixed(2);
       const drawOdds = +(2.8 + Math.random() * 2.2).toFixed(2);
       const awayOdds = +(1.5 + Math.random() * 3).toFixed(2);
@@ -187,7 +191,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
         away_team: away,
         kickoff_at: kickoff,
         status: "scheduled",
-        stage: "Simulation Cup",
+        stage: data.mode === "batch" ? "Simulation Cup (Batch)" : "Simulation Cup",
         is_simulation: true,
         reference_odds: { home: homeOdds, draw: drawOdds, away: awayOdds },
       });
@@ -208,8 +212,9 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
     if (snaps.length) {
       await (supabaseAdmin as any).from("match_odds_snapshots").insert(snaps);
     }
-    return { created: inserted?.length ?? 0 };
+    return { created: inserted?.length ?? 0, mode: data.mode };
   });
+
 
 // =========================================================
 //  SEED random predictions for all scheduled sim matches
@@ -573,4 +578,133 @@ export const validateSimulationSeed = createServerFn({ method: "GET" })
       totalIssued: total,
     };
   });
+
+// =========================================================
+//  BATCH SETTLE — settles every live sim match together
+// =========================================================
+export const runSimulationBatchSettle = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const clientT0 = Date.now();
+    const { data, error } = await (supabaseAdmin as any).rpc("run_simulation_batch_settle");
+    if (error) throw new Error(error.message);
+    const clientMs = Date.now() - clientT0;
+    return { ...(data as any), client_round_trip_ms: clientMs };
+  });
+
+// =========================================================
+//  Stress test metrics
+// =========================================================
+export const getSimulationStressMetrics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await (supabaseAdmin as any).rpc("get_simulation_stress_metrics");
+    if (error) throw new Error(error.message);
+    return data as Record<string, number>;
+  });
+
+// =========================================================
+//  Settlement summary (post-batch)
+// =========================================================
+export const getSimulationSettlementSummary = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [{ data: matches }, { data: pools }, { data: payouts }, { data: preds }, { data: bankroll }] =
+      await Promise.all([
+        (supabaseAdmin as any).from("matches")
+          .select("id, home_team, away_team, status, home_score, away_score")
+          .eq("is_simulation", true),
+        (supabaseAdmin as any).from("match_stake_pools")
+          .select("match_id, home_pool, draw_pool, away_pool, settled")
+          .eq("is_simulation", true),
+        (supabaseAdmin as any).from("platform_transactions")
+          .select("match_id, amount, transaction_type").eq("is_simulation", true)
+          .eq("transaction_type", "payout_paid"),
+        (supabaseAdmin as any).from("predictions")
+          .select("user_id, status, virtual_stake, potential_return").eq("is_simulation", true),
+        (supabaseAdmin as any).from("platform_bankroll").select("*").eq("id", 2).maybeSingle(),
+      ]);
+
+    const poolByMatch = new Map((pools ?? []).map((p: any) => [p.match_id, p]));
+    const payoutByMatch = new Map<string, number>();
+    for (const t of payouts ?? []) {
+      payoutByMatch.set(t.match_id, (payoutByMatch.get(t.match_id) ?? 0) + Number(t.amount));
+    }
+
+    // Per-match P/L (settled only)
+    let highestPayoutMatch: any = null;
+    let highestProfitMatch: any = null;
+    let highestLossMatch: any = null;
+    let matchesSettled = 0;
+    let totalStakes = 0;
+    let totalPayouts = 0;
+
+    for (const m of matches ?? []) {
+      const pool: any = poolByMatch.get(m.id);
+      if (!pool?.settled) continue;
+      matchesSettled++;
+      const original = Number(pool.home_pool || 0) + Number(pool.draw_pool || 0) + Number(pool.away_pool || 0);
+      const payout = payoutByMatch.get(m.id) ?? 0;
+      const pl = original - payout;
+      totalStakes += original;
+      totalPayouts += payout;
+      const row = { id: m.id, label: `${m.home_team} vs ${m.away_team}`, score: `${m.home_score}-${m.away_score}`, original, payout, pl };
+      if (!highestPayoutMatch || payout > highestPayoutMatch.payout) highestPayoutMatch = row;
+      if (!highestProfitMatch || pl > highestProfitMatch.pl) highestProfitMatch = row;
+      if (!highestLossMatch || pl < highestLossMatch.pl) highestLossMatch = row;
+    }
+
+    // Biggest winning / losing user
+    const userPL = new Map<string, number>();
+    let predsSettled = 0;
+    for (const p of preds ?? []) {
+      const stake = Number(p.virtual_stake || 0);
+      if (p.status === "won") {
+        const payout = Number(p.potential_return || 0);
+        userPL.set(p.user_id, (userPL.get(p.user_id) ?? 0) + (payout - stake));
+        predsSettled++;
+      } else if (p.status === "lost") {
+        userPL.set(p.user_id, (userPL.get(p.user_id) ?? 0) - stake);
+        predsSettled++;
+      } else if (p.status === "void") {
+        predsSettled++;
+      }
+    }
+    let topUser: { user_id: string; pl: number } | null = null;
+    let botUser: { user_id: string; pl: number } | null = null;
+    for (const [uid, pl] of userPL) {
+      if (!topUser || pl > topUser.pl) topUser = { user_id: uid, pl };
+      if (!botUser || pl < botUser.pl) botUser = { user_id: uid, pl };
+    }
+    const ids: string[] = [];
+    if (topUser) ids.push(topUser.user_id);
+    if (botUser) ids.push(botUser.user_id);
+    const nameMap: Record<string, string> = {};
+    if (ids.length) {
+      const { data: profs } = await (supabaseAdmin as any).from("profiles").select("id, display_name").in("id", ids);
+      for (const p of profs ?? []) nameMap[p.id] = p.display_name;
+    }
+
+    return {
+      matchesSettled,
+      predictionsSettled: predsSettled,
+      totalStakes,
+      totalPayouts,
+      netPlatformPL: totalStakes - totalPayouts,
+      bankrollBalance: Number((bankroll as any)?.balance ?? 0),
+      biggestWinner: topUser ? { name: nameMap[topUser.user_id] ?? topUser.user_id.slice(0, 8), pl: topUser.pl } : null,
+      biggestLoser: botUser ? { name: nameMap[botUser.user_id] ?? botUser.user_id.slice(0, 8), pl: botUser.pl } : null,
+      highestPayoutMatch,
+      highestProfitMatch,
+      highestLossMatch,
+    };
+  });
+
 
