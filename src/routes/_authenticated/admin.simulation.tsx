@@ -121,16 +121,34 @@ function SimulationPage() {
   async function handleSeed() {
     setSeeding(true);
     try {
-      toast.info("Seeding 100 simulation users (in batches)…");
-      for (let start = 1; start <= 100; start += 25) {
-        const res: any = await seedUsersFn({ data: { start, count: 25 } });
+      toast.info(`Setting simulation bankroll to ${cfg.bankroll.toLocaleString()} pts…`);
+      await setBankrollFn({ data: { balance: cfg.bankroll } });
+
+      toast.info(`Seeding ${cfg.totalUsers} simulation users (in batches)…`);
+      for (let start = 1; start <= cfg.totalUsers; start += 25) {
+        const batch = Math.min(25, cfg.totalUsers - start + 1);
+        const res: any = await seedUsersFn({ data: {
+          start, count: batch,
+          totalUsers: cfg.totalUsers,
+          startingBalance: cfg.startingBalance,
+        }});
         toast.message(`Users ${res.processedRange[0]}-${res.processedRange[1]}: ${res.created} new, ${res.skipped} existing`);
       }
-      toast.info("Seeding 25 simulation matches…");
-      await seedMatchesFn();
-      toast.info("Placing random predictions…");
-      const pr: any = await seedPredsFn();
-      toast.success(`Done. ${pr.predictionsCreated ?? 0} predictions placed (${pr.predictionsFailed ?? 0} failed).`);
+      toast.info(`Seeding ${cfg.matchCount} simulation matches…`);
+      await seedMatchesFn({ data: { matchCount: cfg.matchCount } });
+      toast.info("Placing random predictions (will stop at exposure target)…");
+      const pr: any = await seedPredsFn({ data: {
+        minUsersPerMatch: cfg.minUsersPerMatch,
+        maxUsersPerMatch: cfg.maxUsersPerMatch,
+        minStake: cfg.minStake,
+        maxStake: cfg.maxStake,
+        exposureTargetPct: cfg.exposureTargetPct / 100,
+      }});
+      if (pr.stoppedAtCap) {
+        toast.warning(`Stopped at ${cfg.exposureTargetPct}% exposure cap after ${pr.predictionsCreated} predictions.`);
+      } else {
+        toast.success(`Done. ${pr.predictionsCreated ?? 0} predictions placed (${pr.predictionsFailed ?? 0} failed).`);
+      }
       qc.invalidateQueries();
     } catch (e: any) {
       toast.error(e.message ?? "Seed failed");
