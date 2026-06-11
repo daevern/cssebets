@@ -339,9 +339,11 @@ function SimulationPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Password</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
+                  <TableHead className="text-right">Wallet Balance</TableHead>
                   <TableHead className="text-right">Bets</TableHead>
-                  <TableHead className="text-right">P/L</TableHead>
+                  <TableHead className="text-right">Pending Stakes</TableHead>
+                  <TableHead className="text-right">Settled P/L</TableHead>
+                  <TableHead className="text-right">Total P/L</TableHead>
                   <TableHead>Last activity</TableHead>
                 </TableRow>
               </TableHeader>
@@ -353,18 +355,34 @@ function SimulationPage() {
                     <TableCell className="text-xs"><code>{u.password}</code></TableCell>
                     <TableCell className="text-right">{fmt(u.balance)}</TableCell>
                     <TableCell className="text-right">{u.predictionCount}</TableCell>
-                    <TableCell className={`text-right ${u.profitLoss >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(u.profitLoss)}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{fmt(u.pendingStakes ?? 0)}</TableCell>
+                    <TableCell className={`text-right ${(u.settledPL ?? 0) >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(u.settledPL ?? 0)}</TableCell>
+                    <TableCell className={`text-right font-medium ${(u.totalPL ?? 0) >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(u.totalPL ?? 0)}</TableCell>
                     <TableCell className="text-xs">{u.lastActivity ? new Date(u.lastActivity).toLocaleString() : "—"}</TableCell>
                   </TableRow>
                 ))}
                 {!users.data?.users?.length && (
-                  <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No simulation users. Click Seed.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground">No simulation users. Click Seed.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
           </Card>
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+function CfgInput({ label, v, on }: { label: string; v: number; on: (n: number) => void }) {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Input
+        type="number"
+        value={v}
+        onChange={(e) => on(Number(e.target.value) || 0)}
+        className="h-8"
+      />
     </div>
   );
 }
