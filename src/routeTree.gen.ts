@@ -13,10 +13,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
+import { Route as AuthenticatedPayoutRouteImport } from './routes/_authenticated/payout'
 import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
 import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
 import { Route as AuthenticatedLeaderboardRouteImport } from './routes/_authenticated/leaderboard'
 import { Route as AuthenticatedAdminWalletRouteImport } from './routes/_authenticated/admin-wallet'
+import { Route as AuthenticatedAdminPayoutRouteImport } from './routes/_authenticated/admin-payout'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedAdminWalletLedgerRouteImport } from './routes/_authenticated/admin.wallet-ledger'
@@ -51,6 +53,11 @@ const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPayoutRoute = AuthenticatedPayoutRouteImport.update({
+  id: '/payout',
+  path: '/payout',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMyPredictionsRoute =
   AuthenticatedMyPredictionsRouteImport.update({
     id: '/my-predictions',
@@ -72,6 +79,12 @@ const AuthenticatedAdminWalletRoute =
   AuthenticatedAdminWalletRouteImport.update({
     id: '/admin-wallet',
     path: '/admin-wallet',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAdminPayoutRoute =
+  AuthenticatedAdminPayoutRouteImport.update({
+    id: '/admin-payout',
+    path: '/admin-payout',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -158,10 +171,12 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/admin-payout': typeof AuthenticatedAdminPayoutRoute
   '/admin-wallet': typeof AuthenticatedAdminWalletRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
+  '/payout': typeof AuthenticatedPayoutRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/bankroll': typeof AuthenticatedAdminBankrollRoute
@@ -179,10 +194,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
+  '/admin-payout': typeof AuthenticatedAdminPayoutRoute
   '/admin-wallet': typeof AuthenticatedAdminWalletRoute
   '/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
+  '/payout': typeof AuthenticatedPayoutRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/': typeof AuthenticatedIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
@@ -204,10 +221,12 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/admin-payout': typeof AuthenticatedAdminPayoutRoute
   '/_authenticated/admin-wallet': typeof AuthenticatedAdminWalletRoute
   '/_authenticated/leaderboard': typeof AuthenticatedLeaderboardRoute
   '/_authenticated/matches': typeof AuthenticatedMatchesRoute
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
+  '/_authenticated/payout': typeof AuthenticatedPayoutRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
@@ -230,10 +249,12 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/admin'
+    | '/admin-payout'
     | '/admin-wallet'
     | '/leaderboard'
     | '/matches'
     | '/my-predictions'
+    | '/payout'
     | '/wallet'
     | '/admin/audit'
     | '/admin/bankroll'
@@ -251,10 +272,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
+    | '/admin-payout'
     | '/admin-wallet'
     | '/leaderboard'
     | '/matches'
     | '/my-predictions'
+    | '/payout'
     | '/wallet'
     | '/'
     | '/admin/audit'
@@ -275,10 +298,12 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/_authenticated/admin'
+    | '/_authenticated/admin-payout'
     | '/_authenticated/admin-wallet'
     | '/_authenticated/leaderboard'
     | '/_authenticated/matches'
     | '/_authenticated/my-predictions'
+    | '/_authenticated/payout'
     | '/_authenticated/wallet'
     | '/_authenticated/'
     | '/_authenticated/admin/audit'
@@ -331,6 +356,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWalletRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/payout': {
+      id: '/_authenticated/payout'
+      path: '/payout'
+      fullPath: '/payout'
+      preLoaderRoute: typeof AuthenticatedPayoutRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/my-predictions': {
       id: '/_authenticated/my-predictions'
       path: '/my-predictions'
@@ -357,6 +389,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-wallet'
       fullPath: '/admin-wallet'
       preLoaderRoute: typeof AuthenticatedAdminWalletRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin-payout': {
+      id: '/_authenticated/admin-payout'
+      path: '/admin-payout'
+      fullPath: '/admin-payout'
+      preLoaderRoute: typeof AuthenticatedAdminPayoutRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin': {
@@ -497,20 +536,24 @@ const AuthenticatedAdminRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedAdminPayoutRoute: typeof AuthenticatedAdminPayoutRoute
   AuthenticatedAdminWalletRoute: typeof AuthenticatedAdminWalletRoute
   AuthenticatedLeaderboardRoute: typeof AuthenticatedLeaderboardRoute
   AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRoute
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
+  AuthenticatedPayoutRoute: typeof AuthenticatedPayoutRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedAdminPayoutRoute: AuthenticatedAdminPayoutRoute,
   AuthenticatedAdminWalletRoute: AuthenticatedAdminWalletRoute,
   AuthenticatedLeaderboardRoute: AuthenticatedLeaderboardRoute,
   AuthenticatedMatchesRoute: AuthenticatedMatchesRoute,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
+  AuthenticatedPayoutRoute: AuthenticatedPayoutRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
