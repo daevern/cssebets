@@ -662,6 +662,18 @@ export type Database = {
         }
         Returns: number
       }
+      pool_apply_change: {
+        Args: {
+          p_amount: number
+          p_desc?: string
+          p_match_id: string
+          p_outcome: string
+          p_prediction_id?: string
+          p_type: string
+          p_user_id?: string
+        }
+        Returns: number
+      }
       recalc_match_liabilities: {
         Args: { p_match_id: string }
         Returns: undefined
