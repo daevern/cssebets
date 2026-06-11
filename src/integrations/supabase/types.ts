@@ -43,6 +43,7 @@ export type Database = {
           entity_id: string | null
           id: string
           ip: string | null
+          is_simulation: boolean
           metadata: Json | null
           new_value: Json | null
           old_value: Json | null
@@ -57,6 +58,7 @@ export type Database = {
           entity_id?: string | null
           id?: string
           ip?: string | null
+          is_simulation?: boolean
           metadata?: Json | null
           new_value?: Json | null
           old_value?: Json | null
@@ -71,6 +73,7 @@ export type Database = {
           entity_id?: string | null
           id?: string
           ip?: string | null
+          is_simulation?: boolean
           metadata?: Json | null
           new_value?: Json | null
           old_value?: Json | null
@@ -177,6 +180,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_simulation: boolean
           match_id: string
           pool_balance_after: number
           pool_balance_before: number
@@ -189,6 +193,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_simulation?: boolean
           match_id: string
           pool_balance_after: number
           pool_balance_before: number
@@ -201,6 +206,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_simulation?: boolean
           match_id?: string
           pool_balance_after?: number
           pool_balance_before?: number
@@ -232,6 +238,7 @@ export type Database = {
           draw_pool: number
           home_pool: number
           id: string
+          is_simulation: boolean
           match_id: string
           settled: boolean
           settled_at: string | null
@@ -245,6 +252,7 @@ export type Database = {
           draw_pool?: number
           home_pool?: number
           id?: string
+          is_simulation?: boolean
           match_id: string
           settled?: boolean
           settled_at?: string | null
@@ -258,6 +266,7 @@ export type Database = {
           draw_pool?: number
           home_pool?: number
           id?: string
+          is_simulation?: boolean
           match_id?: string
           settled?: boolean
           settled_at?: string | null
@@ -290,6 +299,7 @@ export type Database = {
           home_score: number | null
           home_team: string
           id: string
+          is_simulation: boolean
           kickoff_at: string
           odds_source: string | null
           odds_updated_at: string | null
@@ -314,6 +324,7 @@ export type Database = {
           home_score?: number | null
           home_team: string
           id?: string
+          is_simulation?: boolean
           kickoff_at: string
           odds_source?: string | null
           odds_updated_at?: string | null
@@ -338,6 +349,7 @@ export type Database = {
           home_score?: number | null
           home_team?: string
           id?: string
+          is_simulation?: boolean
           kickoff_at?: string
           odds_source?: string | null
           odds_updated_at?: string | null
@@ -388,6 +400,7 @@ export type Database = {
           bet_id: string | null
           created_at: string
           id: string
+          is_simulation: boolean
           match_id: string | null
           note: string | null
           transaction_type: Database["public"]["Enums"]["platform_txn_type"]
@@ -399,6 +412,7 @@ export type Database = {
           bet_id?: string | null
           created_at?: string
           id?: string
+          is_simulation?: boolean
           match_id?: string | null
           note?: string | null
           transaction_type: Database["public"]["Enums"]["platform_txn_type"]
@@ -410,6 +424,7 @@ export type Database = {
           bet_id?: string | null
           created_at?: string
           id?: string
+          is_simulation?: boolean
           match_id?: string | null
           note?: string | null
           transaction_type?: Database["public"]["Enums"]["platform_txn_type"]
@@ -434,6 +449,7 @@ export type Database = {
       point_requests: {
         Row: {
           id: string
+          is_simulation: boolean
           reason: string | null
           requested_amount: number
           requested_at: string
@@ -445,6 +461,7 @@ export type Database = {
         }
         Insert: {
           id?: string
+          is_simulation?: boolean
           reason?: string | null
           requested_amount: number
           requested_at?: string
@@ -456,6 +473,7 @@ export type Database = {
         }
         Update: {
           id?: string
+          is_simulation?: boolean
           reason?: string | null
           requested_amount?: number
           requested_at?: string
@@ -471,6 +489,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_simulation: boolean
           market: Database["public"]["Enums"]["prediction_market"]
           match_id: string | null
           outcome: string
@@ -486,6 +505,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_simulation?: boolean
           market: Database["public"]["Enums"]["prediction_market"]
           match_id?: string | null
           outcome: string
@@ -501,6 +521,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_simulation?: boolean
           market?: Database["public"]["Enums"]["prediction_market"]
           match_id?: string | null
           outcome?: string
@@ -536,6 +557,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          is_simulation: boolean
           suspended: boolean
         }
         Insert: {
@@ -543,6 +565,7 @@ export type Database = {
           created_at?: string
           display_name: string
           id: string
+          is_simulation?: boolean
           suspended?: boolean
         }
         Update: {
@@ -550,6 +573,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          is_simulation?: boolean
           suspended?: boolean
         }
         Relationships: []
@@ -582,6 +606,7 @@ export type Database = {
           balance_before: number
           created_at: string
           id: string
+          is_simulation: boolean
           note: string | null
           reference_id: string | null
           reference_type: Database["public"]["Enums"]["wallet_ref_type"]
@@ -594,6 +619,7 @@ export type Database = {
           balance_before: number
           created_at?: string
           id?: string
+          is_simulation?: boolean
           note?: string | null
           reference_id?: string | null
           reference_type: Database["public"]["Enums"]["wallet_ref_type"]
@@ -606,6 +632,7 @@ export type Database = {
           balance_before?: number
           created_at?: string
           id?: string
+          is_simulation?: boolean
           note?: string | null
           reference_id?: string | null
           reference_type?: Database["public"]["Enums"]["wallet_ref_type"]
@@ -618,18 +645,21 @@ export type Database = {
         Row: {
           balance: number
           created_at: string
+          is_simulation: boolean
           updated_at: string
           user_id: string
         }
         Insert: {
           balance?: number
           created_at?: string
+          is_simulation?: boolean
           updated_at?: string
           user_id: string
         }
         Update: {
           balance?: number
           created_at?: string
+          is_simulation?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -652,16 +682,28 @@ export type Database = {
         }
         Returns: string
       }
-      platform_apply_change: {
-        Args: {
-          p_amount: number
-          p_bet_id?: string
-          p_match_id?: string
-          p_note?: string
-          p_type: Database["public"]["Enums"]["platform_txn_type"]
-        }
-        Returns: number
-      }
+      platform_apply_change:
+        | {
+            Args: {
+              p_amount: number
+              p_bet_id?: string
+              p_match_id?: string
+              p_note?: string
+              p_type: Database["public"]["Enums"]["platform_txn_type"]
+            }
+            Returns: number
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_bet_id?: string
+              p_is_simulation?: boolean
+              p_match_id?: string
+              p_note?: string
+              p_type: Database["public"]["Enums"]["platform_txn_type"]
+            }
+            Returns: number
+          }
       pool_apply_change: {
         Args: {
           p_amount: number
@@ -678,6 +720,11 @@ export type Database = {
         Args: { p_match_id: string }
         Returns: undefined
       }
+      reset_simulation_data: { Args: { p_admin_id: string }; Returns: Json }
+      run_simulation_tick: {
+        Args: { p_match_duration_minutes?: number }
+        Returns: Json
+      }
       set_house_user: {
         Args: { p_admin_id: string; p_house_user_id: string }
         Returns: string
@@ -687,20 +734,36 @@ export type Database = {
         Returns: number
       }
       void_match_atomic: { Args: { p_match_id: string }; Returns: number }
-      wallet_apply_change: {
-        Args: {
-          p_amount: number
-          p_note?: string
-          p_reference_id: string
-          p_reference_type: Database["public"]["Enums"]["wallet_ref_type"]
-          p_type: Database["public"]["Enums"]["wallet_txn_type"]
-          p_user_id: string
-        }
-        Returns: {
-          new_balance: number
-          txn_id: string
-        }[]
-      }
+      wallet_apply_change:
+        | {
+            Args: {
+              p_amount: number
+              p_note?: string
+              p_reference_id: string
+              p_reference_type: Database["public"]["Enums"]["wallet_ref_type"]
+              p_type: Database["public"]["Enums"]["wallet_txn_type"]
+              p_user_id: string
+            }
+            Returns: {
+              new_balance: number
+              txn_id: string
+            }[]
+          }
+        | {
+            Args: {
+              p_amount: number
+              p_is_simulation?: boolean
+              p_note?: string
+              p_reference_id: string
+              p_reference_type: Database["public"]["Enums"]["wallet_ref_type"]
+              p_type: Database["public"]["Enums"]["wallet_txn_type"]
+              p_user_id: string
+            }
+            Returns: {
+              new_balance: number
+              txn_id: string
+            }[]
+          }
       wallet_approve_request: {
         Args: { p_admin_id: string; p_note?: string; p_request_id: string }
         Returns: number
