@@ -142,6 +142,51 @@ function BankrollPage() {
 
           <Card className="p-4 space-y-3">
             <div className="font-medium flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-primary" /> House user (bankroll wallet)
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Every stake collected credits this user's points wallet, and every payout debits it. Top-ups and withdrawals
+              also mirror here. Super admin only.
+            </p>
+            <div className="text-sm">
+              Current:{" "}
+              <span className="font-medium">
+                {o.house ? `${o.house.displayName} — ${fmt(o.house.walletBalance)} pts` : "Not set"}
+              </span>
+            </div>
+            <div className="grid md:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">Designate user</Label>
+                <select
+                  value={houseChoice}
+                  onChange={(e) => setHouseChoice(e.target.value)}
+                  className="h-9 w-full rounded-md border bg-background px-2 text-sm"
+                >
+                  <option value="">— pick an admin —</option>
+                  {(eligibles.data?.users ?? []).map((u: any) => (
+                    <option key={u.id} value={u.id}>
+                      {u.displayName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="md:col-span-2">
+                <Label className="text-xs">Reason (audit)</Label>
+                <Textarea rows={2} value={houseReason} onChange={(e) => setHouseReason(e.target.value)} />
+              </div>
+            </div>
+            <Button
+              onClick={() => houseMut.mutate()}
+              disabled={houseMut.isPending || !houseChoice || houseReason.length < 3}
+            >
+              Set house user
+            </Button>
+          </Card>
+
+
+
+          <Card className="p-4 space-y-3">
+            <div className="font-medium flex items-center gap-2">
               <ShieldCheck className="h-4 w-4 text-primary" /> Adjust bankroll
             </div>
             <div className="grid md:grid-cols-3 gap-3">
