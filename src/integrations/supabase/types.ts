@@ -972,34 +972,20 @@ export type Database = {
           outcome_prob: number
         }[]
       }
-      place_bet_atomic:
-        | {
-            Args: {
-              p_cap_pct?: number
-              p_market: Database["public"]["Enums"]["prediction_market"]
-              p_match_id: string
-              p_odds: number
-              p_outcome: string
-              p_snapshot_id?: string
-              p_stake: number
-              p_user_id: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_cap_pct?: number
-              p_client_request_id?: string
-              p_market: Database["public"]["Enums"]["prediction_market"]
-              p_match_id: string
-              p_odds: number
-              p_outcome: string
-              p_snapshot_id?: string
-              p_stake: number
-              p_user_id: string
-            }
-            Returns: string
-          }
+      place_bet_atomic: {
+        Args: {
+          p_cap_pct?: number
+          p_client_request_id?: string
+          p_market: Database["public"]["Enums"]["prediction_market"]
+          p_match_id: string
+          p_odds: number
+          p_outcome: string
+          p_snapshot_id?: string
+          p_stake: number
+          p_user_id: string
+        }
+        Returns: string
+      }
       platform_apply_change: {
         Args: {
           p_amount: number
