@@ -78,7 +78,9 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
         available,
         updatedAt: (bankroll as any)?.updated_at ?? null,
       },
+      house,
       bets: { open: openBets ?? 0, settled: settledBets ?? 0, void: voidBets ?? 0 },
+
       topLiabilityMatch: topMatch
         ? {
             id: topMatch.id,
