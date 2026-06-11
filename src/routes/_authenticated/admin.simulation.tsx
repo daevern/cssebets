@@ -620,6 +620,7 @@ function SimulationPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Timer</TableHead>
                   <TableHead>Odds H/D/A</TableHead>
+                  <TableHead className="text-right">Margin</TableHead>
                   <TableHead className="text-right">Original Pool</TableHead>
                   <TableHead className="text-right">H/D/A pool</TableHead>
                   <TableHead className="text-right">Remaining</TableHead>
