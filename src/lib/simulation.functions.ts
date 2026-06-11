@@ -274,6 +274,9 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
 
     let predictionsCreated = 0;
     let predictionsFailed = 0;
+    let totalStakes = 0;
+    let totalExposure = 0;
+    const errorSamples: string[] = [];
     let stoppedAtCap = false;
 
     for (const m of slice as any[]) {
@@ -297,15 +300,18 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
           p_odds: odds,
           p_stake: stake,
           p_snapshot_id: null,
-        }).then((res: any) => ({ ok: !res.error, stake, odds }));
+        }).then((res: any) => ({ ok: !res.error, stake, odds, err: res.error?.message }));
       }));
 
       for (const r of results) {
         if (r.ok) {
           predictionsCreated++;
+          totalStakes += r.stake;
+          totalExposure += r.stake * (r.odds - 1);
           globalExposure += r.stake * (r.odds - 1); // approximate
         } else {
           predictionsFailed++;
+          if (r.err && errorSamples.length < 3) errorSamples.push(r.err);
         }
       }
     }
@@ -313,9 +319,60 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
     const done = nextOffset >= totalMatches || stoppedAtCap;
     return {
       predictionsCreated, predictionsFailed,
+      totalStakes, totalExposure,
       matchesProcessed: slice.length,
       stoppedAtCap, exposureCap,
       nextOffset, totalMatches, done,
+      errorSamples,
+    };
+  });
+
+
+// =========================================================
+//  SEED SUMMARY — counts after seeding for validation
+// =========================================================
+export const getSimulationSeedSummary = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [
+      { count: users },
+      { count: matches },
+      { count: predictions },
+      { count: walletTxns },
+      { count: poolTxns },
+      { count: stakeDebits },
+      { data: predRows },
+      { data: matchRows },
+    ] = await Promise.all([
+      (supabaseAdmin as any).from("profiles").select("id", { count: "exact", head: true }).eq("is_simulation", true),
+      (supabaseAdmin as any).from("matches").select("id", { count: "exact", head: true }).eq("is_simulation", true),
+      (supabaseAdmin as any).from("predictions").select("id", { count: "exact", head: true }).eq("is_simulation", true),
+      (supabaseAdmin as any).from("wallet_transactions").select("id", { count: "exact", head: true }).eq("is_simulation", true),
+      (supabaseAdmin as any).from("match_pool_transactions").select("id", { count: "exact", head: true }).eq("is_simulation", true),
+      (supabaseAdmin as any).from("wallet_transactions").select("id", { count: "exact", head: true }).eq("is_simulation", true).eq("reference_type", "bet_placement"),
+      (supabaseAdmin as any).from("predictions").select("match_id, virtual_stake, potential_return").eq("is_simulation", true),
+      (supabaseAdmin as any).from("matches").select("id").eq("is_simulation", true),
+    ]);
+
+    const matchIdsWithBets = new Set((predRows ?? []).map((p: any) => p.match_id));
+    const totalStakes = (predRows ?? []).reduce((s: number, p: any) => s + Number(p.virtual_stake || 0), 0);
+    const totalExposure = (predRows ?? []).reduce((s: number, p: any) => s + (Number(p.potential_return || 0) - Number(p.virtual_stake || 0)), 0);
+
+    return {
+      users: users ?? 0,
+      matches: matches ?? 0,
+      predictions: predictions ?? 0,
+      walletTxns: walletTxns ?? 0,
+      poolTxns: poolTxns ?? 0,
+      stakeDebits: stakeDebits ?? 0,
+      totalStakes,
+      totalExposure,
+      matchesWithBets: matchIdsWithBets.size,
+      matchesWithoutBets: (matchRows ?? []).filter((m: any) => !matchIdsWithBets.has(m.id)).length,
+      status: (predictions ?? 0) > 0 && (poolTxns ?? 0) > 0 && (stakeDebits ?? 0) > 0 ? "success" : "failed",
     };
   });
 
