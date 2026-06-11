@@ -119,8 +119,10 @@ function MatchCard({ match }: { match: Match }) {
         data: {
           matchId: match.id, market: "result", outcome: pick,
           referenceOdds: Number(ref), virtualStake: Number(stake),
+          clientRequestId: crypto.randomUUID(),
         },
       });
+
     },
     onSuccess: () => {
       toast.success("Prediction submitted");
