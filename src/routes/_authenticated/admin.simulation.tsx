@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, Play, Pause, RotateCcw, Sprout, Zap, Loader2 } from "lucide-react";
+import { AlertTriangle, Play, Pause, RotateCcw, Sprout, Zap, Loader2, FastForward } from "lucide-react";
 import {
   seedSimulationUsers,
   seedSimulationMatches,
