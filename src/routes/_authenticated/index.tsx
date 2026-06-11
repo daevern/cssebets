@@ -24,7 +24,6 @@ function Dashboard() {
         <Trophy className="h-8 w-8 text-primary" />
         <div>
           <h1 className="text-2xl font-bold">cssebets</h1>
-          <p className="text-sm text-muted-foreground">Predict. Compete. Brag.</p>
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

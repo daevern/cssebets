@@ -99,7 +99,7 @@ function SimulatorPage() {
         <div>
           <h1 className="text-2xl font-bold">Bookmaker Profitability Simulator</h1>
           <p className="text-sm text-muted-foreground">
-            Virtual-credit Monte Carlo model. No real money — analytics only.
+            Monte Carlo model for analytics.
           </p>
         </div>
         <Button onClick={run} disabled={running || inp.betTypes.length === 0}>

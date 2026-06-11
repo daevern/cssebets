@@ -95,7 +95,7 @@ function BankrollPage() {
           <Wallet className="h-5 w-5 text-primary" /> Bookmaker bankroll
         </h1>
         <p className="text-sm text-muted-foreground">
-          Virtual house reserve: platform balance, global exposure, and safety coverage.
+          Platform balance, global exposure, and safety coverage.
         </p>
       </div>
 
@@ -141,7 +141,7 @@ function BankrollPage() {
           </div>
 
           <div className="text-xs text-muted-foreground">
-            Virtual points only — no real-money payments are processed. Open / Settled / Void bets: {o.bets.open} / {o.bets.settled} / {o.bets.void}
+            Open / Settled / Void bets: {o.bets.open} / {o.bets.settled} / {o.bets.void}
           </div>
 
 

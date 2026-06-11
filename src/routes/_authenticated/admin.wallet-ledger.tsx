@@ -84,7 +84,7 @@ function AdminWalletLedgerPage() {
         <div>
           <h1 className="text-2xl font-bold">Wallet ledger</h1>
           <p className="text-sm text-muted-foreground">
-            Every virtual-credit movement. Virtual credits only — no real-money payments are processed.
+            All credit movements.
           </p>
         </div>
         <Button variant="outline" onClick={exportCsv} disabled={!rows.length}>

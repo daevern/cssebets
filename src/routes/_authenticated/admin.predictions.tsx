@@ -43,7 +43,7 @@ function AdminPredictionsPage() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold">Predictions</h1>
-        <p className="text-sm text-muted-foreground">View, filter, and void predictions. Voids refund the virtual stake.</p>
+        <p className="text-sm text-muted-foreground">View, filter, and void predictions.</p>
       </div>
 
       <Card className="p-4 space-y-3">

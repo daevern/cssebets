@@ -28,8 +28,7 @@ function MatchPoolsPage() {
           <Layers className="h-5 w-5 text-primary" /> Match pools
         </h1>
         <p className="text-sm text-muted-foreground">
-          Virtual points only — no real-money payments are processed. Stakes are held in the match pool
-          and transferred to the bankroll on settlement.
+          Stakes are held in the match pool and transferred to the bankroll on settlement.
         </p>
       </div>
 
