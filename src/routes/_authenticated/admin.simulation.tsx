@@ -674,7 +674,7 @@ function SimulationPage() {
                   );
                 })}
                 {!matches.data?.matches?.length && (
-                  <TableRow><TableCell colSpan={12} className="text-center text-muted-foreground">No simulation matches.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={13} className="text-center text-muted-foreground">No simulation matches.</TableCell></TableRow>
                 )}
 
               </TableBody>
