@@ -11,8 +11,8 @@ const SIM_USER_COUNT = 100;
 const SIM_MATCH_COUNT = 25;
 const SIM_STARTING_BALANCE = 10_000;
 const SIM_BANKROLL_START = 1_000_000;
-const SIM_MATCH_DURATION_MIN = 5;
-const SIM_INTERVAL_MIN = 5;
+const SIM_MATCH_DURATION_MIN = 1;
+const SIM_INTERVAL_MIN = 1;
 
 async function requireAdmin(supabase: any, userId: string) {
   const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
@@ -165,7 +165,7 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
         away = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
       }
       usedTeams.add(home + away);
-      const kickoff = new Date(now + (i + 1) * SIM_INTERVAL_MIN * 60_000).toISOString();
+      const kickoff = new Date(now + i * SIM_INTERVAL_MIN * 60_000).toISOString();
       const homeOdds = +(1.5 + Math.random() * 3).toFixed(2);
       const drawOdds = +(2.8 + Math.random() * 2.2).toFixed(2);
       const awayOdds = +(1.5 + Math.random() * 3).toFixed(2);
@@ -263,14 +263,19 @@ export const seedSimulationPredictions = createServerFn({ method: "POST" })
 // =========================================================
 export const runSimulationTick = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((i: unknown) =>
+    z.object({
+      durationMinutes: z.number().int().min(1).max(60).default(SIM_MATCH_DURATION_MIN),
+    }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     await requireAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await (supabaseAdmin as any).rpc("run_simulation_tick", {
-      p_match_duration_minutes: SIM_MATCH_DURATION_MIN,
+    const { data: result, error } = await (supabaseAdmin as any).rpc("run_simulation_tick", {
+      p_match_duration_minutes: data.durationMinutes,
     });
     if (error) throw new Error(error.message);
-    return data;
+    return result;
   });
 
 // =========================================================

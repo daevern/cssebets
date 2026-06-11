@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertTriangle, Play, Pause, RotateCcw, Sprout, Zap, Loader2 } from "lucide-react";
+import { AlertTriangle, Play, Pause, RotateCcw, Sprout, Zap, Loader2, FastForward } from "lucide-react";
 import {
   seedSimulationUsers,
   seedSimulationMatches,
@@ -40,26 +42,54 @@ function SimulationPage() {
 
   const [running, setRunning] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [durationMin, setDurationMin] = useState<number>(1);
+  const [nowTs, setNowTs] = useState(() => Date.now());
+
+  // 1s clock for visible countdown timers
+  useEffect(() => {
+    const id = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const overview = useQuery({ queryKey: ["sim-overview"], queryFn: () => overviewFn(), refetchInterval: 5000 });
   const users = useQuery({ queryKey: ["sim-users"], queryFn: () => usersFn(), refetchInterval: 15000 });
   const matches = useQuery({ queryKey: ["sim-matches"], queryFn: () => matchesFn(), refetchInterval: 5000 });
 
-  // Auto-tick when running
+  // Auto-tick every 10s while running
   useEffect(() => {
     if (!running) return;
     const id = setInterval(async () => {
-      try { await tickFn(); qc.invalidateQueries({ queryKey: ["sim-overview"] }); qc.invalidateQueries({ queryKey: ["sim-matches"] }); } catch (e: any) { /* swallow */ }
-    }, 30_000);
+      try {
+        await tickFn({ data: { durationMinutes: durationMin } });
+        qc.invalidateQueries({ queryKey: ["sim-overview"] });
+        qc.invalidateQueries({ queryKey: ["sim-matches"] });
+      } catch { /* swallow */ }
+    }, 10_000);
     return () => clearInterval(id);
-  }, [running, tickFn, qc]);
+  }, [running, tickFn, qc, durationMin]);
 
   const tickMut = useMutation({
-    mutationFn: () => tickFn(),
+    mutationFn: () => tickFn({ data: { durationMinutes: durationMin } }),
     onSuccess: (r: any) => {
       toast.success(`Tick: started ${r?.started ?? 0}, settled ${r?.settled ?? 0}`);
       qc.invalidateQueries();
     },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const settleAllMut = useMutation({
+    mutationFn: async () => {
+      // Run multiple ticks back-to-back to drain any backlog of due matches.
+      let total = { started: 0, settled: 0 };
+      for (let i = 0; i < 5; i++) {
+        const r: any = await tickFn({ data: { durationMinutes: durationMin } });
+        total.started += r?.started ?? 0;
+        total.settled += r?.settled ?? 0;
+        if ((r?.started ?? 0) === 0 && (r?.settled ?? 0) === 0) break;
+      }
+      return total;
+    },
+    onSuccess: (r) => { toast.success(`Settle pass: started ${r.started}, settled ${r.settled}`); qc.invalidateQueries(); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -111,11 +141,26 @@ function SimulationPage() {
           </Button>
           <Button variant={running ? "secondary" : "default"} onClick={() => setRunning((v) => !v)}>
             {running ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
-            {running ? "Pause Auto-Tick" : "Start Auto-Tick (30s)"}
+            {running ? "Pause Auto-Tick" : "Start Auto-Tick (10s)"}
           </Button>
           <Button variant="outline" onClick={() => tickMut.mutate()} disabled={tickMut.isPending}>
             <Zap className="h-4 w-4 mr-2" /> Run Tick Now
           </Button>
+          <Button variant="outline" onClick={() => settleAllMut.mutate()} disabled={settleAllMut.isPending}>
+            <FastForward className="h-4 w-4 mr-2" /> Settle All Due Matches Now
+          </Button>
+          <div className="flex items-center gap-2 ml-2">
+            <Label className="text-xs text-muted-foreground">Match duration</Label>
+            <Select value={String(durationMin)} onValueChange={(v) => setDurationMin(Number(v))}>
+              <SelectTrigger className="w-[120px] h-9"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">1 minute</SelectItem>
+                <SelectItem value="2">2 minutes</SelectItem>
+                <SelectItem value="5">5 minutes</SelectItem>
+                <SelectItem value="10">10 minutes</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <Button variant="destructive" onClick={() => { if (confirm("Delete ALL simulation data?")) resetMut.mutate(); }} disabled={resetMut.isPending}>
             <RotateCcw className="h-4 w-4 mr-2" /> Reset Simulation
           </Button>
@@ -155,6 +200,7 @@ function SimulationPage() {
                   <TableHead>Match</TableHead>
                   <TableHead>Kickoff</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Timer</TableHead>
                   <TableHead>Odds H/D/A</TableHead>
                   <TableHead className="text-right">Pool</TableHead>
                   <TableHead className="text-right">H/D/A pool</TableHead>
@@ -165,22 +211,39 @@ function SimulationPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(matches.data?.matches ?? []).map((m: any) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium">{m.label}</TableCell>
-                    <TableCell className="text-xs">{new Date(m.kickoff).toLocaleTimeString()}</TableCell>
-                    <TableCell><Badge variant="outline" className="capitalize">{m.status}</Badge></TableCell>
-                    <TableCell className="text-xs">{m.odds?.home}/{m.odds?.draw}/{m.odds?.away}</TableCell>
-                    <TableCell className="text-right">{fmt(m.totalPool)}</TableCell>
-                    <TableCell className="text-right text-xs">{fmt(m.homePool)}/{fmt(m.drawPool)}/{fmt(m.awayPool)}</TableCell>
-                    <TableCell className="text-right">{fmt(m.worst)}</TableCell>
-                    <TableCell>{m.finalScore ?? "—"}</TableCell>
-                    <TableCell className="text-right">{fmt(m.payouts)}</TableCell>
-                    <TableCell className={`text-right font-medium ${m.profitLoss >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(m.profitLoss)}</TableCell>
-                  </TableRow>
-                ))}
+                {(matches.data?.matches ?? []).map((m: any) => {
+                  const kickoffMs = new Date(m.kickoff).getTime();
+                  const settleMs = kickoffMs + durationMin * 60_000;
+                  let timer = "—";
+                  if (m.status === "scheduled") {
+                    const s = Math.max(0, Math.ceil((kickoffMs - nowTs) / 1000));
+                    timer = s > 0 ? `Starts in ${s}s` : "Starting…";
+                  } else if (m.status === "live") {
+                    const s = Math.max(0, Math.ceil((settleMs - nowTs) / 1000));
+                    timer = s > 0 ? `Settles in ${s}s` : "Settling…";
+                  } else if (m.status === "finished") {
+                    timer = "Settled";
+                  } else if (m.status === "cancelled") {
+                    timer = "Voided";
+                  }
+                  return (
+                    <TableRow key={m.id}>
+                      <TableCell className="font-medium">{m.label}</TableCell>
+                      <TableCell className="text-xs">{new Date(m.kickoff).toLocaleTimeString()}</TableCell>
+                      <TableCell><Badge variant="outline" className="capitalize">{m.status}</Badge></TableCell>
+                      <TableCell className="text-xs whitespace-nowrap">{timer}</TableCell>
+                      <TableCell className="text-xs">{m.odds?.home}/{m.odds?.draw}/{m.odds?.away}</TableCell>
+                      <TableCell className="text-right">{fmt(m.totalPool)}</TableCell>
+                      <TableCell className="text-right text-xs">{fmt(m.homePool)}/{fmt(m.drawPool)}/{fmt(m.awayPool)}</TableCell>
+                      <TableCell className="text-right">{fmt(m.worst)}</TableCell>
+                      <TableCell>{m.finalScore ?? "—"}</TableCell>
+                      <TableCell className="text-right">{fmt(m.payouts)}</TableCell>
+                      <TableCell className={`text-right font-medium ${m.profitLoss >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(m.profitLoss)}</TableCell>
+                    </TableRow>
+                  );
+                })}
                 {!matches.data?.matches?.length && (
-                  <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground">No simulation matches.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground">No simulation matches.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
