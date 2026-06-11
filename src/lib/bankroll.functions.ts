@@ -18,24 +18,34 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
     await requireTier(supabase, userId, ADMIN_TIERS);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [{ data: bankroll }, { data: matches }, { data: exposureRows }, { count: openBets }, { count: settledBets }, { count: voidBets }] =
-      await Promise.all([
-        (supabaseAdmin as any).from("platform_bankroll").select("*").eq("id", 1).maybeSingle(),
-        supabaseAdmin
-          .from("matches")
-          .select("id, home_team, away_team, status, home_liability, draw_liability, away_liability, worst_case_exposure")
-          .gt("worst_case_exposure" as any, 0)
-          .order("worst_case_exposure" as any, { ascending: false })
-          .limit(20),
-        (supabaseAdmin as any)
-          .from("matches")
-          .select("worst_case_exposure, status")
-          .in("status", ["scheduled", "live"])
-          .gt("worst_case_exposure", 0),
-        supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "pending"),
-        supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).in("status", ["won", "lost"]),
-        supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "void"),
-      ]);
+    const [
+      { data: bankroll },
+      { data: matches },
+      { data: exposureRows },
+      { count: openBets },
+      { count: settledBets },
+      { count: voidBets },
+      { data: poolRows },
+      { data: issuanceRows },
+    ] = await Promise.all([
+      (supabaseAdmin as any).from("platform_bankroll").select("*").eq("id", 1).maybeSingle(),
+      supabaseAdmin
+        .from("matches")
+        .select("id, home_team, away_team, status, home_liability, draw_liability, away_liability, worst_case_exposure")
+        .gt("worst_case_exposure" as any, 0)
+        .order("worst_case_exposure" as any, { ascending: false })
+        .limit(20),
+      (supabaseAdmin as any)
+        .from("matches")
+        .select("worst_case_exposure, status")
+        .in("status", ["scheduled", "live"])
+        .gt("worst_case_exposure", 0),
+      supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).in("status", ["won", "lost"]),
+      supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "void"),
+      (supabaseAdmin as any).from("match_stake_pools").select("total_pool, settled").eq("settled", false),
+      (supabaseAdmin as any).from("wallet_transactions").select("amount").eq("reference_type", "point_request").eq("type", "credit"),
+    ]);
 
     const houseUserId = (bankroll as any)?.house_user_id ?? null;
     let house: { id: string; displayName: string } | null = null;
@@ -56,6 +66,8 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
       (s: number, m: any) => s + Number(m.worst_case_exposure || 0),
       0,
     );
+    const pendingMatchPools = (poolRows ?? []).reduce((s: number, p: any) => s + Number(p.total_pool || 0), 0);
+    const totalIssuance = (issuanceRows ?? []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
     const availableBalance = balance - globalExposure;
     const safetyRatio = globalExposure > 0 ? balance / globalExposure : null;
 
@@ -82,6 +94,8 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
         safetyRatio,
         totalExposure: globalExposure,
         available: availableBalance,
+        pendingMatchPools,
+        totalIssuance,
         updatedAt: (bankroll as any)?.updated_at ?? null,
       },
       house,
@@ -236,3 +250,58 @@ export const setHouseUser = createServerFn({ method: "POST" })
     return { houseUserId: result };
   });
 
+
+export const listMatchPools = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await requireTier(supabase, userId, ADMIN_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: pools } = await (supabaseAdmin as any)
+      .from("match_stake_pools")
+      .select("*")
+      .order("updated_at", { ascending: false })
+      .limit(200);
+
+    const matchIds = (pools ?? []).map((p: any) => p.match_id);
+    if (!matchIds.length) return { pools: [] };
+
+    const [{ data: matches }, { data: preds }, { data: ptx }] = await Promise.all([
+      supabaseAdmin.from("matches").select("id, home_team, away_team, status, home_score, away_score").in("id", matchIds),
+      supabaseAdmin.from("predictions").select("id, match_id, status, virtual_stake, potential_return, outcome, market")
+        .in("match_id", matchIds),
+      (supabaseAdmin as any).from("platform_transactions").select("match_id, transaction_type, amount")
+        .in("match_id", matchIds).in("transaction_type", ["match_pool_collected", "payout_paid"]),
+    ]);
+
+    const matchMap = new Map((matches ?? []).map((m: any) => [m.id, m]));
+    return {
+      pools: (pools ?? []).map((p: any) => {
+        const m: any = matchMap.get(p.match_id);
+        const mp = (preds ?? []).filter((x: any) => x.match_id === p.match_id);
+        const winnerPayout = (ptx ?? [])
+          .filter((t: any) => t.match_id === p.match_id && t.transaction_type === "payout_paid")
+          .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+        const transferred = (ptx ?? [])
+          .filter((t: any) => t.match_id === p.match_id && t.transaction_type === "match_pool_collected")
+          .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+        return {
+          matchId: p.match_id,
+          label: m ? `${m.home_team} vs ${m.away_team}` : p.match_id.slice(0, 8),
+          status: m?.status ?? "unknown",
+          score: m && m.home_score != null ? `${m.home_score}-${m.away_score}` : null,
+          totalPool: Number(p.total_pool),
+          homePool: Number(p.home_pool),
+          drawPool: Number(p.draw_pool),
+          awayPool: Number(p.away_pool),
+          predictionCount: mp.length,
+          settled: p.settled,
+          voided: p.voided,
+          transferredToBankroll: transferred,
+          winnerPayoutTotal: winnerPayout,
+          profitLoss: transferred - winnerPayout,
+        };
+      }),
+    };
+  });

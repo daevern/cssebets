@@ -171,6 +171,110 @@ export type Database = {
           },
         ]
       }
+      match_pool_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          match_id: string
+          pool_balance_after: number
+          pool_balance_before: number
+          prediction_id: string | null
+          transaction_type: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          match_id: string
+          pool_balance_after: number
+          pool_balance_before: number
+          prediction_id?: string | null
+          transaction_type: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          match_id?: string
+          pool_balance_after?: number
+          pool_balance_before?: number
+          prediction_id?: string | null
+          transaction_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_pool_transactions_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_pool_transactions_prediction_id_fkey"
+            columns: ["prediction_id"]
+            isOneToOne: false
+            referencedRelation: "predictions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_stake_pools: {
+        Row: {
+          away_pool: number
+          created_at: string
+          draw_pool: number
+          home_pool: number
+          id: string
+          match_id: string
+          settled: boolean
+          settled_at: string | null
+          total_pool: number
+          updated_at: string
+          voided: boolean
+        }
+        Insert: {
+          away_pool?: number
+          created_at?: string
+          draw_pool?: number
+          home_pool?: number
+          id?: string
+          match_id: string
+          settled?: boolean
+          settled_at?: string | null
+          total_pool?: number
+          updated_at?: string
+          voided?: boolean
+        }
+        Update: {
+          away_pool?: number
+          created_at?: string
+          draw_pool?: number
+          home_pool?: number
+          id?: string
+          match_id?: string
+          settled?: boolean
+          settled_at?: string | null
+          total_pool?: number
+          updated_at?: string
+          voided?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_stake_pools_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: true
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       matches: {
         Row: {
           away_crest: string | null
@@ -558,6 +662,18 @@ export type Database = {
         }
         Returns: number
       }
+      pool_apply_change: {
+        Args: {
+          p_amount: number
+          p_desc?: string
+          p_match_id: string
+          p_outcome: string
+          p_prediction_id?: string
+          p_type: string
+          p_user_id?: string
+        }
+        Returns: number
+      }
       recalc_match_liabilities: {
         Args: { p_match_id: string }
         Returns: undefined
@@ -608,6 +724,7 @@ export type Database = {
         | "void_refund"
         | "admin_topup"
         | "admin_withdrawal"
+        | "match_pool_collected"
       point_request_status: "pending" | "approved" | "rejected"
       prediction_market:
         | "result"
@@ -760,6 +877,7 @@ export const Constants = {
         "void_refund",
         "admin_topup",
         "admin_withdrawal",
+        "match_pool_collected",
       ],
       point_request_status: ["pending", "approved", "rejected"],
       prediction_market: [
