@@ -43,6 +43,25 @@ function WalletPage() {
   const qc = useQueryClient();
   const { user } = useAuth();
   const uid = user?.id;
+  const houseFn = useServerFn(getHouseBankrollSummary);
+
+  const roles = useQuery({
+    queryKey: ["my-roles", uid],
+    queryFn: async () => {
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid!);
+      return (data ?? []).map((r: any) => r.role as string);
+    },
+    enabled: !!uid,
+  });
+  const isAdmin = (roles.data ?? []).some((r) => ["admin", "super_admin", "viewer"].includes(r));
+
+  const house = useQuery({
+    queryKey: ["house-bankroll-summary"],
+    queryFn: () => houseFn(),
+    enabled: isAdmin,
+    refetchInterval: 5000,
+    refetchOnWindowFocus: true,
+  });
 
   const wallet = useQuery({
     queryKey: ["my-wallet", uid],
