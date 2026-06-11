@@ -658,6 +658,7 @@ export type Database = {
       }
       predictions: {
         Row: {
+          client_request_id: string | null
           created_at: string
           id: string
           is_simulation: boolean
@@ -674,6 +675,7 @@ export type Database = {
           virtual_stake: number
         }
         Insert: {
+          client_request_id?: string | null
           created_at?: string
           id?: string
           is_simulation?: boolean
@@ -690,6 +692,7 @@ export type Database = {
           virtual_stake?: number
         }
         Update: {
+          client_request_id?: string | null
           created_at?: string
           id?: string
           is_simulation?: boolean
@@ -952,6 +955,14 @@ export type Database = {
         }
         Returns: number
       }
+      payout_approve_atomic: {
+        Args: { p_admin_id: string; p_payout_id: string }
+        Returns: string
+      }
+      payout_user_reject_atomic: {
+        Args: { p_payout_id: string; p_reason: string; p_user_id: string }
+        Returns: string
+      }
       pick_odds_weighted_score: {
         Args: { p_match_id: string }
         Returns: {
@@ -961,19 +972,34 @@ export type Database = {
           outcome_prob: number
         }[]
       }
-      place_bet_atomic: {
-        Args: {
-          p_cap_pct?: number
-          p_market: Database["public"]["Enums"]["prediction_market"]
-          p_match_id: string
-          p_odds: number
-          p_outcome: string
-          p_snapshot_id?: string
-          p_stake: number
-          p_user_id: string
-        }
-        Returns: string
-      }
+      place_bet_atomic:
+        | {
+            Args: {
+              p_cap_pct?: number
+              p_market: Database["public"]["Enums"]["prediction_market"]
+              p_match_id: string
+              p_odds: number
+              p_outcome: string
+              p_snapshot_id?: string
+              p_stake: number
+              p_user_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_cap_pct?: number
+              p_client_request_id?: string
+              p_market: Database["public"]["Enums"]["prediction_market"]
+              p_match_id: string
+              p_odds: number
+              p_outcome: string
+              p_snapshot_id?: string
+              p_stake: number
+              p_user_id: string
+            }
+            Returns: string
+          }
       platform_apply_change:
         | {
             Args: {
