@@ -51,6 +51,7 @@ function MatchesPage() {
       const { data, error } = await supabase
         .from("matches")
         .select("*")
+        .or("is_simulation.is.null,is_simulation.eq.false")
         .order("kickoff_at", { ascending: true });
       if (error) throw error;
       return data as Match[];
