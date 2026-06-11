@@ -6,7 +6,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const SIM_PASSWORD = "123456789";
+// Simulation user password: pulled from env if provided, otherwise a strong random
+// generated per server boot. Avoids hardcoded credentials in source.
+const SIM_PASSWORD =
+  process.env.SIM_USER_PASSWORD && process.env.SIM_USER_PASSWORD.length >= 12
+    ? process.env.SIM_USER_PASSWORD
+    : `sim-${crypto.randomUUID()}-${crypto.randomUUID()}`;
 const SIM_USER_COUNT = 100;
 const SIM_MATCH_COUNT = 25;
 const SIM_STARTING_BALANCE = 10_000;
