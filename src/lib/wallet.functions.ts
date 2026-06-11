@@ -297,6 +297,9 @@ export const adminRejectRequest = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("point_requests").select("user_id").eq("id", data.requestId).maybeSingle();
+    if (row?.user_id === userId) throw new Error("Cannot reject your own request");
     const { error } = await supabaseAdmin.rpc("wallet_reject_request", {
       p_request_id: data.requestId,
       p_admin_id: userId,
