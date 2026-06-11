@@ -30,6 +30,8 @@ function BankrollPage() {
   const overviewFn = useServerFn(getBankrollOverview);
   const txnsFn = useServerFn(listPlatformTransactions);
   const adjustFn = useServerFn(adjustBankroll);
+  const listHouseFn = useServerFn(listEligibleHouseUsers);
+  const setHouseFn = useServerFn(setHouseUser);
   const qc = useQueryClient();
 
   const overview = useQuery({
@@ -42,9 +44,26 @@ function BankrollPage() {
     queryFn: () => txnsFn({ data: {} }),
     refetchInterval: 15_000,
   });
+  const eligibles = useQuery({
+    queryKey: ["bankroll-eligible-house"],
+    queryFn: () => listHouseFn(),
+  });
 
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
+  const [houseChoice, setHouseChoice] = useState("");
+  const [houseReason, setHouseReason] = useState("");
+
+  const houseMut = useMutation({
+    mutationFn: () => setHouseFn({ data: { houseUserId: houseChoice, reason: houseReason } }),
+    onSuccess: () => {
+      toast.success("House user updated. Bankroll movements now mirror this wallet.");
+      setHouseReason("");
+      qc.invalidateQueries({ queryKey: ["bankroll-overview"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Failed to set house user"),
+  });
+
 
   const mut = useMutation({
     mutationFn: (action: "topup" | "withdraw") =>
