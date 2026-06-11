@@ -26,7 +26,7 @@ import {
   getSimulationMatches,
   validateSimulationSeed,
   runSimulationBatchSettle,
-  getSimulationStressMetrics,
+  getSimulationStressMetrics, getSimulationOutcomeAnalytics,
   getSimulationSettlementSummary,
   getSimulationSeedSummary,
 } from "@/lib/simulation.functions";
