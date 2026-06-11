@@ -245,11 +245,16 @@ function SimulationPage() {
 
       // Seed summary + sanity validation
       const sum: any = await seedSummaryFn();
-      setSeedSummary(sum);
+      const merged = { ...sum, exposureCapHit: cappedOut };
+      setSeedSummary(merged);
       if (sum.predictions === 0 || sum.poolTxns === 0 || sum.stakeDebits === 0) {
         throw new Error("SIMULATION_SEED_FAILED: Simulation users and matches were created but no predictions were generated.");
       }
-      toast.success(`Seed OK: ${sum.predictions} predictions · ${sum.matchesWithBets}/${sum.matches} matches with bets`);
+      if (sum.matchesWithoutBets > 0 && !cappedOut) {
+        toast.error(`Simulation seed issue: ${sum.matchesWithoutBets} match(es) received no predictions even though exposure cap was not reached.`);
+      } else {
+        toast.success(`Seed OK: ${sum.predictions} predictions · ${sum.matchesWithBets}/${sum.matches} matches with bets`);
+      }
 
       setSimStartedAt(Date.now());
       setSummary(null);
