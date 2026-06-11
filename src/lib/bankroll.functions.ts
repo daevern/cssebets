@@ -94,6 +94,8 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
         safetyRatio,
         totalExposure: globalExposure,
         available: availableBalance,
+        pendingMatchPools,
+        totalIssuance,
         updatedAt: (bankroll as any)?.updated_at ?? null,
       },
       house,
