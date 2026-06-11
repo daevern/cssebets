@@ -42,26 +42,54 @@ function SimulationPage() {
 
   const [running, setRunning] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [durationMin, setDurationMin] = useState<number>(1);
+  const [nowTs, setNowTs] = useState(() => Date.now());
+
+  // 1s clock for visible countdown timers
+  useEffect(() => {
+    const id = setInterval(() => setNowTs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const overview = useQuery({ queryKey: ["sim-overview"], queryFn: () => overviewFn(), refetchInterval: 5000 });
   const users = useQuery({ queryKey: ["sim-users"], queryFn: () => usersFn(), refetchInterval: 15000 });
   const matches = useQuery({ queryKey: ["sim-matches"], queryFn: () => matchesFn(), refetchInterval: 5000 });
 
-  // Auto-tick when running
+  // Auto-tick every 10s while running
   useEffect(() => {
     if (!running) return;
     const id = setInterval(async () => {
-      try { await tickFn(); qc.invalidateQueries({ queryKey: ["sim-overview"] }); qc.invalidateQueries({ queryKey: ["sim-matches"] }); } catch (e: any) { /* swallow */ }
-    }, 30_000);
+      try {
+        await tickFn({ data: { durationMinutes: durationMin } });
+        qc.invalidateQueries({ queryKey: ["sim-overview"] });
+        qc.invalidateQueries({ queryKey: ["sim-matches"] });
+      } catch { /* swallow */ }
+    }, 10_000);
     return () => clearInterval(id);
-  }, [running, tickFn, qc]);
+  }, [running, tickFn, qc, durationMin]);
 
   const tickMut = useMutation({
-    mutationFn: () => tickFn(),
+    mutationFn: () => tickFn({ data: { durationMinutes: durationMin } }),
     onSuccess: (r: any) => {
       toast.success(`Tick: started ${r?.started ?? 0}, settled ${r?.settled ?? 0}`);
       qc.invalidateQueries();
     },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const settleAllMut = useMutation({
+    mutationFn: async () => {
+      // Run multiple ticks back-to-back to drain any backlog of due matches.
+      let total = { started: 0, settled: 0 };
+      for (let i = 0; i < 5; i++) {
+        const r: any = await tickFn({ data: { durationMinutes: durationMin } });
+        total.started += r?.started ?? 0;
+        total.settled += r?.settled ?? 0;
+        if ((r?.started ?? 0) === 0 && (r?.settled ?? 0) === 0) break;
+      }
+      return total;
+    },
+    onSuccess: (r) => { toast.success(`Settle pass: started ${r.started}, settled ${r.settled}`); qc.invalidateQueries(); },
     onError: (e: any) => toast.error(e.message),
   });
 
