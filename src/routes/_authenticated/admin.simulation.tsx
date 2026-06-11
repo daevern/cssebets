@@ -231,6 +231,9 @@ function SimulationPage() {
       let coverageFailed = 0;
       let coverageEmergencyCapHit = false;
       const coverageDiagnostics: any[] = [];
+      let rawMatchesCount = 0;
+      let uniqueMatchesCount = 0;
+      let duplicateMatchIdsCount = 0;
       {
         let offset = 0;
         for (let iter = 0; iter < 100; iter++) {
@@ -252,9 +255,26 @@ function SimulationPage() {
           coverageFailed += pr.predictionsFailed ?? 0;
           if (pr.stoppedAtCap) coverageEmergencyCapHit = true;
           if (Array.isArray(pr.matchDiagnostics)) coverageDiagnostics.push(...pr.matchDiagnostics);
+          rawMatchesCount = pr.rawMatchesCount ?? rawMatchesCount;
+          uniqueMatchesCount = pr.uniqueMatchesCount ?? uniqueMatchesCount;
+          duplicateMatchIdsCount = pr.duplicateMatchIdsCount ?? duplicateMatchIdsCount;
           offset = pr.nextOffset;
           if (pr.done) break;
         }
+      }
+
+      // Defensive: deduplicate diagnostics by match_id (paginated calls could repeat).
+      const diagSeen = new Set<string>();
+      const dedupedDiagnostics = coverageDiagnostics.filter((d) => {
+        if (diagSeen.has(d.matchId)) return false;
+        diagSeen.add(d.matchId);
+        return true;
+      });
+      coverageDiagnostics.length = 0;
+      coverageDiagnostics.push(...dedupedDiagnostics);
+
+      if (duplicateMatchIdsCount > 0) {
+        toast.warning(`Detected ${duplicateMatchIdsCount} duplicate match row(s) during coverage — deduplicated by match.id.`);
       }
 
       // ---- Coverage validation: every match must have predictions BEFORE fill ----
