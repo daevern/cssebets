@@ -32,19 +32,22 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
       supabaseAdmin
         .from("matches")
         .select("id, home_team, away_team, status, home_liability, draw_liability, away_liability, worst_case_exposure")
+        .eq("is_simulation" as any, false)
         .gt("worst_case_exposure" as any, 0)
         .order("worst_case_exposure" as any, { ascending: false })
         .limit(20),
       (supabaseAdmin as any)
         .from("matches")
         .select("worst_case_exposure, status")
+        .eq("is_simulation", false)
         .in("status", ["scheduled", "live"])
         .gt("worst_case_exposure", 0),
-      supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "pending"),
-      supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).in("status", ["won", "lost"]),
-      supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "void"),
-      (supabaseAdmin as any).from("match_stake_pools").select("total_pool, settled").eq("settled", false),
-      (supabaseAdmin as any).from("wallet_transactions").select("amount").eq("reference_type", "point_request").eq("type", "credit"),
+      supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "pending").eq("is_simulation" as any, false),
+      supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).in("status", ["won", "lost"]).eq("is_simulation" as any, false),
+      supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "void").eq("is_simulation" as any, false),
+      (supabaseAdmin as any).from("match_stake_pools").select("total_pool, settled").eq("settled", false).eq("is_simulation", false),
+      (supabaseAdmin as any).from("wallet_transactions").select("amount").eq("reference_type", "point_request").eq("type", "credit").eq("is_simulation", false),
+
     ]);
 
     const houseUserId = (bankroll as any)?.house_user_id ?? null;

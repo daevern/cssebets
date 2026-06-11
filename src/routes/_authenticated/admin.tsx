@@ -43,6 +43,8 @@ const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean }> = [
   { to: "/admin/bankroll", label: "Bankroll", icon: TrendingUp },
   { to: "/admin/match-pools", label: "Match pools", icon: Wallet },
   { to: "/admin/simulator", label: "Simulator", icon: LineChartIcon },
+  { to: "/admin/simulation", label: "Simulation Mode", icon: ShieldAlert },
+
   { to: "/admin/risk", label: "Risk", icon: ShieldAlert },
   { to: "/admin/audit", label: "Audit", icon: ScrollText },
   { to: "/admin/settings", label: "Settings", icon: Settings },
