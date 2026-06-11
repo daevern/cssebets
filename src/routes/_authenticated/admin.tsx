@@ -98,6 +98,7 @@ function AdminLayout() {
               ? location.pathname === item.to
               : location.pathname.startsWith(item.to);
             const Icon = item.icon;
+            const badge = item.badgeKey ? badges[item.badgeKey] : 0;
             return (
               <Link
                 key={item.to}
@@ -111,11 +112,17 @@ function AdminLayout() {
                 )}
               >
                 <Icon className="h-4 w-4" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {badge > 0 && (
+                  <span className="ml-auto inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-semibold text-destructive-foreground tabular-nums">
+                    {badge}
+                  </span>
+                )}
               </Link>
             );
           })}
         </nav>
+
       </aside>
 
       <div className="flex-1 min-w-0">
