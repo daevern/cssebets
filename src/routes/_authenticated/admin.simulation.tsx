@@ -173,8 +173,8 @@ function SimulationPage() {
         toast.success(`Starting balance verified: ${cfg.startingBalance} pts × ${v.userCount} users = ${v.totalIssued.toLocaleString()} pts`);
       }
 
-      toast.info(`Seeding ${cfg.matchCount} simulation matches…`);
-      await seedMatchesFn({ data: { matchCount: cfg.matchCount } });
+      toast.info(`Seeding ${cfg.matchCount} simulation matches (${simMode} mode)…`);
+      await seedMatchesFn({ data: { matchCount: cfg.matchCount, mode: simMode } });
       toast.info("Placing random predictions (will stop at exposure target)…");
       const pr: any = await seedPredsFn({ data: {
         minUsersPerMatch: cfg.minUsersPerMatch,
@@ -188,7 +188,11 @@ function SimulationPage() {
       } else {
         toast.success(`Done. ${pr.predictionsCreated ?? 0} predictions placed (${pr.predictionsFailed ?? 0} failed).`);
       }
+      setSimStartedAt(Date.now());
+      setSummary(null);
+      setLastBatchTiming(null);
       qc.invalidateQueries();
+
     } catch (e: any) {
       toast.error(e.message ?? "Seed failed");
     } finally {
