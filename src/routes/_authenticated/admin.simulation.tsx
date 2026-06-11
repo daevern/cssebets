@@ -308,12 +308,13 @@ function SimulationPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Timer</TableHead>
                   <TableHead>Odds H/D/A</TableHead>
-                  <TableHead className="text-right">Pool</TableHead>
+                  <TableHead className="text-right">Original Pool</TableHead>
                   <TableHead className="text-right">H/D/A pool</TableHead>
+                  <TableHead className="text-right">Remaining</TableHead>
                   <TableHead className="text-right">Worst</TableHead>
                   <TableHead>Score</TableHead>
                   <TableHead className="text-right">Payouts</TableHead>
-                  <TableHead className="text-right">P/L</TableHead>
+                  <TableHead className="text-right">Match P/L</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -339,18 +340,22 @@ function SimulationPage() {
                       <TableCell><Badge variant="outline" className="capitalize">{m.status}</Badge></TableCell>
                       <TableCell className="text-xs whitespace-nowrap">{timer}</TableCell>
                       <TableCell className="text-xs">{m.odds?.home}/{m.odds?.draw}/{m.odds?.away}</TableCell>
-                      <TableCell className="text-right">{fmt(m.totalPool)}</TableCell>
+                      <TableCell className="text-right">{fmt(m.originalPool ?? m.totalPool)}</TableCell>
                       <TableCell className="text-right text-xs">{fmt(m.homePool)}/{fmt(m.drawPool)}/{fmt(m.awayPool)}</TableCell>
+                      <TableCell className="text-right text-muted-foreground">{fmt(m.remainingPool ?? 0)}</TableCell>
                       <TableCell className="text-right">{fmt(m.worst)}</TableCell>
                       <TableCell>{m.finalScore ?? "—"}</TableCell>
                       <TableCell className="text-right">{fmt(m.payouts)}</TableCell>
-                      <TableCell className={`text-right font-medium ${m.profitLoss >= 0 ? "text-emerald-600" : "text-destructive"}`}>{fmt(m.profitLoss)}</TableCell>
+                      <TableCell className={`text-right font-medium ${m.settled ? (m.profitLoss >= 0 ? "text-emerald-600" : "text-destructive") : "text-muted-foreground"}`}>
+                        {m.settled ? fmt(m.profitLoss) : "—"}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
                 {!matches.data?.matches?.length && (
-                  <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground">No simulation matches.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={12} className="text-center text-muted-foreground">No simulation matches.</TableCell></TableRow>
                 )}
+
               </TableBody>
             </Table>
           </Card>
