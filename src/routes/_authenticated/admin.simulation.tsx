@@ -125,11 +125,15 @@ function SimulationPage() {
 
   async function handleSeed() {
     setSeeding(true);
+    setValidation(null);
     try {
+      toast.info("Resetting prior simulation data…");
+      await resetFn();
+
       toast.info(`Setting simulation bankroll to ${cfg.bankroll.toLocaleString()} pts…`);
       await setBankrollFn({ data: { balance: cfg.bankroll } });
 
-      toast.info(`Seeding ${cfg.totalUsers} simulation users (in batches)…`);
+      toast.info(`Seeding ${cfg.totalUsers} simulation users @ ${cfg.startingBalance} pts each…`);
       for (let start = 1; start <= cfg.totalUsers; start += 25) {
         const batch = Math.min(25, cfg.totalUsers - start + 1);
         const res: any = await seedUsersFn({ data: {
@@ -139,6 +143,21 @@ function SimulationPage() {
         }});
         toast.message(`Users ${res.processedRange[0]}-${res.processedRange[1]}: ${res.created} new, ${res.skipped} existing`);
       }
+
+      // Validate actual vs configured starting balance
+      const v: any = await validateFn();
+      setValidation({
+        configured: cfg.startingBalance,
+        average: v.averageBalance,
+        total: v.totalIssued,
+        users: v.userCount,
+      });
+      if (Math.abs((v.averageBalance ?? 0) - cfg.startingBalance) > 0.5) {
+        toast.warning(`Avg starting balance ${Math.round(v.averageBalance)} ≠ configured ${cfg.startingBalance}`);
+      } else {
+        toast.success(`Starting balance verified: ${cfg.startingBalance} pts × ${v.userCount} users = ${v.totalIssued.toLocaleString()} pts`);
+      }
+
       toast.info(`Seeding ${cfg.matchCount} simulation matches…`);
       await seedMatchesFn({ data: { matchCount: cfg.matchCount } });
       toast.info("Placing random predictions (will stop at exposure target)…");
@@ -161,6 +180,7 @@ function SimulationPage() {
       setSeeding(false);
     }
   }
+
 
   const o = overview.data;
 
