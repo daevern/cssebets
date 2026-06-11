@@ -16,6 +16,7 @@ import { Wallet as WalletIcon, Plus, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/wallet")({
   ssr: false,
