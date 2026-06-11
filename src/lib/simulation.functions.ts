@@ -11,8 +11,8 @@ const SIM_USER_COUNT = 100;
 const SIM_MATCH_COUNT = 25;
 const SIM_STARTING_BALANCE = 10_000;
 const SIM_BANKROLL_START = 1_000_000;
-const SIM_MATCH_DURATION_MIN = 5;
-const SIM_INTERVAL_MIN = 5;
+const SIM_MATCH_DURATION_MIN = 1;
+const SIM_INTERVAL_MIN = 1;
 
 async function requireAdmin(supabase: any, userId: string) {
   const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
