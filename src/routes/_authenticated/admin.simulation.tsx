@@ -439,10 +439,14 @@ function SimulationPage() {
               <div>Max bets / match: <b>{seedSummary.maxBetsPerMatch ?? 0}</b></div>
               <div>Avg bets / match: <b>{seedSummary.avgBetsPerMatch ?? 0}</b></div>
               <div>Exposure cap hit: <b>{seedSummary.exposureCapHit ? "Yes" : "No"}</b></div>
+              <div>Coverage preds: <b>{seedSummary.coveragePredictions ?? 0}</b></div>
+              <div>Fill preds: <b>{seedSummary.fillPredictions ?? 0}</b></div>
+              <div>Cap hit (coverage): <b>{seedSummary.coverageCapHit ? "Yes" : "No"}</b></div>
+              <div>Cap hit (fill): <b>{seedSummary.fillCapHit ? "Yes" : "No"}</b></div>
             </div>
-            {seedSummary.matchesWithoutBets > 0 && !seedSummary.exposureCapHit && (
+            {seedSummary.matchesWithoutBets > 0 && !seedSummary.coverageCapHit && (
               <div className="mt-3 text-sm font-medium text-destructive">
-                Simulation seed issue: {seedSummary.matchesWithoutBets} match(es) received no predictions even though exposure cap was not reached.
+                Simulation seed issue: {seedSummary.matchesWithoutBets} match(es) received no predictions even though coverage pass did not hit the cap.
               </div>
             )}
           </AlertDescription>
