@@ -179,9 +179,10 @@ export const seedSimulationMatches = createServerFn({ method: "POST" })
         away = SIM_TEAMS[teamIdx++ % SIM_TEAMS.length];
       }
       usedTeams.add(home + away);
-      // Batch mode: all matches kick off at now() so they go live together.
+      // Batch mode: all matches kick off ~90s in the future so predictions
+      // can be placed before MATCH_LOCKED, then settle together via batch tick.
       // Sequential mode: stagger 1 min apart.
-      const offsetMs = data.mode === "batch" ? 0 : i * SIM_INTERVAL_MIN * 60_000;
+      const offsetMs = data.mode === "batch" ? 90_000 : i * SIM_INTERVAL_MIN * 60_000;
       const kickoff = new Date(now + offsetMs).toISOString();
       const homeOdds = +(1.5 + Math.random() * 3).toFixed(2);
       const drawOdds = +(2.8 + Math.random() * 2.2).toFixed(2);
