@@ -10,8 +10,14 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ManagementRouteRouteImport } from './routes/management/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ManagementSupportRouteImport } from './routes/management/support'
+import { Route as ManagementSuperAdminRouteImport } from './routes/management/super-admin'
+import { Route as ManagementLoginRouteImport } from './routes/management/login'
+import { Route as ManagementAdminRouteImport } from './routes/management/admin'
+import { Route as ManagementAccessDeniedRouteImport } from './routes/management/access-denied'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedTournamentWinnerRouteImport } from './routes/_authenticated/tournament-winner'
 import { Route as AuthenticatedPayoutRouteImport } from './routes/_authenticated/payout'
@@ -42,6 +48,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ManagementRouteRoute = ManagementRouteRouteImport.update({
+  id: '/management',
+  path: '/management',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -50,6 +61,31 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ManagementSupportRoute = ManagementSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => ManagementRouteRoute,
+} as any)
+const ManagementSuperAdminRoute = ManagementSuperAdminRouteImport.update({
+  id: '/super-admin',
+  path: '/super-admin',
+  getParentRoute: () => ManagementRouteRoute,
+} as any)
+const ManagementLoginRoute = ManagementLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => ManagementRouteRoute,
+} as any)
+const ManagementAdminRoute = ManagementAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => ManagementRouteRoute,
+} as any)
+const ManagementAccessDeniedRoute = ManagementAccessDeniedRouteImport.update({
+  id: '/access-denied',
+  path: '/access-denied',
+  getParentRoute: () => ManagementRouteRoute,
 } as any)
 const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
   id: '/wallet',
@@ -189,6 +225,7 @@ const LovableEmailQueueProcessRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/management': typeof ManagementRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/admin-payout': typeof AuthenticatedAdminPayoutRoute
@@ -200,6 +237,11 @@ export interface FileRoutesByFullPath {
   '/payout': typeof AuthenticatedPayoutRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/wallet': typeof AuthenticatedWalletRoute
+  '/management/access-denied': typeof ManagementAccessDeniedRoute
+  '/management/admin': typeof ManagementAdminRoute
+  '/management/login': typeof ManagementLoginRoute
+  '/management/super-admin': typeof ManagementSuperAdminRoute
+  '/management/support': typeof ManagementSupportRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/bankroll': typeof AuthenticatedAdminBankrollRoute
   '/admin/match-pools': typeof AuthenticatedAdminMatchPoolsRoute
@@ -217,6 +259,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/management': typeof ManagementRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/admin-payout': typeof AuthenticatedAdminPayoutRoute
   '/admin-wallet': typeof AuthenticatedAdminWalletRoute
@@ -227,6 +270,11 @@ export interface FileRoutesByTo {
   '/payout': typeof AuthenticatedPayoutRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/wallet': typeof AuthenticatedWalletRoute
+  '/management/access-denied': typeof ManagementAccessDeniedRoute
+  '/management/admin': typeof ManagementAdminRoute
+  '/management/login': typeof ManagementLoginRoute
+  '/management/super-admin': typeof ManagementSuperAdminRoute
+  '/management/support': typeof ManagementSupportRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/bankroll': typeof AuthenticatedAdminBankrollRoute
   '/admin/match-pools': typeof AuthenticatedAdminMatchPoolsRoute
@@ -246,6 +294,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/management': typeof ManagementRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/admin-payout': typeof AuthenticatedAdminPayoutRoute
@@ -257,6 +306,11 @@ export interface FileRoutesById {
   '/_authenticated/payout': typeof AuthenticatedPayoutRoute
   '/_authenticated/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
+  '/management/access-denied': typeof ManagementAccessDeniedRoute
+  '/management/admin': typeof ManagementAdminRoute
+  '/management/login': typeof ManagementLoginRoute
+  '/management/super-admin': typeof ManagementSuperAdminRoute
+  '/management/support': typeof ManagementSupportRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/bankroll': typeof AuthenticatedAdminBankrollRoute
   '/_authenticated/admin/match-pools': typeof AuthenticatedAdminMatchPoolsRoute
@@ -276,6 +330,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/management'
     | '/auth'
     | '/admin'
     | '/admin-payout'
@@ -287,6 +342,11 @@ export interface FileRouteTypes {
     | '/payout'
     | '/tournament-winner'
     | '/wallet'
+    | '/management/access-denied'
+    | '/management/admin'
+    | '/management/login'
+    | '/management/super-admin'
+    | '/management/support'
     | '/admin/audit'
     | '/admin/bankroll'
     | '/admin/match-pools'
@@ -304,6 +364,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/management'
     | '/auth'
     | '/admin-payout'
     | '/admin-wallet'
@@ -314,6 +375,11 @@ export interface FileRouteTypes {
     | '/payout'
     | '/tournament-winner'
     | '/wallet'
+    | '/management/access-denied'
+    | '/management/admin'
+    | '/management/login'
+    | '/management/super-admin'
+    | '/management/support'
     | '/admin/audit'
     | '/admin/bankroll'
     | '/admin/match-pools'
@@ -332,6 +398,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/management'
     | '/auth'
     | '/_authenticated/admin'
     | '/_authenticated/admin-payout'
@@ -343,6 +410,11 @@ export interface FileRouteTypes {
     | '/_authenticated/payout'
     | '/_authenticated/tournament-winner'
     | '/_authenticated/wallet'
+    | '/management/access-denied'
+    | '/management/admin'
+    | '/management/login'
+    | '/management/super-admin'
+    | '/management/support'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/bankroll'
     | '/_authenticated/admin/match-pools'
@@ -362,6 +434,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ManagementRouteRoute: typeof ManagementRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
@@ -373,6 +446,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/management': {
+      id: '/management'
+      path: '/management'
+      fullPath: '/management'
+      preLoaderRoute: typeof ManagementRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -388,6 +468,41 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/management/support': {
+      id: '/management/support'
+      path: '/support'
+      fullPath: '/management/support'
+      preLoaderRoute: typeof ManagementSupportRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/super-admin': {
+      id: '/management/super-admin'
+      path: '/super-admin'
+      fullPath: '/management/super-admin'
+      preLoaderRoute: typeof ManagementSuperAdminRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/login': {
+      id: '/management/login'
+      path: '/login'
+      fullPath: '/management/login'
+      preLoaderRoute: typeof ManagementLoginRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/admin': {
+      id: '/management/admin'
+      path: '/admin'
+      fullPath: '/management/admin'
+      preLoaderRoute: typeof ManagementAdminRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/access-denied': {
+      id: '/management/access-denied'
+      path: '/access-denied'
+      fullPath: '/management/access-denied'
+      preLoaderRoute: typeof ManagementAccessDeniedRouteImport
+      parentRoute: typeof ManagementRouteRoute
     }
     '/_authenticated/wallet': {
       id: '/_authenticated/wallet'
@@ -624,12 +739,43 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ManagementRouteRouteChildren {
+  ManagementAccessDeniedRoute: typeof ManagementAccessDeniedRoute
+  ManagementAdminRoute: typeof ManagementAdminRoute
+  ManagementLoginRoute: typeof ManagementLoginRoute
+  ManagementSuperAdminRoute: typeof ManagementSuperAdminRoute
+  ManagementSupportRoute: typeof ManagementSupportRoute
+}
+
+const ManagementRouteRouteChildren: ManagementRouteRouteChildren = {
+  ManagementAccessDeniedRoute: ManagementAccessDeniedRoute,
+  ManagementAdminRoute: ManagementAdminRoute,
+  ManagementLoginRoute: ManagementLoginRoute,
+  ManagementSuperAdminRoute: ManagementSuperAdminRoute,
+  ManagementSupportRoute: ManagementSupportRoute,
+}
+
+const ManagementRouteRouteWithChildren = ManagementRouteRoute._addFileChildren(
+  ManagementRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ManagementRouteRoute: ManagementRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
