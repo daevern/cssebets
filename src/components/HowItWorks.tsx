@@ -1,13 +1,39 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import { Card } from "@/components/ui/card";
 
 const steps = [
-  { n: 1, title: "Register", desc: "Create an account or sign in." },
-  { n: 2, title: "Request points", desc: "Convert cash to virtual points." },
-  { n: 3, title: "Upload proof", desc: "Confirm your request for admin review." },
-  { n: 4, title: "Place bets", desc: "Pick a match and track your result." },
+  {
+    n: 1,
+    title: "Register",
+    desc: "Create an account or sign in.",
+    detail:
+      "All new users must await admin approval. Admin approval could take 30 minutes to 6 hours.",
+  },
+  {
+    n: 2,
+    title: "Request points",
+    desc: "Convert cash to virtual points.",
+    detail:
+      "Users will need to make payment via bank transfer to the respective cssebets account and submit receipt. Points will be issued upon admin approval. Admin point approval could take 30 minutes to 6 hours.",
+  },
+  {
+    n: 3,
+    title: "Upload proof",
+    desc: "Confirm your request for admin review.",
+    detail:
+      "For all point requests and point cashouts, user and admin will need to send each other the respective image/PDF of receipt to confirm the transaction.",
+  },
+  {
+    n: 4,
+    title: "Place bets",
+    desc: "Pick a match and track your result.",
+    detail:
+      "Once points are deposited in your account, head over to the BETS section and place bets on Matches or your overall Winner for the FIFA WORLD CUP 2026.",
+  },
 ];
+
+const cashoutDetail =
+  "Once you are ready to take profits, head over to the Payout section and simply cashout. Send a request to convert points back to cash. Upon admin approval, point-to-cash conversion and the cash-to-bank process will take between 24 hours and 7 days.";
 
 // Hand-drawn arrow path through 4 panels arranged in a zigzag.
 // viewBox is 100x160 stretched to fill via preserveAspectRatio="none".
