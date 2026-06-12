@@ -194,18 +194,12 @@ function MatchCard({ match }: { match: Match }) {
           <div className="text-xs text-muted-foreground uppercase tracking-wide">{stageLabel}</div>
           <div className="text-xs text-muted-foreground">{new Date(match.kickoff_at).toLocaleString()}</div>
         </div>
-        <div className="flex items-center justify-between text-lg font-semibold gap-2">
-          <span className="truncate flex items-center gap-2">
-            <span className="text-2xl leading-none" aria-hidden>{teamFlag(match.home_team)}</span>
-            <span className="truncate">{match.home_team}</span>
-          </span>
+        <div className="flex items-center justify-between text-lg font-semibold gap-3">
+          <TeamFlag name={match.home_team} />
           <span className="text-muted-foreground text-sm shrink-0">
             {match.status === "finished" ? `${match.home_score} – ${match.away_score}` : "vs"}
           </span>
-          <span className="truncate text-right flex items-center gap-2 justify-end">
-            <span className="truncate">{match.away_team}</span>
-            <span className="text-2xl leading-none" aria-hidden>{teamFlag(match.away_team)}</span>
-          </span>
+          <TeamFlag name={match.away_team} />
         </div>
       </button>
 
