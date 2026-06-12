@@ -216,7 +216,7 @@ export const getUserDetail = createServerFn({ method: "GET" })
           .order("created_at", { ascending: false })
           .limit(100),
         supabaseAdmin.from("user_roles").select("role").eq("user_id", data.userId),
-        supabaseAdmin.auth.admin.getUser(data.userId).catch(() => ({ data: { user: null } })),
+        supabaseAdmin.auth.admin.getUserById(data.userId).catch(() => ({ data: { user: null } })),
       ]);
     const authUser = authResult?.data?.user;
     return {
