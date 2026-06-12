@@ -206,6 +206,23 @@ function UserDrawer({
               </Card>
             </div>
 
+            {(d.email || d.phoneNumber) && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                {d.email && (
+                  <Card className="p-3">
+                    <div className="text-xs text-muted-foreground">Email</div>
+                    <div className="text-sm font-medium select-all">{d.email}</div>
+                  </Card>
+                )}
+                {d.phoneNumber && (
+                  <Card className="p-3">
+                    <div className="text-xs text-muted-foreground">Phone Number</div>
+                    <div className="text-sm font-medium select-all">{d.phoneNumber}</div>
+                  </Card>
+                )}
+              </div>
+            )}
+
             <div>
               <label className="text-xs font-medium text-muted-foreground">Reason (required for any change)</label>
               <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. user requested rename" />
