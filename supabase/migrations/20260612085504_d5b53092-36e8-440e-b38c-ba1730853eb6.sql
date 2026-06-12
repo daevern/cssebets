@@ -1,0 +1,2 @@
+REVOKE SELECT (phone_number, auth_provider, force_password_change, public_reference, suspended, is_simulation) ON public.profiles FROM authenticated;
+REVOKE SELECT (phone_number, auth_provider, force_password_change, public_reference, suspended, is_simulation) ON public.profiles FROM anon;
