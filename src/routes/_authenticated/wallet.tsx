@@ -71,6 +71,20 @@ function WalletPage() {
     refetchOnMount: "always",
     staleTime: 0,
   });
+  const myProfile = useQuery({
+    queryKey: ["my-profile-ref", uid],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("public_reference")
+        .eq("id", uid!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as any)?.public_reference ?? null;
+    },
+    enabled: !!uid,
+    staleTime: 60_000,
+  });
   const txns = useQuery({
     queryKey: ["my-txns", uid],
     queryFn: () => tFn({ data: { limit: 50 } }),
