@@ -3,7 +3,7 @@ import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/management/access-denied")({
-  head: () => ({ meta: [{ title: "Access denied — CSSE Management" }] }),
+  head: () => ({ meta: [{ title: "Access denied — CSSEBET Management" }] }),
   component: AccessDenied,
 });
 
@@ -17,7 +17,7 @@ function AccessDenied() {
           You do not have permission to access this management area.
         </p>
         <Link to="/management/login">
-          <Button className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950">Return to login</Button>
+          <Button className="w-full bg-purple-500 hover:bg-purple-600 text-slate-950">Return to login</Button>
         </Link>
       </div>
     </div>

@@ -19,7 +19,7 @@ import { Users, FileCheck, Check, X, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/support")({
-  head: () => ({ meta: [{ title: "Support — CSSE Management" }] }),
+  head: () => ({ meta: [{ title: "Support — CSSEBET Management" }] }),
   component: SupportDashboard,
 });
 
@@ -61,7 +61,7 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: number; 
     <div className="rounded-xl border border-slate-800 bg-slate-900 p-4">
       <div className="flex items-center justify-between">
         <span className="text-xs text-slate-400">{label}</span>
-        <Icon className="h-4 w-4 text-amber-400" />
+        <Icon className="h-4 w-4 text-purple-400" />
       </div>
       <div className="mt-2 text-2xl font-bold tabular-nums">{value}</div>
     </div>
@@ -72,7 +72,7 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${active ? "border-amber-400 text-amber-400" : "border-transparent text-slate-400 hover:text-slate-200"}`}
+      className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${active ? "border-purple-400 text-purple-400" : "border-transparent text-slate-400 hover:text-slate-200"}`}
     >
       {children}
     </button>
@@ -124,7 +124,7 @@ function PendingUsersPanel({ onChanged }: { onChanged: () => void }) {
           <div className="flex-1 space-y-1">
             <div className="font-semibold">{u.display_name || "(no name)"}</div>
             <div className="text-xs text-slate-400 flex flex-wrap gap-x-3">
-              {u.public_reference && <span className="text-amber-400 font-mono">{u.public_reference}</span>}
+              {u.public_reference && <span className="text-purple-400 font-mono">{u.public_reference}</span>}
               {u.email && <span>{u.email}</span>}
               {u.phone && <span>{u.phone}</span>}
             </div>
@@ -207,7 +207,7 @@ function PointRequestsPanel({ onChanged }: { onChanged: () => void }) {
             <button
               key={s}
               onClick={() => setStatus(s)}
-              className={`px-3 py-1.5 rounded-md text-xs capitalize ${status === s ? "bg-amber-500 text-slate-950" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`}
+              className={`px-3 py-1.5 rounded-md text-xs capitalize ${status === s ? "bg-purple-500 text-slate-950" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`}
             >
               {s}
             </button>
@@ -232,9 +232,9 @@ function PointRequestsPanel({ onChanged }: { onChanged: () => void }) {
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-semibold">{r.display_name}</span>
-                    {r.public_reference && <span className="text-amber-400 font-mono text-xs">{r.public_reference}</span>}
+                    {r.public_reference && <span className="text-purple-400 font-mono text-xs">{r.public_reference}</span>}
                     <span className={`text-[10px] uppercase px-1.5 py-0.5 rounded ${
-                      r.status === "pending" ? "bg-amber-500/20 text-amber-400" :
+                      r.status === "pending" ? "bg-purple-500/20 text-purple-400" :
                       r.status === "approved" ? "bg-emerald-500/20 text-emerald-400" :
                       "bg-red-500/20 text-red-400"
                     }`}>{r.status}</span>
@@ -244,7 +244,7 @@ function PointRequestsPanel({ onChanged }: { onChanged: () => void }) {
                     {r.phone && <span>{r.phone}</span>}
                   </div>
                   <div className="text-sm">
-                    Requesting <span className="font-bold text-amber-400">{Number(r.requested_amount).toLocaleString()} pts</span>
+                    Requesting <span className="font-bold text-purple-400">{Number(r.requested_amount).toLocaleString()} pts</span>
                     <span className="text-slate-500"> · current balance {r.current_balance.toLocaleString()}</span>
                   </div>
                   {r.reason && <div className="text-xs text-slate-400 italic">"{r.reason}"</div>}

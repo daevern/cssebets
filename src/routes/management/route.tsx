@@ -93,7 +93,7 @@ function ManagementLayout() {
     return (
       <div className="min-h-screen grid place-items-center bg-slate-950 text-slate-100 p-4">
         <div className="max-w-md text-center space-y-4 p-8 rounded-xl border border-slate-800 bg-slate-900">
-          <Shield className="h-10 w-10 mx-auto text-amber-400" />
+          <Shield className="h-10 w-10 mx-auto text-purple-400" />
           <h1 className="text-xl font-bold">Staff portal</h1>
           <p className="text-sm text-slate-400">You are signed in, but you don't have staff permissions.</p>
           <Button variant="outline" onClick={signOut} className="w-full">Sign out</Button>
@@ -124,15 +124,15 @@ function ManagementLayout() {
       <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/80 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
           <Link to="/management/support" className="flex items-center gap-2 font-bold">
-            <Shield className="h-5 w-5 text-amber-400" />
-            <span>CSSE Management</span>
+            <Shield className="h-5 w-5 text-purple-400" />
+            <span>CSSEBET Management</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             {nav.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
-                className="relative px-3 py-1.5 rounded-md text-sm hover:bg-slate-800 [&.active]:bg-slate-800 [&.active]:text-amber-400"
+                className="relative px-3 py-1.5 rounded-md text-sm hover:bg-slate-800 [&.active]:bg-slate-800 [&.active]:text-purple-400"
               >
                 {item.label}
                 {(item.badge ?? 0) > 0 && (
@@ -157,7 +157,7 @@ function ManagementLayout() {
             <Link
               key={item.to}
               to={item.to}
-              className="shrink-0 px-3 py-1.5 rounded-md text-xs bg-slate-800/50 hover:bg-slate-800 [&.active]:bg-amber-500/20 [&.active]:text-amber-400"
+              className="shrink-0 px-3 py-1.5 rounded-md text-xs bg-slate-800/50 hover:bg-slate-800 [&.active]:bg-purple-500/20 [&.active]:text-purple-400"
             >
               {item.label}
             </Link>
