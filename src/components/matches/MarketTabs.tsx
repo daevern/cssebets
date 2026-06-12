@@ -155,19 +155,19 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
           </div>
           <div className="flex gap-2">
             <Input
-              type="number" min={50} value={stake}
+              type="number" min={1} value={stake}
               onChange={(e) => setStake(e.target.value)}
-              placeholder="Stake (min 50)"
+              placeholder="Stake"
             />
             <Button
-              disabled={mut.isPending || Number(stake) < 50}
+              disabled={mut.isPending || Number(stake) < 1}
               onClick={() => mut.mutate()}
             >
               {mut.isPending ? "..." : `Bet → ${potential}`}
             </Button>
           </div>
-          {Number(stake) < 50 && (
-            <div className="text-[10px] text-destructive">Minimum stake is 50 points.</div>
+          {Number(stake) < 1 && (
+            <div className="text-[10px] text-destructive">Enter a stake of at least 1 point.</div>
           )}
         </div>
       )}
