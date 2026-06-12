@@ -136,6 +136,9 @@ function AdminWalletPage() {
                     <div className="min-w-0 flex-1 space-y-0.5">
                       <div className="font-semibold">{r.display_name}</div>
                       {r.email && <div className="text-xs text-muted-foreground">{r.email}</div>}
+                      <div className="text-[11px] text-muted-foreground font-mono break-all">
+                        Ref: {r.user_id}
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         Requested <span className="font-medium text-foreground">{Number(r.requested_amount).toLocaleString()} pts</span>
                         {" · "}Balance <span className="tabular-nums">{Number(r.current_balance).toLocaleString()}</span>
