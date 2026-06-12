@@ -17,6 +17,7 @@ import { teamFlagUrl } from "@/lib/country-flags";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { MarketTabs } from "@/components/matches/MarketTabs";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/matches")({
   head: () => ({ meta: [{ title: "Matches — cssebets" }] }),
@@ -171,12 +172,34 @@ function MatchCard({ match }: { match: Match }) {
   const submit = useServerFn(submitPrediction);
   const historyFn = useServerFn(getMatchOddsHistory);
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [stake, setStake] = useState("10");
   const [pick, setPick] = useState<"HOME" | "DRAW" | "AWAY" | null>(null);
   const [open, setOpen] = useState(false);
 
   const locked = new Date(match.kickoff_at).getTime() <= Date.now() || match.status !== "scheduled";
   const odds = match.reference_odds ?? { home: 2.0, draw: 3.2, away: 3.5 };
+
+  const myResultBets = useQuery({
+    queryKey: ["my-match-result-bets", match.id, user?.id],
+    enabled: !!user && !locked,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("predictions")
+        .select("outcome")
+        .eq("match_id", match.id)
+        .eq("user_id", user!.id)
+        .eq("market", "result")
+        .eq("status", "pending");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const placedResults = useMemo(() => {
+    const s = new Set<string>();
+    for (const b of (myResultBets.data ?? []) as Array<{ outcome: string }>) s.add(b.outcome);
+    return s;
+  }, [myResultBets.data]);
 
   const history = useQuery({
     queryKey: ["match-odds-history", match.id],
@@ -199,6 +222,7 @@ function MatchCard({ match }: { match: Match }) {
     onSuccess: () => {
       toast.success("Prediction submitted");
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
+      qc.invalidateQueries({ queryKey: ["my-match-result-bets", match.id, user?.id] });
       setPick(null);
     },
     onError: (e: Error) => toast.error(e.message),
@@ -249,14 +273,21 @@ function MatchCard({ match }: { match: Match }) {
             {(["HOME", "DRAW", "AWAY"] as const).map((p) => {
               const label = p === "HOME" ? match.home_team : p === "AWAY" ? match.away_team : "Draw";
               const price = p === "HOME" ? odds.home : p === "DRAW" ? odds.draw : odds.away;
+              const alreadyPlaced = placedResults.has(p);
               return (
                 <Button
-                  key={p} type="button" variant={pick === p ? "default" : "outline"}
+                  key={p} type="button"
+                  variant={pick === p ? "default" : "outline"}
+                  disabled={alreadyPlaced}
+                  title={alreadyPlaced ? "You already placed a bet on this selection" : undefined}
                   onClick={() => setPick(p)} size="sm"
-                  className="flex flex-col h-auto py-2"
+                  className="flex flex-col h-auto py-2 relative disabled:opacity-60"
                 >
                   <span className="truncate max-w-full text-xs">{label}</span>
                   <span className="font-bold">{price}</span>
+                  {alreadyPlaced && (
+                    <span className="absolute top-1 right-1 text-[9px] text-primary font-bold">✓</span>
+                  )}
                 </Button>
               );
             })}
