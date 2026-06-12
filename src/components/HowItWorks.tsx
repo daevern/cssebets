@@ -60,8 +60,14 @@ export function HowItWorks() {
   const cashoutY = useTransform(scrollYProgress, [0.82, 1], [20, 0]);
   const cashoutScale = useTransform(scrollYProgress, [0.82, 1], [0.9, 1]);
 
+  const [raining, setRaining] = useState(false);
+  useMotionValueEvent(cashoutOpacity, "change", (v) => {
+    if (v > 0.9 && !raining) setRaining(true);
+  });
+
   return (
-    <section id="how" className="border-b border-border bg-card/30">
+    <section id="how" className="relative overflow-hidden border-b border-border bg-card/30">
+      {raining && <MoneyRain />}
       <div className="mx-auto max-w-5xl px-4 py-16">
         <div className="text-center">
           <h2 className="text-2xl font-bold sm:text-3xl">How It Works</h2>
