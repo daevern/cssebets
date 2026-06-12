@@ -9,7 +9,7 @@ import {
   adminAdjustWallet,
   adminGetProofSignedUrl,
 } from "@/lib/wallet.functions";
-import { supabase } from "@/integrations/supabase/client";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
