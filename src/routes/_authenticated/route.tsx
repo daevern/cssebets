@@ -8,7 +8,7 @@ import { getPendingPointRequestCount } from "@/lib/wallet.functions";
 import { getPendingPayoutCount, getMyPayoutActionCount } from "@/lib/payout.functions";
 import { getPendingUserCount } from "@/lib/admin.functions";
 import { getMyUnreadSupportCount } from "@/lib/support.functions";
-import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote, Headset } from "lucide-react";
+import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote, Headset, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect } from "react";
@@ -205,6 +205,9 @@ function AuthedLayout() {
                 <span className="text-muted-foreground font-normal">pts</span>
               </Link>
             )}
+            <Link to="/settings" title="Settings" className="rounded-md p-2 hover:bg-muted text-muted-foreground hover:text-foreground">
+              <SettingsIcon className="h-4 w-4" />
+            </Link>
             <Button variant="ghost" size="sm" onClick={signOut}>
               <LogOut className="h-4 w-4" />
             </Button>

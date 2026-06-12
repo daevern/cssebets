@@ -25,6 +25,13 @@ function isValidPhone(p: string) {
   return digits.length >= 10 && digits.length <= 15;
 }
 
+// Convert "+60123456789" → "60123456789@phone.cssebets.local"
+// Used so phone sign-up flows through email/password auth (no SMS/OTP).
+export function phoneToSyntheticEmail(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  return `${digits}@phone.cssebets.local`;
+}
+
 function RegisterPage() {
   const [channel, setChannel] = useState<Channel>("email");
   const [displayName, setDisplayName] = useState("");
@@ -32,15 +39,8 @@ function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  function resetTransient() {
-    setOtp("");
-    setOtpSent(false);
-  }
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -72,24 +72,23 @@ function RegisterPage() {
     try {
       const p = normalizePhone(phone);
       if (!isValidPhone(p)) throw new Error("Phone must be in international format, e.g. +60123456789");
-      if (!otpSent) {
-        if (password.length < 8) throw new Error("Password must be at least 8 characters");
-        if (password !== confirm) throw new Error("Passwords do not match");
-        const { error } = await supabase.auth.signUp({
-          phone: p,
-          password,
-          options: { data: { display_name: displayName || p } },
-        });
-        if (error) throw error;
-        setOtpSent(true);
-        toast.success("OTP sent. Check your phone.");
-      } else {
-        if (!otp.trim()) throw new Error("Enter the OTP sent to your phone");
-        const { error } = await supabase.auth.verifyOtp({ phone: p, token: otp.trim(), type: "sms" });
-        if (error) throw error;
-        toast.success("Phone verified. Waiting for admin approval.");
-        navigate({ to: "/dashboard" });
-      }
+      if (password.length < 8) throw new Error("Password must be at least 8 characters");
+      if (password !== confirm) throw new Error("Passwords do not match");
+      const syntheticEmail = phoneToSyntheticEmail(p);
+      const { error } = await supabase.auth.signUp({
+        email: syntheticEmail,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            display_name: displayName || p,
+            phone_number: p,
+          },
+        },
+      });
+      if (error) throw error;
+      toast.success("Account created. Waiting for admin approval.");
+      navigate({ to: "/dashboard" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -115,7 +114,7 @@ function RegisterPage() {
             <button
               key={c}
               type="button"
-              onClick={() => { setChannel(c); resetTransient(); }}
+              onClick={() => setChannel(c)}
               className={`flex-1 py-1.5 rounded-md text-xs font-medium transition ${channel === c ? "bg-card shadow" : "text-muted-foreground"}`}
             >
               {c === "email" ? "Email" : "Phone"}
@@ -147,12 +146,10 @@ function RegisterPage() {
           </form>
         ) : (
           <form onSubmit={handlePhone} className="space-y-4">
-            {!otpSent && (
-              <div className="space-y-1.5">
-                <Label htmlFor="name-phone">Display name</Label>
-                <Input id="name-phone" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Alex" />
-              </div>
-            )}
+            <div className="space-y-1.5">
+              <Label htmlFor="name-phone">Display name</Label>
+              <Input id="name-phone" value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Alex" />
+            </div>
             <div className="space-y-1.5">
               <Label htmlFor="phone">Phone number</Label>
               <Input
@@ -163,38 +160,22 @@ function RegisterPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="+60123456789"
-                disabled={otpSent}
               />
               <p className="text-[11px] text-muted-foreground">International format, e.g. +60123456789</p>
             </div>
-            {!otpSent ? (
-              <>
-                <div className="space-y-1.5">
-                  <Label htmlFor="pw-phone">Password</Label>
-                  <Input id="pw-phone" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="confirm-phone">Confirm password</Label>
-                  <Input id="confirm-phone" type="password" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-                </div>
-              </>
-            ) : (
-              <div className="space-y-1.5">
-                <Label htmlFor="otp">OTP code</Label>
-                <Input id="otp" type="text" inputMode="numeric" required value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="123456" />
-                <p className="text-[11px] text-muted-foreground">Enter the code we just sent via SMS.</p>
-              </div>
-            )}
+            <div className="space-y-1.5">
+              <Label htmlFor="pw-phone">Password</Label>
+              <Input id="pw-phone" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm-phone">Confirm password</Label>
+              <Input id="confirm-phone" type="password" required minLength={8} value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+            </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Please wait…" : otpSent ? "Verify & create account" : "Send OTP"}
+              {loading ? "Please wait…" : "Create account"}
             </Button>
-            {otpSent && (
-              <Button type="button" variant="ghost" className="w-full text-xs" onClick={resetTransient}>
-                ← Change phone number
-              </Button>
-            )}
             <p className="text-[11px] text-muted-foreground text-center">
-              Phone sign-in requires SMS to be enabled on the backend. If you don't receive an OTP, contact an admin.
+              No SMS verification — use this phone number with your password to sign in.
             </p>
           </form>
         )}
