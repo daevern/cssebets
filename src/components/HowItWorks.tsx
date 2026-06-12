@@ -1,0 +1,183 @@
+import { useRef } from "react";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { Card } from "@/components/ui/card";
+
+const steps = [
+  { n: 1, title: "Register", desc: "Create an account or sign in." },
+  { n: 2, title: "Request points", desc: "Convert cash to virtual points." },
+  { n: 3, title: "Upload proof", desc: "Confirm your request for admin review." },
+  { n: 4, title: "Place bets", desc: "Pick a match and track your result." },
+];
+
+// Hand-drawn arrow path through 4 panels arranged in a zigzag.
+// viewBox is 100x160 stretched to fill via preserveAspectRatio="none".
+// Stroke uses vector-effect="non-scaling-stroke" so the line keeps its width.
+const ARROW_PATH =
+  "M 22 14 C 55 14, 60 30, 78 34 C 102 40, -4 60, 22 70 C 55 78, 60 100, 78 106 C 95 112, 60 130, 50 140";
+
+export function HowItWorks() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start 0.8", "end 0.4"],
+  });
+
+  // Step-and-hold mapping: arrow advances then pauses at each panel.
+  const rawDraw = useTransform(
+    scrollYProgress,
+    [0, 0.15, 0.28, 0.42, 0.55, 0.7, 0.82, 1],
+    [0, 0.34, 0.34, 0.66, 0.66, 0.92, 0.92, 1],
+  );
+  const pathLength = useSpring(rawDraw, { stiffness: 120, damping: 24, mass: 0.6 });
+  const cashoutOpacity = useTransform(scrollYProgress, [0.82, 0.95], [0, 1]);
+  const cashoutY = useTransform(scrollYProgress, [0.82, 1], [20, 0]);
+  const cashoutScale = useTransform(scrollYProgress, [0.82, 1], [0.9, 1]);
+
+  return (
+    <section id="how" className="border-b border-border bg-card/30">
+      <div className="mx-auto max-w-5xl px-4 py-16">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold sm:text-3xl">How It Works</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Scroll through to follow the path.
+          </p>
+        </div>
+
+        <div ref={sectionRef} className="relative mt-12">
+          {/* Hand-drawn arrow overlay */}
+          <svg
+            className="pointer-events-none absolute inset-0 z-0 h-full w-full"
+            viewBox="0 0 100 160"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <defs>
+              <filter id="kid-rough" x="-20%" y="-20%" width="140%" height="140%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="7" />
+                <feDisplacementMap in="SourceGraphic" scale="2.2" />
+              </filter>
+              <marker
+                id="kid-arrowhead"
+                viewBox="0 0 12 12"
+                refX="6"
+                refY="6"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
+                <path
+                  d="M 1 1 L 11 6 L 1 11 L 4 6 Z"
+                  fill="hsl(var(--primary))"
+                />
+              </marker>
+            </defs>
+
+            {/* Faint guide path (full route) */}
+            <path
+              d={ARROW_PATH}
+              fill="none"
+              stroke="hsl(var(--primary))"
+              strokeOpacity="0.12"
+              strokeWidth="3"
+              strokeLinecap="round"
+              vectorEffect="non-scaling-stroke"
+              filter="url(#kid-rough)"
+            />
+            {/* Animated drawn arrow */}
+            <motion.path
+              d={ARROW_PATH}
+              fill="none"
+              stroke="hsl(var(--primary))"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+              filter="url(#kid-rough)"
+              markerEnd="url(#kid-arrowhead)"
+              style={{ pathLength, pathOffset: 0 }}
+              initial={{ pathLength: 0 }}
+            />
+          </svg>
+
+          {/* Panels in a zigzag grid */}
+          <div className="relative z-10 grid grid-cols-2 gap-x-6 gap-y-8 sm:gap-x-16 sm:gap-y-12">
+            {steps.map((s, i) => {
+              const col = i % 2 === 0 ? "col-start-1" : "col-start-2";
+              return (
+                <motion.div
+                  key={s.n}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-80px" }}
+                  transition={{ duration: 0.4, delay: i * 0.05 }}
+                  className={`${col} row-start-${i + 1}`}
+                  style={{ gridRowStart: i + 1 }}
+                >
+                  <Card className="relative p-4 sm:p-5">
+                    <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30">
+                      {s.n}
+                    </div>
+                    <div className="text-sm font-semibold sm:text-base">{s.title}</div>
+                    <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{s.desc}</div>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          {/* Cashout dollar-bill graphic */}
+          <motion.div
+            style={{ opacity: cashoutOpacity, y: cashoutY, scale: cashoutScale }}
+            className="relative z-10 mt-12 flex justify-center"
+          >
+            <CashoutBills />
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CashoutBills() {
+  // Each letter rendered as a tiny "dollar bill" tile, fanned out.
+  const letters = "CASHOUT".split("");
+  const rotations = [-9, -5, -2, 0, 2, 5, 9];
+  return (
+    <div className="flex items-end justify-center gap-1 sm:gap-2">
+      {letters.map((ch, i) => (
+        <DollarBill key={i} letter={ch} rotate={rotations[i]} index={i} />
+      ))}
+    </div>
+  );
+}
+
+function DollarBill({ letter, rotate, index }: { letter: string; rotate: number; index: number }) {
+  return (
+    <motion.div
+      initial={{ y: 20, opacity: 0, rotate: 0 }}
+      whileInView={{ y: 0, opacity: 1, rotate }}
+      viewport={{ once: true, margin: "-50px" }}
+      transition={{ duration: 0.5, delay: 0.05 * index, type: "spring", stiffness: 140 }}
+      className="relative h-16 w-12 shrink-0 select-none rounded-sm border-2 border-emerald-900/60 bg-gradient-to-br from-emerald-200 via-emerald-100 to-emerald-300 shadow-md sm:h-20 sm:w-16"
+      style={{
+        boxShadow: "0 6px 18px -8px rgba(6,78,59,0.6), inset 0 0 0 1px rgba(255,255,255,0.4)",
+      }}
+    >
+      {/* Ornate inner border */}
+      <div className="absolute inset-1 rounded-[2px] border border-emerald-800/50" />
+      {/* Corner $ marks */}
+      <span className="absolute left-1 top-0.5 text-[8px] font-black text-emerald-900">$</span>
+      <span className="absolute right-1 top-0.5 text-[8px] font-black text-emerald-900">$</span>
+      <span className="absolute bottom-0.5 left-1 text-[8px] font-black text-emerald-900">$</span>
+      <span className="absolute bottom-0.5 right-1 text-[8px] font-black text-emerald-900">$</span>
+      {/* Center letter */}
+      <div
+        className="absolute inset-0 grid place-items-center font-serif text-2xl font-black text-emerald-900 sm:text-3xl"
+        style={{ textShadow: "0 1px 0 rgba(255,255,255,0.5)" }}
+      >
+        {letter}
+      </div>
+    </motion.div>
+  );
+}
