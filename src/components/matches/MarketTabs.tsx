@@ -43,6 +43,10 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
   const [stakes, setStakes] = useState<Record<string, string>>({});
   const [picks, setPicks] = useState<Record<string, { selection: string; odds: number } | null>>({});
 
+  // Multi-select state for Score (correct_score) — selection -> odds; one stake per selection
+  const [csPicks, setCsPicks] = useState<Record<string, number>>({});
+  const [csStakes, setCsStakes] = useState<Record<string, string>>({});
+
   const mut = useMutation({
     mutationFn: async (market: MarketKey) => {
       const pick = picks[market];
@@ -63,6 +67,39 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
     onSuccess: (_, market) => {
       toast.success("Bet placed");
       setPicks((prev) => ({ ...prev, [market]: null }));
+      qc.invalidateQueries({ queryKey: ["my-predictions"] });
+      qc.invalidateQueries({ queryKey: ["wallet"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const csMut = useMutation({
+    mutationFn: async (selection: string) => {
+      const odds = csPicks[selection];
+      if (!odds) throw new Error("Selection missing");
+      const stakeVal = csStakes[selection] ?? "10";
+      const n = Number(stakeVal);
+      if (!Number.isFinite(n) || n < 1) throw new Error("Enter a stake of at least 1 point");
+      return place({
+        data: {
+          matchId,
+          market: "correct_score",
+          selection,
+          stake: n,
+          clientRequestId: crypto.randomUUID(),
+        },
+      });
+    },
+    onSuccess: (_, selection) => {
+      toast.success(`Bet placed on ${selectionLabel(selection)}`);
+      setCsPicks((prev) => {
+        const { [selection]: _omit, ...rest } = prev;
+        return rest;
+      });
+      setCsStakes((prev) => {
+        const { [selection]: _omit, ...rest } = prev;
+        return rest;
+      });
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
     },
