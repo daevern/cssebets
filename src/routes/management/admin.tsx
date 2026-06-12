@@ -25,37 +25,27 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/management/admin")({
-  ssr: false,
-  beforeLoad: async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw redirect({ to: "/auth" });
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-    const has = (roles ?? []).some((r) =>
-      ["admin", "super_admin", "viewer"].includes(r.role as string),
-    );
-    if (!has) throw redirect({ to: "/dashboard" });
-  },
   head: () => ({ meta: [{ title: "Admin — cssebets" }] }),
   component: AdminLayout,
 });
 
 type BadgeKey = "pendingPointRequests" | "pendingPayouts" | "pendingUsers";
 const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeKey?: BadgeKey }> = [
-  { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/admin/users", label: "Users", icon: Users, badgeKey: "pendingUsers" },
-  { to: "/admin-wallet", label: "Point Requests", icon: Wallet, badgeKey: "pendingPointRequests" },
-  { to: "/admin-payout", label: "Payouts", icon: Banknote, badgeKey: "pendingPayouts" },
-  { to: "/admin/predictions", label: "Predictions", icon: ListChecks },
-  { to: "/admin/matches", label: "Matches", icon: CalendarDays },
-  { to: "/admin/tournament", label: "Tournament", icon: Shield },
-  { to: "/admin/odds-history", label: "Odds history", icon: TrendingUp },
-  { to: "/admin/wallet-ledger", label: "Wallet ledger", icon: Wallet },
-  { to: "/admin/bankroll", label: "Bankroll", icon: TrendingUp },
-  { to: "/admin/risk-settings", label: "Risk settings", icon: ShieldAlert },
-  { to: "/admin/match-pools", label: "Match pools", icon: Wallet },
-  { to: "/admin/simulation", label: "Simulation Mode", icon: ShieldAlert },
-  { to: "/admin/audit", label: "Audit", icon: ScrollText },
-  { to: "/admin/settings", label: "Settings", icon: Settings },
+  { to: "/management/admin", label: "Overview", icon: LayoutDashboard, exact: true },
+  { to: "/management/admin/users", label: "Users", icon: Users, badgeKey: "pendingUsers" },
+  { to: "/management/admin/points", label: "Point Requests", icon: Wallet, badgeKey: "pendingPointRequests" },
+  { to: "/management/admin/payouts", label: "Payouts", icon: Banknote, badgeKey: "pendingPayouts" },
+  { to: "/management/admin/predictions", label: "Predictions", icon: ListChecks },
+  { to: "/management/admin/matches", label: "Matches", icon: CalendarDays },
+  { to: "/management/admin/tournament", label: "Tournament", icon: Shield },
+  { to: "/management/admin/odds-history", label: "Odds history", icon: TrendingUp },
+  { to: "/management/admin/wallet-ledger", label: "Wallet ledger", icon: Wallet },
+  { to: "/management/admin/bankroll", label: "Bankroll", icon: TrendingUp },
+  { to: "/management/admin/risk-settings", label: "Risk settings", icon: ShieldAlert },
+  { to: "/management/admin/match-pools", label: "Match pools", icon: Wallet },
+  { to: "/management/admin/simulation", label: "Simulation Mode", icon: ShieldAlert },
+  { to: "/management/admin/audit", label: "Audit", icon: ScrollText },
+  { to: "/management/admin/settings", label: "Settings", icon: Settings },
 ];
 
 function AdminLayout() {
