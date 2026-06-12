@@ -5,8 +5,10 @@ import { getMatchMarkets, placeMarketBet } from "@/lib/markets.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import {
   MARKET_LABELS,
   selectionLabel,
@@ -18,16 +20,43 @@ import {
 
 type OddsRow = { id: string; market: string; selection: string; odds: number };
 
+const MIN_STAKE = 10;
+const MAX_STAKE = 50000;
+
 export function MarketTabs({ matchId, locked }: { matchId: string; locked: boolean }) {
   const fn = useServerFn(getMatchMarkets);
   const place = useServerFn(placeMarketBet);
   const qc = useQueryClient();
+  const { user } = useAuth();
 
   const { data, isLoading } = useQuery({
     queryKey: ["match-markets", matchId],
     queryFn: () => fn({ data: { matchId } }),
     enabled: !locked,
   });
+
+  const myBets = useQuery({
+    queryKey: ["my-match-pending-bets", matchId, user?.id],
+    enabled: !!user && !locked,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("predictions")
+        .select("market_text, selection_label")
+        .eq("match_id", matchId)
+        .eq("user_id", user!.id)
+        .eq("status", "pending");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const placedKeys = useMemo(() => {
+    const s = new Set<string>();
+    for (const b of (myBets.data ?? []) as Array<{ market_text: string | null; selection_label: string | null }>) {
+      if (b.market_text && b.selection_label) s.add(`${b.market_text}:${b.selection_label}`);
+    }
+    return s;
+  }, [myBets.data]);
 
   const grouped = useMemo(() => {
     const g: Record<MarketKey, OddsRow[]> = {
