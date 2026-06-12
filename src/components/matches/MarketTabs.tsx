@@ -40,27 +40,29 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
     return g;
   }, [data]);
 
-  const [stake, setStake] = useState("10");
-  const [pick, setPick] = useState<{ market: MarketKey; selection: string; odds: number } | null>(null);
+  const [stakes, setStakes] = useState<Record<string, string>>({});
+  const [picks, setPicks] = useState<Record<string, { selection: string; odds: number } | null>>({});
 
   const mut = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (market: MarketKey) => {
+      const pick = picks[market];
       if (!pick) throw new Error("Select an option");
-      const n = Number(stake);
+      const stakeVal = stakes[market] ?? "10";
+      const n = Number(stakeVal);
       if (!Number.isFinite(n) || n < 1) throw new Error("Enter a stake of at least 1 point");
       return place({
         data: {
           matchId,
-          market: pick.market,
+          market,
           selection: pick.selection,
           stake: n,
           clientRequestId: crypto.randomUUID(),
         },
       });
     },
-    onSuccess: () => {
+    onSuccess: (_, market) => {
       toast.success("Bet placed");
-      setPick(null);
+      setPicks((prev) => ({ ...prev, [market]: null }));
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
     },
@@ -85,32 +87,80 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
     return order.map(s => byKey.get(s)).filter(Boolean) as OddsRow[];
   };
 
-  const renderGrid = (market: MarketKey, cols: string) => {
+  const renderMarketSection = (market: MarketKey, cols: string) => {
     const rows = orderedSelections(market, grouped[market]);
     if (!rows.length) return <div className="text-xs text-muted-foreground">Not available.</div>;
+    
+    const pick = picks[market];
+    const stake = stakes[market] ?? "10";
+    const potential = pick ? (Number(stake) * pick.odds || 0).toFixed(2) : "0.00";
+    const isPending = mut.isPending && mut.variables === market;
+
     return (
-      <div className={`grid ${cols} gap-2`}>
-        {rows.map((o) => {
-          const isPicked = pick?.market === market && pick?.selection === o.selection;
-          return (
-            <Button
-              key={o.id}
-              type="button"
-              size="sm"
-              variant={isPicked ? "default" : "outline"}
-              className="flex flex-col h-auto py-2"
-              onClick={() => setPick({ market, selection: o.selection, odds: Number(o.odds) })}
-            >
-              <span className="text-[10px] truncate max-w-full">{selectionLabel(o.selection)}</span>
-              <span className="font-bold text-sm">{Number(o.odds).toFixed(2)}</span>
-            </Button>
-          );
-        })}
+      <div className="space-y-2">
+        <div className={`grid ${cols} gap-2`}>
+          {rows.map((o) => {
+            const isPicked = pick?.selection === o.selection;
+            return (
+              <Button
+                key={o.id}
+                type="button"
+                size="sm"
+                variant={isPicked ? "default" : "outline"}
+                className="flex flex-col h-auto py-2"
+                onClick={() => setPicks((prev) => ({
+                  ...prev,
+                  [market]: isPicked ? null : { selection: o.selection, odds: Number(o.odds) }
+                }))}
+              >
+                <span className="text-[10px] truncate max-w-full">{selectionLabel(o.selection)}</span>
+                <span className="font-bold text-sm">{Number(o.odds).toFixed(2)}</span>
+              </Button>
+            );
+          })}
+        </div>
+
+        {pick && (
+          <div className="space-y-2 p-3 mt-2 rounded-md bg-muted/40 border transition-all animate-in fade-in-50 duration-200">
+            <div className="text-xs flex justify-between items-center">
+              <div>
+                <span className="font-semibold">{MARKET_LABELS[market]}</span>
+                {" · "}{selectionLabel(pick.selection)}
+                {" · "}@ <span className="font-mono font-bold">{pick.odds.toFixed(2)}</span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-4 w-4 text-muted-foreground hover:text-foreground"
+                onClick={() => setPicks((prev) => ({ ...prev, [market]: null }))}
+              >
+                ×
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                type="number" min={1} value={stake}
+                onChange={(e) => setStakes((prev) => ({ ...prev, [market]: e.target.value }))}
+                placeholder="Stake"
+                className="h-8 text-xs"
+              />
+              <Button
+                size="sm"
+                disabled={isPending || Number(stake) < 1}
+                onClick={() => mut.mutate(market)}
+                className="h-8 text-xs shrink-0"
+              >
+                {isPending ? "..." : `Bet → ${potential}`}
+              </Button>
+            </div>
+            {Number(stake) < 1 && (
+              <div className="text-[10px] text-destructive">Enter a stake of at least 1 point.</div>
+            )}
+          </div>
+        )}
       </div>
     );
   };
-
-  const potential = pick ? (Number(stake) * pick.odds || 0).toFixed(2) : "0.00";
 
   return (
     <div className="space-y-3 pt-2 border-t">
@@ -121,56 +171,30 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
           <TabsTrigger value="sp" className="text-xs" disabled={!hasHtFt}>Specials</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="goals" className="space-y-3 mt-2">
+        <TabsContent value="goals" className="space-y-4 mt-2">
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">{MARKET_LABELS.over_under_2_5}</div>
-            {renderGrid("over_under_2_5", "grid-cols-2")}
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.over_under_2_5}</div>
+            {renderMarketSection("over_under_2_5", "grid-cols-2")}
           </div>
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">{MARKET_LABELS.btts}</div>
-            {renderGrid("btts", "grid-cols-2")}
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.btts}</div>
+            {renderMarketSection("btts", "grid-cols-2")}
           </div>
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">{MARKET_LABELS.exact_total_goals}</div>
-            {renderGrid("exact_total_goals", "grid-cols-3")}
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.exact_total_goals}</div>
+            {renderMarketSection("exact_total_goals", "grid-cols-3")}
           </div>
         </TabsContent>
 
         <TabsContent value="cs" className="space-y-2 mt-2">
-          {renderGrid("correct_score", "grid-cols-4")}
+          {renderMarketSection("correct_score", "grid-cols-4")}
         </TabsContent>
 
         <TabsContent value="sp" className="space-y-2 mt-2">
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">{MARKET_LABELS.half_time_full_time}</div>
-          {renderGrid("half_time_full_time", "grid-cols-3")}
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.half_time_full_time}</div>
+          {renderMarketSection("half_time_full_time", "grid-cols-3")}
         </TabsContent>
       </Tabs>
-
-      {pick && (
-        <div className="space-y-2 p-3 rounded-md bg-muted/40 border">
-          <div className="text-xs">
-            <span className="font-semibold">{MARKET_LABELS[pick.market]}</span>
-            {" · "}{selectionLabel(pick.selection)}
-            {" · "}@ <span className="font-mono font-bold">{pick.odds.toFixed(2)}</span>
-          </div>
-          <div className="flex gap-2">
-            <Input
-              type="number" min={1} value={stake}
-              onChange={(e) => setStake(e.target.value)}
-              placeholder="Stake"
-            />
-            <Button
-              disabled={mut.isPending || Number(stake) < 1}
-              onClick={() => mut.mutate()}
-            >
-              {mut.isPending ? "..." : `Bet → ${potential}`}
-            </Button>
-          </div>
-          {Number(stake) < 1 && (
-            <div className="text-[10px] text-destructive">Enter a stake of at least 1 point.</div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
