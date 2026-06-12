@@ -757,27 +757,33 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_provider: string | null
           avatar_url: string | null
           created_at: string
           display_name: string
           id: string
           is_simulation: boolean
+          phone_number: string | null
           suspended: boolean
         }
         Insert: {
+          auth_provider?: string | null
           avatar_url?: string | null
           created_at?: string
           display_name: string
           id: string
           is_simulation?: boolean
+          phone_number?: string | null
           suspended?: boolean
         }
         Update: {
+          auth_provider?: string | null
           avatar_url?: string | null
           created_at?: string
           display_name?: string
           id?: string
           is_simulation?: boolean
+          phone_number?: string | null
           suspended?: boolean
         }
         Relationships: []
