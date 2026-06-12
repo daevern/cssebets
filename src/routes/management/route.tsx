@@ -25,6 +25,7 @@ export const Route = createFileRoute("/management")({
 function ManagementLayout() {
   const location = useLocation();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const path = location.pathname;
 
   const isPublicRoute = path === "/management/login" || path === "/management/access-denied";
