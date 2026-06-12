@@ -56,9 +56,6 @@ export function HowItWorks() {
     [0, 0.34, 0.34, 0.66, 0.66, 0.92, 0.92, 1],
   );
   const pathLength = useSpring(rawDraw, { stiffness: 120, damping: 24, mass: 0.6 });
-  const cashoutOpacity = useTransform(scrollYProgress, [0.82, 0.95], [0, 1]);
-  const cashoutY = useTransform(scrollYProgress, [0.82, 1], [20, 0]);
-  const cashoutScale = useTransform(scrollYProgress, [0.82, 1], [0.9, 1]);
 
   const cashoutRef = useRef<HTMLDivElement>(null);
   const [raining, setRaining] = useState(false);
@@ -176,7 +173,10 @@ export function HowItWorks() {
           {/* Cashout dollar-bill graphic */}
           <motion.div
             ref={cashoutRef}
-            style={{ opacity: cashoutOpacity, y: cashoutY, scale: cashoutScale }}
+            initial={{ opacity: 0, y: 24, scale: 0.92 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ margin: "-60px" }}
+            transition={{ duration: 0.5 }}
             className="relative z-10 mt-12 flex justify-center"
           >
             <CashoutFlip />
