@@ -211,9 +211,13 @@ export const adminListRequests = createServerFn({ method: "GET" })
     const { data: reqs, error } = await q;
     if (error) throw new Error(error.message);
     const ids = Array.from(new Set((reqs ?? []).map((r) => r.user_id)));
-    const { data: profiles } = await supabaseAdmin.from("profiles").select("id, display_name").in("id", ids);
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, public_reference, phone_number")
+      .in("id", ids);
     const { data: wallets } = await supabaseAdmin.from("wallets").select("user_id, balance").in("user_id", ids);
     const wmap = new Map((wallets ?? []).map((w) => [w.user_id, Number(w.balance)]));
+    const pmap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
     // Fetch emails via auth admin
     const emailMap = new Map<string, string>();
     for (const uid of ids) {
@@ -223,12 +227,17 @@ export const adminListRequests = createServerFn({ method: "GET" })
       } catch {}
     }
     return {
-      requests: (reqs ?? []).map((r) => ({
-        ...r,
-        display_name: profiles?.find((p) => p.id === r.user_id)?.display_name ?? r.user_id.slice(0, 8),
-        email: emailMap.get(r.user_id) ?? null,
-        current_balance: wmap.get(r.user_id) ?? 0,
-      })),
+      requests: (reqs ?? []).map((r: any) => {
+        const p: any = pmap.get(r.user_id) ?? {};
+        return {
+          ...r,
+          display_name: p.display_name ?? r.user_id.slice(0, 8),
+          public_reference: r.public_reference ?? p.public_reference ?? null,
+          phone: p.phone_number ?? null,
+          email: emailMap.get(r.user_id) ?? null,
+          current_balance: wmap.get(r.user_id) ?? 0,
+        };
+      }),
     };
   });
 
