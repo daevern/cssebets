@@ -204,9 +204,23 @@ function MatchCard({ match }: { match: Match }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const stageLabel = [humanize(match.stage), humanize(match.group_name)]
-    .filter(Boolean)
-    .join(" · ") || "—";
+  const stageLabel = useMemo(() => {
+    const rawStage = humanize(match.stage);
+    const rawGroup = humanize(match.group_name);
+    
+    const parts = [rawStage, rawGroup]
+      .filter(Boolean)
+      .map(part => 
+        part
+          .replace(/FIFA World Cup/gi, "")
+          .replace(/GROUP STAGE/gi, "")
+          .replace(/^[\s·•\-]+|[\s·•\-]+$/g, "")
+          .trim()
+      )
+      .filter(Boolean);
+
+    return parts.join(" · ") || "—";
+  }, [match.stage, match.group_name]);
 
   return (
     <Card className="p-4 space-y-3">
