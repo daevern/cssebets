@@ -261,13 +261,16 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
         <div className="grid grid-cols-4 gap-2">
           {rows.map((o) => {
             const isPicked = csPicks[o.selection] !== undefined;
+            const alreadyPlaced = placedKeys.has(`correct_score:${o.selection}`);
             return (
               <Button
                 key={o.id}
                 type="button"
                 size="sm"
                 variant={isPicked ? "default" : "outline"}
-                className="flex flex-col h-auto py-2"
+                disabled={alreadyPlaced}
+                title={alreadyPlaced ? "You already placed a bet on this score" : undefined}
+                className="flex flex-col h-auto py-2 relative disabled:opacity-60"
                 onClick={() => {
                   if (isPicked) {
                     setCsPicks((prev) => {
@@ -276,12 +279,15 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
                     });
                   } else {
                     setCsPicks((prev) => ({ ...prev, [o.selection]: Number(o.odds) }));
-                    setCsStakes((prev) => ({ ...prev, [o.selection]: prev[o.selection] ?? "10" }));
+                    setCsStakes((prev) => ({ ...prev, [o.selection]: prev[o.selection] ?? String(MIN_STAKE) }));
                   }
                 }}
               >
                 <span className="text-[10px] truncate max-w-full">{selectionLabel(o.selection)}</span>
                 <span className="font-bold text-sm">{Number(o.odds).toFixed(2)}</span>
+                {alreadyPlaced && (
+                  <Check className="absolute top-1 right-1 h-3 w-3 text-primary" />
+                )}
               </Button>
             );
           })}
@@ -294,8 +300,10 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
             </div>
             {selectedKeys.map((sel) => {
               const odds = csPicks[sel];
-              const stake = csStakes[sel] ?? "10";
-              const potential = (Number(stake) * odds || 0).toFixed(2);
+              const stake = csStakes[sel] ?? String(MIN_STAKE);
+              const stakeNum = Number(stake);
+              const sErr = stakeError(stakeNum);
+              const potential = (stakeNum * odds || 0).toFixed(2);
               const isPending = pendingSelection === sel;
               return (
                 <div
@@ -325,26 +333,25 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
                   <div className="flex gap-2">
                     <Input
                       type="number"
-                      min={1}
+                      min={MIN_STAKE}
+                      max={MAX_STAKE}
                       value={stake}
                       onChange={(e) =>
                         setCsStakes((prev) => ({ ...prev, [sel]: e.target.value }))
                       }
-                      placeholder="Stake"
+                      placeholder={`Stake (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
                       className="h-8 text-xs"
                     />
                     <Button
                       size="sm"
-                      disabled={isPending || Number(stake) < 1}
+                      disabled={isPending || !!sErr}
                       onClick={() => csMut.mutate(sel)}
                       className="h-8 text-xs shrink-0"
                     >
                       {isPending ? "..." : `Bet → ${potential}`}
                     </Button>
                   </div>
-                  {Number(stake) < 1 && (
-                    <div className="text-[10px] text-destructive">Enter a stake of at least 1 point.</div>
-                  )}
+                  {sErr && <div className="text-[10px] text-destructive">{sErr}</div>}
                 </div>
               );
             })}
