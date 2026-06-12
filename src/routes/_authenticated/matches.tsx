@@ -74,7 +74,7 @@ function MatchesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("matches")
-        .select("*")
+        .select("id, home_team, away_team, kickoff_at, status, home_score, away_score, stage, group_name, reference_odds, odds_updated_at, odds_source")
         .or("is_simulation.is.null,is_simulation.eq.false")
         .order("kickoff_at", { ascending: true });
       if (error) throw error;
