@@ -106,11 +106,33 @@ function AuthedLayout() {
     return () => { supabase.removeChannel(ch); };
   }, [showBalance, queryClient, user?.id]);
 
+  const [signingOut, setSigningOut] = useState(false);
+
   async function signOut() {
+    setSigningOut(true);
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
-    router.navigate({ to: "/auth", replace: true });
+    setTimeout(() => {
+      router.navigate({ to: "/auth", replace: true });
+    }, 900);
+  }
+
+  if (signingOut) {
+    return (
+      <div className="min-h-screen grid place-items-center p-4">
+        <Card className="max-w-md p-8 text-center space-y-4">
+          <div className="h-14 w-14 mx-auto rounded-2xl bg-success/20 grid place-items-center">
+            <LogOut className="h-7 w-7 text-success" />
+          </div>
+          <h1 className="text-xl font-bold">Signed out successfully</h1>
+          <p className="text-sm text-muted-foreground">
+            You've been signed out. Redirecting you to the login page…
+          </p>
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mx-auto" />
+        </Card>
+      </div>
+    );
   }
 
   if (loading) {
@@ -137,6 +159,7 @@ function AuthedLayout() {
       </div>
     );
   }
+
 
   const navItems = [
     { to: "/dashboard", label: "Home", icon: Home },
