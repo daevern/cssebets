@@ -72,7 +72,7 @@ function TabButton({ active, onClick, children }: { active: boolean; onClick: ()
   return (
     <button
       onClick={onClick}
-      className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${active ? "border-purple-400 text-violet-300" : "border-transparent text-slate-400 hover:text-slate-200"}`}
+      className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${active ? "border-violet-400 text-violet-300" : "border-transparent text-slate-400 hover:text-slate-200"}`}
     >
       {children}
     </button>
