@@ -183,17 +183,17 @@ function LandingPage() {
               Everything you need to bet smart on the World Cup.
             </p>
           </div>
-          <div className="mt-8 grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border">
             {features.map((f) => (
               <div
                 key={f.label}
-                className="group flex flex-col gap-2 bg-card p-5 transition-colors hover:bg-card/60"
+                className="group flex flex-col gap-2 bg-card p-3 transition-colors hover:bg-card/60 sm:p-5"
               >
-                <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary/15 text-primary">
+                <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary sm:h-9 sm:w-9">
                   <f.icon className="h-4 w-4" />
                 </div>
-                <div className="font-semibold leading-tight">{f.label}</div>
-                <div className="text-xs text-muted-foreground">{f.desc}</div>
+                <div className="text-sm font-semibold leading-tight sm:text-base">{f.label}</div>
+                <div className="hidden text-xs text-muted-foreground sm:block">{f.desc}</div>
               </div>
             ))}
           </div>
