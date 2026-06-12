@@ -11,7 +11,7 @@ import { KeyRound, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/settings")({
-  head: () => ({ meta: [{ title: "Settings — CSSEBETS Management" }] }),
+  head: () => ({ meta: [{ title: "Settings — cssebets management" }] }),
   component: SettingsPage,
 });
 

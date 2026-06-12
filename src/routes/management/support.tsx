@@ -19,7 +19,7 @@ import { Users, FileCheck, Check, X, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/support")({
-  head: () => ({ meta: [{ title: "Support — CSSEBETS Management" }] }),
+  head: () => ({ meta: [{ title: "Support — cssebets management" }] }),
   component: SupportDashboard,
 });
 
@@ -207,7 +207,7 @@ function PointRequestsPanel({ onChanged }: { onChanged: () => void }) {
             <button
               key={s}
               onClick={() => setStatus(s)}
-              className={`px-3 py-1.5 rounded-md text-xs capitalize ${status === s ? "bg-violet-900 text-slate-950" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`}
+              className={`px-3 py-1.5 rounded-md text-xs capitalize ${status === s ? "bg-violet-900 text-white" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`}
             >
               {s}
             </button>

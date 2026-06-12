@@ -10,7 +10,7 @@ import { Shield } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/login")({
-  head: () => ({ meta: [{ title: "Staff portal — CSSEBETS Management" }] }),
+  head: () => ({ meta: [{ title: "Staff portal — cssebets management" }] }),
   component: ManagementLogin,
 });
 
@@ -57,7 +57,7 @@ function ManagementLogin() {
           <div className="h-14 w-14 rounded-2xl bg-violet-900/20 grid place-items-center">
             <Shield className="h-7 w-7 text-violet-300" />
           </div>
-          <h1 className="text-2xl font-bold">CSSEBETS Management</h1>
+          <h1 className="text-2xl font-bold">cssebets management</h1>
           <p className="text-sm text-slate-400 text-center">Authorised staff only</p>
         </div>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -69,7 +69,7 @@ function ManagementLogin() {
             <Label htmlFor="m-pw" className="text-slate-300">Password</Label>
             <Input id="m-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="bg-slate-800 border-slate-700 text-slate-100" />
           </div>
-          <Button type="submit" className="w-full bg-violet-900 hover:bg-violet-900 text-slate-950" disabled={loading}>
+          <Button type="submit" className="w-full bg-violet-900 hover:bg-violet-900 text-white" disabled={loading}>
             {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>

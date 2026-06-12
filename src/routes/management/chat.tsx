@@ -19,7 +19,7 @@ import { Loader2, Send, Paperclip, FileText, Download, Lock, Unlock } from "luci
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/chat")({
-  head: () => ({ meta: [{ title: "Chat — CSSEBETS Management" }] }),
+  head: () => ({ meta: [{ title: "Chat — cssebets management" }] }),
   component: ChatPage,
 });
 
@@ -194,7 +194,7 @@ function Thread({ conversationId, onChange }: { conversationId: string; onChange
           const isStaff = m.sender_role === "staff";
           return (
             <div key={m.id} className={`flex ${isStaff ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${isStaff ? "bg-violet-900 text-slate-950" : "bg-slate-800 text-slate-100"}`}>
+              <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${isStaff ? "bg-violet-900 text-white" : "bg-slate-800 text-slate-100"}`}>
                 <div className="text-[10px] uppercase opacity-70 mb-0.5">{isStaff ? "Staff" : "User"}</div>
                 {m.body && <div className="whitespace-pre-wrap break-words">{m.body}</div>}
                 {m.attachment_path && (
@@ -226,7 +226,7 @@ function Thread({ conversationId, onChange }: { conversationId: string; onChange
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
         />
         <Button onClick={() => send()} disabled={sending || closed || !text.trim()} size="icon"
-          className="bg-violet-900 hover:bg-violet-900 text-slate-950">
+          className="bg-violet-900 hover:bg-violet-900 text-white">
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
       </div>

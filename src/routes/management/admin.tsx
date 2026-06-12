@@ -6,7 +6,7 @@ import { Users, FileCheck, ScrollText, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/management/admin")({
-  head: () => ({ meta: [{ title: "Admin — CSSEBETS Management" }] }),
+  head: () => ({ meta: [{ title: "Admin — cssebets management" }] }),
   component: AdminDashboard,
 });
 
@@ -37,7 +37,7 @@ function AdminDashboard() {
           Bankroll, matches, predictions, simulation, wallet ledger — open the existing admin app:
         </p>
         <Link to="/admin">
-          <Button className="bg-violet-900 hover:bg-violet-900 text-slate-950">
+          <Button className="bg-violet-900 hover:bg-violet-900 text-white">
             Open admin app <ExternalLink className="h-4 w-4 ml-1" />
           </Button>
         </Link>
