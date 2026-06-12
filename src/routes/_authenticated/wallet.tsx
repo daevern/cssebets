@@ -281,12 +281,12 @@ function WalletPage() {
           <div className="space-y-1">
             <div className="text-sm font-semibold leading-tight">J.P MORGAN CHASE BANK BERHAD</div>
             <div className="text-sm leading-tight text-muted-foreground">WISE PAYMENTS SDN BHD</div>
-            <div className="text-sm font-mono tabular-nums leading-tight font-medium">312123400232368</div>
+            <CopiableValue value="312123400232368" label="Account number" />
           </div>
           <div className="border-t border-border pt-2 space-y-1">
             <div className="text-sm font-semibold leading-tight">CIMB</div>
             <div className="text-sm leading-tight text-muted-foreground">BRICKSPLUG ENTERPRISE SD BHD</div>
-            <div className="text-sm font-mono tabular-nums leading-tight font-medium">8010575969</div>
+            <CopiableValue value="8010575969" label="Account number" />
           </div>
           <div className="border-t border-border pt-2 space-y-1.5">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Reference ID</div>
