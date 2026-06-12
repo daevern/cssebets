@@ -313,21 +313,25 @@ function DollarBill({ letter, rotate, index }: { letter: string; rotate: number;
 function MoneyRain() {
   const bills = useMemo(
     () =>
-      Array.from({ length: 28 }).map((_, i) => ({
+      Array.from({ length: 40 }).map((_, i) => ({
         id: i,
         left: Math.random() * 100,
-        delay: Math.random() * 4,
-        duration: 4 + Math.random() * 5,
-        rotate: -45 + Math.random() * 90,
-        spin: (Math.random() > 0.5 ? 1 : -1) * (180 + Math.random() * 360),
-        scale: 0.6 + Math.random() * 0.8,
+        delay: Math.random() * 2.5,
+        // Faster fall — gravity-like 1.1s–2.2s top→bottom
+        duration: 1.1 + Math.random() * 1.1,
+        rotate: -30 + Math.random() * 60,
+        // Tumble: ~1–3 full rotations + slight sway
+        spin: (Math.random() > 0.5 ? 1 : -1) * (360 + Math.random() * 720),
+        sway: 30 + Math.random() * 60, // px horizontal wobble
+        scale: 0.55 + Math.random() * 0.7,
+        crumpled: Math.random() < 0.35,
+        repeatDelay: Math.random() * 1.5,
       })),
     [],
   );
-  // Auto-stop after 12s to avoid forever animation
   const [on, setOn] = useState(true);
   useEffect(() => {
-    const t = setTimeout(() => setOn(false), 12000);
+    const t = setTimeout(() => setOn(false), 14000);
     return () => clearTimeout(t);
   }, []);
   if (!on) return null;
@@ -336,31 +340,63 @@ function MoneyRain() {
       {bills.map((b) => (
         <motion.div
           key={b.id}
-          initial={{ y: "-15%", opacity: 0, rotate: b.rotate }}
-          animate={{ y: "115%", opacity: [0, 1, 1, 0.9], rotate: b.rotate + b.spin }}
+          initial={{ y: "-15vh", x: 0, opacity: 0, rotate: b.rotate }}
+          animate={{
+            y: "115vh",
+            x: [0, b.sway, -b.sway, b.sway * 0.5, 0],
+            opacity: [0, 1, 1, 1, 0.95],
+            rotate: b.rotate + b.spin,
+          }}
           transition={{
             duration: b.duration,
             delay: b.delay,
-            ease: "easeIn",
+            // Quadratic-ish acceleration to mimic gravity
+            ease: [0.45, 0, 0.9, 0.6],
             repeat: Infinity,
-            repeatDelay: Math.random() * 2,
+            repeatDelay: b.repeatDelay,
+            x: {
+              duration: b.duration,
+              delay: b.delay,
+              ease: "easeInOut",
+              repeat: Infinity,
+              repeatDelay: b.repeatDelay,
+            },
           }}
           className="absolute top-0"
           style={{ left: `${b.left}%`, transform: `scale(${b.scale})` }}
         >
-          <MiniBill />
+          <MiniBill crumpled={b.crumpled} />
         </motion.div>
       ))}
     </div>
   );
 }
 
-function MiniBill() {
+function MiniBill({ crumpled = false }: { crumpled?: boolean }) {
+  // Crumpled bills get a skew + clip-path to look folded/wrinkled
+  const crumpleStyle: React.CSSProperties = crumpled
+    ? {
+        clipPath:
+          "polygon(4% 12%, 22% 0%, 55% 8%, 82% 0%, 100% 18%, 96% 55%, 100% 88%, 78% 100%, 45% 92%, 18% 100%, 0% 78%, 6% 40%)",
+        transform: "skewX(-6deg) skewY(2deg)",
+        filter: "contrast(1.1) brightness(0.95)",
+      }
+    : {};
   return (
     <div
       className="relative h-10 w-20 rounded-sm border-2 border-emerald-900/70 bg-gradient-to-br from-emerald-200 via-emerald-100 to-emerald-300 shadow-lg"
-      style={{ boxShadow: "0 6px 14px -6px rgba(6,78,59,0.6), inset 0 0 0 1px rgba(255,255,255,0.4)" }}
+      style={{
+        boxShadow: "0 6px 14px -6px rgba(6,78,59,0.6), inset 0 0 0 1px rgba(255,255,255,0.4)",
+        ...crumpleStyle,
+      }}
     >
+      {/* Wrinkle highlights for crumpled bills */}
+      {crumpled && (
+        <>
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-bl from-emerald-900/20 via-transparent to-emerald-900/15" />
+        </>
+      )}
       <div className="absolute inset-1 rounded-[2px] border border-emerald-800/50" />
       <span className="absolute left-1 top-0.5 text-[8px] font-black text-emerald-900">$</span>
       <span className="absolute right-1 top-0.5 text-[8px] font-black text-emerald-900">$</span>
