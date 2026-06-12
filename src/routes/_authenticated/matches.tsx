@@ -51,6 +51,19 @@ function timeAgo(iso: string | null): string {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
+function formatKickoffDate(iso: string): string {
+  const d = new Date(iso);
+  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  const month = months[d.getMonth()];
+  const day = d.getDate();
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  return `${month} ${day} ${hours}:${minutes}${ampm}`;
+}
+
 function MatchesPage() {
   const qc = useQueryClient();
   const refresh = useServerFn(refreshMatches);
@@ -88,9 +101,21 @@ function MatchesPage() {
   const { scheduled, completed } = useMemo(() => {
     const s: Match[] = [];
     const c: Match[] = [];
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+    const threeHours = 3 * 60 * 60 * 1000;
+
     for (const m of data ?? []) {
-      if (m.status === "finished") c.push(m);
-      else s.push(m);
+      const kickoff = new Date(m.kickoff_at).getTime();
+      if (m.status === "finished") {
+        c.push(m);
+      } else {
+        // Only include scheduled/live matches kickoff within the next 24 hours
+        // and also allow matches starting up to 3 hours ago (e.g. active live games)
+        if (kickoff >= now - threeHours && kickoff <= now + oneDay) {
+          s.push(m);
+        }
+      }
     }
     c.sort((a, b) => new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime());
     return { scheduled: s, completed: c };
@@ -192,7 +217,7 @@ function MatchCard({ match }: { match: Match }) {
       >
         <div className="flex items-center justify-between">
           <div className="text-xs text-muted-foreground uppercase tracking-wide">{stageLabel}</div>
-          <div className="text-xs text-muted-foreground">{new Date(match.kickoff_at).toLocaleString()}</div>
+          <div className="text-xs text-muted-foreground">{formatKickoffDate(match.kickoff_at)}</div>
         </div>
         <div className="grid grid-cols-3 items-center text-lg font-semibold gap-3">
           <div className="flex justify-center"><TeamFlag name={match.home_team} /></div>
@@ -229,7 +254,7 @@ function MatchCard({ match }: { match: Match }) {
           </div>
           <div className="text-[10px] text-muted-foreground">
             {match.odds_source === "the-odds-api"
-              ? `Powered by cssebets · updated ${timeAgo(match.odds_updated_at)}`
+              ? `updated by cssebets ${timeAgo(match.odds_updated_at)}`
               : "Reference odds (awaiting live market sync)"}
           </div>
         </div>
@@ -264,7 +289,7 @@ function MatchCard({ match }: { match: Match }) {
                 <tbody>
                   {history.data.map((r: any) => (
                     <tr key={r.id} className="border-t border-border/40">
-                      <td className="py-1 pr-2 text-muted-foreground">{new Date(r.sampled_at).toLocaleString()}</td>
+                      <td className="py-1 pr-2 text-muted-foreground">{formatKickoffDate(r.sampled_at)}</td>
                       <td className="py-1 pr-2">{r.home_odds}</td>
                       <td className="py-1 pr-2">{r.draw_odds}</td>
                       <td className="py-1 pr-2">{r.away_odds}</td>
