@@ -42,6 +42,25 @@ function MyPredictionsPage() {
     },
   });
 
+  const settleFn = useServerFn(settleFinishedPending);
+
+  // Auto-settle any finished matches with pending bets — on mount and every 30s.
+  useEffect(() => {
+    if (!uid) return;
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const r = await settleFn({});
+        if (!cancelled && (r as any)?.settled > 0) {
+          qc.invalidateQueries({ queryKey: ["my-predictions", uid] });
+        }
+      } catch { /* ignore */ }
+    };
+    run();
+    const t = setInterval(run, 30_000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [uid, qc, settleFn]);
+
   useEffect(() => {
     if (!uid) return;
     const ch = supabase
