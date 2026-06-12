@@ -64,12 +64,12 @@ function LandingPage() {
     : { to: "/auth", label: "Sign In / Register" };
 
   const features = [
-    { icon: Activity, label: "Live Match Tracker" },
-    { icon: BarChart3, label: "Reference Odds" },
-    { icon: WalletIcon, label: "Virtual Wallet" },
-    { icon: FileCheck2, label: "Point Request Approval" },
-    { icon: History, label: "Bet History" },
-    { icon: ShieldCheck, label: "Secure Admin Review" },
+    { icon: Activity, label: "Live Match Tracker", desc: "Follow every World Cup fixture in real time." },
+    { icon: BarChart3, label: "Reference Odds", desc: "Transparent odds on every market before you bet." },
+    { icon: WalletIcon, label: "Virtual Wallet", desc: "Manage your points balance with full history." },
+    { icon: FileCheck2, label: "Point Requests", desc: "Convert cash to points with admin approval." },
+    { icon: History, label: "Bet History", desc: "Review every bet, stake, and payout you've made." },
+    { icon: ShieldCheck, label: "Secure & Audited", desc: "Every action logged and admin reviewed." },
   ];
 
   return (
@@ -177,17 +177,24 @@ function LandingPage() {
       {/* Features */}
       <section id="features" className="border-b border-border">
         <div className="mx-auto max-w-5xl px-4 py-14">
-          <div className="text-center">
+          <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-2xl font-bold sm:text-3xl">Built for serious players</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Everything you need to bet smart on the World Cup.
+            </p>
           </div>
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
             {features.map((f) => (
-              <Card key={f.label} className="flex items-center gap-3 p-4">
-                <div className="grid h-10 w-10 place-items-center rounded-lg bg-primary/15 text-primary">
-                  <f.icon className="h-5 w-5" />
+              <div
+                key={f.label}
+                className="group flex flex-col gap-2 bg-card p-5 transition-colors hover:bg-card/60"
+              >
+                <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary/15 text-primary">
+                  <f.icon className="h-4 w-4" />
                 </div>
-                <div className="font-medium">{f.label}</div>
-              </Card>
+                <div className="font-semibold leading-tight">{f.label}</div>
+                <div className="text-xs text-muted-foreground">{f.desc}</div>
+              </div>
             ))}
           </div>
         </div>
