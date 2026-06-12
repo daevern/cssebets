@@ -166,6 +166,7 @@ function ManagementLayout() {
 
   const nav: { to: string; label: string; icon: any; badge?: number }[] = [];
   nav.push({ to: "/management/support", label: "Support", icon: Headset, badge: supportBadge });
+  nav.push({ to: "/management/users", label: "Users", icon: Users });
   nav.push({ to: "/management/chat", label: "Chat", icon: MessageCircle, badge: chatBadge });
   if (isAdminTier) nav.push({ to: "/management/admin", label: "Admin", icon: LayoutDashboard });
   if (isSuper) nav.push({ to: "/management/super-admin", label: "Super Admin", icon: Crown });
