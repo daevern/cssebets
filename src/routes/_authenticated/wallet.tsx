@@ -243,6 +243,9 @@ function WalletPage() {
 
       <Card className="p-5 space-y-4">
         <h2 className="font-semibold flex items-center gap-2"><Plus className="h-4 w-4" /> Request Points</h2>
+        <p className="text-[11px] text-muted-foreground">
+          Screenshots and recordings are discouraged. A user-specific watermark is applied for security.
+        </p>
 
         <div>
           <label className="text-xs font-medium text-muted-foreground">Amount</label>
