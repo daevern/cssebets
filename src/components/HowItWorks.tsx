@@ -310,67 +310,180 @@ function DollarBill({ letter, rotate, index }: { letter: string; rotate: number;
   );
 }
 
+type Bill = {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  rot: number;
+  vr: number;
+  scale: number;
+  crumpled: boolean;
+  spawned: boolean;
+  spawnAt: number;
+};
+
+const BILL_W = 80;
+const BILL_H = 40;
+const TOTAL_BILLS = 60;
+const SPAWN_MS = 8000;
+const PUSH_RADIUS = 110;
+const PUSH_FORCE = 1400; // px/s impulse
+
 function MoneyRain() {
-  const bills = useMemo(
-    () =>
-      Array.from({ length: 40 }).map((_, i) => ({
-        id: i,
-        left: Math.random() * 100,
-        delay: Math.random() * 2.5,
-        // Faster fall — gravity-like 1.1s–2.2s top→bottom
-        duration: 1.1 + Math.random() * 1.1,
-        rotate: -30 + Math.random() * 60,
-        // Tumble: ~1–3 full rotations + slight sway
-        spin: (Math.random() > 0.5 ? 1 : -1) * (360 + Math.random() * 720),
-        sway: 30 + Math.random() * 60, // px horizontal wobble
-        scale: 0.55 + Math.random() * 0.7,
-        crumpled: Math.random() < 0.35,
-        repeatDelay: Math.random() * 1.5,
-      })),
-    [],
-  );
-  const [on, setOn] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const nodeRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const billsRef = useRef<Bill[]>([]);
+  const pointerRef = useRef<{ x: number; y: number; active: boolean }>({
+    x: -9999,
+    y: -9999,
+    active: false,
+  });
+  const [ready, setReady] = useState(false);
+
+  // Init bills once
+  if (billsRef.current.length === 0) {
+    const W = typeof window !== "undefined" ? window.innerWidth : 800;
+    billsRef.current = Array.from({ length: TOTAL_BILLS }).map((_, i) => ({
+      id: i,
+      x: Math.random() * Math.max(0, W - BILL_W),
+      y: -80 - Math.random() * 200,
+      vx: (Math.random() - 0.5) * 60,
+      vy: 0,
+      rot: -30 + Math.random() * 60,
+      vr: (Math.random() - 0.5) * 240,
+      scale: 0.55 + Math.random() * 0.7,
+      crumpled: Math.random() < 0.35,
+      spawned: false,
+      spawnAt: (i / TOTAL_BILLS) * SPAWN_MS + Math.random() * 400,
+    }));
+    setTimeout(() => setReady(true), 0);
+  }
+
   useEffect(() => {
-    const t = setTimeout(() => setOn(false), 4000);
-    return () => clearTimeout(t);
-  }, []);
-  if (!on) return null;
+    if (!ready) return;
+    let raf = 0;
+    const start = performance.now();
+    let last = start;
+    const gravity = 2200; // px/s^2
+    const airDrag = 0.985;
+    const restitution = 0.25;
+
+    const onMove = (e: PointerEvent) => {
+      pointerRef.current = { x: e.clientX, y: e.clientY, active: true };
+    };
+    const onLeave = () => {
+      pointerRef.current.active = false;
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerdown", onMove, { passive: true });
+    window.addEventListener("pointerup", onLeave, { passive: true });
+    window.addEventListener("pointercancel", onLeave, { passive: true });
+
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const elapsed = now - start;
+      const H = window.innerHeight;
+      const W = window.innerWidth;
+      const floor = H - BILL_H * 0.6;
+      const p = pointerRef.current;
+
+      for (let i = 0; i < billsRef.current.length; i++) {
+        const b = billsRef.current[i];
+        if (!b.spawned) {
+          if (elapsed >= b.spawnAt) b.spawned = true;
+          else continue;
+        }
+
+        // Pointer repulsion
+        if (p.active) {
+          const cx = b.x + BILL_W / 2;
+          const cy = b.y + BILL_H / 2;
+          const dx = cx - p.x;
+          const dy = cy - p.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < PUSH_RADIUS * PUSH_RADIUS && d2 > 1) {
+            const d = Math.sqrt(d2);
+            const f = (1 - d / PUSH_RADIUS) * PUSH_FORCE;
+            b.vx += (dx / d) * f * dt;
+            b.vy += (dy / d) * f * dt;
+            b.vr += (Math.random() - 0.5) * 400 * dt;
+          }
+        }
+
+        // Physics
+        b.vy += gravity * dt;
+        b.vx *= airDrag;
+        b.x += b.vx * dt;
+        b.y += b.vy * dt;
+        b.rot += b.vr * dt;
+        b.vr *= 0.97;
+
+        // Walls
+        if (b.x < 0) {
+          b.x = 0;
+          b.vx = -b.vx * 0.4;
+        } else if (b.x > W - BILL_W) {
+          b.x = W - BILL_W;
+          b.vx = -b.vx * 0.4;
+        }
+
+        // Floor with slight randomness to form a pile
+        const billFloor = floor - (b.id % 6) * 4;
+        if (b.y > billFloor) {
+          b.y = billFloor;
+          if (Math.abs(b.vy) > 30) {
+            b.vy = -b.vy * restitution;
+          } else {
+            b.vy = 0;
+          }
+          b.vx *= 0.82;
+          b.vr *= 0.7;
+        }
+
+        const node = nodeRefs.current[i];
+        if (node) {
+          node.style.transform = `translate3d(${b.x}px, ${b.y}px, 0) rotate(${b.rot}deg) scale(${b.scale})`;
+          if (!node.style.opacity) node.style.opacity = "1";
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onMove);
+      window.removeEventListener("pointerup", onLeave);
+      window.removeEventListener("pointercancel", onLeave);
+    };
+  }, [ready]);
+
   return (
-    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden" aria-hidden="true">
-      {bills.map((b) => (
-        <motion.div
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-50 overflow-hidden"
+      style={{ pointerEvents: "none" }}
+      aria-hidden="true"
+    >
+      {billsRef.current.map((b, i) => (
+        <div
           key={b.id}
-          initial={{ y: "-15vh", x: 0, opacity: 0, rotate: b.rotate }}
-          animate={{
-            y: "115vh",
-            x: [0, b.sway, -b.sway, b.sway * 0.5, 0],
-            opacity: [0, 1, 1, 1, 0.95],
-            rotate: b.rotate + b.spin,
+          ref={(el) => {
+            nodeRefs.current[i] = el;
           }}
-          transition={{
-            duration: b.duration,
-            delay: b.delay,
-            // Quadratic-ish acceleration to mimic gravity
-            ease: [0.45, 0, 0.9, 0.6],
-            repeat: Infinity,
-            repeatDelay: b.repeatDelay,
-            x: {
-              duration: b.duration,
-              delay: b.delay,
-              ease: "easeInOut",
-              repeat: Infinity,
-              repeatDelay: b.repeatDelay,
-            },
-          }}
-          className="absolute top-0"
-          style={{ left: `${b.left}%`, transform: `scale(${b.scale})` }}
+          className="absolute left-0 top-0 will-change-transform"
+          style={{ opacity: 0, transform: `translate3d(${b.x}px, ${b.y}px, 0)` }}
         >
           <MiniBill crumpled={b.crumpled} />
-        </motion.div>
+        </div>
       ))}
     </div>
   );
 }
+
 
 function MiniBill({ crumpled = false }: { crumpled?: boolean }) {
   // Crumpled bills get a skew + clip-path to look folded/wrinkled
