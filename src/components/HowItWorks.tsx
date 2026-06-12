@@ -68,7 +68,7 @@ export function HowItWorks() {
               >
                 <path
                   d="M 1 1 L 11 6 L 1 11 L 4 6 Z"
-                  fill="hsl(var(--primary))"
+                  fill="var(--primary)"
                 />
               </marker>
             </defs>
@@ -77,7 +77,7 @@ export function HowItWorks() {
             <path
               d={ARROW_PATH}
               fill="none"
-              stroke="hsl(var(--primary))"
+              stroke="var(--primary)"
               strokeOpacity="0.12"
               strokeWidth="3"
               strokeLinecap="round"
@@ -88,7 +88,7 @@ export function HowItWorks() {
             <motion.path
               d={ARROW_PATH}
               fill="none"
-              stroke="hsl(var(--primary))"
+              stroke="var(--primary)"
               strokeWidth="3.5"
               strokeLinecap="round"
               strokeLinejoin="round"
