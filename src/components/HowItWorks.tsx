@@ -58,32 +58,15 @@ export function HowItWorks() {
   const pathLength = useSpring(rawDraw, { stiffness: 120, damping: 24, mass: 0.6 });
 
   const cashoutRef = useRef<HTMLDivElement>(null);
-  const [raining, setRaining] = useState(false);
+  const rainInView = useInView(cashoutRef, { amount: 0.3 });
+  const [rainKey, setRainKey] = useState(0);
   useEffect(() => {
-    const el = cashoutRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            // Remount MoneyRain by toggling off→on
-            setRaining(false);
-            requestAnimationFrame(() => setRaining(true));
-          } else {
-            setRaining(false);
-          }
-        }
-      },
-      { threshold: 0.35 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
+    if (rainInView) setRainKey((k) => k + 1);
+  }, [rainInView]);
 
   return (
     <section id="how" className="relative border-b border-border bg-card/30">
-      {raining && <MoneyRain />}
+      {rainInView && <MoneyRain key={rainKey} />}
       <div className="mx-auto max-w-5xl px-4 py-16">
         <div className="text-center">
           <h2 className="text-2xl font-bold sm:text-3xl">How It Works</h2>
