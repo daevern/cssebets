@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated/my-predictions")({
-  head: () => ({ meta: [{ title: "My Predictions — cssebets" }] }),
+  head: () => ({ meta: [{ title: "My Picks — cssebets" }] }),
   component: MyPredictionsPage,
 });
 
@@ -48,7 +48,7 @@ function MyPredictionsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold">My Predictions</h1>
+      <h1 className="text-2xl font-bold">My Picks</h1>
       {!data?.length ? (
         <Card className="p-8 text-center text-sm text-muted-foreground">No predictions yet.</Card>
       ) : (
