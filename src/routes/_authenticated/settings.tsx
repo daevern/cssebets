@@ -58,13 +58,13 @@ function SettingsPage() {
   const [savingPhone, setSavingPhone] = useState(false);
   const [savingPw, setSavingPw] = useState(false);
 
-  // Sync form when profile loads
-  if (profile.data && phone === "" && currentPhone) {
-    setPhone(currentPhone);
-  }
-  if (user && email === "" && currentEmail) {
-    setEmail(currentEmail);
-  }
+  // Sync form values when profile/user load
+  useEffect(() => {
+    if (currentEmail) setEmail(currentEmail);
+  }, [currentEmail]);
+  useEffect(() => {
+    if (currentPhone) setPhone(currentPhone);
+  }, [currentPhone]);
 
   async function saveEmail() {
     if (!email || !email.includes("@")) {
