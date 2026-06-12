@@ -276,9 +276,9 @@ function WalletPage() {
           </div>
           <div className="border-t border-border pt-2 space-y-1.5">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Reference ID</div>
-            <ReferenceIdRow uid={uid ?? ""} />
+            <ReferenceIdRow reference={wallet.data?.publicReference ?? ""} />
             <p className="text-[11px] text-muted-foreground leading-snug">
-              Use this Reference ID when submitting your proof so admins can match your request.
+              Include this Reference ID with your bank transfer proof so admins can match your request.
             </p>
           </div>
         </div>
