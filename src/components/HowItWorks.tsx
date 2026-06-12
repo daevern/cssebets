@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring, useInView } from "framer-motion";
 
 const steps = [
   {
@@ -56,37 +56,17 @@ export function HowItWorks() {
     [0, 0.34, 0.34, 0.66, 0.66, 0.92, 0.92, 1],
   );
   const pathLength = useSpring(rawDraw, { stiffness: 120, damping: 24, mass: 0.6 });
-  const cashoutOpacity = useTransform(scrollYProgress, [0.82, 0.95], [0, 1]);
-  const cashoutY = useTransform(scrollYProgress, [0.82, 1], [20, 0]);
-  const cashoutScale = useTransform(scrollYProgress, [0.82, 1], [0.9, 1]);
 
   const cashoutRef = useRef<HTMLDivElement>(null);
-  const [raining, setRaining] = useState(false);
+  const rainInView = useInView(cashoutRef, { amount: 0.3 });
+  const [rainKey, setRainKey] = useState(0);
   useEffect(() => {
-    const el = cashoutRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            // Remount MoneyRain by toggling off→on
-            setRaining(false);
-            requestAnimationFrame(() => setRaining(true));
-          } else {
-            setRaining(false);
-          }
-        }
-      },
-      { threshold: 0.35 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-
+    if (rainInView) setRainKey((k) => k + 1);
+  }, [rainInView]);
 
   return (
     <section id="how" className="relative border-b border-border bg-card/30">
-      {raining && <MoneyRain />}
+      {rainInView && <MoneyRain key={rainKey} />}
       <div className="mx-auto max-w-5xl px-4 py-16">
         <div className="text-center">
           <h2 className="text-2xl font-bold sm:text-3xl">How It Works</h2>
@@ -176,7 +156,10 @@ export function HowItWorks() {
           {/* Cashout dollar-bill graphic */}
           <motion.div
             ref={cashoutRef}
-            style={{ opacity: cashoutOpacity, y: cashoutY, scale: cashoutScale }}
+            initial={{ opacity: 0, y: 24, scale: 0.92 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ margin: "-60px" }}
+            transition={{ duration: 0.5 }}
             className="relative z-10 mt-12 flex justify-center"
           >
             <CashoutFlip />
@@ -453,7 +436,7 @@ function MoneyRain() {
         const node = nodeRefs.current[i];
         if (node) {
           node.style.transform = `translate3d(${b.x}px, ${b.y}px, 0) rotate(${b.rot}deg) scale(${b.scale})`;
-          if (!node.style.opacity) node.style.opacity = "1";
+          node.style.opacity = "1";
         }
       }
       raf = requestAnimationFrame(tick);
