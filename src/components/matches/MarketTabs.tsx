@@ -199,6 +199,114 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
     );
   };
 
+  const renderCorrectScore = () => {
+    const rows = orderedSelections("correct_score", grouped.correct_score);
+    if (!rows.length) return <div className="text-xs text-muted-foreground">Not available.</div>;
+
+    const selectedKeys = Object.keys(csPicks);
+    const pendingSelection = csMut.isPending ? (csMut.variables as string | undefined) : undefined;
+
+    return (
+      <div className="space-y-3">
+        <div className="text-[10px] text-muted-foreground">
+          Tap multiple scores to back several — each gets its own stake.
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {rows.map((o) => {
+            const isPicked = csPicks[o.selection] !== undefined;
+            return (
+              <Button
+                key={o.id}
+                type="button"
+                size="sm"
+                variant={isPicked ? "default" : "outline"}
+                className="flex flex-col h-auto py-2"
+                onClick={() => {
+                  if (isPicked) {
+                    setCsPicks((prev) => {
+                      const { [o.selection]: _omit, ...rest } = prev;
+                      return rest;
+                    });
+                  } else {
+                    setCsPicks((prev) => ({ ...prev, [o.selection]: Number(o.odds) }));
+                    setCsStakes((prev) => ({ ...prev, [o.selection]: prev[o.selection] ?? "10" }));
+                  }
+                }}
+              >
+                <span className="text-[10px] truncate max-w-full">{selectionLabel(o.selection)}</span>
+                <span className="font-bold text-sm">{Number(o.odds).toFixed(2)}</span>
+              </Button>
+            );
+          })}
+        </div>
+
+        {selectedKeys.length > 0 && (
+          <div className="space-y-2 pt-1">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Your score slips ({selectedKeys.length})
+            </div>
+            {selectedKeys.map((sel) => {
+              const odds = csPicks[sel];
+              const stake = csStakes[sel] ?? "10";
+              const potential = (Number(stake) * odds || 0).toFixed(2);
+              const isPending = pendingSelection === sel;
+              return (
+                <div
+                  key={sel}
+                  className="space-y-2 p-3 rounded-md bg-muted/40 border animate-in fade-in-50 duration-200"
+                >
+                  <div className="text-xs flex justify-between items-center">
+                    <div>
+                      <span className="font-semibold">Score</span>
+                      {" · "}{selectionLabel(sel)}
+                      {" · "}@ <span className="font-mono font-bold">{odds.toFixed(2)}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-4 w-4 text-muted-foreground hover:text-foreground"
+                      onClick={() => {
+                        setCsPicks((prev) => {
+                          const { [sel]: _omit, ...rest } = prev;
+                          return rest;
+                        });
+                      }}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={stake}
+                      onChange={(e) =>
+                        setCsStakes((prev) => ({ ...prev, [sel]: e.target.value }))
+                      }
+                      placeholder="Stake"
+                      className="h-8 text-xs"
+                    />
+                    <Button
+                      size="sm"
+                      disabled={isPending || Number(stake) < 1}
+                      onClick={() => csMut.mutate(sel)}
+                      className="h-8 text-xs shrink-0"
+                    >
+                      {isPending ? "..." : `Bet → ${potential}`}
+                    </Button>
+                  </div>
+                  {Number(stake) < 1 && (
+                    <div className="text-[10px] text-destructive">Enter a stake of at least 1 point.</div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-3 pt-2 border-t">
       <Tabs defaultValue="goals" className="w-full">
