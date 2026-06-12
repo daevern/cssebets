@@ -1228,9 +1228,21 @@ export type Database = {
       }
     }
     Functions: {
+      cancel_pending_bet: {
+        Args: { p_prediction_id: string; p_user_id: string }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
+      }
+      edit_pending_bet_stake: {
+        Args: {
+          p_new_stake: number
+          p_prediction_id: string
+          p_user_id: string
+        }
+        Returns: number
       }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
