@@ -394,3 +394,36 @@ function WalletPage() {
     </div>
   );
 }
+
+function ReferenceIdRow({ uid }: { uid: string }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    if (!uid) return;
+    try {
+      await navigator.clipboard.writeText(uid);
+      setCopied(true);
+      toast.success("Reference ID copied");
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Could not copy");
+    }
+  }
+  return (
+    <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5">
+      <code className="flex-1 font-mono text-[11px] sm:text-xs break-all leading-tight select-all">
+        {uid || "—"}
+      </code>
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        className="h-7 px-2 shrink-0"
+        onClick={copy}
+        disabled={!uid}
+      >
+        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+        <span className="ml-1 text-xs">{copied ? "Copied" : "Copy"}</span>
+      </Button>
+    </div>
+  );
+}
