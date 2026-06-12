@@ -6,6 +6,10 @@ import { Card } from "@/components/ui/card";
 const HowItWorks = lazy(() =>
   import("@/components/HowItWorks").then((m) => ({ default: m.HowItWorks })),
 );
+const FeaturesShowcase = lazy(() =>
+  import("@/components/FeaturesShowcase").then((m) => ({ default: m.FeaturesShowcase })),
+);
+
 import {
   Trophy,
   ShieldCheck,
