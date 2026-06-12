@@ -40,14 +40,14 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
     return g;
   }, [data]);
 
-  const [stake, setStake] = useState("50");
+  const [stake, setStake] = useState("10");
   const [pick, setPick] = useState<{ market: MarketKey; selection: string; odds: number } | null>(null);
 
   const mut = useMutation({
     mutationFn: async () => {
       if (!pick) throw new Error("Select an option");
       const n = Number(stake);
-      if (!Number.isFinite(n) || n < 50) throw new Error("Minimum stake is 50 points");
+      if (!Number.isFinite(n) || n < 1) throw new Error("Enter a stake of at least 1 point");
       return place({
         data: {
           matchId,
@@ -155,19 +155,19 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
           </div>
           <div className="flex gap-2">
             <Input
-              type="number" min={50} value={stake}
+              type="number" min={1} value={stake}
               onChange={(e) => setStake(e.target.value)}
-              placeholder="Stake (min 50)"
+              placeholder="Stake"
             />
             <Button
-              disabled={mut.isPending || Number(stake) < 50}
+              disabled={mut.isPending || Number(stake) < 1}
               onClick={() => mut.mutate()}
             >
               {mut.isPending ? "..." : `Bet → ${potential}`}
             </Button>
           </div>
-          {Number(stake) < 50 && (
-            <div className="text-[10px] text-destructive">Minimum stake is 50 points.</div>
+          {Number(stake) < 1 && (
+            <div className="text-[10px] text-destructive">Enter a stake of at least 1 point.</div>
           )}
         </div>
       )}

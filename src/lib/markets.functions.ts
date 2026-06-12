@@ -70,7 +70,7 @@ const PlaceSchema = z.object({
   matchId: z.string().uuid(),
   market: z.enum(MARKET_KEYS),
   selection: z.string().min(1).max(40),
-  stake: z.number().min(50).max(1_000_000),
+  stake: z.number().min(1).max(1_000_000),
   clientRequestId: z.string().uuid().optional(),
 });
 
