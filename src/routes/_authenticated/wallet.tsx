@@ -444,3 +444,32 @@ function ReferenceIdRow({ reference }: { reference: string }) {
     </div>
   );
 }
+
+function CopiableValue({ value, label }: { value: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      toast.success(`${label || "Value"} copied`);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Could not copy");
+    }
+  }
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-sm font-mono tabular-nums leading-tight font-medium select-all">{value}</span>
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+        onClick={copy}
+      >
+        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      </Button>
+    </div>
+  );
+}
