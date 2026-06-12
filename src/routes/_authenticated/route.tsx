@@ -11,6 +11,7 @@ import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as W
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect } from "react";
+import { ScreenProtection } from "@/components/security/ScreenProtection";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -153,6 +154,10 @@ function AuthedLayout() {
 
   return (
     <div className="min-h-screen flex flex-col pb-20 md:pb-0">
+      <ScreenProtection
+        displayName={user?.user_metadata?.display_name || user?.email?.split("@")[0] || "user"}
+        uid={user?.id ?? ""}
+      />
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
