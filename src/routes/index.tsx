@@ -161,7 +161,7 @@ function LandingPage() {
                 <MessageCircle className="h-5 w-5 text-primary" />
                 <div>
                   <div className="text-xs text-muted-foreground">WhatsApp</div>
-                  <div className="font-medium">+60 XX-XXX XXXX</div>
+                  <div className="font-medium">+60 11 142 11004</div>
                 </div>
               </Card>
               <Card className="flex items-center gap-3 p-4">
