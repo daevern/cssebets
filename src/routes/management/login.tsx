@@ -10,7 +10,7 @@ import { Shield } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/login")({
-  head: () => ({ meta: [{ title: "Staff portal — CSSE Management" }] }),
+  head: () => ({ meta: [{ title: "Staff portal — CSSEBET Management" }] }),
   component: ManagementLogin,
 });
 
@@ -54,10 +54,10 @@ function ManagementLogin() {
     <div className="min-h-screen grid place-items-center p-4">
       <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 space-y-6">
         <div className="flex flex-col items-center gap-2">
-          <div className="h-14 w-14 rounded-2xl bg-amber-500/20 grid place-items-center">
-            <Shield className="h-7 w-7 text-amber-400" />
+          <div className="h-14 w-14 rounded-2xl bg-purple-500/20 grid place-items-center">
+            <Shield className="h-7 w-7 text-purple-400" />
           </div>
-          <h1 className="text-2xl font-bold">CSSE Management</h1>
+          <h1 className="text-2xl font-bold">CSSEBET Management</h1>
           <p className="text-sm text-slate-400 text-center">Authorised staff only</p>
         </div>
         <form onSubmit={onSubmit} className="space-y-4">
@@ -69,7 +69,7 @@ function ManagementLogin() {
             <Label htmlFor="m-pw" className="text-slate-300">Password</Label>
             <Input id="m-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="bg-slate-800 border-slate-700 text-slate-100" />
           </div>
-          <Button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950" disabled={loading}>
+          <Button type="submit" className="w-full bg-purple-500 hover:bg-purple-600 text-slate-950" disabled={loading}>
             {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>

@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ManagementSupportRouteImport } from './routes/management/support'
 import { Route as ManagementSuperAdminRouteImport } from './routes/management/super-admin'
+import { Route as ManagementSettingsRouteImport } from './routes/management/settings'
 import { Route as ManagementLoginRouteImport } from './routes/management/login'
 import { Route as ManagementChatRouteImport } from './routes/management/chat'
 import { Route as ManagementChangePasswordRouteImport } from './routes/management/change-password'
@@ -73,6 +74,11 @@ const ManagementSupportRoute = ManagementSupportRouteImport.update({
 const ManagementSuperAdminRoute = ManagementSuperAdminRouteImport.update({
   id: '/super-admin',
   path: '/super-admin',
+  getParentRoute: () => ManagementRouteRoute,
+} as any)
+const ManagementSettingsRoute = ManagementSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => ManagementRouteRoute,
 } as any)
 const ManagementLoginRoute = ManagementLoginRouteImport.update({
@@ -262,6 +268,7 @@ export interface FileRoutesByFullPath {
   '/management/change-password': typeof ManagementChangePasswordRoute
   '/management/chat': typeof ManagementChatRoute
   '/management/login': typeof ManagementLoginRoute
+  '/management/settings': typeof ManagementSettingsRoute
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
@@ -298,6 +305,7 @@ export interface FileRoutesByTo {
   '/management/change-password': typeof ManagementChangePasswordRoute
   '/management/chat': typeof ManagementChatRoute
   '/management/login': typeof ManagementLoginRoute
+  '/management/settings': typeof ManagementSettingsRoute
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
@@ -337,6 +345,7 @@ export interface FileRoutesById {
   '/management/change-password': typeof ManagementChangePasswordRoute
   '/management/chat': typeof ManagementChatRoute
   '/management/login': typeof ManagementLoginRoute
+  '/management/settings': typeof ManagementSettingsRoute
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
@@ -376,6 +385,7 @@ export interface FileRouteTypes {
     | '/management/change-password'
     | '/management/chat'
     | '/management/login'
+    | '/management/settings'
     | '/management/super-admin'
     | '/management/support'
     | '/admin/audit'
@@ -412,6 +422,7 @@ export interface FileRouteTypes {
     | '/management/change-password'
     | '/management/chat'
     | '/management/login'
+    | '/management/settings'
     | '/management/super-admin'
     | '/management/support'
     | '/admin/audit'
@@ -450,6 +461,7 @@ export interface FileRouteTypes {
     | '/management/change-password'
     | '/management/chat'
     | '/management/login'
+    | '/management/settings'
     | '/management/super-admin'
     | '/management/support'
     | '/_authenticated/admin/audit'
@@ -518,6 +530,13 @@ declare module '@tanstack/react-router' {
       path: '/super-admin'
       fullPath: '/management/super-admin'
       preLoaderRoute: typeof ManagementSuperAdminRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/settings': {
+      id: '/management/settings'
+      path: '/settings'
+      fullPath: '/management/settings'
+      preLoaderRoute: typeof ManagementSettingsRouteImport
       parentRoute: typeof ManagementRouteRoute
     }
     '/management/login': {
@@ -805,6 +824,7 @@ interface ManagementRouteRouteChildren {
   ManagementChangePasswordRoute: typeof ManagementChangePasswordRoute
   ManagementChatRoute: typeof ManagementChatRoute
   ManagementLoginRoute: typeof ManagementLoginRoute
+  ManagementSettingsRoute: typeof ManagementSettingsRoute
   ManagementSuperAdminRoute: typeof ManagementSuperAdminRoute
   ManagementSupportRoute: typeof ManagementSupportRoute
 }
@@ -815,6 +835,7 @@ const ManagementRouteRouteChildren: ManagementRouteRouteChildren = {
   ManagementChangePasswordRoute: ManagementChangePasswordRoute,
   ManagementChatRoute: ManagementChatRoute,
   ManagementLoginRoute: ManagementLoginRoute,
+  ManagementSettingsRoute: ManagementSettingsRoute,
   ManagementSuperAdminRoute: ManagementSuperAdminRoute,
   ManagementSupportRoute: ManagementSupportRoute,
 }

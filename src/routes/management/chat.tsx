@@ -19,7 +19,7 @@ import { Loader2, Send, Paperclip, FileText, Download, Lock, Unlock } from "luci
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/chat")({
-  head: () => ({ meta: [{ title: "Chat — CSSE Management" }] }),
+  head: () => ({ meta: [{ title: "Chat — CSSEBET Management" }] }),
   component: ChatPage,
 });
 
@@ -62,7 +62,7 @@ function ChatPage() {
                   <span className="font-semibold text-sm truncate">{c.display_name}</span>
                   {c.hasUnread && <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" />}
                 </div>
-                <div className="text-[10px] text-amber-400 font-mono truncate">{c.public_reference ?? "—"}</div>
+                <div className="text-[10px] text-purple-400 font-mono truncate">{c.public_reference ?? "—"}</div>
                 <div className="text-[10px] text-slate-500">
                   {c.last_message_at ? new Date(c.last_message_at).toLocaleString() : "no messages"}
                   {c.status === "closed" && " · closed"}
@@ -175,7 +175,7 @@ function Thread({ conversationId, onChange }: { conversationId: string; onChange
         <div className="min-w-0">
           <div className="font-semibold truncate">{u.display_name || "user"}</div>
           <div className="text-[10px] text-slate-400 flex gap-2 flex-wrap">
-            {u.public_reference && <span className="text-amber-400 font-mono">{u.public_reference}</span>}
+            {u.public_reference && <span className="text-purple-400 font-mono">{u.public_reference}</span>}
             {u.email && <span>{u.email}</span>}
             {u.phone_number && <span>{u.phone_number}</span>}
           </div>
@@ -194,12 +194,12 @@ function Thread({ conversationId, onChange }: { conversationId: string; onChange
           const isStaff = m.sender_role === "staff";
           return (
             <div key={m.id} className={`flex ${isStaff ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${isStaff ? "bg-amber-500 text-slate-950" : "bg-slate-800 text-slate-100"}`}>
+              <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${isStaff ? "bg-purple-500 text-slate-950" : "bg-slate-800 text-slate-100"}`}>
                 <div className="text-[10px] uppercase opacity-70 mb-0.5">{isStaff ? "Staff" : "User"}</div>
                 {m.body && <div className="whitespace-pre-wrap break-words">{m.body}</div>}
                 {m.attachment_path && (
                   <button onClick={() => openAtt(m.attachment_path)}
-                    className={`mt-1 inline-flex items-center gap-1 text-xs underline ${isStaff ? "text-slate-900" : "text-amber-400"}`}>
+                    className={`mt-1 inline-flex items-center gap-1 text-xs underline ${isStaff ? "text-slate-900" : "text-purple-400"}`}>
                     <FileText className="h-3 w-3" /> {m.attachment_name || "attachment"} <Download className="h-3 w-3" />
                   </button>
                 )}
@@ -226,7 +226,7 @@ function Thread({ conversationId, onChange }: { conversationId: string; onChange
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
         />
         <Button onClick={() => send()} disabled={sending || closed || !text.trim()} size="icon"
-          className="bg-amber-500 hover:bg-amber-600 text-slate-950">
+          className="bg-purple-500 hover:bg-purple-600 text-slate-950">
           {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
         </Button>
       </div>

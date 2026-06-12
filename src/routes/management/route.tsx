@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyStaffRole, getStaffCounts, staffUnreadConvCount, getMyForcePasswordChange } from "@/lib/management.functions";
-import { Shield, LogOut, Loader2, Crown, Headset, LayoutDashboard, MessageCircle } from "lucide-react";
+import { Shield, LogOut, Loader2, Crown, Headset, LayoutDashboard, MessageCircle, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 
@@ -93,7 +93,7 @@ function ManagementLayout() {
     return (
       <div className="min-h-screen grid place-items-center bg-slate-950 text-slate-100 p-4">
         <div className="max-w-md text-center space-y-4 p-8 rounded-xl border border-slate-800 bg-slate-900">
-          <Shield className="h-10 w-10 mx-auto text-amber-400" />
+          <Shield className="h-10 w-10 mx-auto text-purple-400" />
           <h1 className="text-xl font-bold">Staff portal</h1>
           <p className="text-sm text-slate-400">You are signed in, but you don't have staff permissions.</p>
           <Button variant="outline" onClick={signOut} className="w-full">Sign out</Button>
@@ -113,55 +113,81 @@ function ManagementLayout() {
     throw redirect({ to: "/management/access-denied" });
   }
 
+  const supportBadge = (counts.data?.pendingUsers ?? 0) + (counts.data?.pendingPointRequests ?? 0);
+  const chatBadge = unread.data?.count ?? 0;
+  const totalBadge = supportBadge + chatBadge;
+
   const nav: { to: string; label: string; icon: any; badge?: number }[] = [];
-  nav.push({ to: "/management/support", label: "Support", icon: Headset, badge: (counts.data?.pendingUsers ?? 0) + (counts.data?.pendingPointRequests ?? 0) });
-  nav.push({ to: "/management/chat", label: "Chat", icon: MessageCircle, badge: unread.data?.count ?? 0 });
+  nav.push({ to: "/management/support", label: "Support", icon: Headset, badge: supportBadge });
+  nav.push({ to: "/management/chat", label: "Chat", icon: MessageCircle, badge: chatBadge });
   if (isAdminTier) nav.push({ to: "/management/admin", label: "Admin", icon: LayoutDashboard });
   if (isSuper) nav.push({ to: "/management/super-admin", label: "Super Admin", icon: Crown });
+  nav.push({ to: "/management/settings", label: "Settings", icon: Settings });
+
+  // Update document title with unread count (iPhone-style)
+  useEffect(() => {
+    const base = "CSSEBET Management";
+    document.title = totalBadge > 0 ? `(${totalBadge > 99 ? "99+" : totalBadge}) ${base}` : base;
+  }, [totalBadge]);
+
+  function Badge({ n }: { n: number }) {
+    if (!n || n <= 0) return null;
+    const label = n > 99 ? "99+" : String(n);
+    return (
+      <span className="absolute -top-1.5 -right-1.5 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-red-500 ring-2 ring-black px-1 text-[10px] font-bold text-white tabular-nums shadow-lg shadow-red-500/30">
+        {label}
+      </span>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-      <header className="sticky top-0 z-40 border-b border-slate-800 bg-slate-900/80 backdrop-blur">
+    <div className="min-h-screen flex flex-col bg-black text-slate-100">
+      <header className="sticky top-0 z-40 border-b border-purple-950/40 bg-zinc-950/90 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
           <Link to="/management/support" className="flex items-center gap-2 font-bold">
-            <Shield className="h-5 w-5 text-amber-400" />
-            <span>CSSE Management</span>
+            <Shield className="h-5 w-5 text-purple-400" />
+            <span className="bg-gradient-to-r from-purple-300 to-purple-500 bg-clip-text text-transparent">CSSEBET Management</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
-            {nav.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="relative px-3 py-1.5 rounded-md text-sm hover:bg-slate-800 [&.active]:bg-slate-800 [&.active]:text-amber-400"
-              >
-                {item.label}
-                {(item.badge ?? 0) > 0 && (
-                  <span className="absolute -top-1 -right-1 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white tabular-nums">
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            ))}
+            {nav.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className="relative px-3 py-1.5 rounded-md text-sm text-slate-300 hover:bg-purple-950/40 hover:text-purple-300 inline-flex items-center gap-1.5 [&.active]:bg-purple-950/60 [&.active]:text-purple-300"
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                  <Badge n={item.badge ?? 0} />
+                </Link>
+              );
+            })}
           </nav>
           <div className="flex items-center gap-2">
-            <span className="hidden sm:inline text-xs px-2 py-1 rounded-full bg-slate-800 capitalize">
+            <span className="hidden sm:inline text-xs px-2 py-1 rounded-full bg-purple-950/50 text-purple-300 capitalize">
               {role.replace("_", " ")}
             </span>
-            <Button variant="ghost" size="sm" onClick={signOut} className="text-slate-300 hover:text-white">
+            <Button variant="ghost" size="sm" onClick={signOut} className="text-slate-300 hover:text-purple-300">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
         </div>
-        <nav className="md:hidden flex items-center gap-1 px-3 pb-2 overflow-x-auto">
-          {nav.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className="shrink-0 px-3 py-1.5 rounded-md text-xs bg-slate-800/50 hover:bg-slate-800 [&.active]:bg-amber-500/20 [&.active]:text-amber-400"
-            >
-              {item.label}
-            </Link>
-          ))}
+        <nav className="md:hidden flex items-center gap-2 px-3 pb-2 overflow-x-auto">
+          {nav.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="relative shrink-0 px-3 py-1.5 rounded-md text-xs bg-zinc-900 hover:bg-purple-950/50 inline-flex items-center gap-1.5 [&.active]:bg-purple-600 [&.active]:text-white"
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {item.label}
+                <Badge n={item.badge ?? 0} />
+              </Link>
+            );
+          })}
         </nav>
       </header>
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
