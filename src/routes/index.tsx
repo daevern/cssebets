@@ -149,30 +149,7 @@ function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section id="how" className="border-b border-border bg-card/30">
-        <div className="mx-auto max-w-5xl px-4 py-14">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold sm:text-3xl">How It Works</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Get started in four steps.</p>
-          </div>
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { n: 1, title: "Register", desc: "Create an account or sign in." },
-              { n: 2, title: "Request points", desc: "Convert cash to virtual points." },
-              { n: 3, title: "Upload proof", desc: "Confirm your request for admin review." },
-              { n: 4, title: "Place bets", desc: "Pick a match and track your result." },
-            ].map((s) => (
-              <Card key={s.n} className="p-5">
-                <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                  {s.n}
-                </div>
-                <div className="font-semibold">{s.title}</div>
-                <div className="mt-1 text-sm text-muted-foreground">{s.desc}</div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      <HowItWorks />
 
       {/* Features */}
       <section id="features" className="border-b border-border">
