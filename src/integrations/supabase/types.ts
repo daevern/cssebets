@@ -794,6 +794,54 @@ export type Database = {
         }
         Relationships: []
       }
+      support_audit_logs: {
+        Row: {
+          action_type: string
+          actor_id: string | null
+          actor_role: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_value: Json | null
+          old_value: Json | null
+          reason: string | null
+          target_id: string | null
+          target_type: string | null
+          target_user_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action_type: string
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          target_id?: string | null
+          target_type?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action_type?: string
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          target_id?: string | null
+          target_type?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -1082,6 +1130,14 @@ export type Database = {
         Args: { p_tournament_key: string; p_winner_team: string }
         Returns: number
       }
+      staff_approve_point_request: {
+        Args: { p_note?: string; p_request_id: string; p_staff_id: string }
+        Returns: number
+      }
+      staff_reject_point_request: {
+        Args: { p_reason: string; p_request_id: string; p_staff_id: string }
+        Returns: undefined
+      }
       update_platform_settings: {
         Args: {
           p_admin_id: string
@@ -1133,7 +1189,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "member" | "pending" | "super_admin" | "viewer"
+      app_role:
+        | "admin"
+        | "member"
+        | "pending"
+        | "super_admin"
+        | "viewer"
+        | "customer_support"
       match_status:
         | "scheduled"
         | "live"
@@ -1303,7 +1365,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "member", "pending", "super_admin", "viewer"],
+      app_role: [
+        "admin",
+        "member",
+        "pending",
+        "super_admin",
+        "viewer",
+        "customer_support",
+      ],
       match_status: ["scheduled", "live", "finished", "postponed", "cancelled"],
       payout_request_status: [
         "pending",
