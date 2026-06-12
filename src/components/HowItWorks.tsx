@@ -453,7 +453,7 @@ function MoneyRain() {
         const node = nodeRefs.current[i];
         if (node) {
           node.style.transform = `translate3d(${b.x}px, ${b.y}px, 0) rotate(${b.rot}deg) scale(${b.scale})`;
-          if (!node.style.opacity) node.style.opacity = "1";
+          node.style.opacity = "1";
         }
       }
       raf = requestAnimationFrame(tick);
