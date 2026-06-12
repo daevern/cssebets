@@ -11,6 +11,7 @@ import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as W
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect } from "react";
+import { ScreenProtection } from "@/components/security/ScreenProtection";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
