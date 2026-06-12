@@ -43,9 +43,19 @@ function iso2ToFlag(code: string): string {
          String.fromCodePoint(A + code.charCodeAt(1) - base);
 }
 
-export function teamFlag(name: string): string {
-  if (!name) return "";
+export function teamFlagCode(name: string): string | null {
+  if (!name) return null;
   const key = name.toLowerCase().trim();
   const iso = NAME_TO_ISO2[key];
-  return iso ? iso2ToFlag(iso) : "";
+  if (!iso) return null;
+  return iso.toLowerCase();
 }
+
+export function teamFlagUrl(name: string, width: 40 | 80 | 160 | 320 = 80): string | null {
+  const code = teamFlagCode(name);
+  if (!code) return null;
+  // flagcdn.com serves PNG flags for ISO 3166-1 alpha-2 codes.
+  // GB subdivisions (eng/sct/wls) are also supported as "gb-eng" etc.
+  return `https://flagcdn.com/w${width}/${code}.png`;
+}
+
