@@ -11,7 +11,7 @@ import { getMyUnreadSupportCount } from "@/lib/support.functions";
 import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote, Headset, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ScreenProtection } from "@/components/security/ScreenProtection";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -107,27 +107,40 @@ function AuthedLayout() {
   }, [showBalance, queryClient, user?.id]);
 
   const [signingOut, setSigningOut] = useState(false);
+  const redirectTimeoutRef = useRef<any>(null);
+
+  const triggerRedirect = () => {
+    if (redirectTimeoutRef.current) {
+      clearTimeout(redirectTimeoutRef.current);
+      redirectTimeoutRef.current = null;
+    }
+    router.navigate({ to: "/auth", replace: true });
+  };
 
   async function signOut() {
     setSigningOut(true);
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
-    setTimeout(() => {
-      router.navigate({ to: "/auth", replace: true });
-    }, 900);
+    const timeout = setTimeout(() => {
+      triggerRedirect();
+    }, 5000);
+    redirectTimeoutRef.current = timeout;
   }
 
   if (signingOut) {
     return (
-      <div className="min-h-screen grid place-items-center p-4">
-        <Card className="max-w-md p-8 text-center space-y-4">
+      <div 
+        className="min-h-screen grid place-items-center p-4 cursor-pointer select-none"
+        onClick={triggerRedirect}
+      >
+        <Card className="max-w-md p-8 text-center space-y-4 pointer-events-none">
           <div className="h-14 w-14 mx-auto rounded-2xl bg-success/20 grid place-items-center">
             <LogOut className="h-7 w-7 text-success" />
           </div>
           <h1 className="text-xl font-bold">Signed out successfully</h1>
           <p className="text-sm text-muted-foreground">
-            You've been signed out. Redirecting you to the login page…
+            You've been signed out. Redirecting you to the login page (or click anywhere to skip)...
           </p>
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mx-auto" />
         </Card>

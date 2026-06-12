@@ -120,11 +120,12 @@ function PayoutPage() {
   }
 
   const amt = Number(amount);
+  const amountValid = amt >= 50;
   const canRequest =
     !active &&
     bankName.trim().length >= 2 &&
     accNo.trim().length >= 4 &&
-    amt > 0 &&
+    amountValid &&
     amt <= balance;
 
   return (
@@ -201,7 +202,8 @@ function PayoutPage() {
         </div>
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Points to withdraw</label>
-          <Input type="number" min={1} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" disabled={!!active} />
+          <Input type="number" min={50} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" disabled={!!active} />
+          {amount !== "" && amt < 50 && <p className="text-xs text-destructive">Minimum payout amount is 50 pts.</p>}
           {amt > balance && <p className="text-xs text-destructive">Amount exceeds your balance.</p>}
         </div>
         <Button className="w-full" disabled={!canRequest || create.isPending} onClick={() => create.mutate()}>
