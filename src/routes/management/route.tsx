@@ -54,6 +54,27 @@ function ManagementLayout() {
     refetchInterval: 20_000,
   });
 
+  const unreadFn = useServerFn(staffUnreadConvCount);
+  const unread = useQuery({
+    queryKey: ["mgmt-unread-conv"],
+    queryFn: () => unreadFn({}),
+    enabled: !!roleQ.data?.role,
+    refetchInterval: 15_000,
+  });
+
+  const forceFn = useServerFn(getMyForcePasswordChange);
+  const force = useQuery({
+    queryKey: ["mgmt-force-pw"],
+    queryFn: () => forceFn({}),
+    enabled: !!roleQ.data?.role,
+  });
+
+  useEffect(() => {
+    if (force.data?.force && location.pathname !== "/management/change-password") {
+      router.navigate({ to: "/management/change-password", replace: true });
+    }
+  }, [force.data?.force, location.pathname, router]);
+
   async function signOut() {
     await supabase.auth.signOut();
     router.navigate({ to: "/management/login", replace: true });
@@ -94,6 +115,7 @@ function ManagementLayout() {
 
   const nav: { to: string; label: string; icon: any; badge?: number }[] = [];
   nav.push({ to: "/management/support", label: "Support", icon: Headset, badge: (counts.data?.pendingUsers ?? 0) + (counts.data?.pendingPointRequests ?? 0) });
+  nav.push({ to: "/management/chat", label: "Chat", icon: MessageCircle, badge: unread.data?.count ?? 0 });
   if (isAdminTier) nav.push({ to: "/management/admin", label: "Admin", icon: LayoutDashboard });
   if (isSuper) nav.push({ to: "/management/super-admin", label: "Super Admin", icon: Crown });
 
