@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyStaffRole, getStaffCounts } from "@/lib/management.functions";
-import { Shield, LogOut, Loader2, Users, FileCheck, ScrollText, Crown, Headset, LayoutDashboard } from "lucide-react";
+import { Shield, LogOut, Loader2, Crown, Headset, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/management")({
