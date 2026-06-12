@@ -11,12 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedTournamentWinnerRouteImport } from './routes/_authenticated/tournament-winner'
 import { Route as AuthenticatedPayoutRouteImport } from './routes/_authenticated/payout'
 import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
 import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/bets'
 import { Route as AuthenticatedAdminWalletRouteImport } from './routes/_authenticated/admin-wallet'
 import { Route as AuthenticatedAdminPayoutRouteImport } from './routes/_authenticated/admin-payout'
@@ -45,11 +45,6 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
@@ -75,6 +70,11 @@ const AuthenticatedMyPredictionsRoute =
 const AuthenticatedMatchesRoute = AuthenticatedMatchesRouteImport.update({
   id: '/matches',
   path: '/matches',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedBetsRoute = AuthenticatedBetsRouteImport.update({
@@ -182,12 +182,13 @@ const LovableEmailQueueProcessRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedIndexRoute
+  '/': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/admin-payout': typeof AuthenticatedAdminPayoutRoute
   '/admin-wallet': typeof AuthenticatedAdminWalletRoute
   '/bets': typeof AuthenticatedBetsRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
@@ -209,16 +210,17 @@ export interface FileRoutesByFullPath {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/admin-payout': typeof AuthenticatedAdminPayoutRoute
   '/admin-wallet': typeof AuthenticatedAdminWalletRoute
   '/bets': typeof AuthenticatedBetsRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/wallet': typeof AuthenticatedWalletRoute
-  '/': typeof AuthenticatedIndexRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/bankroll': typeof AuthenticatedAdminBankrollRoute
   '/admin/match-pools': typeof AuthenticatedAdminMatchPoolsRoute
@@ -242,12 +244,12 @@ export interface FileRoutesById {
   '/_authenticated/admin-payout': typeof AuthenticatedAdminPayoutRoute
   '/_authenticated/admin-wallet': typeof AuthenticatedAdminWalletRoute
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/matches': typeof AuthenticatedMatchesRoute
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/_authenticated/payout': typeof AuthenticatedPayoutRoute
   '/_authenticated/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
-  '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/bankroll': typeof AuthenticatedAdminBankrollRoute
   '/_authenticated/admin/match-pools': typeof AuthenticatedAdminMatchPoolsRoute
@@ -272,6 +274,7 @@ export interface FileRouteTypes {
     | '/admin-payout'
     | '/admin-wallet'
     | '/bets'
+    | '/dashboard'
     | '/matches'
     | '/my-predictions'
     | '/payout'
@@ -293,16 +296,17 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/auth'
     | '/admin-payout'
     | '/admin-wallet'
     | '/bets'
+    | '/dashboard'
     | '/matches'
     | '/my-predictions'
     | '/payout'
     | '/tournament-winner'
     | '/wallet'
-    | '/'
     | '/admin/audit'
     | '/admin/bankroll'
     | '/admin/match-pools'
@@ -325,12 +329,12 @@ export interface FileRouteTypes {
     | '/_authenticated/admin-payout'
     | '/_authenticated/admin-wallet'
     | '/_authenticated/bets'
+    | '/_authenticated/dashboard'
     | '/_authenticated/matches'
     | '/_authenticated/my-predictions'
     | '/_authenticated/payout'
     | '/_authenticated/tournament-winner'
     | '/_authenticated/wallet'
-    | '/_authenticated/'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/bankroll'
     | '/_authenticated/admin/match-pools'
@@ -369,13 +373,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/': {
-      id: '/_authenticated/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/wallet': {
       id: '/_authenticated/wallet'
       path: '/wallet'
@@ -409,6 +406,13 @@ declare module '@tanstack/react-router' {
       path: '/matches'
       fullPath: '/matches'
       preLoaderRoute: typeof AuthenticatedMatchesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/bets': {
@@ -580,12 +584,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminPayoutRoute: typeof AuthenticatedAdminPayoutRoute
   AuthenticatedAdminWalletRoute: typeof AuthenticatedAdminWalletRoute
   AuthenticatedBetsRoute: typeof AuthenticatedBetsRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRoute
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
   AuthenticatedPayoutRoute: typeof AuthenticatedPayoutRoute
   AuthenticatedTournamentWinnerRoute: typeof AuthenticatedTournamentWinnerRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -593,12 +597,12 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminPayoutRoute: AuthenticatedAdminPayoutRoute,
   AuthenticatedAdminWalletRoute: AuthenticatedAdminWalletRoute,
   AuthenticatedBetsRoute: AuthenticatedBetsRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedMatchesRoute: AuthenticatedMatchesRoute,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
   AuthenticatedPayoutRoute: AuthenticatedPayoutRoute,
   AuthenticatedTournamentWinnerRoute: AuthenticatedTournamentWinnerRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
-  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -612,3 +616,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
