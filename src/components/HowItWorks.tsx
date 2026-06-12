@@ -142,13 +142,7 @@ export function HowItWorks() {
                   className={`${col} row-start-${i + 1}`}
                   style={{ gridRowStart: i + 1 }}
                 >
-                  <Card className="relative p-4 sm:p-5">
-                    <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30">
-                      {s.n}
-                    </div>
-                    <div className="text-sm font-semibold sm:text-base">{s.title}</div>
-                    <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{s.desc}</div>
-                  </Card>
+                  <FlipPanel n={s.n} title={s.title} desc={s.desc} detail={s.detail} />
                 </motion.div>
               );
             })}
