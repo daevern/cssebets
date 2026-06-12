@@ -24,33 +24,26 @@ export const Route = createFileRoute("/management")({
 function ManagementLayout() {
   const location = useLocation();
   const router = useRouter();
+  const path = location.pathname;
 
-  // Public sub-routes
-  if (location.pathname === "/management/login" || location.pathname === "/management/access-denied") {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100">
-        <Outlet />
-      </div>
-    );
-  }
+  const isPublicRoute = path === "/management/login" || path === "/management/access-denied";
+  const isChangePwRoute = path === "/management/change-password";
 
-  // Force password change route — render without role checks (still requires auth)
-  if (location.pathname === "/management/change-password") {
-    return (
-      <div className="min-h-screen bg-slate-950 text-slate-100">
-        <Outlet />
-      </div>
-    );
-  }
-
+  // All hooks must run on every render, regardless of route — never put hooks
+  // after an early return (React error #310).
   const roleFn = useServerFn(getMyStaffRole);
-  const roleQ = useQuery({ queryKey: ["mgmt-role"], queryFn: () => roleFn({}), staleTime: 30_000 });
+  const roleQ = useQuery({
+    queryKey: ["mgmt-role"],
+    queryFn: () => roleFn({}),
+    staleTime: 30_000,
+    enabled: !isPublicRoute,
+  });
 
   const countsFn = useServerFn(getStaffCounts);
   const counts = useQuery({
     queryKey: ["mgmt-counts"],
     queryFn: () => countsFn({}),
-    enabled: !!roleQ.data?.role,
+    enabled: !isPublicRoute && !!roleQ.data?.role,
     refetchInterval: 20_000,
   });
 
@@ -58,7 +51,7 @@ function ManagementLayout() {
   const unread = useQuery({
     queryKey: ["mgmt-unread-conv"],
     queryFn: () => unreadFn({}),
-    enabled: !!roleQ.data?.role,
+    enabled: !isPublicRoute && !!roleQ.data?.role,
     refetchInterval: 15_000,
   });
 
@@ -66,33 +59,63 @@ function ManagementLayout() {
   const force = useQuery({
     queryKey: ["mgmt-force-pw"],
     queryFn: () => forceFn({}),
-    enabled: !!roleQ.data?.role,
+    enabled: !isPublicRoute && !!roleQ.data?.role,
   });
 
   useEffect(() => {
-    if (force.data?.force && location.pathname !== "/management/change-password") {
+    if (!isPublicRoute && force.data?.force && path !== "/management/change-password") {
       router.navigate({ to: "/management/change-password", replace: true });
     }
-  }, [force.data?.force, location.pathname, router]);
+  }, [force.data?.force, path, router, isPublicRoute]);
+
+  const role = roleQ.data?.role;
+  const isAdminTier = role === "admin" || role === "super_admin";
+  const isSuper = role === "super_admin";
+
+  const supportBadge = (counts.data?.pendingUsers ?? 0) + (counts.data?.pendingPointRequests ?? 0);
+  const chatBadge = unread.data?.count ?? 0;
+  const totalBadge = supportBadge + chatBadge;
+
+  useEffect(() => {
+    if (isPublicRoute) return;
+    const base = "cssebets management";
+    document.title = totalBadge > 0 ? `(${totalBadge > 99 ? "99+" : totalBadge}) ${base}` : base;
+  }, [totalBadge, isPublicRoute]);
 
   async function signOut() {
     await supabase.auth.signOut();
     router.navigate({ to: "/management/login", replace: true });
   }
 
+  // ---------- Early returns (after all hooks) ----------
+  if (isPublicRoute) {
+    return (
+      <div className="min-h-screen bg-black text-slate-100">
+        <Outlet />
+      </div>
+    );
+  }
+
+  if (isChangePwRoute) {
+    return (
+      <div className="min-h-screen bg-black text-slate-100">
+        <Outlet />
+      </div>
+    );
+  }
+
   if (roleQ.isLoading) {
     return (
-      <div className="min-h-screen grid place-items-center bg-slate-950 text-slate-100">
+      <div className="min-h-screen grid place-items-center bg-black text-slate-100">
         <Loader2 className="h-6 w-6 animate-spin" />
       </div>
     );
   }
 
-  const role = roleQ.data?.role;
   if (!role) {
     return (
-      <div className="min-h-screen grid place-items-center bg-slate-950 text-slate-100 p-4">
-        <div className="max-w-md text-center space-y-4 p-8 rounded-xl border border-slate-800 bg-slate-900">
+      <div className="min-h-screen grid place-items-center bg-black text-slate-100 p-4">
+        <div className="max-w-md text-center space-y-4 p-8 rounded-xl border border-violet-950/50 bg-zinc-950">
           <Shield className="h-10 w-10 mx-auto text-violet-300" />
           <h1 className="text-xl font-bold">Staff portal</h1>
           <p className="text-sm text-slate-400">You are signed in, but you don't have staff permissions.</p>
@@ -102,20 +125,12 @@ function ManagementLayout() {
     );
   }
 
-  // Route gating per role
-  const path = location.pathname;
-  const isAdminTier = role === "admin" || role === "super_admin";
-  const isSuper = role === "super_admin";
   if (path.startsWith("/management/admin") && !isAdminTier) {
     throw redirect({ to: "/management/access-denied" });
   }
   if (path.startsWith("/management/super-admin") && !isSuper) {
     throw redirect({ to: "/management/access-denied" });
   }
-
-  const supportBadge = (counts.data?.pendingUsers ?? 0) + (counts.data?.pendingPointRequests ?? 0);
-  const chatBadge = unread.data?.count ?? 0;
-  const totalBadge = supportBadge + chatBadge;
 
   const nav: { to: string; label: string; icon: any; badge?: number }[] = [];
   nav.push({ to: "/management/support", label: "Support", icon: Headset, badge: supportBadge });
@@ -124,11 +139,6 @@ function ManagementLayout() {
   if (isSuper) nav.push({ to: "/management/super-admin", label: "Super Admin", icon: Crown });
   nav.push({ to: "/management/settings", label: "Settings", icon: Settings });
 
-  // Update document title with unread count (iPhone-style)
-  useEffect(() => {
-    const base = "CSSEBETS Management";
-    document.title = totalBadge > 0 ? `(${totalBadge > 99 ? "99+" : totalBadge}) ${base}` : base;
-  }, [totalBadge]);
 
   function Badge({ n }: { n: number }) {
     if (!n || n <= 0) return null;
