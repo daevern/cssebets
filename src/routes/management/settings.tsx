@@ -11,7 +11,7 @@ import { KeyRound, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/settings")({
-  head: () => ({ meta: [{ title: "Settings — CSSEBET Management" }] }),
+  head: () => ({ meta: [{ title: "Settings — CSSEBETS Management" }] }),
   component: SettingsPage,
 });
 
@@ -54,9 +54,9 @@ function SettingsPage() {
         <p className="text-sm text-slate-400">Manage your staff account.</p>
       </header>
 
-      <div className="rounded-xl border border-purple-950/50 bg-zinc-950 p-6 space-y-4">
+      <div className="rounded-xl border border-violet-950/50 bg-zinc-950 p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-purple-400" />
+          <ShieldCheck className="h-5 w-5 text-violet-300" />
           <div>
             <div className="font-semibold">Account</div>
             <div className="text-xs text-slate-400 capitalize">{roleQ.data?.role?.replace("_", " ") ?? "—"}</div>
@@ -64,9 +64,9 @@ function SettingsPage() {
         </div>
       </div>
 
-      <form onSubmit={submit} className="rounded-xl border border-purple-950/50 bg-zinc-950 p-6 space-y-4">
+      <form onSubmit={submit} className="rounded-xl border border-violet-950/50 bg-zinc-950 p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <KeyRound className="h-5 w-5 text-purple-400" />
+          <KeyRound className="h-5 w-5 text-violet-300" />
           <h2 className="font-semibold">Change password</h2>
         </div>
         <p className="text-xs text-slate-400">
@@ -75,19 +75,19 @@ function SettingsPage() {
         <div className="space-y-1.5">
           <Label htmlFor="cur" className="text-slate-300">Current password</Label>
           <Input id="cur" type="password" value={current} onChange={(e) => setCurrent(e.target.value)}
-            className="bg-zinc-900 border-purple-950/60 text-slate-100" autoComplete="current-password" required />
+            className="bg-zinc-900 border-violet-950/60 text-slate-100" autoComplete="current-password" required />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="np" className="text-slate-300">New password</Label>
           <Input id="np" type="password" value={pw} onChange={(e) => setPw(e.target.value)}
-            className="bg-zinc-900 border-purple-950/60 text-slate-100" autoComplete="new-password" required />
+            className="bg-zinc-900 border-violet-950/60 text-slate-100" autoComplete="new-password" required />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="np2" className="text-slate-300">Confirm new password</Label>
           <Input id="np2" type="password" value={pw2} onChange={(e) => setPw2(e.target.value)}
-            className="bg-zinc-900 border-purple-950/60 text-slate-100" autoComplete="new-password" required />
+            className="bg-zinc-900 border-violet-950/60 text-slate-100" autoComplete="new-password" required />
         </div>
-        <Button type="submit" disabled={busy} className="bg-purple-600 hover:bg-purple-500 text-white">
+        <Button type="submit" disabled={busy} className="bg-violet-950 hover:bg-violet-800 text-white">
           {busy ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <KeyRound className="h-4 w-4 mr-1" />}
           Update password
         </Button>

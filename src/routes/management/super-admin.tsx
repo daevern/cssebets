@@ -13,7 +13,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/super-admin")({
-  head: () => ({ meta: [{ title: "Super Admin — CSSEBET Management" }] }),
+  head: () => ({ meta: [{ title: "Super Admin — CSSEBETS Management" }] }),
   component: SuperAdminDashboard,
 });
 
@@ -70,13 +70,13 @@ function SuperAdminDashboard() {
           <h1 className="text-2xl font-bold">Super admin</h1>
           <p className="text-sm text-slate-400">Manage customer support accounts.</p>
         </div>
-        <Button onClick={seed} disabled={seeding} className="bg-purple-500 hover:bg-purple-600 text-slate-950">
+        <Button onClick={seed} disabled={seeding} className="bg-violet-900 hover:bg-violet-900 text-slate-950">
           <Sparkles className="h-4 w-4 mr-1" /> {seeding ? "Seeding…" : "Seed 10 support accounts"}
         </Button>
       </header>
 
       <div className="rounded-xl border border-slate-800 bg-slate-900 p-4 space-y-3">
-        <h2 className="font-semibold flex items-center gap-2"><Users className="h-4 w-4 text-purple-400" /> Customer support accounts</h2>
+        <h2 className="font-semibold flex items-center gap-2"><Users className="h-4 w-4 text-violet-300" /> Customer support accounts</h2>
         {q.isLoading ? (
           <div className="py-6 text-center text-slate-400"><Loader2 className="h-5 w-5 animate-spin inline" /></div>
         ) : (q.data?.accounts ?? []).length === 0 ? (
@@ -99,7 +99,7 @@ function SuperAdminDashboard() {
                     variant="outline"
                     onClick={() => resetPw(a.id, a.email ?? a.id)}
                     disabled={busy === a.id}
-                    className="border-purple-700 text-purple-400 hover:bg-purple-950"
+                    className="border-violet-900 text-violet-300 hover:bg-violet-950"
                   >
                     <KeyRound className="h-4 w-4 mr-1" /> Reset password
                   </Button>
