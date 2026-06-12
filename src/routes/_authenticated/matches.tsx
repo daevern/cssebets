@@ -137,11 +137,11 @@ function MatchesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Matches</h1>
+      <h1 className="text-2xl font-bold">FIFA World Cup</h1>
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          Scheduled ({scheduled.length})
+          GROUP STAGE ({scheduled.length})
         </h2>
         {scheduled.length === 0 ? (
           <Card className="p-4 text-center text-sm text-muted-foreground">No upcoming matches.</Card>
