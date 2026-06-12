@@ -145,25 +145,15 @@ function AuthedLayout() {
     { to: "/wallet", label: "Wallet", icon: WalletIcon },
     { to: "/payout", label: "Payout", icon: Banknote },
     { to: "/support", label: "Support", icon: Headset },
-    ...(isAdminTier ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
-    ...(isAdmin ? [{ to: "/admin-wallet", label: "Points", icon: WalletIcon }] : []),
   ] as const;
 
-  const mobileNavItems = isAdminTier
-    ? [
-        { to: "/dashboard", label: "Home", icon: Home },
-        { to: "/bets", label: "Bets", icon: ListChecks },
-        { to: "/admin", label: "Admin", icon: Shield },
-        { to: "/admin-wallet", label: "Points", icon: WalletIcon },
-        { to: "/wallet", label: "Wallet", icon: WalletIcon },
-      ]
-    : [
-        { to: "/dashboard", label: "Home", icon: Home },
-        { to: "/bets", label: "Bets", icon: ListChecks },
-        { to: "/wallet", label: "Wallet", icon: WalletIcon },
-        { to: "/payout", label: "Payout", icon: Banknote },
-        { to: "/support", label: "Support", icon: Headset },
-      ];
+  const mobileNavItems = [
+    { to: "/dashboard", label: "Home", icon: Home },
+    { to: "/bets", label: "Bets", icon: ListChecks },
+    { to: "/wallet", label: "Wallet", icon: WalletIcon },
+    { to: "/payout", label: "Payout", icon: Banknote },
+    { to: "/support", label: "Support", icon: Headset },
+  ];
 
 
 
@@ -184,8 +174,6 @@ function AuthedLayout() {
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
               const badge =
-                item.to === "/admin" ? adminBadge :
-                item.to === "/admin-wallet" ? (pendingPoints.data?.count ?? 0) :
                 item.to === "/payout" ? payoutBadge :
                 item.to === "/support" ? supportBadge : 0;
               return (
@@ -206,21 +194,6 @@ function AuthedLayout() {
             })}
           </nav>
           <div className="flex items-center gap-2">
-            {isAdminTier && (
-              <Link
-                to="/admin"
-                className="relative md:hidden grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
-                title="Admin"
-                aria-label="Admin"
-              >
-                <Shield className="h-4 w-4" />
-                {adminBadge > 0 && (
-                  <span className="absolute -top-1 -right-1 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground tabular-nums">
-                    {adminBadge}
-                  </span>
-                )}
-              </Link>
-            )}
             {showBalance && (
               <Link
                 to="/wallet"
@@ -250,8 +223,6 @@ function AuthedLayout() {
             const active = item.to === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(item.to);
             const Icon = item.icon;
             const badge =
-              item.to === "/admin" ? adminBadge :
-              item.to === "/admin-wallet" ? (pendingPoints.data?.count ?? 0) :
               item.to === "/payout" ? payoutBadge :
               item.to === "/support" ? supportBadge : 0;
             return (

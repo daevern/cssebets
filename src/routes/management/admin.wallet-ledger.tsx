@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Download } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/wallet-ledger")({
+export const Route = createFileRoute("/management/admin/wallet-ledger")({
   component: AdminWalletLedgerPage,
 });
 

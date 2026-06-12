@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -21,14 +21,7 @@ import { Banknote, Loader2, Upload, Eye, FileCheck } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/admin-payout")({
-  ssr: false,
-  beforeLoad: async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw redirect({ to: "/auth" });
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-    if (!(roles ?? []).some((r) => r.role === "admin")) throw redirect({ to: "/dashboard" });
-  },
+export const Route = createFileRoute("/management/admin/payouts")({
   head: () => ({ meta: [{ title: "Payouts — Admin" }] }),
   component: AdminPayoutPage,
 });

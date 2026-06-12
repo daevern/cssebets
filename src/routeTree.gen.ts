@@ -30,22 +30,21 @@ import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authen
 import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/bets'
-import { Route as AuthenticatedAdminWalletRouteImport } from './routes/_authenticated/admin-wallet'
-import { Route as AuthenticatedAdminPayoutRouteImport } from './routes/_authenticated/admin-payout'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
-import { Route as AuthenticatedAdminWalletLedgerRouteImport } from './routes/_authenticated/admin.wallet-ledger'
-import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
-import { Route as AuthenticatedAdminTournamentRouteImport } from './routes/_authenticated/admin.tournament'
-import { Route as AuthenticatedAdminSimulationRouteImport } from './routes/_authenticated/admin.simulation'
-import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
-import { Route as AuthenticatedAdminRiskSettingsRouteImport } from './routes/_authenticated/admin.risk-settings'
-import { Route as AuthenticatedAdminPredictionsRouteImport } from './routes/_authenticated/admin.predictions'
-import { Route as AuthenticatedAdminOddsHistoryRouteImport } from './routes/_authenticated/admin.odds-history'
-import { Route as AuthenticatedAdminMatchesRouteImport } from './routes/_authenticated/admin.matches'
-import { Route as AuthenticatedAdminMatchPoolsRouteImport } from './routes/_authenticated/admin.match-pools'
-import { Route as AuthenticatedAdminBankrollRouteImport } from './routes/_authenticated/admin.bankroll'
-import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
+import { Route as ManagementAdminIndexRouteImport } from './routes/management/admin.index'
+import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
+import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
+import { Route as ManagementAdminTournamentRouteImport } from './routes/management/admin.tournament'
+import { Route as ManagementAdminSimulationRouteImport } from './routes/management/admin.simulation'
+import { Route as ManagementAdminSettingsRouteImport } from './routes/management/admin.settings'
+import { Route as ManagementAdminRiskSettingsRouteImport } from './routes/management/admin.risk-settings'
+import { Route as ManagementAdminPredictionsRouteImport } from './routes/management/admin.predictions'
+import { Route as ManagementAdminPointsRouteImport } from './routes/management/admin.points'
+import { Route as ManagementAdminPayoutsRouteImport } from './routes/management/admin.payouts'
+import { Route as ManagementAdminOddsHistoryRouteImport } from './routes/management/admin.odds-history'
+import { Route as ManagementAdminMatchesRouteImport } from './routes/management/admin.matches'
+import { Route as ManagementAdminMatchPoolsRouteImport } from './routes/management/admin.match-pools'
+import { Route as ManagementAdminBankrollRouteImport } from './routes/management/admin.bankroll'
+import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 
 const RegisterRoute = RegisterRouteImport.update({
@@ -155,97 +154,87 @@ const AuthenticatedBetsRoute = AuthenticatedBetsRouteImport.update({
   path: '/bets',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAdminWalletRoute =
-  AuthenticatedAdminWalletRouteImport.update({
-    id: '/admin-wallet',
-    path: '/admin-wallet',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminPayoutRoute =
-  AuthenticatedAdminPayoutRouteImport.update({
-    id: '/admin-payout',
-    path: '/admin-payout',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+const ManagementAdminIndexRoute = ManagementAdminIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AuthenticatedAdminRoute,
+  getParentRoute: () => ManagementAdminRoute,
 } as any)
-const AuthenticatedAdminWalletLedgerRoute =
-  AuthenticatedAdminWalletLedgerRouteImport.update({
+const ManagementAdminWalletLedgerRoute =
+  ManagementAdminWalletLedgerRouteImport.update({
     id: '/wallet-ledger',
     path: '/wallet-ledger',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    getParentRoute: () => ManagementAdminRoute,
   } as any)
-const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+const ManagementAdminUsersRoute = ManagementAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
-  getParentRoute: () => AuthenticatedAdminRoute,
+  getParentRoute: () => ManagementAdminRoute,
 } as any)
-const AuthenticatedAdminTournamentRoute =
-  AuthenticatedAdminTournamentRouteImport.update({
+const ManagementAdminTournamentRoute =
+  ManagementAdminTournamentRouteImport.update({
     id: '/tournament',
     path: '/tournament',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    getParentRoute: () => ManagementAdminRoute,
   } as any)
-const AuthenticatedAdminSimulationRoute =
-  AuthenticatedAdminSimulationRouteImport.update({
+const ManagementAdminSimulationRoute =
+  ManagementAdminSimulationRouteImport.update({
     id: '/simulation',
     path: '/simulation',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    getParentRoute: () => ManagementAdminRoute,
   } as any)
-const AuthenticatedAdminSettingsRoute =
-  AuthenticatedAdminSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminRiskSettingsRoute =
-  AuthenticatedAdminRiskSettingsRouteImport.update({
+const ManagementAdminSettingsRoute = ManagementAdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminRiskSettingsRoute =
+  ManagementAdminRiskSettingsRouteImport.update({
     id: '/risk-settings',
     path: '/risk-settings',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    getParentRoute: () => ManagementAdminRoute,
   } as any)
-const AuthenticatedAdminPredictionsRoute =
-  AuthenticatedAdminPredictionsRouteImport.update({
+const ManagementAdminPredictionsRoute =
+  ManagementAdminPredictionsRouteImport.update({
     id: '/predictions',
     path: '/predictions',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    getParentRoute: () => ManagementAdminRoute,
   } as any)
-const AuthenticatedAdminOddsHistoryRoute =
-  AuthenticatedAdminOddsHistoryRouteImport.update({
+const ManagementAdminPointsRoute = ManagementAdminPointsRouteImport.update({
+  id: '/points',
+  path: '/points',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminPayoutsRoute = ManagementAdminPayoutsRouteImport.update({
+  id: '/payouts',
+  path: '/payouts',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminOddsHistoryRoute =
+  ManagementAdminOddsHistoryRouteImport.update({
     id: '/odds-history',
     path: '/odds-history',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    getParentRoute: () => ManagementAdminRoute,
   } as any)
-const AuthenticatedAdminMatchesRoute =
-  AuthenticatedAdminMatchesRouteImport.update({
-    id: '/matches',
-    path: '/matches',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminMatchPoolsRoute =
-  AuthenticatedAdminMatchPoolsRouteImport.update({
+const ManagementAdminMatchesRoute = ManagementAdminMatchesRouteImport.update({
+  id: '/matches',
+  path: '/matches',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminMatchPoolsRoute =
+  ManagementAdminMatchPoolsRouteImport.update({
     id: '/match-pools',
     path: '/match-pools',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    getParentRoute: () => ManagementAdminRoute,
   } as any)
-const AuthenticatedAdminBankrollRoute =
-  AuthenticatedAdminBankrollRouteImport.update({
-    id: '/bankroll',
-    path: '/bankroll',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
+const ManagementAdminBankrollRoute = ManagementAdminBankrollRouteImport.update({
+  id: '/bankroll',
+  path: '/bankroll',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminAuditRoute = ManagementAdminAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
-  getParentRoute: () => AuthenticatedAdminRoute,
+  getParentRoute: () => ManagementAdminRoute,
 } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
@@ -259,9 +248,6 @@ export interface FileRoutesByFullPath {
   '/management': typeof ManagementRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/register': typeof RegisterRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/admin-payout': typeof AuthenticatedAdminPayoutRoute
-  '/admin-wallet': typeof AuthenticatedAdminWalletRoute
   '/bets': typeof AuthenticatedBetsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/matches': typeof AuthenticatedMatchesRoute
@@ -271,26 +257,28 @@ export interface FileRoutesByFullPath {
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
-  '/management/admin': typeof ManagementAdminRoute
+  '/management/admin': typeof ManagementAdminRouteWithChildren
   '/management/change-password': typeof ManagementChangePasswordRoute
   '/management/chat': typeof ManagementChatRoute
   '/management/login': typeof ManagementLoginRoute
   '/management/settings': typeof ManagementSettingsRoute
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
-  '/admin/audit': typeof AuthenticatedAdminAuditRoute
-  '/admin/bankroll': typeof AuthenticatedAdminBankrollRoute
-  '/admin/match-pools': typeof AuthenticatedAdminMatchPoolsRoute
-  '/admin/matches': typeof AuthenticatedAdminMatchesRoute
-  '/admin/odds-history': typeof AuthenticatedAdminOddsHistoryRoute
-  '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
-  '/admin/risk-settings': typeof AuthenticatedAdminRiskSettingsRoute
-  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/admin/simulation': typeof AuthenticatedAdminSimulationRoute
-  '/admin/tournament': typeof AuthenticatedAdminTournamentRoute
-  '/admin/users': typeof AuthenticatedAdminUsersRoute
-  '/admin/wallet-ledger': typeof AuthenticatedAdminWalletLedgerRoute
-  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/management/admin/audit': typeof ManagementAdminAuditRoute
+  '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
+  '/management/admin/matches': typeof ManagementAdminMatchesRoute
+  '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
+  '/management/admin/points': typeof ManagementAdminPointsRoute
+  '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
+  '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
+  '/management/admin/settings': typeof ManagementAdminSettingsRoute
+  '/management/admin/simulation': typeof ManagementAdminSimulationRoute
+  '/management/admin/tournament': typeof ManagementAdminTournamentRoute
+  '/management/admin/users': typeof ManagementAdminUsersRoute
+  '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/management/admin/': typeof ManagementAdminIndexRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
@@ -298,8 +286,6 @@ export interface FileRoutesByTo {
   '/management': typeof ManagementRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/register': typeof RegisterRoute
-  '/admin-payout': typeof AuthenticatedAdminPayoutRoute
-  '/admin-wallet': typeof AuthenticatedAdminWalletRoute
   '/bets': typeof AuthenticatedBetsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/matches': typeof AuthenticatedMatchesRoute
@@ -309,26 +295,27 @@ export interface FileRoutesByTo {
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
-  '/management/admin': typeof ManagementAdminRoute
   '/management/change-password': typeof ManagementChangePasswordRoute
   '/management/chat': typeof ManagementChatRoute
   '/management/login': typeof ManagementLoginRoute
   '/management/settings': typeof ManagementSettingsRoute
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
-  '/admin/audit': typeof AuthenticatedAdminAuditRoute
-  '/admin/bankroll': typeof AuthenticatedAdminBankrollRoute
-  '/admin/match-pools': typeof AuthenticatedAdminMatchPoolsRoute
-  '/admin/matches': typeof AuthenticatedAdminMatchesRoute
-  '/admin/odds-history': typeof AuthenticatedAdminOddsHistoryRoute
-  '/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
-  '/admin/risk-settings': typeof AuthenticatedAdminRiskSettingsRoute
-  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/admin/simulation': typeof AuthenticatedAdminSimulationRoute
-  '/admin/tournament': typeof AuthenticatedAdminTournamentRoute
-  '/admin/users': typeof AuthenticatedAdminUsersRoute
-  '/admin/wallet-ledger': typeof AuthenticatedAdminWalletLedgerRoute
-  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/management/admin/audit': typeof ManagementAdminAuditRoute
+  '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
+  '/management/admin/matches': typeof ManagementAdminMatchesRoute
+  '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
+  '/management/admin/points': typeof ManagementAdminPointsRoute
+  '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
+  '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
+  '/management/admin/settings': typeof ManagementAdminSettingsRoute
+  '/management/admin/simulation': typeof ManagementAdminSimulationRoute
+  '/management/admin/tournament': typeof ManagementAdminTournamentRoute
+  '/management/admin/users': typeof ManagementAdminUsersRoute
+  '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/management/admin': typeof ManagementAdminIndexRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
@@ -338,9 +325,6 @@ export interface FileRoutesById {
   '/management': typeof ManagementRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/register': typeof RegisterRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/_authenticated/admin-payout': typeof AuthenticatedAdminPayoutRoute
-  '/_authenticated/admin-wallet': typeof AuthenticatedAdminWalletRoute
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/matches': typeof AuthenticatedMatchesRoute
@@ -350,26 +334,28 @@ export interface FileRoutesById {
   '/_authenticated/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
-  '/management/admin': typeof ManagementAdminRoute
+  '/management/admin': typeof ManagementAdminRouteWithChildren
   '/management/change-password': typeof ManagementChangePasswordRoute
   '/management/chat': typeof ManagementChatRoute
   '/management/login': typeof ManagementLoginRoute
   '/management/settings': typeof ManagementSettingsRoute
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
-  '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
-  '/_authenticated/admin/bankroll': typeof AuthenticatedAdminBankrollRoute
-  '/_authenticated/admin/match-pools': typeof AuthenticatedAdminMatchPoolsRoute
-  '/_authenticated/admin/matches': typeof AuthenticatedAdminMatchesRoute
-  '/_authenticated/admin/odds-history': typeof AuthenticatedAdminOddsHistoryRoute
-  '/_authenticated/admin/predictions': typeof AuthenticatedAdminPredictionsRoute
-  '/_authenticated/admin/risk-settings': typeof AuthenticatedAdminRiskSettingsRoute
-  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/_authenticated/admin/simulation': typeof AuthenticatedAdminSimulationRoute
-  '/_authenticated/admin/tournament': typeof AuthenticatedAdminTournamentRoute
-  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
-  '/_authenticated/admin/wallet-ledger': typeof AuthenticatedAdminWalletLedgerRoute
-  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/management/admin/audit': typeof ManagementAdminAuditRoute
+  '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
+  '/management/admin/matches': typeof ManagementAdminMatchesRoute
+  '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
+  '/management/admin/points': typeof ManagementAdminPointsRoute
+  '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
+  '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
+  '/management/admin/settings': typeof ManagementAdminSettingsRoute
+  '/management/admin/simulation': typeof ManagementAdminSimulationRoute
+  '/management/admin/tournament': typeof ManagementAdminTournamentRoute
+  '/management/admin/users': typeof ManagementAdminUsersRoute
+  '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/management/admin/': typeof ManagementAdminIndexRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
@@ -379,9 +365,6 @@ export interface FileRouteTypes {
     | '/management'
     | '/auth'
     | '/register'
-    | '/admin'
-    | '/admin-payout'
-    | '/admin-wallet'
     | '/bets'
     | '/dashboard'
     | '/matches'
@@ -398,19 +381,21 @@ export interface FileRouteTypes {
     | '/management/settings'
     | '/management/super-admin'
     | '/management/support'
-    | '/admin/audit'
-    | '/admin/bankroll'
-    | '/admin/match-pools'
-    | '/admin/matches'
-    | '/admin/odds-history'
-    | '/admin/predictions'
-    | '/admin/risk-settings'
-    | '/admin/settings'
-    | '/admin/simulation'
-    | '/admin/tournament'
-    | '/admin/users'
-    | '/admin/wallet-ledger'
-    | '/admin/'
+    | '/management/admin/audit'
+    | '/management/admin/bankroll'
+    | '/management/admin/match-pools'
+    | '/management/admin/matches'
+    | '/management/admin/odds-history'
+    | '/management/admin/payouts'
+    | '/management/admin/points'
+    | '/management/admin/predictions'
+    | '/management/admin/risk-settings'
+    | '/management/admin/settings'
+    | '/management/admin/simulation'
+    | '/management/admin/tournament'
+    | '/management/admin/users'
+    | '/management/admin/wallet-ledger'
+    | '/management/admin/'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -418,8 +403,6 @@ export interface FileRouteTypes {
     | '/management'
     | '/auth'
     | '/register'
-    | '/admin-payout'
-    | '/admin-wallet'
     | '/bets'
     | '/dashboard'
     | '/matches'
@@ -429,26 +412,27 @@ export interface FileRouteTypes {
     | '/tournament-winner'
     | '/wallet'
     | '/management/access-denied'
-    | '/management/admin'
     | '/management/change-password'
     | '/management/chat'
     | '/management/login'
     | '/management/settings'
     | '/management/super-admin'
     | '/management/support'
-    | '/admin/audit'
-    | '/admin/bankroll'
-    | '/admin/match-pools'
-    | '/admin/matches'
-    | '/admin/odds-history'
-    | '/admin/predictions'
-    | '/admin/risk-settings'
-    | '/admin/settings'
-    | '/admin/simulation'
-    | '/admin/tournament'
-    | '/admin/users'
-    | '/admin/wallet-ledger'
-    | '/admin'
+    | '/management/admin/audit'
+    | '/management/admin/bankroll'
+    | '/management/admin/match-pools'
+    | '/management/admin/matches'
+    | '/management/admin/odds-history'
+    | '/management/admin/payouts'
+    | '/management/admin/points'
+    | '/management/admin/predictions'
+    | '/management/admin/risk-settings'
+    | '/management/admin/settings'
+    | '/management/admin/simulation'
+    | '/management/admin/tournament'
+    | '/management/admin/users'
+    | '/management/admin/wallet-ledger'
+    | '/management/admin'
     | '/lovable/email/queue/process'
   id:
     | '__root__'
@@ -457,9 +441,6 @@ export interface FileRouteTypes {
     | '/management'
     | '/auth'
     | '/register'
-    | '/_authenticated/admin'
-    | '/_authenticated/admin-payout'
-    | '/_authenticated/admin-wallet'
     | '/_authenticated/bets'
     | '/_authenticated/dashboard'
     | '/_authenticated/matches'
@@ -476,19 +457,21 @@ export interface FileRouteTypes {
     | '/management/settings'
     | '/management/super-admin'
     | '/management/support'
-    | '/_authenticated/admin/audit'
-    | '/_authenticated/admin/bankroll'
-    | '/_authenticated/admin/match-pools'
-    | '/_authenticated/admin/matches'
-    | '/_authenticated/admin/odds-history'
-    | '/_authenticated/admin/predictions'
-    | '/_authenticated/admin/risk-settings'
-    | '/_authenticated/admin/settings'
-    | '/_authenticated/admin/simulation'
-    | '/_authenticated/admin/tournament'
-    | '/_authenticated/admin/users'
-    | '/_authenticated/admin/wallet-ledger'
-    | '/_authenticated/admin/'
+    | '/management/admin/audit'
+    | '/management/admin/bankroll'
+    | '/management/admin/match-pools'
+    | '/management/admin/matches'
+    | '/management/admin/odds-history'
+    | '/management/admin/payouts'
+    | '/management/admin/points'
+    | '/management/admin/predictions'
+    | '/management/admin/risk-settings'
+    | '/management/admin/settings'
+    | '/management/admin/simulation'
+    | '/management/admin/tournament'
+    | '/management/admin/users'
+    | '/management/admin/wallet-ledger'
+    | '/management/admin/'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
@@ -650,117 +633,110 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin-wallet': {
-      id: '/_authenticated/admin-wallet'
-      path: '/admin-wallet'
-      fullPath: '/admin-wallet'
-      preLoaderRoute: typeof AuthenticatedAdminWalletRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin-payout': {
-      id: '/_authenticated/admin-payout'
-      path: '/admin-payout'
-      fullPath: '/admin-payout'
-      preLoaderRoute: typeof AuthenticatedAdminPayoutRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/': {
-      id: '/_authenticated/admin/'
+    '/management/admin/': {
+      id: '/management/admin/'
       path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/management/admin/'
+      preLoaderRoute: typeof ManagementAdminIndexRouteImport
+      parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/admin/wallet-ledger': {
-      id: '/_authenticated/admin/wallet-ledger'
+    '/management/admin/wallet-ledger': {
+      id: '/management/admin/wallet-ledger'
       path: '/wallet-ledger'
-      fullPath: '/admin/wallet-ledger'
-      preLoaderRoute: typeof AuthenticatedAdminWalletLedgerRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/management/admin/wallet-ledger'
+      preLoaderRoute: typeof ManagementAdminWalletLedgerRouteImport
+      parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/admin/users': {
-      id: '/_authenticated/admin/users'
+    '/management/admin/users': {
+      id: '/management/admin/users'
       path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/management/admin/users'
+      preLoaderRoute: typeof ManagementAdminUsersRouteImport
+      parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/admin/tournament': {
-      id: '/_authenticated/admin/tournament'
+    '/management/admin/tournament': {
+      id: '/management/admin/tournament'
       path: '/tournament'
-      fullPath: '/admin/tournament'
-      preLoaderRoute: typeof AuthenticatedAdminTournamentRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/management/admin/tournament'
+      preLoaderRoute: typeof ManagementAdminTournamentRouteImport
+      parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/admin/simulation': {
-      id: '/_authenticated/admin/simulation'
+    '/management/admin/simulation': {
+      id: '/management/admin/simulation'
       path: '/simulation'
-      fullPath: '/admin/simulation'
-      preLoaderRoute: typeof AuthenticatedAdminSimulationRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/management/admin/simulation'
+      preLoaderRoute: typeof ManagementAdminSimulationRouteImport
+      parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/admin/settings': {
-      id: '/_authenticated/admin/settings'
+    '/management/admin/settings': {
+      id: '/management/admin/settings'
       path: '/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/management/admin/settings'
+      preLoaderRoute: typeof ManagementAdminSettingsRouteImport
+      parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/admin/risk-settings': {
-      id: '/_authenticated/admin/risk-settings'
+    '/management/admin/risk-settings': {
+      id: '/management/admin/risk-settings'
       path: '/risk-settings'
-      fullPath: '/admin/risk-settings'
-      preLoaderRoute: typeof AuthenticatedAdminRiskSettingsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/management/admin/risk-settings'
+      preLoaderRoute: typeof ManagementAdminRiskSettingsRouteImport
+      parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/admin/predictions': {
-      id: '/_authenticated/admin/predictions'
+    '/management/admin/predictions': {
+      id: '/management/admin/predictions'
       path: '/predictions'
-      fullPath: '/admin/predictions'
-      preLoaderRoute: typeof AuthenticatedAdminPredictionsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/management/admin/predictions'
+      preLoaderRoute: typeof ManagementAdminPredictionsRouteImport
+      parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/admin/odds-history': {
-      id: '/_authenticated/admin/odds-history'
+    '/management/admin/points': {
+      id: '/management/admin/points'
+      path: '/points'
+      fullPath: '/management/admin/points'
+      preLoaderRoute: typeof ManagementAdminPointsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/payouts': {
+      id: '/management/admin/payouts'
+      path: '/payouts'
+      fullPath: '/management/admin/payouts'
+      preLoaderRoute: typeof ManagementAdminPayoutsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/odds-history': {
+      id: '/management/admin/odds-history'
       path: '/odds-history'
-      fullPath: '/admin/odds-history'
-      preLoaderRoute: typeof AuthenticatedAdminOddsHistoryRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/management/admin/odds-history'
+      preLoaderRoute: typeof ManagementAdminOddsHistoryRouteImport
+      parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/admin/matches': {
-      id: '/_authenticated/admin/matches'
+    '/management/admin/matches': {
+      id: '/management/admin/matches'
       path: '/matches'
-      fullPath: '/admin/matches'
-      preLoaderRoute: typeof AuthenticatedAdminMatchesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/management/admin/matches'
+      preLoaderRoute: typeof ManagementAdminMatchesRouteImport
+      parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/admin/match-pools': {
-      id: '/_authenticated/admin/match-pools'
+    '/management/admin/match-pools': {
+      id: '/management/admin/match-pools'
       path: '/match-pools'
-      fullPath: '/admin/match-pools'
-      preLoaderRoute: typeof AuthenticatedAdminMatchPoolsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/management/admin/match-pools'
+      preLoaderRoute: typeof ManagementAdminMatchPoolsRouteImport
+      parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/admin/bankroll': {
-      id: '/_authenticated/admin/bankroll'
+    '/management/admin/bankroll': {
+      id: '/management/admin/bankroll'
       path: '/bankroll'
-      fullPath: '/admin/bankroll'
-      preLoaderRoute: typeof AuthenticatedAdminBankrollRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/management/admin/bankroll'
+      preLoaderRoute: typeof ManagementAdminBankrollRouteImport
+      parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/admin/audit': {
-      id: '/_authenticated/admin/audit'
+    '/management/admin/audit': {
+      id: '/management/admin/audit'
       path: '/audit'
-      fullPath: '/admin/audit'
-      preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      fullPath: '/management/admin/audit'
+      preLoaderRoute: typeof ManagementAdminAuditRouteImport
+      parentRoute: typeof ManagementAdminRoute
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -772,45 +748,7 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
-  AuthenticatedAdminBankrollRoute: typeof AuthenticatedAdminBankrollRoute
-  AuthenticatedAdminMatchPoolsRoute: typeof AuthenticatedAdminMatchPoolsRoute
-  AuthenticatedAdminMatchesRoute: typeof AuthenticatedAdminMatchesRoute
-  AuthenticatedAdminOddsHistoryRoute: typeof AuthenticatedAdminOddsHistoryRoute
-  AuthenticatedAdminPredictionsRoute: typeof AuthenticatedAdminPredictionsRoute
-  AuthenticatedAdminRiskSettingsRoute: typeof AuthenticatedAdminRiskSettingsRoute
-  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
-  AuthenticatedAdminSimulationRoute: typeof AuthenticatedAdminSimulationRoute
-  AuthenticatedAdminTournamentRoute: typeof AuthenticatedAdminTournamentRoute
-  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
-  AuthenticatedAdminWalletLedgerRoute: typeof AuthenticatedAdminWalletLedgerRoute
-  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
-}
-
-const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminAuditRoute: AuthenticatedAdminAuditRoute,
-  AuthenticatedAdminBankrollRoute: AuthenticatedAdminBankrollRoute,
-  AuthenticatedAdminMatchPoolsRoute: AuthenticatedAdminMatchPoolsRoute,
-  AuthenticatedAdminMatchesRoute: AuthenticatedAdminMatchesRoute,
-  AuthenticatedAdminOddsHistoryRoute: AuthenticatedAdminOddsHistoryRoute,
-  AuthenticatedAdminPredictionsRoute: AuthenticatedAdminPredictionsRoute,
-  AuthenticatedAdminRiskSettingsRoute: AuthenticatedAdminRiskSettingsRoute,
-  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
-  AuthenticatedAdminSimulationRoute: AuthenticatedAdminSimulationRoute,
-  AuthenticatedAdminTournamentRoute: AuthenticatedAdminTournamentRoute,
-  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
-  AuthenticatedAdminWalletLedgerRoute: AuthenticatedAdminWalletLedgerRoute,
-  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
-}
-
-const AuthenticatedAdminRouteWithChildren =
-  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
-
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
-  AuthenticatedAdminPayoutRoute: typeof AuthenticatedAdminPayoutRoute
-  AuthenticatedAdminWalletRoute: typeof AuthenticatedAdminWalletRoute
   AuthenticatedBetsRoute: typeof AuthenticatedBetsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRoute
@@ -822,9 +760,6 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
-  AuthenticatedAdminPayoutRoute: AuthenticatedAdminPayoutRoute,
-  AuthenticatedAdminWalletRoute: AuthenticatedAdminWalletRoute,
   AuthenticatedBetsRoute: AuthenticatedBetsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedMatchesRoute: AuthenticatedMatchesRoute,
@@ -838,9 +773,49 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ManagementAdminRouteChildren {
+  ManagementAdminAuditRoute: typeof ManagementAdminAuditRoute
+  ManagementAdminBankrollRoute: typeof ManagementAdminBankrollRoute
+  ManagementAdminMatchPoolsRoute: typeof ManagementAdminMatchPoolsRoute
+  ManagementAdminMatchesRoute: typeof ManagementAdminMatchesRoute
+  ManagementAdminOddsHistoryRoute: typeof ManagementAdminOddsHistoryRoute
+  ManagementAdminPayoutsRoute: typeof ManagementAdminPayoutsRoute
+  ManagementAdminPointsRoute: typeof ManagementAdminPointsRoute
+  ManagementAdminPredictionsRoute: typeof ManagementAdminPredictionsRoute
+  ManagementAdminRiskSettingsRoute: typeof ManagementAdminRiskSettingsRoute
+  ManagementAdminSettingsRoute: typeof ManagementAdminSettingsRoute
+  ManagementAdminSimulationRoute: typeof ManagementAdminSimulationRoute
+  ManagementAdminTournamentRoute: typeof ManagementAdminTournamentRoute
+  ManagementAdminUsersRoute: typeof ManagementAdminUsersRoute
+  ManagementAdminWalletLedgerRoute: typeof ManagementAdminWalletLedgerRoute
+  ManagementAdminIndexRoute: typeof ManagementAdminIndexRoute
+}
+
+const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
+  ManagementAdminAuditRoute: ManagementAdminAuditRoute,
+  ManagementAdminBankrollRoute: ManagementAdminBankrollRoute,
+  ManagementAdminMatchPoolsRoute: ManagementAdminMatchPoolsRoute,
+  ManagementAdminMatchesRoute: ManagementAdminMatchesRoute,
+  ManagementAdminOddsHistoryRoute: ManagementAdminOddsHistoryRoute,
+  ManagementAdminPayoutsRoute: ManagementAdminPayoutsRoute,
+  ManagementAdminPointsRoute: ManagementAdminPointsRoute,
+  ManagementAdminPredictionsRoute: ManagementAdminPredictionsRoute,
+  ManagementAdminRiskSettingsRoute: ManagementAdminRiskSettingsRoute,
+  ManagementAdminSettingsRoute: ManagementAdminSettingsRoute,
+  ManagementAdminSimulationRoute: ManagementAdminSimulationRoute,
+  ManagementAdminTournamentRoute: ManagementAdminTournamentRoute,
+  ManagementAdminUsersRoute: ManagementAdminUsersRoute,
+  ManagementAdminWalletLedgerRoute: ManagementAdminWalletLedgerRoute,
+  ManagementAdminIndexRoute: ManagementAdminIndexRoute,
+}
+
+const ManagementAdminRouteWithChildren = ManagementAdminRoute._addFileChildren(
+  ManagementAdminRouteChildren,
+)
+
 interface ManagementRouteRouteChildren {
   ManagementAccessDeniedRoute: typeof ManagementAccessDeniedRoute
-  ManagementAdminRoute: typeof ManagementAdminRoute
+  ManagementAdminRoute: typeof ManagementAdminRouteWithChildren
   ManagementChangePasswordRoute: typeof ManagementChangePasswordRoute
   ManagementChatRoute: typeof ManagementChatRoute
   ManagementLoginRoute: typeof ManagementLoginRoute
@@ -851,7 +826,7 @@ interface ManagementRouteRouteChildren {
 
 const ManagementRouteRouteChildren: ManagementRouteRouteChildren = {
   ManagementAccessDeniedRoute: ManagementAccessDeniedRoute,
-  ManagementAdminRoute: ManagementAdminRoute,
+  ManagementAdminRoute: ManagementAdminRouteWithChildren,
   ManagementChangePasswordRoute: ManagementChangePasswordRoute,
   ManagementChatRoute: ManagementChatRoute,
   ManagementLoginRoute: ManagementLoginRoute,

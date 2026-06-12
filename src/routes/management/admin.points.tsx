@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -9,7 +9,7 @@ import {
   adminAdjustWallet,
   adminGetProofSignedUrl,
 } from "@/lib/wallet.functions";
-import { supabase } from "@/integrations/supabase/client";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,14 +22,7 @@ import { Loader2, Wallet as WalletIcon, FileText, Eye, AlertCircle } from "lucid
 import { toast } from "sonner";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_authenticated/admin-wallet")({
-  ssr: false,
-  beforeLoad: async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw redirect({ to: "/auth" });
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-    if (!(roles ?? []).some((r) => r.role === "admin")) throw redirect({ to: "/dashboard" });
-  },
+export const Route = createFileRoute("/management/admin/points")({
   head: () => ({ meta: [{ title: "Point Requests — cssebets" }] }),
   component: AdminWalletPage,
 });

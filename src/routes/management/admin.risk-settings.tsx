@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { getPlatformSettings, updatePlatformSettings } from "@/lib/platform-settings.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/risk-settings")({
+export const Route = createFileRoute("/management/admin/risk-settings")({
   component: RiskSettingsPage,
 });
 
