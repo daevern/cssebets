@@ -331,7 +331,7 @@ function MoneyRain() {
   );
   const [on, setOn] = useState(true);
   useEffect(() => {
-    const t = setTimeout(() => setOn(false), 5000);
+    const t = setTimeout(() => setOn(false), 3000);
     return () => clearTimeout(t);
   }, []);
   if (!on) return null;
