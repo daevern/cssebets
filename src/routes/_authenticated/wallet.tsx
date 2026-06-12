@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Wallet as WalletIcon, Plus, Loader2, Upload, X, FileCheck, Landmark } from "lucide-react";
+import { Wallet as WalletIcon, Plus, Loader2, Upload, X, FileCheck, Landmark, Copy, Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -271,8 +271,12 @@ function WalletPage() {
             <div className="text-sm leading-tight text-muted-foreground">BRICKSPLUG ENTERPRISE SD BHD</div>
             <div className="text-sm font-mono tabular-nums leading-tight font-medium">8010575969</div>
           </div>
-          <div className="border-t border-border pt-2 text-xs text-muted-foreground font-medium">
-            REFERENCE: {user?.email?.split("@")[0] || "Username"}
+          <div className="border-t border-border pt-2 space-y-1.5">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Reference ID</div>
+            <ReferenceIdRow uid={uid ?? ""} />
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              Use this Reference ID when submitting your proof so admins can match your request.
+            </p>
           </div>
         </div>
 
@@ -387,6 +391,39 @@ function WalletPage() {
           <Link to="/matches" className="text-xs text-primary underline">Place a bet on Matches →</Link>
         </div>
       </Card>
+    </div>
+  );
+}
+
+function ReferenceIdRow({ uid }: { uid: string }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    if (!uid) return;
+    try {
+      await navigator.clipboard.writeText(uid);
+      setCopied(true);
+      toast.success("Reference ID copied");
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Could not copy");
+    }
+  }
+  return (
+    <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5">
+      <code className="flex-1 font-mono text-[11px] sm:text-xs break-all leading-tight select-all">
+        {uid || "—"}
+      </code>
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        className="h-7 px-2 shrink-0"
+        onClick={copy}
+        disabled={!uid}
+      >
+        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+        <span className="ml-1 text-xs">{copied ? "Copied" : "Copy"}</span>
+      </Button>
     </div>
   );
 }

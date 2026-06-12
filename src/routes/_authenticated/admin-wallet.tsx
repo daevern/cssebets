@@ -47,6 +47,7 @@ function AdminWalletPage() {
   const [proof, setProof] = useState<{ url: string; type: string; name: string } | null>(null);
   const [rejectFor, setRejectFor] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [search, setSearch] = useState("");
 
   const requests = useQuery({
     queryKey: ["admin-point-requests", status],
@@ -105,13 +106,29 @@ function AdminWalletPage() {
             ))}
           </div>
         </div>
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by Reference ID, name, or email…"
+          className="max-w-md"
+        />
         {requests.isLoading ? (
           <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
         ) : !requests.data?.requests.length ? (
           <p className="text-sm text-muted-foreground">No {status} requests.</p>
         ) : (
           <div className="space-y-3">
-            {requests.data.requests.map((r: any) => {
+            {(requests.data.requests as any[])
+              .filter((r) => {
+                if (!search.trim()) return true;
+                const q = search.trim().toLowerCase();
+                return (
+                  String(r.user_id).toLowerCase().includes(q) ||
+                  String(r.display_name ?? "").toLowerCase().includes(q) ||
+                  String(r.email ?? "").toLowerCase().includes(q)
+                );
+              })
+              .map((r: any) => {
               const hasProof = !!r.proof_file_path;
               return (
                 <div key={r.id} className="border rounded-md p-3 text-sm space-y-2">
@@ -119,6 +136,9 @@ function AdminWalletPage() {
                     <div className="min-w-0 flex-1 space-y-0.5">
                       <div className="font-semibold">{r.display_name}</div>
                       {r.email && <div className="text-xs text-muted-foreground">{r.email}</div>}
+                      <div className="text-[11px] text-muted-foreground font-mono break-all">
+                        Ref: {r.user_id}
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         Requested <span className="font-medium text-foreground">{Number(r.requested_amount).toLocaleString()} pts</span>
                         {" · "}Balance <span className="tabular-nums">{Number(r.current_balance).toLocaleString()}</span>
