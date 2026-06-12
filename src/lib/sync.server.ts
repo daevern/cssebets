@@ -44,10 +44,12 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
     const stageLabel = m.stage ? (competition ? `${competition} · ${m.stage}` : m.stage) : competition;
     const homeScore = m.score?.fullTime?.home ?? null;
     const awayScore = m.score?.fullTime?.away ?? null;
+    const homeScoreHt = m.score?.halfTime?.home ?? null;
+    const awayScoreHt = m.score?.halfTime?.away ?? null;
     const winner = status === "finished" && homeScore !== null && awayScore !== null
       ? (homeScore > awayScore ? "HOME" : homeScore < awayScore ? "AWAY" : "DRAW") : null;
 
-    const payload = {
+    const payload: any = {
       external_id: String(m.id),
       stage: stageLabel,
       group_name: m.group ?? null,
@@ -59,6 +61,8 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
       status,
       home_score: homeScore,
       away_score: awayScore,
+      home_score_ht: homeScoreHt,
+      away_score_ht: awayScoreHt,
       winner,
       reference_odds: existing?.reference_odds ?? generateOdds(),
       updated_at: new Date().toISOString(),
@@ -70,7 +74,7 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
 
     const matchId = upRow?.id ?? existing?.id;
     if (matchId && status === "finished" && homeScore !== null && awayScore !== null) {
-      autoSettled += await settlePredictionsForMatch(matchId, homeScore, awayScore);
+      autoSettled += await settlePredictionsForMatch(matchId, homeScore, awayScore, homeScoreHt, awayScoreHt);
     }
   }
 

@@ -217,6 +217,83 @@ export type Database = {
         }
         Relationships: []
       }
+      market_odds_snapshots: {
+        Row: {
+          id: string
+          market: string
+          match_id: string
+          odds: number
+          selection: string
+          snapshot_at: string
+          source: string
+        }
+        Insert: {
+          id?: string
+          market: string
+          match_id: string
+          odds: number
+          selection: string
+          snapshot_at?: string
+          source?: string
+        }
+        Update: {
+          id?: string
+          market?: string
+          match_id?: string
+          odds?: number
+          selection?: string
+          snapshot_at?: string
+          source?: string
+        }
+        Relationships: []
+      }
+      match_market_odds: {
+        Row: {
+          active: boolean
+          created_at: string
+          generated: boolean
+          id: string
+          market: string
+          match_id: string
+          odds: number
+          selection: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          generated?: boolean
+          id?: string
+          market: string
+          match_id: string
+          odds: number
+          selection: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          generated?: boolean
+          id?: string
+          market?: string
+          match_id?: string
+          odds?: number
+          selection?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_market_odds_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       match_odds_snapshots: {
         Row: {
           away_odds: number
@@ -376,6 +453,7 @@ export type Database = {
           away_crest: string | null
           away_liability: number
           away_score: number | null
+          away_score_ht: number | null
           away_team: string
           created_at: string
           draw_liability: number
@@ -384,6 +462,7 @@ export type Database = {
           home_crest: string | null
           home_liability: number
           home_score: number | null
+          home_score_ht: number | null
           home_team: string
           id: string
           is_simulation: boolean
@@ -401,6 +480,7 @@ export type Database = {
           away_crest?: string | null
           away_liability?: number
           away_score?: number | null
+          away_score_ht?: number | null
           away_team: string
           created_at?: string
           draw_liability?: number
@@ -409,6 +489,7 @@ export type Database = {
           home_crest?: string | null
           home_liability?: number
           home_score?: number | null
+          home_score_ht?: number | null
           home_team: string
           id?: string
           is_simulation?: boolean
@@ -426,6 +507,7 @@ export type Database = {
           away_crest?: string | null
           away_liability?: number
           away_score?: number | null
+          away_score_ht?: number | null
           away_team?: string
           created_at?: string
           draw_liability?: number
@@ -434,6 +516,7 @@ export type Database = {
           home_crest?: string | null
           home_liability?: number
           home_score?: number | null
+          home_score_ht?: number | null
           home_team?: string
           id?: string
           is_simulation?: boolean
@@ -696,13 +779,17 @@ export type Database = {
           id: string
           is_simulation: boolean
           market: Database["public"]["Enums"]["prediction_market"]
+          market_label: string | null
+          market_text: string | null
           match_id: string | null
           outcome: string
           points: number
           potential_return: number
           reference_odds: number
           reference_odds_snapshot_id: string | null
+          selection_label: string | null
           settled_at: string | null
+          settled_result: string | null
           status: Database["public"]["Enums"]["prediction_status"]
           user_id: string
           virtual_stake: number
@@ -713,13 +800,17 @@ export type Database = {
           id?: string
           is_simulation?: boolean
           market: Database["public"]["Enums"]["prediction_market"]
+          market_label?: string | null
+          market_text?: string | null
           match_id?: string | null
           outcome: string
           points?: number
           potential_return?: number
           reference_odds?: number
           reference_odds_snapshot_id?: string | null
+          selection_label?: string | null
           settled_at?: string | null
+          settled_result?: string | null
           status?: Database["public"]["Enums"]["prediction_status"]
           user_id: string
           virtual_stake?: number
@@ -730,13 +821,17 @@ export type Database = {
           id?: string
           is_simulation?: boolean
           market?: Database["public"]["Enums"]["prediction_market"]
+          market_label?: string | null
+          market_text?: string | null
           match_id?: string | null
           outcome?: string
           points?: number
           potential_return?: number
           reference_odds?: number
           reference_odds_snapshot_id?: string | null
+          selection_label?: string | null
           settled_at?: string | null
+          settled_result?: string | null
           status?: Database["public"]["Enums"]["prediction_status"]
           user_id?: string
           virtual_stake?: number
@@ -1112,7 +1207,25 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      match_market_exposure: {
+        Row: {
+          bet_count: number | null
+          liability: number | null
+          market: string | null
+          match_id: string | null
+          selection: string | null
+          total_stake: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "predictions_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       delete_email: {
@@ -1166,6 +1279,17 @@ export type Database = {
         }
         Returns: string
       }
+      place_market_bet_atomic: {
+        Args: {
+          p_client_request_id?: string
+          p_market: string
+          p_match_id: string
+          p_selection: string
+          p_stake: number
+          p_user_id: string
+        }
+        Returns: string
+      }
       platform_apply_change: {
         Args: {
           p_amount: number
@@ -1207,12 +1331,36 @@ export type Database = {
         Args: { p_match_duration_minutes?: number }
         Returns: Json
       }
+      seed_match_market_odds: {
+        Args: { p_match_id: string }
+        Returns: undefined
+      }
       set_house_user: {
         Args: { p_admin_id: string; p_house_user_id: string }
         Returns: string
       }
+      settle_match_all_markets_atomic: {
+        Args: {
+          p_away: number
+          p_away_ht?: number
+          p_home: number
+          p_home_ht?: number
+          p_match_id: string
+        }
+        Returns: number
+      }
       settle_match_atomic: {
         Args: { p_away_score: number; p_home_score: number; p_match_id: string }
+        Returns: number
+      }
+      settle_new_markets_for_match: {
+        Args: {
+          p_away: number
+          p_away_ht?: number
+          p_home: number
+          p_home_ht?: number
+          p_match_id: string
+        }
         Returns: number
       }
       settle_tournament_winner_atomic: {

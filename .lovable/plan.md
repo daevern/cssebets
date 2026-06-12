@@ -1,96 +1,150 @@
-# Phase 1 & 2 — Security, Integrity, and Data Model Hardening
+# Add High-Margin Virtual Prediction Markets
 
-This is a large body of work. I'll deliver it in **two migrations + one app-code pass per phase**, validating after each step so nothing regresses for live users.
+This is a large, multi-layer feature. I'll implement it in safe phases so existing match-winner bets, wallet, bankroll, settlement, and admin flows keep working untouched.
 
----
+## Scope
 
-## Phase 1 — Critical Security & Accounting Integrity
+Add 5 new markets alongside the existing `result` market:
 
-### 1.1 Secure bet placement (`place_bet_atomic`)
-- Drop the `p_user_id` argument. Replace it with `auth.uid()` read inside the function. Reject if NULL.
-- Re-create as `SECURITY INVOKER` where possible; keep `SECURITY DEFINER` only for the cross-table writes, but always gate by `auth.uid()`.
-- Update `src/lib/predictions.functions.ts` to stop sending `p_user_id` (server function already authenticates via `requireSupabaseAuth`).
-- Same treatment for: `wallet_approve_request`, `wallet_reject_request`, `payout_approve_atomic`, `payout_user_reject_atomic`, `set_house_user`, `reset_simulation_data`, `update_platform_settings` — derive admin/user id from `auth.uid()` instead of trusting `p_admin_id` / `p_user_id`.
+1. `over_under_2_5` — OVER_2_5 / UNDER_2_5
+2. `btts` — YES / NO  *(market key already exists in enum; extend coverage)*
+3. `correct_score` — fixed grid + OTHER  *(enum exists; add odds + UI)*
+4. `half_time_full_time` — 9 combos *(new)*
+5. `exact_total_goals` — GOALS_0..GOALS_5_PLUS *(new; `total_goals` enum already exists but we'll use the new key)*
 
-### 1.2 Atomicity
-- Audit `place_bet_atomic`, `settle_match_atomic`, `void_match_atomic`, `wallet_apply_change`, `platform_apply_change`, `pool_apply_change` — they already run inside a single PL/pgSQL transaction. Verify lock order (match → pool → wallet → bankroll) is consistent everywhere to avoid deadlocks. Add explicit `FOR UPDATE` where missing.
+Existing `result`, `tournament_winner`, `group_winner`, `first_scorer` markets stay as-is.
 
-### 1.3 Idempotency
-- Bet placement already uses `client_request_id`. Extend with a UNIQUE index on `(user_id, client_request_id)` if not present.
-- Add idempotency to:
-  - `wallet_approve_request` / `wallet_reject_request` — guarded by `status='pending'` row lock (already partially in place; verify).
-  - `payout_approve_atomic` — same.
-  - `settle_match_atomic` — already guarded by `match_stake_pools.settled`. Verify.
-  - `void_match_atomic` — guarded by `status<>'cancelled'`. Add explicit check.
-  - `platform_apply_change` — add optional `p_external_ref` UNIQUE to prevent double credit on retried admin top-ups.
+## Phase 1 — Database
 
-### 1.4 Settlement & Void correctness
-- Re-running `settle_match_atomic` must short-circuit when pool is `settled=true` (already true — confirm).
-- `void_match_atomic` must refund from pool if not yet drained, from bankroll if already settled. Already implemented — add a "void cannot follow settle for finished matches" guard unless explicitly forced.
+### New table: `match_market_odds`
+Server-controlled odds per (match, market, selection).
 
-### 1.5 RLS hardening
-Audit and tighten policies for: `profiles`, `wallets`, `wallet_transactions`, `predictions`, `matches`, `point_requests`, `payout_requests`, `audit_log`, `platform_bankroll`, `platform_transactions`, `match_stake_pools`, `match_pool_transactions`, `match_odds_snapshots`, `platform_settings`, `tournaments`, `tournament_outrights`, `user_roles`.
+```
+id uuid pk
+match_id uuid → matches(id) on delete cascade
+market text
+selection text
+odds numeric(10,2) check (odds >= 1)
+source text default 'internal'   -- 'internal' | 'the-odds-api'
+active boolean default true
+generated boolean default false
+created_at, updated_at timestamptz
+UNIQUE (match_id, market, selection)
+```
+RLS: `authenticated` SELECT (only `active=true`); `service_role` ALL. GRANTs included.
 
-Rules enforced:
-- Users `SELECT` only their own private rows.
-- Users `INSERT` only with `user_id = auth.uid()`.
-- Users **never** `UPDATE/DELETE` wallets, balances, predictions after creation, or admin tables.
-- Admin/super_admin checks go through `private.has_role(auth.uid(), …)` — never client claims.
-- `platform_bankroll`, `platform_transactions`, `match_stake_pools`, `audit_log`: read = admin only, write = service_role only.
+### New table: `market_odds_snapshots`
+Immutable history for audit/settlement linkage.
 
-### 1.6 Storage security (`point-request-proofs`, `payout-proofs`)
-- Policies on `storage.objects`:
-  - Path convention `{auth.uid()}/...` enforced via `(storage.foldername(name))[1] = auth.uid()::text`.
-  - Users INSERT/SELECT only their own folder. No UPDATE/DELETE by users.
-  - Admins SELECT all.
-- File-type + 10MB limit enforced client-side (server-side limit is bucket setting).
+```
+id uuid pk
+match_id uuid
+market text, selection text
+odds numeric(10,2)
+source text
+snapshot_at timestamptz default now()
+```
+RLS: `authenticated` SELECT; `service_role` ALL.
 
-### 1.7 UI double-submit protection
-- Audit submit handlers in: `wallet.tsx`, `payout.tsx`, `matches.tsx` (bet placement), `admin-wallet.tsx`, `admin-payout.tsx`, `admin.matches.tsx`, `admin.bankroll.tsx`, `admin.risk-settings.tsx`.
-- Standardize on `useMutation` + `disabled={isPending}` + sonner toasts. Add a single `client_request_id` (uuid) per attempt where applicable.
+### Extend `predictions`
+Add nullable columns (back-compat with existing rows):
+- `selection_label text`
+- `market_label text`
+- `settled_result text`
 
----
+Existing columns `market`, `outcome`, `reference_odds`, `potential_return`, `reference_odds_snapshot_id` already cover odds-at-prediction.
 
-## Phase 2 — Data Model Cleanup
+### Extend `prediction_market` enum
+Add `over_under_2_5`, `half_time_full_time`, `exact_total_goals`. Keep existing values.
 
-### 2.1 Migrations
-- I will **not** rewrite history (migrations are append-only in production). Instead, I'll add one consolidating migration that:
-  - Drops any orphaned/duplicate policies discovered during the audit.
-  - Re-asserts canonical CHECK constraints and indexes.
-  - Is safe to re-run (uses `IF NOT EXISTS` / `DROP POLICY IF EXISTS`).
+### Extend `matches`
+Add nullable `home_score_ht int`, `away_score_ht int` for HT/FT settlement.
 
-### 2.2 Constraints
-- `wallets.balance >= 0` (CHECK).
-- `predictions.virtual_stake > 0`, `reference_odds >= 1`, `potential_return >= 0`.
-- `predictions.status` already enum — confirm.
-- `point_requests.requested_amount > 0`.
-- `platform_bankroll` row 1: allow negative (per current design) — leave as is, add comment.
-- `match_stake_pools` totals `>= 0`.
-- Settlement-once guard: partial UNIQUE index on `match_stake_pools(match_id) WHERE settled = true` is implicit (PK is match_id).
+### New SQL functions
+- `seed_match_market_odds(p_match_id uuid)` — generates internal odds for all selections of all new markets if missing. Pulled from the spec's suggested odds.
+- `place_market_bet_atomic(p_user_id, p_match_id, p_market, p_selection, p_stake, p_client_request_id)` — looks up odds from `match_market_odds` (active only), reuses existing wallet debit + exposure pattern. For `result` market it delegates to existing `place_bet_atomic` to keep that path identical.
+- Per-market settlement helpers, all idempotent (skip predictions already non-`pending`):
+  - `settle_over_under_2_5(match, h, a)`
+  - `settle_btts(match, h, a)` *(already partly covered by `settle_match_atomic`; keep that for `result` and add this for new placements written via new path)*
+  - `settle_correct_score(match, h, a)`
+  - `settle_exact_total_goals(match, h, a)`
+  - `settle_half_time_full_time(match, h_ht, a_ht, h, a)`
+- Wrap into `settle_match_all_markets_atomic(p_match_id, p_home, p_away, p_home_ht, p_away_ht)` that calls existing `settle_match_atomic` first (covers `result`/legacy `correct_score`/`total_goals`/`btts`) then the new helpers for any predictions still `pending` on the new markets. Idempotent + reuses `wallet_apply_change` + `platform_apply_change`.
 
-### 2.3 Indexes
-- `predictions(user_id, created_at DESC)`
-- `predictions(match_id, status)`
-- `wallet_transactions(user_id, created_at DESC)`
-- `point_requests(status, created_at DESC)`
-- `matches(status, kickoff_at)`
-- `audit_log(action, created_at DESC)`
-- `match_odds_snapshots(match_id, sampled_at DESC)`
-- `platform_transactions(transaction_type, created_at DESC)`
+### Exposure
+Add view `match_market_exposure` aggregating `sum(potential_return)` grouped by `match_id, market, outcome` over pending predictions. Used by admin dashboard. The hard exposure cap stays on `result` (existing behavior) — new markets are capped per-bet via existing `max_stake_per_bet` / `max_potential_payout` settings.
 
----
+## Phase 2 — Server functions
 
-## Execution order
+New file `src/lib/markets.functions.ts`:
+- `getMatchMarkets({ matchId })` — returns grouped odds + labels for tabs Main/Goals/Correct Score/Specials. Auto-calls `seed_match_market_odds` if empty (and match not started). Hides HT/FT for non-simulation matches that have no `home_score_ht`.
+- `placeMarketBet({ matchId, market, selection, stake, clientRequestId })` — calls `place_market_bet_atomic`. Snapshot insert into `market_odds_snapshots` before placement; stores returned `id` on the prediction.
+- `getMarketExposure()` (admin) — reads the exposure view.
+- `setMarketOdds({ matchId, market, selection, odds, active })` (admin) — audited update.
 
-1. **Migration A** — Phase 1.1, 1.3, 1.5, 1.6, 2.2, 2.3 (DB-only: function signatures, RLS, constraints, indexes). Submit for your approval.
-2. **App code pass** — update every server function and client mutation to match the new `place_bet_atomic` / approve/reject signatures, plus UI disabled-while-pending + toasts.
-3. **Migration B** (optional, if audit finds orphaned policies) — cleanup pass.
-4. Verify: build, run `supabase--linter`, smoke-test bet placement / approval / settlement flows.
+Extend `src/lib/settlement.server.ts` to call `settle_match_all_markets_atomic`. Extend `src/lib/sync.server.ts` to read & store HT score from football-data when available (`score.halfTime`), then run the new settle wrapper.
 
-## Risks / call-outs
+Existing `submitPrediction` keeps working for `result` and `tournament_winner`. Frontend for new markets uses `placeMarketBet`.
 
-- Changing `place_bet_atomic`'s signature is a **breaking RPC change**. All callers will be updated in the same turn, but any in-flight bets at deploy time will get a single retryable error.
-- Removing `p_admin_id` from approve/reject RPCs means admins must be signed in as themselves (no impersonation) — that's the intended security posture.
-- RLS tightening on `wallet_transactions` / `platform_*` will break any admin UI page that currently reads via the user's session instead of the admin server fn. I'll update those to go through admin server fns.
+## Phase 3 — UI
 
-**Confirm and I'll start with Migration A.**
+`src/routes/_authenticated/matches.tsx` (or the match-detail card already shown there): add a Tabs control per match card with Main / Goals / Correct Score / Specials.
+- Main: existing 1X2 buttons (unchanged).
+- Goals: O/U 2.5, BTTS, Exact Total Goals as selection cards.
+- Correct Score: 5×5 grid + OTHER.
+- Specials: HT/FT grid (hidden if odds not available).
+
+Bet slip: existing modal/inline form extended to accept `{market, selection, odds}` and call `placeMarketBet`. Shows stake → potential return live.
+
+Min stake 50 rule (from earlier turn) still applies.
+
+## Phase 4 — Admin
+
+New page `src/routes/management/admin.markets.tsx`:
+- Per match: list all markets/selections with odds, toggle `active`, edit odds (locked once kickoff passed).
+- Exposure table grouped by match/market/selection, highlighting top liability.
+- All edits audited via existing `audit_log`.
+
+Extend `admin.simulation.tsx` to show stake/payout/P&L by market (reads new view).
+
+## Phase 5 — Simulation
+
+`src/lib/sim-worldcup.server.ts` updates:
+- Generate HT scores (`pick_odds_weighted_score` extended) for sim matches.
+- Seed multi-market bets with the 35/20/15/20/10 distribution.
+- Settlement uses `settle_match_all_markets_atomic`.
+
+## Acceptance check
+
+- Existing match-winner bets continue to settle via untouched `place_bet_atomic` / `settle_match_atomic`.
+- New markets place + settle through new atomic functions, sharing the same wallet/bankroll helpers (so ledgers stay consistent).
+- Odds are server-only (client passes only `selection`).
+- Snapshot row written per placement.
+- All new tables have RLS + GRANTs.
+- Build passes.
+
+## Technical notes
+
+- One migration creates tables, enum values, columns, view, and all functions in dependency order.
+- New code paths are additive — no changes to `place_bet_atomic` or `settle_match_atomic` signatures.
+- Idempotency: all new settle helpers gate on `status='pending'` with `FOR UPDATE`.
+- Settlement wrapper safe to call multiple times.
+
+## Files to be added / changed
+
+**New**
+- `supabase/migrations/<ts>_markets.sql` (via migration tool)
+- `src/lib/markets.functions.ts`
+- `src/lib/markets-catalog.ts` (shared labels + selection lists)
+- `src/components/matches/MarketTabs.tsx`
+- `src/routes/management/admin.markets.tsx`
+
+**Edited**
+- `src/routes/_authenticated/matches.tsx` (add tabs + new bet slip path)
+- `src/lib/settlement.server.ts` (use wrapper)
+- `src/lib/sync.server.ts` (store HT score, run wrapper)
+- `src/lib/sim-worldcup.server.ts` (multi-market seeding/settlement)
+- `src/routes/management/admin.simulation.tsx` (per-market analytics)
+- `src/routes/management/admin.tsx` (nav entry for Markets)
+
+Confirm and I'll start with the migration (you'll see the SQL before it runs), then ship the code in the order above.
