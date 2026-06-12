@@ -21,7 +21,7 @@ import { Banknote, Loader2, Upload, Eye, FileCheck } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/admin-payout")({
+export const Route = createFileRoute("/management/admin/payouts")({
   ssr: false,
   beforeLoad: async () => {
     const { data: { user } } = await supabase.auth.getUser();

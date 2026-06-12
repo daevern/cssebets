@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, Layers } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/match-pools")({
+export const Route = createFileRoute("/management/admin/match-pools")({
   component: MatchPoolsPage,
 });
 

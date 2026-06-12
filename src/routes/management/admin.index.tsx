@@ -9,7 +9,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/")({
+export const Route = createFileRoute("/management/admin/")({
   component: AdminOverview,
 });
 

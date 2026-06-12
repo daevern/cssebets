@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2, TrendingUp, TrendingDown, Wallet, AlertTriangle, ShieldCheck } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/bankroll")({
+export const Route = createFileRoute("/management/admin/bankroll")({
   component: BankrollPage,
 });
 

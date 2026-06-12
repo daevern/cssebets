@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/odds-history")({
+export const Route = createFileRoute("/management/admin/odds-history")({
   component: AdminOddsHistoryPage,
 });
 

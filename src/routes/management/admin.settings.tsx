@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Loader2, ShieldCheck, ShieldAlert } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/settings")({
+export const Route = createFileRoute("/management/admin/settings")({
   component: AdminSettingsPage,
 });
 

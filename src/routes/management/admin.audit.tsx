@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/audit")({
+export const Route = createFileRoute("/management/admin/audit")({
   component: AdminAuditPage,
 });
 

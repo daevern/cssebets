@@ -22,7 +22,7 @@ import { Loader2, Wallet as WalletIcon, FileText, Eye, AlertCircle } from "lucid
 import { toast } from "sonner";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_authenticated/admin-wallet")({
+export const Route = createFileRoute("/management/admin/points")({
   ssr: false,
   beforeLoad: async () => {
     const { data: { user } } = await supabase.auth.getUser();
