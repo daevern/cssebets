@@ -10,3 +10,18 @@ export const refreshMatches = createServerFn({ method: "POST" })
     const { runFootballDataSync } = await import("@/lib/sync.server");
     return runFootballDataSync({ userId: context.userId });
   });
+
+export const getMatchOddsHistory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { matchId: string }) => input)
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
+      .from("match_odds_snapshots")
+      .select("id, sampled_at, home_odds, draw_odds, away_odds, source")
+      .eq("match_id", data.matchId)
+      .order("sampled_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
