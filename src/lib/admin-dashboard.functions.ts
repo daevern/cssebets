@@ -206,7 +206,7 @@ export const getUserDetail = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     await requireTier(supabase, userId, ADMIN_TIERS);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [{ data: profile }, { data: wallet }, { data: predictions }, { data: roleRows }] =
+    const [{ data: profile }, { data: wallet }, { data: predictions }, { data: roleRows }, authResult] =
       await Promise.all([
         supabaseAdmin.from("profiles").select("*").eq("id", data.userId).maybeSingle(),
         supabaseAdmin.from("wallets").select("balance, updated_at").eq("user_id", data.userId).maybeSingle(),
@@ -216,12 +216,16 @@ export const getUserDetail = createServerFn({ method: "GET" })
           .order("created_at", { ascending: false })
           .limit(100),
         supabaseAdmin.from("user_roles").select("role").eq("user_id", data.userId),
+        supabaseAdmin.auth.admin.getUser(data.userId).catch(() => ({ data: { user: null } })),
       ]);
+    const authUser = authResult?.data?.user;
     return {
       profile,
       wallet: wallet ?? { balance: 0, updated_at: null },
       predictions: predictions ?? [],
       roles: (roleRows ?? []).map((r: any) => r.role),
+      email: authUser?.email || null,
+      phoneNumber: authUser?.phone || profile?.phone_number || null,
     };
   });
 
