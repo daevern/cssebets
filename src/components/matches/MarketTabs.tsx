@@ -223,8 +223,8 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
           </div>
         </TabsContent>
 
-        <TabsContent value="cs" className="space-y-2 mt-2">
-          {renderMarketSection("correct_score", "grid-cols-4")}
+        <TabsContent value="cs" className="space-y-3 mt-2">
+          {renderCorrectScore()}
         </TabsContent>
 
         <TabsContent value="sp" className="space-y-2 mt-2">
