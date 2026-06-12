@@ -137,11 +137,11 @@ function MatchesPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Matches</h1>
+      <h1 className="text-2xl font-bold">FIFA World Cup</h1>
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          Scheduled ({scheduled.length})
+          GROUP STAGE ({scheduled.length})
         </h2>
         {scheduled.length === 0 ? (
           <Card className="p-4 text-center text-sm text-muted-foreground">No upcoming matches.</Card>
@@ -204,9 +204,23 @@ function MatchCard({ match }: { match: Match }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const stageLabel = [humanize(match.stage), humanize(match.group_name)]
-    .filter(Boolean)
-    .join(" · ") || "—";
+  const stageLabel = useMemo(() => {
+    const rawStage = humanize(match.stage);
+    const rawGroup = humanize(match.group_name);
+    
+    const parts = [rawStage, rawGroup]
+      .filter(Boolean)
+      .map(part => 
+        part
+          .replace(/FIFA World Cup/gi, "")
+          .replace(/GROUP STAGE/gi, "")
+          .replace(/^[\s·•\-]+|[\s·•\-]+$/g, "")
+          .trim()
+      )
+      .filter(Boolean);
+
+    return parts.join(" · ") || "—";
+  }, [match.stage, match.group_name]);
 
   return (
     <Card className="p-4 space-y-3">
