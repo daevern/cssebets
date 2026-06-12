@@ -68,14 +68,21 @@ export function HowItWorks() {
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
-          if (e.isIntersecting) setRaining(true);
+          if (e.isIntersecting) {
+            // Remount MoneyRain by toggling off→on
+            setRaining(false);
+            requestAnimationFrame(() => setRaining(true));
+          } else {
+            setRaining(false);
+          }
         }
       },
-      { threshold: 0.4 },
+      { threshold: 0.35 },
     );
     io.observe(el);
     return () => io.disconnect();
   }, []);
+
 
   return (
     <section id="how" className="relative border-b border-border bg-card/30">
