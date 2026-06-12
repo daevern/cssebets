@@ -262,8 +262,8 @@ function MatchCard({ match }: { match: Match }) {
             })}
           </div>
           <div className="flex gap-2">
-            <Input type="number" min={1} value={stake} onChange={(e) => setStake(e.target.value)} placeholder="Stake" />
-            <Button disabled={!pick || mut.isPending} onClick={() => mut.mutate()}>
+            <Input type="number" min={10} max={50000} value={stake} onChange={(e) => setStake(e.target.value)} placeholder="Stake (10-50,000)" />
+            <Button disabled={!pick || mut.isPending || Number(stake) < 10 || Number(stake) > 50000} onClick={() => mut.mutate()}>
               {mut.isPending ? "..." : "Submit"}
             </Button>
           </div>
