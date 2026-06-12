@@ -71,6 +71,20 @@ function WalletPage() {
     refetchOnMount: "always",
     staleTime: 0,
   });
+  const myProfile = useQuery({
+    queryKey: ["my-profile-ref", uid],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("public_reference")
+        .eq("id", uid!)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as any)?.public_reference ?? null;
+    },
+    enabled: !!uid,
+    staleTime: 60_000,
+  });
   const txns = useQuery({
     queryKey: ["my-txns", uid],
     queryFn: () => tFn({ data: { limit: 50 } }),
@@ -276,7 +290,7 @@ function WalletPage() {
           </div>
           <div className="border-t border-border pt-2 space-y-1.5">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Reference ID</div>
-            <ReferenceIdRow reference={wallet.data?.publicReference ?? ""} />
+            <ReferenceIdRow reference={myProfile.data ?? wallet.data?.publicReference ?? ""} />
             <p className="text-[11px] text-muted-foreground leading-snug">
               Include this Reference ID with your bank transfer proof so admins can match your request.
             </p>
