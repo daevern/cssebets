@@ -82,12 +82,6 @@ function LandingPage() {
               How It Works
             </button>
             <button
-              onClick={() => scrollToId("features")}
-              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              Features
-            </button>
-            <button
               onClick={() => scrollToId("support")}
               className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
             >
