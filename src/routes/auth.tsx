@@ -43,7 +43,8 @@ function LoginPage() {
       } else {
         const p = normalizePhone(phone);
         if (!isValidPhone(p)) throw new Error("Phone must be in international format, e.g. +60123456789");
-        const { error } = await supabase.auth.signInWithPassword({ phone: p, password });
+        const syntheticEmail = `${p.replace(/\D/g, "")}@phone.cssebets.local`;
+        const { error } = await supabase.auth.signInWithPassword({ email: syntheticEmail, password });
         if (error) throw error;
       }
       navigate({ to: "/dashboard" });
