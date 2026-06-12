@@ -398,12 +398,12 @@ function WalletPage() {
   );
 }
 
-function ReferenceIdRow({ uid }: { uid: string }) {
+function ReferenceIdRow({ reference }: { reference: string }) {
   const [copied, setCopied] = useState(false);
   async function copy() {
-    if (!uid) return;
+    if (!reference) return;
     try {
-      await navigator.clipboard.writeText(uid);
+      await navigator.clipboard.writeText(reference);
       setCopied(true);
       toast.success("Reference ID copied");
       setTimeout(() => setCopied(false), 1500);
@@ -413,8 +413,8 @@ function ReferenceIdRow({ uid }: { uid: string }) {
   }
   return (
     <div className="flex items-center gap-2 rounded-md border border-border bg-background px-2 py-1.5">
-      <code className="flex-1 font-mono text-[11px] sm:text-xs break-all leading-tight select-all">
-        {uid || "—"}
+      <code className="flex-1 font-mono text-sm sm:text-base tracking-wider leading-tight select-all">
+        {reference || "—"}
       </code>
       <Button
         type="button"
@@ -422,7 +422,7 @@ function ReferenceIdRow({ uid }: { uid: string }) {
         variant="ghost"
         className="h-7 px-2 shrink-0"
         onClick={copy}
-        disabled={!uid}
+        disabled={!reference}
       >
         {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
         <span className="ml-1 text-xs">{copied ? "Copied" : "Copy"}</span>
