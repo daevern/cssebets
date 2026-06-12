@@ -152,7 +152,9 @@ function LandingPage() {
       </section>
 
       {/* How it works */}
-      <HowItWorks />
+      <Suspense fallback={<div className="h-[600px]" />}>
+        <HowItWorks />
+      </Suspense>
 
       {/* Features */}
       <section id="features" className="border-b border-border">
