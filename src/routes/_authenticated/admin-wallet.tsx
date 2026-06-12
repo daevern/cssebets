@@ -106,13 +106,29 @@ function AdminWalletPage() {
             ))}
           </div>
         </div>
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by Reference ID, name, or email…"
+          className="max-w-md"
+        />
         {requests.isLoading ? (
           <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
         ) : !requests.data?.requests.length ? (
           <p className="text-sm text-muted-foreground">No {status} requests.</p>
         ) : (
           <div className="space-y-3">
-            {requests.data.requests.map((r: any) => {
+            {(requests.data.requests as any[])
+              .filter((r) => {
+                if (!search.trim()) return true;
+                const q = search.trim().toLowerCase();
+                return (
+                  String(r.user_id).toLowerCase().includes(q) ||
+                  String(r.display_name ?? "").toLowerCase().includes(q) ||
+                  String(r.email ?? "").toLowerCase().includes(q)
+                );
+              })
+              .map((r: any) => {
               const hasProof = !!r.proof_file_path;
               return (
                 <div key={r.id} className="border rounded-md p-3 text-sm space-y-2">
