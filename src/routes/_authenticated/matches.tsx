@@ -289,7 +289,7 @@ function TeamFlag({ name }: { name: string }) {
     <img
       src={url}
       alt={`${name} flag`}
-      className="h-12 w-12 object-cover shadow-sm border border-border/40"
+      className="h-10 w-16 object-cover shadow-sm border border-border/40"
       loading="lazy"
     />
   );
