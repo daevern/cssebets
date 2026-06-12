@@ -9,9 +9,8 @@ import {
   staffMarkConvRead,
   staffCloseConversation,
   staffGetSupportAttachmentUrl,
-  getMyAttachmentUploadUrl,
 } from "@/lib/management.functions";
-import { getMyAttachmentUploadUrl as _userUpload } from "@/lib/support.functions";
+import { getMyAttachmentUploadUrl } from "@/lib/support.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
