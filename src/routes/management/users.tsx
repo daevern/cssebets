@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { staffListUsers } from "@/lib/management.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -16,10 +17,32 @@ export const Route = createFileRoute("/management/users")({
 
 function StaffUsersPage() {
   const [search, setSearch] = useState("");
+
+  // Don't call the server fn without a session (would 401 in auth middleware).
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active) setHasSession(!!data.session);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setHasSession(!!session);
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
   const listFn = useServerFn(staffListUsers);
   const users = useQuery({
     queryKey: ["staff-users", search],
-    queryFn: () => listFn({ data: { search } }),
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) return null;
+      return listFn({ data: { search } });
+    },
+    enabled: hasSession === true,
   });
 
   return (
