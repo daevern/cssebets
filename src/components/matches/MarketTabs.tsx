@@ -40,7 +40,7 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
     return g;
   }, [data]);
 
-  const [stake, setStake] = useState("50");
+  const [stake, setStake] = useState("10");
   const [pick, setPick] = useState<{ market: MarketKey; selection: string; odds: number } | null>(null);
 
   const mut = useMutation({
