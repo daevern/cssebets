@@ -139,8 +139,8 @@ function WalletPage() {
       return;
     }
     const amt = Number(amount);
-    if (!amt || amt <= 0) {
-      toast.error("Enter a valid points amount first.");
+    if (!amt || amt < 50) {
+      toast.error("Enter a points amount of at least 50 first.");
       return;
     }
     setUploading(true);
@@ -201,7 +201,7 @@ function WalletPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const amountValid = Number(amount) > 0;
+  const amountValid = Number(amount) >= 50;
   const canSubmit = amountValid && !!draftId && !uploading;
 
   return (
@@ -265,11 +265,14 @@ function WalletPage() {
           <label className="text-xs font-medium text-muted-foreground">Amount</label>
           <Input
             type="number"
-            min={1}
+            min={50}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Amount"
           />
+          {amount !== "" && Number(amount) < 50 && (
+            <p className="text-xs text-destructive mt-1">Minimum request amount is 50 pts.</p>
+          )}
         </div>
 
         <div>
@@ -324,7 +327,7 @@ function WalletPage() {
             </div>
           )}
           {!amountValid && (
-            <p className="text-xs text-muted-foreground">Enter a valid amount before uploading.</p>
+            <p className="text-xs text-destructive font-medium">Enter an amount of at least 50 pts before uploading.</p>
           )}
         </div>
 
