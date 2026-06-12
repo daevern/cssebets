@@ -6,18 +6,17 @@ import { Card } from "@/components/ui/card";
 const HowItWorks = lazy(() =>
   import("@/components/HowItWorks").then((m) => ({ default: m.HowItWorks })),
 );
+const FeaturesShowcase = lazy(() =>
+  import("@/components/FeaturesShowcase").then((m) => ({ default: m.FeaturesShowcase })),
+);
+
 import {
   Trophy,
-  ShieldCheck,
-  Wallet as WalletIcon,
-  History,
-  Activity,
-  BarChart3,
-  FileCheck2,
   Mail,
   MessageCircle,
   ArrowRight,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -66,14 +65,8 @@ function LandingPage() {
     ? { to: "/dashboard", label: "Go to Dashboard" }
     : { to: "/auth", label: "Sign In / Register" };
 
-  const features = [
-    { icon: Activity, label: "Live Match Tracker", desc: "Follow every World Cup fixture in real time." },
-    { icon: BarChart3, label: "Reference Odds", desc: "Transparent odds on every market before you bet." },
-    { icon: WalletIcon, label: "Virtual Wallet", desc: "Manage your points balance with full history." },
-    { icon: FileCheck2, label: "Point Requests", desc: "Convert cash to points with admin approval." },
-    { icon: History, label: "Bet History", desc: "Review every bet, stake, and payout you've made." },
-    { icon: ShieldCheck, label: "Secure & Audited", desc: "Every action logged and admin reviewed." },
-  ];
+
+
 
   return (
     <div className="min-h-screen bg-background text-foreground scroll-smooth">
@@ -154,31 +147,10 @@ function LandingPage() {
         <HowItWorks />
       </Suspense>
 
-      {/* Features */}
-      <section id="features" className="border-b border-border">
-        <div className="mx-auto max-w-5xl px-4 py-14">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-bold sm:text-3xl">Built for serious players</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Everything you need to bet smart on the World Cup.
-            </p>
-          </div>
-          <div className="mt-8 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border">
-            {features.map((f) => (
-              <div
-                key={f.label}
-                className="group flex flex-col gap-2 bg-card p-3 transition-colors hover:bg-card/60 sm:p-5"
-              >
-                <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary sm:h-9 sm:w-9">
-                  <f.icon className="h-4 w-4" />
-                </div>
-                <div className="text-sm font-semibold leading-tight sm:text-base">{f.label}</div>
-                <div className="hidden text-xs text-muted-foreground sm:block">{f.desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <Suspense fallback={<div className="h-[600px]" />}>
+        <FeaturesShowcase />
+      </Suspense>
+
 
       {/* Support + CTA */}
       <section id="support" className="border-b border-border bg-card/30">
