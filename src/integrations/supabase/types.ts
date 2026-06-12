@@ -764,6 +764,7 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           display_name: string
+          force_password_change: boolean
           id: string
           is_simulation: boolean
           phone_number: string | null
@@ -775,6 +776,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name: string
+          force_password_change?: boolean
           id: string
           is_simulation?: boolean
           phone_number?: string | null
@@ -786,6 +788,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string
+          force_password_change?: boolean
           id?: string
           is_simulation?: boolean
           phone_number?: string | null
@@ -841,6 +844,92 @@ export type Database = {
           user_agent?: string | null
         }
         Relationships: []
+      }
+      support_conversations: {
+        Row: {
+          claimed_by: string | null
+          created_at: string
+          id: string
+          last_message_at: string | null
+          last_staff_message_at: string | null
+          last_user_message_at: string | null
+          staff_last_read_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          user_last_read_at: string | null
+        }
+        Insert: {
+          claimed_by?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_staff_message_at?: string | null
+          last_user_message_at?: string | null
+          staff_last_read_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          user_last_read_at?: string | null
+        }
+        Update: {
+          claimed_by?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_staff_message_at?: string | null
+          last_user_message_at?: string | null
+          staff_last_read_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          user_last_read_at?: string | null
+        }
+        Relationships: []
+      }
+      support_messages: {
+        Row: {
+          attachment_name: string | null
+          attachment_path: string | null
+          attachment_type: string | null
+          body: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_id: string
+          sender_role: string
+        }
+        Insert: {
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_type?: string | null
+          body?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          sender_role: string
+        }
+        Update: {
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_type?: string | null
+          body?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          sender_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "support_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppressed_emails: {
         Row: {

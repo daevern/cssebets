@@ -7,7 +7,8 @@ import { getMyWallet } from "@/lib/wallet.functions";
 import { getPendingPointRequestCount } from "@/lib/wallet.functions";
 import { getPendingPayoutCount, getMyPayoutActionCount } from "@/lib/payout.functions";
 import { getPendingUserCount } from "@/lib/admin.functions";
-import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote } from "lucide-react";
+import { getMyUnreadSupportCount } from "@/lib/support.functions";
+import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote, Headset } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect } from "react";
@@ -70,12 +71,20 @@ function AuthedLayout() {
     enabled: !!user?.id,
     refetchInterval: 20000,
   });
+  const supportUnreadFn = useServerFn(getMyUnreadSupportCount);
+  const supportUnread = useQuery({
+    queryKey: ["my-support-unread", user?.id],
+    queryFn: () => supportUnreadFn({}),
+    enabled: !!user?.id,
+    refetchInterval: 20000,
+  });
 
   const adminBadge =
     (pendingPoints.data?.count ?? 0) +
     (pendingPayouts.data?.count ?? 0) +
     (pendingUsers.data?.count ?? 0);
   const payoutBadge = myPayoutAction.data?.count ?? 0;
+  const supportBadge = supportUnread.data?.count ?? 0;
 
   // Live wallet balance: refresh whenever this user's wallet/txns/predictions change.
   useEffect(() => {
@@ -135,6 +144,7 @@ function AuthedLayout() {
     { to: "/my-predictions", label: "Picks", icon: History },
     { to: "/wallet", label: "Wallet", icon: WalletIcon },
     { to: "/payout", label: "Payout", icon: Banknote },
+    { to: "/support", label: "Support", icon: Headset },
     ...(isAdminTier ? [{ to: "/admin", label: "Admin", icon: Shield }] : []),
     ...(isAdmin ? [{ to: "/admin-wallet", label: "Points", icon: WalletIcon }] : []),
   ] as const;
@@ -147,7 +157,13 @@ function AuthedLayout() {
         { to: "/admin-wallet", label: "Points", icon: WalletIcon },
         { to: "/wallet", label: "Wallet", icon: WalletIcon },
       ]
-    : navItems.slice(0, 5);
+    : [
+        { to: "/dashboard", label: "Home", icon: Home },
+        { to: "/bets", label: "Bets", icon: ListChecks },
+        { to: "/wallet", label: "Wallet", icon: WalletIcon },
+        { to: "/payout", label: "Payout", icon: Banknote },
+        { to: "/support", label: "Support", icon: Headset },
+      ];
 
 
 
@@ -170,7 +186,8 @@ function AuthedLayout() {
               const badge =
                 item.to === "/admin" ? adminBadge :
                 item.to === "/admin-wallet" ? (pendingPoints.data?.count ?? 0) :
-                item.to === "/payout" ? payoutBadge : 0;
+                item.to === "/payout" ? payoutBadge :
+                item.to === "/support" ? supportBadge : 0;
               return (
                 <Link
                   key={item.to}
@@ -235,7 +252,8 @@ function AuthedLayout() {
             const badge =
               item.to === "/admin" ? adminBadge :
               item.to === "/admin-wallet" ? (pendingPoints.data?.count ?? 0) :
-              item.to === "/payout" ? payoutBadge : 0;
+              item.to === "/payout" ? payoutBadge :
+              item.to === "/support" ? supportBadge : 0;
             return (
               <Link
                 key={item.to}

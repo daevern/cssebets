@@ -16,10 +16,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ManagementSupportRouteImport } from './routes/management/support'
 import { Route as ManagementSuperAdminRouteImport } from './routes/management/super-admin'
 import { Route as ManagementLoginRouteImport } from './routes/management/login'
+import { Route as ManagementChatRouteImport } from './routes/management/chat'
+import { Route as ManagementChangePasswordRouteImport } from './routes/management/change-password'
 import { Route as ManagementAdminRouteImport } from './routes/management/admin'
 import { Route as ManagementAccessDeniedRouteImport } from './routes/management/access-denied'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedTournamentWinnerRouteImport } from './routes/_authenticated/tournament-winner'
+import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
 import { Route as AuthenticatedPayoutRouteImport } from './routes/_authenticated/payout'
 import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
 import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
@@ -77,6 +80,17 @@ const ManagementLoginRoute = ManagementLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => ManagementRouteRoute,
 } as any)
+const ManagementChatRoute = ManagementChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
+  getParentRoute: () => ManagementRouteRoute,
+} as any)
+const ManagementChangePasswordRoute =
+  ManagementChangePasswordRouteImport.update({
+    id: '/change-password',
+    path: '/change-password',
+    getParentRoute: () => ManagementRouteRoute,
+  } as any)
 const ManagementAdminRoute = ManagementAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -98,6 +112,11 @@ const AuthenticatedTournamentWinnerRoute =
     path: '/tournament-winner',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedPayoutRoute = AuthenticatedPayoutRouteImport.update({
   id: '/payout',
   path: '/payout',
@@ -235,10 +254,13 @@ export interface FileRoutesByFullPath {
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
+  '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
   '/management/admin': typeof ManagementAdminRoute
+  '/management/change-password': typeof ManagementChangePasswordRoute
+  '/management/chat': typeof ManagementChatRoute
   '/management/login': typeof ManagementLoginRoute
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
@@ -268,10 +290,13 @@ export interface FileRoutesByTo {
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
+  '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
   '/management/admin': typeof ManagementAdminRoute
+  '/management/change-password': typeof ManagementChangePasswordRoute
+  '/management/chat': typeof ManagementChatRoute
   '/management/login': typeof ManagementLoginRoute
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
@@ -304,10 +329,13 @@ export interface FileRoutesById {
   '/_authenticated/matches': typeof AuthenticatedMatchesRoute
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/_authenticated/payout': typeof AuthenticatedPayoutRoute
+  '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
   '/management/admin': typeof ManagementAdminRoute
+  '/management/change-password': typeof ManagementChangePasswordRoute
+  '/management/chat': typeof ManagementChatRoute
   '/management/login': typeof ManagementLoginRoute
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
@@ -340,10 +368,13 @@ export interface FileRouteTypes {
     | '/matches'
     | '/my-predictions'
     | '/payout'
+    | '/support'
     | '/tournament-winner'
     | '/wallet'
     | '/management/access-denied'
     | '/management/admin'
+    | '/management/change-password'
+    | '/management/chat'
     | '/management/login'
     | '/management/super-admin'
     | '/management/support'
@@ -373,10 +404,13 @@ export interface FileRouteTypes {
     | '/matches'
     | '/my-predictions'
     | '/payout'
+    | '/support'
     | '/tournament-winner'
     | '/wallet'
     | '/management/access-denied'
     | '/management/admin'
+    | '/management/change-password'
+    | '/management/chat'
     | '/management/login'
     | '/management/super-admin'
     | '/management/support'
@@ -408,10 +442,13 @@ export interface FileRouteTypes {
     | '/_authenticated/matches'
     | '/_authenticated/my-predictions'
     | '/_authenticated/payout'
+    | '/_authenticated/support'
     | '/_authenticated/tournament-winner'
     | '/_authenticated/wallet'
     | '/management/access-denied'
     | '/management/admin'
+    | '/management/change-password'
+    | '/management/chat'
     | '/management/login'
     | '/management/super-admin'
     | '/management/support'
@@ -490,6 +527,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementLoginRouteImport
       parentRoute: typeof ManagementRouteRoute
     }
+    '/management/chat': {
+      id: '/management/chat'
+      path: '/chat'
+      fullPath: '/management/chat'
+      preLoaderRoute: typeof ManagementChatRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/change-password': {
+      id: '/management/change-password'
+      path: '/change-password'
+      fullPath: '/management/change-password'
+      preLoaderRoute: typeof ManagementChangePasswordRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
     '/management/admin': {
       id: '/management/admin'
       path: '/admin'
@@ -516,6 +567,13 @@ declare module '@tanstack/react-router' {
       path: '/tournament-winner'
       fullPath: '/tournament-winner'
       preLoaderRoute: typeof AuthenticatedTournamentWinnerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/support': {
+      id: '/_authenticated/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof AuthenticatedSupportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/payout': {
@@ -719,6 +777,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRoute
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
   AuthenticatedPayoutRoute: typeof AuthenticatedPayoutRoute
+  AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTournamentWinnerRoute: typeof AuthenticatedTournamentWinnerRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
 }
@@ -732,6 +791,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMatchesRoute: AuthenticatedMatchesRoute,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
   AuthenticatedPayoutRoute: AuthenticatedPayoutRoute,
+  AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTournamentWinnerRoute: AuthenticatedTournamentWinnerRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
 }
@@ -742,6 +802,8 @@ const AuthenticatedRouteRouteWithChildren =
 interface ManagementRouteRouteChildren {
   ManagementAccessDeniedRoute: typeof ManagementAccessDeniedRoute
   ManagementAdminRoute: typeof ManagementAdminRoute
+  ManagementChangePasswordRoute: typeof ManagementChangePasswordRoute
+  ManagementChatRoute: typeof ManagementChatRoute
   ManagementLoginRoute: typeof ManagementLoginRoute
   ManagementSuperAdminRoute: typeof ManagementSuperAdminRoute
   ManagementSupportRoute: typeof ManagementSupportRoute
@@ -750,6 +812,8 @@ interface ManagementRouteRouteChildren {
 const ManagementRouteRouteChildren: ManagementRouteRouteChildren = {
   ManagementAccessDeniedRoute: ManagementAccessDeniedRoute,
   ManagementAdminRoute: ManagementAdminRoute,
+  ManagementChangePasswordRoute: ManagementChangePasswordRoute,
+  ManagementChatRoute: ManagementChatRoute,
   ManagementLoginRoute: ManagementLoginRoute,
   ManagementSuperAdminRoute: ManagementSuperAdminRoute,
   ManagementSupportRoute: ManagementSupportRoute,

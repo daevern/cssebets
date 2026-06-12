@@ -5,9 +5,10 @@ import {
   listSupportAccounts,
   setSupportAccountSuspended,
   seedSupportAccounts,
+  resetSupportPassword,
 } from "@/lib/management.functions";
 import { Button } from "@/components/ui/button";
-import { Users, Loader2, ShieldCheck, ShieldOff, Sparkles } from "lucide-react";
+import { Users, Loader2, ShieldCheck, ShieldOff, Sparkles, KeyRound } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -21,10 +22,22 @@ function SuperAdminDashboard() {
   const listFn = useServerFn(listSupportAccounts);
   const toggleFn = useServerFn(setSupportAccountSuspended);
   const seedFn = useServerFn(seedSupportAccounts);
+  const resetFn = useServerFn(resetSupportPassword);
 
   const q = useQuery({ queryKey: ["support-accounts"], queryFn: () => listFn({}) });
   const [busy, setBusy] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
+
+  async function resetPw(uid: string, email: string) {
+    const np = window.prompt(`New password for ${email}? (min 8 chars). User will be forced to change it on next login.`);
+    if (!np || np.length < 8) { if (np) toast.error("Min 8 characters"); return; }
+    setBusy(uid);
+    try {
+      await resetFn({ data: { targetUserId: uid, newPassword: np } });
+      toast.success("Password reset");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+    finally { setBusy(null); }
+  }
 
   async function toggle(uid: string, suspended: boolean) {
     setBusy(uid);
@@ -80,15 +93,26 @@ function SuperAdminDashboard() {
                     {a.last_sign_in_at ? ` · last sign-in ${new Date(a.last_sign_in_at).toLocaleString()}` : " · never signed in"}
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => toggle(a.id, !a.suspended)}
-                  disabled={busy === a.id}
-                  className={a.suspended ? "border-emerald-700 text-emerald-400 hover:bg-emerald-950" : "border-red-700 text-red-400 hover:bg-red-950"}
-                >
-                  {a.suspended ? <><ShieldCheck className="h-4 w-4 mr-1" /> Enable</> : <><ShieldOff className="h-4 w-4 mr-1" /> Disable</>}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => resetPw(a.id, a.email ?? a.id)}
+                    disabled={busy === a.id}
+                    className="border-amber-700 text-amber-400 hover:bg-amber-950"
+                  >
+                    <KeyRound className="h-4 w-4 mr-1" /> Reset password
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => toggle(a.id, !a.suspended)}
+                    disabled={busy === a.id}
+                    className={a.suspended ? "border-emerald-700 text-emerald-400 hover:bg-emerald-950" : "border-red-700 text-red-400 hover:bg-red-950"}
+                  >
+                    {a.suspended ? <><ShieldCheck className="h-4 w-4 mr-1" /> Enable</> : <><ShieldOff className="h-4 w-4 mr-1" /> Disable</>}
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
