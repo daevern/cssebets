@@ -47,6 +47,7 @@ function AdminWalletPage() {
   const [proof, setProof] = useState<{ url: string; type: string; name: string } | null>(null);
   const [rejectFor, setRejectFor] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [search, setSearch] = useState("");
 
   const requests = useQuery({
     queryKey: ["admin-point-requests", status],
