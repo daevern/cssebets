@@ -10,7 +10,7 @@ export type MarketKey =
 export const MARKET_LABELS: Record<MarketKey, string> = {
   over_under_2_5: "Over / Under 2.5 Goals",
   btts: "Both Teams To Score",
-  correct_score: "Correct Score",
+  correct_score: "Score",
   half_time_full_time: "Half-Time / Full-Time",
   exact_total_goals: "Exact Total Goals",
 };
