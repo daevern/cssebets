@@ -26,6 +26,7 @@ import { Route as ManagementAccessDeniedRouteImport } from './routes/management/
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedTournamentWinnerRouteImport } from './routes/_authenticated/tournament-winner'
 import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPayoutRouteImport } from './routes/_authenticated/payout'
 import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
 import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
@@ -132,6 +133,11 @@ const AuthenticatedTournamentWinnerRoute =
 const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
   id: '/support',
   path: '/support',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPayoutRoute = AuthenticatedPayoutRouteImport.update({
@@ -259,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/wallet': typeof AuthenticatedWalletRoute
@@ -298,6 +305,7 @@ export interface FileRoutesByTo {
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/wallet': typeof AuthenticatedWalletRoute
@@ -338,6 +346,7 @@ export interface FileRoutesById {
   '/_authenticated/matches': typeof AuthenticatedMatchesRoute
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/_authenticated/payout': typeof AuthenticatedPayoutRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
@@ -379,6 +388,7 @@ export interface FileRouteTypes {
     | '/matches'
     | '/my-predictions'
     | '/payout'
+    | '/settings'
     | '/support'
     | '/tournament-winner'
     | '/wallet'
@@ -418,6 +428,7 @@ export interface FileRouteTypes {
     | '/matches'
     | '/my-predictions'
     | '/payout'
+    | '/settings'
     | '/support'
     | '/tournament-winner'
     | '/wallet'
@@ -457,6 +468,7 @@ export interface FileRouteTypes {
     | '/_authenticated/matches'
     | '/_authenticated/my-predictions'
     | '/_authenticated/payout'
+    | '/_authenticated/settings'
     | '/_authenticated/support'
     | '/_authenticated/tournament-winner'
     | '/_authenticated/wallet'
@@ -617,6 +629,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSupportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/payout': {
       id: '/_authenticated/payout'
       path: '/payout'
@@ -773,6 +792,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRoute
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
   AuthenticatedPayoutRoute: typeof AuthenticatedPayoutRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTournamentWinnerRoute: typeof AuthenticatedTournamentWinnerRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
@@ -784,6 +804,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMatchesRoute: AuthenticatedMatchesRoute,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
   AuthenticatedPayoutRoute: AuthenticatedPayoutRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTournamentWinnerRoute: AuthenticatedTournamentWinnerRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
