@@ -9,7 +9,7 @@ import { Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/change-password")({
-  head: () => ({ meta: [{ title: "Change password — CSSEBET Management" }] }),
+  head: () => ({ meta: [{ title: "Change password — CSSEBETS Management" }] }),
   component: ChangePasswordPage,
 });
 
@@ -39,7 +39,7 @@ function ChangePasswordPage() {
     <div className="min-h-screen grid place-items-center px-4">
       <form onSubmit={submit} className="w-full max-w-sm space-y-4 p-6 rounded-xl border border-slate-800 bg-slate-900">
         <div className="text-center space-y-1">
-          <Lock className="h-8 w-8 text-purple-400 mx-auto" />
+          <Lock className="h-8 w-8 text-violet-300 mx-auto" />
           <h1 className="text-lg font-bold">Set a new password</h1>
           <p className="text-xs text-slate-400">Your password must be changed before you can continue.</p>
         </div>
@@ -47,7 +47,7 @@ function ChangePasswordPage() {
           className="bg-slate-800 border-slate-700" autoFocus />
         <Input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="Confirm password"
           className="bg-slate-800 border-slate-700" />
-        <Button type="submit" disabled={busy} className="w-full bg-purple-500 hover:bg-purple-600 text-slate-950">
+        <Button type="submit" disabled={busy} className="w-full bg-violet-900 hover:bg-violet-900 text-slate-950">
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update password"}
         </Button>
       </form>

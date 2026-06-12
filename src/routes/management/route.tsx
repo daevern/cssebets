@@ -93,7 +93,7 @@ function ManagementLayout() {
     return (
       <div className="min-h-screen grid place-items-center bg-slate-950 text-slate-100 p-4">
         <div className="max-w-md text-center space-y-4 p-8 rounded-xl border border-slate-800 bg-slate-900">
-          <Shield className="h-10 w-10 mx-auto text-purple-400" />
+          <Shield className="h-10 w-10 mx-auto text-violet-300" />
           <h1 className="text-xl font-bold">Staff portal</h1>
           <p className="text-sm text-slate-400">You are signed in, but you don't have staff permissions.</p>
           <Button variant="outline" onClick={signOut} className="w-full">Sign out</Button>
@@ -126,7 +126,7 @@ function ManagementLayout() {
 
   // Update document title with unread count (iPhone-style)
   useEffect(() => {
-    const base = "CSSEBET Management";
+    const base = "CSSEBETS Management";
     document.title = totalBadge > 0 ? `(${totalBadge > 99 ? "99+" : totalBadge}) ${base}` : base;
   }, [totalBadge]);
 
@@ -142,11 +142,11 @@ function ManagementLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-black text-slate-100">
-      <header className="sticky top-0 z-40 border-b border-purple-950/40 bg-zinc-950/90 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-violet-950/40 bg-zinc-950/90 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
           <Link to="/management/support" className="flex items-center gap-2 font-bold">
-            <Shield className="h-5 w-5 text-purple-400" />
-            <span className="bg-gradient-to-r from-purple-300 to-purple-500 bg-clip-text text-transparent">CSSEBET Management</span>
+            <Shield className="h-5 w-5 text-violet-300" />
+            <span className="bg-gradient-to-r from-violet-300 to-violet-500 bg-clip-text text-transparent">CSSEBETS Management</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             {nav.map((item) => {
@@ -155,7 +155,7 @@ function ManagementLayout() {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="relative px-3 py-1.5 rounded-md text-sm text-slate-300 hover:bg-purple-950/40 hover:text-purple-300 inline-flex items-center gap-1.5 [&.active]:bg-purple-950/60 [&.active]:text-purple-300"
+                  className="relative px-3 py-1.5 rounded-md text-sm text-slate-300 hover:bg-violet-950/40 hover:text-violet-200 inline-flex items-center gap-1.5 [&.active]:bg-violet-950/60 [&.active]:text-violet-200"
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
@@ -165,10 +165,10 @@ function ManagementLayout() {
             })}
           </nav>
           <div className="flex items-center gap-2">
-            <span className="hidden sm:inline text-xs px-2 py-1 rounded-full bg-purple-950/50 text-purple-300 capitalize">
+            <span className="hidden sm:inline text-xs px-2 py-1 rounded-full bg-violet-950/50 text-violet-200 capitalize">
               {role.replace("_", " ")}
             </span>
-            <Button variant="ghost" size="sm" onClick={signOut} className="text-slate-300 hover:text-purple-300">
+            <Button variant="ghost" size="sm" onClick={signOut} className="text-slate-300 hover:text-violet-200">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -180,7 +180,7 @@ function ManagementLayout() {
               <Link
                 key={item.to}
                 to={item.to}
-                className="relative shrink-0 px-3 py-1.5 rounded-md text-xs bg-zinc-900 hover:bg-purple-950/50 inline-flex items-center gap-1.5 [&.active]:bg-purple-600 [&.active]:text-white"
+                className="relative shrink-0 px-3 py-1.5 rounded-md text-xs bg-zinc-900 hover:bg-violet-950/50 inline-flex items-center gap-1.5 [&.active]:bg-violet-950 [&.active]:text-white"
               >
                 <Icon className="h-3.5 w-3.5" />
                 {item.label}
