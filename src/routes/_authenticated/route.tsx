@@ -177,7 +177,7 @@ function AuthedLayout() {
   const navItems = [
     { to: "/dashboard", label: "Home", icon: Home },
     { to: "/bets", label: "Bets", icon: ListChecks },
-    { to: "/my-predictions", label: "Picks", icon: History },
+    { to: "/my-predictions", label: "PICKS", icon: History },
     { to: "/wallet", label: "Wallet", icon: WalletIcon },
     { to: "/payout", label: "Payout", icon: Banknote },
     { to: "/support", label: "Support", icon: Headset },
