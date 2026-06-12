@@ -98,7 +98,7 @@ export const placeMarketBet = createServerFn({ method: "POST" })
       const msg = error.message ?? "";
       if (msg.includes("INSUFFICIENT_BALANCE")) throw new Error("Insufficient points balance.");
       if (msg.includes("MATCH_LOCKED")) throw new Error("Match has kicked off — bets locked.");
-      if (msg.includes("DUPLICATE_REQUEST")) throw new Error("You already have a bet on this market.");
+      if (msg.includes("DUPLICATE_REQUEST")) throw new Error("Duplicate submit detected — please try again.");
       if (msg.includes("MAX_STAKE_EXCEEDED")) throw new Error("Stake exceeds per-bet maximum.");
       if (msg.includes("MAX_PAYOUT_EXCEEDED")) throw new Error("Potential payout exceeds maximum.");
       if (msg.includes("odds unavailable")) throw new Error("Odds unavailable for that selection.");
