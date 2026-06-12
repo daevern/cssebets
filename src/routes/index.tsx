@@ -125,10 +125,10 @@ function LandingPage() {
             FIFA World Cup · Live
           </div>
           <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-            Competitive Strategy <span className="text-primary">Starts Everywhere</span>
+            cssebets
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground sm:text-base">
-            The smartest way to play the World Cup. Convert cash to points, place bets, win big.
+            Competitive Strategy Starts Everywhere
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Link to={primaryCta.to}>
@@ -144,9 +144,7 @@ function LandingPage() {
 
           {/* About strip */}
           <p className="mx-auto mt-12 max-w-2xl text-sm text-muted-foreground">
-            cssebets is a betting platform where users can view FIFA WORLD CUP matches,
-            check reference odds, request virtual points, place match bets, and track
-            their results through a transparent wallet.
+            Convert cash to points, place bets, win big.
           </p>
         </div>
       </section>
