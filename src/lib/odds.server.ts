@@ -153,6 +153,14 @@ export async function runOddsSync(opts: { force?: boolean } = {}) {
         updated_at: nowIso,
       } as any)
       .eq("id", m.id);
+
+    // Recompute all derived markets (O/U, BTTS, correct score, HT/FT, exact goals)
+    // from the freshly-updated API h2h odds.
+    try {
+      await (supabaseAdmin as any).rpc("regenerate_match_market_odds", { p_match_id: m.id });
+    } catch (e) {
+      console.log(`[odds-api] regenerate markets failed for ${m.id}: ${(e as Error).message}`);
+    }
     updated++;
   }
 

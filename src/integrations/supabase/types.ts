@@ -1301,6 +1301,7 @@ export type Database = {
         }
         Returns: number
       }
+      poisson_pmf: { Args: { k: number; lambda: number }; Returns: number }
       pool_apply_change: {
         Args: {
           p_amount: number
@@ -1322,6 +1323,10 @@ export type Database = {
         }[]
       }
       recalc_match_liabilities: {
+        Args: { p_match_id: string }
+        Returns: undefined
+      }
+      regenerate_match_market_odds: {
         Args: { p_match_id: string }
         Returns: undefined
       }
