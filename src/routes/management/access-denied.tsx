@@ -17,7 +17,7 @@ function AccessDenied() {
           You do not have permission to access this management area.
         </p>
         <Link to="/management/login">
-          <Button className="w-full bg-violet-900 hover:bg-violet-900 text-slate-950">Return to login</Button>
+          <Button className="w-full bg-violet-900 hover:bg-violet-900 text-white">Return to login</Button>
         </Link>
       </div>
     </div>

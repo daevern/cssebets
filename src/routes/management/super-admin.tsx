@@ -70,7 +70,7 @@ function SuperAdminDashboard() {
           <h1 className="text-2xl font-bold">Super admin</h1>
           <p className="text-sm text-slate-400">Manage customer support accounts.</p>
         </div>
-        <Button onClick={seed} disabled={seeding} className="bg-violet-900 hover:bg-violet-900 text-slate-950">
+        <Button onClick={seed} disabled={seeding} className="bg-violet-900 hover:bg-violet-900 text-white">
           <Sparkles className="h-4 w-4 mr-1" /> {seeding ? "Seeding…" : "Seed 10 support accounts"}
         </Button>
       </header>

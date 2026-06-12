@@ -47,7 +47,7 @@ function ChangePasswordPage() {
           className="bg-slate-800 border-slate-700" autoFocus />
         <Input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="Confirm password"
           className="bg-slate-800 border-slate-700" />
-        <Button type="submit" disabled={busy} className="w-full bg-violet-900 hover:bg-violet-900 text-slate-950">
+        <Button type="submit" disabled={busy} className="w-full bg-violet-900 hover:bg-violet-900 text-white">
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Update password"}
         </Button>
       </form>

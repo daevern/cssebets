@@ -69,7 +69,7 @@ function ManagementLogin() {
             <Label htmlFor="m-pw" className="text-slate-300">Password</Label>
             <Input id="m-pw" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="bg-slate-800 border-slate-700 text-slate-100" />
           </div>
-          <Button type="submit" className="w-full bg-violet-900 hover:bg-violet-900 text-slate-950" disabled={loading}>
+          <Button type="submit" className="w-full bg-violet-900 hover:bg-violet-900 text-white" disabled={loading}>
             {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>
