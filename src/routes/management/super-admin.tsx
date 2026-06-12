@@ -50,14 +50,26 @@ function SuperAdminDashboard() {
   }
 
   async function seed() {
-    if (!confirm("Seed 10 customer support accounts (support01..10@cssebets.com / 123456789)?")) return;
+    if (!confirm("Seed/refresh 10 customer support accounts? A fresh strong password will be generated for each — copy them once, they are not stored.")) return;
     setSeeding(true);
     try {
       const r = await seedFn({});
       const created = r.results.filter((x: any) => x.status === "created").length;
-      const existed = r.results.filter((x: any) => x.status === "existed").length;
+      const rotated = r.results.filter((x: any) => x.status === "rotated").length;
       const errored = r.results.filter((x: any) => x.status === "error").length;
-      toast.success(`Created ${created}, existed ${existed}, errors ${errored}`);
+      // Show credentials once — they are NOT persisted anywhere readable.
+      const lines = r.results
+        .filter((x: any) => x.password)
+        .map((x: any) => `${x.email}\t${x.password}`)
+        .join("\n");
+      if (lines) {
+        window.prompt(
+          `Created ${created}, rotated ${rotated}, errors ${errored}.\n\nCopy these credentials NOW — they are shown only once:`,
+          lines,
+        );
+      } else {
+        toast.success(`Created ${created}, rotated ${rotated}, errors ${errored}`);
+      }
       qc.invalidateQueries({ queryKey: ["support-accounts"] });
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
     finally { setSeeding(false); }
