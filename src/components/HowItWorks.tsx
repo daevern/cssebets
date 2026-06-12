@@ -225,17 +225,17 @@ function CashoutFlip() {
       aria-label={`Cashout — tap to ${flipped ? "hide" : "show"} details`}
     >
       <div
-        className="relative min-h-[6rem] w-[20rem] transition-transform duration-500 [transform-style:preserve-3d] sm:w-[28rem]"
+        className="relative h-56 w-[20rem] transition-transform duration-500 [transform-style:preserve-3d] sm:h-52 sm:w-[28rem]"
         style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
       >
-        <div className="[backface-visibility:hidden]">
+        <div className="absolute inset-0 flex flex-col items-center justify-center [backface-visibility:hidden]">
           <CashoutBills />
-          <div className="mt-2 text-center text-[10px] uppercase tracking-wider text-muted-foreground/70">
+          <div className="mt-3 text-center text-[10px] uppercase tracking-wider text-muted-foreground/70">
             Tap to flip
           </div>
         </div>
         <div
-          className="absolute inset-0 rounded-xl border border-emerald-700/50 bg-emerald-50/95 p-4 text-emerald-950 shadow-lg [backface-visibility:hidden] sm:p-5"
+          className="absolute inset-0 overflow-auto rounded-xl border border-emerald-700/50 bg-emerald-50/95 p-4 text-emerald-950 shadow-lg [backface-visibility:hidden] sm:p-5"
           style={{ transform: "rotateY(180deg)" }}
         >
           <div className="mb-2 text-xs font-bold uppercase tracking-wider text-emerald-800">
