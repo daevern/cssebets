@@ -332,7 +332,7 @@ function MoneyRain() {
   }, []);
   if (!on) return null;
   return (
-    <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden" aria-hidden="true">
+    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden" aria-hidden="true">
       {bills.map((b) => (
         <motion.div
           key={b.id}
