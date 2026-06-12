@@ -10,6 +10,7 @@ import { Loader2, Pencil, Trash2, Check, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import { editPendingBetStake, cancelPendingBet } from "@/lib/bet-edit.functions";
+import { settleFinishedPending } from "@/lib/settle-catchup.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/my-predictions")({
