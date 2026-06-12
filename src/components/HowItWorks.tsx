@@ -168,6 +168,7 @@ export function HowItWorks() {
 
           {/* Cashout dollar-bill graphic */}
           <motion.div
+            ref={cashoutRef}
             style={{ opacity: cashoutOpacity, y: cashoutY, scale: cashoutScale }}
             className="relative z-10 mt-12 flex justify-center"
           >
