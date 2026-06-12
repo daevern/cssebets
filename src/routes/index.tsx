@@ -6,9 +6,6 @@ import { Card } from "@/components/ui/card";
 const HowItWorks = lazy(() =>
   import("@/components/HowItWorks").then((m) => ({ default: m.HowItWorks })),
 );
-const FeaturesShowcase = lazy(() =>
-  import("@/components/FeaturesShowcase").then((m) => ({ default: m.FeaturesShowcase })),
-);
 
 import {
   Trophy,
@@ -85,12 +82,6 @@ function LandingPage() {
               How It Works
             </button>
             <button
-              onClick={() => scrollToId("features")}
-              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              Features
-            </button>
-            <button
               onClick={() => scrollToId("support")}
               className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
             >
@@ -147,9 +138,6 @@ function LandingPage() {
         <HowItWorks />
       </Suspense>
 
-      <Suspense fallback={<div className="h-[600px]" />}>
-        <FeaturesShowcase />
-      </Suspense>
 
 
       {/* Support + CTA */}
