@@ -12,16 +12,11 @@ const FeaturesShowcase = lazy(() =>
 
 import {
   Trophy,
-  ShieldCheck,
-  Wallet as WalletIcon,
-  History,
-  Activity,
-  BarChart3,
-  FileCheck2,
   Mail,
   MessageCircle,
   ArrowRight,
 } from "lucide-react";
+
 
 export const Route = createFileRoute("/")({
   ssr: false,
