@@ -235,7 +235,7 @@ function MatchCard({ match }: { match: Match }) {
           </div>
           <div className="text-[10px] text-muted-foreground">
             {match.odds_source === "the-odds-api"
-              ? `Live odds via The Odds API · updated ${timeAgo(match.odds_updated_at)}`
+              ? `Powered by cssebets · updated ${timeAgo(match.odds_updated_at)}`
               : "Reference odds (awaiting live market sync)"}
           </div>
         </div>
