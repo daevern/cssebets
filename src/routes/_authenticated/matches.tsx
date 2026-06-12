@@ -279,3 +279,18 @@ function MatchCard({ match }: { match: Match }) {
     </Card>
   );
 }
+
+function TeamFlag({ name }: { name: string }) {
+  const url = teamFlagUrl(name, 160);
+  if (!url) {
+    return <span className="text-sm font-semibold truncate">{name}</span>;
+  }
+  return (
+    <img
+      src={url}
+      alt={`${name} flag`}
+      className="h-10 w-16 object-cover rounded-sm shadow-sm border border-border/40"
+      loading="lazy"
+    />
+  );
+}
