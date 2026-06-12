@@ -61,7 +61,7 @@ function LoginPage() {
           <div className="h-14 w-14 rounded-2xl bg-primary/20 grid place-items-center">
             <Trophy className="h-7 w-7 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">Sign in to cssebets</h1>
+          <h1 className="text-2xl font-bold">cssebets</h1>
           <p className="text-sm text-muted-foreground text-center">
             Competitive Strategy Starts Everywhere!
           </p>
