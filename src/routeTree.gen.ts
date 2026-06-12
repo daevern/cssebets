@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ManagementRouteRouteImport } from './routes/management/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ManagementUsersRouteImport } from './routes/management/users'
 import { Route as ManagementSupportRouteImport } from './routes/management/support'
 import { Route as ManagementSuperAdminRouteImport } from './routes/management/super-admin'
 import { Route as ManagementSettingsRouteImport } from './routes/management/settings'
@@ -70,6 +71,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ManagementUsersRoute = ManagementUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => ManagementRouteRoute,
 } as any)
 const ManagementSupportRoute = ManagementSupportRouteImport.update({
   id: '/support',
@@ -264,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/management/settings': typeof ManagementSettingsRoute
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
+  '/management/users': typeof ManagementUsersRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
@@ -301,6 +308,7 @@ export interface FileRoutesByTo {
   '/management/settings': typeof ManagementSettingsRoute
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
+  '/management/users': typeof ManagementUsersRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
@@ -341,6 +349,7 @@ export interface FileRoutesById {
   '/management/settings': typeof ManagementSettingsRoute
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
+  '/management/users': typeof ManagementUsersRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
@@ -381,6 +390,7 @@ export interface FileRouteTypes {
     | '/management/settings'
     | '/management/super-admin'
     | '/management/support'
+    | '/management/users'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
     | '/management/admin/match-pools'
@@ -418,6 +428,7 @@ export interface FileRouteTypes {
     | '/management/settings'
     | '/management/super-admin'
     | '/management/support'
+    | '/management/users'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
     | '/management/admin/match-pools'
@@ -457,6 +468,7 @@ export interface FileRouteTypes {
     | '/management/settings'
     | '/management/super-admin'
     | '/management/support'
+    | '/management/users'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
     | '/management/admin/match-pools'
@@ -520,6 +532,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/management/users': {
+      id: '/management/users'
+      path: '/users'
+      fullPath: '/management/users'
+      preLoaderRoute: typeof ManagementUsersRouteImport
+      parentRoute: typeof ManagementRouteRoute
     }
     '/management/support': {
       id: '/management/support'
@@ -822,6 +841,7 @@ interface ManagementRouteRouteChildren {
   ManagementSettingsRoute: typeof ManagementSettingsRoute
   ManagementSuperAdminRoute: typeof ManagementSuperAdminRoute
   ManagementSupportRoute: typeof ManagementSupportRoute
+  ManagementUsersRoute: typeof ManagementUsersRoute
 }
 
 const ManagementRouteRouteChildren: ManagementRouteRouteChildren = {
@@ -833,6 +853,7 @@ const ManagementRouteRouteChildren: ManagementRouteRouteChildren = {
   ManagementSettingsRoute: ManagementSettingsRoute,
   ManagementSuperAdminRoute: ManagementSuperAdminRoute,
   ManagementSupportRoute: ManagementSupportRoute,
+  ManagementUsersRoute: ManagementUsersRoute,
 }
 
 const ManagementRouteRouteWithChildren = ManagementRouteRoute._addFileChildren(
