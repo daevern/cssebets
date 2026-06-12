@@ -76,13 +76,21 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
   const [csPicks, setCsPicks] = useState<Record<string, number>>({});
   const [csStakes, setCsStakes] = useState<Record<string, string>>({});
 
+  const stakeError = (n: number) =>
+    !Number.isFinite(n) || n < MIN_STAKE
+      ? `Minimum stake is ${MIN_STAKE} points.`
+      : n > MAX_STAKE
+        ? `Maximum stake is ${MAX_STAKE.toLocaleString()} points.`
+        : null;
+
   const mut = useMutation({
     mutationFn: async (market: MarketKey) => {
       const pick = picks[market];
       if (!pick) throw new Error("Select an option");
-      const stakeVal = stakes[market] ?? "10";
+      const stakeVal = stakes[market] ?? String(MIN_STAKE);
       const n = Number(stakeVal);
-      if (!Number.isFinite(n) || n < 1) throw new Error("Enter a stake of at least 1 point");
+      const err = stakeError(n);
+      if (err) throw new Error(err);
       return place({
         data: {
           matchId,
@@ -98,6 +106,7 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
       setPicks((prev) => ({ ...prev, [market]: null }));
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
+      qc.invalidateQueries({ queryKey: ["my-match-pending-bets", matchId, user?.id] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -106,9 +115,10 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
     mutationFn: async (selection: string) => {
       const odds = csPicks[selection];
       if (!odds) throw new Error("Selection missing");
-      const stakeVal = csStakes[selection] ?? "10";
+      const stakeVal = csStakes[selection] ?? String(MIN_STAKE);
       const n = Number(stakeVal);
-      if (!Number.isFinite(n) || n < 1) throw new Error("Enter a stake of at least 1 point");
+      const err = stakeError(n);
+      if (err) throw new Error(err);
       return place({
         data: {
           matchId,
@@ -131,9 +141,11 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
       });
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
+      qc.invalidateQueries({ queryKey: ["my-match-pending-bets", matchId, user?.id] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   if (locked) return null;
   if (isLoading) {
