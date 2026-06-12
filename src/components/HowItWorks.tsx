@@ -1,13 +1,39 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import { Card } from "@/components/ui/card";
 
 const steps = [
-  { n: 1, title: "Register", desc: "Create an account or sign in." },
-  { n: 2, title: "Request points", desc: "Convert cash to virtual points." },
-  { n: 3, title: "Upload proof", desc: "Confirm your request for admin review." },
-  { n: 4, title: "Place bets", desc: "Pick a match and track your result." },
+  {
+    n: 1,
+    title: "Register",
+    desc: "Create an account or sign in.",
+    detail:
+      "All new users must await admin approval. Admin approval could take 30 minutes to 6 hours.",
+  },
+  {
+    n: 2,
+    title: "Request points",
+    desc: "Convert cash to virtual points.",
+    detail:
+      "Users will need to make payment via bank transfer to the respective cssebets account and submit receipt. Points will be issued upon admin approval. Admin point approval could take 30 minutes to 6 hours.",
+  },
+  {
+    n: 3,
+    title: "Upload proof",
+    desc: "Confirm your request for admin review.",
+    detail:
+      "For all point requests and point cashouts, user and admin will need to send each other the respective image/PDF of receipt to confirm the transaction.",
+  },
+  {
+    n: 4,
+    title: "Place bets",
+    desc: "Pick a match and track your result.",
+    detail:
+      "Once points are deposited in your account, head over to the BETS section and place bets on Matches or your overall Winner for the FIFA WORLD CUP 2026.",
+  },
 ];
+
+const cashoutDetail =
+  "Once you are ready to take profits, head over to the Payout section and simply cashout. Send a request to convert points back to cash. Upon admin approval, point-to-cash conversion and the cash-to-bank process will take between 24 hours and 7 days.";
 
 // Hand-drawn arrow path through 4 panels arranged in a zigzag.
 // viewBox is 100x160 stretched to fill via preserveAspectRatio="none".
@@ -116,13 +142,7 @@ export function HowItWorks() {
                   className={`${col} row-start-${i + 1}`}
                   style={{ gridRowStart: i + 1 }}
                 >
-                  <Card className="relative p-4 sm:p-5">
-                    <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30">
-                      {s.n}
-                    </div>
-                    <div className="text-sm font-semibold sm:text-base">{s.title}</div>
-                    <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{s.desc}</div>
-                  </Card>
+                  <FlipPanel n={s.n} title={s.title} desc={s.desc} detail={s.detail} />
                 </motion.div>
               );
             })}
@@ -133,11 +153,98 @@ export function HowItWorks() {
             style={{ opacity: cashoutOpacity, y: cashoutY, scale: cashoutScale }}
             className="relative z-10 mt-12 flex justify-center"
           >
-            <CashoutBills />
+            <CashoutFlip />
           </motion.div>
         </div>
       </div>
     </section>
+  );
+}
+
+function FlipPanel({
+  n,
+  title,
+  desc,
+  detail,
+}: {
+  n: number;
+  title: string;
+  desc: string;
+  detail: string;
+}) {
+  const [flipped, setFlipped] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => setFlipped((f) => !f)}
+      className="group block w-full text-left [perspective:1000px]"
+      aria-pressed={flipped}
+      aria-label={`${title} — tap to ${flipped ? "hide" : "show"} details`}
+    >
+      <div
+        className="relative h-40 w-full transition-transform duration-500 [transform-style:preserve-3d] sm:h-44"
+        style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
+      >
+        {/* Front */}
+        <div className="absolute inset-0 rounded-xl border bg-card p-4 text-card-foreground shadow [backface-visibility:hidden] sm:p-5">
+          <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30">
+            {n}
+          </div>
+          <div className="text-sm font-semibold sm:text-base">{title}</div>
+          <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{desc}</div>
+          <div className="absolute bottom-2 right-3 text-[10px] uppercase tracking-wider text-muted-foreground/70 group-hover:text-primary">
+            Tap to flip
+          </div>
+        </div>
+        {/* Back */}
+        <div
+          className="absolute inset-0 overflow-auto rounded-xl border border-primary/40 bg-primary/5 p-4 text-card-foreground shadow [backface-visibility:hidden] sm:p-5"
+          style={{ transform: "rotateY(180deg)" }}
+        >
+          <div className="mb-2 text-xs font-bold uppercase tracking-wider text-primary">
+            Step {n} · {title}
+          </div>
+          <p className="text-xs leading-relaxed text-foreground/90 sm:text-sm">{detail}</p>
+          <div className="absolute bottom-2 right-3 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+            Tap to flip back
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function CashoutFlip() {
+  const [flipped, setFlipped] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => setFlipped((f) => !f)}
+      className="block [perspective:1200px]"
+      aria-pressed={flipped}
+      aria-label={`Cashout — tap to ${flipped ? "hide" : "show"} details`}
+    >
+      <div
+        className="relative min-h-[6rem] w-[20rem] transition-transform duration-500 [transform-style:preserve-3d] sm:w-[28rem]"
+        style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
+      >
+        <div className="[backface-visibility:hidden]">
+          <CashoutBills />
+          <div className="mt-2 text-center text-[10px] uppercase tracking-wider text-muted-foreground/70">
+            Tap to flip
+          </div>
+        </div>
+        <div
+          className="absolute inset-0 rounded-xl border border-emerald-700/50 bg-emerald-50/95 p-4 text-emerald-950 shadow-lg [backface-visibility:hidden] sm:p-5"
+          style={{ transform: "rotateY(180deg)" }}
+        >
+          <div className="mb-2 text-xs font-bold uppercase tracking-wider text-emerald-800">
+            Cashout
+          </div>
+          <p className="text-xs leading-relaxed sm:text-sm">{cashoutDetail}</p>
+        </div>
+      </div>
+    </button>
   );
 }
 
