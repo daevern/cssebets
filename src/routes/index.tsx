@@ -70,14 +70,8 @@ function LandingPage() {
     ? { to: "/dashboard", label: "Go to Dashboard" }
     : { to: "/auth", label: "Sign In / Register" };
 
-  const features = [
-    { icon: Activity, label: "Live Match Tracker", desc: "Follow every World Cup fixture in real time." },
-    { icon: BarChart3, label: "Reference Odds", desc: "Transparent odds on every market before you bet." },
-    { icon: WalletIcon, label: "Virtual Wallet", desc: "Manage your points balance with full history." },
-    { icon: FileCheck2, label: "Point Requests", desc: "Convert cash to points with admin approval." },
-    { icon: History, label: "Bet History", desc: "Review every bet, stake, and payout you've made." },
-    { icon: ShieldCheck, label: "Secure & Audited", desc: "Every action logged and admin reviewed." },
-  ];
+
+
 
   return (
     <div className="min-h-screen bg-background text-foreground scroll-smooth">
