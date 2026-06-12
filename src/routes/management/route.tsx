@@ -2,9 +2,10 @@ import { createFileRoute, Outlet, redirect, Link, useRouter, useLocation } from 
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getMyStaffRole, getStaffCounts } from "@/lib/management.functions";
-import { Shield, LogOut, Loader2, Crown, Headset, LayoutDashboard } from "lucide-react";
+import { getMyStaffRole, getStaffCounts, staffUnreadConvCount, getMyForcePasswordChange } from "@/lib/management.functions";
+import { Shield, LogOut, Loader2, Crown, Headset, LayoutDashboard, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/management")({
   ssr: false,
@@ -26,6 +27,15 @@ function ManagementLayout() {
 
   // Public sub-routes
   if (location.pathname === "/management/login" || location.pathname === "/management/access-denied") {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100">
+        <Outlet />
+      </div>
+    );
+  }
+
+  // Force password change route — render without role checks (still requires auth)
+  if (location.pathname === "/management/change-password") {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100">
         <Outlet />
