@@ -30,6 +30,25 @@ function ManagementLayout() {
   const isPublicRoute = path === "/management/login" || path === "/management/access-denied";
   const isChangePwRoute = path === "/management/change-password";
 
+  // Track whether a Supabase session exists; queries below must NOT fire
+  // without it (would 401 in the auth middleware).
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active) setHasSession(!!data.session);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setHasSession(!!session);
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  const canQuery = !isPublicRoute && hasSession === true;
+
   // All hooks must run on every render, regardless of route — never put hooks
   // after an early return (React error #310).
   const roleFn = useServerFn(getMyStaffRole);
@@ -37,14 +56,14 @@ function ManagementLayout() {
     queryKey: ["mgmt-role"],
     queryFn: () => roleFn({}),
     staleTime: 30_000,
-    enabled: !isPublicRoute,
+    enabled: canQuery,
   });
 
   const countsFn = useServerFn(getStaffCounts);
   const counts = useQuery({
     queryKey: ["mgmt-counts"],
     queryFn: () => countsFn({}),
-    enabled: !isPublicRoute && !!roleQ.data?.role,
+    enabled: canQuery && !!roleQ.data?.role,
     refetchInterval: 20_000,
   });
 
@@ -52,7 +71,7 @@ function ManagementLayout() {
   const unread = useQuery({
     queryKey: ["mgmt-unread-conv"],
     queryFn: () => unreadFn({}),
-    enabled: !isPublicRoute && !!roleQ.data?.role,
+    enabled: canQuery && !!roleQ.data?.role,
     refetchInterval: 15_000,
   });
 
@@ -60,8 +79,9 @@ function ManagementLayout() {
   const force = useQuery({
     queryKey: ["mgmt-force-pw"],
     queryFn: () => forceFn({}),
-    enabled: !isPublicRoute && !!roleQ.data?.role,
+    enabled: canQuery && !!roleQ.data?.role,
   });
+
 
   useEffect(() => {
     if (!isPublicRoute && force.data?.force && path !== "/management/change-password") {
