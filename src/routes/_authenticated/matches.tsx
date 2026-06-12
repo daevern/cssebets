@@ -16,6 +16,7 @@ import { ChevronDown, Loader2 } from "lucide-react";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { MarketTabs } from "@/components/matches/MarketTabs";
 
 export const Route = createFileRoute("/_authenticated/matches")({
   head: () => ({ meta: [{ title: "Matches — cssebets" }] }),
@@ -259,6 +260,8 @@ function MatchCard({ match }: { match: Match }) {
           </div>
         </div>
       )}
+
+      {!locked && <MarketTabs matchId={match.id} locked={locked} />}
 
       {locked && (
         <div className="text-xs text-muted-foreground font-medium">
