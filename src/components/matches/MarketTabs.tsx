@@ -167,7 +167,7 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
       <Tabs defaultValue="goals" className="w-full">
         <TabsList className="grid grid-cols-3 w-full">
           <TabsTrigger value="goals" className="text-xs">Goals</TabsTrigger>
-          <TabsTrigger value="cs" className="text-xs">Correct Score</TabsTrigger>
+          <TabsTrigger value="cs" className="text-xs">Score</TabsTrigger>
           <TabsTrigger value="sp" className="text-xs" disabled={!hasHtFt}>Specials</TabsTrigger>
         </TabsList>
 
