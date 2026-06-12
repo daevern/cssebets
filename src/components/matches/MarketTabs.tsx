@@ -47,7 +47,7 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
     mutationFn: async () => {
       if (!pick) throw new Error("Select an option");
       const n = Number(stake);
-      if (!Number.isFinite(n) || n < 50) throw new Error("Minimum stake is 50 points");
+      if (!Number.isFinite(n) || n < 1) throw new Error("Enter a stake of at least 1 point");
       return place({
         data: {
           matchId,
