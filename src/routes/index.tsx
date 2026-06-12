@@ -183,7 +183,7 @@ function LandingPage() {
               Everything you need to bet smart on the World Cup.
             </p>
           </div>
-          <div className="mt-8 grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-border bg-border">
             {features.map((f) => (
               <div
                 key={f.label}
