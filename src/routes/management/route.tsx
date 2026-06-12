@@ -113,6 +113,8 @@ function ManagementLayout() {
   }, [totalBadge, isPublicRoute]);
 
   async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
     await supabase.auth.signOut();
     router.navigate({ to: "/management/login", replace: true });
   }
