@@ -49,12 +49,20 @@ function ManagementLayout() {
 
   const canQuery = !isPublicRoute && hasSession === true;
 
+  // Re-check the session right before every server-fn call: polling queries
+  // can otherwise fire mid sign-out and hit the server with no bearer token.
+  async function withSession<T>(fn: () => Promise<T>): Promise<T | null> {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return null;
+    return fn();
+  }
+
   // All hooks must run on every render, regardless of route — never put hooks
   // after an early return (React error #310).
   const roleFn = useServerFn(getMyStaffRole);
   const roleQ = useQuery({
     queryKey: ["mgmt-role"],
-    queryFn: () => roleFn({}),
+    queryFn: () => withSession(() => roleFn({})),
     staleTime: 30_000,
     enabled: canQuery,
   });
@@ -62,7 +70,7 @@ function ManagementLayout() {
   const countsFn = useServerFn(getStaffCounts);
   const counts = useQuery({
     queryKey: ["mgmt-counts"],
-    queryFn: () => countsFn({}),
+    queryFn: () => withSession(() => countsFn({})),
     enabled: canQuery && !!roleQ.data?.role,
     refetchInterval: 20_000,
   });
@@ -70,7 +78,7 @@ function ManagementLayout() {
   const unreadFn = useServerFn(staffUnreadConvCount);
   const unread = useQuery({
     queryKey: ["mgmt-unread-conv"],
-    queryFn: () => unreadFn({}),
+    queryFn: () => withSession(() => unreadFn({})),
     enabled: canQuery && !!roleQ.data?.role,
     refetchInterval: 15_000,
   });
@@ -78,7 +86,7 @@ function ManagementLayout() {
   const forceFn = useServerFn(getMyForcePasswordChange);
   const force = useQuery({
     queryKey: ["mgmt-force-pw"],
-    queryFn: () => forceFn({}),
+    queryFn: () => withSession(() => forceFn({})),
     enabled: canQuery && !!roleQ.data?.role,
   });
 
