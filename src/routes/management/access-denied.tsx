@@ -3,7 +3,7 @@ import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/management/access-denied")({
-  head: () => ({ meta: [{ title: "Access denied — CSSEBETS Management" }] }),
+  head: () => ({ meta: [{ title: "Access denied — cssebets management" }] }),
   component: AccessDenied,
 });
 

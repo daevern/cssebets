@@ -9,7 +9,7 @@ import { Lock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/change-password")({
-  head: () => ({ meta: [{ title: "Change password — CSSEBETS Management" }] }),
+  head: () => ({ meta: [{ title: "Change password — cssebets management" }] }),
   component: ChangePasswordPage,
 });
 

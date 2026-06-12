@@ -6,7 +6,7 @@ import { Users, FileCheck, ScrollText, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/management/admin")({
-  head: () => ({ meta: [{ title: "Admin — CSSEBETS Management" }] }),
+  head: () => ({ meta: [{ title: "Admin — cssebets management" }] }),
   component: AdminDashboard,
 });
 

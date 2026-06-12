@@ -146,7 +146,7 @@ function ManagementLayout() {
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
           <Link to="/management/support" className="flex items-center gap-2 font-bold">
             <Shield className="h-5 w-5 text-violet-300" />
-            <span className="bg-gradient-to-r from-violet-300 to-violet-500 bg-clip-text text-transparent">CSSEBETS Management</span>
+            <span className="text-white">cssebets management</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
             {nav.map((item) => {

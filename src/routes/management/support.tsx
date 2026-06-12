@@ -19,7 +19,7 @@ import { Users, FileCheck, Check, X, Eye, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/support")({
-  head: () => ({ meta: [{ title: "Support — CSSEBETS Management" }] }),
+  head: () => ({ meta: [{ title: "Support — cssebets management" }] }),
   component: SupportDashboard,
 });
 

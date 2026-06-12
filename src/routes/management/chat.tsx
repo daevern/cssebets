@@ -19,7 +19,7 @@ import { Loader2, Send, Paperclip, FileText, Download, Lock, Unlock } from "luci
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/chat")({
-  head: () => ({ meta: [{ title: "Chat — CSSEBETS Management" }] }),
+  head: () => ({ meta: [{ title: "Chat — cssebets management" }] }),
   component: ChatPage,
 });
 

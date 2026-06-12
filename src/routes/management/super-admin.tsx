@@ -13,7 +13,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/management/super-admin")({
-  head: () => ({ meta: [{ title: "Super Admin — CSSEBETS Management" }] }),
+  head: () => ({ meta: [{ title: "Super Admin — cssebets management" }] }),
   component: SuperAdminDashboard,
 });
 
