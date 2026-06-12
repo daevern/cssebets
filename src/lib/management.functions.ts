@@ -431,3 +431,217 @@ export const logManagementLoginAttempt = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+// ============= STAFF CHAT =============
+
+export const staffListConversations = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const role = await getStaffRole(context.supabase, context.userId);
+    if (!role) throw new Error("Staff only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: convs } = await supabaseAdmin
+      .from("support_conversations")
+      .select("*")
+      .order("last_message_at", { ascending: false, nullsFirst: false })
+      .limit(200);
+    if (!convs?.length) return { conversations: [] };
+    const ids = convs.map((c: any) => c.user_id);
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles").select("id, display_name, public_reference").in("id", ids);
+    const pmap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+    return {
+      conversations: convs.map((c: any) => {
+        const p: any = pmap.get(c.user_id) ?? {};
+        const unread =
+          c.last_user_message_at &&
+          (!c.staff_last_read_at || new Date(c.staff_last_read_at) < new Date(c.last_user_message_at));
+        return {
+          ...c,
+          display_name: p.display_name ?? c.user_id.slice(0, 8),
+          public_reference: p.public_reference ?? null,
+          hasUnread: !!unread,
+        };
+      }),
+    };
+  });
+
+export const staffListMessages = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ conversationId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const role = await getStaffRole(context.supabase, context.userId);
+    if (!role) throw new Error("Staff only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: conv } = await supabaseAdmin
+      .from("support_conversations").select("*").eq("id", data.conversationId).maybeSingle();
+    if (!conv) throw new Error("Not found");
+    const { data: msgs } = await supabaseAdmin
+      .from("support_messages").select("*")
+      .eq("conversation_id", data.conversationId)
+      .order("created_at", { ascending: true }).limit(500);
+    const { data: profile } = await supabaseAdmin
+      .from("profiles").select("display_name, public_reference, phone_number").eq("id", conv.user_id).maybeSingle();
+    let email: string | null = null;
+    try {
+      const { data: u } = await supabaseAdmin.auth.admin.getUserById(conv.user_id);
+      email = u?.user?.email ?? null;
+    } catch {}
+    return {
+      conversation: conv,
+      messages: msgs ?? [],
+      user: { ...(profile ?? {}), email, id: conv.user_id },
+    };
+  });
+
+export const staffSendMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      conversationId: z.string().uuid(),
+      body: z.string().trim().max(2000).optional(),
+      attachmentPath: z.string().optional(),
+      attachmentName: z.string().optional(),
+      attachmentType: z.string().optional(),
+    }).refine((v) => (v.body && v.body.length > 0) || v.attachmentPath, { message: "Empty" })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const role = await getStaffRole(context.supabase, context.userId);
+    if (!role) throw new Error("Staff only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const now = new Date().toISOString();
+    const { error } = await supabaseAdmin.from("support_messages").insert({
+      conversation_id: data.conversationId,
+      sender_id: context.userId,
+      sender_role: "staff",
+      body: data.body ?? null,
+      attachment_path: data.attachmentPath ?? null,
+      attachment_name: data.attachmentName ?? null,
+      attachment_type: data.attachmentType ?? null,
+    });
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("support_conversations").update({
+      last_message_at: now,
+      last_staff_message_at: now,
+      claimed_by: context.userId,
+    }).eq("id", data.conversationId);
+    await audit(context.userId, role, "support_message_sent", {
+      target_type: "support_conversation", target_id: data.conversationId,
+    });
+    return { ok: true };
+  });
+
+export const staffMarkConvRead = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ conversationId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const role = await getStaffRole(context.supabase, context.userId);
+    if (!role) throw new Error("Staff only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("support_conversations")
+      .update({ staff_last_read_at: new Date().toISOString() })
+      .eq("id", data.conversationId);
+    return { ok: true };
+  });
+
+export const staffCloseConversation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ conversationId: z.string().uuid(), close: z.boolean() }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const role = await getStaffRole(context.supabase, context.userId);
+    if (!role) throw new Error("Staff only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("support_conversations")
+      .update({ status: data.close ? "closed" : "open" })
+      .eq("id", data.conversationId);
+    await audit(context.userId, role, data.close ? "support_conversation_closed" : "support_conversation_reopened", {
+      target_type: "support_conversation", target_id: data.conversationId,
+    });
+    return { ok: true };
+  });
+
+export const staffUnreadConvCount = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const role = await getStaffRole(context.supabase, context.userId);
+    if (!role) return { count: 0 };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: convs } = await supabaseAdmin
+      .from("support_conversations")
+      .select("id, last_user_message_at, staff_last_read_at")
+      .not("last_user_message_at", "is", null);
+    const count = (convs ?? []).filter((c: any) =>
+      !c.staff_last_read_at || new Date(c.staff_last_read_at) < new Date(c.last_user_message_at)
+    ).length;
+    return { count };
+  });
+
+export const staffGetSupportAttachmentUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ path: z.string() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const role = await getStaffRole(context.supabase, context.userId);
+    if (!role) throw new Error("Staff only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from("support-attachments").createSignedUrl(data.path, 60 * 5);
+    if (error) throw new Error(error.message);
+    await audit(context.userId, role, "support_attachment_viewed", {
+      target_type: "support_attachment", reason: data.path,
+    });
+    return { url: signed.signedUrl };
+  });
+
+// ============= SUPER ADMIN — RESET STAFF PASSWORD =============
+
+export const resetSupportPassword = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      targetUserId: z.string().uuid(),
+      newPassword: z.string().min(8).max(200),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const role = await getStaffRole(context.supabase, context.userId);
+    if (role !== "super_admin") throw new Error("Super admin only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Confirm target is a support account (not another admin/super_admin)
+    const { data: targetRoles } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", data.targetUserId);
+    const tr = (targetRoles ?? []).map((r: any) => r.role);
+    if (!tr.includes("customer_support")) throw new Error("Target is not a support account");
+    const { error: pwErr } = await supabaseAdmin.auth.admin.updateUserById(
+      data.targetUserId, { password: data.newPassword },
+    );
+    if (pwErr) throw new Error(pwErr.message);
+    await supabaseAdmin.from("profiles")
+      .update({ force_password_change: true })
+      .eq("id", data.targetUserId);
+    await audit(context.userId, role, "support_password_reset", {
+      target_type: "support_account", target_user_id: data.targetUserId,
+    });
+    return { ok: true };
+  });
+
+// ============= FORCE PASSWORD CHANGE (self) =============
+
+export const getMyForcePasswordChange = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase
+      .from("profiles").select("force_password_change").eq("id", context.userId).maybeSingle();
+    return { force: !!data?.force_password_change };
+  });
+
+export const clearMyForcePasswordChange = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("profiles")
+      .update({ force_password_change: false }).eq("id", context.userId);
+    return { ok: true };
+  });
