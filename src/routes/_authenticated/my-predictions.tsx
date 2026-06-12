@@ -10,6 +10,7 @@ import { Loader2, Pencil, Trash2, Check, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import { editPendingBetStake, cancelPendingBet } from "@/lib/bet-edit.functions";
+import { settleFinishedPending } from "@/lib/settle-catchup.functions";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/my-predictions")({
@@ -40,6 +41,25 @@ function MyPredictionsPage() {
       return data as any[];
     },
   });
+
+  const settleFn = useServerFn(settleFinishedPending);
+
+  // Auto-settle any finished matches with pending bets — on mount and every 30s.
+  useEffect(() => {
+    if (!uid) return;
+    let cancelled = false;
+    const run = async () => {
+      try {
+        const r = await settleFn({});
+        if (!cancelled && (r as any)?.settled > 0) {
+          qc.invalidateQueries({ queryKey: ["my-predictions", uid] });
+        }
+      } catch { /* ignore */ }
+    };
+    run();
+    const t = setInterval(run, 30_000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [uid, qc, settleFn]);
 
   useEffect(() => {
     if (!uid) return;
