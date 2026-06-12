@@ -21,8 +21,9 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/management/admin")({
   head: () => ({ meta: [{ title: "Admin — cssebets" }] }),
@@ -51,24 +52,51 @@ const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeK
 function AdminLayout() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
+
+  // Queries must not fire without a session (server fn would 401).
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active) setHasSession(!!data.session);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setHasSession(!!session);
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Re-check session right before each call to avoid mid-signout 401s.
+  async function withSession<T>(fn: () => Promise<T>): Promise<T | null> {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return null;
+    return fn();
+  }
+
   const countFn = useServerFn(getPendingPointRequestCount);
   const payoutCountFn = useServerFn(getPendingPayoutCount);
   const userCountFn = useServerFn(getPendingUserCount);
   const pendingCount = useQuery({
     queryKey: ["pending-point-request-count"],
-    queryFn: () => countFn({}),
+    queryFn: () => withSession(() => countFn({})),
+    enabled: hasSession === true,
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
   });
   const pendingPayoutCount = useQuery({
     queryKey: ["pending-payout-count"],
-    queryFn: () => payoutCountFn({}),
+    queryFn: () => withSession(() => payoutCountFn({})),
+    enabled: hasSession === true,
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
   });
   const pendingUserCount = useQuery({
     queryKey: ["pending-user-count"],
-    queryFn: () => userCountFn({}),
+    queryFn: () => withSession(() => userCountFn({})),
+    enabled: hasSession === true,
     refetchInterval: 15000,
     refetchOnWindowFocus: true,
   });
