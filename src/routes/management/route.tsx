@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyStaffRole, getStaffCounts, staffUnreadConvCount, getMyForcePasswordChange } from "@/lib/management.functions";
-import { Shield, LogOut, Loader2, Crown, Headset, LayoutDashboard, MessageCircle, Settings } from "lucide-react";
+import { Shield, LogOut, Loader2, Crown, Headset, LayoutDashboard, MessageCircle, Settings, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 
@@ -166,6 +166,7 @@ function ManagementLayout() {
 
   const nav: { to: string; label: string; icon: any; badge?: number }[] = [];
   nav.push({ to: "/management/support", label: "Support", icon: Headset, badge: supportBadge });
+  nav.push({ to: "/management/users", label: "Users", icon: Users });
   nav.push({ to: "/management/chat", label: "Chat", icon: MessageCircle, badge: chatBadge });
   if (isAdminTier) nav.push({ to: "/management/admin", label: "Admin", icon: LayoutDashboard });
   if (isSuper) nav.push({ to: "/management/super-admin", label: "Super Admin", icon: Crown });

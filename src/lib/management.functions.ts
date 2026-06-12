@@ -645,3 +645,70 @@ export const clearMyForcePasswordChange = createServerFn({ method: "POST" })
       .update({ force_password_change: false }).eq("id", context.userId);
     return { ok: true };
   });
+
+// ============= STAFF USER DIRECTORY (view-only) =============
+
+export const staffListUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ search: z.string().trim().max(80).optional().default("") }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const role = await getStaffRole(context.supabase, context.userId);
+    if (!role) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    let q = supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, suspended, created_at, phone_number")
+      .order("display_name", { ascending: true })
+      .limit(200);
+    if (data.search) q = q.ilike("display_name", `%${data.search}%`);
+    const { data: profiles, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const ids = (profiles ?? []).map((p: any) => p.id);
+    const [{ data: wallets }, { data: roleRows }] = await Promise.all([
+      ids.length
+        ? supabaseAdmin.from("wallets").select("user_id, balance").in("user_id", ids)
+        : Promise.resolve({ data: [] as any[] }),
+      ids.length
+        ? supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", ids)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+    const wmap = new Map((wallets ?? []).map((w: any) => [w.user_id, Number(w.balance)]));
+    const rmap = new Map<string, string[]>();
+    for (const r of roleRows ?? []) {
+      const arr = rmap.get(r.user_id) ?? [];
+      arr.push(r.role);
+      rmap.set(r.user_id, arr);
+    }
+
+    // Fetch emails from auth in batch (paginated). For up to 200 users we
+    // pull the first auth page; for production-scale this would page through.
+    const emailMap = new Map<string, string | null>();
+    const phoneMap = new Map<string, string | null>();
+    try {
+      const { data: page } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      for (const u of page?.users ?? []) {
+        emailMap.set(u.id, u.email ?? null);
+        phoneMap.set(u.id, u.phone ?? null);
+      }
+    } catch {
+      // ignore
+    }
+
+    return {
+      role,
+      users: (profiles ?? []).map((p: any) => ({
+        id: p.id,
+        display_name: p.display_name,
+        suspended: !!p.suspended,
+        created_at: p.created_at,
+        balance: wmap.get(p.id) ?? 0,
+        roles: rmap.get(p.id) ?? [],
+        email: emailMap.get(p.id) ?? null,
+        phoneNumber: phoneMap.get(p.id) ?? p.phone_number ?? null,
+      })),
+    };
+  });
