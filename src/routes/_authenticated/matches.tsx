@@ -3,14 +3,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPrediction } from "@/lib/predictions.functions";
-import { refreshMatches } from "@/lib/matches.functions";
+import { refreshMatches, getMatchOddsHistory } from "@/lib/matches.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronDown, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-
 
 export const Route = createFileRoute("/_authenticated/matches")({
   head: () => ({ meta: [{ title: "Matches — cssebets" }] }),
@@ -31,6 +35,11 @@ type Match = {
   odds_updated_at: string | null;
   odds_source: string | null;
 };
+
+function humanize(s: string | null | undefined): string {
+  if (!s) return "";
+  return s.replace(/_/g, " ").trim();
+}
 
 function timeAgo(iso: string | null): string {
   if (!iso) return "never";
@@ -58,16 +67,13 @@ function MatchesPage() {
     },
   });
 
-  // Trigger a live sync on mount + every 30s so finished matches reflect quickly.
   useEffect(() => {
-    let cancelled = false;
     const run = () => refresh({}).catch(() => {});
     run();
     const id = setInterval(run, 30_000);
-    return () => { cancelled = true; clearInterval(id); };
+    return () => clearInterval(id);
   }, [refresh]);
 
-  // Realtime: any matches row change → refetch.
   useEffect(() => {
     const channel = supabase
       .channel("matches-live")
@@ -78,6 +84,16 @@ function MatchesPage() {
     return () => { supabase.removeChannel(channel); };
   }, [qc]);
 
+  const { scheduled, completed } = useMemo(() => {
+    const s: Match[] = [];
+    const c: Match[] = [];
+    for (const m of data ?? []) {
+      if (m.status === "finished") c.push(m);
+      else s.push(m);
+    }
+    c.sort((a, b) => new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime());
+    return { scheduled: s, completed: c };
+  }, [data]);
 
   if (isLoading) {
     return <div className="grid place-items-center py-20"><Loader2 className="animate-spin h-6 w-6 text-muted-foreground" /></div>;
@@ -93,24 +109,53 @@ function MatchesPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h1 className="text-2xl font-bold">Matches</h1>
-      <div className="space-y-3">
-        {data.map((m) => <MatchCard key={m.id} match={m} />)}
-      </div>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          Scheduled ({scheduled.length})
+        </h2>
+        {scheduled.length === 0 ? (
+          <Card className="p-4 text-center text-sm text-muted-foreground">No upcoming matches.</Card>
+        ) : (
+          scheduled.map((m) => <MatchCard key={m.id} match={m} />)
+        )}
+      </section>
+
+      {completed.length > 0 && (
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button variant="outline" className="w-full justify-between">
+              <span>Completed matches ({completed.length})</span>
+              <ChevronDown className="h-4 w-4" />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 mt-3">
+            {completed.map((m) => <MatchCard key={m.id} match={m} />)}
+          </CollapsibleContent>
+        </Collapsible>
+      )}
     </div>
   );
 }
 
 function MatchCard({ match }: { match: Match }) {
   const submit = useServerFn(submitPrediction);
+  const historyFn = useServerFn(getMatchOddsHistory);
   const qc = useQueryClient();
   const [stake, setStake] = useState("10");
   const [pick, setPick] = useState<"HOME" | "DRAW" | "AWAY" | null>(null);
+  const [open, setOpen] = useState(false);
 
   const locked = new Date(match.kickoff_at).getTime() <= Date.now() || match.status !== "scheduled";
-
   const odds = match.reference_odds ?? { home: 2.0, draw: 3.2, away: 3.5 };
+
+  const history = useQuery({
+    queryKey: ["match-odds-history", match.id],
+    queryFn: () => historyFn({ data: { matchId: match.id } }),
+    enabled: open,
+  });
 
   const mut = useMutation({
     mutationFn: async () => {
@@ -123,7 +168,6 @@ function MatchCard({ match }: { match: Match }) {
           clientRequestId: crypto.randomUUID(),
         },
       });
-
     },
     onSuccess: () => {
       toast.success("Prediction submitted");
@@ -133,32 +177,48 @@ function MatchCard({ match }: { match: Match }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const stageLabel = [humanize(match.stage), humanize(match.group_name)]
+    .filter(Boolean)
+    .join(" · ") || "—";
+
   return (
     <Card className="p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="text-xs text-muted-foreground">
-          {match.stage ?? "—"} {match.group_name ? `· ${match.group_name}` : ""}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full text-left space-y-2"
+        aria-expanded={open}
+      >
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-muted-foreground uppercase tracking-wide">{stageLabel}</div>
+          <div className="text-xs text-muted-foreground">{new Date(match.kickoff_at).toLocaleString()}</div>
         </div>
-        <div className="text-xs text-muted-foreground">{new Date(match.kickoff_at).toLocaleString()}</div>
-      </div>
-      <div className="flex items-center justify-between text-lg font-semibold">
-        <span>{match.home_team}</span>
-        <span className="text-muted-foreground text-sm">
-          {match.status === "finished" ? `${match.home_score} – ${match.away_score}` : "vs"}
-        </span>
-        <span>{match.away_team}</span>
-      </div>
+        <div className="flex items-center justify-between text-lg font-semibold gap-2">
+          <span className="truncate">{match.home_team}</span>
+          <span className="text-muted-foreground text-sm shrink-0">
+            {match.status === "finished" ? `${match.home_score} – ${match.away_score}` : "vs"}
+          </span>
+          <span className="truncate text-right">{match.away_team}</span>
+        </div>
+      </button>
+
       {!locked && match.reference_odds && (
         <div className="space-y-2">
           <div className="grid grid-cols-3 gap-2">
-            {(["HOME", "DRAW", "AWAY"] as const).map((p) => (
-              <Button
-                key={p} type="button" variant={pick === p ? "default" : "outline"}
-                onClick={() => setPick(p)} size="sm"
-              >
-                {p} ({p === "HOME" ? odds.home : p === "DRAW" ? odds.draw : odds.away})
-              </Button>
-            ))}
+            {(["HOME", "DRAW", "AWAY"] as const).map((p) => {
+              const label = p === "HOME" ? match.home_team : p === "AWAY" ? match.away_team : "Draw";
+              const price = p === "HOME" ? odds.home : p === "DRAW" ? odds.draw : odds.away;
+              return (
+                <Button
+                  key={p} type="button" variant={pick === p ? "default" : "outline"}
+                  onClick={() => setPick(p)} size="sm"
+                  className="flex flex-col h-auto py-2"
+                >
+                  <span className="truncate max-w-full text-xs">{label}</span>
+                  <span className="font-bold">{price}</span>
+                </Button>
+              );
+            })}
           </div>
           <div className="flex gap-2">
             <Input type="number" min={1} value={stake} onChange={(e) => setStake(e.target.value)} placeholder="Stake" />
@@ -173,9 +233,46 @@ function MatchCard({ match }: { match: Match }) {
           </div>
         </div>
       )}
+
       {locked && (
         <div className="text-xs text-muted-foreground font-medium">
           {match.status === "finished" ? "Match finished." : "Betting closed — kickoff passed."}
+        </div>
+      )}
+
+      {open && (
+        <div className="pt-3 border-t space-y-2">
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Odds history
+          </div>
+          {history.isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          ) : !history.data?.length ? (
+            <div className="text-xs text-muted-foreground">No odds snapshots recorded yet.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead className="text-muted-foreground">
+                  <tr className="text-left">
+                    <th className="py-1 pr-2 font-medium">When</th>
+                    <th className="py-1 pr-2 font-medium truncate">{match.home_team}</th>
+                    <th className="py-1 pr-2 font-medium">Draw</th>
+                    <th className="py-1 pr-2 font-medium truncate">{match.away_team}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {history.data.map((r: any) => (
+                    <tr key={r.id} className="border-t border-border/40">
+                      <td className="py-1 pr-2 text-muted-foreground">{new Date(r.sampled_at).toLocaleString()}</td>
+                      <td className="py-1 pr-2">{r.home_odds}</td>
+                      <td className="py-1 pr-2">{r.draw_odds}</td>
+                      <td className="py-1 pr-2">{r.away_odds}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </Card>
