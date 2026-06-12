@@ -11,7 +11,7 @@ import { getMyUnreadSupportCount } from "@/lib/support.functions";
 import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote, Headset, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ScreenProtection } from "@/components/security/ScreenProtection";
 
 export const Route = createFileRoute("/_authenticated")({
