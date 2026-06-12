@@ -171,12 +171,34 @@ function MatchCard({ match }: { match: Match }) {
   const submit = useServerFn(submitPrediction);
   const historyFn = useServerFn(getMatchOddsHistory);
   const qc = useQueryClient();
+  const { user } = useAuth();
   const [stake, setStake] = useState("10");
   const [pick, setPick] = useState<"HOME" | "DRAW" | "AWAY" | null>(null);
   const [open, setOpen] = useState(false);
 
   const locked = new Date(match.kickoff_at).getTime() <= Date.now() || match.status !== "scheduled";
   const odds = match.reference_odds ?? { home: 2.0, draw: 3.2, away: 3.5 };
+
+  const myResultBets = useQuery({
+    queryKey: ["my-match-result-bets", match.id, user?.id],
+    enabled: !!user && !locked,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("predictions")
+        .select("outcome")
+        .eq("match_id", match.id)
+        .eq("user_id", user!.id)
+        .eq("market", "result")
+        .eq("status", "pending");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const placedResults = useMemo(() => {
+    const s = new Set<string>();
+    for (const b of (myResultBets.data ?? []) as Array<{ outcome: string }>) s.add(b.outcome);
+    return s;
+  }, [myResultBets.data]);
 
   const history = useQuery({
     queryKey: ["match-odds-history", match.id],
@@ -199,6 +221,7 @@ function MatchCard({ match }: { match: Match }) {
     onSuccess: () => {
       toast.success("Prediction submitted");
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
+      qc.invalidateQueries({ queryKey: ["my-match-result-bets", match.id, user?.id] });
       setPick(null);
     },
     onError: (e: Error) => toast.error(e.message),
