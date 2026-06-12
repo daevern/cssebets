@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { HowItWorks } from "@/components/HowItWorks";
+const HowItWorks = lazy(() =>
+  import("@/components/HowItWorks").then((m) => ({ default: m.HowItWorks })),
+);
 import {
   Trophy,
   ShieldCheck,
@@ -150,7 +152,9 @@ function LandingPage() {
       </section>
 
       {/* How it works */}
-      <HowItWorks />
+      <Suspense fallback={<div className="h-[600px]" />}>
+        <HowItWorks />
+      </Suspense>
 
       {/* Features */}
       <section id="features" className="border-b border-border">
