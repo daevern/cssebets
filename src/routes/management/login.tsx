@@ -28,18 +28,19 @@ function ManagementLogin() {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error || !data.user) {
-        await logFn({ data: { email, success: false, reason: error?.message ?? "no user" } });
+        // Failed sign-in: no auth session, so we don't call the audit endpoint
+        // (Supabase Auth already logs failed attempts). Just surface the error.
         throw new Error(error?.message ?? "Sign-in failed");
       }
       const { role } = await roleFn({});
       if (!role) {
-        await logFn({ data: { email, success: false, reason: "not_staff", userId: data.user.id } });
+        await logFn({ data: { success: false, reason: "not_staff" } });
         await supabase.auth.signOut();
         toast.error("This portal is for authorised staff only.");
         navigate({ to: "/management/access-denied" });
         return;
       }
-      await logFn({ data: { email, success: true, userId: data.user.id } });
+      await logFn({ data: { success: true, reason: `role=${role}` } });
       if (role === "super_admin") navigate({ to: "/management/super-admin" });
       else if (role === "admin") navigate({ to: "/management/admin" });
       else navigate({ to: "/management/support" });

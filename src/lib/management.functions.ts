@@ -296,6 +296,16 @@ const SUPPORT_EMAILS = Array.from({ length: 10 }, (_, i) => {
   return { email: `support${n}@cssebets.com`, displayName: `CSSE Support ${n}` };
 });
 
+function generateStrongPassword(): string {
+  // 24 chars from crypto-random bytes, base64url-ish (no padding/symbols).
+  const bytes = new Uint8Array(18);
+  crypto.getRandomValues(bytes);
+  const b64 = Buffer.from(bytes).toString("base64")
+    .replace(/\+/g, "A").replace(/\//g, "B").replace(/=/g, "");
+  // Ensure at least one digit and one uppercase to satisfy common policies.
+  return `Aa1${b64}`;
+}
+
 export const seedSupportAccounts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -303,28 +313,39 @@ export const seedSupportAccounts = createServerFn({ method: "POST" })
     if (role !== "super_admin") throw new Error("Super admin only");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const results: { email: string; status: "created" | "existed" | "error"; error?: string }[] = [];
+    const results: {
+      email: string;
+      status: "created" | "existed" | "rotated" | "error";
+      password?: string;
+      error?: string;
+    }[] = [];
+
     for (const { email, displayName } of SUPPORT_EMAILS) {
       try {
-        // Check if exists
         const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
         let user = list?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase());
+        const password = generateStrongPassword();
         if (!user) {
           const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
             email,
-            password: "123456789",
+            password,
             email_confirm: true,
             user_metadata: { display_name: displayName, force_password_change: true },
           });
           if (error) { results.push({ email, status: "error", error: error.message }); continue; }
           user = created.user!;
-          results.push({ email, status: "created" });
+          results.push({ email, status: "created", password });
         } else {
-          results.push({ email, status: "existed" });
+          // Account already existed: rotate its password to a fresh random value
+          // so any default/known credential can no longer sign in.
+          const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+            password,
+            user_metadata: { ...(user.user_metadata ?? {}), display_name: displayName, force_password_change: true },
+          });
+          if (updErr) { results.push({ email, status: "error", error: updErr.message }); continue; }
+          results.push({ email, status: "rotated", password });
         }
-        // Ensure profile display name
         await supabaseAdmin.from("profiles").update({ display_name: displayName }).eq("id", user.id);
-        // Remove pending role, add customer_support
         await supabaseAdmin.from("user_roles").delete()
           .eq("user_id", user.id).eq("role", "pending");
         await supabaseAdmin.from("user_roles").upsert(
@@ -335,8 +356,12 @@ export const seedSupportAccounts = createServerFn({ method: "POST" })
         results.push({ email, status: "error", error: e instanceof Error ? e.message : String(e) });
       }
     }
+    // Audit log MUST NOT contain plaintext passwords — only outcome counts.
     await audit(context.userId, role, "seed_support_accounts", {
-      target_type: "support_accounts", new_value: { results },
+      target_type: "support_accounts",
+      new_value: {
+        summary: results.map((r) => ({ email: r.email, status: r.status, error: r.error })),
+      },
     });
     return { results };
   });
@@ -412,22 +437,22 @@ export const listAuditLog = createServerFn({ method: "GET" })
 // ============= LOGIN AUDIT (called from client after sign-in attempt) =============
 
 export const logManagementLoginAttempt = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) =>
     z.object({
-      email: z.string().email().max(255),
       success: z.boolean(),
       reason: z.string().max(200).optional().nullable(),
-      userId: z.string().uuid().optional().nullable(),
     }).parse(i),
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Trusted: actor_id is taken from the verified auth context, never the client.
     await supabaseAdmin.from("support_audit_logs").insert({
-      actor_id: data.userId ?? null,
+      actor_id: context.userId,
       actor_role: null,
       action_type: data.success ? "management_login_success" : "management_login_failed",
       target_type: "auth",
-      reason: data.reason ?? data.email,
+      reason: data.reason ?? null,
     });
     return { ok: true };
   });
