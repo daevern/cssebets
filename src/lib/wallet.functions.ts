@@ -15,11 +15,15 @@ export const getMyWallet = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data } = await supabase.from("wallets").select("balance, updated_at").eq("user_id", userId).maybeSingle();
-    if (data) return { balance: Number(data.balance), updated_at: data.updated_at };
+    const [{ data: wallet }, { data: profile }] = await Promise.all([
+      supabase.from("wallets").select("balance, updated_at").eq("user_id", userId).maybeSingle(),
+      supabase.from("profiles").select("public_reference").eq("id", userId).maybeSingle(),
+    ]);
+    const publicReference = (profile as any)?.public_reference ?? null;
+    if (wallet) return { balance: Number(wallet.balance), updated_at: wallet.updated_at, publicReference };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("wallets").upsert({ user_id: userId }, { onConflict: "user_id" });
-    return { balance: 0, updated_at: new Date().toISOString() };
+    return { balance: 0, updated_at: new Date().toISOString(), publicReference };
   });
 
 export const listMyTransactions = createServerFn({ method: "GET" })
