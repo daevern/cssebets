@@ -12,6 +12,7 @@ import {
   staffGetProofSignedUrl,
 } from "@/lib/management.functions";
 import { useState } from "react";
+import { useHasSession, withSession } from "@/hooks/use-staff-session";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -27,8 +28,14 @@ function SupportDashboard() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<"pending-users" | "point-requests">("pending-users");
 
+  const hasSession = useHasSession();
   const countsFn = useServerFn(getStaffCounts);
-  const counts = useQuery({ queryKey: ["mgmt-counts"], queryFn: () => countsFn({}), refetchInterval: 20_000 });
+  const counts = useQuery({
+    queryKey: ["mgmt-counts"],
+    queryFn: () => withSession(() => countsFn({})),
+    refetchInterval: 20_000,
+    enabled: hasSession === true,
+  });
 
   return (
     <div className="space-y-6">
@@ -86,7 +93,13 @@ function PendingUsersPanel({ onChanged }: { onChanged: () => void }) {
   const listFn = useServerFn(staffListPendingUsers);
   const approveFn = useServerFn(staffApproveUser);
   const rejectFn = useServerFn(staffRejectUser);
-  const q = useQuery({ queryKey: ["staff-pending-users"], queryFn: () => listFn({}), refetchInterval: 30_000 });
+  const hasSession = useHasSession();
+  const q = useQuery({
+    queryKey: ["staff-pending-users"],
+    queryFn: () => withSession(() => listFn({})),
+    refetchInterval: 30_000,
+    enabled: hasSession === true,
+  });
   const [busyId, setBusyId] = useState<string | null>(null);
 
   async function approve(uid: string) {
@@ -156,10 +169,12 @@ function PointRequestsPanel({ onChanged }: { onChanged: () => void }) {
   const rejectFn = useServerFn(staffRejectPointRequest);
   const proofFn = useServerFn(staffGetProofSignedUrl);
 
+  const hasSession = useHasSession();
   const q = useQuery({
     queryKey: ["staff-point-requests", status],
-    queryFn: () => listFn({ data: { status } }),
+    queryFn: () => withSession(() => listFn({ data: { status } })),
     refetchInterval: 30_000,
+    enabled: hasSession === true,
   });
   const [busyId, setBusyId] = useState<string | null>(null);
 
