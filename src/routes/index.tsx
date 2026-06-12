@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { HowItWorks } from "@/components/HowItWorks";
 import {
   Trophy,
   ShieldCheck,
