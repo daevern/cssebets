@@ -296,3 +296,66 @@ function DollarBill({ letter, rotate, index }: { letter: string; rotate: number;
     </motion.div>
   );
 }
+
+function MoneyRain() {
+  const bills = useMemo(
+    () =>
+      Array.from({ length: 28 }).map((_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        delay: Math.random() * 4,
+        duration: 4 + Math.random() * 5,
+        rotate: -45 + Math.random() * 90,
+        spin: (Math.random() > 0.5 ? 1 : -1) * (180 + Math.random() * 360),
+        scale: 0.6 + Math.random() * 0.8,
+      })),
+    [],
+  );
+  // Auto-stop after 12s to avoid forever animation
+  const [on, setOn] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setOn(false), 12000);
+    return () => clearTimeout(t);
+  }, []);
+  if (!on) return null;
+  return (
+    <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden" aria-hidden="true">
+      {bills.map((b) => (
+        <motion.div
+          key={b.id}
+          initial={{ y: "-15%", opacity: 0, rotate: b.rotate }}
+          animate={{ y: "115%", opacity: [0, 1, 1, 0.9], rotate: b.rotate + b.spin }}
+          transition={{
+            duration: b.duration,
+            delay: b.delay,
+            ease: "easeIn",
+            repeat: Infinity,
+            repeatDelay: Math.random() * 2,
+          }}
+          className="absolute top-0"
+          style={{ left: `${b.left}%`, transform: `scale(${b.scale})` }}
+        >
+          <MiniBill />
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+function MiniBill() {
+  return (
+    <div
+      className="relative h-10 w-20 rounded-sm border-2 border-emerald-900/70 bg-gradient-to-br from-emerald-200 via-emerald-100 to-emerald-300 shadow-lg"
+      style={{ boxShadow: "0 6px 14px -6px rgba(6,78,59,0.6), inset 0 0 0 1px rgba(255,255,255,0.4)" }}
+    >
+      <div className="absolute inset-1 rounded-[2px] border border-emerald-800/50" />
+      <span className="absolute left-1 top-0.5 text-[8px] font-black text-emerald-900">$</span>
+      <span className="absolute right-1 top-0.5 text-[8px] font-black text-emerald-900">$</span>
+      <span className="absolute bottom-0.5 left-1 text-[8px] font-black text-emerald-900">$</span>
+      <span className="absolute bottom-0.5 right-1 text-[8px] font-black text-emerald-900">$</span>
+      <div className="absolute inset-0 grid place-items-center font-serif text-sm font-black text-emerald-900">
+        100
+      </div>
+    </div>
+  );
+}
