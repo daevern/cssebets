@@ -39,8 +39,10 @@ export function HowItWorks() {
       <div className="mx-auto max-w-5xl px-4 py-16">
         <div className="text-center">
           <h2 className="text-2xl font-bold sm:text-3xl">How It Works</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Scroll through to follow the path.
+          <p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground">
+            cssebets is a betting platform where users can view FIFA WORLD CUP matches,
+            check reference odds, request virtual points, place match bets, and track
+            their results through a transparent wallet.
           </p>
         </div>
 
