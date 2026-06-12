@@ -194,12 +194,12 @@ function MatchCard({ match }: { match: Match }) {
           <div className="text-xs text-muted-foreground uppercase tracking-wide">{stageLabel}</div>
           <div className="text-xs text-muted-foreground">{new Date(match.kickoff_at).toLocaleString()}</div>
         </div>
-        <div className="flex items-center justify-between text-lg font-semibold gap-3">
-          <TeamFlag name={match.home_team} />
-          <span className="text-muted-foreground text-sm shrink-0">
+        <div className="grid grid-cols-3 items-center text-lg font-semibold gap-3">
+          <div className="flex justify-center"><TeamFlag name={match.home_team} /></div>
+          <span className="text-muted-foreground text-sm text-center">
             {match.status === "finished" ? `${match.home_score} – ${match.away_score}` : "vs"}
           </span>
-          <TeamFlag name={match.away_team} />
+          <div className="flex justify-center"><TeamFlag name={match.away_team} /></div>
         </div>
       </button>
 
@@ -289,7 +289,7 @@ function TeamFlag({ name }: { name: string }) {
     <img
       src={url}
       alt={`${name} flag`}
-      className="h-10 w-16 object-cover rounded-sm shadow-sm border border-border/40"
+      className="h-12 w-12 object-cover shadow-sm border border-border/40"
       loading="lazy"
     />
   );
