@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
     const has = (roles ?? []).some((r) =>
       ["admin", "super_admin", "viewer"].includes(r.role as string),
     );
-    if (!has) throw redirect({ to: "/" });
+    if (!has) throw redirect({ to: "/dashboard" });
   },
   head: () => ({ meta: [{ title: "Admin — cssebets" }] }),
   component: AdminLayout,
