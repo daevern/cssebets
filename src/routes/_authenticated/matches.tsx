@@ -13,6 +13,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ChevronDown, Loader2 } from "lucide-react";
+import { teamFlag } from "@/lib/country-flags";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
