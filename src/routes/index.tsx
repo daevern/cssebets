@@ -144,9 +144,6 @@ function LandingPage() {
         <HowItWorks />
       </Suspense>
 
-      <Suspense fallback={<div className="h-[600px]" />}>
-        <FeaturesShowcase />
-      </Suspense>
 
 
       {/* Support + CTA */}
