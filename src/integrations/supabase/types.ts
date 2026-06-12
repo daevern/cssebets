@@ -637,6 +637,7 @@ export type Database = {
           proof_file_path: string | null
           proof_file_size: number | null
           proof_file_type: string | null
+          public_reference: string | null
           reason: string | null
           rejection_reason: string | null
           requested_amount: number
@@ -655,6 +656,7 @@ export type Database = {
           proof_file_path?: string | null
           proof_file_size?: number | null
           proof_file_type?: string | null
+          public_reference?: string | null
           reason?: string | null
           rejection_reason?: string | null
           requested_amount: number
@@ -673,6 +675,7 @@ export type Database = {
           proof_file_path?: string | null
           proof_file_size?: number | null
           proof_file_type?: string | null
+          public_reference?: string | null
           reason?: string | null
           rejection_reason?: string | null
           requested_amount?: number
@@ -764,6 +767,7 @@ export type Database = {
           id: string
           is_simulation: boolean
           phone_number: string | null
+          public_reference: string
           suspended: boolean
         }
         Insert: {
@@ -774,6 +778,7 @@ export type Database = {
           id: string
           is_simulation?: boolean
           phone_number?: string | null
+          public_reference?: string
           suspended?: boolean
         }
         Update: {
@@ -784,6 +789,7 @@ export type Database = {
           id?: string
           is_simulation?: boolean
           phone_number?: string | null
+          public_reference?: string
           suspended?: boolean
         }
         Relationships: []
@@ -980,6 +986,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      generate_public_reference: { Args: never; Returns: string }
       get_simulation_outcome_analytics: { Args: never; Returns: Json }
       get_simulation_stress_metrics: { Args: never; Returns: Json }
       move_to_dlq: {

@@ -109,7 +109,7 @@ function AdminWalletPage() {
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by Reference ID, name, or email…"
+          placeholder="Search by Reference ID, UUID, name, email, or phone…"
           className="max-w-md"
         />
         {requests.isLoading ? (
@@ -123,9 +123,11 @@ function AdminWalletPage() {
                 if (!search.trim()) return true;
                 const q = search.trim().toLowerCase();
                 return (
+                  String(r.public_reference ?? "").toLowerCase().includes(q) ||
                   String(r.user_id).toLowerCase().includes(q) ||
                   String(r.display_name ?? "").toLowerCase().includes(q) ||
-                  String(r.email ?? "").toLowerCase().includes(q)
+                  String(r.email ?? "").toLowerCase().includes(q) ||
+                  String(r.phone ?? "").toLowerCase().includes(q)
                 );
               })
               .map((r: any) => {
@@ -134,10 +136,16 @@ function AdminWalletPage() {
                 <div key={r.id} className="border rounded-md p-3 text-sm space-y-2">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 flex-1 space-y-0.5">
-                      <div className="font-semibold">{r.display_name}</div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold tracking-wider">
+                          {r.public_reference ?? "—"}
+                        </span>
+                        <span className="font-semibold">{r.display_name}</span>
+                      </div>
                       {r.email && <div className="text-xs text-muted-foreground">{r.email}</div>}
-                      <div className="text-[11px] text-muted-foreground font-mono break-all">
-                        Ref: {r.user_id}
+                      {r.phone && <div className="text-xs text-muted-foreground">{r.phone}</div>}
+                      <div className="text-[10px] text-muted-foreground/70 font-mono break-all">
+                        UUID: {r.user_id}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         Requested <span className="font-medium text-foreground">{Number(r.requested_amount).toLocaleString()} pts</span>

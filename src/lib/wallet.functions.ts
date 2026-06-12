@@ -15,11 +15,15 @@ export const getMyWallet = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data } = await supabase.from("wallets").select("balance, updated_at").eq("user_id", userId).maybeSingle();
-    if (data) return { balance: Number(data.balance), updated_at: data.updated_at };
+    const [{ data: wallet }, { data: profile }] = await Promise.all([
+      supabase.from("wallets").select("balance, updated_at").eq("user_id", userId).maybeSingle(),
+      supabase.from("profiles").select("public_reference").eq("id", userId).maybeSingle(),
+    ]);
+    const publicReference = (profile as any)?.public_reference ?? null;
+    if (wallet) return { balance: Number(wallet.balance), updated_at: wallet.updated_at, publicReference };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("wallets").upsert({ user_id: userId }, { onConflict: "user_id" });
-    return { balance: 0, updated_at: new Date().toISOString() };
+    return { balance: 0, updated_at: new Date().toISOString(), publicReference };
   });
 
 export const listMyTransactions = createServerFn({ method: "GET" })
@@ -207,9 +211,13 @@ export const adminListRequests = createServerFn({ method: "GET" })
     const { data: reqs, error } = await q;
     if (error) throw new Error(error.message);
     const ids = Array.from(new Set((reqs ?? []).map((r) => r.user_id)));
-    const { data: profiles } = await supabaseAdmin.from("profiles").select("id, display_name").in("id", ids);
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, public_reference, phone_number")
+      .in("id", ids);
     const { data: wallets } = await supabaseAdmin.from("wallets").select("user_id, balance").in("user_id", ids);
     const wmap = new Map((wallets ?? []).map((w) => [w.user_id, Number(w.balance)]));
+    const pmap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
     // Fetch emails via auth admin
     const emailMap = new Map<string, string>();
     for (const uid of ids) {
@@ -219,12 +227,17 @@ export const adminListRequests = createServerFn({ method: "GET" })
       } catch {}
     }
     return {
-      requests: (reqs ?? []).map((r) => ({
-        ...r,
-        display_name: profiles?.find((p) => p.id === r.user_id)?.display_name ?? r.user_id.slice(0, 8),
-        email: emailMap.get(r.user_id) ?? null,
-        current_balance: wmap.get(r.user_id) ?? 0,
-      })),
+      requests: (reqs ?? []).map((r: any) => {
+        const p: any = pmap.get(r.user_id) ?? {};
+        return {
+          ...r,
+          display_name: p.display_name ?? r.user_id.slice(0, 8),
+          public_reference: r.public_reference ?? p.public_reference ?? null,
+          phone: p.phone_number ?? null,
+          email: emailMap.get(r.user_id) ?? null,
+          current_balance: wmap.get(r.user_id) ?? 0,
+        };
+      }),
     };
   });
 
