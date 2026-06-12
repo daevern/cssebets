@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, useScroll, useTransform, useSpring, useMotionValueEvent } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 
 const steps = [
   {
@@ -60,13 +60,25 @@ export function HowItWorks() {
   const cashoutY = useTransform(scrollYProgress, [0.82, 1], [20, 0]);
   const cashoutScale = useTransform(scrollYProgress, [0.82, 1], [0.9, 1]);
 
+  const cashoutRef = useRef<HTMLDivElement>(null);
   const [raining, setRaining] = useState(false);
-  useMotionValueEvent(cashoutOpacity, "change", (v) => {
-    if (v > 0.9 && !raining) setRaining(true);
-  });
+  useEffect(() => {
+    const el = cashoutRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) setRaining(true);
+        }
+      },
+      { threshold: 0.4 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
-    <section id="how" className="relative overflow-hidden border-b border-border bg-card/30">
+    <section id="how" className="relative border-b border-border bg-card/30">
       {raining && <MoneyRain />}
       <div className="mx-auto max-w-5xl px-4 py-16">
         <div className="text-center">
@@ -156,6 +168,7 @@ export function HowItWorks() {
 
           {/* Cashout dollar-bill graphic */}
           <motion.div
+            ref={cashoutRef}
             style={{ opacity: cashoutOpacity, y: cashoutY, scale: cashoutScale }}
             className="relative z-10 mt-12 flex justify-center"
           >
@@ -319,7 +332,7 @@ function MoneyRain() {
   }, []);
   if (!on) return null;
   return (
-    <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden" aria-hidden="true">
+    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden" aria-hidden="true">
       {bills.map((b) => (
         <motion.div
           key={b.id}
