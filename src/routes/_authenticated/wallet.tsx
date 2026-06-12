@@ -271,8 +271,12 @@ function WalletPage() {
             <div className="text-sm leading-tight text-muted-foreground">BRICKSPLUG ENTERPRISE SD BHD</div>
             <div className="text-sm font-mono tabular-nums leading-tight font-medium">8010575969</div>
           </div>
-          <div className="border-t border-border pt-2 text-xs text-muted-foreground font-medium">
-            REFERENCE: {user?.email?.split("@")[0] || "Username"}
+          <div className="border-t border-border pt-2 space-y-1.5">
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Reference ID</div>
+            <ReferenceIdRow uid={uid ?? ""} />
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              Use this Reference ID when submitting your proof so admins can match your request.
+            </p>
           </div>
         </div>
 
