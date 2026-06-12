@@ -35,11 +35,11 @@ function AuthPage() {
         });
         if (error) throw error;
         toast.success("Account created. Waiting for admin approval.");
-        navigate({ to: "/" });
+        navigate({ to: "/dashboard" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/" });
+        navigate({ to: "/dashboard" });
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");

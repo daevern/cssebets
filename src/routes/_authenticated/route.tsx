@@ -129,7 +129,7 @@ function AuthedLayout() {
   }
 
   const navItems = [
-    { to: "/", label: "Home", icon: Home },
+    { to: "/dashboard", label: "Home", icon: Home },
     { to: "/bets", label: "Bets", icon: ListChecks },
     { to: "/my-predictions", label: "Picks", icon: History },
     { to: "/wallet", label: "Wallet", icon: WalletIcon },
@@ -140,7 +140,7 @@ function AuthedLayout() {
 
   const mobileNavItems = isAdminTier
     ? [
-        { to: "/", label: "Home", icon: Home },
+        { to: "/dashboard", label: "Home", icon: Home },
         { to: "/bets", label: "Bets", icon: ListChecks },
         { to: "/admin", label: "Admin", icon: Shield },
         { to: "/admin-wallet", label: "Points", icon: WalletIcon },
@@ -156,7 +156,7 @@ function AuthedLayout() {
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
-          <Link to="/" className="flex items-center gap-2 font-bold">
+          <Link to="/dashboard" className="flex items-center gap-2 font-bold">
             <Trophy className="h-5 w-5 text-primary" />
             <span className="hidden sm:inline">cssebets</span>
           </Link>
@@ -171,7 +171,7 @@ function AuthedLayout() {
                   key={item.to}
                   to={item.to}
                   className="relative px-3 py-1.5 rounded-md text-sm hover:bg-muted [&.active]:bg-muted [&.active]:text-primary"
-                  activeOptions={{ exact: item.to === "/" }}
+                  activeOptions={{ exact: item.to === "/dashboard" }}
                 >
                   {item.label}
                   {badge > 0 && (
@@ -225,7 +225,7 @@ function AuthedLayout() {
       <nav className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t bg-background/95 backdrop-blur">
         <div className="grid grid-cols-5 max-w-md mx-auto">
           {mobileNavItems.map((item) => {
-            const active = item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to);
+            const active = item.to === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(item.to);
             const Icon = item.icon;
             const badge =
               item.to === "/admin" ? adminBadge :
