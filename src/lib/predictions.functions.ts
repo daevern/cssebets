@@ -118,10 +118,11 @@ export const submitPrediction = createServerFn({ method: "POST" })
 
     if (error) {
       const msg = error.message ?? "";
+      if (msg.includes("MAX_PAYOUT_NOT_CONFIGURED")) throw new Error("Bet placement is disabled: platform payout limit is not configured. Please contact an admin.");
       if (msg.includes("INSUFFICIENT_BALANCE")) throw new Error("Insufficient points balance. Request more points to place this bet.");
       if (msg.includes("MAX_EXPOSURE_REACHED")) throw new Error("The house has reached its exposure cap on this match. Try a smaller stake or wait for the cap to clear.");
       if (msg.includes("MAX_STAKE_EXCEEDED")) throw new Error("Stake exceeds the per-bet maximum set by the house.");
-      if (msg.includes("MAX_PAYOUT_EXCEEDED")) throw new Error("Potential payout exceeds the per-bet maximum set by the house. Lower your stake.");
+      if (msg.includes("MAX_PAYOUT_EXCEEDED")) throw new Error("Potential return exceeds platform limit.");
       if (msg.includes("MATCH_LOCKED")) throw new Error("This match has already kicked off. Predictions are locked.");
       if (msg.includes("DUPLICATE_REQUEST")) throw new Error("Duplicate bet detected. Please refresh and try again.");
       throw new Error(msg || "Could not place bet.");

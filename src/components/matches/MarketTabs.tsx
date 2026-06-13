@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMatchMarkets, placeMarketBet } from "@/lib/markets.functions";
@@ -83,6 +83,19 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
         ? `Maximum stake is ${MAX_STAKE.toLocaleString()} points.`
         : null;
 
+  // Stable idempotency keys per bet slip. Same key is reused for retries
+  // of the same (market, selection, stake) so double-clicks or transport
+  // retries collapse into one prediction server-side.
+  const slipIdsRef = useRef<Map<string, { sig: string; id: string }>>(new Map());
+  const getSlipId = (key: string, sig: string) => {
+    const cur = slipIdsRef.current.get(key);
+    if (cur && cur.sig === sig) return cur.id;
+    const id = crypto.randomUUID();
+    slipIdsRef.current.set(key, { sig, id });
+    return id;
+  };
+  const clearSlipId = (key: string) => { slipIdsRef.current.delete(key); };
+
   const mut = useMutation({
     mutationFn: async (market: MarketKey) => {
       const pick = picks[market];
@@ -91,18 +104,20 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
       const n = Number(stakeVal);
       const err = stakeError(n);
       if (err) throw new Error(err);
+      const slipId = getSlipId(`single:${market}`, `${pick.selection}:${pick.odds}:${n}`);
       return place({
         data: {
           matchId,
           market,
           selection: pick.selection,
           stake: n,
-          clientRequestId: crypto.randomUUID(),
+          clientRequestId: slipId,
         },
       });
     },
     onSuccess: (_, market) => {
       toast.success("Bet placed");
+      clearSlipId(`single:${market}`);
       setPicks((prev) => ({ ...prev, [market]: null }));
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
@@ -119,18 +134,20 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
       const n = Number(stakeVal);
       const err = stakeError(n);
       if (err) throw new Error(err);
+      const slipId = getSlipId(`cs:${selection}`, `${odds}:${n}`);
       return place({
         data: {
           matchId,
           market: "correct_score",
           selection,
           stake: n,
-          clientRequestId: crypto.randomUUID(),
+          clientRequestId: slipId,
         },
       });
     },
     onSuccess: (_, selection) => {
       toast.success(`Bet placed on ${selectionLabel(selection)}`);
+      clearSlipId(`cs:${selection}`);
       setCsPicks((prev) => {
         const { [selection]: _omit, ...rest } = prev;
         return rest;
