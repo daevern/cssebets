@@ -631,27 +631,45 @@ export type Database = {
       platform_settings: {
         Row: {
           apply_margin_to_real: boolean
+          bets_paused: boolean
+          correct_score_disabled: boolean
+          disabled_markets: string[]
           exposure_cap_pct: number
+          high_odds_disabled: boolean
+          high_odds_threshold: number
           id: number
           margin_pct: number
+          max_bets_per_user_per_match: number
           max_potential_payout: number
           max_stake_per_bet: number
           updated_at: string
         }
         Insert: {
           apply_margin_to_real?: boolean
+          bets_paused?: boolean
+          correct_score_disabled?: boolean
+          disabled_markets?: string[]
           exposure_cap_pct?: number
+          high_odds_disabled?: boolean
+          high_odds_threshold?: number
           id?: number
           margin_pct?: number
+          max_bets_per_user_per_match?: number
           max_potential_payout?: number
           max_stake_per_bet?: number
           updated_at?: string
         }
         Update: {
           apply_margin_to_real?: boolean
+          bets_paused?: boolean
+          correct_score_disabled?: boolean
+          disabled_markets?: string[]
           exposure_cap_pct?: number
+          high_odds_disabled?: boolean
+          high_odds_threshold?: number
           id?: number
           margin_pct?: number
+          max_bets_per_user_per_match?: number
           max_potential_payout?: number
           max_stake_per_bet?: number
           updated_at?: string
@@ -889,6 +907,33 @@ export type Database = {
           phone_number?: string | null
           public_reference?: string
           suspended?: boolean
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          action: string
+          count: number
+          created_at: string
+          id: string
+          scope: string
+          window_start: string
+        }
+        Insert: {
+          action: string
+          count?: number
+          created_at?: string
+          id?: string
+          scope: string
+          window_start: string
+        }
+        Update: {
+          action?: string
+          count?: number
+          created_at?: string
+          id?: string
+          scope?: string
+          window_start?: string
         }
         Relationships: []
       }
@@ -1236,9 +1281,28 @@ export type Database = {
         }
         Returns: undefined
       }
+      assert_betting_allowed: {
+        Args: {
+          p_is_simulation?: boolean
+          p_market: string
+          p_match_id: string
+          p_odds: number
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       cancel_pending_bet: {
         Args: { p_prediction_id: string; p_user_id: string }
         Returns: string
+      }
+      check_rate_limit: {
+        Args: {
+          p_action: string
+          p_max: number
+          p_scope: string
+          p_window_seconds: number
+        }
+        Returns: boolean
       }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -1402,31 +1466,75 @@ export type Database = {
         Args: { p_reason: string; p_request_id: string; p_staff_id: string }
         Returns: undefined
       }
-      update_platform_settings: {
-        Args: {
-          p_admin_id: string
-          p_apply_margin_to_real: boolean
-          p_exposure_cap_pct: number
-          p_margin_pct: number
-          p_max_potential_payout: number
-          p_max_stake_per_bet: number
-        }
-        Returns: {
-          apply_margin_to_real: boolean
-          exposure_cap_pct: number
-          id: number
-          margin_pct: number
-          max_potential_payout: number
-          max_stake_per_bet: number
-          updated_at: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "platform_settings"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
+      update_platform_settings:
+        | {
+            Args: {
+              p_admin_id: string
+              p_apply_margin_to_real: boolean
+              p_exposure_cap_pct: number
+              p_margin_pct: number
+              p_max_potential_payout: number
+              p_max_stake_per_bet: number
+            }
+            Returns: {
+              apply_margin_to_real: boolean
+              bets_paused: boolean
+              correct_score_disabled: boolean
+              disabled_markets: string[]
+              exposure_cap_pct: number
+              high_odds_disabled: boolean
+              high_odds_threshold: number
+              id: number
+              margin_pct: number
+              max_bets_per_user_per_match: number
+              max_potential_payout: number
+              max_stake_per_bet: number
+              updated_at: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "platform_settings"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: {
+              p_admin_id: string
+              p_apply_margin_to_real: boolean
+              p_bets_paused?: boolean
+              p_correct_score_disabled?: boolean
+              p_disabled_markets?: string[]
+              p_exposure_cap_pct: number
+              p_high_odds_disabled?: boolean
+              p_high_odds_threshold?: number
+              p_margin_pct: number
+              p_max_bets_per_user_per_match?: number
+              p_max_potential_payout: number
+              p_max_stake_per_bet: number
+            }
+            Returns: {
+              apply_margin_to_real: boolean
+              bets_paused: boolean
+              correct_score_disabled: boolean
+              disabled_markets: string[]
+              exposure_cap_pct: number
+              high_odds_disabled: boolean
+              high_odds_threshold: number
+              id: number
+              margin_pct: number
+              max_bets_per_user_per_match: number
+              max_potential_payout: number
+              max_stake_per_bet: number
+              updated_at: string
+            }
+            SetofOptions: {
+              from: "*"
+              to: "platform_settings"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
       void_match_atomic: { Args: { p_match_id: string }; Returns: number }
       wallet_apply_change: {
         Args: {
