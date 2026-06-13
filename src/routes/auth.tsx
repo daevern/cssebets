@@ -39,6 +39,7 @@ function LoginPage() {
     setLoading(true);
     try {
       if (channel === "email") {
+        await checkAuthRateLimit({ data: { email } });
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
