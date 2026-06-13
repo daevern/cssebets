@@ -28,6 +28,7 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
   const matches = json.matches ?? [];
 
   let upserted = 0, live = 0, autoSettled = 0;
+  const settlementWarnings: string[] = [];
   for (const m of matches) {
     const status: "scheduled" | "live" | "finished" | "postponed" | "cancelled" =
       m.status === "FINISHED" ? "finished"
@@ -38,7 +39,7 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
     if (status === "live") live++;
 
     const { data: existing } = await supabaseAdmin
-      .from("matches").select("id, reference_odds").eq("external_id", String(m.id)).maybeSingle();
+      .from("matches").select("id, status, reference_odds").eq("external_id", String(m.id)).maybeSingle();
 
     const competition = m.competition?.name ?? null;
     const stageLabel = m.stage ? (competition ? `${competition} · ${m.stage}` : m.stage) : competition;
@@ -74,18 +75,43 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
 
     const matchId = upRow?.id ?? existing?.id;
     if (matchId && status === "finished" && homeScore !== null && awayScore !== null) {
-      autoSettled += await settlePredictionsForMatch(matchId, homeScore, awayScore, homeScoreHt, awayScoreHt);
+      const justFinished = existing?.status !== "finished";
+      const { data: pendingPrediction } = justFinished
+        ? { data: { id: "transition" } }
+        : await supabaseAdmin
+            .from("predictions")
+            .select("id")
+            .eq("match_id", matchId)
+            .eq("status", "pending")
+            .limit(1)
+            .maybeSingle();
+
+      if (pendingPrediction) {
+        try {
+          autoSettled += await settlePredictionsForMatch(matchId, homeScore, awayScore, homeScoreHt, awayScoreHt);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          settlementWarnings.push(`${payload.home_team} vs ${payload.away_team}: ${message}`);
+        }
+      }
     }
   }
 
   await supabaseAdmin.from("audit_log").insert({
     user_id: opts.userId ?? null, action: "matches.sync", entity: "matches", entity_id: null,
-    metadata: { upserted, total: matches.length, live, autoSettled },
+    metadata: { upserted, total: matches.length, live, autoSettled, settlementWarnings },
   });
 
   // Refresh real odds (throttled to once every 2h to stay within free tier).
   let odds: Awaited<ReturnType<typeof runOddsSync>> | null = null;
   try { odds = await runOddsSync(); } catch (e) { console.log("[odds] sync failed", e); }
 
-  return { upserted, total: matches.length, live, autoSettled, odds };
+  return {
+    upserted,
+    total: matches.length,
+    live,
+    autoSettled,
+    odds,
+    warning: settlementWarnings.length ? settlementWarnings.slice(0, 3).join("; ") : undefined,
+  };
 }
