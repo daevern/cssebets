@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.run_reconciliation_check() FROM PUBLIC, anon, authenticated;
