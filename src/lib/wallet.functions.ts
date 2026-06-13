@@ -83,6 +83,8 @@ export const attachProofToRequest = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => ProofSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    try { await enforceRateLimit(`user:${userId}`, "proof_upload"); }
+    catch (e) { if ((e as Error).message === "RATE_LIMITED") throw new Error("Too many requests. Please try again later."); throw e; }
     const { data: existing, error: e1 } = await supabase
       .from("point_requests")
       .select("id, user_id, status")
