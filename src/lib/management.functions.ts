@@ -553,6 +553,21 @@ export const staffSendMessage = createServerFn({ method: "POST" })
     const role = await getStaffRole(context.supabase, context.userId);
     if (!role) throw new Error("Staff only");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Customer support can only write into open or self-claimed conversations.
+    if (role === "customer_support") {
+      const { data: conv } = await supabaseAdmin
+        .from("support_conversations").select("status, claimed_by")
+        .eq("id", data.conversationId).maybeSingle();
+      if (!conv || (conv.status !== "open" && conv.claimed_by !== context.userId)) {
+        await audit(context.userId, role, "support_access_denied", {
+          target_type: "support_conversation", target_id: data.conversationId,
+          reason: "customer_support attempted to send into out-of-scope conversation",
+        });
+        throw new Error("Forbidden");
+      }
+    }
+
     const now = new Date().toISOString();
     const { error } = await supabaseAdmin.from("support_messages").insert({
       conversation_id: data.conversationId,
