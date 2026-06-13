@@ -1251,6 +1251,7 @@ export type Database = {
       generate_public_reference: { Args: never; Returns: string }
       get_simulation_outcome_analytics: { Args: never; Returns: Json }
       get_simulation_stress_metrics: { Args: never; Returns: Json }
+      market_odds_cap: { Args: { p_market: string }; Returns: number }
       move_to_dlq: {
         Args: {
           dlq_name: string
