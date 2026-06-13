@@ -1228,6 +1228,14 @@ export type Database = {
       }
     }
     Functions: {
+      adjust_correct_score_odds: {
+        Args: {
+          p_match_id: string
+          p_max_odds?: number
+          p_target_overround?: number
+        }
+        Returns: undefined
+      }
       cancel_pending_bet: {
         Args: { p_prediction_id: string; p_user_id: string }
         Returns: string
