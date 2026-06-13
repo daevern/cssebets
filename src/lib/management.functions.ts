@@ -465,11 +465,18 @@ export const staffListConversations = createServerFn({ method: "GET" })
     const role = await getStaffRole(context.supabase, context.userId);
     if (!role) throw new Error("Staff only");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: convs } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("support_conversations")
       .select("*")
       .order("last_message_at", { ascending: false, nullsFirst: false })
       .limit(200);
+
+    // Customer support can only see open conversations or ones they have personally claimed.
+    if (role === "customer_support") {
+      query = query.or(`status.eq.open,claimed_by.eq.${context.userId}`);
+    }
+
+    const { data: convs } = await query;
     if (!convs?.length) return { conversations: [] };
     const ids = convs.map((c: any) => c.user_id);
     const { data: profiles } = await supabaseAdmin
@@ -501,6 +508,17 @@ export const staffListMessages = createServerFn({ method: "POST" })
     const { data: conv } = await supabaseAdmin
       .from("support_conversations").select("*").eq("id", data.conversationId).maybeSingle();
     if (!conv) throw new Error("Not found");
+
+    // Enforce CS scope: open OR personally claimed.
+    if (role === "customer_support" && conv.status !== "open" && conv.claimed_by !== context.userId) {
+      await audit(context.userId, role, "support_access_denied", {
+        target_type: "support_conversation",
+        target_id: data.conversationId,
+        reason: "customer_support attempted to read out-of-scope conversation",
+      });
+      throw new Error("Forbidden");
+    }
+
     const { data: msgs } = await supabaseAdmin
       .from("support_messages").select("*")
       .eq("conversation_id", data.conversationId)
@@ -535,6 +553,21 @@ export const staffSendMessage = createServerFn({ method: "POST" })
     const role = await getStaffRole(context.supabase, context.userId);
     if (!role) throw new Error("Staff only");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Customer support can only write into open or self-claimed conversations.
+    if (role === "customer_support") {
+      const { data: conv } = await supabaseAdmin
+        .from("support_conversations").select("status, claimed_by")
+        .eq("id", data.conversationId).maybeSingle();
+      if (!conv || (conv.status !== "open" && conv.claimed_by !== context.userId)) {
+        await audit(context.userId, role, "support_access_denied", {
+          target_type: "support_conversation", target_id: data.conversationId,
+          reason: "customer_support attempted to send into out-of-scope conversation",
+        });
+        throw new Error("Forbidden");
+      }
+    }
+
     const now = new Date().toISOString();
     const { error } = await supabaseAdmin.from("support_messages").insert({
       conversation_id: data.conversationId,
@@ -735,5 +768,118 @@ export const staffListUsers = createServerFn({ method: "GET" })
         email: emailMap.get(p.id) ?? null,
         phoneNumber: phoneMap.get(p.id) ?? p.phone_number ?? null,
       })),
+    };
+  });
+
+// ============= CUSTOMER SUPPORT MASKED SEARCH =============
+// Allows customer_support (and admins) to look up a single user by
+// public_reference, email or phone. Returns masked PII. Logged in audit.
+
+function maskEmail(e: string | null | undefined): string | null {
+  if (!e) return null;
+  const [u, d] = e.split("@");
+  if (!u || !d) return e;
+  const head = u.slice(0, 1);
+  return `${head}${"*".repeat(Math.max(1, u.length - 1))}@${d}`;
+}
+function maskPhone(p: string | null | undefined): string | null {
+  if (!p) return null;
+  const digits = p.replace(/\D/g, "");
+  if (digits.length < 4) return "***";
+  return `***${digits.slice(-4)}`;
+}
+
+export const staffSearchUserMasked = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ q: z.string().trim().min(2).max(120) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const role = await getStaffRole(context.supabase, context.userId);
+    if (!role) throw new Error("Staff only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const q = data.q;
+    const isEmailish = q.includes("@");
+    const isPhoneish = /^[+\d\s\-()]{4,}$/.test(q);
+
+    let matchedUserId: string | null = null;
+    let matchedEmail: string | null = null;
+    let matchedPhone: string | null = null;
+
+    // Try by public_reference first
+    const { data: byRef } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, public_reference, phone_number")
+      .ilike("public_reference", q)
+      .maybeSingle();
+    let profile: any = byRef;
+
+    if (!profile && (isEmailish || isPhoneish)) {
+      // Fall back to auth admin lookup (page through first 1000 users)
+      try {
+        const { data: page } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const needle = q.toLowerCase();
+        for (const u of page?.users ?? []) {
+          if (
+            (u.email && u.email.toLowerCase() === needle) ||
+            (u.phone && u.phone.replace(/\D/g, "").endsWith(needle.replace(/\D/g, "")))
+          ) {
+            matchedUserId = u.id;
+            matchedEmail = u.email ?? null;
+            matchedPhone = u.phone ?? null;
+            break;
+          }
+        }
+      } catch { /* ignore */ }
+      if (matchedUserId) {
+        const { data: p } = await supabaseAdmin
+          .from("profiles").select("id, display_name, public_reference, phone_number")
+          .eq("id", matchedUserId).maybeSingle();
+        profile = p;
+      }
+    } else if (profile) {
+      try {
+        const { data: u } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+        matchedEmail = u?.user?.email ?? null;
+        matchedPhone = u?.user?.phone ?? null;
+      } catch { /* ignore */ }
+    }
+
+    await audit(context.userId, role, "support_user_search", {
+      target_type: "user",
+      target_id: profile?.id ?? null,
+      target_user_id: profile?.id ?? null,
+      reason: `query="${q}"`,
+      new_value: { found: !!profile },
+    });
+
+    if (!profile) return { found: false as const };
+
+    // Pending point requests count (in-scope for CS)
+    const { count: pendingRequests } = await supabaseAdmin
+      .from("point_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", profile.id)
+      .eq("status", "pending");
+
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", profile.id);
+    const userRoles = (roles ?? []).map((r: any) => r.role);
+    const status =
+      userRoles.includes("pending") ? "pending" :
+      userRoles.includes("rejected") ? "rejected" : "active";
+
+    return {
+      found: true as const,
+      user: {
+        id: profile.id,
+        display_name: profile.display_name ?? null,
+        public_reference: profile.public_reference ?? null,
+        status,
+        email_masked: maskEmail(matchedEmail),
+        phone_masked: maskPhone(matchedPhone ?? profile.phone_number),
+        pending_point_requests: pendingRequests ?? 0,
+      },
     };
   });

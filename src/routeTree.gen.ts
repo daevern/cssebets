@@ -39,6 +39,7 @@ import { Route as ManagementAdminTournamentRouteImport } from './routes/manageme
 import { Route as ManagementAdminSimulationRouteImport } from './routes/management/admin.simulation'
 import { Route as ManagementAdminSettingsRouteImport } from './routes/management/admin.settings'
 import { Route as ManagementAdminRiskSettingsRouteImport } from './routes/management/admin.risk-settings'
+import { Route as ManagementAdminReconciliationRouteImport } from './routes/management/admin.reconciliation'
 import { Route as ManagementAdminPredictionsRouteImport } from './routes/management/admin.predictions'
 import { Route as ManagementAdminPointsRouteImport } from './routes/management/admin.points'
 import { Route as ManagementAdminPayoutsRouteImport } from './routes/management/admin.payouts'
@@ -48,6 +49,7 @@ import { Route as ManagementAdminMatchPoolsRouteImport } from './routes/manageme
 import { Route as ManagementAdminBankrollRouteImport } from './routes/management/admin.bankroll'
 import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -205,6 +207,12 @@ const ManagementAdminRiskSettingsRoute =
     path: '/risk-settings',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminReconciliationRoute =
+  ManagementAdminReconciliationRouteImport.update({
+    id: '/reconciliation',
+    path: '/reconciliation',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminPredictionsRoute =
   ManagementAdminPredictionsRouteImport.update({
     id: '/predictions',
@@ -254,6 +262,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksReconciliationRoute =
+  ApiPublicHooksReconciliationRouteImport.update({
+    id: '/api/public/hooks/reconciliation',
+    path: '/api/public/hooks/reconciliation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -286,6 +300,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
+  '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
   '/management/admin/simulation': typeof ManagementAdminSimulationRoute
@@ -293,6 +308,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
@@ -325,6 +341,7 @@ export interface FileRoutesByTo {
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
+  '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
   '/management/admin/simulation': typeof ManagementAdminSimulationRoute
@@ -332,6 +349,7 @@ export interface FileRoutesByTo {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
@@ -367,6 +385,7 @@ export interface FileRoutesById {
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
+  '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
   '/management/admin/simulation': typeof ManagementAdminSimulationRoute
@@ -374,6 +393,7 @@ export interface FileRoutesById {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
@@ -409,6 +429,7 @@ export interface FileRouteTypes {
     | '/management/admin/payouts'
     | '/management/admin/points'
     | '/management/admin/predictions'
+    | '/management/admin/reconciliation'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
     | '/management/admin/simulation'
@@ -416,6 +437,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin/'
+    | '/api/public/hooks/reconciliation'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -448,6 +470,7 @@ export interface FileRouteTypes {
     | '/management/admin/payouts'
     | '/management/admin/points'
     | '/management/admin/predictions'
+    | '/management/admin/reconciliation'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
     | '/management/admin/simulation'
@@ -455,6 +478,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin'
+    | '/api/public/hooks/reconciliation'
     | '/lovable/email/queue/process'
   id:
     | '__root__'
@@ -489,6 +513,7 @@ export interface FileRouteTypes {
     | '/management/admin/payouts'
     | '/management/admin/points'
     | '/management/admin/predictions'
+    | '/management/admin/reconciliation'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
     | '/management/admin/simulation'
@@ -496,6 +521,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin/'
+    | '/api/public/hooks/reconciliation'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
@@ -505,6 +531,7 @@ export interface RootRouteChildren {
   ManagementRouteRoute: typeof ManagementRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   RegisterRoute: typeof RegisterRoute
+  ApiPublicHooksReconciliationRoute: typeof ApiPublicHooksReconciliationRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -720,6 +747,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminRiskSettingsRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/reconciliation': {
+      id: '/management/admin/reconciliation'
+      path: '/reconciliation'
+      fullPath: '/management/admin/reconciliation'
+      preLoaderRoute: typeof ManagementAdminReconciliationRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/predictions': {
       id: '/management/admin/predictions'
       path: '/predictions'
@@ -783,6 +817,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/reconciliation': {
+      id: '/api/public/hooks/reconciliation'
+      path: '/api/public/hooks/reconciliation'
+      fullPath: '/api/public/hooks/reconciliation'
+      preLoaderRoute: typeof ApiPublicHooksReconciliationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -822,6 +863,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminPayoutsRoute: typeof ManagementAdminPayoutsRoute
   ManagementAdminPointsRoute: typeof ManagementAdminPointsRoute
   ManagementAdminPredictionsRoute: typeof ManagementAdminPredictionsRoute
+  ManagementAdminReconciliationRoute: typeof ManagementAdminReconciliationRoute
   ManagementAdminRiskSettingsRoute: typeof ManagementAdminRiskSettingsRoute
   ManagementAdminSettingsRoute: typeof ManagementAdminSettingsRoute
   ManagementAdminSimulationRoute: typeof ManagementAdminSimulationRoute
@@ -840,6 +882,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminPayoutsRoute: ManagementAdminPayoutsRoute,
   ManagementAdminPointsRoute: ManagementAdminPointsRoute,
   ManagementAdminPredictionsRoute: ManagementAdminPredictionsRoute,
+  ManagementAdminReconciliationRoute: ManagementAdminReconciliationRoute,
   ManagementAdminRiskSettingsRoute: ManagementAdminRiskSettingsRoute,
   ManagementAdminSettingsRoute: ManagementAdminSettingsRoute,
   ManagementAdminSimulationRoute: ManagementAdminSimulationRoute,
@@ -887,18 +930,9 @@ const rootRouteChildren: RootRouteChildren = {
   ManagementRouteRoute: ManagementRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   RegisterRoute: RegisterRoute,
+  ApiPublicHooksReconciliationRoute: ApiPublicHooksReconciliationRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
