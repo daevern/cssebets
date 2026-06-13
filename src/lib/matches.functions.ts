@@ -16,12 +16,14 @@ export const getMatchOddsHistory = createServerFn({ method: "POST" })
   .inputValidator((input: { matchId: string }) => input)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { data: rows, error } = await supabaseAdmin
       .from("match_odds_snapshots")
       .select("id, sampled_at, home_odds, draw_odds, away_odds, source")
       .eq("match_id", data.matchId)
+      .gte("sampled_at", oneDayAgo)
       .order("sampled_at", { ascending: false })
-      .limit(50);
+      .limit(100);
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
