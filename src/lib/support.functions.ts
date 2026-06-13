@@ -62,6 +62,8 @@ export const sendMyMessage = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
+    try { await enforceRateLimit(`user:${context.userId}`, "support_message"); }
+    catch (e) { if ((e as Error).message === "RATE_LIMITED") throw new Error("Too many requests. Please try again later."); throw e; }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Ensure conversation
     let { data: conv } = await supabaseAdmin
