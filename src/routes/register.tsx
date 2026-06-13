@@ -77,6 +77,7 @@ function RegisterPage() {
       if (password.length < 8) throw new Error("Password must be at least 8 characters");
       if (password !== confirm) throw new Error("Passwords do not match");
       const syntheticEmail = phoneToSyntheticEmail(p);
+      await checkAuthRateLimit({ data: { phone: p } });
       const { error } = await supabase.auth.signUp({
         email: syntheticEmail,
         password,
