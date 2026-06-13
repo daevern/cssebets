@@ -70,6 +70,12 @@ function TournamentWinnerPage() {
       .catch(() => {});
   }, [refresh, qc]);
 
+  // Stable idempotency key per bet slip — see MatchCard for rationale.
+  const slipClientRequestId = useMemo(
+    () => crypto.randomUUID(),
+    [tournamentKey, pick, stake],
+  );
+
   const mut = useMutation({
     mutationFn: async () => {
       if (!pick) throw new Error("Pick a team");
@@ -82,7 +88,7 @@ function TournamentWinnerPage() {
           outcome: pick,
           referenceOdds: Number(row.odds),
           virtualStake: Number(stake),
-          clientRequestId: crypto.randomUUID(),
+          clientRequestId: slipClientRequestId,
         },
       });
 
