@@ -207,6 +207,12 @@ function MatchCard({ match }: { match: Match }) {
     enabled: open,
   });
 
+  const recentHistory = useMemo(() => {
+    if (!history.data) return [];
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    return history.data.filter((r: any) => new Date(r.sampled_at).getTime() >= oneDayAgo);
+  }, [history.data]);
+
   const mut = useMutation({
     mutationFn: async () => {
       if (!pick) throw new Error("Pick an outcome");
