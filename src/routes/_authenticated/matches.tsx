@@ -213,6 +213,10 @@ function MatchCard({ match }: { match: Match }) {
     return history.data.filter((r: any) => new Date(r.sampled_at).getTime() >= oneDayAgo);
   }, [history.data]);
 
+  // Stable idempotency key per bet slip: re-used while pick + stake are unchanged
+  // so a double-click or transport retry collapses into a single prediction.
+  const slipClientRequestId = useMemo(() => crypto.randomUUID(), [match.id, pick, stake]);
+
   const mut = useMutation({
     mutationFn: async () => {
       if (!pick) throw new Error("Pick an outcome");
@@ -221,7 +225,7 @@ function MatchCard({ match }: { match: Match }) {
         data: {
           matchId: match.id, market: "result", outcome: pick,
           referenceOdds: Number(ref), virtualStake: Number(stake),
-          clientRequestId: crypto.randomUUID(),
+          clientRequestId: slipClientRequestId,
         },
       });
     },
