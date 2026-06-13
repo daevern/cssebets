@@ -24,6 +24,13 @@ export const submitPrediction = createServerFn({ method: "POST" })
     const isMember = (roles ?? []).some((r) => r.role === "member" || r.role === "admin");
     if (!isMember) throw new Error("Your account isn't approved yet.");
 
+    try {
+      await enforceRateLimit(`user:${userId}`, "bet_placement");
+    } catch (e) {
+      if ((e as Error).message === "RATE_LIMITED") throw new Error("Too many requests. Please try again later.");
+      throw e;
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Server-side odds validation: never trust client-supplied odds.
