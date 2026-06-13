@@ -465,11 +465,18 @@ export const staffListConversations = createServerFn({ method: "GET" })
     const role = await getStaffRole(context.supabase, context.userId);
     if (!role) throw new Error("Staff only");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: convs } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("support_conversations")
       .select("*")
       .order("last_message_at", { ascending: false, nullsFirst: false })
       .limit(200);
+
+    // Customer support can only see open conversations or ones they have personally claimed.
+    if (role === "customer_support") {
+      query = query.or(`status.eq.open,claimed_by.eq.${context.userId}`);
+    }
+
+    const { data: convs } = await query;
     if (!convs?.length) return { conversations: [] };
     const ids = convs.map((c: any) => c.user_id);
     const { data: profiles } = await supabaseAdmin
@@ -501,6 +508,17 @@ export const staffListMessages = createServerFn({ method: "POST" })
     const { data: conv } = await supabaseAdmin
       .from("support_conversations").select("*").eq("id", data.conversationId).maybeSingle();
     if (!conv) throw new Error("Not found");
+
+    // Enforce CS scope: open OR personally claimed.
+    if (role === "customer_support" && conv.status !== "open" && conv.claimed_by !== context.userId) {
+      await audit(context.userId, role, "support_access_denied", {
+        target_type: "support_conversation",
+        target_id: data.conversationId,
+        reason: "customer_support attempted to read out-of-scope conversation",
+      });
+      throw new Error("Forbidden");
+    }
+
     const { data: msgs } = await supabaseAdmin
       .from("support_messages").select("*")
       .eq("conversation_id", data.conversationId)
