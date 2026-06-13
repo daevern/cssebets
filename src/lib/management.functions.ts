@@ -755,3 +755,116 @@ export const staffListUsers = createServerFn({ method: "GET" })
       })),
     };
   });
+
+// ============= CUSTOMER SUPPORT MASKED SEARCH =============
+// Allows customer_support (and admins) to look up a single user by
+// public_reference, email or phone. Returns masked PII. Logged in audit.
+
+function maskEmail(e: string | null | undefined): string | null {
+  if (!e) return null;
+  const [u, d] = e.split("@");
+  if (!u || !d) return e;
+  const head = u.slice(0, 1);
+  return `${head}${"*".repeat(Math.max(1, u.length - 1))}@${d}`;
+}
+function maskPhone(p: string | null | undefined): string | null {
+  if (!p) return null;
+  const digits = p.replace(/\D/g, "");
+  if (digits.length < 4) return "***";
+  return `***${digits.slice(-4)}`;
+}
+
+export const staffSearchUserMasked = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ q: z.string().trim().min(2).max(120) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const role = await getStaffRole(context.supabase, context.userId);
+    if (!role) throw new Error("Staff only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const q = data.q;
+    const isEmailish = q.includes("@");
+    const isPhoneish = /^[+\d\s\-()]{4,}$/.test(q);
+
+    let matchedUserId: string | null = null;
+    let matchedEmail: string | null = null;
+    let matchedPhone: string | null = null;
+
+    // Try by public_reference first
+    const { data: byRef } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, public_reference, phone_number")
+      .ilike("public_reference", q)
+      .maybeSingle();
+    let profile: any = byRef;
+
+    if (!profile && (isEmailish || isPhoneish)) {
+      // Fall back to auth admin lookup (page through first 1000 users)
+      try {
+        const { data: page } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+        const needle = q.toLowerCase();
+        for (const u of page?.users ?? []) {
+          if (
+            (u.email && u.email.toLowerCase() === needle) ||
+            (u.phone && u.phone.replace(/\D/g, "").endsWith(needle.replace(/\D/g, "")))
+          ) {
+            matchedUserId = u.id;
+            matchedEmail = u.email ?? null;
+            matchedPhone = u.phone ?? null;
+            break;
+          }
+        }
+      } catch { /* ignore */ }
+      if (matchedUserId) {
+        const { data: p } = await supabaseAdmin
+          .from("profiles").select("id, display_name, public_reference, phone_number")
+          .eq("id", matchedUserId).maybeSingle();
+        profile = p;
+      }
+    } else if (profile) {
+      try {
+        const { data: u } = await supabaseAdmin.auth.admin.getUserById(profile.id);
+        matchedEmail = u?.user?.email ?? null;
+        matchedPhone = u?.user?.phone ?? null;
+      } catch { /* ignore */ }
+    }
+
+    await audit(context.userId, role, "support_user_search", {
+      target_type: "user",
+      target_id: profile?.id ?? null,
+      target_user_id: profile?.id ?? null,
+      reason: `query="${q}"`,
+      new_value: { found: !!profile },
+    });
+
+    if (!profile) return { found: false as const };
+
+    // Pending point requests count (in-scope for CS)
+    const { count: pendingRequests } = await supabaseAdmin
+      .from("point_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", profile.id)
+      .eq("status", "pending");
+
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", profile.id);
+    const userRoles = (roles ?? []).map((r: any) => r.role);
+    const status =
+      userRoles.includes("pending") ? "pending" :
+      userRoles.includes("rejected") ? "rejected" : "active";
+
+    return {
+      found: true as const,
+      user: {
+        id: profile.id,
+        display_name: profile.display_name ?? null,
+        public_reference: profile.public_reference ?? null,
+        status,
+        email_masked: maskEmail(matchedEmail),
+        phone_masked: maskPhone(matchedPhone ?? profile.phone_number),
+        pending_point_requests: pendingRequests ?? 0,
+      },
+    };
+  });
