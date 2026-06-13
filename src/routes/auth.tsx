@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { checkAuthRateLimit } from "@/lib/rate-limit.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,11 +39,13 @@ function LoginPage() {
     setLoading(true);
     try {
       if (channel === "email") {
+        await checkAuthRateLimit({ data: { email } });
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       } else {
         const p = normalizePhone(phone);
         if (!isValidPhone(p)) throw new Error("Phone must be in international format, e.g. +60123456789");
+        await checkAuthRateLimit({ data: { phone: p } });
         const syntheticEmail = `${p.replace(/\D/g, "")}@phone.cssebets.local`;
         const { error } = await supabase.auth.signInWithPassword({ email: syntheticEmail, password });
         if (error) throw error;

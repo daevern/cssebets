@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { checkAuthRateLimit } from "@/lib/rate-limit.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +49,7 @@ function RegisterPage() {
     try {
       if (password.length < 8) throw new Error("Password must be at least 8 characters");
       if (password !== confirm) throw new Error("Passwords do not match");
+      await checkAuthRateLimit({ data: { email } });
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -75,6 +77,7 @@ function RegisterPage() {
       if (password.length < 8) throw new Error("Password must be at least 8 characters");
       if (password !== confirm) throw new Error("Passwords do not match");
       const syntheticEmail = phoneToSyntheticEmail(p);
+      await checkAuthRateLimit({ data: { phone: p } });
       const { error } = await supabase.auth.signUp({
         email: syntheticEmail,
         password,

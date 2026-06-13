@@ -9,6 +9,12 @@ export type PlatformSettings = {
   max_stake_per_bet: number;
   max_potential_payout: number;
   apply_margin_to_real: boolean;
+  bets_paused: boolean;
+  correct_score_disabled: boolean;
+  high_odds_disabled: boolean;
+  high_odds_threshold: number;
+  disabled_markets: string[];
+  max_bets_per_user_per_match: number;
   updated_at: string;
 };
 
@@ -30,6 +36,12 @@ const UpdateSchema = z.object({
   maxStakePerBet: z.number().min(0).max(10_000_000),
   maxPotentialPayout: z.number().min(0).max(100_000_000),
   applyMarginToReal: z.boolean(),
+  betsPaused: z.boolean().optional(),
+  correctScoreDisabled: z.boolean().optional(),
+  highOddsDisabled: z.boolean().optional(),
+  highOddsThreshold: z.number().min(1).max(1_000_000).optional(),
+  disabledMarkets: z.array(z.string().max(40)).max(20).optional(),
+  maxBetsPerUserPerMatch: z.number().int().min(0).max(1000).optional(),
 });
 
 export const updatePlatformSettings = createServerFn({ method: "POST" })
@@ -49,6 +61,12 @@ export const updatePlatformSettings = createServerFn({ method: "POST" })
       p_max_stake_per_bet: data.maxStakePerBet,
       p_max_potential_payout: data.maxPotentialPayout,
       p_apply_margin_to_real: data.applyMarginToReal,
+      p_bets_paused: data.betsPaused ?? null,
+      p_correct_score_disabled: data.correctScoreDisabled ?? null,
+      p_high_odds_disabled: data.highOddsDisabled ?? null,
+      p_high_odds_threshold: data.highOddsThreshold ?? null,
+      p_disabled_markets: data.disabledMarkets ?? null,
+      p_max_bets_per_user_per_match: data.maxBetsPerUserPerMatch ?? null,
     });
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("audit_log").insert({

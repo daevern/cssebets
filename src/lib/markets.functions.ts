@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { enforceRateLimit } from "@/lib/rate-limit.functions";
 
 const MARKET_KEYS = [
   "over_under_2_5",
@@ -84,6 +85,13 @@ export const placeMarketBet = createServerFn({ method: "POST" })
     const isMember = (roles ?? []).some((r) => r.role === "member" || r.role === "admin");
     if (!isMember) throw new Error("Your account isn't approved yet.");
 
+    try {
+      await enforceRateLimit(`user:${userId}`, "bet_placement");
+    } catch (e) {
+      if ((e as Error).message === "RATE_LIMITED") throw new Error("Too many requests. Please try again later.");
+      throw e;
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: predId, error } = await (supabaseAdmin as any).rpc("place_market_bet_atomic", {
       p_user_id: userId,
@@ -96,12 +104,22 @@ export const placeMarketBet = createServerFn({ method: "POST" })
 
     if (error) {
       const msg = error.message ?? "";
+      if (msg.includes("BETTING_PAUSED")) throw new Error("Bet placement is temporarily paused.");
+      if (msg.includes("MARKET_DISABLED")) throw new Error("This market is currently disabled.");
+      if (msg.includes("HIGH_ODDS_DISABLED")) throw new Error("High-odds markets are temporarily disabled.");
+      if (msg.includes("MAX_BETS_PER_MATCH")) throw new Error("You have reached the maximum bets allowed on this match.");
       if (msg.includes("MAX_PAYOUT_NOT_CONFIGURED")) throw new Error("Bet placement is disabled: platform payout limit is not configured. Please contact an admin.");
       if (msg.includes("INSUFFICIENT_BALANCE")) throw new Error("Insufficient points balance.");
       if (msg.includes("MATCH_LOCKED")) throw new Error("Match has kicked off — bets locked.");
       if (msg.includes("DUPLICATE_REQUEST")) throw new Error("Duplicate submit detected — please try again.");
       if (msg.includes("MAX_STAKE_EXCEEDED")) throw new Error("Stake exceeds per-bet maximum.");
-      if (msg.includes("MAX_PAYOUT_EXCEEDED")) throw new Error("Potential return exceeds platform limit.");
+      if (msg.includes("MAX_PAYOUT_EXCEEDED")) {
+        await supabaseAdmin.from("audit_log").insert({
+          user_id: userId, action: "high_payout_attempt_blocked", entity: "prediction", entity_id: null,
+          metadata: { market: data.market, selection: data.selection, stake: data.stake },
+        });
+        throw new Error("Potential return exceeds platform limit.");
+      }
       if (msg.includes("odds unavailable")) throw new Error("Odds unavailable for that selection.");
       throw new Error(msg || "Could not place bet.");
     }
