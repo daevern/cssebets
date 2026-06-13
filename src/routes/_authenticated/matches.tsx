@@ -327,8 +327,8 @@ function MatchCard({ match }: { match: Match }) {
           </div>
           {history.isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          ) : !history.data?.length ? (
-            <div className="text-xs text-muted-foreground">No odds snapshots recorded yet.</div>
+          ) : !recentHistory.length ? (
+            <div className="text-xs text-muted-foreground">No odds snapshots recorded in the last 24 hours.</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
@@ -341,7 +341,7 @@ function MatchCard({ match }: { match: Match }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {history.data.map((r: any) => (
+                  {recentHistory.map((r: any) => (
                     <tr key={r.id} className="border-t border-border/40">
                       <td className="py-1 pr-2 text-muted-foreground">{formatKickoffDate(r.sampled_at)}</td>
                       <td className="py-1 pr-2">{r.home_odds}</td>
