@@ -38,6 +38,13 @@ export const Route = createFileRoute("/management/admin")({
 type BadgeKey = "pendingPointRequests" | "pendingPayouts" | "pendingUsers";
 const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeKey?: BadgeKey }> = [
   { to: "/management/admin", label: "Overview", icon: LayoutDashboard, exact: true },
+  { to: "/management/admin/operations", label: "Operations", icon: Activity },
+  { to: "/management/admin/incidents", label: "Incidents", icon: GitBranch },
+  { to: "/management/admin/alerts", label: "Alerts", icon: Bell },
+  { to: "/management/admin/settlements", label: "Settlements", icon: ClipboardList },
+  { to: "/management/admin/health", label: "Health", icon: Stethoscope },
+  { to: "/management/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { to: "/management/admin/review", label: "Action review", icon: ScrollText },
   { to: "/management/admin/users", label: "Users", icon: Users, badgeKey: "pendingUsers" },
   { to: "/management/admin/points", label: "Point Requests", icon: Wallet, badgeKey: "pendingPointRequests" },
   { to: "/management/admin/payouts", label: "Payouts", icon: Banknote, badgeKey: "pendingPayouts" },
