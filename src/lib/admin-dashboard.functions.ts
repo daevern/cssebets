@@ -416,7 +416,6 @@ export const setUserSuspended = createServerFn({ method: "POST" })
     if (data.targetUserId === userId) throw new Error("You cannot suspend your own account.");
     await requireTier(supabase, userId, WRITE_TIERS);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await requireFreshReauth(supabaseAdmin, userId);
 
     // Block targeting other admins/super_admins (only super_admin may suspend admins)
     const { data: targetRoles } = await supabaseAdmin

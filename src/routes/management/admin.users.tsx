@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -166,7 +166,13 @@ function UserDrawer({
     onError: (e: Error) => toast.error(e.message),
   });
   const suspend = useMutation({
-    mutationFn: (suspended: boolean) => suspendFn({ data: { targetUserId: userId, suspended, reason } }),
+    mutationFn: (suspended: boolean) => suspendFn({
+      data: {
+        targetUserId: userId,
+        suspended,
+        reason: reason.trim() || (suspended ? "Admin account suspension" : "Admin account unsuspension"),
+      },
+    }),
     onSuccess: () => { toast.success("Status updated"); invalidate(); },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -190,6 +196,7 @@ function UserDrawer({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>User · {d?.profile?.display_name ?? "…"}</DialogTitle>
+          <DialogDescription>Suspending or unsuspending an account requires a reason and admin privileges.</DialogDescription>
         </DialogHeader>
         {detail.isLoading || !d ? (
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -247,14 +254,14 @@ function UserDrawer({
               <div className="flex gap-2">
                 <Button
                   variant="destructive"
-                  disabled={!canWrite || !reason || d.profile?.suspended || suspend.isPending}
+                  disabled={!canWrite || d.profile?.suspended || suspend.isPending}
                   onClick={() => suspend.mutate(true)}
                 >
                   Suspend
                 </Button>
                 <Button
                   variant="outline"
-                  disabled={!canWrite || !reason || !d.profile?.suspended || suspend.isPending}
+                  disabled={!canWrite || !d.profile?.suspended || suspend.isPending}
                   onClick={() => suspend.mutate(false)}
                 >
                   Unsuspend
