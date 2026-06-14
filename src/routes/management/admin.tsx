@@ -17,7 +17,12 @@ import {
   Wallet,
   Banknote,
   TrendingUp,
-  
+  Activity,
+  Bell,
+  Stethoscope,
+  ClipboardList,
+  BarChart3,
+  GitBranch,
   Menu,
   X,
 } from "lucide-react";
