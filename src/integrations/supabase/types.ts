@@ -750,14 +750,18 @@ export type Database = {
       }
       platform_settings: {
         Row: {
+          admin_alert_emails: string[]
+          alert_suppression_window_minutes: number
           apply_margin_to_real: boolean
           bets_paused: boolean
           correct_score_disabled: boolean
+          critical_alert_email_enabled: boolean
           disabled_markets: string[]
           exposure_cap_pct: number
           high_odds_disabled: boolean
           high_odds_threshold: number
           id: number
+          last_alert_sent_at: string | null
           margin_pct: number
           max_bets_per_user_per_match: number
           max_potential_payout: number
@@ -765,14 +769,18 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          admin_alert_emails?: string[]
+          alert_suppression_window_minutes?: number
           apply_margin_to_real?: boolean
           bets_paused?: boolean
           correct_score_disabled?: boolean
+          critical_alert_email_enabled?: boolean
           disabled_markets?: string[]
           exposure_cap_pct?: number
           high_odds_disabled?: boolean
           high_odds_threshold?: number
           id?: number
+          last_alert_sent_at?: string | null
           margin_pct?: number
           max_bets_per_user_per_match?: number
           max_potential_payout?: number
@@ -780,14 +788,18 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          admin_alert_emails?: string[]
+          alert_suppression_window_minutes?: number
           apply_margin_to_real?: boolean
           bets_paused?: boolean
           correct_score_disabled?: boolean
+          critical_alert_email_enabled?: boolean
           disabled_markets?: string[]
           exposure_cap_pct?: number
           high_odds_disabled?: boolean
           high_odds_threshold?: number
           id?: number
+          last_alert_sent_at?: string | null
           margin_pct?: number
           max_bets_per_user_per_match?: number
           max_potential_payout?: number
@@ -1601,14 +1613,18 @@ export type Database = {
               p_max_stake_per_bet: number
             }
             Returns: {
+              admin_alert_emails: string[]
+              alert_suppression_window_minutes: number
               apply_margin_to_real: boolean
               bets_paused: boolean
               correct_score_disabled: boolean
+              critical_alert_email_enabled: boolean
               disabled_markets: string[]
               exposure_cap_pct: number
               high_odds_disabled: boolean
               high_odds_threshold: number
               id: number
+              last_alert_sent_at: string | null
               margin_pct: number
               max_bets_per_user_per_match: number
               max_potential_payout: number
@@ -1638,14 +1654,18 @@ export type Database = {
               p_max_stake_per_bet: number
             }
             Returns: {
+              admin_alert_emails: string[]
+              alert_suppression_window_minutes: number
               apply_margin_to_real: boolean
               bets_paused: boolean
               correct_score_disabled: boolean
+              critical_alert_email_enabled: boolean
               disabled_markets: string[]
               exposure_cap_pct: number
               high_odds_disabled: boolean
               high_odds_threshold: number
               id: number
+              last_alert_sent_at: string | null
               margin_pct: number
               max_bets_per_user_per_match: number
               max_potential_payout: number
