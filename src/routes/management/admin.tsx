@@ -42,6 +42,7 @@ const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeK
   { to: "/management/admin/incidents", label: "Incidents", icon: GitBranch },
   { to: "/management/admin/alerts", label: "Alerts", icon: Bell },
   { to: "/management/admin/settlements", label: "Settlements", icon: ClipboardList },
+  { to: "/management/admin/support-ops", label: "Support ops", icon: Activity },
   { to: "/management/admin/health", label: "Health", icon: Stethoscope },
   { to: "/management/admin/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/management/admin/review", label: "Action review", icon: ScrollText },
