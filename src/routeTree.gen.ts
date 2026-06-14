@@ -37,19 +37,27 @@ import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/manage
 import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
 import { Route as ManagementAdminTournamentRouteImport } from './routes/management/admin.tournament'
 import { Route as ManagementAdminSimulationRouteImport } from './routes/management/admin.simulation'
+import { Route as ManagementAdminSettlementsRouteImport } from './routes/management/admin.settlements'
 import { Route as ManagementAdminSettingsRouteImport } from './routes/management/admin.settings'
 import { Route as ManagementAdminRiskSettingsRouteImport } from './routes/management/admin.risk-settings'
+import { Route as ManagementAdminReviewRouteImport } from './routes/management/admin.review'
 import { Route as ManagementAdminReconciliationRouteImport } from './routes/management/admin.reconciliation'
 import { Route as ManagementAdminPredictionsRouteImport } from './routes/management/admin.predictions'
 import { Route as ManagementAdminPointsRouteImport } from './routes/management/admin.points'
 import { Route as ManagementAdminPayoutsRouteImport } from './routes/management/admin.payouts'
+import { Route as ManagementAdminOperationsRouteImport } from './routes/management/admin.operations'
 import { Route as ManagementAdminOddsHistoryRouteImport } from './routes/management/admin.odds-history'
 import { Route as ManagementAdminMatchesRouteImport } from './routes/management/admin.matches'
 import { Route as ManagementAdminMatchPoolsRouteImport } from './routes/management/admin.match-pools'
+import { Route as ManagementAdminIncidentsRouteImport } from './routes/management/admin.incidents'
+import { Route as ManagementAdminHealthRouteImport } from './routes/management/admin.health'
 import { Route as ManagementAdminBankrollRouteImport } from './routes/management/admin.bankroll'
 import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
+import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
+import { Route as ManagementAdminAlertsRouteImport } from './routes/management/admin.alerts'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
+import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -196,6 +204,12 @@ const ManagementAdminSimulationRoute =
     path: '/simulation',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminSettlementsRoute =
+  ManagementAdminSettlementsRouteImport.update({
+    id: '/settlements',
+    path: '/settlements',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminSettingsRoute = ManagementAdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -207,6 +221,11 @@ const ManagementAdminRiskSettingsRoute =
     path: '/risk-settings',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminReviewRoute = ManagementAdminReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
 const ManagementAdminReconciliationRoute =
   ManagementAdminReconciliationRouteImport.update({
     id: '/reconciliation',
@@ -229,6 +248,12 @@ const ManagementAdminPayoutsRoute = ManagementAdminPayoutsRouteImport.update({
   path: '/payouts',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
+const ManagementAdminOperationsRoute =
+  ManagementAdminOperationsRouteImport.update({
+    id: '/operations',
+    path: '/operations',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminOddsHistoryRoute =
   ManagementAdminOddsHistoryRouteImport.update({
     id: '/odds-history',
@@ -246,6 +271,17 @@ const ManagementAdminMatchPoolsRoute =
     path: '/match-pools',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminIncidentsRoute =
+  ManagementAdminIncidentsRouteImport.update({
+    id: '/incidents',
+    path: '/incidents',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminHealthRoute = ManagementAdminHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
 const ManagementAdminBankrollRoute = ManagementAdminBankrollRouteImport.update({
   id: '/bankroll',
   path: '/bankroll',
@@ -254,6 +290,17 @@ const ManagementAdminBankrollRoute = ManagementAdminBankrollRouteImport.update({
 const ManagementAdminAuditRoute = ManagementAdminAuditRouteImport.update({
   id: '/audit',
   path: '/audit',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminAnalyticsRoute =
+  ManagementAdminAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminAlertsRoute = ManagementAdminAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
 const LovableEmailQueueProcessRoute =
@@ -266,6 +313,12 @@ const ApiPublicHooksReconciliationRoute =
   ApiPublicHooksReconciliationRouteImport.update({
     id: '/api/public/hooks/reconciliation',
     path: '/api/public/hooks/reconciliation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksHealthCheckRoute =
+  ApiPublicHooksHealthCheckRouteImport.update({
+    id: '/api/public/hooks/health-check',
+    path: '/api/public/hooks/health-check',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -292,22 +345,30 @@ export interface FileRoutesByFullPath {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/management/admin/alerts': typeof ManagementAdminAlertsRoute
+  '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/health': typeof ManagementAdminHealthRoute
+  '/management/admin/incidents': typeof ManagementAdminIncidentsRoute
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
+  '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
+  '/management/admin/settlements': typeof ManagementAdminSettlementsRoute
   '/management/admin/simulation': typeof ManagementAdminSimulationRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -333,22 +394,30 @@ export interface FileRoutesByTo {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/management/admin/alerts': typeof ManagementAdminAlertsRoute
+  '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/health': typeof ManagementAdminHealthRoute
+  '/management/admin/incidents': typeof ManagementAdminIncidentsRoute
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
+  '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
+  '/management/admin/settlements': typeof ManagementAdminSettlementsRoute
   '/management/admin/simulation': typeof ManagementAdminSimulationRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -377,22 +446,30 @@ export interface FileRoutesById {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/management/admin/alerts': typeof ManagementAdminAlertsRoute
+  '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/health': typeof ManagementAdminHealthRoute
+  '/management/admin/incidents': typeof ManagementAdminIncidentsRoute
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
+  '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
+  '/management/admin/settlements': typeof ManagementAdminSettlementsRoute
   '/management/admin/simulation': typeof ManagementAdminSimulationRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
@@ -421,22 +498,30 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/management/admin/alerts'
+    | '/management/admin/analytics'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
+    | '/management/admin/health'
+    | '/management/admin/incidents'
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
+    | '/management/admin/operations'
     | '/management/admin/payouts'
     | '/management/admin/points'
     | '/management/admin/predictions'
     | '/management/admin/reconciliation'
+    | '/management/admin/review'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
+    | '/management/admin/settlements'
     | '/management/admin/simulation'
     | '/management/admin/tournament'
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin/'
+    | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
@@ -462,22 +547,30 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/management/admin/alerts'
+    | '/management/admin/analytics'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
+    | '/management/admin/health'
+    | '/management/admin/incidents'
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
+    | '/management/admin/operations'
     | '/management/admin/payouts'
     | '/management/admin/points'
     | '/management/admin/predictions'
     | '/management/admin/reconciliation'
+    | '/management/admin/review'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
+    | '/management/admin/settlements'
     | '/management/admin/simulation'
     | '/management/admin/tournament'
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin'
+    | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
     | '/lovable/email/queue/process'
   id:
@@ -505,22 +598,30 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/management/admin/alerts'
+    | '/management/admin/analytics'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
+    | '/management/admin/health'
+    | '/management/admin/incidents'
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
+    | '/management/admin/operations'
     | '/management/admin/payouts'
     | '/management/admin/points'
     | '/management/admin/predictions'
     | '/management/admin/reconciliation'
+    | '/management/admin/review'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
+    | '/management/admin/settlements'
     | '/management/admin/simulation'
     | '/management/admin/tournament'
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin/'
+    | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
@@ -531,6 +632,7 @@ export interface RootRouteChildren {
   ManagementRouteRoute: typeof ManagementRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   RegisterRoute: typeof RegisterRoute
+  ApiPublicHooksHealthCheckRoute: typeof ApiPublicHooksHealthCheckRoute
   ApiPublicHooksReconciliationRoute: typeof ApiPublicHooksReconciliationRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
@@ -733,6 +835,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminSimulationRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/settlements': {
+      id: '/management/admin/settlements'
+      path: '/settlements'
+      fullPath: '/management/admin/settlements'
+      preLoaderRoute: typeof ManagementAdminSettlementsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/settings': {
       id: '/management/admin/settings'
       path: '/settings'
@@ -745,6 +854,13 @@ declare module '@tanstack/react-router' {
       path: '/risk-settings'
       fullPath: '/management/admin/risk-settings'
       preLoaderRoute: typeof ManagementAdminRiskSettingsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/review': {
+      id: '/management/admin/review'
+      path: '/review'
+      fullPath: '/management/admin/review'
+      preLoaderRoute: typeof ManagementAdminReviewRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
     '/management/admin/reconciliation': {
@@ -775,6 +891,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminPayoutsRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/operations': {
+      id: '/management/admin/operations'
+      path: '/operations'
+      fullPath: '/management/admin/operations'
+      preLoaderRoute: typeof ManagementAdminOperationsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/odds-history': {
       id: '/management/admin/odds-history'
       path: '/odds-history'
@@ -796,6 +919,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminMatchPoolsRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/incidents': {
+      id: '/management/admin/incidents'
+      path: '/incidents'
+      fullPath: '/management/admin/incidents'
+      preLoaderRoute: typeof ManagementAdminIncidentsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/health': {
+      id: '/management/admin/health'
+      path: '/health'
+      fullPath: '/management/admin/health'
+      preLoaderRoute: typeof ManagementAdminHealthRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/bankroll': {
       id: '/management/admin/bankroll'
       path: '/bankroll'
@@ -810,6 +947,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminAuditRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/analytics': {
+      id: '/management/admin/analytics'
+      path: '/analytics'
+      fullPath: '/management/admin/analytics'
+      preLoaderRoute: typeof ManagementAdminAnalyticsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/alerts': {
+      id: '/management/admin/alerts'
+      path: '/alerts'
+      fullPath: '/management/admin/alerts'
+      preLoaderRoute: typeof ManagementAdminAlertsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
@@ -822,6 +973,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/reconciliation'
       fullPath: '/api/public/hooks/reconciliation'
       preLoaderRoute: typeof ApiPublicHooksReconciliationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/health-check': {
+      id: '/api/public/hooks/health-check'
+      path: '/api/public/hooks/health-check'
+      fullPath: '/api/public/hooks/health-check'
+      preLoaderRoute: typeof ApiPublicHooksHealthCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -855,17 +1013,24 @@ const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface ManagementAdminRouteChildren {
+  ManagementAdminAlertsRoute: typeof ManagementAdminAlertsRoute
+  ManagementAdminAnalyticsRoute: typeof ManagementAdminAnalyticsRoute
   ManagementAdminAuditRoute: typeof ManagementAdminAuditRoute
   ManagementAdminBankrollRoute: typeof ManagementAdminBankrollRoute
+  ManagementAdminHealthRoute: typeof ManagementAdminHealthRoute
+  ManagementAdminIncidentsRoute: typeof ManagementAdminIncidentsRoute
   ManagementAdminMatchPoolsRoute: typeof ManagementAdminMatchPoolsRoute
   ManagementAdminMatchesRoute: typeof ManagementAdminMatchesRoute
   ManagementAdminOddsHistoryRoute: typeof ManagementAdminOddsHistoryRoute
+  ManagementAdminOperationsRoute: typeof ManagementAdminOperationsRoute
   ManagementAdminPayoutsRoute: typeof ManagementAdminPayoutsRoute
   ManagementAdminPointsRoute: typeof ManagementAdminPointsRoute
   ManagementAdminPredictionsRoute: typeof ManagementAdminPredictionsRoute
   ManagementAdminReconciliationRoute: typeof ManagementAdminReconciliationRoute
+  ManagementAdminReviewRoute: typeof ManagementAdminReviewRoute
   ManagementAdminRiskSettingsRoute: typeof ManagementAdminRiskSettingsRoute
   ManagementAdminSettingsRoute: typeof ManagementAdminSettingsRoute
+  ManagementAdminSettlementsRoute: typeof ManagementAdminSettlementsRoute
   ManagementAdminSimulationRoute: typeof ManagementAdminSimulationRoute
   ManagementAdminTournamentRoute: typeof ManagementAdminTournamentRoute
   ManagementAdminUsersRoute: typeof ManagementAdminUsersRoute
@@ -874,17 +1039,24 @@ interface ManagementAdminRouteChildren {
 }
 
 const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
+  ManagementAdminAlertsRoute: ManagementAdminAlertsRoute,
+  ManagementAdminAnalyticsRoute: ManagementAdminAnalyticsRoute,
   ManagementAdminAuditRoute: ManagementAdminAuditRoute,
   ManagementAdminBankrollRoute: ManagementAdminBankrollRoute,
+  ManagementAdminHealthRoute: ManagementAdminHealthRoute,
+  ManagementAdminIncidentsRoute: ManagementAdminIncidentsRoute,
   ManagementAdminMatchPoolsRoute: ManagementAdminMatchPoolsRoute,
   ManagementAdminMatchesRoute: ManagementAdminMatchesRoute,
   ManagementAdminOddsHistoryRoute: ManagementAdminOddsHistoryRoute,
+  ManagementAdminOperationsRoute: ManagementAdminOperationsRoute,
   ManagementAdminPayoutsRoute: ManagementAdminPayoutsRoute,
   ManagementAdminPointsRoute: ManagementAdminPointsRoute,
   ManagementAdminPredictionsRoute: ManagementAdminPredictionsRoute,
   ManagementAdminReconciliationRoute: ManagementAdminReconciliationRoute,
+  ManagementAdminReviewRoute: ManagementAdminReviewRoute,
   ManagementAdminRiskSettingsRoute: ManagementAdminRiskSettingsRoute,
   ManagementAdminSettingsRoute: ManagementAdminSettingsRoute,
+  ManagementAdminSettlementsRoute: ManagementAdminSettlementsRoute,
   ManagementAdminSimulationRoute: ManagementAdminSimulationRoute,
   ManagementAdminTournamentRoute: ManagementAdminTournamentRoute,
   ManagementAdminUsersRoute: ManagementAdminUsersRoute,
@@ -930,19 +1102,10 @@ const rootRouteChildren: RootRouteChildren = {
   ManagementRouteRoute: ManagementRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   RegisterRoute: RegisterRoute,
+  ApiPublicHooksHealthCheckRoute: ApiPublicHooksHealthCheckRoute,
   ApiPublicHooksReconciliationRoute: ApiPublicHooksReconciliationRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
