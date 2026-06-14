@@ -531,3 +531,131 @@ export const runHealthChecksNow = createServerFn({ method: "POST" })
     const { runHealthChecks } = await import("@/lib/health-checks.server");
     return runHealthChecks();
   });
+
+// =========================================================================
+// SUPPORT OPERATIONS DASHBOARD
+// =========================================================================
+
+export const getSupportOps = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({
+    days: z.number().int().min(1).max(90).default(30),
+  }).parse(i ?? {}))
+  .handler(async ({ data, context }) => {
+    await requireTier(context.supabase, context.userId, READ_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const since = new Date(Date.now() - data.days * 24 * 3600 * 1000).toISOString();
+
+    const [open, unassigned, assigned, closed, convs, msgs, auditRows, staff] =
+      await Promise.all([
+        supabaseAdmin.from("support_conversations").select("id", { count: "exact", head: true }).eq("status", "open"),
+        supabaseAdmin.from("support_conversations").select("id", { count: "exact", head: true }).eq("status", "open").is("claimed_by", null),
+        supabaseAdmin.from("support_conversations").select("id", { count: "exact", head: true }).eq("status", "open").not("claimed_by", "is", null),
+        supabaseAdmin.from("support_conversations").select("id", { count: "exact", head: true }).eq("status", "closed").gte("updated_at", since),
+        supabaseAdmin.from("support_conversations")
+          .select("id, claimed_by, status, created_at, updated_at, last_user_message_at, last_staff_message_at")
+          .gte("created_at", since).limit(2000),
+        supabaseAdmin.from("support_messages")
+          .select("conversation_id, sender_role, created_at")
+          .gte("created_at", since).order("created_at", { ascending: true }).limit(5000),
+        supabaseAdmin.from("support_audit_logs")
+          .select("actor_id, action_type, created_at")
+          .gte("created_at", since).limit(5000),
+        supabaseAdmin.from("user_roles").select("user_id, role")
+          .in("role", ["customer_support", "admin", "super_admin"]),
+      ]);
+
+    const firstUser = new Map<string, number>();
+    const firstStaff = new Map<string, number>();
+    for (const m of (msgs.data ?? []) as any[]) {
+      const t = new Date(m.created_at).getTime();
+      if (m.sender_role === "user" && !firstUser.has(m.conversation_id)) firstUser.set(m.conversation_id, t);
+      if (m.sender_role === "staff" && !firstStaff.has(m.conversation_id)) firstStaff.set(m.conversation_id, t);
+    }
+    const frDeltas: number[] = [];
+    for (const [cid, u] of firstUser.entries()) {
+      const s = firstStaff.get(cid);
+      if (s && s >= u) frDeltas.push((s - u) / 60000);
+    }
+    const avgFirstResponseMin = frDeltas.length ? frDeltas.reduce((a, b) => a + b, 0) / frDeltas.length : 0;
+
+    const resDeltas: number[] = [];
+    for (const c of (convs.data ?? []) as any[]) {
+      if (c.status === "closed") {
+        const d = (new Date(c.updated_at).getTime() - new Date(c.created_at).getTime()) / 3600000;
+        if (d >= 0) resDeltas.push(d);
+      }
+    }
+    const avgResolutionHr = resDeltas.length ? resDeltas.reduce((a, b) => a + b, 0) / resDeltas.length : 0;
+
+    const staffIds = new Set<string>();
+    for (const r of (staff.data ?? []) as any[]) staffIds.add(r.user_id);
+    const ticketsPerStaff = new Map<string, number>();
+    for (const c of (convs.data ?? []) as any[]) {
+      if (!c.claimed_by) continue;
+      ticketsPerStaff.set(c.claimed_by, (ticketsPerStaff.get(c.claimed_by) ?? 0) + 1);
+    }
+    const KIND: Record<string, string[]> = {
+      approvals: ["approve_point_request", "approve_registration"],
+      rejections: ["reject_point_request"],
+      proof_views: ["proof_viewed"],
+      conversations_closed: ["support_conversation_closed"],
+      messages_sent: ["support_message_sent"],
+    };
+    const activity = new Map<string, Record<string, number>>();
+    for (const r of (auditRows.data ?? []) as any[]) {
+      if (!r.actor_id) continue;
+      const row = activity.get(r.actor_id) ?? { approvals: 0, rejections: 0, proof_views: 0, conversations_closed: 0, messages_sent: 0 };
+      for (const [k, list] of Object.entries(KIND)) {
+        if (list.includes(r.action_type)) row[k] = (row[k] ?? 0) + 1;
+      }
+      activity.set(r.actor_id, row);
+    }
+    const allIds = Array.from(new Set<string>([...staffIds, ...ticketsPerStaff.keys(), ...activity.keys()]));
+    const { data: profiles } = allIds.length
+      ? await supabaseAdmin.from("profiles").select("id, display_name").in("id", allIds)
+      : { data: [] as any[] };
+    const profById = new Map<string, any>((profiles ?? []).map((p: any) => [p.id, p]));
+    const roleById = new Map<string, string>();
+    for (const r of (staff.data ?? []) as any[]) {
+      const cur = roleById.get(r.user_id);
+      // prioritise higher roles
+      const rank: any = { super_admin: 3, admin: 2, customer_support: 1 };
+      if (!cur || (rank[r.role] ?? 0) > (rank[cur] ?? 0)) roleById.set(r.user_id, r.role);
+    }
+
+    const perStaff = allIds.map((uid) => {
+      const a = activity.get(uid) ?? { approvals: 0, rejections: 0, proof_views: 0, conversations_closed: 0, messages_sent: 0 };
+      return {
+        user_id: uid,
+        name: profById.get(uid)?.display_name ?? uid.slice(0, 8),
+        role: roleById.get(uid) ?? "staff",
+        tickets_assigned: ticketsPerStaff.get(uid) ?? 0,
+        approvals: a.approvals ?? 0,
+        rejections: a.rejections ?? 0,
+        proof_views: a.proof_views ?? 0,
+        conversations_closed: a.conversations_closed ?? 0,
+        messages_sent: a.messages_sent ?? 0,
+      };
+    }).sort((a, b) =>
+      (b.tickets_assigned + b.approvals + b.rejections + b.messages_sent) -
+      (a.tickets_assigned + a.approvals + a.rejections + a.messages_sent)
+    );
+
+    return {
+      range_days: data.days,
+      tickets: {
+        open: open.count ?? 0,
+        unassigned: unassigned.count ?? 0,
+        assigned: assigned.count ?? 0,
+        closed: closed.count ?? 0,
+      },
+      timings: {
+        avg_first_response_min: Math.round(avgFirstResponseMin * 10) / 10,
+        avg_resolution_hr: Math.round(avgResolutionHr * 10) / 10,
+        sample_first_response: frDeltas.length,
+        sample_resolution: resDeltas.length,
+      },
+      per_staff: perStaff,
+    };
+  });
