@@ -300,12 +300,13 @@ export const generateAlerts = createServerFn({ method: "POST" })
     const sinceDay = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
     const [failedSettle, payoutSpike, pointSpike, rateSpike, bankroll, settings, drift, support] =
       await Promise.all([
-        supabaseAdmin
-          .from("predictions")
-          .select("id", { count: "exact", head: true })
-          .eq("status", "pending").eq("matches.status", "finished" as any)
-          // fall back without join filter — use simple check below
-          .limit(1).then((r: any) => r).catch(() => ({ count: 0 })),
+        (async () => {
+          const { count } = await supabaseAdmin
+            .from("predictions")
+            .select("id, matches!inner(status)", { count: "exact", head: true })
+            .eq("status", "pending").eq("matches.status", "finished" as any);
+          return { count: count ?? 0 };
+        })(),
         supabaseAdmin.from("payout_requests").select("id", { count: "exact", head: true })
           .eq("status", "pending").gte("created_at", sinceDay),
         supabaseAdmin.from("point_requests").select("id", { count: "exact", head: true })
