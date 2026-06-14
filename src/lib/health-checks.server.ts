@@ -6,7 +6,7 @@ type CheckResult = {
   status: "ok" | "degraded" | "failed";
   duration_ms: number;
   error?: string | null;
-  metadata?: Record<string, unknown>;
+  metadata?: any;
 };
 
 async function timed(name: string, fn: () => Promise<Omit<CheckResult, "name" | "duration_ms">>): Promise<CheckResult> {
