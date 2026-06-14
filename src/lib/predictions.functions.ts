@@ -45,33 +45,26 @@ export const submitPrediction = createServerFn({ method: "POST" })
         .eq("id", data.matchId)
         .maybeSingle();
 
-      const refOdds = (match as any)?.reference_odds as Record<string, number> | null;
+      const refOdds = (match as any)?.reference_odds as Record<string, any> | null;
+      if (!refOdds) throw new Error("Odds for this market are not available.");
 
-      if (data.market === "result" && refOdds) {
+      if (data.market === "result") {
         const key = data.outcome === "HOME" ? "home" : data.outcome === "DRAW" ? "draw" : data.outcome === "AWAY" ? "away" : null;
         const serverOdds = key ? Number(refOdds[key]) : null;
         if (!serverOdds || !Number.isFinite(serverOdds) || serverOdds < 1) {
           throw new Error("Odds for this market are not available.");
         }
-        // Allow ±5% drift from server reference
         const drift = Math.abs(data.referenceOdds - serverOdds) / serverOdds;
-        if (drift > 0.05) {
-          throw new Error("Odds have changed. Please refresh and try again.");
-        }
+        if (drift > 0.05) throw new Error("Odds have changed. Please refresh and try again.");
         trustedOdds = serverOdds;
-      } else if (data.market !== "result") {
-        // For non-result markets, fall back to the stored snapshot value if present;
-        // otherwise reject to avoid arbitrary client odds.
-        const marketOdds = refOdds && typeof refOdds === "object" ? (refOdds as any)[data.market]?.[data.outcome] : null;
-        if (typeof marketOdds === "number" && marketOdds >= 1) {
-          const drift = Math.abs(data.referenceOdds - marketOdds) / marketOdds;
-          if (drift > 0.05) throw new Error("Odds have changed. Please refresh and try again.");
-          trustedOdds = marketOdds;
+      } else {
+        const marketOdds = typeof refOdds === "object" ? (refOdds as any)[data.market]?.[data.outcome] : null;
+        if (typeof marketOdds !== "number" || !Number.isFinite(marketOdds) || marketOdds < 1) {
+          throw new Error("Odds for this market are not available.");
         }
-        // If no server-side reference exists for this market, cap at a safe ceiling.
-        else if (data.referenceOdds > 50) {
-          throw new Error("Odds exceed allowed range for this market.");
-        }
+        const drift = Math.abs(data.referenceOdds - marketOdds) / marketOdds;
+        if (drift > 0.05) throw new Error("Odds have changed. Please refresh and try again.");
+        trustedOdds = marketOdds;
       }
 
       const { data: snap } = await supabaseAdmin
@@ -106,8 +99,8 @@ export const submitPrediction = createServerFn({ method: "POST" })
       const drift = Math.abs(data.referenceOdds - serverOdds) / serverOdds;
       if (drift > 0.05) throw new Error("Odds have changed. Please refresh and try again.");
       trustedOdds = serverOdds;
-    } else if (data.referenceOdds > 50) {
-      throw new Error("Odds exceed allowed range.");
+    } else {
+      throw new Error("Odds for this market are not available.");
     }
 
     // Atomic: wallet debit + prediction insert + platform credit + exposure check + liability recalc.

@@ -358,7 +358,7 @@ export const adminAdjustWallet = createServerFn({ method: "POST" })
       p_type: type,
       p_amount: Math.abs(data.amount),
       p_reference_type: "admin_adjustment",
-      p_reference_id: undefined as unknown as string,
+      p_reference_id: null as unknown as string,
       p_note: data.note ?? `Admin adjustment by ${userId.slice(0, 8)}`,
     });
     if (error) throw new Error(error.message);

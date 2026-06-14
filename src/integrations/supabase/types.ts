@@ -1337,6 +1337,10 @@ export type Database = {
         Args: { p_admin_id: string; p_payout_id: string }
         Returns: string
       }
+      payout_user_confirm: {
+        Args: { p_payout_id: string; p_user_id: string }
+        Returns: undefined
+      }
       payout_user_reject_atomic: {
         Args: { p_payout_id: string; p_reason: string; p_user_id: string }
         Returns: string

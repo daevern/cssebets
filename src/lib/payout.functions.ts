@@ -91,24 +91,26 @@ export const userConfirmPayoutProof = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ payoutId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: row, error: e1 } = await supabase
-      .from("payout_requests")
-      .select("id, user_id, status")
-      .eq("id", data.payoutId)
-      .maybeSingle();
-    if (e1) throw new Error(e1.message);
-    if (!row || row.user_id !== userId) throw new Error("Not found");
-    if (row.status !== "proof_uploaded") throw new Error("Not awaiting your confirmation");
-    const { error } = await supabase
-      .from("payout_requests")
-      .update({
-        status: "completed",
-        user_decision_at: new Date().toISOString(),
-        completed_at: new Date().toISOString(),
-      })
-      .eq("id", data.payoutId);
-    if (error) throw new Error(error.message);
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.rpc("payout_user_confirm" as any, {
+      p_payout_id: data.payoutId,
+      p_user_id: userId,
+    });
+    if (error) {
+      const m = error.message || "";
+      if (m.includes("NOT_FOUND")) throw new Error("Not found");
+      if (m.includes("FORBIDDEN")) throw new Error("Not found");
+      if (m.includes("INVALID_STATUS")) throw new Error("Not awaiting your confirmation");
+      throw new Error(m || "Could not confirm payout");
+    }
+    await supabaseAdmin.from("audit_log").insert({
+      user_id: userId,
+      action: "payout.user_confirm",
+      entity: "payout_request",
+      entity_id: data.payoutId,
+      metadata: {},
+    });
     return { ok: true };
   });
 
