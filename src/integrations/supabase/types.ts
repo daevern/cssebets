@@ -170,6 +170,81 @@ export type Database = {
         }
         Relationships: []
       }
+      health_check_runs: {
+        Row: {
+          check_name: string
+          created_at: string
+          duration_ms: number
+          error: string | null
+          id: string
+          metadata: Json
+          status: string
+        }
+        Insert: {
+          check_name: string
+          created_at?: string
+          duration_ms?: number
+          error?: string | null
+          id?: string
+          metadata?: Json
+          status: string
+        }
+        Update: {
+          check_name?: string
+          created_at?: string
+          duration_ms?: number
+          error?: string | null
+          id?: string
+          metadata?: Json
+          status?: string
+        }
+        Relationships: []
+      }
+      incidents: {
+        Row: {
+          assigned_to: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          resolution_summary: string | null
+          resolved_at: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          resolution_summary?: string | null
+          resolved_at?: string | null
+          severity: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          resolution_summary?: string | null
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       league_members: {
         Row: {
           joined_at: string
@@ -529,6 +604,51 @@ export type Database = {
           updated_at?: string
           winner?: string | null
           worst_case_exposure?: number
+        }
+        Relationships: []
+      }
+      operational_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          category: string
+          created_at: string
+          id: string
+          level: string
+          message: string | null
+          metadata: Json
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          category: string
+          created_at?: string
+          id?: string
+          level: string
+          message?: string | null
+          metadata?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          level?: string
+          message?: string | null
+          metadata?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          title?: string
         }
         Relationships: []
       }
