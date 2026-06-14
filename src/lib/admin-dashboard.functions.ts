@@ -413,11 +413,33 @@ export const setUserSuspended = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    if (data.targetUserId === userId) throw new Error("You cannot suspend your own account.");
     await requireTier(supabase, userId, WRITE_TIERS);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await requireFreshReauth(supabaseAdmin, userId);
+
+    // Block targeting other admins/super_admins (only super_admin may suspend admins)
+    const { data: targetRoles } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", data.targetUserId);
+    const targetRoleSet = new Set((targetRoles ?? []).map((r: any) => r.role as string));
+    if (targetRoleSet.has("super_admin")) throw new Error("Cannot suspend a super admin.");
+    if (targetRoleSet.has("admin")) {
+      const myRoles = await getRoles(supabase, userId);
+      if (!myRoles.includes("super_admin")) throw new Error("Only a super admin can suspend an admin.");
+    }
+
     const { error } = await supabaseAdmin.from("profiles").update({ suspended: data.suspended }).eq("id", data.targetUserId);
     if (error) throw new Error(error.message);
+
+    // Enforce at the auth layer so the user is signed out / cannot log back in.
+    try {
+      await (supabaseAdmin.auth as any).admin.updateUserById(data.targetUserId, {
+        ban_duration: data.suspended ? "876000h" : "none",
+      });
+    } catch (e) {
+      console.error("[setUserSuspended] auth ban update failed", e);
+    }
+
     await audit(supabaseAdmin, {
       userId, action: data.suspended ? "user.suspend" : "user.unsuspend",
       entity: "user", entityId: data.targetUserId,

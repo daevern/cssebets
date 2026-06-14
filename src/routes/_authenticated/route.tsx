@@ -19,6 +19,13 @@ export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
+    // Block suspended accounts immediately.
+    const { data: profile } = await supabase
+      .from("profiles").select("suspended").eq("id", data.user.id).maybeSingle();
+    if (profile?.suspended) {
+      await supabase.auth.signOut();
+      throw redirect({ to: "/auth", search: { suspended: "1" } as any });
+    }
     return { userId: data.user.id };
   },
   component: AuthedLayout,
