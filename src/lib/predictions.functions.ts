@@ -99,8 +99,8 @@ export const submitPrediction = createServerFn({ method: "POST" })
       const drift = Math.abs(data.referenceOdds - serverOdds) / serverOdds;
       if (drift > 0.05) throw new Error("Odds have changed. Please refresh and try again.");
       trustedOdds = serverOdds;
-    } else if (data.referenceOdds > 50) {
-      throw new Error("Odds exceed allowed range.");
+    } else {
+      throw new Error("Odds for this market are not available.");
     }
 
     // Atomic: wallet debit + prediction insert + platform credit + exposure check + liability recalc.
