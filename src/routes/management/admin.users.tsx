@@ -166,7 +166,13 @@ function UserDrawer({
     onError: (e: Error) => toast.error(e.message),
   });
   const suspend = useMutation({
-    mutationFn: (suspended: boolean) => suspendFn({ data: { targetUserId: userId, suspended, reason } }),
+    mutationFn: (suspended: boolean) => suspendFn({
+      data: {
+        targetUserId: userId,
+        suspended,
+        reason: reason.trim() || (suspended ? "Admin account suspension" : "Admin account unsuspension"),
+      },
+    }),
     onSuccess: () => { toast.success("Status updated"); invalidate(); },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -248,14 +254,14 @@ function UserDrawer({
               <div className="flex gap-2">
                 <Button
                   variant="destructive"
-                  disabled={!canWrite || !reason || d.profile?.suspended || suspend.isPending}
+                  disabled={!canWrite || d.profile?.suspended || suspend.isPending}
                   onClick={() => suspend.mutate(true)}
                 >
                   Suspend
                 </Button>
                 <Button
                   variant="outline"
-                  disabled={!canWrite || !reason || !d.profile?.suspended || suspend.isPending}
+                  disabled={!canWrite || !d.profile?.suspended || suspend.isPending}
                   onClick={() => suspend.mutate(false)}
                 >
                   Unsuspend
