@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import {
   listUsersAdmin, getUserDetail, updateUserDisplayName, setUserSuspended,
-  resetUserBalance, setUserRole, getReauthStatus, issueReauth,
+  resetUserBalance, setUserRole,
 } from "@/lib/admin-dashboard.functions";
 import { listPendingUsers, approveUser } from "@/lib/admin.functions";
 import { Card } from "@/components/ui/card";
@@ -145,22 +145,14 @@ function UserDrawer({
   const suspendFn = useServerFn(setUserSuspended);
   const resetFn = useServerFn(resetUserBalance);
   const roleFn = useServerFn(setUserRole);
-  const reauthStatusFn = useServerFn(getReauthStatus);
-  const issueReauthFn = useServerFn(issueReauth);
 
   const detail = useQuery({
     queryKey: ["admin-user", userId],
     queryFn: () => detailFn({ data: { userId } }),
   });
-  const reauth = useQuery({
-    queryKey: ["admin-reauth"],
-    queryFn: () => reauthStatusFn({}),
-    refetchInterval: 30_000,
-  });
 
   const [name, setName] = useState("");
   const [reason, setReason] = useState("");
-  const [password, setPassword] = useState("");
   const [resetTo, setResetTo] = useState("1000");
 
   function invalidate() {
@@ -176,15 +168,6 @@ function UserDrawer({
   const suspend = useMutation({
     mutationFn: (suspended: boolean) => suspendFn({ data: { targetUserId: userId, suspended, reason } }),
     onSuccess: () => { toast.success("Status updated"); invalidate(); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const unlock = useMutation({
-    mutationFn: () => issueReauthFn({ data: { password } }),
-    onSuccess: () => {
-      toast.success("Admin actions unlocked for 5 minutes");
-      setPassword("");
-      qc.invalidateQueries({ queryKey: ["admin-reauth"] });
-    },
     onError: (e: Error) => toast.error(e.message),
   });
   const reset = useMutation({
@@ -207,7 +190,7 @@ function UserDrawer({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>User · {d?.profile?.display_name ?? "…"}</DialogTitle>
-          <DialogDescription>Suspending or unsuspending an account requires a reason and a fresh admin password confirmation.</DialogDescription>
+          <DialogDescription>Suspending or unsuspending an account requires a reason and admin privileges.</DialogDescription>
         </DialogHeader>
         {detail.isLoading || !d ? (
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -262,34 +245,17 @@ function UserDrawer({
 
             <Card className="p-3 space-y-2">
               <div className="text-sm font-semibold">Suspension</div>
-              {!reauth.data?.active && (
-                <div className="rounded-md border border-warning/40 bg-warning/10 p-3 space-y-2">
-                  <div className="text-xs font-medium text-warning">Admin actions locked</div>
-                  <div className="flex gap-2">
-                    <Input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Confirm your password"
-                      onKeyDown={(e) => { if (e.key === "Enter" && password) unlock.mutate(); }}
-                    />
-                    <Button variant="outline" onClick={() => unlock.mutate()} disabled={!password || unlock.isPending}>
-                      {unlock.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Unlock"}
-                    </Button>
-                  </div>
-                </div>
-              )}
               <div className="flex gap-2">
                 <Button
                   variant="destructive"
-                  disabled={!canWrite || !reason || !reauth.data?.active || d.profile?.suspended || suspend.isPending}
+                  disabled={!canWrite || !reason || d.profile?.suspended || suspend.isPending}
                   onClick={() => suspend.mutate(true)}
                 >
                   Suspend
                 </Button>
                 <Button
                   variant="outline"
-                  disabled={!canWrite || !reason || !reauth.data?.active || !d.profile?.suspended || suspend.isPending}
+                  disabled={!canWrite || !reason || !d.profile?.suspended || suspend.isPending}
                   onClick={() => suspend.mutate(false)}
                 >
                   Unsuspend
