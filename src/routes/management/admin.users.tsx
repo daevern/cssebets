@@ -346,6 +346,28 @@ function UserDrawer({
                 </Table>
               </div>
             </Card>
+
+            {canDelete && (
+              <Card className="p-3 space-y-2 border-destructive/40">
+                <div className="text-sm font-semibold text-destructive flex items-center gap-2">
+                  <Trash2 className="h-4 w-4" /> Danger zone
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Permanently deletes this user account, login, and profile. This cannot be undone.
+                </p>
+                <Button
+                  variant="destructive"
+                  disabled={!reason || remove.isPending}
+                  onClick={() => {
+                    if (confirm(`Delete ${d.profile?.display_name}? This cannot be undone.`)) {
+                      remove.mutate();
+                    }
+                  }}
+                >
+                  Delete user account
+                </Button>
+              </Card>
+            )}
           </div>
         )}
         <DialogFooter>
