@@ -26,12 +26,22 @@ export const TOURS: Record<string, TourDef> = {
       {
         target: "quick-actions",
         title: "Bet and find your picks",
-        body: "Tap BET to place a wager on a match. Tap PICKS to see your active and settled bets.",
+        body: "Tap BET to place a wager. Tap PICKS to see your bets.",
+      },
+      {
+        target: "quick-actions",
+        title: "Request points",
+        body: "Open Wallet → Request Points. Send funds, attach proof, submit.",
+      },
+      {
+        target: "quick-actions",
+        title: "Cash out",
+        body: "Open Payout → Request Payout. An admin reviews and pays you.",
       },
       {
         target: "help-link",
         title: "Need help later?",
-        body: "Open the Help Center any time to request points, request a payout, or replay this tour.",
+        body: "Open the Help Center any time to replay this tour.",
       },
     ],
   },
