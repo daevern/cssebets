@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import {
   listUsersAdmin, getUserDetail, updateUserDisplayName, setUserSuspended,
-  resetUserBalance, setUserRole,
+  resetUserBalance, setUserRole, deleteUserAccount,
 } from "@/lib/admin-dashboard.functions";
 import { listPendingUsers, approveUser } from "@/lib/admin.functions";
 import { Card } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 
