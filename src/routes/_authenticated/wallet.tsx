@@ -291,7 +291,7 @@ function WalletPage() {
             <div className="text-sm leading-tight text-muted-foreground">BRICKSPLUG ENTERPRISE SD BHD</div>
             <CopiableValue value="8010575969" label="Account number" />
           </div>
-          <div className="border-t border-border pt-2 space-y-1.5">
+          <div data-tour="reference-id" className="border-t border-border pt-2 space-y-1.5">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Reference ID</div>
             <ReferenceIdRow reference={myProfile.data ?? wallet.data?.publicReference ?? ""} />
             <p className="text-[11px] text-muted-foreground leading-snug">
