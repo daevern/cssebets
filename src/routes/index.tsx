@@ -164,11 +164,25 @@ function LandingPage() {
                 ]).map(([h, a, oh, od, oa], i) => (
                   <span key={i} className="inline-flex items-center gap-2">
                     <span className="font-semibold text-foreground/80">{h} vs {a}</span>
-                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">{oh}</span>
-                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">{od}</span>
-                    <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">{oa}</span>
+                    {[oh, od, oa].map((o, idx) => (
+                      <span
+                        key={idx}
+                        className="group/odd relative cursor-pointer rounded bg-muted px-1.5 py-0.5 font-mono text-foreground transition-colors hover:bg-primary/20 hover:text-primary"
+                      >
+                        {o}
+                        <span className="pointer-events-none invisible absolute left-1/2 top-full z-50 mt-1.5 w-32 -translate-x-1/2 rounded-md border border-primary/30 bg-popover px-2 py-1.5 text-[10px] font-normal text-popover-foreground opacity-0 shadow-lg transition-all group-hover/odd:visible group-hover/odd:opacity-100">
+                          <span className="block text-muted-foreground">Stake</span>
+                          <span className="block font-mono font-semibold text-foreground">100 pts</span>
+                          <span className="mt-1 block text-muted-foreground">Potential return</span>
+                          <span className="block font-mono font-bold text-primary">
+                            {Math.round(100 * Number(o))} pts
+                          </span>
+                        </span>
+                      </span>
+                    ))}
                   </span>
                 ))}
+
               </div>
             </div>
           </div>
