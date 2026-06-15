@@ -211,66 +211,151 @@ function ExpandPanel({
   bullets: string[];
 }) {
   const [open, setOpen] = useState(false);
+
+  // Lock body scroll when drawer/tab is open to make reading on mobile comfortable
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+
   return (
-    <button
-      type="button"
-      onClick={() => setOpen((o) => !o)}
-      className="group block w-full text-left"
-      aria-expanded={open}
-      aria-label={`Step ${n}: ${title} — tap to ${open ? "hide" : "show"} details`}
-    >
-      <motion.div
-        layout
-        transition={{ layout: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } }}
-        className={`relative flex w-full flex-col rounded-2xl border bg-card p-5 text-card-foreground shadow-sm transition-shadow hover:shadow-lg sm:p-6 ${
-          open ? "border-primary/50 shadow-lg shadow-primary/10" : "group-hover:border-primary/50"
-        }`}
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="group block w-full text-left"
+        aria-expanded={open}
+        aria-label={`Step ${n}: ${title} — tap to open details tab`}
       >
-        <motion.div layout="position" className="mb-4 flex items-center gap-3">
-          <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30">
-            {n}
+        <div
+          className={`relative flex w-full flex-col rounded-2xl border bg-card p-5 text-card-foreground shadow-sm transition-all duration-300 hover:border-primary/50 hover:shadow-lg sm:p-6 ${
+            open ? "border-primary/50 shadow-lg shadow-primary/10" : "group-hover:border-primary/50"
+          }`}
+        >
+          <div className="mb-4 flex items-center gap-3">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30">
+              {n}
+            </div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Step {n} of 4
+            </div>
           </div>
-          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Step {n} of 4
+          <div className="text-base font-semibold sm:text-lg">{title}</div>
+          <div className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+            {desc}
           </div>
-        </motion.div>
-        <motion.div layout="position" className="text-base font-semibold sm:text-lg">{title}</motion.div>
-        <motion.div layout="position" className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-          {desc}
-        </motion.div>
 
-        <AnimatePresence initial={false}>
-          {open && (
+          <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-3">
+            <div className="text-[11px] italic text-primary/80">{hint}</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground/70 group-hover:text-primary font-bold flex items-center gap-1 transition-colors">
+              Open details <span className="text-xs">→</span>
+            </div>
+          </div>
+        </div>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <>
+            {/* Backdrop Overlay */}
             <motion.div
-              key="details"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="overflow-hidden"
-            >
-              <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 p-4">
-                <ul className="space-y-2 text-sm leading-relaxed text-foreground/90">
-                  {bullets.map((b, i) => (
-                    <li key={i} className="flex gap-2">
-                      <span className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md"
+            />
 
-        <motion.div layout="position" className="mt-4">
-          <div className="text-[11px] italic text-primary/80">{hint}</div>
-          <div className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground/70 group-hover:text-primary">
-            {open ? "Tap to collapse ↑" : "Tap to see details ↓"}
-          </div>
-        </motion.div>
-      </motion.div>
-    </button>
+            {/* Closable Sheet/Tab Panel */}
+            <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
+              <motion.div
+                initial={{ y: "100%", opacity: 0.8 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: "100%", opacity: 0.8 }}
+                transition={{ type: "spring", damping: 26, stiffness: 320 }}
+                className="relative flex w-full max-h-[85vh] sm:max-h-[90vh] flex-col rounded-t-[2rem] border-t border-border bg-card shadow-2xl sm:max-w-md sm:rounded-2xl sm:border"
+              >
+                {/* Pull handle indicator on mobile */}
+                <div className="flex justify-center py-3 sm:hidden">
+                  <div className="h-1.5 w-12 rounded-full bg-muted-foreground/20" />
+                </div>
+
+                {/* Close Button ('x') */}
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="absolute right-5 top-4 sm:top-5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  aria-label="Close details"
+                >
+                  <span className="text-xl font-bold leading-none">&times;</span>
+                </button>
+
+                {/* Tab Header & Content */}
+                <div className="flex-1 overflow-y-auto px-6 pb-8 pt-4 sm:pt-6">
+                  <div className="mb-4 flex items-center gap-3">
+                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary text-lg font-bold text-primary-foreground shadow-lg shadow-primary/30">
+                      {n}
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                        CSSEBets Guide
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Step {n} of 4
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 className="text-xl font-bold sm:text-2xl mt-2">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {desc}
+                  </p>
+
+                  {/* Bullet points as beautiful cards inside */}
+                  <div className="mt-6 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider text-primary mb-3">
+                      Guidelines & requirements:
+                    </h4>
+                    <ul className="space-y-3.5 text-sm leading-relaxed text-foreground/90">
+                      {bullets.map((b, i) => (
+                        <li key={i} className="flex gap-3 items-start">
+                          <span className="mt-1.5 inline-block h-2 w-2 shrink-0 rounded-full bg-primary shadow-sm shadow-primary/30" />
+                          <span className="text-sm font-medium">{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="mt-6 border-t border-border/40 pt-4">
+                    <p className="text-xs italic text-primary/90 flex items-center gap-2">
+                      <span className="inline-block h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                      Pro Tip: {hint}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Footer close action button */}
+                <div className="border-t border-border bg-muted/20 px-6 py-4 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="flex-1 rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all hover:scale-[1.01] active:scale-[0.99]"
+                  >
+                    Got it, close tab
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
