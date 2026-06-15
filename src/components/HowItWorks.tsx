@@ -173,7 +173,7 @@ export function HowItWorks() {
                   className={`${col} row-start-${i + 1}`}
                   style={{ gridRowStart: i + 1 }}
                 >
-                  <FlipPanel n={s.n} title={s.title} desc={s.desc} detail={s.detail} />
+                  <FlipPanel n={s.n} title={s.title} desc={s.desc} hint={s.hint} bullets={s.bullets} />
                 </motion.div>
               );
             })}
