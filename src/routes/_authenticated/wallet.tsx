@@ -280,7 +280,7 @@ function WalletPage() {
           <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" rows={2} />
         </div>
 
-        <div className="rounded-md border bg-muted/40 p-3 space-y-3">
+        <div data-tour="pointbank-field" className="rounded-md border bg-muted/40 p-3 space-y-3">
           <div className="space-y-1">
             <div className="text-sm font-semibold leading-tight">J.P MORGAN CHASE BANK BERHAD</div>
             <div className="text-sm leading-tight text-muted-foreground">WISE PAYMENTS SDN BHD</div>
