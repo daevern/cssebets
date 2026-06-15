@@ -82,7 +82,8 @@ export function HowItWorks() {
   const pathLength = useSpring(rawDraw, { stiffness: 120, damping: 24, mass: 0.6 });
 
   const cashoutRef = useRef<HTMLDivElement>(null);
-  const rainInView = useInView(cashoutRef, { amount: 0.3 });
+  // Only trigger the money rain when the cashout (step 5) card is fully visible
+  const rainInView = useInView(cashoutRef, { amount: 0.9, margin: "-10% 0px -10% 0px" });
   const [rainKey, setRainKey] = useState(0);
   useEffect(() => {
     if (rainInView) setRainKey((k) => k + 1);
