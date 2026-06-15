@@ -17,7 +17,7 @@ import { Headset, Paperclip, Send, Loader2, FileText, Download } from "lucide-re
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/support")({
-  head: () => ({ meta: [{ title: "Support — CSSE" }] }),
+  head: () => ({ meta: [{ title: "Support — CSSEBets" }] }),
   component: SupportPage,
 });
 
@@ -135,7 +135,7 @@ function SupportPage() {
               return (
                 <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                   <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
-                    {!mine && <div className="text-[10px] uppercase opacity-70 mb-0.5">CSSE Support</div>}
+                    {!mine && <div className="text-[10px] uppercase opacity-70 mb-0.5">CSSEBets Support</div>}
                     {m.body && <div className="whitespace-pre-wrap break-words">{m.body}</div>}
                     {m.attachment_path && (
                       <button onClick={() => openAttachment(m.attachment_path)}

@@ -175,7 +175,7 @@ function LoginPage() {
               </span>
             </div>
             <span className="text-[10px] text-muted-foreground">
-              CSSE · 01
+              CSSEBets · 01
             </span>
           </div>
 
@@ -257,7 +257,7 @@ function LoginPage() {
               </div>
               <div className="relative flex justify-center text-xs">
                 <span className="bg-card px-2 uppercase tracking-[0.18em] text-muted-foreground text-[10px]">
-                  New to CSSE
+                  New to CSSEBets
                 </span>
               </div>
             </div>

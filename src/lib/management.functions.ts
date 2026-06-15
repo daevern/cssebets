@@ -293,7 +293,7 @@ export const staffRejectPointRequest = createServerFn({ method: "POST" })
 
 const SUPPORT_EMAILS = Array.from({ length: 10 }, (_, i) => {
   const n = String(i + 1).padStart(2, "0");
-  return { email: `support${n}@cssebets.com`, displayName: `CSSE Support ${n}` };
+  return { email: `support${n}@cssebets.com`, displayName: `CSSEBets Support ${n}` };
 });
 
 function generateStrongPassword(): string {
