@@ -200,48 +200,65 @@ function FlipPanel({
   n,
   title,
   desc,
-  detail,
+  hint,
+  bullets,
 }: {
   n: number;
   title: string;
   desc: string;
-  detail: string;
+  hint: string;
+  bullets: string[];
 }) {
   const [flipped, setFlipped] = useState(false);
   return (
     <button
       type="button"
       onClick={() => setFlipped((f) => !f)}
-      className="group block w-full text-left [perspective:1000px]"
+      className="group block w-full text-left [perspective:1200px]"
       aria-pressed={flipped}
-      aria-label={`${title} — tap to ${flipped ? "hide" : "show"} details`}
+      aria-label={`Step ${n}: ${title} — tap to ${flipped ? "hide" : "show"} details`}
     >
       <div
-        className="relative h-40 w-full transition-transform duration-500 [transform-style:preserve-3d] sm:h-44"
+        className="relative h-56 w-full transition-transform duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] [transform-style:preserve-3d] sm:h-60"
         style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
       >
         {/* Front */}
-        <div className="absolute inset-0 rounded-xl border bg-card p-4 text-card-foreground shadow [backface-visibility:hidden] sm:p-5">
-          <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30">
-            {n}
+        <div className="absolute inset-0 flex flex-col rounded-2xl border bg-card p-5 text-card-foreground shadow-sm transition-shadow [backface-visibility:hidden] group-hover:border-primary/50 group-hover:shadow-lg group-hover:shadow-primary/10 sm:p-6">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30">
+              {n}
+            </div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Step {n} of 4
+            </div>
           </div>
-          <div className="text-sm font-semibold sm:text-base">{title}</div>
-          <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{desc}</div>
-          <div className="absolute bottom-2 right-3 text-[10px] uppercase tracking-wider text-muted-foreground/70 group-hover:text-primary">
-            Tap to flip
+          <div className="text-base font-semibold sm:text-lg">{title}</div>
+          <div className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{desc}</div>
+          <div className="mt-auto pt-4">
+            <div className="text-[11px] italic text-primary/80">{hint}</div>
+            <div className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground/70 group-hover:text-primary">
+              Tap to see details →
+            </div>
           </div>
         </div>
         {/* Back */}
         <div
-          className="absolute inset-0 overflow-auto rounded-xl border border-primary/40 bg-primary/5 p-4 text-card-foreground shadow [backface-visibility:hidden] sm:p-5"
+          className="absolute inset-0 flex flex-col overflow-auto rounded-2xl border border-primary/40 bg-primary/5 p-5 text-card-foreground shadow-lg [backface-visibility:hidden] sm:p-6"
           style={{ transform: "rotateY(180deg)" }}
         >
-          <div className="mb-2 text-xs font-bold uppercase tracking-wider text-primary">
+          <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
             Step {n} · {title}
           </div>
-          <p className="text-xs leading-relaxed text-foreground/90 sm:text-sm">{detail}</p>
-          <div className="absolute bottom-2 right-3 text-[10px] uppercase tracking-wider text-muted-foreground/70">
-            Tap to flip back
+          <ul className="space-y-2 text-sm leading-relaxed text-foreground/90">
+            {bullets.map((b, i) => (
+              <li key={i} className="flex gap-2">
+                <span className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-auto pt-3 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+            ← Tap to flip back
           </div>
         </div>
       </div>
