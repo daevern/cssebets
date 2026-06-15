@@ -175,7 +175,7 @@ function LoginPage() {
               </span>
             </div>
             <span className="text-[10px] text-muted-foreground">
-              CSSE · 01
+              CSSEBets · 01
             </span>
           </div>
 
