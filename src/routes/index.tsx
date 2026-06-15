@@ -157,7 +157,7 @@ function LandingPage() {
     ? { to: "/dashboard", label: "Go to Dashboard" }
     : { to: "/auth", label: "Sign In / Register" };
 
-  const kickoff = (landing?.nextMatch as { match_date?: string } | null)?.match_date ?? null;
+  const kickoff = landing?.nextMatches?.[0]?.kickoffAt ?? null;
 
   return (
     <div className="min-h-screen bg-background text-foreground scroll-smooth">
