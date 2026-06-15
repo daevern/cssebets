@@ -155,7 +155,7 @@ function LoginPage() {
         </Link>
 
         {/* Tagline strip — proprietary CSSE language, not landing-page copy */}
-        <div className="mb-5 flex items-center justify-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
+        <div className="mb-5 flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
           <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[oklch(0.78_0.19_145)]" />
           <span>Matchday Console</span>
           <span className="text-border">/</span>
@@ -167,14 +167,14 @@ function LoginPage() {
           {/* Top accent bar mimicking a stadium scoreboard */}
           <div className="flex items-center justify-between border-b border-border/60 bg-[oklch(0.18_0.02_240/0.6)] px-5 py-2.5">
             <div className="flex items-center gap-2">
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                 Session
               </span>
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[oklch(0.78_0.19_145)]">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-[oklch(0.78_0.19_145)]">
                 Sign in
               </span>
             </div>
-            <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+            <span className="text-[10px] text-muted-foreground">
               CSSE · 01
             </span>
           </div>
@@ -182,11 +182,8 @@ function LoginPage() {
           <div className="space-y-5 px-5 py-6">
             <div className="flex flex-col gap-1">
               <h1 className="text-[22px] font-bold leading-tight tracking-tight">
-                Welcome back, strategist.
+                Welcome back.
               </h1>
-              <p className="text-xs text-muted-foreground">
-                Your picks, leagues, and standings are queued.
-              </p>
             </div>
 
             <div className="flex gap-1 rounded-lg border border-border/60 bg-muted/40 p-1">
@@ -247,7 +244,7 @@ function LoginPage() {
                 />
               </div>
               <Button type="submit" className="group w-full" disabled={loading}>
-                {loading ? "Entering the console…" : "Enter the console"}
+                {loading ? "signing in…" : "sign in"}
                 {!loading && (
                   <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 )}
@@ -259,7 +256,7 @@ function LoginPage() {
                 <span className="w-full border-t border-border/60" />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="bg-card px-2 font-mono uppercase tracking-[0.18em] text-muted-foreground text-[10px]">
+                <span className="bg-card px-2 uppercase tracking-[0.18em] text-muted-foreground text-[10px]">
                   New to CSSE
                 </span>
               </div>
@@ -267,29 +264,21 @@ function LoginPage() {
 
             <Link to="/register" className="block">
               <Button type="button" variant="outline" className="w-full">
-                Create your strategist profile
+                create account
               </Button>
             </Link>
           </div>
 
-          {/* Bottom strip — league ticker, brand-flavored */}
+          {/* Bottom strip — FIFA WORLD CUP */}
           <div className="border-t border-border/60 bg-[oklch(0.18_0.02_240/0.4)] px-5 py-2">
-            <div className="flex items-center justify-between gap-2 overflow-hidden font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-              <span className="text-[oklch(0.78_0.19_145)]">EPL</span>
-              <span>·</span>
-              <span>LaLiga</span>
-              <span>·</span>
-              <span>Serie A</span>
-              <span>·</span>
-              <span>Bundesliga</span>
-              <span>·</span>
-              <span className="text-[oklch(0.78_0.19_145)]">UCL</span>
+            <div className="flex items-center justify-center gap-2 overflow-hidden text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-bold">
+              <span className="text-[oklch(0.78_0.19_145)]">FIFA WORLD CUP</span>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <p className="mt-6 text-center font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+        <p className="mt-6 text-center text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
           Competitive Strategy Starts Everywhere
         </p>
         <div className="mt-3 text-center text-[11px] text-muted-foreground">
