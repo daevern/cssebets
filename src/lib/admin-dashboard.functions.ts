@@ -575,7 +575,7 @@ export const setUserRole = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       targetUserId: z.string().uuid(),
-      role: z.enum(["admin", "super_admin", "viewer", "member", "pending"]),
+      role: z.enum(["admin", "super_admin", "viewer", "member", "pending", "customer_support"]),
       add: z.boolean(),
       reason: ReasonField,
     }).parse(i),
