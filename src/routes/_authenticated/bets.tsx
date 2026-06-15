@@ -37,9 +37,9 @@ function BetsHub() {
           <p className="text-sm text-muted-foreground">Pick a market to start.</p>
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div data-tour="available-matches" className="grid gap-4 sm:grid-cols-2">
         {tiles.map((t) => (
-          <Link key={t.to} to={t.to as string}>
+          <Link key={t.to} to={t.to as string} data-tour={t.to === "/matches" ? "bet-button" : undefined}>
             <Card className="p-5 transition hover:border-primary hover:shadow-lg">
               <t.icon className="mb-3 h-6 w-6 text-primary" />
               <div className="font-semibold">{t.label}</div>
