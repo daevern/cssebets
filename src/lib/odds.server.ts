@@ -75,10 +75,20 @@ export async function runOddsSync(opts: { force?: boolean } = {}) {
     const lastAt = (last as any)?.odds_updated_at
       ? new Date((last as any).odds_updated_at).getTime()
       : 0;
-    if (lastAt && Date.now() - lastAt < THROTTLE_MS) {
+    // Bypass throttle if any upcoming match still has no odds — those matches
+    // would otherwise stay on placeholder reference odds until the next window.
+    const { count: missingCount } = await supabaseAdmin
+      .from("matches")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "scheduled")
+      .is("odds_updated_at", null)
+      .gt("kickoff_at", new Date().toISOString());
+    const hasMissing = (missingCount ?? 0) > 0;
+    if (lastAt && Date.now() - lastAt < THROTTLE_MS && !hasMissing) {
       return { updated: 0, skipped: true, reason: "throttled" };
     }
   }
+
 
   const res = await fetch(`${ENDPOINT}&apiKey=${apiKey}`);
   if (!res.ok) {
