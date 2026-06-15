@@ -21,6 +21,8 @@ const TEAM_ALIASES: Record<string, string> = {
   northkorea: "koreadprrepublic",
   ivorycoast: "cotedivoire",
   capeverde: "caboverde",
+  capeverdeislands: "caboverde",
+  caboverdeislands: "caboverde",
   curacao: "curacao",
   bosniaherzegovina: "bosniaandherzegovina",
   drcongo: "congodr",
