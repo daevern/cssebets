@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -14,6 +15,14 @@ import {
 } from "@/components/ui/tooltip";
 import { Zap, Clock, TrendingUp, ShieldCheck } from "lucide-react";
 import { teamFlagUrl } from "@/lib/country-flags";
+import {
+  MARKET_LABELS,
+  selectionLabel,
+  CORRECT_SCORES,
+  HTFT_OPTIONS,
+  EXACT_GOALS_OPTIONS,
+  type MarketKey,
+} from "@/lib/markets-catalog";
 import { getLandingData, type LandingNextMatch, type LandingStats } from "@/lib/landing.functions";
 
 function formatCountdown(ms: number) {
@@ -97,6 +106,34 @@ export function StatsRow({ stats }: { stats: LandingStats }) {
   );
 }
 
+// Static demo market odds shown on the landing preview. Shape mirrors
+// what the real MarketTabs component renders so the user sees exactly
+// what placing a bet looks like once they sign up.
+const PREVIEW_ODDS: Record<MarketKey, Record<string, number>> = {
+  over_under_2_5: { OVER_2_5: 1.85, UNDER_2_5: 1.95 },
+  btts: { YES: 1.80, NO: 2.00 },
+  exact_total_goals: {
+    GOALS_0: 11.0, GOALS_1: 5.50, GOALS_2: 3.80,
+    GOALS_3: 4.20, GOALS_4: 6.50, GOALS_5_PLUS: 7.00,
+  },
+  correct_score: {
+    "0-0": 11.0, "1-0": 7.50, "0-1": 8.50, "1-1": 6.00,
+    "2-0": 9.00, "0-2": 11.0, "2-1": 8.50, "1-2": 10.0, "2-2": 14.0,
+    "3-0": 17.0, "0-3": 21.0, "3-1": 15.0, "1-3": 18.0,
+    "3-2": 26.0, "2-3": 31.0, "3-3": 51.0,
+    "4-0": 41.0, "0-4": 67.0, "4-1": 41.0, "1-4": 51.0,
+    "4-2": 67.0, "2-4": 81.0, OTHER: 26.0,
+  },
+  half_time_full_time: {
+    HOME_HOME: 3.60, HOME_DRAW: 21.0, HOME_AWAY: 41.0,
+    DRAW_HOME: 5.50, DRAW_DRAW: 5.00, DRAW_AWAY: 9.00,
+    AWAY_HOME: 41.0, AWAY_DRAW: 26.0, AWAY_AWAY: 6.00,
+  },
+};
+
+const MIN_STAKE = 10;
+const MAX_STAKE = 50000;
+
 const DEMO_MATCH: NonNullable<LandingNextMatch> = {
   id: "demo",
   homeTeam: "England",
@@ -107,6 +144,8 @@ const DEMO_MATCH: NonNullable<LandingNextMatch> = {
   awayOdds: 4.91,
 };
 
+type Pick = { selection: string; odds: number };
+
 export function FeaturedMatch({ match, authed }: { match: LandingNextMatch; authed: boolean | null }) {
   const m = match ?? DEMO_MATCH;
   const [now, setNow] = useState(() => Date.now());
@@ -115,15 +154,29 @@ export function FeaturedMatch({ match, authed }: { match: LandingNextMatch; auth
     return () => clearInterval(id);
   }, []);
   const diff = new Date(m.kickoffAt).getTime() - now;
-  const ko =
-    diff <= 0
-      ? "Live / starting"
-      : formatCountdown(diff);
+  const ko = diff <= 0 ? "Live / starting" : formatCountdown(diff);
   const home = m.homeOdds ?? 2.0;
   const draw = m.drawOdds ?? 3.2;
   const away = m.awayOdds ?? 3.5;
-  const stake = 100;
-  const potential = Math.round(stake * home);
+
+  // Result pick (1 / X / 2)
+  const [resultPick, setResultPick] = useState<Pick | null>(null);
+  const [resultStake, setResultStake] = useState<string>(String(MIN_STAKE));
+
+  // Market picks
+  const [picks, setPicks] = useState<Record<string, Pick | null>>({});
+  const [stakes, setStakes] = useState<Record<string, string>>({});
+
+  const ctaTo = authed ? "/dashboard" : "/register";
+
+  const setPick = (market: MarketKey, sel: string, odds: number) => {
+    setPicks((prev) => {
+      const cur = prev[market];
+      const same = cur && cur.selection === sel;
+      return { ...prev, [market]: same ? null : { selection: sel, odds } };
+    });
+    setStakes((prev) => ({ ...prev, [market]: prev[market] ?? String(MIN_STAKE) }));
+  };
 
   return (
     <section className="border-b border-border bg-gradient-to-b from-background to-card/30">
@@ -159,50 +212,236 @@ export function FeaturedMatch({ match, authed }: { match: LandingNextMatch; auth
             </div>
           </div>
 
+          {/* Result market (1 / X / 2) */}
           <div className="space-y-2">
             <div className="grid grid-cols-3 gap-2">
               {[
-                { p: "HOME" as const, label: m.homeTeam, price: home },
-                { p: "DRAW" as const, label: "Draw", price: draw },
-                { p: "AWAY" as const, label: m.awayTeam, price: away },
-              ].map((o) => (
-                <Button
-                  key={o.p}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="flex flex-col h-auto py-2"
-                  asChild
-                >
-                  <Link to={authed ? "/dashboard" : "/register"}>
+                { p: "HOME", label: m.homeTeam, price: home },
+                { p: "DRAW", label: "Draw", price: draw },
+                { p: "AWAY", label: m.awayTeam, price: away },
+              ].map((o) => {
+                const isPicked = resultPick?.selection === o.p;
+                return (
+                  <Button
+                    key={o.p}
+                    type="button"
+                    variant={isPicked ? "default" : "outline"}
+                    size="sm"
+                    className="flex flex-col h-auto py-2"
+                    onClick={() =>
+                      setResultPick(isPicked ? null : { selection: o.p, odds: o.price })
+                    }
+                  >
                     <span className="truncate max-w-full text-xs">{o.label}</span>
                     <span className="font-bold">{Number(o.price).toFixed(2)}</span>
-                  </Link>
-                </Button>
-              ))}
+                  </Button>
+                );
+              })}
             </div>
-            <div className="flex gap-2">
-              <Input
-                type="number"
-                value={stake}
-                readOnly
-                aria-label="Stake preview"
-                className="pointer-events-none"
+            {resultPick && (
+              <PreviewSlip
+                marketLabel="Match Result"
+                pick={resultPick}
+                stake={resultStake}
+                onStake={setResultStake}
+                onClear={() => setResultPick(null)}
+                ctaTo={ctaTo}
               />
-              <Button asChild>
-                <Link to={authed ? "/dashboard" : "/register"}>
-                  <Zap className="h-3.5 w-3.5 mr-1" />
-                  Bet Now
-                </Link>
-              </Button>
-            </div>
-            <div className="text-[10px] text-muted-foreground">
-              Potential return: <span className="font-mono font-semibold text-primary">{potential} pts</span> · Points only · No real money required
-            </div>
+            )}
           </div>
+
+          {/* Goals / Score / Specials markets — mirrors MarketTabs */}
+          <div className="space-y-3 pt-2 border-t">
+            <Tabs defaultValue="goals" className="w-full">
+              <TabsList className="grid grid-cols-3 w-full">
+                <TabsTrigger value="goals" className="text-xs">Goals</TabsTrigger>
+                <TabsTrigger value="cs" className="text-xs">Score</TabsTrigger>
+                <TabsTrigger value="sp" className="text-xs">Specials</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="goals" className="space-y-4 mt-2">
+                <PreviewMarketSection
+                  market="over_under_2_5"
+                  order={["OVER_2_5", "UNDER_2_5"]}
+                  cols="grid-cols-2"
+                  picks={picks}
+                  stakes={stakes}
+                  onPick={setPick}
+                  onStake={(mk, v) => setStakes((p) => ({ ...p, [mk]: v }))}
+                  onClear={(mk) => setPicks((p) => ({ ...p, [mk]: null }))}
+                  ctaTo={ctaTo}
+                />
+                <PreviewMarketSection
+                  market="btts"
+                  order={["YES", "NO"]}
+                  cols="grid-cols-2"
+                  picks={picks}
+                  stakes={stakes}
+                  onPick={setPick}
+                  onStake={(mk, v) => setStakes((p) => ({ ...p, [mk]: v }))}
+                  onClear={(mk) => setPicks((p) => ({ ...p, [mk]: null }))}
+                  ctaTo={ctaTo}
+                />
+                <PreviewMarketSection
+                  market="exact_total_goals"
+                  order={EXACT_GOALS_OPTIONS}
+                  cols="grid-cols-3"
+                  picks={picks}
+                  stakes={stakes}
+                  onPick={setPick}
+                  onStake={(mk, v) => setStakes((p) => ({ ...p, [mk]: v }))}
+                  onClear={(mk) => setPicks((p) => ({ ...p, [mk]: null }))}
+                  ctaTo={ctaTo}
+                />
+              </TabsContent>
+
+              <TabsContent value="cs" className="space-y-3 mt-2">
+                <PreviewMarketSection
+                  market="correct_score"
+                  order={CORRECT_SCORES}
+                  cols="grid-cols-4"
+                  picks={picks}
+                  stakes={stakes}
+                  onPick={setPick}
+                  onStake={(mk, v) => setStakes((p) => ({ ...p, [mk]: v }))}
+                  onClear={(mk) => setPicks((p) => ({ ...p, [mk]: null }))}
+                  ctaTo={ctaTo}
+                  hideHeader
+                />
+              </TabsContent>
+
+              <TabsContent value="sp" className="space-y-2 mt-2">
+                <PreviewMarketSection
+                  market="half_time_full_time"
+                  order={HTFT_OPTIONS}
+                  cols="grid-cols-3"
+                  picks={picks}
+                  stakes={stakes}
+                  onPick={setPick}
+                  onStake={(mk, v) => setStakes((p) => ({ ...p, [mk]: v }))}
+                  onClear={(mk) => setPicks((p) => ({ ...p, [mk]: null }))}
+                  ctaTo={ctaTo}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <p className="text-center text-[10px] text-muted-foreground pt-1">
+            Points only · No real money required · Sign up to lock in your bets
+          </p>
         </Card>
       </div>
     </section>
+  );
+}
+
+function PreviewMarketSection({
+  market, order, cols, picks, stakes, onPick, onStake, onClear, ctaTo, hideHeader,
+}: {
+  market: MarketKey;
+  order: string[];
+  cols: string;
+  picks: Record<string, Pick | null>;
+  stakes: Record<string, string>;
+  onPick: (market: MarketKey, sel: string, odds: number) => void;
+  onStake: (market: MarketKey, value: string) => void;
+  onClear: (market: MarketKey) => void;
+  ctaTo: string;
+  hideHeader?: boolean;
+}) {
+  const oddsMap = PREVIEW_ODDS[market];
+  const pick = picks[market] ?? null;
+  const stake = stakes[market] ?? String(MIN_STAKE);
+  return (
+    <div>
+      {!hideHeader && (
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+          {MARKET_LABELS[market]}
+        </div>
+      )}
+      <div className={`grid ${cols} gap-2`}>
+        {order.map((sel) => {
+          const odds = oddsMap[sel];
+          if (odds == null) return null;
+          const isPicked = pick?.selection === sel;
+          return (
+            <Button
+              key={sel}
+              type="button"
+              size="sm"
+              variant={isPicked ? "default" : "outline"}
+              className="flex flex-col h-auto py-2"
+              onClick={() => onPick(market, sel, odds)}
+            >
+              <span className="text-[10px] truncate max-w-full">{selectionLabel(sel)}</span>
+              <span className="font-bold text-sm">{odds.toFixed(2)}</span>
+            </Button>
+          );
+        })}
+      </div>
+      {pick && (
+        <div className="mt-2">
+          <PreviewSlip
+            marketLabel={MARKET_LABELS[market]}
+            pick={pick}
+            stake={stake}
+            onStake={(v) => onStake(market, v)}
+            onClear={() => onClear(market)}
+            ctaTo={ctaTo}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PreviewSlip({
+  marketLabel, pick, stake, onStake, onClear, ctaTo,
+}: {
+  marketLabel: string;
+  pick: Pick;
+  stake: string;
+  onStake: (v: string) => void;
+  onClear: () => void;
+  ctaTo: string;
+}) {
+  const stakeNum = Number(stake);
+  const valid = Number.isFinite(stakeNum) && stakeNum >= MIN_STAKE && stakeNum <= MAX_STAKE;
+  const potential = valid ? (stakeNum * pick.odds).toFixed(2) : "0.00";
+  return (
+    <div className="space-y-2 p-3 rounded-md bg-muted/40 border animate-in fade-in-50 duration-200">
+      <div className="text-xs flex justify-between items-center gap-2">
+        <div className="truncate">
+          <span className="font-semibold">{marketLabel}</span>
+          {" · "}{selectionLabel(pick.selection)}
+          {" · "}@ <span className="font-mono font-bold">{pick.odds.toFixed(2)}</span>
+        </div>
+        <Button
+          variant="ghost" size="icon"
+          className="h-4 w-4 text-muted-foreground hover:text-foreground shrink-0"
+          onClick={onClear}
+        >×</Button>
+      </div>
+      <div className="flex gap-2">
+        <Input
+          type="number" min={MIN_STAKE} max={MAX_STAKE} value={stake}
+          onChange={(e) => onStake(e.target.value)}
+          placeholder={`Stake (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
+          className="h-8 text-xs"
+        />
+        <Button size="sm" className="h-8 text-xs shrink-0 gap-1" asChild>
+          <Link to={ctaTo}>
+            <Zap className="h-3 w-3" />
+            Bet Now → {potential}
+          </Link>
+        </Button>
+      </div>
+      {!valid && (
+        <div className="text-[10px] text-destructive">
+          Enter a stake between {MIN_STAKE} and {MAX_STAKE.toLocaleString()} points.
+        </div>
+      )}
+    </div>
   );
 }
 
