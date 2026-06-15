@@ -12,7 +12,6 @@ const HowItWorks = lazy(() =>
 );
 
 import {
-  Trophy,
   Mail,
   MessageCircle,
   ArrowRight,
@@ -23,6 +22,7 @@ import {
   TrendingUp,
   Lock,
 } from "lucide-react";
+import { CsseMark } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/")({
   ssr: false,
