@@ -61,6 +61,7 @@ import { Route as ManagementAdminAuditRouteImport } from './routes/management/ad
 import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
 import { Route as ManagementAdminAlertsRouteImport } from './routes/management/admin.alerts'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/public/hooks/sync-fixtures'
 import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
 import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
 
@@ -341,6 +342,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksSyncFixturesRoute =
+  ApiPublicHooksSyncFixturesRouteImport.update({
+    id: '/api/public/hooks/sync-fixtures',
+    path: '/api/public/hooks/sync-fixtures',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksReconciliationRoute =
   ApiPublicHooksReconciliationRouteImport.update({
     id: '/api/public/hooks/reconciliation',
@@ -407,6 +414,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/': typeof ManagementAdminIndexRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
+  '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
@@ -461,6 +469,7 @@ export interface FileRoutesByTo {
   '/management/admin': typeof ManagementAdminIndexRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
+  '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
@@ -518,6 +527,7 @@ export interface FileRoutesById {
   '/management/admin/': typeof ManagementAdminIndexRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
+  '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
@@ -575,6 +585,7 @@ export interface FileRouteTypes {
     | '/management/admin/'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
+    | '/api/public/hooks/sync-fixtures'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -629,6 +640,7 @@ export interface FileRouteTypes {
     | '/management/admin'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
+    | '/api/public/hooks/sync-fixtures'
     | '/lovable/email/queue/process'
   id:
     | '__root__'
@@ -685,6 +697,7 @@ export interface FileRouteTypes {
     | '/management/admin/'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
+    | '/api/public/hooks/sync-fixtures'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
@@ -697,6 +710,7 @@ export interface RootRouteChildren {
   RegisterRoute: typeof RegisterRoute
   ApiPublicHooksHealthCheckRoute: typeof ApiPublicHooksHealthCheckRoute
   ApiPublicHooksReconciliationRoute: typeof ApiPublicHooksReconciliationRoute
+  ApiPublicHooksSyncFixturesRoute: typeof ApiPublicHooksSyncFixturesRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -1066,6 +1080,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/sync-fixtures': {
+      id: '/api/public/hooks/sync-fixtures'
+      path: '/api/public/hooks/sync-fixtures'
+      fullPath: '/api/public/hooks/sync-fixtures'
+      preLoaderRoute: typeof ApiPublicHooksSyncFixturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/reconciliation': {
       id: '/api/public/hooks/reconciliation'
       path: '/api/public/hooks/reconciliation'
@@ -1211,18 +1232,9 @@ const rootRouteChildren: RootRouteChildren = {
   RegisterRoute: RegisterRoute,
   ApiPublicHooksHealthCheckRoute: ApiPublicHooksHealthCheckRoute,
   ApiPublicHooksReconciliationRoute: ApiPublicHooksReconciliationRoute,
+  ApiPublicHooksSyncFixturesRoute: ApiPublicHooksSyncFixturesRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
