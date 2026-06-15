@@ -68,7 +68,6 @@ function formatKickoffDate(iso: string): string {
 
 function MatchesPage() {
   const qc = useQueryClient();
-  const refresh = useServerFn(refreshMatches);
   const listMatches = useServerFn(listMatchesForUsers);
 
   const { data, isLoading } = useQuery({
@@ -78,13 +77,6 @@ function MatchesPage() {
       return rows as Match[];
     },
   });
-
-  useEffect(() => {
-    const run = () => refresh({}).catch(() => {});
-    run();
-    const id = setInterval(run, 30_000);
-    return () => clearInterval(id);
-  }, [refresh]);
 
   useEffect(() => {
     const channel = supabase
