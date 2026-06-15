@@ -204,11 +204,13 @@ function AuthedLayout() {
 
 
   return (
+    <TourProvider>
     <div className="min-h-screen flex flex-col pb-20 md:pb-0">
       <ScreenProtection
         displayName={user?.user_metadata?.display_name || user?.email?.split("@")[0] || "user"}
         uid={user?.id ?? ""}
       />
+      <WelcomeModal />
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
@@ -250,6 +252,9 @@ function AuthedLayout() {
                 <span className="text-muted-foreground font-normal">pts</span>
               </Link>
             )}
+            <Link to="/help" title="Help Center" className="rounded-md p-2 hover:bg-muted text-muted-foreground hover:text-foreground">
+              <HelpCircle className="h-4 w-4" />
+            </Link>
             <Link to="/settings" title="Settings" className="rounded-md p-2 hover:bg-muted text-muted-foreground hover:text-foreground">
               <SettingsIcon className="h-4 w-4" />
             </Link>
@@ -293,6 +298,28 @@ function AuthedLayout() {
           })}
         </div>
       </nav>
+      <FirstVisitWalkthroughs />
     </div>
+    </TourProvider>
   );
+}
+
+// Triggers one-shot walkthroughs for first-time visits to /bets and /wallet.
+function FirstVisitWalkthroughs() {
+  const { startTour, hasCompleted, isTourActive, status } = useTour();
+  const location = useLocation();
+  useEffect(() => {
+    if (!status || isTourActive) return;
+    if (!status.userEnabled || !status.globalEnabled) return;
+    // Don't run a first-visit walkthrough until the user has chosen to skip
+    // the welcome flow or completed it (so we don't overlap modals).
+    if (!status.completedAt && !status.skippedAt) return;
+
+    if (location.pathname === "/bets" && !hasCompleted("first_bet")) {
+      startTour("first_bet");
+    } else if (location.pathname === "/wallet" && !hasCompleted("first_point_request")) {
+      startTour("first_point_request");
+    }
+  }, [location.pathname, status, hasCompleted, isTourActive, startTour]);
+  return null;
 }
