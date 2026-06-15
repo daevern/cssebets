@@ -332,6 +332,7 @@ function WalletPage() {
         </div>
 
         <Button
+          data-tour="submit-request"
           className="w-full"
           onClick={() => {
             if (!draftId) {
