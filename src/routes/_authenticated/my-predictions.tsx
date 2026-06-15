@@ -136,7 +136,7 @@ function PredictionRow({ p }: { p: any }) {
             {p.matches ? `${p.matches.home_team} vs ${p.matches.away_team}` : "—"}
           </div>
           <div className="text-xs text-muted-foreground">
-            {p.market_text ?? p.market} · {p.selection_label ?? p.outcome} · stake {p.virtual_stake} @ {p.reference_odds}
+            {p.market_text ?? p.market} · {p.selection_label ?? p.outcome} · stake {p.virtual_stake} @ {p.reference_odds} · payout <span className="font-mono font-semibold text-foreground">{(Number(p.virtual_stake) * Number(p.reference_odds)).toFixed(2)}</span>
           </div>
         </div>
         <div className="text-right space-y-1 shrink-0">
