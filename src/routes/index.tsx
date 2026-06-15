@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  FeaturedMatch,
+  FeaturedMatches,
   useLandingData,
 } from "@/components/HeroEnhancements";
 const HowItWorks = lazy(() =>
