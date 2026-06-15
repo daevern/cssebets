@@ -18,40 +18,38 @@ export type LandingStats = {
 };
 
 export const getLandingData = createServerFn({ method: "GET" }).handler(
-  async (): Promise<{ nextMatch: LandingNextMatch; stats: LandingStats }> => {
+  async (): Promise<{ nextMatches: LandingNextMatch[]; stats: LandingStats }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-    const [nextMatchRes, profilesRes, activeRes, settledRes, paidRes] = await Promise.all([
+    const [nextMatchesRes, profilesRes, activeRes, settledRes, paidRes] = await Promise.all([
       supabaseAdmin
         .from("matches")
         .select("id, home_team, away_team, kickoff_at, reference_odds, status")
         .gte("kickoff_at", nowIso)
         .in("status", ["scheduled"])
         .order("kickoff_at", { ascending: true })
-        .limit(1)
-        .maybeSingle(),
+        .limit(2),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("predictions").select("user_id").gte("created_at", dayAgo),
       supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).neq("status", "pending"),
       supabaseAdmin.from("predictions").select("points").eq("status", "won"),
     ]);
 
-    const m = nextMatchRes.data;
-    const refOdds: any = (m as any)?.reference_odds ?? {};
-    const nextMatch: LandingNextMatch = m
-      ? {
-          id: m.id,
-          homeTeam: m.home_team,
-          awayTeam: m.away_team,
-          kickoffAt: m.kickoff_at,
-          homeOdds: refOdds.home != null ? Number(refOdds.home) : null,
-          drawOdds: refOdds.draw != null ? Number(refOdds.draw) : null,
-          awayOdds: refOdds.away != null ? Number(refOdds.away) : null,
-        }
-      : null;
-
+    const matchesList = nextMatchesRes.data || [];
+    const nextMatches: LandingNextMatch[] = matchesList.map((m) => {
+      const refOdds: any = (m as any)?.reference_odds ?? {};
+      return {
+        id: m.id,
+        homeTeam: m.home_team,
+        awayTeam: m.away_team,
+        kickoffAt: m.kickoff_at,
+        homeOdds: refOdds.home != null ? Number(refOdds.home) : null,
+        drawOdds: refOdds.draw != null ? Number(refOdds.draw) : null,
+        awayOdds: refOdds.away != null ? Number(refOdds.away) : null,
+      };
+    });
 
     const activeToday = new Set((activeRes.data ?? []).map((r: any) => r.user_id)).size;
     const pointsPaidOut = (paidRes.data ?? []).reduce(
@@ -60,7 +58,7 @@ export const getLandingData = createServerFn({ method: "GET" }).handler(
     );
 
     return {
-      nextMatch,
+      nextMatches,
       stats: {
         registeredPlayers: profilesRes.count ?? 0,
         activeToday,
