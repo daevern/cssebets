@@ -30,7 +30,7 @@ export const getLandingData = createServerFn({ method: "GET" }).handler(
         .gte("kickoff_at", nowIso)
         .in("status", ["scheduled"])
         .order("kickoff_at", { ascending: true })
-        .limit(2),
+        .limit(12),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("predictions").select("user_id").gte("created_at", dayAgo),
       supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).neq("status", "pending"),
