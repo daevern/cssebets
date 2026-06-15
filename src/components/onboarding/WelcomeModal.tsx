@@ -47,15 +47,9 @@ export function WelcomeModal() {
           </div>
           <DialogTitle className="text-2xl">Welcome to CSSEBets</DialogTitle>
           <DialogDescription className="text-base">
-            Let's take 60 seconds to show you how everything works.
+            A 20-second tour of the essentials — your balance, where to bet, and where to find your picks.
           </DialogDescription>
         </DialogHeader>
-        <ul className="text-sm text-muted-foreground space-y-1.5 pl-1">
-          <li>• How your wallet & points work</li>
-          <li>• Placing your first bet</li>
-          <li>• Requesting payouts</li>
-          <li>• Getting help when you need it</li>
-        </ul>
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={onSkip} className="w-full sm:w-auto">
             Skip for now
