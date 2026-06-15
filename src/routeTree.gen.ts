@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as BrandRouteImport } from './routes/brand'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ManagementRouteRouteImport } from './routes/management/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -66,6 +67,11 @@ import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/publ
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BrandRoute = BrandRouteImport.update({
+  id: '/brand',
+  path: '/brand',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -352,6 +358,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/management': typeof ManagementRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/brand': typeof BrandRoute
   '/register': typeof RegisterRoute
   '/bets': typeof AuthenticatedBetsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -406,6 +413,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/management': typeof ManagementRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/brand': typeof BrandRoute
   '/register': typeof RegisterRoute
   '/bets': typeof AuthenticatedBetsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -461,6 +469,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/management': typeof ManagementRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/brand': typeof BrandRoute
   '/register': typeof RegisterRoute
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -517,6 +526,7 @@ export interface FileRouteTypes {
     | '/'
     | '/management'
     | '/auth'
+    | '/brand'
     | '/register'
     | '/bets'
     | '/dashboard'
@@ -571,6 +581,7 @@ export interface FileRouteTypes {
     | '/'
     | '/management'
     | '/auth'
+    | '/brand'
     | '/register'
     | '/bets'
     | '/dashboard'
@@ -625,6 +636,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/management'
     | '/auth'
+    | '/brand'
     | '/register'
     | '/_authenticated/bets'
     | '/_authenticated/dashboard'
@@ -681,6 +693,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   ManagementRouteRoute: typeof ManagementRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  BrandRoute: typeof BrandRoute
   RegisterRoute: typeof RegisterRoute
   ApiPublicHooksHealthCheckRoute: typeof ApiPublicHooksHealthCheckRoute
   ApiPublicHooksReconciliationRoute: typeof ApiPublicHooksReconciliationRoute
@@ -694,6 +707,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/brand': {
+      id: '/brand'
+      path: '/brand'
+      fullPath: '/brand'
+      preLoaderRoute: typeof BrandRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -1187,6 +1207,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   ManagementRouteRoute: ManagementRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  BrandRoute: BrandRoute,
   RegisterRoute: RegisterRoute,
   ApiPublicHooksHealthCheckRoute: ApiPublicHooksHealthCheckRoute,
   ApiPublicHooksReconciliationRoute: ApiPublicHooksReconciliationRoute,
