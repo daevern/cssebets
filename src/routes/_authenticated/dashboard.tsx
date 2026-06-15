@@ -22,7 +22,7 @@ function Dashboard() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4">
       <div className="flex items-center gap-3">
-        <Trophy className="h-8 w-8 text-primary" />
+        <CsseMark className="h-9 w-9 text-foreground" />
         <div>
           <h1 className="text-2xl font-bold">cssebets</h1>
         </div>
