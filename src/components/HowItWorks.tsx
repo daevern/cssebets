@@ -1,39 +1,63 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useSpring, useInView } from "framer-motion";
 
-const steps = [
+type Step = {
+  n: number;
+  title: string;
+  desc: string;
+  hint: string;
+  bullets: string[];
+};
+
+const steps: Step[] = [
   {
     n: 1,
     title: "Register",
     desc: "Create an account or sign in.",
-    detail:
-      "All new users must await admin approval. Admin approval could take 30 minutes to 6 hours.",
+    hint: "Takes under a minute.",
+    bullets: [
+      "Sign up with email or phone.",
+      "New accounts need admin approval.",
+      "Approval usually takes 30 min – 6 hrs.",
+    ],
   },
   {
     n: 2,
     title: "Request points",
-    desc: "Convert cash to virtual points.",
-    detail:
-      "Users will need to make payment via bank transfer to the respective cssebets account and submit receipt. Points will be issued upon admin approval. Admin point approval could take 30 minutes to 6 hours.",
+    desc: "Convert cash to virtual points to fund your wallet.",
+    hint: "Request points to fund your wallet.",
+    bullets: [
+      "Bank transfer to the cssebets account.",
+      "Submit your receipt in-app.",
+      "Points credited after admin approval (30 min – 6 hrs).",
+    ],
   },
   {
     n: 3,
     title: "Upload proof",
-    desc: "Confirm your request for admin review.",
-    detail:
-      "For all point requests and point cashouts, user and admin will need to send each other the respective image/PDF of receipt to confirm the transaction.",
+    desc: "Confirm your request for faster admin review.",
+    hint: "Upload proof for faster approval.",
+    bullets: [
+      "Attach receipt image or PDF.",
+      "Used for both top-ups and cashouts.",
+      "Both sides confirm to close the transaction.",
+    ],
   },
   {
     n: 4,
     title: "Place bets",
-    desc: "Pick a match and track your result.",
-    detail:
-      "Once points are deposited in your account, head over to the BETS section and place bets on Matches or your overall Winner for the FIFA WORLD CUP 2026.",
+    desc: "Pick a match and track your result live.",
+    hint: "Track all bets from your dashboard.",
+    bullets: [
+      "Open the BETS section for FIFA World Cup 2026.",
+      "Bet on individual matches or the overall winner.",
+      "Follow live results from your dashboard.",
+    ],
   },
 ];
 
 const cashoutDetail =
-  "Once you are ready to take profits, head over to the Payout section and simply cashout. Send a request to convert points back to cash. Upon admin approval, point-to-cash conversion and the cash-to-bank process will take between 24 hours and 7 days.";
+  "Once you're ready to take profits, head to the Payout section and request a cashout. After admin approval, point-to-cash and bank transfer typically take 24 hours – 7 days.";
 
 // Hand-drawn arrow path through 4 panels arranged in a zigzag.
 // viewBox is 100x160 stretched to fill via preserveAspectRatio="none".
