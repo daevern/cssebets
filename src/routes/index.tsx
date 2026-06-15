@@ -384,9 +384,6 @@ function LandingPage() {
               </Link>
             )}
           </div>
-          <div className="mt-4 flex items-center justify-center">
-            <LiveActivityPulse />
-          </div>
         </div>
       </section>
 
