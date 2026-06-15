@@ -60,6 +60,7 @@ function scrollToId(id: string) {
 
 function LandingPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const landing = useLandingData();
 
   useEffect(() => {
     let mounted = true;
@@ -78,6 +79,7 @@ function LandingPage() {
   const primaryCta = authed
     ? { to: "/dashboard", label: "Go to Dashboard" }
     : { to: "/auth", label: "Sign In / Register" };
+
 
 
 
