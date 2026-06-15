@@ -93,9 +93,26 @@ function LandingPage() {
               Support
             </button>
           </nav>
-          <Link to={primaryCta.to}>
-            <Button size="sm">{primaryCta.label}</Button>
-          </Link>
+          {authed ? (
+            <Link to="/dashboard">
+              <Button size="sm" className="shadow-md shadow-primary/30 transition-transform hover:scale-[1.03]">
+                Go to Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link to="/auth" className="hidden sm:inline-flex">
+                <Button size="sm" variant="ghost" className="transition-colors hover:text-primary">
+                  Log In
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button size="sm" className="shadow-md shadow-primary/30 transition-transform hover:scale-[1.03]">
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </header>
 
