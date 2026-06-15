@@ -165,7 +165,7 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
       .from("profiles")
       .select("id, display_name, suspended, created_at")
       .order("display_name", { ascending: true })
-      .limit(200);
+      .limit(500);
     if (data.search) q = q.ilike("display_name", `%${data.search}%`);
     const { data: profiles, error } = await q;
     if (error) throw new Error(error.message);
@@ -186,8 +186,12 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
     const pcount = new Map<string, number>();
     for (const p of predCounts ?? []) pcount.set(p.user_id, (pcount.get(p.user_id) ?? 0) + 1);
 
+    // Exclude staff (anyone holding a staff role) — they live in the Staff table.
+    const STAFF = new Set(["admin", "super_admin", "customer_support", "viewer"]);
+    const isStaff = (id: string) => (rmap.get(id) ?? []).some((r) => STAFF.has(r));
+
     return {
-      users: (profiles ?? []).map((p: any) => ({
+      users: (profiles ?? []).filter((p: any) => !isStaff(p.id)).map((p: any) => ({
         id: p.id,
         display_name: p.display_name,
         suspended: !!p.suspended,
@@ -198,6 +202,88 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
       })),
     };
   });
+
+export const listStaffAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ search: z.string().trim().max(80).optional().default("") }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireTier(supabase, userId, ADMIN_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const STAFF_ROLES = ["admin", "super_admin", "customer_support", "viewer"] as const;
+    const { data: roleRows, error: rErr } = await supabaseAdmin
+      .from("user_roles")
+      .select("user_id, role")
+      .in("role", STAFF_ROLES as any);
+    if (rErr) throw new Error(rErr.message);
+    const rmap = new Map<string, string[]>();
+    for (const r of roleRows ?? []) {
+      const arr = rmap.get(r.user_id) ?? [];
+      arr.push(r.role);
+      rmap.set(r.user_id, arr);
+    }
+    const ids = Array.from(rmap.keys());
+    if (!ids.length) return { staff: [] };
+
+    let q = supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, suspended, created_at")
+      .in("id", ids)
+      .order("display_name", { ascending: true });
+    if (data.search) q = q.ilike("display_name", `%${data.search}%`);
+    const { data: profiles, error } = await q;
+    if (error) throw new Error(error.message);
+
+    return {
+      staff: (profiles ?? []).map((p: any) => ({
+        id: p.id,
+        display_name: p.display_name,
+        suspended: !!p.suspended,
+        created_at: p.created_at,
+        roles: rmap.get(p.id) ?? [],
+      })),
+    };
+  });
+
+export const deleteUserAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      targetUserId: z.string().uuid(),
+      reason: z.string().trim().min(3).max(500),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireTier(supabase, userId, SUPER_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await requireFreshReauth(supabaseAdmin, userId);
+
+    if (data.targetUserId === userId) {
+      throw new Error("You can't delete your own account.");
+    }
+
+    // Capture for audit before deletion
+    const { data: profile } = await supabaseAdmin
+      .from("profiles").select("display_name").eq("id", data.targetUserId).maybeSingle();
+
+    // Remove role rows and the auth user (cascades to profile via FK).
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.targetUserId);
+    const { error: delErr } = await supabaseAdmin.auth.admin.deleteUser(data.targetUserId);
+    if (delErr) throw new Error(delErr.message);
+    // Safety net if no auth row existed.
+    await supabaseAdmin.from("profiles").delete().eq("id", data.targetUserId);
+
+    await audit(supabaseAdmin, {
+      userId, action: "user.delete", entity: "user", entityId: data.targetUserId,
+      oldValue: { display_name: profile?.display_name ?? null }, reason: data.reason,
+    });
+    return { ok: true };
+  });
+
 
 export const getUserDetail = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -489,7 +575,7 @@ export const setUserRole = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
       targetUserId: z.string().uuid(),
-      role: z.enum(["admin", "super_admin", "viewer", "member", "pending"]),
+      role: z.enum(["admin", "super_admin", "viewer", "member", "pending", "customer_support"]),
       add: z.boolean(),
       reason: ReasonField,
     }).parse(i),
