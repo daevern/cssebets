@@ -148,8 +148,9 @@ function LandingPage() {
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
               Live Odds
             </span>
-            <div className="flex flex-1 gap-6 overflow-hidden whitespace-nowrap text-xs text-muted-foreground [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
-              <div className="flex animate-[ticker_40s_linear_infinite] gap-6">
+            <div className="flex flex-1 gap-6 overflow-x-clip whitespace-nowrap text-xs text-muted-foreground [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+              <div className="flex animate-[ticker_40s_linear_infinite] gap-6 hover:[animation-play-state:paused]">
+
                 {[
                   ["BRA", "ARG", "2.10", "3.40", "2.80"],
                   ["FRA", "GER", "1.95", "3.20", "3.60"],
