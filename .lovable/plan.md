@@ -1,150 +1,123 @@
-# Add High-Margin Virtual Prediction Markets
+## Onboarding & Tutorial System Plan
 
-This is a large, multi-layer feature. I'll implement it in safe phases so existing match-winner bets, wallet, bankroll, settlement, and admin flows keep working untouched.
+A complete first-time user onboarding system for CSSEBets — guided tours, contextual help, walkthroughs, a Help Center, and admin controls. Nothing added to the landing page.
 
-## Scope
+---
 
-Add 5 new markets alongside the existing `result` market:
+### 1. Database (1 migration)
 
-1. `over_under_2_5` — OVER_2_5 / UNDER_2_5
-2. `btts` — YES / NO  *(market key already exists in enum; extend coverage)*
-3. `correct_score` — fixed grid + OTHER  *(enum exists; add odds + UI)*
-4. `half_time_full_time` — 9 combos *(new)*
-5. `exact_total_goals` — GOALS_0..GOALS_5_PLUS *(new; `total_goals` enum already exists but we'll use the new key)*
+**`profiles` table — add columns:**
+- `onboarding_completed_at timestamptz`
+- `onboarding_skipped_at timestamptz`
+- `tour_progress jsonb default '{}'` — per-tour completion map, e.g. `{ "dashboard": true, "first_bet": true }`
+- `onboarding_enabled boolean default true` — admin can disable per user
 
-Existing `result`, `tournament_winner`, `group_winner`, `first_scorer` markets stay as-is.
+**New table: `onboarding_events`** (analytics)
+- `user_id`, `tour_key text`, `event text` (`started|completed|skipped|step_viewed`), `step_index int`, `metadata jsonb`, `created_at`
+- RLS: users insert their own; admins read all.
+- GRANTs for `authenticated` (insert/select own) + `service_role`.
 
-## Phase 1 — Database
+**New table: `onboarding_settings`** (global toggle)
+- single-row `id=1`, `enabled boolean`, `updated_by`, `updated_at`
+- RLS: anyone authenticated reads; only admin/super_admin writes.
 
-### New table: `match_market_odds`
-Server-controlled odds per (match, market, selection).
+**RPCs:**
+- `mark_tour_complete(p_tour_key text)` — updates `tour_progress` for `auth.uid()`.
+- `mark_onboarding_complete()` / `mark_onboarding_skipped()`.
+- `admin_reset_onboarding(p_user_id uuid)` — admin only, clears flags.
+- `admin_set_onboarding_enabled(p_user_id uuid, p_enabled boolean)`.
+- `get_onboarding_completion_stats()` — admin reporting (completion rates per tour).
 
-```
-id uuid pk
-match_id uuid → matches(id) on delete cascade
-market text
-selection text
-odds numeric(10,2) check (odds >= 1)
-source text default 'internal'   -- 'internal' | 'the-odds-api'
-active boolean default true
-generated boolean default false
-created_at, updated_at timestamptz
-UNIQUE (match_id, market, selection)
-```
-RLS: `authenticated` SELECT (only `active=true`); `service_role` ALL. GRANTs included.
+---
 
-### New table: `market_odds_snapshots`
-Immutable history for audit/settlement linkage.
+### 2. Tour Engine (reusable)
 
-```
-id uuid pk
-match_id uuid
-market text, selection text
-odds numeric(10,2)
-source text
-snapshot_at timestamptz default now()
-```
-RLS: `authenticated` SELECT; `service_role` ALL.
+`src/components/onboarding/TourProvider.tsx` — React context + Radix Portal overlay.
+- Dim backdrop (SVG mask cutout around target element).
+- Auto-scroll target into view, highlight with glow ring.
+- Floating tooltip card: title, body, **Step X of Y**, Prev / Next / Skip.
+- Keyboard: Esc=skip, ←/→ nav.
+- Targets via `data-tour="key"` attributes on existing UI.
+- Persists state through `useTourState` hook (calls server fns).
 
-### Extend `predictions`
-Add nullable columns (back-compat with existing rows):
-- `selection_label text`
-- `market_label text`
-- `settled_result text`
+Files:
+- `src/components/onboarding/TourProvider.tsx`
+- `src/components/onboarding/TourOverlay.tsx`
+- `src/components/onboarding/TourTooltip.tsx`
+- `src/components/onboarding/tours.config.ts` — all tour definitions (steps per page).
+- `src/components/onboarding/useTour.ts`
+- `src/components/onboarding/HelpIcon.tsx` — small `?` icon w/ popover (what / why / common mistakes).
+- `src/lib/onboarding.functions.ts` — server fns (mark complete, log event, admin actions, stats).
 
-Existing columns `market`, `outcome`, `reference_odds`, `potential_return`, `reference_odds_snapshot_id` already cover odds-at-prediction.
+Mount `<TourProvider />` inside `_authenticated/route.tsx`.
 
-### Extend `prediction_market` enum
-Add `over_under_2_5`, `half_time_full_time`, `exact_total_goals`. Keep existing values.
+---
 
-### Extend `matches`
-Add nullable `home_score_ht int`, `away_score_ht int` for HT/FT settlement.
+### 3. Welcome Modal
 
-### New SQL functions
-- `seed_match_market_odds(p_match_id uuid)` — generates internal odds for all selections of all new markets if missing. Pulled from the spec's suggested odds.
-- `place_market_bet_atomic(p_user_id, p_match_id, p_market, p_selection, p_stake, p_client_request_id)` — looks up odds from `match_market_odds` (active only), reuses existing wallet debit + exposure pattern. For `result` market it delegates to existing `place_bet_atomic` to keep that path identical.
-- Per-market settlement helpers, all idempotent (skip predictions already non-`pending`):
-  - `settle_over_under_2_5(match, h, a)`
-  - `settle_btts(match, h, a)` *(already partly covered by `settle_match_atomic`; keep that for `result` and add this for new placements written via new path)*
-  - `settle_correct_score(match, h, a)`
-  - `settle_exact_total_goals(match, h, a)`
-  - `settle_half_time_full_time(match, h_ht, a_ht, h, a)`
-- Wrap into `settle_match_all_markets_atomic(p_match_id, p_home, p_away, p_home_ht, p_away_ht)` that calls existing `settle_match_atomic` first (covers `result`/legacy `correct_score`/`total_goals`/`btts`) then the new helpers for any predictions still `pending` on the new markets. Idempotent + reuses `wallet_apply_change` + `platform_apply_change`.
+`src/components/onboarding/WelcomeModal.tsx` — shown once on first authenticated load when `onboarding_completed_at` and `onboarding_skipped_at` are both null.
+- Title "Welcome to CSSEBets", subtitle, **Start Tour** / **Skip For Now**.
+- Start Tour → kicks off Dashboard tour, then auto-chains to next page tours.
 
-### Exposure
-Add view `match_market_exposure` aggregating `sum(potential_return)` grouped by `match_id, market, outcome` over pending predictions. Used by admin dashboard. The hard exposure cap stays on `result` (existing behavior) — new markets are capped per-bet via existing `max_stake_per_bet` / `max_potential_payout` settings.
+---
 
-## Phase 2 — Server functions
+### 4. Page Tours
 
-New file `src/lib/markets.functions.ts`:
-- `getMatchMarkets({ matchId })` — returns grouped odds + labels for tabs Main/Goals/Correct Score/Specials. Auto-calls `seed_match_market_odds` if empty (and match not started). Hides HT/FT for non-simulation matches that have no `home_score_ht`.
-- `placeMarketBet({ matchId, market, selection, stake, clientRequestId })` — calls `place_market_bet_atomic`. Snapshot insert into `market_odds_snapshots` before placement; stores returned `id` on the prediction.
-- `getMarketExposure()` (admin) — reads the exposure view.
-- `setMarketOdds({ matchId, market, selection, odds, active })` (admin) — audited update.
+Add `data-tour` attributes to existing components (no logic changes) on:
+- Dashboard — wallet balance, recent activity, quick actions
+- Wallet — balance, request points button, transaction history
+- Point Requests (within Wallet) — pointbank field, reference ID, proof upload, submit
+- Matches — match list, odds, bet button
+- Betting modal — stake input, potential return, place bet
+- My Predictions — pending, settled, details
+- Payout — request payout, history, proof upload
+- Support — create ticket, conversation, attachments
 
-Extend `src/lib/settlement.server.ts` to call `settle_match_all_markets_atomic`. Extend `src/lib/sync.server.ts` to read & store HT score from football-data when available (`score.halfTime`), then run the new settle wrapper.
+Each tour stored in `tours.config.ts` with `{ key, route, steps: [{ target, title, body }] }`.
 
-Existing `submitPrediction` keeps working for `result` and `tournament_winner`. Frontend for new markets uses `placeMarketBet`.
+---
 
-## Phase 3 — UI
+### 5. First-Time Walkthroughs
 
-`src/routes/_authenticated/matches.tsx` (or the match-detail card already shown there): add a Tabs control per match card with Main / Goals / Correct Score / Specials.
-- Main: existing 1X2 buttons (unchanged).
-- Goals: O/U 2.5, BTTS, Exact Total Goals as selection cards.
-- Correct Score: 5×5 grid + OTHER.
-- Specials: HT/FT grid (hidden if odds not available).
+- **First Bet** — intercepts the bet sheet the first time; 5-step mini guide (Select Match → Market → Stake → Review → Confirm). Flag stored in `tour_progress.first_bet`.
+- **First Point Request** — opens automatically on first visit to Point Requests; 5 steps (Pay → Reference → Upload → Submit → Wait).
 
-Bet slip: existing modal/inline form extended to accept `{market, selection, odds}` and call `placeMarketBet`. Shows stake → potential return live.
+---
 
-Min stake 50 rule (from earlier turn) still applies.
+### 6. Help Center
 
-## Phase 4 — Admin
+New route: `src/routes/_authenticated/help.tsx` with sections:
+- Getting Started, Wallet & Points, Betting Guide, Payout Guide, Support Guide, FAQ.
 
-New page `src/routes/management/admin.markets.tsx`:
-- Per match: list all markets/selections with odds, toggle `active`, edit odds (locked once kickoff passed).
-- Exposure table grouped by match/market/selection, highlighting top liability.
-- All edits audited via existing `audit_log`.
+Links added to user menu, footer (authenticated shell), and Support page header. Each section has a "Restart this tour" button.
 
-Extend `admin.simulation.tsx` to show stake/payout/P&L by market (reads new view).
+---
 
-## Phase 5 — Simulation
+### 7. Admin Controls
 
-`src/lib/sim-worldcup.server.ts` updates:
-- Generate HT scores (`pick_odds_weighted_score` extended) for sim matches.
-- Seed multi-market bets with the 35/20/15/20/10 distribution.
-- Settlement uses `settle_match_all_markets_atomic`.
+New tab in `src/routes/management/` (existing admin area):
+- `src/routes/management/onboarding.tsx` — global enable/disable toggle, per-user table (search, status badge, Reset / Enable / Disable actions), completion analytics (cards: started/completed/skipped, per-tour completion %, drop-off chart).
 
-## Acceptance check
+---
 
-- Existing match-winner bets continue to settle via untouched `place_bet_atomic` / `settle_match_atomic`.
-- New markets place + settle through new atomic functions, sharing the same wallet/bankroll helpers (so ledgers stay consistent).
-- Odds are server-only (client passes only `selection`).
-- Snapshot row written per placement.
-- All new tables have RLS + GRANTs.
-- Build passes.
+### 8. Analytics
 
-## Technical notes
+`logOnboardingEvent` server fn writes to `onboarding_events`. Admin page reads aggregated stats via `get_onboarding_completion_stats` RPC.
 
-- One migration creates tables, enum values, columns, view, and all functions in dependency order.
-- New code paths are additive — no changes to `place_bet_atomic` or `settle_match_atomic` signatures.
-- Idempotency: all new settle helpers gate on `status='pending'` with `FOR UPDATE`.
-- Settlement wrapper safe to call multiple times.
+---
 
-## Files to be added / changed
+### Files Summary
 
-**New**
-- `supabase/migrations/<ts>_markets.sql` (via migration tool)
-- `src/lib/markets.functions.ts`
-- `src/lib/markets-catalog.ts` (shared labels + selection lists)
-- `src/components/matches/MarketTabs.tsx`
-- `src/routes/management/admin.markets.tsx`
+**Migrations:** 1 (`add_onboarding_system`)
+**New routes:** `_authenticated/help.tsx`, `management/onboarding.tsx`
+**New components:** ~8 under `src/components/onboarding/`
+**New server fns:** `src/lib/onboarding.functions.ts`
+**Edited:** `_authenticated/route.tsx` (mount provider + welcome modal), and minor `data-tour=""` additions on Dashboard / Wallet / Matches / Bets / MyPredictions / Payout / Support (no behavior change).
 
-**Edited**
-- `src/routes/_authenticated/matches.tsx` (add tabs + new bet slip path)
-- `src/lib/settlement.server.ts` (use wrapper)
-- `src/lib/sync.server.ts` (store HT score, run wrapper)
-- `src/lib/sim-worldcup.server.ts` (multi-market seeding/settlement)
-- `src/routes/management/admin.simulation.tsx` (per-market analytics)
-- `src/routes/management/admin.tsx` (nav entry for Markets)
+---
 
-Confirm and I'll start with the migration (you'll see the SQL before it runs), then ship the code in the order above.
+### Out of scope
+- No landing page changes.
+- No changes to betting/wallet/payout/admin business logic — only DOM attributes for targeting.
+
+Ready to build on approval.
