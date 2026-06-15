@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import {
@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -14,6 +15,14 @@ import {
 } from "@/components/ui/tooltip";
 import { Zap, Clock, TrendingUp, ShieldCheck } from "lucide-react";
 import { teamFlagUrl } from "@/lib/country-flags";
+import {
+  MARKET_LABELS,
+  selectionLabel,
+  CORRECT_SCORES,
+  HTFT_OPTIONS,
+  EXACT_GOALS_OPTIONS,
+  type MarketKey,
+} from "@/lib/markets-catalog";
 import { getLandingData, type LandingNextMatch, type LandingStats } from "@/lib/landing.functions";
 
 function formatCountdown(ms: number) {
