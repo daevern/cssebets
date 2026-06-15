@@ -181,22 +181,38 @@ function LandingPage() {
               <Flame className="h-3.5 w-3.5" />
               FIFA World Cup · Live Now
             </div>
+            {landing?.nextMatch && (
+              <div className="mt-3 flex justify-center lg:justify-start">
+                <Countdown targetIso={landing.nextMatch.kickoffAt} />
+              </div>
+            )}
             <h1 className="mt-5 text-4xl font-black uppercase tracking-tight sm:text-6xl">
               Bet the <span className="text-primary">World Cup</span>.
               <br />
               Win Big.
             </h1>
             <p className="mx-auto mt-3 max-w-xl text-xs font-semibold uppercase tracking-[0.22em] text-primary/80 sm:text-sm lg:mx-0">
-              Competitive Strategy Starts Everywhere
+              Every Match. Every Prediction. Every Win.
             </p>
             <p className="mx-auto mt-5 max-w-xl text-base text-foreground/85 sm:text-lg lg:mx-0">
               Live odds on every match. Place bets in seconds, track every ticket,
               and cash out your winnings — all in one place.
             </p>
+
+            {landing && (
+              <div className="flex justify-center lg:justify-start">
+                <StatsRow stats={landing.stats} />
+              </div>
+            )}
+
             <div className="mt-7 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
               {authed ? (
                 <Link to="/dashboard">
-                  <Button size="lg" className="gap-2 font-bold uppercase tracking-wide shadow-lg shadow-primary/40 transition-transform hover:scale-[1.03]">
+                  <Button
+                    size="lg"
+                    className="group relative gap-2 overflow-hidden font-bold uppercase tracking-wide shadow-lg shadow-primary/40 transition-all hover:scale-[1.03] hover:shadow-primary/60"
+                  >
+                    <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                     Go to Dashboard
                     <ArrowRight className="h-4 w-4" />
                   </Button>
@@ -204,13 +220,21 @@ function LandingPage() {
               ) : (
                 <>
                   <Link to="/register">
-                    <Button size="lg" className="gap-2 font-bold uppercase tracking-wide shadow-lg shadow-primary/40 transition-transform hover:scale-[1.03]">
+                    <Button
+                      size="lg"
+                      className="group relative gap-2 overflow-hidden font-bold uppercase tracking-wide shadow-lg shadow-primary/40 transition-all hover:scale-[1.03] hover:shadow-primary/60"
+                    >
+                      <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                       <Zap className="h-4 w-4" />
                       Join & Bet Now
                     </Button>
                   </Link>
                   <Link to="/auth">
-                    <Button size="lg" variant="outline" className="font-bold uppercase tracking-wide transition-colors hover:border-primary hover:text-primary">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="font-bold uppercase tracking-wide transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
+                    >
                       Log In
                     </Button>
                   </Link>
@@ -218,24 +242,15 @@ function LandingPage() {
               )}
             </div>
 
-            {/* Trust strip */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground sm:text-sm lg:justify-start">
-              {[
-                { icon: Radio, label: "Live Tracking" },
-                { icon: Wallet, label: "Secure Wallet" },
-                { icon: History, label: "Bet History" },
-                { icon: LifeBuoy, label: "24/7 Support" },
-              ].map(({ icon: Icon, label }) => (
-                <span
-                  key={label}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card/60 px-2.5 py-1.5 backdrop-blur"
-                >
-                  <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-                  <Icon className="h-3.5 w-3.5 text-primary/70" />
-                  {label}
-                </span>
-              ))}
-            </div>
+            <TrustBadgesInteractive
+              items={[
+                { Icon: Radio, label: "Live Tracking", tip: "Track every prediction in real time." },
+                { Icon: Wallet, label: "Secure Wallet", tip: "Full wallet and transaction history." },
+                { Icon: History, label: "Bet History", tip: "View all settled and active bets." },
+                { Icon: LifeBuoy, label: "24/7 Support", tip: "Support team available when needed." },
+              ]}
+            />
+
           </div>
 
           {/* Right: live bet slip card */}
