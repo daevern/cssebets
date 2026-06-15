@@ -270,7 +270,6 @@ function LandingPage() {
 
           </div>
         </div>
-        </div>
 
         {/* Ticker keyframes */}
         <style>{`
