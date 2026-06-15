@@ -21,7 +21,7 @@ import {
   ShieldCheck,
   Zap,
   Radio,
-  HeadphonesIcon,
+  Headphones,
   Receipt,
   CheckCircle2,
   Trophy as TrophyIcon,
@@ -33,10 +33,12 @@ import {
   Clock,
   UserPlus,
   UploadCloud,
-  CircleCheck,
+  CheckCircle as CircleCheck,
   Eye,
   ArrowDownCircle,
 } from "lucide-react";
+
+const HeadphonesIcon = Headphones;
 
 export const Route = createFileRoute("/")({
   ssr: false,
