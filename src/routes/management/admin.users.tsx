@@ -130,6 +130,7 @@ function AdminUsersPage() {
           onClose={() => setOpenId(null)}
           canWrite={!isViewer}
           canRole={isSuperAdmin}
+          canDelete={isSuperAdmin}
         />
       )}
     </div>
