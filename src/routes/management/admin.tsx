@@ -47,6 +47,7 @@ const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeK
   { to: "/management/admin/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/management/admin/review", label: "Action review", icon: ScrollText },
   { to: "/management/admin/users", label: "Users", icon: Users, badgeKey: "pendingUsers" },
+  { to: "/management/admin/staff", label: "Staff", icon: Shield },
   { to: "/management/admin/points", label: "Point Requests", icon: Wallet, badgeKey: "pendingPointRequests" },
   { to: "/management/admin/payouts", label: "Payouts", icon: Banknote, badgeKey: "pendingPayouts" },
   { to: "/management/admin/predictions", label: "Predictions", icon: ListChecks },
