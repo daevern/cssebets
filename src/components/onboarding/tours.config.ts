@@ -21,17 +21,17 @@ export const TOURS: Record<string, TourDef> = {
       {
         target: "wallet-balance",
         title: "Your wallet balance",
-        body: "This is your available points balance. Use it to place bets across the platform.",
-      },
-      {
-        target: "recent-activity",
-        title: "Recent activity",
-        body: "Track your recent bets, payouts, and approvals here at a glance.",
+        body: "This is your available points balance, shown in the top bar everywhere on the platform.",
       },
       {
         target: "quick-actions",
         title: "Quick actions",
-        body: "Jump straight to the most common pages — bets, wallet, payouts, and more.",
+        body: "Jump straight to the most common pages — bets, picks, payouts, and more.",
+      },
+      {
+        target: "help-link",
+        title: "Help is always one tap away",
+        body: "Tap the help icon any time to revisit this tour, browse guides, or read the FAQ.",
       },
     ],
   },
