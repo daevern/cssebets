@@ -244,6 +244,7 @@ function AuthedLayout() {
             {showBalance && (
               <Link
                 to="/wallet"
+                data-tour="wallet-balance"
                 className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold tabular-nums hover:bg-muted/80"
                 title="Your points balance"
               >
@@ -252,7 +253,7 @@ function AuthedLayout() {
                 <span className="text-muted-foreground font-normal">pts</span>
               </Link>
             )}
-            <Link to="/help" title="Help Center" className="rounded-md p-2 hover:bg-muted text-muted-foreground hover:text-foreground">
+            <Link to="/help" data-tour="help-link" title="Help Center" className="rounded-md p-2 hover:bg-muted text-muted-foreground hover:text-foreground">
               <HelpCircle className="h-4 w-4" />
             </Link>
             <Link to="/settings" title="Settings" className="rounded-md p-2 hover:bg-muted text-muted-foreground hover:text-foreground">
