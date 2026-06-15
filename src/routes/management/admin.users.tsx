@@ -189,6 +189,11 @@ function UserDrawer({
     onSuccess: () => { toast.success("Role updated"); invalidate(); },
     onError: (e: Error) => toast.error(e.message),
   });
+  const remove = useMutation({
+    mutationFn: () => deleteFn({ data: { targetUserId: userId, reason } }),
+    onSuccess: () => { toast.success("Account deleted"); qc.invalidateQueries({ queryKey: ["admin-users"] }); onClose(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const d = detail.data;
   const hasRole = (r: string) => (d?.roles ?? []).includes(r);
