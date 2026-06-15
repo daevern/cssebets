@@ -189,38 +189,38 @@ function LandingPage() {
           </div>
         </div>
 
-        <div className="relative mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:py-16 lg:grid-cols-[1.1fr_1fr] lg:items-center">
-          {/* Left: copy + CTAs */}
-          <div className="text-center lg:text-left">
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary lg:mx-0">
+        <div className="relative mx-auto max-w-4xl px-4 py-12 sm:py-16 text-center flex flex-col items-center">
+          {/* Main Hero Copy & CTAs */}
+          <div className="flex flex-col items-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
               <Flame className="h-3.5 w-3.5" />
               FIFA World Cup · Live Now
             </div>
             {landing?.nextMatch && (
-              <div className="mt-3 flex justify-center lg:justify-start">
+              <div className="mt-3 flex justify-center">
                 <Countdown targetIso={landing.nextMatch.kickoffAt} />
               </div>
             )}
-            <h1 className="mt-5 text-4xl font-black uppercase tracking-tight sm:text-6xl">
+            <h1 className="mt-5 text-4xl font-black uppercase tracking-tight sm:text-6xl text-center">
               Bet the <span className="text-primary">World Cup</span>.
               <br />
               Win Big.
             </h1>
-            <p className="mx-auto mt-3 max-w-xl text-xs font-semibold uppercase tracking-[0.22em] text-primary/80 sm:text-sm lg:mx-0">
+            <p className="mx-auto mt-3 max-w-xl text-xs font-semibold uppercase tracking-[0.22em] text-primary/80 sm:text-sm">
               Every Match. Every Prediction. Every Win.
             </p>
-            <p className="mx-auto mt-5 max-w-xl text-base text-foreground/85 sm:text-lg lg:mx-0">
+            <p className="mx-auto mt-5 max-w-xl text-base text-foreground/85 sm:text-lg">
               Live odds on every match. Place bets in seconds, track every ticket,
               and cash out your winnings — all in one place.
             </p>
 
             {landing && (
-              <div className="flex justify-center lg:justify-start">
+              <div className="flex justify-center">
                 <StatsRow stats={landing.stats} />
               </div>
             )}
 
-            <div className="mt-7 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+            <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
               {authed ? (
                 <Link to="/dashboard">
                   <Button
@@ -257,96 +257,17 @@ function LandingPage() {
               )}
             </div>
 
-            <TrustBadgesInteractive
-              items={[
-                { Icon: Radio, label: "Live Tracking", tip: "Track every prediction in real time." },
-                { Icon: Wallet, label: "Secure Wallet", tip: "Full wallet and transaction history." },
-                { Icon: History, label: "Bet History", tip: "View all settled and active bets." },
-                { Icon: LifeBuoy, label: "24/7 Support", tip: "Support team available when needed." },
-              ]}
-            />
+            <div className="mt-8">
+              <TrustBadgesInteractive
+                items={[
+                  { Icon: Radio, label: "Live Tracking", tip: "Track every prediction in real time." },
+                  { Icon: Wallet, label: "Secure Wallet", tip: "Full wallet and transaction history." },
+                  { Icon: History, label: "Bet History", tip: "View all settled and active bets." },
+                  { Icon: LifeBuoy, label: "24/7 Support", tip: "Support team available when needed." },
+                ]}
+              />
+            </div>
 
-          </div>
-
-          {/* Right: live bet slip card */}
-          <div className="relative">
-            <div
-              className="absolute -inset-1 rounded-2xl opacity-50 blur-xl"
-              style={{ background: "linear-gradient(135deg, color-mix(in oklab, var(--primary) 50%, transparent), transparent)" }}
-            />
-            <Card className="relative overflow-hidden border-border/80 bg-card/95 p-0 shadow-2xl shadow-primary/10 backdrop-blur">
-              {/* Match header */}
-              <div className="flex items-center justify-between border-b border-border/70 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 px-4 py-2.5">
-                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">
-                  <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-                  </span>
-                  Live · 67'
-                </span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  Group Stage
-                </span>
-              </div>
-
-              {/* Scoreboard */}
-              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 py-5">
-                <div className="text-right">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Brazil</div>
-                  <div className="mt-0.5 text-2xl">🇧🇷</div>
-                </div>
-                <div className="rounded-lg border border-border bg-background/60 px-4 py-2 font-mono text-2xl font-black tabular-nums">
-                  2 <span className="text-muted-foreground">:</span> 1
-                </div>
-                <div className="text-left">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Argentina</div>
-                  <div className="mt-0.5 text-2xl">🇦🇷</div>
-                </div>
-              </div>
-
-              {/* Odds buttons */}
-              <div className="grid grid-cols-3 gap-2 px-4 pb-3">
-                {[
-                  { label: "1 · BRA", odds: "2.10", trend: "up" },
-                  { label: "X · Draw", odds: "3.40", trend: "down" },
-                  { label: "2 · ARG", odds: "2.80", trend: "up" },
-                ].map((o) => (
-                  <button
-                    key={o.label}
-                    className="group flex flex-col items-center gap-0.5 rounded-md border border-border bg-background/70 px-2 py-2.5 text-xs transition-all hover:-translate-y-0.5 hover:border-primary hover:bg-primary/10 hover:shadow-md hover:shadow-primary/20"
-                  >
-                    <span className="font-semibold text-muted-foreground group-hover:text-foreground">{o.label}</span>
-                    <span className="flex items-center gap-1 font-mono text-base font-bold text-foreground">
-                      {o.odds}
-                      {o.trend === "up" ? (
-                        <TrendingUp className="h-3 w-3 text-primary" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3 text-destructive" />
-                      )}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Slip footer */}
-              <div className="border-t border-border/70 bg-muted/30 px-4 py-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Stake</span>
-                  <span className="font-mono font-semibold text-foreground">100 pts</span>
-                </div>
-                <div className="mt-1 flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Potential payout</span>
-                  <span className="font-mono text-base font-black text-primary">210 pts</span>
-                </div>
-                <Link to={authed ? "/dashboard" : "/register"} className="mt-3 block">
-                  <Button size="sm" className="w-full gap-1.5 font-bold uppercase tracking-wide">
-                    <Zap className="h-3.5 w-3.5" />
-                    Place Bet
-                  </Button>
-                </Link>
-              </div>
-            </Card>
           </div>
         </div>
 
