@@ -191,23 +191,10 @@ function LandingPage() {
 
         <div className="relative mx-auto max-w-4xl px-4 py-12 sm:py-16 text-center flex flex-col items-center">
           {/* Main Hero Copy & CTAs */}
-          <div className="flex flex-col items-center w-full">
+  <div className="flex flex-col items-center w-full">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
               <Flame className="h-3.5 w-3.5" />
               FIFA World Cup · Bet Now
-            </div>
-            {landing?.nextMatch && (
-              <div className="mt-3 flex justify-center">
-                <Countdown targetIso={landing.nextMatch.kickoffAt} />
-              </div>
-            )}
-            
-            {/* Elegant brand emblem above title */}
-            <div className="mt-6 flex flex-col items-center gap-1 border border-primary/20 bg-primary/5 py-2.5 px-6 rounded-md backdrop-blur-sm max-w-md w-full shadow-[0_0_15px_rgba(34,197,94,0.05)]">
-              <span className="text-xs font-black tracking-[0.5em] text-primary">CSSE</span>
-              <span className="text-[10px] sm:text-xs font-semibold tracking-widest text-foreground uppercase">
-                Competitive Strategy Starts Everywhere
-              </span>
             </div>
 
             <h1 className="mt-5 text-4xl font-black uppercase tracking-tight sm:text-6xl text-center">
@@ -219,6 +206,11 @@ function LandingPage() {
             <p className="mx-auto mt-4 max-w-xl text-base font-bold uppercase tracking-wider text-primary/90 sm:text-lg">
               Strategy Over Luck.
             </p>
+
+            {/* Next Match Section */}
+            <div className="w-full max-w-2xl mt-6">
+              <FeaturedMatch match={landing?.nextMatch ?? null} authed={authed} />
+            </div>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               {authed ? (
@@ -277,9 +269,6 @@ function LandingPage() {
           }
         `}</style>
       </section>
-
-      {/* Featured Match */}
-      <FeaturedMatch match={landing?.nextMatch ?? null} authed={authed} />
 
       {/* How it works */}
 
