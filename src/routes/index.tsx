@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  FeaturedMatch,
+  FeaturedMatches,
   useLandingData,
 } from "@/components/HeroEnhancements";
 const HowItWorks = lazy(() =>
@@ -157,7 +157,7 @@ function LandingPage() {
     ? { to: "/dashboard", label: "Go to Dashboard" }
     : { to: "/auth", label: "Sign In / Register" };
 
-  const kickoff = (landing?.nextMatch as { match_date?: string } | null)?.match_date ?? null;
+  const kickoff = landing?.nextMatches?.[0]?.kickoffAt ?? null;
 
   return (
     <div className="min-h-screen bg-background text-foreground scroll-smooth">
@@ -272,7 +272,7 @@ function LandingPage() {
         <div className="relative mx-auto flex max-w-4xl flex-col items-center px-4 py-12 text-center sm:py-16">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
             <Flame className="h-3.5 w-3.5" />
-            World Cup · Limited Seats
+            FIFA WORLD CUP 2026
           </div>
 
           <h1 className="mt-5 text-4xl font-black uppercase tracking-tight sm:text-6xl">
@@ -290,9 +290,9 @@ function LandingPage() {
             <LiveActivityPulse />
           </div>
 
-          {/* Featured match */}
-          <div className="mt-6 w-full max-w-2xl">
-            <FeaturedMatch match={landing?.nextMatch ?? null} authed={authed} />
+          {/* Featured matches */}
+          <div className="mt-6 w-full max-w-4xl">
+            <FeaturedMatches matches={landing?.nextMatches ?? []} authed={authed} />
           </div>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -330,24 +330,6 @@ function LandingPage() {
                 </Link>
               </>
             )}
-          </div>
-
-          {/* Scarcity micro-row replaces the boring trust strip */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground sm:text-xs">
-            <span className="inline-flex items-center gap-1.5">
-              <Users className="h-3 w-3 text-primary" />
-              <span className="font-mono text-foreground">2,341</span> players in
-            </span>
-            <span className="hidden h-3 w-px bg-border sm:inline-block" />
-            <span className="inline-flex items-center gap-1.5">
-              <TrendingUp className="h-3 w-3 text-primary" />
-              <span className="font-mono text-foreground">186K</span> pts won today
-            </span>
-            <span className="hidden h-3 w-px bg-border sm:inline-block" />
-            <span className="inline-flex items-center gap-1.5">
-              <Lock className="h-3 w-3 text-primary" />
-              Bets close at kickoff
-            </span>
           </div>
         </div>
 
@@ -404,7 +386,7 @@ function LandingPage() {
               <Link to="/register">
                 <Button size="lg" className="gap-2 font-bold uppercase tracking-wide shadow-lg shadow-primary/40">
                   <Zap className="h-4 w-4" />
-                  Claim Your Seat
+                  MAKE A BET
                 </Button>
               </Link>
             )}

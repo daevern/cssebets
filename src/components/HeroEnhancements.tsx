@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import {
@@ -134,8 +134,8 @@ const PREVIEW_ODDS: Record<MarketKey, Record<string, number>> = {
 const MIN_STAKE = 10;
 const MAX_STAKE = 50000;
 
-const DEMO_MATCH: NonNullable<LandingNextMatch> = {
-  id: "demo",
+const DEMO_MATCH_1: NonNullable<LandingNextMatch> = {
+  id: "demo1",
   homeTeam: "England",
   awayTeam: "Croatia",
   kickoffAt: new Date(Date.now() + (2 * 60 + 14) * 60 * 1000).toISOString(),
@@ -144,10 +144,19 @@ const DEMO_MATCH: NonNullable<LandingNextMatch> = {
   awayOdds: 4.91,
 };
 
+const DEMO_MATCH_2: NonNullable<LandingNextMatch> = {
+  id: "demo2",
+  homeTeam: "Argentina",
+  awayTeam: "France",
+  kickoffAt: new Date(Date.now() + (5 * 60 + 45) * 60 * 1000).toISOString(),
+  homeOdds: 2.15,
+  drawOdds: 3.20,
+  awayOdds: 3.10,
+};
+
 type Pick = { selection: string; odds: number };
 
-export function FeaturedMatch({ match, authed }: { match: LandingNextMatch; authed: boolean | null }) {
-  const m = match ?? DEMO_MATCH;
+function MatchFixtureCard({ m, authed }: { m: NonNullable<LandingNextMatch>; authed: boolean | null }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -159,238 +168,90 @@ export function FeaturedMatch({ match, authed }: { match: LandingNextMatch; auth
   const draw = m.drawOdds ?? 3.2;
   const away = m.awayOdds ?? 3.5;
 
-  // Result pick (1 / X / 2)
   const [resultPick, setResultPick] = useState<Pick | null>(null);
   const [resultStake, setResultStake] = useState<string>(String(MIN_STAKE));
-
-  // Market picks
-  const [picks, setPicks] = useState<Record<string, Pick | null>>({});
-  const [stakes, setStakes] = useState<Record<string, string>>({});
-
   const ctaTo = authed ? "/dashboard" : "/register";
 
-  const setPick = (market: MarketKey, sel: string, odds: number) => {
-    setPicks((prev) => {
-      const cur = prev[market];
-      const same = cur && cur.selection === sel;
-      return { ...prev, [market]: same ? null : { selection: sel, odds } };
-    });
-    setStakes((prev) => ({ ...prev, [market]: prev[market] ?? String(MIN_STAKE) }));
-  };
-
   return (
-    <section className="border-b border-border bg-gradient-to-b from-background to-card/30">
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.18em] text-primary">
-            <TrendingUp className="h-4 w-4" />
-            Next Match
-          </h2>
-          {!match && (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Demo
-            </span>
-          )}
+    <Card className="p-4 space-y-3 bg-card/60 backdrop-blur border-border hover:border-primary/30 transition-colors">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            Group Stage
+          </span>
+          <span className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
+            <Clock className="h-3 w-3 text-primary" />
+            Kickoff in {ko}
+          </span>
         </div>
-
-        {/* Mirror of the real MatchCard UI used inside the app */}
-        <Card className="p-4 space-y-3">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                Group Stage
-              </div>
-              <div className="text-xs text-muted-foreground inline-flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Kickoff in {ko}
-              </div>
-            </div>
-            <div className="grid grid-cols-3 items-center text-lg font-semibold gap-3">
-              <div className="flex justify-center"><PreviewFlag name={m.homeTeam} /></div>
-              <span className="text-muted-foreground text-sm text-center">vs</span>
-              <div className="flex justify-center"><PreviewFlag name={m.awayTeam} /></div>
-            </div>
+        <div className="grid grid-cols-3 items-center text-sm font-bold gap-3 py-1">
+          <div className="flex flex-col items-center gap-1 text-center">
+            <PreviewFlag name={m.homeTeam} />
+            <span className="truncate max-w-[90px] text-xs font-semibold">{m.homeTeam}</span>
           </div>
-
-          {/* Result market (1 / X / 2) */}
-          <div className="space-y-2">
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { p: "HOME", label: m.homeTeam, price: home },
-                { p: "DRAW", label: "Draw", price: draw },
-                { p: "AWAY", label: m.awayTeam, price: away },
-              ].map((o) => {
-                const isPicked = resultPick?.selection === o.p;
-                return (
-                  <Button
-                    key={o.p}
-                    type="button"
-                    variant={isPicked ? "default" : "outline"}
-                    size="sm"
-                    className="flex flex-col h-auto py-2"
-                    onClick={() =>
-                      setResultPick(isPicked ? null : { selection: o.p, odds: o.price })
-                    }
-                  >
-                    <span className="truncate max-w-full text-xs">{o.label}</span>
-                    <span className="font-bold">{Number(o.price).toFixed(2)}</span>
-                  </Button>
-                );
-              })}
-            </div>
-            {resultPick && (
-              <PreviewSlip
-                marketLabel="Match Result"
-                pick={resultPick}
-                stake={resultStake}
-                onStake={setResultStake}
-                onClear={() => setResultPick(null)}
-                ctaTo={ctaTo}
-              />
-            )}
+          <span className="text-muted-foreground text-xs text-center font-normal">vs</span>
+          <div className="flex flex-col items-center gap-1 text-center">
+            <PreviewFlag name={m.awayTeam} />
+            <span className="truncate max-w-[90px] text-xs font-semibold">{m.awayTeam}</span>
           </div>
-
-          {/* Goals / Score / Specials markets — mirrors MarketTabs */}
-          <div className="space-y-3 pt-2 border-t">
-            <Tabs defaultValue="goals" className="w-full">
-              <TabsList className="grid grid-cols-3 w-full">
-                <TabsTrigger value="goals" className="text-xs">Goals</TabsTrigger>
-                <TabsTrigger value="cs" className="text-xs">Score</TabsTrigger>
-                <TabsTrigger value="sp" className="text-xs">Specials</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="goals" className="space-y-4 mt-2">
-                <PreviewMarketSection
-                  market="over_under_2_5"
-                  order={["OVER_2_5", "UNDER_2_5"]}
-                  cols="grid-cols-2"
-                  picks={picks}
-                  stakes={stakes}
-                  onPick={setPick}
-                  onStake={(mk, v) => setStakes((p) => ({ ...p, [mk]: v }))}
-                  onClear={(mk) => setPicks((p) => ({ ...p, [mk]: null }))}
-                  ctaTo={ctaTo}
-                />
-                <PreviewMarketSection
-                  market="btts"
-                  order={["YES", "NO"]}
-                  cols="grid-cols-2"
-                  picks={picks}
-                  stakes={stakes}
-                  onPick={setPick}
-                  onStake={(mk, v) => setStakes((p) => ({ ...p, [mk]: v }))}
-                  onClear={(mk) => setPicks((p) => ({ ...p, [mk]: null }))}
-                  ctaTo={ctaTo}
-                />
-                <PreviewMarketSection
-                  market="exact_total_goals"
-                  order={EXACT_GOALS_OPTIONS}
-                  cols="grid-cols-3"
-                  picks={picks}
-                  stakes={stakes}
-                  onPick={setPick}
-                  onStake={(mk, v) => setStakes((p) => ({ ...p, [mk]: v }))}
-                  onClear={(mk) => setPicks((p) => ({ ...p, [mk]: null }))}
-                  ctaTo={ctaTo}
-                />
-              </TabsContent>
-
-              <TabsContent value="cs" className="space-y-3 mt-2">
-                <PreviewMarketSection
-                  market="correct_score"
-                  order={CORRECT_SCORES}
-                  cols="grid-cols-4"
-                  picks={picks}
-                  stakes={stakes}
-                  onPick={setPick}
-                  onStake={(mk, v) => setStakes((p) => ({ ...p, [mk]: v }))}
-                  onClear={(mk) => setPicks((p) => ({ ...p, [mk]: null }))}
-                  ctaTo={ctaTo}
-                  hideHeader
-                />
-              </TabsContent>
-
-              <TabsContent value="sp" className="space-y-2 mt-2">
-                <PreviewMarketSection
-                  market="half_time_full_time"
-                  order={HTFT_OPTIONS}
-                  cols="grid-cols-3"
-                  picks={picks}
-                  stakes={stakes}
-                  onPick={setPick}
-                  onStake={(mk, v) => setStakes((p) => ({ ...p, [mk]: v }))}
-                  onClear={(mk) => setPicks((p) => ({ ...p, [mk]: null }))}
-                  ctaTo={ctaTo}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-
-          <p className="text-center text-[10px] text-muted-foreground pt-1">
-            Points only · No real money required · Sign up to lock in your bets
-          </p>
-        </Card>
+        </div>
       </div>
-    </section>
+
+      <div className="space-y-2">
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { p: "HOME", label: m.homeTeam, price: home },
+            { p: "DRAW", label: "Draw", price: draw },
+            { p: "AWAY", label: m.awayTeam, price: away },
+          ].map((o) => {
+            const isPicked = resultPick?.selection === o.p;
+            return (
+              <Button
+                key={o.p}
+                type="button"
+                variant={isPicked ? "default" : "outline"}
+                size="sm"
+                className="flex flex-col h-auto py-1.5 px-1"
+                onClick={() =>
+                  setResultPick(isPicked ? null : { selection: o.p, odds: o.price })
+                }
+              >
+                <span className="truncate max-w-full text-[10px] font-normal text-muted-foreground">{o.p === "DRAW" ? "Draw" : "Win"}</span>
+                <span className="font-bold text-xs">{Number(o.price).toFixed(2)}</span>
+              </Button>
+            );
+          })}
+        </div>
+        {resultPick && (
+          <PreviewSlip
+            marketLabel="Match Result"
+            pick={resultPick}
+            stake={resultStake}
+            onStake={setResultStake}
+            onClear={() => setResultPick(null)}
+            ctaTo={ctaTo}
+          />
+        )}
+      </div>
+    </Card>
   );
 }
 
-function PreviewMarketSection({
-  market, order, cols, picks, stakes, onPick, onStake, onClear, ctaTo, hideHeader,
-}: {
-  market: MarketKey;
-  order: string[];
-  cols: string;
-  picks: Record<string, Pick | null>;
-  stakes: Record<string, string>;
-  onPick: (market: MarketKey, sel: string, odds: number) => void;
-  onStake: (market: MarketKey, value: string) => void;
-  onClear: (market: MarketKey) => void;
-  ctaTo: string;
-  hideHeader?: boolean;
-}) {
-  const oddsMap = PREVIEW_ODDS[market];
-  const pick = picks[market] ?? null;
-  const stake = stakes[market] ?? String(MIN_STAKE);
+export function FeaturedMatches({ matches, authed }: { matches: LandingNextMatch[]; authed: boolean | null }) {
+  const displayedMatches = useMemo(() => {
+    const list = [...(matches || [])].filter(Boolean) as NonNullable<LandingNextMatch>[];
+    if (list.length >= 2) return list.slice(0, 2);
+    if (list.length === 1) return [list[0], DEMO_MATCH_2];
+    return [DEMO_MATCH_1, DEMO_MATCH_2];
+  }, [matches]);
+
   return (
-    <div>
-      {!hideHeader && (
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
-          {MARKET_LABELS[market]}
-        </div>
-      )}
-      <div className={`grid ${cols} gap-2`}>
-        {order.map((sel) => {
-          const odds = oddsMap[sel];
-          if (odds == null) return null;
-          const isPicked = pick?.selection === sel;
-          return (
-            <Button
-              key={sel}
-              type="button"
-              size="sm"
-              variant={isPicked ? "default" : "outline"}
-              className="flex flex-col h-auto py-2"
-              onClick={() => onPick(market, sel, odds)}
-            >
-              <span className="text-[10px] truncate max-w-full">{selectionLabel(sel)}</span>
-              <span className="font-bold text-sm">{odds.toFixed(2)}</span>
-            </Button>
-          );
-        })}
+    <div className="mx-auto max-w-4xl py-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {displayedMatches.map((m) => (
+          <MatchFixtureCard key={m.id} m={m} authed={authed} />
+        ))}
       </div>
-      {pick && (
-        <div className="mt-2">
-          <PreviewSlip
-            marketLabel={MARKET_LABELS[market]}
-            pick={pick}
-            stake={stake}
-            onStake={(v) => onStake(market, v)}
-            onClear={() => onClear(market)}
-            ctaTo={ctaTo}
-          />
-        </div>
-      )}
     </div>
   );
 }
@@ -489,7 +350,7 @@ export function TrustBadgesInteractive({
 
 export function useLandingData() {
   const fn = useServerFn(getLandingData);
-  const [data, setData] = useState<{ nextMatch: LandingNextMatch; stats: LandingStats } | null>(
+  const [data, setData] = useState<{ nextMatches: LandingNextMatch[]; stats: LandingStats } | null>(
     null,
   );
   useEffect(() => {
@@ -501,7 +362,7 @@ export function useLandingData() {
       .catch(() => {
         if (mounted)
           setData({
-            nextMatch: null,
+            nextMatches: [],
             stats: {
               registeredPlayers: 0,
               activeToday: 0,
