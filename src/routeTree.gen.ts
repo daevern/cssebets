@@ -30,6 +30,7 @@ import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPayoutRouteImport } from './routes/_authenticated/payout'
 import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
 import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
+import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/bets'
 import { Route as ManagementAdminIndexRouteImport } from './routes/management/admin.index'
@@ -48,6 +49,7 @@ import { Route as ManagementAdminPredictionsRouteImport } from './routes/managem
 import { Route as ManagementAdminPointsRouteImport } from './routes/management/admin.points'
 import { Route as ManagementAdminPayoutsRouteImport } from './routes/management/admin.payouts'
 import { Route as ManagementAdminOperationsRouteImport } from './routes/management/admin.operations'
+import { Route as ManagementAdminOnboardingRouteImport } from './routes/management/admin.onboarding'
 import { Route as ManagementAdminOddsHistoryRouteImport } from './routes/management/admin.odds-history'
 import { Route as ManagementAdminMatchesRouteImport } from './routes/management/admin.matches'
 import { Route as ManagementAdminMatchPoolsRouteImport } from './routes/management/admin.match-pools'
@@ -168,6 +170,11 @@ const AuthenticatedMatchesRoute = AuthenticatedMatchesRouteImport.update({
   path: '/matches',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -267,6 +274,12 @@ const ManagementAdminOperationsRoute =
     path: '/operations',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminOnboardingRoute =
+  ManagementAdminOnboardingRouteImport.update({
+    id: '/onboarding',
+    path: '/onboarding',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminOddsHistoryRoute =
   ManagementAdminOddsHistoryRouteImport.update({
     id: '/odds-history',
@@ -342,6 +355,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/bets': typeof AuthenticatedBetsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/help': typeof AuthenticatedHelpRoute
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
@@ -367,6 +381,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/onboarding': typeof ManagementAdminOnboardingRoute
   '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
@@ -394,6 +409,7 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/bets': typeof AuthenticatedBetsRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/help': typeof AuthenticatedHelpRoute
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
@@ -418,6 +434,7 @@ export interface FileRoutesByTo {
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/onboarding': typeof ManagementAdminOnboardingRoute
   '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
@@ -447,6 +464,7 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/matches': typeof AuthenticatedMatchesRoute
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/_authenticated/payout': typeof AuthenticatedPayoutRoute
@@ -472,6 +490,7 @@ export interface FileRoutesById {
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/onboarding': typeof ManagementAdminOnboardingRoute
   '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
@@ -501,6 +520,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/bets'
     | '/dashboard'
+    | '/help'
     | '/matches'
     | '/my-predictions'
     | '/payout'
@@ -526,6 +546,7 @@ export interface FileRouteTypes {
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
+    | '/management/admin/onboarding'
     | '/management/admin/operations'
     | '/management/admin/payouts'
     | '/management/admin/points'
@@ -553,6 +574,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/bets'
     | '/dashboard'
+    | '/help'
     | '/matches'
     | '/my-predictions'
     | '/payout'
@@ -577,6 +599,7 @@ export interface FileRouteTypes {
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
+    | '/management/admin/onboarding'
     | '/management/admin/operations'
     | '/management/admin/payouts'
     | '/management/admin/points'
@@ -605,6 +628,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/_authenticated/bets'
     | '/_authenticated/dashboard'
+    | '/_authenticated/help'
     | '/_authenticated/matches'
     | '/_authenticated/my-predictions'
     | '/_authenticated/payout'
@@ -630,6 +654,7 @@ export interface FileRouteTypes {
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
+    | '/management/admin/onboarding'
     | '/management/admin/operations'
     | '/management/admin/payouts'
     | '/management/admin/points'
@@ -811,6 +836,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMatchesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/help': {
+      id: '/_authenticated/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof AuthenticatedHelpRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -937,6 +969,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminOperationsRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/onboarding': {
+      id: '/management/admin/onboarding'
+      path: '/onboarding'
+      fullPath: '/management/admin/onboarding'
+      preLoaderRoute: typeof ManagementAdminOnboardingRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/odds-history': {
       id: '/management/admin/odds-history'
       path: '/odds-history'
@@ -1027,6 +1066,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBetsRoute: typeof AuthenticatedBetsRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
   AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRoute
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
   AuthenticatedPayoutRoute: typeof AuthenticatedPayoutRoute
@@ -1039,6 +1079,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBetsRoute: AuthenticatedBetsRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedHelpRoute: AuthenticatedHelpRoute,
   AuthenticatedMatchesRoute: AuthenticatedMatchesRoute,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
   AuthenticatedPayoutRoute: AuthenticatedPayoutRoute,
@@ -1061,6 +1102,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminMatchPoolsRoute: typeof ManagementAdminMatchPoolsRoute
   ManagementAdminMatchesRoute: typeof ManagementAdminMatchesRoute
   ManagementAdminOddsHistoryRoute: typeof ManagementAdminOddsHistoryRoute
+  ManagementAdminOnboardingRoute: typeof ManagementAdminOnboardingRoute
   ManagementAdminOperationsRoute: typeof ManagementAdminOperationsRoute
   ManagementAdminPayoutsRoute: typeof ManagementAdminPayoutsRoute
   ManagementAdminPointsRoute: typeof ManagementAdminPointsRoute
@@ -1089,6 +1131,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminMatchPoolsRoute: ManagementAdminMatchPoolsRoute,
   ManagementAdminMatchesRoute: ManagementAdminMatchesRoute,
   ManagementAdminOddsHistoryRoute: ManagementAdminOddsHistoryRoute,
+  ManagementAdminOnboardingRoute: ManagementAdminOnboardingRoute,
   ManagementAdminOperationsRoute: ManagementAdminOperationsRoute,
   ManagementAdminPayoutsRoute: ManagementAdminPayoutsRoute,
   ManagementAdminPointsRoute: ManagementAdminPointsRoute,

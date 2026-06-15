@@ -255,7 +255,7 @@ function WalletPage() {
         </Card>
       )}
 
-      <Card className="p-5 space-y-4">
+      <Card data-tour="request-points" className="p-5 space-y-4">
         <h2 className="font-semibold flex items-center gap-2"><Plus className="h-4 w-4" /> Request Points</h2>
         <p className="text-[11px] text-muted-foreground">
           Screenshots and recordings are discouraged. A user-specific watermark is applied for security.
@@ -280,7 +280,7 @@ function WalletPage() {
           <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" rows={2} />
         </div>
 
-        <div className="rounded-md border bg-muted/40 p-3 space-y-3">
+        <div data-tour="pointbank-field" className="rounded-md border bg-muted/40 p-3 space-y-3">
           <div className="space-y-1">
             <div className="text-sm font-semibold leading-tight">J.P MORGAN CHASE BANK BERHAD</div>
             <div className="text-sm leading-tight text-muted-foreground">WISE PAYMENTS SDN BHD</div>
@@ -291,7 +291,7 @@ function WalletPage() {
             <div className="text-sm leading-tight text-muted-foreground">BRICKSPLUG ENTERPRISE SD BHD</div>
             <CopiableValue value="8010575969" label="Account number" />
           </div>
-          <div className="border-t border-border pt-2 space-y-1.5">
+          <div data-tour="reference-id" className="border-t border-border pt-2 space-y-1.5">
             <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Reference ID</div>
             <ReferenceIdRow reference={myProfile.data ?? wallet.data?.publicReference ?? ""} />
             <p className="text-[11px] text-muted-foreground leading-snug">
@@ -300,7 +300,7 @@ function WalletPage() {
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div data-tour="proof-upload" className="space-y-2">
           <label className="text-sm font-medium">Upload proof file</label>
           <p className="text-xs text-muted-foreground">Accepted file types: PDF, JPG, JPEG, PNG, WEBP. Max 10MB.</p>
 
@@ -332,6 +332,7 @@ function WalletPage() {
         </div>
 
         <Button
+          data-tour="submit-request"
           className="w-full"
           onClick={() => {
             if (!draftId) {
@@ -378,7 +379,7 @@ function WalletPage() {
         )}
       </Card>
 
-      <Card className="p-5 space-y-3">
+      <Card data-tour="transaction-history" className="p-5 space-y-3">
         <h2 className="font-semibold">Transaction history</h2>
         {txns.isLoading ? (
           <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />

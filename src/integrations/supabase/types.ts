@@ -607,6 +607,57 @@ export type Database = {
         }
         Relationships: []
       }
+      onboarding_events: {
+        Row: {
+          created_at: string
+          event: string
+          id: string
+          metadata: Json
+          step_index: number | null
+          tour_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          id?: string
+          metadata?: Json
+          step_index?: number | null
+          tour_key: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          id?: string
+          metadata?: Json
+          step_index?: number | null
+          tour_key?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      onboarding_settings: {
+        Row: {
+          enabled: boolean
+          id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       operational_alerts: {
         Row: {
           acknowledged_at: string | null
@@ -1012,9 +1063,13 @@ export type Database = {
           force_password_change: boolean
           id: string
           is_simulation: boolean
+          onboarding_completed_at: string | null
+          onboarding_enabled: boolean
+          onboarding_skipped_at: string | null
           phone_number: string | null
           public_reference: string
           suspended: boolean
+          tour_progress: Json
         }
         Insert: {
           auth_provider?: string | null
@@ -1024,9 +1079,13 @@ export type Database = {
           force_password_change?: boolean
           id: string
           is_simulation?: boolean
+          onboarding_completed_at?: string | null
+          onboarding_enabled?: boolean
+          onboarding_skipped_at?: string | null
           phone_number?: string | null
           public_reference?: string
           suspended?: boolean
+          tour_progress?: Json
         }
         Update: {
           auth_provider?: string | null
@@ -1036,9 +1095,13 @@ export type Database = {
           force_password_change?: boolean
           id?: string
           is_simulation?: boolean
+          onboarding_completed_at?: string | null
+          onboarding_enabled?: boolean
+          onboarding_skipped_at?: string | null
           phone_number?: string | null
           public_reference?: string
           suspended?: boolean
+          tour_progress?: Json
         }
         Relationships: []
       }
@@ -1413,6 +1476,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_reset_onboarding: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      admin_set_global_onboarding: {
+        Args: { p_enabled: boolean }
+        Returns: undefined
+      }
+      admin_set_onboarding_enabled: {
+        Args: { p_enabled: boolean; p_user_id: string }
+        Returns: undefined
+      }
       assert_betting_allowed: {
         Args: {
           p_is_simulation?: boolean
@@ -1453,8 +1528,21 @@ export type Database = {
         Returns: number
       }
       generate_public_reference: { Args: never; Returns: string }
+      get_onboarding_completion_stats: { Args: never; Returns: Json }
       get_simulation_outcome_analytics: { Args: never; Returns: Json }
       get_simulation_stress_metrics: { Args: never; Returns: Json }
+      log_onboarding_event: {
+        Args: {
+          p_event: string
+          p_metadata?: Json
+          p_step_index?: number
+          p_tour_key: string
+        }
+        Returns: undefined
+      }
+      mark_onboarding_complete: { Args: never; Returns: undefined }
+      mark_onboarding_skipped: { Args: never; Returns: undefined }
+      mark_tour_complete: { Args: { p_tour_key: string }; Returns: undefined }
       market_odds_cap: { Args: { p_market: string }; Returns: number }
       move_to_dlq: {
         Args: {

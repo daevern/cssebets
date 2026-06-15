@@ -25,6 +25,7 @@ import {
   GitBranch,
   Menu,
   X,
+  BookOpen,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -61,6 +62,7 @@ const NAV: Array<{ to: string; label: string; icon: any; exact?: boolean; badgeK
   { to: "/management/admin/simulation", label: "Simulation Mode", icon: ShieldAlert },
   { to: "/management/admin/reconciliation", label: "Reconciliation", icon: ShieldAlert },
   { to: "/management/admin/audit", label: "Audit", icon: ScrollText },
+  { to: "/management/admin/onboarding", label: "Onboarding", icon: BookOpen },
   { to: "/management/admin/settings", label: "Settings", icon: Settings },
 ];
 

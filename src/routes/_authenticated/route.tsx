@@ -8,11 +8,13 @@ import { getPendingPointRequestCount } from "@/lib/wallet.functions";
 import { getPendingPayoutCount, getMyPayoutActionCount } from "@/lib/payout.functions";
 import { getPendingUserCount } from "@/lib/admin.functions";
 import { getMyUnreadSupportCount } from "@/lib/support.functions";
-import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote, Headset, Settings as SettingsIcon } from "lucide-react";
+import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote, Headset, Settings as SettingsIcon, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
 import { ScreenProtection } from "@/components/security/ScreenProtection";
+import { TourProvider, useTour } from "@/components/onboarding/TourProvider";
+import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -202,11 +204,13 @@ function AuthedLayout() {
 
 
   return (
+    <TourProvider>
     <div className="min-h-screen flex flex-col pb-20 md:pb-0">
       <ScreenProtection
         displayName={user?.user_metadata?.display_name || user?.email?.split("@")[0] || "user"}
         uid={user?.id ?? ""}
       />
+      <WelcomeModal />
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
@@ -240,6 +244,7 @@ function AuthedLayout() {
             {showBalance && (
               <Link
                 to="/wallet"
+                data-tour="wallet-balance"
                 className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold tabular-nums hover:bg-muted/80"
                 title="Your points balance"
               >
@@ -248,6 +253,9 @@ function AuthedLayout() {
                 <span className="text-muted-foreground font-normal">pts</span>
               </Link>
             )}
+            <Link to="/help" data-tour="help-link" title="Help Center" className="rounded-md p-2 hover:bg-muted text-muted-foreground hover:text-foreground">
+              <HelpCircle className="h-4 w-4" />
+            </Link>
             <Link to="/settings" title="Settings" className="rounded-md p-2 hover:bg-muted text-muted-foreground hover:text-foreground">
               <SettingsIcon className="h-4 w-4" />
             </Link>
@@ -291,6 +299,28 @@ function AuthedLayout() {
           })}
         </div>
       </nav>
+      <FirstVisitWalkthroughs />
     </div>
+    </TourProvider>
   );
+}
+
+// Triggers one-shot walkthroughs for first-time visits to /bets and /wallet.
+function FirstVisitWalkthroughs() {
+  const { startTour, hasCompleted, isTourActive, status } = useTour();
+  const location = useLocation();
+  useEffect(() => {
+    if (!status || isTourActive) return;
+    if (!status.userEnabled || !status.globalEnabled) return;
+    // Don't run a first-visit walkthrough until the user has chosen to skip
+    // the welcome flow or completed it (so we don't overlap modals).
+    if (!status.completedAt && !status.skippedAt) return;
+
+    if (location.pathname === "/bets" && !hasCompleted("first_bet")) {
+      startTour("first_bet");
+    } else if (location.pathname === "/wallet" && !hasCompleted("first_point_request")) {
+      startTour("first_point_request");
+    }
+  }, [location.pathname, status, hasCompleted, isTourActive, startTour]);
+  return null;
 }

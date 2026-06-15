@@ -26,7 +26,7 @@ function Dashboard() {
           <h1 className="text-2xl font-bold">cssebets</h1>
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div data-tour="quick-actions" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {tiles.map((t) => (
           <Link key={t.to} to={t.to as string}>
             <Card className="p-5 transition hover:border-primary hover:shadow-lg">
