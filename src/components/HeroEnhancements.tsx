@@ -5,6 +5,7 @@ import {
   Card,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
@@ -12,6 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Zap, Clock, TrendingUp, ShieldCheck } from "lucide-react";
+import { teamFlagUrl } from "@/lib/country-flags";
 import { getLandingData, type LandingNextMatch, type LandingStats } from "@/lib/landing.functions";
 
 function formatCountdown(ms: number) {
