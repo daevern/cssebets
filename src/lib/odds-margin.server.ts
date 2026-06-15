@@ -35,10 +35,18 @@ export async function apply3WayMargin(odds: { home: number; draw: number; away: 
   const cur = 1 / odds.home + 1 / odds.draw + 1 / odds.away;
   const k = shrinkFactor(cur, target);
   if (k === 1) return odds;
-  return {
+  const adjusted = {
     home: Number((odds.home * k).toFixed(2)),
     draw: Number((odds.draw * k).toFixed(2)),
     away: Number((odds.away * k).toFixed(2)),
+  };
+  if (adjusted.home < 1.01 || adjusted.draw < 1.01 || adjusted.away < 1.01) {
+    return odds;
+  }
+  return {
+    home: adjusted.home,
+    draw: adjusted.draw,
+    away: adjusted.away,
   };
 }
 
