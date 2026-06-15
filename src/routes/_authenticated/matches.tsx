@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPrediction } from "@/lib/predictions.functions";
-import { refreshMatches, getMatchOddsHistory } from "@/lib/matches.functions";
+import { refreshMatches, getMatchOddsHistory, listMatchesForUsers } from "@/lib/matches.functions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,17 +69,13 @@ function formatKickoffDate(iso: string): string {
 function MatchesPage() {
   const qc = useQueryClient();
   const refresh = useServerFn(refreshMatches);
+  const listMatches = useServerFn(listMatchesForUsers);
 
   const { data, isLoading } = useQuery({
     queryKey: ["matches"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("matches")
-        .select("id, home_team, away_team, kickoff_at, status, home_score, away_score, stage, group_name, reference_odds, odds_updated_at, odds_source")
-        .or("is_simulation.is.null,is_simulation.eq.false")
-        .order("kickoff_at", { ascending: true });
-      if (error) throw error;
-      return data as Match[];
+      const rows = await listMatches();
+      return rows as Match[];
     },
   });
 
