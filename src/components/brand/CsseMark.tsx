@@ -19,7 +19,7 @@ const SURFACE = "#0B1220";
 
 type MarkVariant = "default" | "mono" | "inverse";
 
-export interface CsseMarkProps {
+export interface CsseMarkProps extends React.SVGAttributes<SVGSVGElement> {
   className?: string;
   variant?: MarkVariant;
   title?: string;
@@ -34,7 +34,7 @@ export interface CsseMarkProps {
  * Built on a 32-unit grid with a 3.25-unit stroke so the silhouette
  * stays crisp at 16px favicon size up through 256px hero size.
  */
-export function CsseMark({ className, variant = "default", title }: CsseMarkProps) {
+export function CsseMark({ className, variant = "default", title, ...rest }: CsseMarkProps) {
   const wedgeColor = variant === "inverse" ? SURFACE : "currentColor";
   const accentColor = variant === "mono" ? "currentColor" : ACCENT;
 
@@ -47,7 +47,9 @@ export function CsseMark({ className, variant = "default", title }: CsseMarkProp
       aria-hidden={title ? undefined : true}
       aria-label={title}
       className={cn("inline-block shrink-0", className)}
+      {...rest}
     >
+
       {title ? <title>{title}</title> : null}
       <path
         d="M24 7 L11 7 L4 16 L11 25 L24 25"
@@ -121,8 +123,10 @@ export function CsseLogo({ className, size = 20, markOnly = false, inverse = fal
       <CsseMark
         title="CSSEBets"
         className={inverse ? "text-[#0B1220]" : "text-foreground"}
-        style={{ width: markSize, height: markSize } as React.CSSProperties}
+        width={markSize}
+        height={markSize}
       />
+
       {!markOnly ? <CsseWordmark size={size} inverse={inverse} /> : null}
     </span>
   );
@@ -170,7 +174,5 @@ export function CsseAppIcon({
   );
 }
 
-/* Re-export the mark with a `style` prop type-extended via React.SVGProps */
-declare module "react" {
-  // allow inline width/height style on CsseMark via spread
-}
+
+
