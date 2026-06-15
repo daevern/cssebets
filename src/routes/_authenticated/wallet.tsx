@@ -300,7 +300,7 @@ function WalletPage() {
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div data-tour="proof-upload" className="space-y-2">
           <label className="text-sm font-medium">Upload proof file</label>
           <p className="text-xs text-muted-foreground">Accepted file types: PDF, JPG, JPEG, PNG, WEBP. Max 10MB.</p>
 
