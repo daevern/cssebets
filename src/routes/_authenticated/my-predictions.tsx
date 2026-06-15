@@ -128,82 +128,157 @@ function PredictionRow({ p }: { p: any }) {
   const stakeInvalid = !Number.isFinite(stakeNum) || stakeNum < MIN_STAKE || stakeNum > MAX_STAKE;
   const stakeUnchanged = stakeNum === Number(p.virtual_stake);
 
+  const stakeN = Number(p.virtual_stake);
+  const oddsN = Number(p.reference_odds);
+  const payout = (stakeN * oddsN).toFixed(2);
+  const profit = (stakeN * oddsN - stakeN).toFixed(2);
+  const ticketId = String(p.id).replace(/-/g, "").slice(0, 10).toUpperCase();
+  const kickoffLabel = p.matches?.kickoff_at
+    ? new Date(p.matches.kickoff_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+    : "—";
+
+  const statusTone =
+    p.status === "won" ? "text-primary border-primary/60 bg-primary/10"
+    : p.status === "lost" ? "text-destructive border-destructive/60 bg-destructive/10"
+    : "text-muted-foreground border-border bg-muted/30";
+
   return (
-    <Card className="p-4 space-y-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="font-medium truncate">
-            {p.matches ? `${p.matches.home_team} vs ${p.matches.away_team}` : "—"}
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {p.market_text ?? p.market} · {p.selection_label ?? p.outcome} · stake {p.virtual_stake} @ {p.reference_odds} · payout <span className="font-mono font-semibold text-foreground">{(Number(p.virtual_stake) * Number(p.reference_odds)).toFixed(2)}</span>
-          </div>
+    <Card className="relative overflow-hidden p-0 border-border/60 bg-card shadow-md">
+      {/* perforation notches */}
+      <span aria-hidden className="absolute left-[-8px] top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-background border border-border/60" />
+      <span aria-hidden className="absolute right-[-8px] top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-background border border-border/60" />
+
+      {/* Header / stub */}
+      <div className="flex items-center justify-between px-4 py-2 bg-primary/10 border-b border-primary/20">
+        <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-primary font-semibold">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+          CSSEBets · Match Ticket
         </div>
-        <div className="text-right space-y-1 shrink-0">
-          <Badge variant={p.status === "won" ? "default" : p.status === "lost" ? "destructive" : "secondary"}>
-            {p.status}
-          </Badge>
-          <div className="text-xs text-muted-foreground">{p.points ?? 0} pts</div>
+        <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          #{ticketId}
         </div>
       </div>
 
-      {canModify && (
-        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/40">
-          {editing ? (
-            <>
-              <Input
-                type="number"
-                min={MIN_STAKE}
-                max={MAX_STAKE}
-                value={stake}
-                onChange={(e) => setStake(e.target.value)}
-                className="h-9 w-32"
-                placeholder={`${MIN_STAKE}-${MAX_STAKE}`}
-              />
-              <Button
-                size="sm"
-                disabled={editMut.isPending || stakeInvalid || stakeUnchanged}
-                onClick={() => editMut.mutate(stakeNum)}
-              >
-                <Check className="h-4 w-4 mr-1" /> Save
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                disabled={editMut.isPending}
-                onClick={() => { setEditing(false); setStake(String(p.virtual_stake)); }}
-              >
-                <X className="h-4 w-4 mr-1" /> Cancel
-              </Button>
-              {stakeInvalid && (
-                <span className="text-xs text-destructive">Stake must be {MIN_STAKE}-{MAX_STAKE.toLocaleString()}.</span>
-              )}
-            </>
-          ) : (
-            <>
-              <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-                <Pencil className="h-4 w-4 mr-1" /> Edit stake
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                disabled={cancelMut.isPending}
-                onClick={() => {
-                  if (window.confirm("Cancel this bet and refund the stake?")) cancelMut.mutate();
-                }}
-              >
-                <Trash2 className="h-4 w-4 mr-1" /> Remove bet
-              </Button>
-            </>
-          )}
+      {/* Body */}
+      <div className="px-4 py-3 space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-1">Fixture</div>
+            <div className="font-semibold text-base leading-tight truncate">
+              {p.matches ? (
+                <>
+                  {p.matches.home_team} <span className="text-muted-foreground text-xs mx-1">vs</span> {p.matches.away_team}
+                </>
+              ) : "—"}
+            </div>
+            <div className="text-[11px] text-muted-foreground mt-0.5">{kickoffLabel}</div>
+          </div>
+          <div className={`shrink-0 rounded-sm border px-2 py-1 text-[10px] uppercase tracking-[0.22em] font-bold ${statusTone}`}>
+            {p.status}
+          </div>
         </div>
-      )}
 
-      {!canModify && p.status === "pending" && matchLocked && (
-        <div className="text-xs text-muted-foreground pt-1 border-t border-border/40">
-          Match has kicked off — edit/remove disabled.
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-sm bg-muted/30 px-2.5 py-1.5">
+            <div className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground">Market</div>
+            <div className="font-medium truncate">{p.market_text ?? p.market}</div>
+          </div>
+          <div className="rounded-sm bg-muted/30 px-2.5 py-1.5">
+            <div className="text-[9px] uppercase tracking-[0.18em] text-muted-foreground">Selection</div>
+            <div className="font-medium truncate">{p.selection_label ?? p.outcome}</div>
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* Perforated divider */}
+      <div className="relative mx-4 border-t border-dashed border-border/70" />
+
+      {/* Stub: stake / odds / payout */}
+      <div className="px-4 py-3 grid grid-cols-3 gap-2">
+        <div>
+          <div className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Stake</div>
+          <div className="font-mono font-semibold tabular-nums">{stakeN.toFixed(2)}</div>
+        </div>
+        <div>
+          <div className="text-[9px] uppercase tracking-[0.2em] text-muted-foreground">Odds</div>
+          <div className="font-mono font-semibold tabular-nums">{oddsN.toFixed(2)}</div>
+        </div>
+        <div className="text-right">
+          <div className="text-[9px] uppercase tracking-[0.2em] text-primary">Potential payout</div>
+          <div className="font-mono font-bold text-primary text-lg leading-tight tabular-nums">{payout}</div>
+          <div className="text-[10px] text-muted-foreground tabular-nums">+{profit} profit</div>
+        </div>
+      </div>
+
+      {/* Footer / actions */}
+      <div className="px-4 py-2 border-t border-border/60 bg-muted/20 flex items-center justify-between gap-2">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+          {p.points ?? 0} pts awarded
+        </div>
+
+        {canModify ? (
+          <div className="flex flex-wrap items-center gap-1.5 justify-end">
+            {editing ? (
+              <>
+                <Input
+                  type="number"
+                  min={MIN_STAKE}
+                  max={MAX_STAKE}
+                  value={stake}
+                  onChange={(e) => setStake(e.target.value)}
+                  className="h-8 w-24"
+                  placeholder={`${MIN_STAKE}-${MAX_STAKE}`}
+                />
+                <Button
+                  size="sm"
+                  className="h-8"
+                  disabled={editMut.isPending || stakeInvalid || stakeUnchanged}
+                  onClick={() => editMut.mutate(stakeNum)}
+                >
+                  <Check className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8"
+                  disabled={editMut.isPending}
+                  onClick={() => { setEditing(false); setStake(String(p.virtual_stake)); }}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+                {stakeInvalid && (
+                  <span className="text-[10px] text-destructive w-full text-right">Stake must be {MIN_STAKE}-{MAX_STAKE.toLocaleString()}.</span>
+                )}
+              </>
+            ) : (
+              <>
+                <Button size="sm" variant="outline" className="h-8" onClick={() => setEditing(true)}>
+                  <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="h-8"
+                  disabled={cancelMut.isPending}
+                  onClick={() => {
+                    if (window.confirm("Cancel this bet and refund the stake?")) cancelMut.mutate();
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Void
+                </Button>
+              </>
+            )}
+          </div>
+        ) : p.status === "pending" && matchLocked ? (
+          <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+            Locked · kicked off
+          </div>
+        ) : (
+          <div className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+            Settled
+          </div>
+        )}
+      </div>
     </Card>
   );
 }
