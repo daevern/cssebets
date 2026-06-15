@@ -138,14 +138,15 @@ function AdminUsersPage() {
 }
 
 function UserDrawer({
-  userId, onClose, canWrite, canRole,
-}: { userId: string; onClose: () => void; canWrite: boolean; canRole: boolean }) {
+  userId, onClose, canWrite, canRole, canDelete,
+}: { userId: string; onClose: () => void; canWrite: boolean; canRole: boolean; canDelete: boolean }) {
   const qc = useQueryClient();
   const detailFn = useServerFn(getUserDetail);
   const renameFn = useServerFn(updateUserDisplayName);
   const suspendFn = useServerFn(setUserSuspended);
   const resetFn = useServerFn(resetUserBalance);
   const roleFn = useServerFn(setUserRole);
+  const deleteFn = useServerFn(deleteUserAccount);
 
   const detail = useQuery({
     queryKey: ["admin-user", userId],
