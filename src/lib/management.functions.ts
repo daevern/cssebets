@@ -756,9 +756,13 @@ export const staffListUsers = createServerFn({ method: "GET" })
       // ignore
     }
 
+    // Exclude staff (admin, super_admin, customer_support, viewer) — they live in the Staff table.
+    const STAFF = new Set(["admin", "super_admin", "customer_support", "viewer"]);
+    const isStaff = (id: string) => (rmap.get(id) ?? []).some((r) => STAFF.has(r));
+
     return {
       role,
-      users: (profiles ?? []).map((p: any) => ({
+      users: (profiles ?? []).filter((p: any) => !isStaff(p.id)).map((p: any) => ({
         id: p.id,
         display_name: p.display_name,
         suspended: !!p.suspended,
