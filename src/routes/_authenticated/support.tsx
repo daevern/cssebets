@@ -17,7 +17,7 @@ import { Headset, Paperclip, Send, Loader2, FileText, Download } from "lucide-re
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/support")({
-  head: () => ({ meta: [{ title: "Support — CSSE" }] }),
+  head: () => ({ meta: [{ title: "Support — CSSEBets" }] }),
   component: SupportPage,
 });
 
