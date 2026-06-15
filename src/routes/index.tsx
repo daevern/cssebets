@@ -344,8 +344,11 @@ function LandingPage() {
         `}</style>
       </section>
 
+      {/* Featured Match */}
+      <FeaturedMatch match={landing?.nextMatch ?? null} authed={authed} />
 
       {/* How it works */}
+
       <Suspense fallback={<div className="h-[600px]" />}>
         <HowItWorks />
       </Suspense>
