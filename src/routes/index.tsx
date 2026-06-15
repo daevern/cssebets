@@ -19,11 +19,11 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "cssebets — Competitive Strategy Starts Everywhere" },
+      { title: "cssebets — Predict, Bet & Cash Out on FIFA World Cup" },
       {
         name: "description",
         content:
-          "cssebets is a betting platform for FIFA World Cup matches. Convert cash for points, check reference odds, place bets, and track results.",
+          "Predict World Cup matches, place bets using points, track results, and cash out your winnings on cssebets.",
       },
       { property: "og:title", content: "cssebets — Competitive Strategy Starts Everywhere" },
       {
