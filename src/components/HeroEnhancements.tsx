@@ -127,11 +127,11 @@ export function FeaturedMatch({ match, authed }: { match: LandingNextMatch; auth
 
   return (
     <section className="border-b border-border bg-gradient-to-b from-background to-card/30">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
+      <div className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-[0.18em] text-primary">
             <TrendingUp className="h-4 w-4" />
-            Featured Match
+            Next Match
           </h2>
           {!match && (
             <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -139,69 +139,85 @@ export function FeaturedMatch({ match, authed }: { match: LandingNextMatch; auth
             </span>
           )}
         </div>
-        <Card className="overflow-hidden border-border/80 bg-card/90 p-0 shadow-xl shadow-primary/5">
-          <div className="grid gap-0 sm:grid-cols-[1.2fr_1fr]">
-            {/* Match info */}
-            <div className="p-5 sm:p-6">
-              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                <span>FIFA World Cup</span>
-                <span className="inline-flex items-center gap-1 text-primary">
-                  <Clock className="h-3 w-3" />
-                  Kickoff in {ko}
-                </span>
+
+        {/* Mirror of the real MatchCard UI used inside the app */}
+        <Card className="p-4 space-y-3">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                Group Stage
               </div>
-              <div className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
-                {m.homeTeam} <span className="text-muted-foreground">vs</span> {m.awayTeam}
-              </div>
-              <div className="mt-5 grid grid-cols-3 gap-2">
-                {[
-                  { lbl: "1", sub: m.homeTeam, odds: home },
-                  { lbl: "X", sub: "Draw", odds: draw },
-                  { lbl: "2", sub: m.awayTeam, odds: away },
-                ].map((o) => (
-                  <button
-                    key={o.lbl}
-                    className="group flex flex-col items-center gap-0.5 rounded-md border border-border bg-background/70 px-2 py-2.5 text-xs transition-all hover:-translate-y-0.5 hover:border-primary hover:bg-primary/10 hover:shadow-md hover:shadow-primary/20"
-                  >
-                    <span className="font-semibold text-muted-foreground group-hover:text-foreground">
-                      {o.lbl} · {o.sub.slice(0, 8)}
-                    </span>
-                    <span className="font-mono text-base font-bold text-foreground">
-                      {Number(o.odds).toFixed(2)}
-                    </span>
-                  </button>
-                ))}
+              <div className="text-xs text-muted-foreground inline-flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Kickoff in {ko}
               </div>
             </div>
-            {/* Slip */}
-            <div className="border-t border-border/70 bg-muted/20 p-5 sm:border-l sm:border-t-0 sm:p-6">
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Quick bet slip
-              </div>
-              <div className="mt-3 flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Stake</span>
-                <span className="font-mono font-semibold">{stake} pts</span>
-              </div>
-              <div className="mt-1 flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Potential return</span>
-                <span className="font-mono text-lg font-black text-primary">
-                  {potential} pts
-                </span>
-              </div>
-              <Link to={authed ? "/dashboard" : "/register"} className="mt-4 block">
-                <Button className="w-full gap-1.5 font-bold uppercase tracking-wide shadow-md shadow-primary/30 transition-transform hover:scale-[1.02]">
-                  <Zap className="h-3.5 w-3.5" />
-                  Place Prediction
+            <div className="grid grid-cols-3 items-center text-lg font-semibold gap-3">
+              <div className="flex justify-center"><PreviewFlag name={m.homeTeam} /></div>
+              <span className="text-muted-foreground text-sm text-center">vs</span>
+              <div className="flex justify-center"><PreviewFlag name={m.awayTeam} /></div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { p: "HOME" as const, label: m.homeTeam, price: home },
+                { p: "DRAW" as const, label: "Draw", price: draw },
+                { p: "AWAY" as const, label: m.awayTeam, price: away },
+              ].map((o) => (
+                <Button
+                  key={o.p}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="flex flex-col h-auto py-2"
+                  asChild
+                >
+                  <Link to={authed ? "/dashboard" : "/register"}>
+                    <span className="truncate max-w-full text-xs">{o.label}</span>
+                    <span className="font-bold">{Number(o.price).toFixed(2)}</span>
+                  </Link>
                 </Button>
-              </Link>
-              <p className="mt-2 text-center text-[10px] text-muted-foreground">
-                Points only · No real money required
-              </p>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                value={stake}
+                readOnly
+                aria-label="Stake preview"
+                className="pointer-events-none"
+              />
+              <Button asChild>
+                <Link to={authed ? "/dashboard" : "/register"}>
+                  <Zap className="h-3.5 w-3.5 mr-1" />
+                  Bet Now
+                </Link>
+              </Button>
+            </div>
+            <div className="text-[10px] text-muted-foreground">
+              Potential return: <span className="font-mono font-semibold text-primary">{potential} pts</span> · Points only · No real money required
             </div>
           </div>
         </Card>
       </div>
     </section>
+  );
+}
+
+function PreviewFlag({ name }: { name: string }) {
+  const url = teamFlagUrl(name, 160);
+  if (!url) {
+    return <span className="text-sm font-semibold truncate">{name}</span>;
+  }
+  return (
+    <img
+      src={url}
+      alt={`${name} flag`}
+      className="h-10 w-16 object-cover shadow-sm border border-border/40"
+      loading="lazy"
+    />
   );
 }
 
