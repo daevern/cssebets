@@ -93,11 +93,13 @@ export function HowItWorks() {
       {rainInView && <MoneyRain key={rainKey} />}
       <div className="mx-auto max-w-5xl px-4 py-16">
         <div className="text-center">
+          <div className="mx-auto mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
+            4 simple steps
+          </div>
           <h2 className="text-2xl font-bold sm:text-3xl">How It Works</h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground">
-            cssebets is a betting platform where users can view FIFA WORLD CUP matches,
-            check reference odds, request virtual points, place match bets, and track
-            their results through a transparent wallet.
+          <p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
+            Get from sign-up to your first bet on the FIFA World Cup in minutes —
+            then cash out winnings straight back to your bank.
           </p>
         </div>
 
