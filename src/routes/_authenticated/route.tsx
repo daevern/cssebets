@@ -216,7 +216,7 @@ function AuthedLayout() {
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
           <Link to="/dashboard" className="flex items-center gap-2 font-bold">
-            <Trophy className="h-5 w-5 text-primary" />
+            <CsseMark className="h-6 w-6 text-foreground" />
             <span className="hidden sm:inline">cssebets</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
