@@ -194,7 +194,7 @@ function LandingPage() {
           <div className="flex flex-col items-center">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
               <Flame className="h-3.5 w-3.5" />
-              FIFA World Cup · Live Now
+              FIFA World Cup · Bet Now
             </div>
             {landing?.nextMatch && (
               <div className="mt-3 flex justify-center">
