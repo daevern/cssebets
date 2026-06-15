@@ -379,7 +379,7 @@ function WalletPage() {
         )}
       </Card>
 
-      <Card className="p-5 space-y-3">
+      <Card data-tour="transaction-history" className="p-5 space-y-3">
         <h2 className="font-semibold">Transaction history</h2>
         {txns.isLoading ? (
           <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
