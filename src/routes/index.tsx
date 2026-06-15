@@ -17,6 +17,11 @@ import {
   Wallet,
   History,
   LifeBuoy,
+  TrendingUp,
+  TrendingDown,
+  Zap,
+  Clock,
+  Flame,
 } from "lucide-react";
 
 
