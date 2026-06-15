@@ -5,7 +5,6 @@ import { checkAuthRateLimit } from "@/lib/rate-limit.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { CsseAppIcon, CsseWordmark } from "@/components/brand/CsseMark";
 import { ChevronRight } from "lucide-react";
@@ -34,11 +33,76 @@ function isValidPhone(p: string) {
   return digits.length >= 10 && digits.length <= 15;
 }
 
-function BrandBackdrop() {
+/**
+ * Tactical pitch backdrop — proprietary CSSE visual.
+ * Half-pitch with center circle, passing lanes, and an "ascent" polyline
+ * that mirrors the brand mark. Pure SVG, scales crisp on mobile.
+ */
+function PitchBackdrop() {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,oklch(0.78_0.19_145/0.14),transparent_60%)]" />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
+      {/* Radial brand glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-10%,oklch(0.78_0.19_145/0.18),transparent_55%)]" />
+      {/* Pitch SVG */}
+      <svg
+        viewBox="0 0 800 1000"
+        className="absolute inset-x-0 top-0 h-full w-full opacity-[0.10]"
+        preserveAspectRatio="xMidYMin slice"
+      >
+        <defs>
+          <linearGradient id="lane" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="oklch(0.78 0.19 145)" stopOpacity="0.0" />
+            <stop offset="100%" stopColor="oklch(0.78 0.19 145)" stopOpacity="0.9" />
+          </linearGradient>
+        </defs>
+        <g fill="none" stroke="currentColor" strokeWidth="1.2" className="text-foreground">
+          {/* Touchlines */}
+          <rect x="60" y="40" width="680" height="920" />
+          {/* Halfway line */}
+          <line x1="60" y1="500" x2="740" y2="500" />
+          <circle cx="400" cy="500" r="90" />
+          <circle cx="400" cy="500" r="2.5" fill="currentColor" />
+          {/* Top penalty area */}
+          <rect x="200" y="40" width="400" height="150" />
+          <rect x="300" y="40" width="200" height="60" />
+          <circle cx="400" cy="160" r="2.5" fill="currentColor" />
+          {/* Bottom penalty area */}
+          <rect x="200" y="810" width="400" height="150" />
+          <rect x="300" y="900" width="200" height="60" />
+          <circle cx="400" cy="840" r="2.5" fill="currentColor" />
+          {/* Corner arcs */}
+          <path d="M60 60 A20 20 0 0 1 80 40" />
+          <path d="M740 60 A20 20 0 0 0 720 40" />
+          <path d="M60 940 A20 20 0 0 0 80 960" />
+          <path d="M740 940 A20 20 0 0 1 720 960" />
+        </g>
+        {/* Passing lane / strategy vector */}
+        <polyline
+          points="120,920 260,720 380,640 520,460 640,260 720,120"
+          fill="none"
+          stroke="url(#lane)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray="2 8"
+        />
+        {/* Strategy nodes */}
+        {[
+          [120, 920],
+          [380, 640],
+          [640, 260],
+        ].map(([x, y]) => (
+          <circle
+            key={`${x}-${y}`}
+            cx={x}
+            cy={y}
+            r="6"
+            fill="oklch(0.78 0.19 145)"
+            opacity="0.9"
+          />
+        ))}
+      </svg>
+      {/* Bottom fade to background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
     </div>
   );
 }
@@ -80,98 +144,155 @@ function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-background">
-      <BrandBackdrop />
-      <div className="relative mx-auto flex min-h-screen w-full max-w-sm flex-col justify-center px-4 py-10">
-        <Link to="/" className="mb-8 flex items-center justify-center gap-3">
+    <div className="relative min-h-screen bg-background text-foreground">
+      <PitchBackdrop />
+
+      <div className="relative mx-auto flex min-h-screen w-full max-w-sm flex-col px-4 py-8">
+        {/* Brand lockup */}
+        <Link to="/" className="mb-6 flex items-center justify-center gap-3">
           <CsseAppIcon size={40} />
           <CsseWordmark size={20} />
         </Link>
 
-        <Card className="space-y-5 border-border/70 bg-card/85 p-6 shadow-2xl backdrop-blur-md">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-xl font-bold">Welcome back</h1>
-            <p className="text-xs text-muted-foreground">Sign in to continue.</p>
+        {/* Tagline strip — proprietary CSSE language, not landing-page copy */}
+        <div className="mb-5 flex items-center justify-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
+          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[oklch(0.78_0.19_145)]" />
+          <span>Matchday Console</span>
+          <span className="text-border">/</span>
+          <span className="text-[oklch(0.78_0.19_145)]">Live</span>
+        </div>
+
+        {/* Scoreboard-style auth card */}
+        <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/85 shadow-2xl backdrop-blur-md">
+          {/* Top accent bar mimicking a stadium scoreboard */}
+          <div className="flex items-center justify-between border-b border-border/60 bg-[oklch(0.18_0.02_240/0.6)] px-5 py-2.5">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                Session
+              </span>
+              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[oklch(0.78_0.19_145)]">
+                Sign in
+              </span>
+            </div>
+            <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+              CSSE · 01
+            </span>
           </div>
 
-          <div className="flex gap-2 rounded-lg bg-muted/60 p-1">
-            {(["email", "phone"] as const).map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setChannel(c)}
-                className={`flex-1 rounded-md py-1.5 text-xs font-medium transition ${
-                  channel === c ? "bg-card shadow" : "text-muted-foreground"
-                }`}
-              >
-                {c === "email" ? "Email" : "Phone"}
-              </button>
-            ))}
-          </div>
+          <div className="space-y-5 px-5 py-6">
+            <div className="flex flex-col gap-1">
+              <h1 className="text-[22px] font-bold leading-tight tracking-tight">
+                Welcome back, strategist.
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                Your picks, leagues, and standings are queued.
+              </p>
+            </div>
 
-          <form onSubmit={onSubmit} className="space-y-4">
-            {channel === "email" ? (
+            <div className="flex gap-1 rounded-lg border border-border/60 bg-muted/40 p-1">
+              {(["email", "phone"] as const).map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setChannel(c)}
+                  className={`flex-1 rounded-md py-1.5 text-xs font-medium transition ${
+                    channel === c
+                      ? "bg-card text-foreground shadow"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {c === "email" ? "Email" : "Phone"}
+                </button>
+              ))}
+            </div>
+
+            <form onSubmit={onSubmit} className="space-y-4">
+              {channel === "email" ? (
+                <div className="space-y-1.5">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label htmlFor="phone">Phone number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    required
+                    inputMode="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+60123456789"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    International format, e.g. +60123456789
+                  </p>
+                </div>
+              )}
               <div className="space-y-1.5">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="password">Password</Label>
                 <Input
-                  id="email"
-                  type="email"
+                  id="password"
+                  type="password"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-            ) : (
-              <div className="space-y-1.5">
-                <Label htmlFor="phone">Phone number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  required
-                  inputMode="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+60123456789"
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  International format, e.g. +60123456789
-                </p>
-              </div>
-            )}
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Please wait…" : "Sign in"}
-              {!loading && <ChevronRight className="ml-1 h-4 w-4" />}
-            </Button>
-          </form>
+              <Button type="submit" className="group w-full" disabled={loading}>
+                {loading ? "Entering the console…" : "Enter the console"}
+                {!loading && (
+                  <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                )}
+              </Button>
+            </form>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border/60" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-card px-2 font-mono uppercase tracking-[0.18em] text-muted-foreground text-[10px]">
+                  New to CSSE
+                </span>
+              </div>
             </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-card px-2 text-muted-foreground">New to CSSE?</span>
-            </div>
+
+            <Link to="/register" className="block">
+              <Button type="button" variant="outline" className="w-full">
+                Create your strategist profile
+              </Button>
+            </Link>
           </div>
 
-          <Link to="/register" className="block">
-            <Button type="button" variant="outline" className="w-full">
-              Create an account
-            </Button>
-          </Link>
-        </Card>
+          {/* Bottom strip — league ticker, brand-flavored */}
+          <div className="border-t border-border/60 bg-[oklch(0.18_0.02_240/0.4)] px-5 py-2">
+            <div className="flex items-center justify-between gap-2 overflow-hidden font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              <span className="text-[oklch(0.78_0.19_145)]">EPL</span>
+              <span>·</span>
+              <span>LaLiga</span>
+              <span>·</span>
+              <span>Serie A</span>
+              <span>·</span>
+              <span>Bundesliga</span>
+              <span>·</span>
+              <span className="text-[oklch(0.78_0.19_145)]">UCL</span>
+            </div>
+          </div>
+        </div>
 
-        <div className="mt-6 text-center text-[11px] text-muted-foreground">
+        {/* Footer */}
+        <p className="mt-6 text-center font-mono text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+          Competitive Strategy Starts Everywhere
+        </p>
+        <div className="mt-3 text-center text-[11px] text-muted-foreground">
           <Link to="/" className="hover:text-foreground">
             ← Back home
           </Link>
