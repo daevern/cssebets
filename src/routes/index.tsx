@@ -386,7 +386,7 @@ function LandingPage() {
               <Link to="/register">
                 <Button size="lg" className="gap-2 font-bold uppercase tracking-wide shadow-lg shadow-primary/40">
                   <Zap className="h-4 w-4" />
-                  Claim Your Seat
+                  MAKE A BET
                 </Button>
               </Link>
             )}
