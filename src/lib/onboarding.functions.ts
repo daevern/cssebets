@@ -57,7 +57,7 @@ export const logOnboardingEvent = createServerFn({ method: "POST" })
       .object({
         tourKey: z.string().min(1).max(64),
         event: z.enum(["started", "completed", "skipped", "step_viewed"]),
-        stepIndex: z.number().int().min(0).max(50).nullable().optional(),
+        stepIndex: z.number().int().min(0).max(50).optional(),
         metadata: z.record(z.string(), z.any()).optional(),
       })
       .parse(i),
