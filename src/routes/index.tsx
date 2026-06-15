@@ -22,7 +22,7 @@ import {
   TrendingUp,
   Lock,
 } from "lucide-react";
-import { CsseLogo, CsseMark } from "@/components/brand/CsseMark";
+import { CsseLogo } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/")({
   ssr: false,
