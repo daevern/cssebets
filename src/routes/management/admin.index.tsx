@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getAdminMetrics, getMatchExposure } from "@/lib/admin-dashboard.functions";
 import { Card } from "@/components/ui/card";
 import {
-  Users, ListChecks, Activity, Coins, TrendingUp, AlertCircle, Ban, Trophy,
+  Users, ListChecks, Activity, Coins, TrendingUp, AlertCircle, Ban, Crown,
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2 } from "lucide-react";
@@ -50,7 +50,7 @@ function AdminOverview() {
         <div className="grid md:grid-cols-2 gap-4">
           <Card className="p-4 space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold">
-              <Trophy className="h-4 w-4 text-primary" /> Top virtual winners
+              <Crown className="h-4 w-4 text-primary" /> Top virtual winners
             </div>
             <ol className="text-sm space-y-1">
               {m.data.topWinners.map((u) => (
@@ -64,7 +64,7 @@ function AdminOverview() {
           </Card>
           <Card className="p-4 space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold">
-              <Trophy className="h-4 w-4 text-muted-foreground" /> Biggest virtual losers
+              <Crown className="h-4 w-4 text-muted-foreground" /> Biggest virtual losers
             </div>
             <ol className="text-sm space-y-1">
               {m.data.topLosers.map((u) => (
