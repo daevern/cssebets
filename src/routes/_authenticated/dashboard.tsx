@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
-import { Trophy, ListChecks, History } from "lucide-react";
+import { ListChecks, History } from "lucide-react";
+import { CsseMark } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -21,7 +22,7 @@ function Dashboard() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4">
       <div className="flex items-center gap-3">
-        <Trophy className="h-8 w-8 text-primary" />
+        <CsseMark className="h-9 w-9 text-foreground" />
         <div>
           <h1 className="text-2xl font-bold">cssebets</h1>
         </div>

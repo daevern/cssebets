@@ -8,7 +8,8 @@ import { getPendingPointRequestCount } from "@/lib/wallet.functions";
 import { getPendingPayoutCount, getMyPayoutActionCount } from "@/lib/payout.functions";
 import { getPendingUserCount } from "@/lib/admin.functions";
 import { getMyUnreadSupportCount } from "@/lib/support.functions";
-import { Trophy, Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote, Headset, Settings as SettingsIcon, HelpCircle } from "lucide-react";
+import { Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote, Headset, Settings as SettingsIcon, HelpCircle } from "lucide-react";
+import { CsseMark } from "@/components/brand/CsseMark";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
@@ -215,7 +216,7 @@ function AuthedLayout() {
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
           <Link to="/dashboard" className="flex items-center gap-2 font-bold">
-            <Trophy className="h-5 w-5 text-primary" />
+            <CsseMark className="h-6 w-6 text-foreground" />
             <span className="hidden sm:inline">cssebets</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">

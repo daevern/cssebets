@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Trophy } from "lucide-react";
+import { Loader2, Crown } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/tournament-winner")({
@@ -123,7 +123,7 @@ function TournamentWinnerPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Trophy className="h-7 w-7 text-primary" />
+        <Crown className="h-7 w-7 text-primary" />
         <div className="flex-1">
           <h1 className="text-2xl font-bold">{t.name}</h1>
           <p className="text-xs text-muted-foreground">Bet on who wins the entire tournament.</p>

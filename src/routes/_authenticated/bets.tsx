@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
-import { ListChecks, Trophy } from "lucide-react";
+import { ListChecks, Crown } from "lucide-react";
+import { CsseMark } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/bets")({
   head: () => ({
@@ -22,21 +23,22 @@ function BetsHub() {
     },
     {
       to: "/tournament-winner",
-      icon: Trophy,
+      icon: Crown,
       label: "Tournament Winner",
-      desc: "Bet on who lifts the trophy",
+      desc: "Pick the tournament champion",
     },
   ] as const;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4">
       <div className="flex items-center gap-3">
-        <Trophy className="h-8 w-8 text-primary" />
+        <CsseMark className="h-9 w-9 text-foreground" />
         <div>
           <h1 className="text-2xl font-bold">Bets</h1>
           <p className="text-sm text-muted-foreground">Pick a market to start.</p>
         </div>
       </div>
+
       <div data-tour="available-matches" className="grid gap-4 sm:grid-cols-2">
         {tiles.map((t) => (
           <Link key={t.to} to={t.to as string} data-tour={t.to === "/matches" ? "bet-button" : undefined}>

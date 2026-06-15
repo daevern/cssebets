@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, Trophy } from "lucide-react";
+import { Loader2, RefreshCw, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -98,7 +98,7 @@ function AdminTournamentPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <Trophy className="h-6 w-6 text-primary" />
+          <Crown className="h-6 w-6 text-primary" />
           <div>
             <h1 className="text-2xl font-bold">{t.data.name}</h1>
             <p className="text-xs text-muted-foreground">Manage outright odds & settlement.</p>
