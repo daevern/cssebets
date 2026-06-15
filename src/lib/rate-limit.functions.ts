@@ -40,8 +40,8 @@ export async function enforceRateLimit(scope: string, action: RateLimitAction) {
 export const checkAuthRateLimit = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) =>
     z.object({
-      email: z.string().email().optional(),
-      phone: z.string().max(40).optional(),
+      email: z.string().trim().max(255).optional().transform((v) => (v ? v.toLowerCase() : undefined)),
+      phone: z.string().trim().max(40).optional(),
     }).refine((v) => v.email || v.phone, "email or phone required").parse(i),
   )
   .handler(async ({ data }) => {
