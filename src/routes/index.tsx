@@ -12,6 +12,11 @@ import {
   Mail,
   MessageCircle,
   ArrowRight,
+  ShieldCheck,
+  Radio,
+  Wallet,
+  History,
+  LifeBuoy,
 } from "lucide-react";
 
 
