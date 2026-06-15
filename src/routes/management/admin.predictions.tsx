@@ -82,20 +82,26 @@ function AdminPredictionsPage() {
                   <TableHead>Outcome</TableHead>
                   <TableHead className="text-right">Stake</TableHead>
                   <TableHead className="text-right">Odds</TableHead>
+                  <TableHead className="text-right">Payout</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Placed</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(q.data?.predictions ?? []).map((p: any) => (
+                {(q.data?.predictions ?? []).map((p: any) => {
+                  const stake = Number(p.virtual_stake);
+                  const odds = Number(p.reference_odds);
+                  const payout = stake * odds;
+                  return (
                   <TableRow key={p.id}>
                     <TableCell className="font-medium text-sm">{p.display_name}</TableCell>
                     <TableCell className="text-xs">{p.match}</TableCell>
                     <TableCell className="text-xs">{p.market}</TableCell>
                     <TableCell className="text-xs">{p.outcome}</TableCell>
-                    <TableCell className="text-right text-xs tabular-nums">{Number(p.virtual_stake).toLocaleString()}</TableCell>
-                    <TableCell className="text-right text-xs tabular-nums">{Number(p.reference_odds).toFixed(2)}</TableCell>
+                    <TableCell className="text-right text-xs tabular-nums">{stake.toLocaleString()}</TableCell>
+                    <TableCell className="text-right text-xs tabular-nums">{odds.toFixed(2)}</TableCell>
+                    <TableCell className="text-right text-xs font-semibold text-primary tabular-nums">{payout.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                     <TableCell><Badge variant="outline" className="uppercase text-[10px]">{p.status}</Badge></TableCell>
                     <TableCell className="text-[10px] text-muted-foreground">{new Date(p.created_at).toLocaleString()}</TableCell>
                     <TableCell className="text-right">
@@ -108,9 +114,10 @@ function AdminPredictionsPage() {
                       </Button>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
                 {!q.data?.predictions?.length && (
-                  <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground">No predictions.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground">No predictions.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
