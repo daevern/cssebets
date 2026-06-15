@@ -26,7 +26,7 @@ export const getLandingData = createServerFn({ method: "GET" }).handler(
     const [nextMatchRes, profilesRes, activeRes, settledRes, paidRes] = await Promise.all([
       supabaseAdmin
         .from("matches")
-        .select("id, home_team, away_team, kickoff_at, home_odds, draw_odds, away_odds, status")
+        .select("id, home_team, away_team, kickoff_at, reference_odds, status")
         .gte("kickoff_at", nowIso)
         .in("status", ["scheduled"])
         .order("kickoff_at", { ascending: true })
@@ -39,17 +39,19 @@ export const getLandingData = createServerFn({ method: "GET" }).handler(
     ]);
 
     const m = nextMatchRes.data;
+    const refOdds: any = (m as any)?.reference_odds ?? {};
     const nextMatch: LandingNextMatch = m
       ? {
           id: m.id,
           homeTeam: m.home_team,
           awayTeam: m.away_team,
           kickoffAt: m.kickoff_at,
-          homeOdds: m.home_odds != null ? Number(m.home_odds) : null,
-          drawOdds: m.draw_odds != null ? Number(m.draw_odds) : null,
-          awayOdds: m.away_odds != null ? Number(m.away_odds) : null,
+          homeOdds: refOdds.home != null ? Number(refOdds.home) : null,
+          drawOdds: refOdds.draw != null ? Number(refOdds.draw) : null,
+          awayOdds: refOdds.away != null ? Number(refOdds.away) : null,
         }
       : null;
+
 
     const activeToday = new Set((activeRes.data ?? []).map((r: any) => r.user_id)).size;
     const pointsPaidOut = (paidRes.data ?? []).reduce(
