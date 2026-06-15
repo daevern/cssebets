@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, useScroll, useTransform, useSpring, useInView } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform, useSpring, useInView } from "framer-motion";
 
 type Step = {
   n: number;
@@ -82,7 +82,8 @@ export function HowItWorks() {
   const pathLength = useSpring(rawDraw, { stiffness: 120, damping: 24, mass: 0.6 });
 
   const cashoutRef = useRef<HTMLDivElement>(null);
-  const rainInView = useInView(cashoutRef, { amount: 0.3 });
+  // Only trigger the money rain when the cashout (step 5) card is fully visible
+  const rainInView = useInView(cashoutRef, { amount: 0.9, margin: "-10% 0px -10% 0px" });
   const [rainKey, setRainKey] = useState(0);
   useEffect(() => {
     if (rainInView) setRainKey((k) => k + 1);
@@ -166,14 +167,14 @@ export function HowItWorks() {
               return (
                 <motion.div
                   key={s.n}
-                  initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  transition={{ duration: 0.4, delay: i * 0.05 }}
+                  viewport={{ once: true, amount: 0.6 }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                   className={`${col} row-start-${i + 1}`}
                   style={{ gridRowStart: i + 1 }}
                 >
-                  <FlipPanel n={s.n} title={s.title} desc={s.desc} hint={s.hint} bullets={s.bullets} />
+                  <ExpandPanel n={s.n} title={s.title} desc={s.desc} hint={s.hint} bullets={s.bullets} />
                 </motion.div>
               );
             })}
@@ -196,7 +197,7 @@ export function HowItWorks() {
   );
 }
 
-function FlipPanel({
+function ExpandPanel({
   n,
   title,
   desc,
@@ -209,59 +210,66 @@ function FlipPanel({
   hint: string;
   bullets: string[];
 }) {
-  const [flipped, setFlipped] = useState(false);
+  const [open, setOpen] = useState(false);
   return (
     <button
       type="button"
-      onClick={() => setFlipped((f) => !f)}
-      className="group block w-full text-left [perspective:1200px]"
-      aria-pressed={flipped}
-      aria-label={`Step ${n}: ${title} — tap to ${flipped ? "hide" : "show"} details`}
+      onClick={() => setOpen((o) => !o)}
+      className="group block w-full text-left"
+      aria-expanded={open}
+      aria-label={`Step ${n}: ${title} — tap to ${open ? "hide" : "show"} details`}
     >
-      <div
-        className="relative h-56 w-full transition-transform duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] [transform-style:preserve-3d] sm:h-60"
-        style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
+      <motion.div
+        layout
+        transition={{ layout: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } }}
+        className={`relative flex w-full flex-col rounded-2xl border bg-card p-5 text-card-foreground shadow-sm transition-shadow hover:shadow-lg sm:p-6 ${
+          open ? "border-primary/50 shadow-lg shadow-primary/10" : "group-hover:border-primary/50"
+        }`}
       >
-        {/* Front */}
-        <div className="absolute inset-0 flex flex-col rounded-2xl border bg-card p-5 text-card-foreground shadow-sm transition-shadow [backface-visibility:hidden] group-hover:border-primary/50 group-hover:shadow-lg group-hover:shadow-primary/10 sm:p-6">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30">
-              {n}
-            </div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-              Step {n} of 4
-            </div>
+        <motion.div layout="position" className="mb-4 flex items-center gap-3">
+          <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30">
+            {n}
           </div>
-          <div className="text-base font-semibold sm:text-lg">{title}</div>
-          <div className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{desc}</div>
-          <div className="mt-auto pt-4">
-            <div className="text-[11px] italic text-primary/80">{hint}</div>
-            <div className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground/70 group-hover:text-primary">
-              Tap to see details →
-            </div>
+          <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Step {n} of 4
           </div>
-        </div>
-        {/* Back */}
-        <div
-          className="absolute inset-0 flex flex-col overflow-auto rounded-2xl border border-primary/40 bg-primary/5 p-5 text-card-foreground shadow-lg [backface-visibility:hidden] sm:p-6"
-          style={{ transform: "rotateY(180deg)" }}
-        >
-          <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-            Step {n} · {title}
+        </motion.div>
+        <motion.div layout="position" className="text-base font-semibold sm:text-lg">{title}</motion.div>
+        <motion.div layout="position" className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+          {desc}
+        </motion.div>
+
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div
+              key="details"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="mt-4 rounded-xl border border-primary/30 bg-primary/5 p-4">
+                <ul className="space-y-2 text-sm leading-relaxed text-foreground/90">
+                  {bullets.map((b, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                      <span>{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.div layout="position" className="mt-4">
+          <div className="text-[11px] italic text-primary/80">{hint}</div>
+          <div className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground/70 group-hover:text-primary">
+            {open ? "Tap to collapse ↑" : "Tap to see details ↓"}
           </div>
-          <ul className="space-y-2 text-sm leading-relaxed text-foreground/90">
-            {bullets.map((b, i) => (
-              <li key={i} className="flex gap-2">
-                <span className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                <span>{b}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-auto pt-3 text-[10px] uppercase tracking-wider text-muted-foreground/70">
-            ← Tap to flip back
-          </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </button>
   );
 }
