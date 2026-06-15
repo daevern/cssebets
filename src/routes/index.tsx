@@ -12,6 +12,11 @@ import {
   Mail,
   MessageCircle,
   ArrowRight,
+  ShieldCheck,
+  Radio,
+  Wallet,
+  History,
+  LifeBuoy,
 } from "lucide-react";
 
 
@@ -19,11 +24,11 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "cssebets — Competitive Strategy Starts Everywhere" },
+      { title: "cssebets — Predict, Bet & Cash Out on FIFA World Cup" },
       {
         name: "description",
         content:
-          "cssebets is a betting platform for FIFA World Cup matches. Convert cash for points, check reference odds, place bets, and track results.",
+          "Predict World Cup matches, place bets using points, track results, and cash out your winnings on cssebets.",
       },
       { property: "og:title", content: "cssebets — Competitive Strategy Starts Everywhere" },
       {
@@ -88,9 +93,26 @@ function LandingPage() {
               Support
             </button>
           </nav>
-          <Link to={primaryCta.to}>
-            <Button size="sm">{primaryCta.label}</Button>
-          </Link>
+          {authed ? (
+            <Link to="/dashboard">
+              <Button size="sm" className="shadow-md shadow-primary/30 transition-transform hover:scale-[1.03]">
+                Go to Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link to="/auth" className="hidden sm:inline-flex">
+                <Button size="sm" variant="ghost" className="transition-colors hover:text-primary">
+                  Log In
+                </Button>
+              </Link>
+              <Link to="/register">
+                <Button size="sm" className="shadow-md shadow-primary/30 transition-transform hover:scale-[1.03]">
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </header>
 
@@ -111,25 +133,59 @@ function LandingPage() {
           <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
             cssebets
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-sm text-muted-foreground sm:text-base">
+          <p className="mx-auto mt-3 max-w-xl text-xs uppercase tracking-[0.18em] text-primary/80 sm:text-sm">
             Competitive Strategy Starts Everywhere
           </p>
+          <p className="mx-auto mt-5 max-w-2xl text-base text-foreground/90 sm:text-lg">
+            Predict World Cup matches, place bets using points, track results,
+            and cash out your winnings — all in one place.
+          </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-            <Link to={primaryCta.to}>
-              <Button size="lg" className="gap-2">
-                {primaryCta.label}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Button size="lg" variant="outline" onClick={() => scrollToId("how")}>
+            {authed ? (
+              <Link to="/dashboard">
+                <Button size="lg" className="gap-2 shadow-lg shadow-primary/30 transition-transform hover:scale-[1.03]">
+                  Go to Dashboard
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <>
+                <Link to="/register">
+                  <Button size="lg" className="gap-2 shadow-lg shadow-primary/30 transition-transform hover:scale-[1.03]">
+                    Sign Up Free
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link to="/auth">
+                  <Button size="lg" variant="outline" className="transition-colors hover:border-primary hover:text-primary">
+                    Log In
+                  </Button>
+                </Link>
+              </>
+            )}
+            <Button size="lg" variant="ghost" onClick={() => scrollToId("how")}>
               How It Works
             </Button>
           </div>
 
-          {/* About strip */}
-          <p className="mx-auto mt-12 max-w-2xl text-sm text-muted-foreground">
-            Convert cash to points, place bets, win big.
-          </p>
+          {/* Trust indicators */}
+          <div className="mx-auto mt-10 flex max-w-3xl flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground sm:gap-3 sm:text-sm">
+            {[
+              { icon: Radio, label: "Live Match Tracking" },
+              { icon: Wallet, label: "Secure Wallet Records" },
+              { icon: History, label: "Full Betting History" },
+              { icon: LifeBuoy, label: "Support Available" },
+            ].map(({ icon: Icon, label }) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/60 px-3 py-1.5 backdrop-blur transition-colors hover:border-primary/50 hover:text-foreground"
+              >
+                <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                <Icon className="h-3.5 w-3.5 text-primary/70" />
+                {label}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 

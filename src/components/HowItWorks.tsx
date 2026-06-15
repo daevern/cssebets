@@ -1,39 +1,63 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useSpring, useInView } from "framer-motion";
 
-const steps = [
+type Step = {
+  n: number;
+  title: string;
+  desc: string;
+  hint: string;
+  bullets: string[];
+};
+
+const steps: Step[] = [
   {
     n: 1,
     title: "Register",
     desc: "Create an account or sign in.",
-    detail:
-      "All new users must await admin approval. Admin approval could take 30 minutes to 6 hours.",
+    hint: "Takes under a minute.",
+    bullets: [
+      "Sign up with email or phone.",
+      "New accounts need admin approval.",
+      "Approval usually takes 30 min – 6 hrs.",
+    ],
   },
   {
     n: 2,
     title: "Request points",
-    desc: "Convert cash to virtual points.",
-    detail:
-      "Users will need to make payment via bank transfer to the respective cssebets account and submit receipt. Points will be issued upon admin approval. Admin point approval could take 30 minutes to 6 hours.",
+    desc: "Convert cash to virtual points to fund your wallet.",
+    hint: "Request points to fund your wallet.",
+    bullets: [
+      "Bank transfer to the cssebets account.",
+      "Submit your receipt in-app.",
+      "Points credited after admin approval (30 min – 6 hrs).",
+    ],
   },
   {
     n: 3,
     title: "Upload proof",
-    desc: "Confirm your request for admin review.",
-    detail:
-      "For all point requests and point cashouts, user and admin will need to send each other the respective image/PDF of receipt to confirm the transaction.",
+    desc: "Confirm your request for faster admin review.",
+    hint: "Upload proof for faster approval.",
+    bullets: [
+      "Attach receipt image or PDF.",
+      "Used for both top-ups and cashouts.",
+      "Both sides confirm to close the transaction.",
+    ],
   },
   {
     n: 4,
     title: "Place bets",
-    desc: "Pick a match and track your result.",
-    detail:
-      "Once points are deposited in your account, head over to the BETS section and place bets on Matches or your overall Winner for the FIFA WORLD CUP 2026.",
+    desc: "Pick a match and track your result live.",
+    hint: "Track all bets from your dashboard.",
+    bullets: [
+      "Open the BETS section for FIFA World Cup 2026.",
+      "Bet on individual matches or the overall winner.",
+      "Follow live results from your dashboard.",
+    ],
   },
 ];
 
 const cashoutDetail =
-  "Once you are ready to take profits, head over to the Payout section and simply cashout. Send a request to convert points back to cash. Upon admin approval, point-to-cash conversion and the cash-to-bank process will take between 24 hours and 7 days.";
+  "Once you're ready to take profits, head to the Payout section and request a cashout. After admin approval, point-to-cash and bank transfer typically take 24 hours – 7 days.";
 
 // Hand-drawn arrow path through 4 panels arranged in a zigzag.
 // viewBox is 100x160 stretched to fill via preserveAspectRatio="none".
@@ -69,11 +93,13 @@ export function HowItWorks() {
       {rainInView && <MoneyRain key={rainKey} />}
       <div className="mx-auto max-w-5xl px-4 py-16">
         <div className="text-center">
+          <div className="mx-auto mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
+            4 simple steps
+          </div>
           <h2 className="text-2xl font-bold sm:text-3xl">How It Works</h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground">
-            cssebets is a betting platform where users can view FIFA WORLD CUP matches,
-            check reference odds, request virtual points, place match bets, and track
-            their results through a transparent wallet.
+          <p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">
+            Get from sign-up to your first bet on the FIFA World Cup in minutes —
+            then cash out winnings straight back to your bank.
           </p>
         </div>
 
@@ -147,7 +173,7 @@ export function HowItWorks() {
                   className={`${col} row-start-${i + 1}`}
                   style={{ gridRowStart: i + 1 }}
                 >
-                  <FlipPanel n={s.n} title={s.title} desc={s.desc} detail={s.detail} />
+                  <FlipPanel n={s.n} title={s.title} desc={s.desc} hint={s.hint} bullets={s.bullets} />
                 </motion.div>
               );
             })}
@@ -174,48 +200,65 @@ function FlipPanel({
   n,
   title,
   desc,
-  detail,
+  hint,
+  bullets,
 }: {
   n: number;
   title: string;
   desc: string;
-  detail: string;
+  hint: string;
+  bullets: string[];
 }) {
   const [flipped, setFlipped] = useState(false);
   return (
     <button
       type="button"
       onClick={() => setFlipped((f) => !f)}
-      className="group block w-full text-left [perspective:1000px]"
+      className="group block w-full text-left [perspective:1200px]"
       aria-pressed={flipped}
-      aria-label={`${title} — tap to ${flipped ? "hide" : "show"} details`}
+      aria-label={`Step ${n}: ${title} — tap to ${flipped ? "hide" : "show"} details`}
     >
       <div
-        className="relative h-40 w-full transition-transform duration-500 [transform-style:preserve-3d] sm:h-44"
+        className="relative h-56 w-full transition-transform duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] [transform-style:preserve-3d] sm:h-60"
         style={{ transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)" }}
       >
         {/* Front */}
-        <div className="absolute inset-0 rounded-xl border bg-card p-4 text-card-foreground shadow [backface-visibility:hidden] sm:p-5">
-          <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30">
-            {n}
+        <div className="absolute inset-0 flex flex-col rounded-2xl border bg-card p-5 text-card-foreground shadow-sm transition-shadow [backface-visibility:hidden] group-hover:border-primary/50 group-hover:shadow-lg group-hover:shadow-primary/10 sm:p-6">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-lg shadow-primary/30">
+              {n}
+            </div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Step {n} of 4
+            </div>
           </div>
-          <div className="text-sm font-semibold sm:text-base">{title}</div>
-          <div className="mt-1 text-xs text-muted-foreground sm:text-sm">{desc}</div>
-          <div className="absolute bottom-2 right-3 text-[10px] uppercase tracking-wider text-muted-foreground/70 group-hover:text-primary">
-            Tap to flip
+          <div className="text-base font-semibold sm:text-lg">{title}</div>
+          <div className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{desc}</div>
+          <div className="mt-auto pt-4">
+            <div className="text-[11px] italic text-primary/80">{hint}</div>
+            <div className="mt-2 text-[10px] uppercase tracking-wider text-muted-foreground/70 group-hover:text-primary">
+              Tap to see details →
+            </div>
           </div>
         </div>
         {/* Back */}
         <div
-          className="absolute inset-0 overflow-auto rounded-xl border border-primary/40 bg-primary/5 p-4 text-card-foreground shadow [backface-visibility:hidden] sm:p-5"
+          className="absolute inset-0 flex flex-col overflow-auto rounded-2xl border border-primary/40 bg-primary/5 p-5 text-card-foreground shadow-lg [backface-visibility:hidden] sm:p-6"
           style={{ transform: "rotateY(180deg)" }}
         >
-          <div className="mb-2 text-xs font-bold uppercase tracking-wider text-primary">
+          <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
             Step {n} · {title}
           </div>
-          <p className="text-xs leading-relaxed text-foreground/90 sm:text-sm">{detail}</p>
-          <div className="absolute bottom-2 right-3 text-[10px] uppercase tracking-wider text-muted-foreground/70">
-            Tap to flip back
+          <ul className="space-y-2 text-sm leading-relaxed text-foreground/90">
+            {bullets.map((b, i) => (
+              <li key={i} className="flex gap-2">
+                <span className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-auto pt-3 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+            ← Tap to flip back
           </div>
         </div>
       </div>
