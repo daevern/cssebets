@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useHasSession, withSession } from "@/hooks/use-staff-session";
 
 export const Route = createFileRoute("/management/admin/matches")({
   component: AdminMatchesPage,
@@ -21,6 +22,7 @@ const STATUSES = ["scheduled", "live", "finished", "cancelled", "postponed"] as 
 function AdminMatchesPage() {
   const qc = useQueryClient();
   const { isViewer } = useAuth();
+  const hasSession = useHasSession();
   const [reason, setReason] = useState("");
   const syncFn = useServerFn(syncFootballData);
   const settleFn = useServerFn(settleMatch);
@@ -31,9 +33,10 @@ function AdminMatchesPage() {
   const matches = useQuery({
     queryKey: ["admin-matches-full"],
     queryFn: async () => {
-      const r = await listFn({});
+      const r = await withSession(() => listFn({}));
       return (r?.rows ?? []) as any[];
     },
+    enabled: hasSession === true,
     refetchInterval: 30_000,
   });
 
