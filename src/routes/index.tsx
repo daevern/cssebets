@@ -22,7 +22,7 @@ import {
   TrendingUp,
   Lock,
 } from "lucide-react";
-import { CsseMark } from "@/components/brand/CsseMark";
+import { CsseLogo } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -179,10 +179,10 @@ function LandingPage() {
       {/* Top nav */}
       <header className="sticky top-[30px] z-40 border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link to="/" className="flex items-center gap-2 font-bold tracking-tight">
-            <CsseMark className="h-6 w-6 text-foreground" />
-            <span>cssebets</span>
+          <Link to="/" aria-label="CSSEBets home">
+            <CsseLogo size={18} />
           </Link>
+
           <nav className="hidden items-center gap-1 md:flex">
             <button
               onClick={() => scrollToId("how")}
@@ -429,10 +429,8 @@ function LandingPage() {
       <footer className="bg-background pb-20 sm:pb-8">
         <div className="mx-auto max-w-5xl px-4 py-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-2 font-bold">
-              <CsseMark className="h-6 w-6 text-foreground" />
-              cssebets
-            </div>
+            <CsseLogo size={18} />
+
             <Link to={primaryCta.to} className="text-sm text-muted-foreground hover:text-foreground">
               {primaryCta.label}
             </Link>

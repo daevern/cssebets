@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { CsseMark } from "@/components/brand/CsseMark";
+import { CsseAppIcon, CsseWordmark } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Sign in — cssebets" }] }),
@@ -61,15 +61,14 @@ function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-accent/20">
       <Card className="w-full max-w-md p-8 space-y-6">
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-14 w-14 rounded-2xl bg-primary/20 grid place-items-center">
-            <CsseMark className="h-8 w-8 text-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold">cssebets</h1>
-          <p className="text-sm text-muted-foreground text-center">
-            Competitive Strategy Starts Everywhere!
+        <div className="flex flex-col items-center gap-3">
+          <CsseAppIcon size={56} />
+          <CsseWordmark size={26} />
+          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground text-center">
+            Competitive Strategy Starts Everywhere
           </p>
         </div>
+
 
         <div className="flex gap-2 p-1 bg-muted/60 rounded-lg">
           {(["email", "phone"] as const).map((c) => (

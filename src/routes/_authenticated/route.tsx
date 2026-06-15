@@ -9,7 +9,7 @@ import { getPendingPayoutCount, getMyPayoutActionCount } from "@/lib/payout.func
 import { getPendingUserCount } from "@/lib/admin.functions";
 import { getMyUnreadSupportCount } from "@/lib/support.functions";
 import { Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote, Headset, Settings as SettingsIcon, HelpCircle } from "lucide-react";
-import { CsseMark } from "@/components/brand/CsseMark";
+import { CsseLogo, CsseMark } from "@/components/brand/CsseMark";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
@@ -215,10 +215,11 @@ function AuthedLayout() {
       {/* Top bar */}
       <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
-          <Link to="/dashboard" className="flex items-center gap-2 font-bold">
-            <CsseMark className="h-6 w-6 text-foreground" />
-            <span className="hidden sm:inline">cssebets</span>
+          <Link to="/dashboard" aria-label="CSSEBets home">
+            <span className="sm:hidden"><CsseMark className="h-7 w-7 text-foreground" title="CSSEBets" /></span>
+            <span className="hidden sm:inline-flex"><CsseLogo size={18} /></span>
           </Link>
+
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
               const badge =
