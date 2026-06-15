@@ -350,7 +350,7 @@ export function TrustBadgesInteractive({
 
 export function useLandingData() {
   const fn = useServerFn(getLandingData);
-  const [data, setData] = useState<{ nextMatch: LandingNextMatch; stats: LandingStats } | null>(
+  const [data, setData] = useState<{ nextMatches: LandingNextMatch[]; stats: LandingStats } | null>(
     null,
   );
   useEffect(() => {
@@ -362,7 +362,7 @@ export function useLandingData() {
       .catch(() => {
         if (mounted)
           setData({
-            nextMatch: null,
+            nextMatches: [],
             stats: {
               registeredPlayers: 0,
               activeToday: 0,
