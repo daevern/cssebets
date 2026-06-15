@@ -3,6 +3,13 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Countdown,
+  StatsRow,
+  FeaturedMatch,
+  TrustBadgesInteractive,
+  useLandingData,
+} from "@/components/HeroEnhancements";
 const HowItWorks = lazy(() =>
   import("@/components/HowItWorks").then((m) => ({ default: m.HowItWorks })),
 );
@@ -12,7 +19,6 @@ import {
   Mail,
   MessageCircle,
   ArrowRight,
-  ShieldCheck,
   Radio,
   Wallet,
   History,
@@ -23,6 +29,7 @@ import {
   Clock,
   Flame,
 } from "lucide-react";
+
 
 
 export const Route = createFileRoute("/")({
