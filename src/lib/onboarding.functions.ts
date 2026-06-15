@@ -66,7 +66,7 @@ export const logOnboardingEvent = createServerFn({ method: "POST" })
     const { error } = await context.supabase.rpc("log_onboarding_event", {
       p_tour_key: data.tourKey,
       p_event: data.event,
-      p_step_index: data.stepIndex ?? null,
+      p_step_index: (data.stepIndex ?? null) as any,
       p_metadata: data.metadata ?? {},
     });
     if (error) throw new Error(error.message);
