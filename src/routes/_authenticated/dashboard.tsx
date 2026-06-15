@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card } from "@/components/ui/card";
-import { Trophy, ListChecks, History } from "lucide-react";
+import { ListChecks, History } from "lucide-react";
+import { CsseMark } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
