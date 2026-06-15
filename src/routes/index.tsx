@@ -231,43 +231,40 @@ function LandingPage() {
           }}
         />
 
-        {/* Live odds ticker */}
-        <div className="relative border-b border-border/40 bg-card/40 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl items-center gap-3 overflow-hidden px-4 py-2">
-            <span className="inline-flex items-center gap-1.5 rounded-md bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-              Live Odds
-            </span>
-            <div className="flex flex-1 gap-6 overflow-x-clip whitespace-nowrap text-xs text-muted-foreground [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
-              <div className="flex animate-[ticker_40s_linear_infinite] gap-6 hover:[animation-play-state:paused]">
-                {[
-                  ["BRA", "ARG", "2.10", "3.40", "2.80"],
-                  ["FRA", "GER", "1.95", "3.20", "3.60"],
-                  ["ESP", "ITA", "2.45", "3.10", "2.70"],
-                  ["ENG", "POR", "2.20", "3.30", "3.00"],
-                  ["NED", "BEL", "2.05", "3.25", "3.40"],
-                  ["URU", "CRO", "2.60", "3.00", "2.55"],
-                ].concat([
-                  ["BRA", "ARG", "2.10", "3.40", "2.80"],
-                  ["FRA", "GER", "1.95", "3.20", "3.60"],
-                  ["ESP", "ITA", "2.45", "3.10", "2.70"],
-                ]).map(([h, a, oh, od, oa], i) => (
-                  <span key={i} className="inline-flex items-center gap-2">
-                    <span className="font-semibold text-foreground/80">{h} vs {a}</span>
-                    {[oh, od, oa].map((o, idx) => (
-                      <span
-                        key={idx}
-                        className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground transition-colors hover:bg-primary/20 hover:text-primary"
-                      >
-                        {o}
+        {/* Live odds ticker — pulls actual upcoming matches & reference odds */}
+        {(landing?.nextMatches?.length ?? 0) > 0 && (
+          <div className="relative border-b border-border/40 bg-card/40 backdrop-blur">
+            <div className="mx-auto flex max-w-6xl items-center gap-3 overflow-hidden px-4 py-2">
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
+                Live Odds
+              </span>
+              <div className="flex flex-1 gap-6 overflow-x-clip whitespace-nowrap text-xs text-muted-foreground [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+                <div className="flex animate-[ticker_40s_linear_infinite] gap-6 hover:[animation-play-state:paused]">
+                  {[...(landing?.nextMatches ?? []), ...(landing?.nextMatches ?? [])].map((m, i) => {
+                    if (!m) return null;
+                    const fmt = (n: number | null) => (n != null ? n.toFixed(2) : "—");
+                    return (
+                      <span key={`${m.id}-${i}`} className="inline-flex items-center gap-2">
+                        <span className="font-semibold text-foreground/80">
+                          {m.homeTeam} vs {m.awayTeam}
+                        </span>
+                        {[m.homeOdds, m.drawOdds, m.awayOdds].map((o, idx) => (
+                          <span
+                            key={idx}
+                            className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground transition-colors hover:bg-primary/20 hover:text-primary"
+                          >
+                            {fmt(o)}
+                          </span>
+                        ))}
                       </span>
-                    ))}
-                  </span>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="relative mx-auto flex max-w-4xl flex-col items-center px-4 py-12 text-center sm:py-16">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-primary">
@@ -285,10 +282,6 @@ function LandingPage() {
             Strategy Over Luck.
           </p>
 
-          {/* Live activity pulse — names + wins streaming under the headline */}
-          <div className="mt-5 flex h-5 items-center justify-center">
-            <LiveActivityPulse />
-          </div>
 
           {/* Featured matches */}
           <div className="mt-6 w-full max-w-4xl">
@@ -390,9 +383,6 @@ function LandingPage() {
                 </Button>
               </Link>
             )}
-          </div>
-          <div className="mt-4 flex items-center justify-center">
-            <LiveActivityPulse />
           </div>
         </div>
       </section>
