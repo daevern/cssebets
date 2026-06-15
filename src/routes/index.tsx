@@ -125,7 +125,7 @@ function Hero({
   data,
 }: {
   primaryCta: { to: string; label: string };
-  data: ReturnType<typeof useQuery>["data"] extends infer T ? T : never;
+  data?: import("@/lib/landing.functions").LandingData;
 }) {
   const nextKickoff = data?.upcomingMatches?.[0]?.kickoff_at ?? data?.liveMatches?.[0]?.kickoff_at;
 
