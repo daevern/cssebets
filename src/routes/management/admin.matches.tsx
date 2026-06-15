@@ -26,17 +26,13 @@ function AdminMatchesPage() {
   const settleFn = useServerFn(settleMatch);
   const statusFn = useServerFn(setMatchStatusManual);
   const refreshFn = useServerFn(refreshMatchScore);
+  const listFn = useServerFn(listMatchesAdmin);
 
   const matches = useQuery({
     queryKey: ["admin-matches-full"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("matches")
-        .select("id, external_id, home_team, away_team, kickoff_at, status, home_score, away_score, home_score_ht, away_score_ht, stage, group_name, reference_odds, odds_updated_at, odds_source, is_simulation, winner, created_at, updated_at")
-        .order("kickoff_at", { ascending: false })
-        .limit(80);
-      if (error) throw error;
-      return data as any[];
+      const r = await listFn({});
+      return (r?.rows ?? []) as any[];
     },
     refetchInterval: 30_000,
   });
