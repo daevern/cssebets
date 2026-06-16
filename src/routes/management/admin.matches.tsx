@@ -23,7 +23,6 @@ function AdminMatchesPage() {
   const qc = useQueryClient();
   const { isViewer } = useAuth();
   const hasSession = useHasSession();
-  const [reason, setReason] = useState("");
   const syncFn = useServerFn(syncFootballData);
   const settleFn = useServerFn(settleMatch);
   const statusFn = useServerFn(setMatchStatusManual);
@@ -58,21 +57,30 @@ function AdminMatchesPage() {
   });
 
   const statusMut = useMutation({
-    mutationFn: (v: { id: string; status: any }) =>
-      statusFn({ data: { matchId: v.id, status: v.status, reason } }),
+    mutationFn: (v: { id: string; status: any; reason: string }) =>
+      statusFn({ data: { matchId: v.id, status: v.status, reason: v.reason } }),
     onSuccess: () => { toast.success("Status updated"); qc.invalidateQueries({ queryKey: ["admin-matches-full"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
   const marginMut = useMutation({
-    mutationFn: (v: { id: string; disabled: boolean }) =>
-      marginFn({ data: { matchId: v.id, disabled: v.disabled, reason } }),
+    mutationFn: (v: { id: string; disabled: boolean; reason: string }) =>
+      marginFn({ data: { matchId: v.id, disabled: v.disabled, reason: v.reason } }),
     onSuccess: (_r, v) => {
       toast.success(v.disabled ? "Margin disabled — odds re-priced at fair value" : "Margin re-enabled — odds re-priced with house margin");
       qc.invalidateQueries({ queryKey: ["admin-matches-full"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const promptReason = (label: string): string | null => {
+    const r = typeof window !== "undefined" ? window.prompt(`${label}\n\nEnter a reason (required, min 3 chars):`) : null;
+    if (!r || r.trim().length < 3) {
+      if (r !== null) toast.error("Reason must be at least 3 characters");
+      return null;
+    }
+    return r.trim();
+  };
 
   return (
     <div className="space-y-4">
@@ -87,9 +95,8 @@ function AdminMatchesPage() {
         </Button>
       </div>
 
-      <Card className="p-3">
-        <label className="text-xs text-muted-foreground">Reason (required for status / settle changes)</label>
-        <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. API down, manual correction" />
+      <Card className="p-3 text-xs text-muted-foreground">
+        Status changes and margin toggles will prompt you to enter a reason. The reason is recorded in the audit log.
       </Card>
 
       {matches.isLoading ? (
@@ -98,10 +105,18 @@ function AdminMatchesPage() {
         <div className="space-y-3">
           {(matches.data ?? []).map((m) => (
             <MatchRow
-              key={m.id} match={m} reason={reason} canWrite={!isViewer}
+              key={m.id} match={m} canWrite={!isViewer}
               onRefresh={() => refreshMut.mutate(m.id)}
-              onStatus={(s) => statusMut.mutate({ id: m.id, status: s })}
-              onToggleMargin={(d) => marginMut.mutate({ id: m.id, disabled: d })}
+              onStatus={(s) => {
+                const reason = promptReason(`Change status of ${m.home_team} vs ${m.away_team} to "${s}"`);
+                if (!reason) return;
+                statusMut.mutate({ id: m.id, status: s, reason });
+              }}
+              onToggleMargin={(d) => {
+                const reason = promptReason(`${d ? "Disable" : "Re-enable"} margin on ${m.home_team} vs ${m.away_team}`);
+                if (!reason) return;
+                marginMut.mutate({ id: m.id, disabled: d, reason });
+              }}
               onSettle={async (h, a) => {
                 try {
                   await settleFn({ data: { matchId: m.id, homeScore: h, awayScore: a } });
