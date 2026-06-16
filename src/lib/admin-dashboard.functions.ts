@@ -159,7 +159,7 @@ export const listMatchesAdmin = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("matches")
-      .select("id, external_id, home_team, away_team, kickoff_at, status, home_score, away_score, home_score_ht, away_score_ht, stage, group_name, reference_odds, odds_updated_at, odds_source, is_simulation, winner, created_at, updated_at")
+      .select("id, external_id, home_team, away_team, kickoff_at, status, home_score, away_score, home_score_ht, away_score_ht, stage, group_name, reference_odds, odds_updated_at, odds_source, is_simulation, margin_disabled, winner, created_at, updated_at")
       .order("kickoff_at", { ascending: false })
       .limit(80);
     if (error) throw new Error(error.message);
@@ -691,6 +691,44 @@ export const refreshMatchScore = createServerFn({ method: "POST" })
     const result = await runFootballDataSync({ userId });
     return { ok: true, ...result, matchId: data.matchId };
   });
+
+export const setMatchMarginDisabled = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      matchId: z.string().uuid(),
+      disabled: z.boolean(),
+      reason: ReasonField,
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireTier(supabase, userId, WRITE_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await requireFreshReauth(supabaseAdmin, userId);
+    const { data: old } = await supabaseAdmin
+      .from("matches")
+      .select("margin_disabled")
+      .eq("id", data.matchId)
+      .single();
+    const { error: rpcErr } = await (supabaseAdmin as any).rpc(
+      "admin_set_match_margin_disabled",
+      { p_match_id: data.matchId, p_disabled: data.disabled },
+    );
+    if (rpcErr) throw new Error(rpcErr.message);
+    await audit(supabaseAdmin, {
+      userId,
+      action: "match.margin_disabled",
+      entity: "match",
+      entityId: data.matchId,
+      oldValue: { margin_disabled: (old as any)?.margin_disabled ?? false },
+      newValue: { margin_disabled: data.disabled },
+      reason: data.reason,
+    });
+    return { ok: true };
+  });
+
+
 
 // ============== WALLET LEDGER (admin) ==============
 

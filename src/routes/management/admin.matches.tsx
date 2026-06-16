@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { syncFootballData, settleMatch } from "@/lib/admin.functions";
-import { setMatchStatusManual, refreshMatchScore, listMatchesAdmin } from "@/lib/admin-dashboard.functions";
+import { setMatchStatusManual, refreshMatchScore, listMatchesAdmin, setMatchMarginDisabled } from "@/lib/admin-dashboard.functions";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ function AdminMatchesPage() {
   const statusFn = useServerFn(setMatchStatusManual);
   const refreshFn = useServerFn(refreshMatchScore);
   const listFn = useServerFn(listMatchesAdmin);
+  const marginFn = useServerFn(setMatchMarginDisabled);
 
   const matches = useQuery({
     queryKey: ["admin-matches-full"],
@@ -63,6 +64,16 @@ function AdminMatchesPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const marginMut = useMutation({
+    mutationFn: (v: { id: string; disabled: boolean }) =>
+      marginFn({ data: { matchId: v.id, disabled: v.disabled, reason } }),
+    onSuccess: (_r, v) => {
+      toast.success(v.disabled ? "Margin disabled — odds re-priced at fair value" : "Margin re-enabled — odds re-priced with house margin");
+      qc.invalidateQueries({ queryKey: ["admin-matches-full"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
@@ -90,6 +101,7 @@ function AdminMatchesPage() {
               key={m.id} match={m} reason={reason} canWrite={!isViewer}
               onRefresh={() => refreshMut.mutate(m.id)}
               onStatus={(s) => statusMut.mutate({ id: m.id, status: s })}
+              onToggleMargin={(d) => marginMut.mutate({ id: m.id, disabled: d })}
               onSettle={async (h, a) => {
                 try {
                   await settleFn({ data: { matchId: m.id, homeScore: h, awayScore: a } });
@@ -109,15 +121,17 @@ function AdminMatchesPage() {
 }
 
 function MatchRow({
-  match, reason, canWrite, onRefresh, onStatus, onSettle,
+  match, reason, canWrite, onRefresh, onStatus, onSettle, onToggleMargin,
 }: {
   match: any; reason: string; canWrite: boolean;
   onRefresh: () => void;
   onStatus: (s: typeof STATUSES[number]) => void;
   onSettle: (h: number, a: number) => void;
+  onToggleMargin: (d: boolean) => void;
 }) {
   const [h, setH] = useState(String(match.home_score ?? ""));
   const [a, setA] = useState(String(match.away_score ?? ""));
+  const marginOff = Boolean(match.margin_disabled);
 
   return (
     <Card className="p-3 space-y-2">
@@ -125,6 +139,7 @@ function MatchRow({
         <div className="text-sm font-medium truncate">{match.home_team} vs {match.away_team}</div>
         <div className="flex items-center gap-2 text-xs">
           <Badge variant="outline" className="uppercase">{match.status}</Badge>
+          {marginOff && <Badge variant="destructive" className="uppercase">Margin OFF</Badge>}
           <span className="text-muted-foreground">{new Date(match.kickoff_at).toLocaleString()}</span>
         </div>
       </div>
@@ -145,6 +160,15 @@ function MatchRow({
         >
           {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
+        <Button
+          size="sm"
+          variant={marginOff ? "default" : "outline"}
+          disabled={!canWrite || !reason}
+          title={!reason ? "Enter a reason above first" : marginOff ? "Re-enable house margin and re-price odds" : "Disable house margin for this match — publish fair odds"}
+          onClick={() => onToggleMargin(!marginOff)}
+        >
+          {marginOff ? "Re-enable margin" : "Disable margin"}
+        </Button>
       </div>
     </Card>
   );
