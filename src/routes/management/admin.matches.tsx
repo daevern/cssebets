@@ -101,6 +101,7 @@ function AdminMatchesPage() {
               key={m.id} match={m} reason={reason} canWrite={!isViewer}
               onRefresh={() => refreshMut.mutate(m.id)}
               onStatus={(s) => statusMut.mutate({ id: m.id, status: s })}
+              onToggleMargin={(d) => marginMut.mutate({ id: m.id, disabled: d })}
               onSettle={async (h, a) => {
                 try {
                   await settleFn({ data: { matchId: m.id, homeScore: h, awayScore: a } });
