@@ -135,6 +135,13 @@ export const submitPrediction = createServerFn({ method: "POST" })
         throw new Error("Potential return exceeds platform limit.");
       }
       if (msg.includes("MATCH_LOCKED")) throw new Error("This match has already kicked off. Predictions are locked.");
+      if (msg.includes("MARKET_SUSPENDED") || msg.includes("ODDS_NOT_TRUSTED") || msg.includes("ODDS_MISSING") || msg.includes("ODDS_AWAITING_SYNC") || msg.includes("ODDS_STALE")) {
+        throw new Error("Market temporarily suspended while odds are being verified.");
+      }
+      if (msg.includes("HIGH_ODDS_STAKE_LIMIT")) throw new Error("This selection has a reduced stake limit. Please lower your stake.");
+      if (msg.includes("MAX_SINGLE_BET_PAYOUT")) throw new Error("Potential return exceeds the per-bet limit.");
+      if (msg.includes("MAX_OUTCOME_LIABILITY") || msg.includes("MAX_MATCH_LIABILITY")) throw new Error("This selection is temporarily limited due to platform risk controls.");
+      if (msg.includes("CORRECT_SCORE_OTHER_LIMIT")) throw new Error("This selection is temporarily limited due to platform risk controls.");
       if (msg.includes("DUPLICATE_REQUEST")) throw new Error("Duplicate bet detected. Please refresh and try again.");
       throw new Error(msg || "Could not place bet.");
     }
