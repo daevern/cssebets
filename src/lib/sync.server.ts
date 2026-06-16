@@ -66,7 +66,10 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
       home_score_ht: homeScoreHt,
       away_score_ht: awayScoreHt,
       winner,
-      reference_odds: existing?.reference_odds ?? generateOdds(),
+      // HOTFIX: never inject fake odds for real matches. Keep existing
+      // provider odds if present; otherwise leave NULL so the match is
+      // auto-suspended as 'missing' until runOddsSync supplies real values.
+      reference_odds: existing?.reference_odds ?? null,
       updated_at: new Date().toISOString(),
     };
 
