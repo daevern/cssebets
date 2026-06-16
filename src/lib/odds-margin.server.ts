@@ -28,25 +28,21 @@ function shrinkFactor(currentOverround: number, targetOverround: number): number
   return currentOverround / targetOverround;
 }
 
+const MIN_ODD = 1.01;
+const clamp = (x: number) => Math.max(MIN_ODD, Number(x.toFixed(2)));
+
 export async function apply3WayMargin(odds: { home: number; draw: number; away: number }) {
   const { marginPct, apply } = await getRealOddsMarginSettings();
-  if (!apply) return odds;
+  const safe = { home: clamp(odds.home), draw: clamp(odds.draw), away: clamp(odds.away) };
+  if (!apply) return safe;
   const target = 1 + marginPct / 100;
-  const cur = 1 / odds.home + 1 / odds.draw + 1 / odds.away;
+  const cur = 1 / safe.home + 1 / safe.draw + 1 / safe.away;
   const k = shrinkFactor(cur, target);
-  if (k === 1) return odds;
-  const adjusted = {
-    home: Number((odds.home * k).toFixed(2)),
-    draw: Number((odds.draw * k).toFixed(2)),
-    away: Number((odds.away * k).toFixed(2)),
-  };
-  if (adjusted.home < 1.01 || adjusted.draw < 1.01 || adjusted.away < 1.01) {
-    return odds;
-  }
+  if (k === 1) return safe;
   return {
-    home: adjusted.home,
-    draw: adjusted.draw,
-    away: adjusted.away,
+    home: clamp(safe.home * k),
+    draw: clamp(safe.draw * k),
+    away: clamp(safe.away * k),
   };
 }
 
@@ -54,10 +50,13 @@ export async function apply3WayMargin(odds: { home: number; draw: number; away: 
 // the field's combined implied-probability sum.
 export async function applyOutrightMargin(odds: Array<{ team: string; odds: number }>) {
   const { marginPct, apply } = await getRealOddsMarginSettings();
-  if (!apply || odds.length === 0) return odds;
+  if (odds.length === 0) return odds;
+  const safe = odds.map((o) => ({ team: o.team, odds: clamp(o.odds) }));
+  if (!apply) return safe;
   const target = 1 + marginPct / 100;
-  const cur = odds.reduce((s, o) => s + 1 / o.odds, 0);
+  const cur = safe.reduce((s, o) => s + 1 / o.odds, 0);
   const k = shrinkFactor(cur, target);
-  if (k === 1) return odds;
-  return odds.map((o) => ({ team: o.team, odds: Number((o.odds * k).toFixed(2)) }));
+  if (k === 1) return safe;
+  return safe.map((o) => ({ team: o.team, odds: clamp(o.odds * k) }));
 }
+
