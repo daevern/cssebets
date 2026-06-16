@@ -106,6 +106,11 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
   let odds: Awaited<ReturnType<typeof runOddsSync>> | null = null;
   try { odds = await runOddsSync(); } catch (e) { console.log("[odds] sync failed", e); }
 
+  // Refresh odds_status (trusted/stale/missing) + raise alerts for open matches.
+  try {
+    await (supabaseAdmin as any).rpc("refresh_odds_status_for_open_matches");
+  } catch (e) { console.log("[odds-status] refresh failed", e); }
+
   return {
     upserted,
     total: matches.length,

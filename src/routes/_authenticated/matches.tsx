@@ -37,6 +37,9 @@ type Match = {
   reference_odds: { home: number; draw: number; away: number } | null;
   odds_updated_at: string | null;
   odds_source: string | null;
+  odds_status?: string | null;
+  suspended_markets?: string[] | null;
+  manual_override?: boolean | null;
 };
 
 function humanize(s: string | null | undefined): string {
@@ -165,7 +168,11 @@ function MatchCard({ match }: { match: Match }) {
   const [pick, setPick] = useState<"HOME" | "DRAW" | "AWAY" | null>(null);
   const [open, setOpen] = useState(false);
 
+  const oddsTrusted = !match.odds_status || match.odds_status === "trusted" || match.manual_override === true;
+  const suspendedMarkets = match.suspended_markets ?? [];
+  const resultSuspended = suspendedMarkets.includes("result") || suspendedMarkets.includes("ALL");
   const locked = new Date(match.kickoff_at).getTime() <= Date.now() || match.status !== "scheduled";
+  const bettingBlocked = !oddsTrusted || resultSuspended;
   const odds = match.reference_odds ?? { home: 2.0, draw: 3.2, away: 3.5 };
 
   const myResultBets = useQuery({
