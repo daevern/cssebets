@@ -542,11 +542,14 @@ export type Database = {
           id: string
           is_simulation: boolean
           kickoff_at: string
+          manual_override: boolean
           odds_source: string | null
+          odds_status: string
           odds_updated_at: string | null
           reference_odds: Json | null
           stage: string | null
           status: Database["public"]["Enums"]["match_status"]
+          suspended_markets: string[]
           updated_at: string
           winner: string | null
           worst_case_exposure: number
@@ -569,11 +572,14 @@ export type Database = {
           id?: string
           is_simulation?: boolean
           kickoff_at: string
+          manual_override?: boolean
           odds_source?: string | null
+          odds_status?: string
           odds_updated_at?: string | null
           reference_odds?: Json | null
           stage?: string | null
           status?: Database["public"]["Enums"]["match_status"]
+          suspended_markets?: string[]
           updated_at?: string
           winner?: string | null
           worst_case_exposure?: number
@@ -596,11 +602,14 @@ export type Database = {
           id?: string
           is_simulation?: boolean
           kickoff_at?: string
+          manual_override?: boolean
           odds_source?: string | null
+          odds_status?: string
           odds_updated_at?: string | null
           reference_odds?: Json | null
           stage?: string | null
           status?: Database["public"]["Enums"]["match_status"]
+          suspended_markets?: string[]
           updated_at?: string
           winner?: string | null
           worst_case_exposure?: number
@@ -815,8 +824,15 @@ export type Database = {
           last_alert_sent_at: string | null
           margin_pct: number
           max_bets_per_user_per_match: number
+          max_correct_score_other_liability: number | null
+          max_high_odds_stake: number | null
+          max_match_worst_case_liability: number | null
+          max_odds_age_minutes: number | null
           max_potential_payout: number
+          max_single_bet_payout: number | null
+          max_single_outcome_liability: number | null
           max_stake_per_bet: number
+          odds_deviation_threshold_pct: number | null
           updated_at: string
         }
         Insert: {
@@ -834,8 +850,15 @@ export type Database = {
           last_alert_sent_at?: string | null
           margin_pct?: number
           max_bets_per_user_per_match?: number
+          max_correct_score_other_liability?: number | null
+          max_high_odds_stake?: number | null
+          max_match_worst_case_liability?: number | null
+          max_odds_age_minutes?: number | null
           max_potential_payout?: number
+          max_single_bet_payout?: number | null
+          max_single_outcome_liability?: number | null
           max_stake_per_bet?: number
+          odds_deviation_threshold_pct?: number | null
           updated_at?: string
         }
         Update: {
@@ -853,8 +876,15 @@ export type Database = {
           last_alert_sent_at?: string | null
           margin_pct?: number
           max_bets_per_user_per_match?: number
+          max_correct_score_other_liability?: number | null
+          max_high_odds_stake?: number | null
+          max_match_worst_case_liability?: number | null
+          max_odds_age_minutes?: number | null
           max_potential_payout?: number
+          max_single_bet_payout?: number | null
+          max_single_outcome_liability?: number | null
           max_stake_per_bet?: number
+          odds_deviation_threshold_pct?: number | null
           updated_at?: string
         }
         Relationships: []
@@ -977,6 +1007,8 @@ export type Database = {
         Row: {
           client_request_id: string | null
           created_at: string
+          flagged_for_review: boolean
+          flagged_reason: string | null
           id: string
           is_simulation: boolean
           market: Database["public"]["Enums"]["prediction_market"]
@@ -998,6 +1030,8 @@ export type Database = {
         Insert: {
           client_request_id?: string | null
           created_at?: string
+          flagged_for_review?: boolean
+          flagged_reason?: string | null
           id?: string
           is_simulation?: boolean
           market: Database["public"]["Enums"]["prediction_market"]
@@ -1019,6 +1053,8 @@ export type Database = {
         Update: {
           client_request_id?: string | null
           created_at?: string
+          flagged_for_review?: boolean
+          flagged_reason?: string | null
           id?: string
           is_simulation?: boolean
           market?: Database["public"]["Enums"]["prediction_market"]
@@ -1488,6 +1524,16 @@ export type Database = {
         Args: { p_enabled: boolean; p_user_id: string }
         Returns: undefined
       }
+      assert_bet_within_liability_caps: {
+        Args: {
+          p_market: string
+          p_match_id: string
+          p_odds: number
+          p_selection: string
+          p_stake: number
+        }
+        Returns: undefined
+      }
       assert_betting_allowed: {
         Args: {
           p_is_simulation?: boolean
@@ -1500,6 +1546,10 @@ export type Database = {
       }
       cancel_pending_bet: {
         Args: { p_prediction_id: string; p_user_id: string }
+        Returns: string
+      }
+      check_match_market_betting: {
+        Args: { p_market: string; p_match_id: string }
         Returns: string
       }
       check_rate_limit: {
@@ -1635,6 +1685,7 @@ export type Database = {
         Args: { p_match_id: string }
         Returns: undefined
       }
+      refresh_odds_status_for_open_matches: { Args: never; Returns: undefined }
       regenerate_match_market_odds: {
         Args: { p_match_id: string }
         Returns: undefined
@@ -1715,8 +1766,15 @@ export type Database = {
               last_alert_sent_at: string | null
               margin_pct: number
               max_bets_per_user_per_match: number
+              max_correct_score_other_liability: number | null
+              max_high_odds_stake: number | null
+              max_match_worst_case_liability: number | null
+              max_odds_age_minutes: number | null
               max_potential_payout: number
+              max_single_bet_payout: number | null
+              max_single_outcome_liability: number | null
               max_stake_per_bet: number
+              odds_deviation_threshold_pct: number | null
               updated_at: string
             }
             SetofOptions: {
@@ -1756,8 +1814,15 @@ export type Database = {
               last_alert_sent_at: string | null
               margin_pct: number
               max_bets_per_user_per_match: number
+              max_correct_score_other_liability: number | null
+              max_high_odds_stake: number | null
+              max_match_worst_case_liability: number | null
+              max_odds_age_minutes: number | null
               max_potential_payout: number
+              max_single_bet_payout: number | null
+              max_single_outcome_liability: number | null
               max_stake_per_bet: number
+              odds_deviation_threshold_pct: number | null
               updated_at: string
             }
             SetofOptions: {
