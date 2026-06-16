@@ -1,65 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { CsseMark } from "@/components/brand/CsseMark";
+import { Mail, Lock, ArrowRight, Upload, FileCheck2, Banknote, TrendingUp, Wallet, CheckCircle2 } from "lucide-react";
 
-type Step = {
-  n: number;
-  title: string;
-  hint: string;
-  bullets: string[];
-  tone: string;
-};
+const TOTAL = 5; // 4 walkthrough screens + cashout
 
-const steps: Step[] = [
-  {
-    n: 1,
-    title: "Register",
-    hint: "Takes under a minute.",
-    tone: "from-sky-500/20 to-indigo-500/10 border-sky-400/40",
-    bullets: [
-      "Sign up with email or phone.",
-      "New accounts need admin approval.",
-      "Approval usually takes 30 min – 6 hrs.",
-    ],
-  },
-  {
-    n: 2,
-    title: "Request points",
-    hint: "Fund your wallet.",
-    tone: "from-violet-500/20 to-fuchsia-500/10 border-violet-400/40",
-    bullets: [
-      "Bank transfer to the cssebets account.",
-      "Submit your receipt in-app.",
-      "Points credited after admin approval (30 min – 6 hrs).",
-    ],
-  },
-  {
-    n: 3,
-    title: "Upload proof",
-    hint: "Faster admin review.",
-    tone: "from-amber-500/20 to-orange-500/10 border-amber-400/40",
-    bullets: [
-      "Attach receipt image or PDF.",
-      "Used for both top-ups and cashouts.",
-      "Both sides confirm to close the transaction.",
-    ],
-  },
-  {
-    n: 4,
-    title: "Place bets",
-    hint: "Track from your dashboard.",
-    tone: "from-rose-500/20 to-pink-500/10 border-rose-400/40",
-    bullets: [
-      "Open the BETS section for FIFA World Cup 2026.",
-      "Bet on individual matches or the overall winner.",
-      "Follow live results from your dashboard.",
-    ],
-  },
-];
-
-const cashoutDetail =
-  "Head to the Payout section and request a cashout. After admin approval, point-to-cash and bank transfer typically take 24 hours – 7 days.";
-
-const TOTAL = 5; // 4 steps + cashout
+const STEP_LABELS = ["Register", "Request points", "Upload proof", "Your wallet", "Cashout"];
 
 export function HowItWorks() {
   const [index, setIndex] = useState(0);
@@ -74,12 +20,12 @@ export function HowItWorks() {
         <div className="text-center">
           <h2 className="text-2xl font-bold sm:text-3xl">How It Works</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Tap the deck to shuffle through every step — from sign-up to cashout.
+            Tap the deck to flip through every screen — sign-up to cashout, exactly like it looks in the app.
           </p>
         </div>
 
         {/* Deck */}
-        <div className="relative mx-auto mt-10 h-[440px] w-full max-w-sm select-none sm:h-[460px]">
+        <div className="relative mx-auto mt-10 h-[480px] w-full max-w-sm select-none sm:h-[500px]">
           {/* Background placeholder cards (stack illusion) */}
           {[2, 1].map((offset) => (
             <div
@@ -107,10 +53,16 @@ export function HowItWorks() {
               aria-label={
                 isCashout
                   ? "Cashout — tap to restart the deck"
-                  : `Step ${index + 1} of ${TOTAL} — tap for next`
+                  : `Step ${index + 1} of ${TOTAL} — ${STEP_LABELS[index]} — tap for next`
               }
             >
-              {isCashout ? <CashoutCard /> : <StepCard step={steps[index]} />}
+              <PhoneFrame step={index + 1} label={STEP_LABELS[index]} cashout={isCashout}>
+                {index === 0 && <RegisterScreen />}
+                {index === 1 && <PointsRequestScreen />}
+                {index === 2 && <UploadProofScreen />}
+                {index === 3 && <WalletScreen />}
+                {index === 4 && <CashoutScreen />}
+              </PhoneFrame>
             </motion.button>
           </AnimatePresence>
         </div>
@@ -123,7 +75,7 @@ export function HowItWorks() {
                 key={i}
                 type="button"
                 onClick={() => setIndex(i)}
-                aria-label={`Go to card ${i + 1}`}
+                aria-label={`Go to card ${i + 1}: ${STEP_LABELS[i]}`}
                 className={`h-1.5 rounded-full transition-all ${
                   i === index ? "w-6 bg-primary" : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/60"
                 }`}
@@ -132,97 +84,290 @@ export function HowItWorks() {
           </div>
         </div>
         <p className="mt-3 text-center text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70">
-          {isCashout ? "Tap to shuffle again" : "Tap card to shuffle"}
+          {isCashout ? "Tap to shuffle again" : `${STEP_LABELS[index]} • tap card to continue`}
         </p>
       </div>
     </section>
   );
 }
 
-function StepCard({ step }: { step: Step }) {
+/* ---------------- Phone frame chrome (on-brand) ---------------- */
+
+function PhoneFrame({
+  step,
+  label,
+  cashout,
+  children,
+}: {
+  step: number;
+  label: string;
+  cashout?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <div
-      className={`relative flex h-full w-full flex-col overflow-hidden rounded-3xl border bg-gradient-to-br ${step.tone} bg-card p-6 shadow-2xl shadow-primary/10 backdrop-blur-sm`}
+      className={`relative flex h-full w-full flex-col overflow-hidden rounded-[2rem] border bg-[#0B1220] p-3 shadow-2xl ${
+        cashout
+          ? "border-primary/70 shadow-primary/40"
+          : "border-border/70 shadow-primary/10"
+      }`}
     >
-      {/* Corner index — like a playing card */}
-      <div className="flex items-start justify-between">
-        <div className="flex flex-col items-start leading-none">
-          <span className="text-4xl font-black text-foreground/90">{step.n}</span>
-          <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Step / {TOTAL - 1}
-          </span>
-        </div>
-        <div className="rounded-full border border-border/60 bg-background/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          cssebets
-        </div>
-      </div>
-
-      <div className="mt-6">
-        <h3 className="text-2xl font-bold sm:text-3xl">{step.title}</h3>
-        <p className="mt-2 text-xs italic text-primary/90">{step.hint}</p>
-      </div>
-
-      <ul className="mt-5 space-y-3 text-sm leading-relaxed text-foreground/90">
-        {step.bullets.map((b, i) => (
-          <li key={i} className="flex gap-2.5">
-            <span className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-            <span>{b}</span>
-          </li>
-        ))}
-      </ul>
-
-      <div className="mt-auto flex items-center justify-between pt-4 text-[11px] uppercase tracking-wider text-muted-foreground/80">
-        <span>Tap for next</span>
-        <span className="inline-flex items-center gap-1 font-bold text-primary">
-          Shuffle <span className="text-base leading-none">→</span>
+      {/* Phone status bar */}
+      <div className="flex items-center justify-between px-3 pt-1 text-[10px] font-medium text-white/60">
+        <span className="tabular-nums">9:41</span>
+        <span className="flex items-center gap-1">
+          <span className="h-1 w-1 rounded-full bg-white/60" />
+          <span className="h-1 w-1.5 rounded-full bg-white/60" />
+          <span className="h-1 w-2 rounded-full bg-white/60" />
+          <span className="ml-1 rounded-sm border border-white/40 px-1 text-[8px]">100%</span>
         </span>
       </div>
 
-      {/* Mirrored corner index */}
-      <div className="absolute bottom-5 left-5 rotate-180 leading-none">
-        <span className="text-4xl font-black text-foreground/30">{step.n}</span>
+      {/* App header */}
+      <div className="mt-2 flex items-center justify-between rounded-2xl bg-white/[0.04] px-3 py-2 ring-1 ring-white/5">
+        <div className="flex items-center gap-2">
+          <CsseMark className="h-5 w-5 text-white" />
+          <span className="text-[13px] font-semibold tracking-tight text-white">
+            cssebets
+          </span>
+        </div>
+        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary">
+          Step {step} / {TOTAL}
+        </span>
+      </div>
+
+      {/* Inner screen */}
+      <div className="relative mt-3 flex-1 overflow-hidden rounded-2xl bg-gradient-to-b from-[#0F1830] to-[#0A1020] p-4 text-white ring-1 ring-white/5">
+        <div className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
+          {label}
+        </div>
+        {children}
+      </div>
+
+      {/* Footer hint */}
+      <div className="mt-2 flex items-center justify-between px-2 pb-1 text-[10px] uppercase tracking-wider text-white/40">
+        <span>Preview</span>
+        <span className="inline-flex items-center gap-1 font-bold text-primary">
+          {cashout ? "Restart ↺" : "Next →"}
+        </span>
       </div>
     </div>
   );
 }
 
-function CashoutCard() {
+/* ---------------- Per-step mini screens ---------------- */
+
+function FakeInput({
+  icon: Icon,
+  value,
+  placeholder,
+  mask,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  value?: string;
+  placeholder?: string;
+  mask?: boolean;
+}) {
   return (
-    <div className="relative flex h-full w-full flex-col overflow-hidden rounded-3xl border-2 border-emerald-500/60 bg-gradient-to-br from-emerald-500/25 via-emerald-400/15 to-emerald-700/25 p-6 shadow-2xl shadow-emerald-500/30">
-      <div className="flex items-start justify-between">
-        <div className="flex flex-col items-start leading-none">
-          <span className="text-4xl font-black text-emerald-200">$</span>
-          <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-200/80">
-            Final card
-          </span>
-        </div>
-        <div className="rounded-full border border-emerald-300/40 bg-emerald-950/40 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-200">
-          Payout
+    <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5">
+      <Icon className="h-3.5 w-3.5 text-white/50" />
+      <span className={`text-xs ${value ? "text-white" : "text-white/40"} tracking-tight`}>
+        {mask && value ? "•".repeat(value.length) : value || placeholder}
+      </span>
+    </div>
+  );
+}
+
+function RegisterScreen() {
+  return (
+    <div className="flex h-full flex-col">
+      <h3 className="text-lg font-bold text-white">Welcome back</h3>
+      <p className="mt-0.5 text-[11px] text-white/60">Sign in to keep predicting.</p>
+      <div className="mt-4 space-y-2.5">
+        <FakeInput icon={Mail} value="you@cssebets.com" />
+        <FakeInput icon={Lock} value="supersecret" mask />
+      </div>
+      <button
+        type="button"
+        className="mt-4 flex items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/30"
+      >
+        Sign in <ArrowRight className="h-3.5 w-3.5" />
+      </button>
+      <div className="mt-3 text-center text-[10px] text-white/50">
+        New here? <span className="font-semibold text-primary">Create an account</span>
+      </div>
+      <div className="mt-auto rounded-lg border border-white/10 bg-white/[0.03] p-2.5 text-[10px] leading-snug text-white/60">
+        ⏱ New accounts get admin approval in 30 min – 6 hrs.
+      </div>
+    </div>
+  );
+}
+
+function PointsRequestScreen() {
+  return (
+    <div className="flex h-full flex-col">
+      <h3 className="text-lg font-bold text-white">Request points</h3>
+      <p className="mt-0.5 text-[11px] text-white/60">Top up your wallet by bank transfer.</p>
+
+      <div className="mt-3 rounded-xl bg-gradient-to-br from-primary/25 to-primary/5 p-3 ring-1 ring-primary/40">
+        <div className="text-[9px] font-bold uppercase tracking-wider text-primary/90">Amount</div>
+        <div className="mt-1 flex items-baseline gap-1">
+          <span className="text-[10px] text-white/60">pts</span>
+          <span className="text-2xl font-black tabular-nums text-white">5,000</span>
         </div>
       </div>
 
-      <div className="mt-4">
-        <h3 className="text-3xl font-black text-emerald-50 drop-shadow sm:text-4xl">
-          Cashout!
-        </h3>
-        <p className="mt-3 text-sm leading-relaxed text-emerald-50/90">{cashoutDetail}</p>
+      <div className="mt-3 space-y-1.5">
+        <div className="flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2 text-[10px]">
+          <span className="text-white/60">Bank</span>
+          <span className="font-semibold text-white">CSSEBets Ltd.</span>
+        </div>
+        <div className="flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2 text-[10px]">
+          <span className="text-white/60">Reference</span>
+          <span className="font-mono font-semibold text-primary">CSSE-8421</span>
+        </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-3 gap-2">
-        {[1, 2, 3].map((i) => (
-          <motion.div
-            key={i}
-            initial={{ y: 12, opacity: 0, rotate: -8 + i * 4 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.1 * i, type: "spring", stiffness: 160 }}
-            className="rounded-md border-2 border-emerald-900/60 bg-gradient-to-br from-emerald-100 via-emerald-50 to-emerald-200 px-2 py-3 text-center font-serif text-xl font-black text-emerald-900 shadow-md"
+      <button
+        type="button"
+        className="mt-auto flex items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/30"
+      >
+        <Banknote className="h-3.5 w-3.5" /> Submit request
+      </button>
+    </div>
+  );
+}
+
+function UploadProofScreen() {
+  return (
+    <div className="flex h-full flex-col">
+      <h3 className="text-lg font-bold text-white">Upload proof</h3>
+      <p className="mt-0.5 text-[11px] text-white/60">Attach your receipt for faster approval.</p>
+
+      <motion.div
+        initial={{ scale: 0.96 }}
+        animate={{ scale: 1 }}
+        transition={{ repeat: Infinity, repeatType: "reverse", duration: 1.6 }}
+        className="mt-4 grid place-items-center rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 py-6"
+      >
+        <Upload className="h-6 w-6 text-primary" />
+        <div className="mt-2 text-[11px] font-semibold text-white">Tap to upload</div>
+        <div className="text-[9px] text-white/50">JPG, PNG or PDF · max 5 MB</div>
+      </motion.div>
+
+      <div className="mt-3 flex items-center gap-2 rounded-lg bg-white/[0.04] p-2 ring-1 ring-primary/30">
+        <FileCheck2 className="h-4 w-4 text-primary" />
+        <div className="flex-1">
+          <div className="text-[11px] font-semibold text-white">receipt-8421.jpg</div>
+          <div className="text-[9px] text-white/50">218 KB · uploaded</div>
+        </div>
+        <CheckCircle2 className="h-4 w-4 text-primary" />
+      </div>
+
+      <div className="mt-auto rounded-lg border border-white/10 bg-white/[0.03] p-2.5 text-[10px] leading-snug text-white/60">
+        Both you and admin confirm to close the transaction.
+      </div>
+    </div>
+  );
+}
+
+function WalletScreen() {
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold text-white">Your wallet</h3>
+        <Wallet className="h-4 w-4 text-primary" />
+      </div>
+
+      <div className="mt-2 rounded-2xl bg-gradient-to-br from-primary/30 via-primary/15 to-transparent p-4 ring-1 ring-primary/40">
+        <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary/90">Balance</div>
+        <div className="mt-1 flex items-baseline gap-1.5">
+          <motion.span
+            key="bal"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-4xl font-black tabular-nums text-white drop-shadow"
           >
-            $100
-          </motion.div>
+            42,860
+          </motion.span>
+          <span className="text-xs font-semibold text-primary">pts</span>
+        </div>
+        <div className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-primary">
+          <TrendingUp className="h-3 w-3" /> +12,500 this week
+        </div>
+      </div>
+
+      <div className="mt-3 text-[9px] font-bold uppercase tracking-wider text-white/50">
+        Recent activity
+      </div>
+      <div className="mt-1.5 space-y-1.5">
+        {[
+          { label: "Bet won · BRA vs ARG", amt: "+8,400", up: true },
+          { label: "Top-up approved", amt: "+5,000", up: true },
+          { label: "Bet placed · ESP vs CPV", amt: "−1,200", up: false },
+        ].map((r, i) => (
+          <div
+            key={i}
+            className="flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-1.5 text-[10px]"
+          >
+            <span className="text-white/80">{r.label}</span>
+            <span className={`font-bold tabular-nums ${r.up ? "text-primary" : "text-rose-300"}`}>
+              {r.amt}
+            </span>
+          </div>
         ))}
       </div>
+    </div>
+  );
+}
 
-      <div className="mt-auto flex items-center justify-between pt-4 text-[11px] uppercase tracking-wider text-emerald-100/80">
+function CashoutScreen() {
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-black text-white">Cashout 🎉</h3>
+        <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground">
+          Approved
+        </span>
+      </div>
+
+      <div className="mt-2 rounded-2xl bg-gradient-to-br from-primary/40 via-primary/20 to-transparent p-4 ring-1 ring-primary/60">
+        <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-primary">
+          Payout amount
+        </div>
+        <motion.div
+          initial={{ scale: 0.85, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 200, damping: 14 }}
+          className="mt-1 text-4xl font-black tabular-nums text-white drop-shadow"
+        >
+          $4,286
+        </motion.div>
+        <div className="mt-1 text-[10px] text-white/70">42,860 pts · 1 pt = $0.10</div>
+      </div>
+
+      <div className="mt-3 space-y-1.5 text-[10px]">
+        <div className="flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2">
+          <span className="text-white/60">To bank</span>
+          <span className="font-semibold text-white">•••• 4421</span>
+        </div>
+        <div className="flex items-center justify-between rounded-lg bg-white/[0.04] px-3 py-2">
+          <span className="text-white/60">Arrives in</span>
+          <span className="font-semibold text-primary">24 hrs – 7 days</span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className="mt-auto flex items-center justify-center gap-1.5 rounded-lg bg-primary py-2.5 text-xs font-bold text-primary-foreground shadow-lg shadow-primary/40"
+      >
+        Confirm cashout <ArrowRight className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
         <span>You did it 🎉</span>
         <span className="inline-flex items-center gap-1 font-bold text-emerald-50">
           Restart <span className="text-base leading-none">↺</span>
