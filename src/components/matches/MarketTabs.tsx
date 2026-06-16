@@ -328,7 +328,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
           })}
         </div>
 
-        {selectedKeys.length > 0 && (
+        {!csSuspended && selectedKeys.length > 0 && (
           <div className="space-y-2 pt-1">
             <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               Your score slips ({selectedKeys.length})
