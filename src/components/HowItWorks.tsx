@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CsseMark } from "@/components/brand/CsseMark";
-import { Mail, Lock, ArrowRight, Upload, FileCheck2, Banknote, TrendingUp, Wallet, CheckCircle2 } from "lucide-react";
+import { Mail, Lock, ArrowRight, Upload, FileCheck2, Banknote, Wallet as WalletIcon, CheckCircle2, Plus, Copy, Landmark } from "lucide-react";
 
 const TOTAL = 5; // 4 walkthrough screens + cashout
 
