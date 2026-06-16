@@ -263,16 +263,16 @@ function PointsRequestScreen() {
 
         <div className="rounded-md border border-white/10 bg-white/[0.04] p-2 space-y-1.5">
           <div>
-            <div className="text-[10px] font-semibold leading-tight text-white">J.P MORGAN CHASE BANK BERHAD</div>
-            <div className="text-[9px] leading-tight text-white/50">WISE PAYMENTS SDN BHD</div>
+            <div className="text-[10px] font-semibold leading-tight text-white">APEX TRUST BANK</div>
+            <div className="text-[9px] leading-tight text-white/50">CSSE PAYMENTS SDN BHD</div>
             <div className="mt-0.5 flex items-center justify-between rounded bg-white/[0.04] px-1.5 py-1 font-mono text-[10px] text-white/80">
               <span>312123400232368</span>
               <Copy className="h-2.5 w-2.5 text-white/40" />
             </div>
           </div>
           <div className="border-t border-white/10 pt-1.5">
-            <div className="text-[10px] font-semibold leading-tight text-white">CIMB</div>
-            <div className="text-[9px] leading-tight text-white/50">BRICKSPLUG ENTERPRISE SD BHD</div>
+            <div className="text-[10px] font-semibold leading-tight text-white">NEXUS ALLIANCE BANK</div>
+            <div className="text-[9px] leading-tight text-white/50">CSSE PLATFORM SDN BHD</div>
             <div className="mt-0.5 flex items-center justify-between rounded bg-white/[0.04] px-1.5 py-1 font-mono text-[10px] text-white/80">
               <span>8010575969</span>
               <Copy className="h-2.5 w-2.5 text-white/40" />
@@ -390,7 +390,7 @@ function CashoutScreen() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-black text-white">Cashout 🎉</h3>
+        <h3 className="text-xl font-black text-white">Cashout</h3>
         <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-primary-foreground">
           Approved
         </span>
