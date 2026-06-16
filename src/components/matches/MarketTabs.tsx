@@ -281,8 +281,14 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     const selectedKeys = Object.keys(csPicks);
     const pendingSelection = csMut.isPending ? (csMut.variables as string | undefined) : undefined;
 
+    const csSuspended = isMarketSuspended("correct_score");
     return (
       <div className="space-y-3">
+        {csSuspended && (
+          <div className="text-[10px] font-medium rounded border border-destructive/40 bg-destructive/10 text-destructive px-2 py-1 inline-block">
+            Suspended
+          </div>
+        )}
         <div className="text-[10px] text-muted-foreground">
           Tap multiple scores to back several — each gets its own stake.
         </div>
@@ -290,14 +296,15 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
           {rows.map((o) => {
             const isPicked = csPicks[o.selection] !== undefined;
             const alreadyPlaced = placedKeys.has(`correct_score:${o.selection}`);
+            const disabled = alreadyPlaced || csSuspended;
             return (
               <Button
                 key={o.id}
                 type="button"
                 size="sm"
                 variant={isPicked ? "default" : "outline"}
-                disabled={alreadyPlaced}
-                title={alreadyPlaced ? "You already placed a bet on this score" : undefined}
+                disabled={disabled}
+                title={csSuspended ? "Market suspended" : alreadyPlaced ? "You already placed a bet on this score" : undefined}
                 className="flex flex-col h-auto py-2 relative disabled:opacity-60"
                 onClick={() => {
                   if (isPicked) {
