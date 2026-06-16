@@ -692,6 +692,44 @@ export const refreshMatchScore = createServerFn({ method: "POST" })
     return { ok: true, ...result, matchId: data.matchId };
   });
 
+export const setMatchMarginDisabled = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      matchId: z.string().uuid(),
+      disabled: z.boolean(),
+      reason: ReasonField,
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireTier(supabase, userId, WRITE_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await requireFreshReauth(supabaseAdmin, userId);
+    const { data: old } = await supabaseAdmin
+      .from("matches")
+      .select("margin_disabled")
+      .eq("id", data.matchId)
+      .single();
+    const { error: rpcErr } = await (supabaseAdmin as any).rpc(
+      "admin_set_match_margin_disabled",
+      { p_match_id: data.matchId, p_disabled: data.disabled },
+    );
+    if (rpcErr) throw new Error(rpcErr.message);
+    await audit(supabaseAdmin, {
+      userId,
+      action: "match.margin_disabled",
+      entity: "match",
+      entityId: data.matchId,
+      oldValue: { margin_disabled: (old as any)?.margin_disabled ?? false },
+      newValue: { margin_disabled: data.disabled },
+      reason: data.reason,
+    });
+    return { ok: true };
+  });
+
+
+
 // ============== WALLET LEDGER (admin) ==============
 
 export const listWalletLedgerAdmin = createServerFn({ method: "GET" })
