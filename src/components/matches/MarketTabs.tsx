@@ -197,18 +197,27 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
     return (
       <div className="space-y-2">
+        {suspended && (
+          <div className="text-[10px] font-medium rounded border border-destructive/40 bg-destructive/10 text-destructive px-2 py-1 inline-block">
+            Suspended
+          </div>
+        )}
         <div className={`grid ${cols} gap-2`}>
           {rows.map((o) => {
             const isPicked = pick?.selection === o.selection;
             const alreadyPlaced = placedKeys.has(`${market}:${o.selection}`);
+            const disabled = alreadyPlaced || suspended;
             return (
               <Button
                 key={o.id}
                 type="button"
                 size="sm"
                 variant={isPicked ? "default" : "outline"}
-                disabled={alreadyPlaced}
-                title={alreadyPlaced ? "You already placed a bet on this selection" : undefined}
+                disabled={disabled}
+                title={
+                  suspended ? "Market suspended" :
+                  alreadyPlaced ? "You already placed a bet on this selection" : undefined
+                }
                 className="flex flex-col h-auto py-2 relative disabled:opacity-60"
                 onClick={() => setPicks((prev) => ({
                   ...prev,
@@ -225,7 +234,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
           })}
         </div>
 
-        {pick && (
+        {pick && !suspended && (
           <div className="space-y-2 p-3 mt-2 rounded-md bg-muted/40 border transition-all animate-in fade-in-50 duration-200">
             <div className="text-xs flex justify-between items-center">
               <div>
