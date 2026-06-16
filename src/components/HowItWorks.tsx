@@ -368,14 +368,7 @@ function CashoutScreen() {
   );
 }
 
-        <span>You did it 🎉</span>
-        <span className="inline-flex items-center gap-1 font-bold text-emerald-50">
-          Restart <span className="text-base leading-none">↺</span>
-        </span>
-      </div>
-    </div>
-  );
-}
+
 
 /* ---------- Money rain (kept from previous version) ---------- */
 
