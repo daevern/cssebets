@@ -121,15 +121,17 @@ function AdminMatchesPage() {
 }
 
 function MatchRow({
-  match, reason, canWrite, onRefresh, onStatus, onSettle,
+  match, reason, canWrite, onRefresh, onStatus, onSettle, onToggleMargin,
 }: {
   match: any; reason: string; canWrite: boolean;
   onRefresh: () => void;
   onStatus: (s: typeof STATUSES[number]) => void;
   onSettle: (h: number, a: number) => void;
+  onToggleMargin: (d: boolean) => void;
 }) {
   const [h, setH] = useState(String(match.home_score ?? ""));
   const [a, setA] = useState(String(match.away_score ?? ""));
+  const marginOff = Boolean(match.margin_disabled);
 
   return (
     <Card className="p-3 space-y-2">
@@ -137,6 +139,7 @@ function MatchRow({
         <div className="text-sm font-medium truncate">{match.home_team} vs {match.away_team}</div>
         <div className="flex items-center gap-2 text-xs">
           <Badge variant="outline" className="uppercase">{match.status}</Badge>
+          {marginOff && <Badge variant="destructive" className="uppercase">Margin OFF</Badge>}
           <span className="text-muted-foreground">{new Date(match.kickoff_at).toLocaleString()}</span>
         </div>
       </div>
@@ -157,6 +160,15 @@ function MatchRow({
         >
           {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
+        <Button
+          size="sm"
+          variant={marginOff ? "default" : "outline"}
+          disabled={!canWrite || !reason}
+          title={!reason ? "Enter a reason above first" : marginOff ? "Re-enable house margin and re-price odds" : "Disable house margin for this match — publish fair odds"}
+          onClick={() => onToggleMargin(!marginOff)}
+        >
+          {marginOff ? "Re-enable margin" : "Disable margin"}
+        </Button>
       </div>
     </Card>
   );
