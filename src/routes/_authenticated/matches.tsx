@@ -37,6 +37,9 @@ type Match = {
   reference_odds: { home: number; draw: number; away: number } | null;
   odds_updated_at: string | null;
   odds_source: string | null;
+  odds_status?: string | null;
+  suspended_markets?: string[] | null;
+  manual_override?: boolean | null;
 };
 
 function humanize(s: string | null | undefined): string {
