@@ -46,6 +46,7 @@ import { Route as ManagementAdminSettingsRouteImport } from './routes/management
 import { Route as ManagementAdminRiskSettingsRouteImport } from './routes/management/admin.risk-settings'
 import { Route as ManagementAdminReviewRouteImport } from './routes/management/admin.review'
 import { Route as ManagementAdminReconciliationRouteImport } from './routes/management/admin.reconciliation'
+import { Route as ManagementAdminPricingBreakdownRouteImport } from './routes/management/admin.pricing-breakdown'
 import { Route as ManagementAdminPredictionsRouteImport } from './routes/management/admin.predictions'
 import { Route as ManagementAdminPointsRouteImport } from './routes/management/admin.points'
 import { Route as ManagementAdminPayoutsRouteImport } from './routes/management/admin.payouts'
@@ -259,6 +260,12 @@ const ManagementAdminReconciliationRoute =
     path: '/reconciliation',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminPricingBreakdownRoute =
+  ManagementAdminPricingBreakdownRouteImport.update({
+    id: '/pricing-breakdown',
+    path: '/pricing-breakdown',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminPredictionsRoute =
   ManagementAdminPredictionsRouteImport.update({
     id: '/predictions',
@@ -400,6 +407,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
+  '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
@@ -455,6 +463,7 @@ export interface FileRoutesByTo {
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
+  '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
@@ -513,6 +522,7 @@ export interface FileRoutesById {
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
+  '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
@@ -571,6 +581,7 @@ export interface FileRouteTypes {
     | '/management/admin/payouts'
     | '/management/admin/points'
     | '/management/admin/predictions'
+    | '/management/admin/pricing-breakdown'
     | '/management/admin/reconciliation'
     | '/management/admin/review'
     | '/management/admin/risk-settings'
@@ -626,6 +637,7 @@ export interface FileRouteTypes {
     | '/management/admin/payouts'
     | '/management/admin/points'
     | '/management/admin/predictions'
+    | '/management/admin/pricing-breakdown'
     | '/management/admin/reconciliation'
     | '/management/admin/review'
     | '/management/admin/risk-settings'
@@ -683,6 +695,7 @@ export interface FileRouteTypes {
     | '/management/admin/payouts'
     | '/management/admin/points'
     | '/management/admin/predictions'
+    | '/management/admin/pricing-breakdown'
     | '/management/admin/reconciliation'
     | '/management/admin/review'
     | '/management/admin/risk-settings'
@@ -975,6 +988,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminReconciliationRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/pricing-breakdown': {
+      id: '/management/admin/pricing-breakdown'
+      path: '/pricing-breakdown'
+      fullPath: '/management/admin/pricing-breakdown'
+      preLoaderRoute: typeof ManagementAdminPricingBreakdownRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/predictions': {
       id: '/management/admin/predictions'
       path: '/predictions'
@@ -1148,6 +1168,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminPayoutsRoute: typeof ManagementAdminPayoutsRoute
   ManagementAdminPointsRoute: typeof ManagementAdminPointsRoute
   ManagementAdminPredictionsRoute: typeof ManagementAdminPredictionsRoute
+  ManagementAdminPricingBreakdownRoute: typeof ManagementAdminPricingBreakdownRoute
   ManagementAdminReconciliationRoute: typeof ManagementAdminReconciliationRoute
   ManagementAdminReviewRoute: typeof ManagementAdminReviewRoute
   ManagementAdminRiskSettingsRoute: typeof ManagementAdminRiskSettingsRoute
@@ -1177,6 +1198,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminPayoutsRoute: ManagementAdminPayoutsRoute,
   ManagementAdminPointsRoute: ManagementAdminPointsRoute,
   ManagementAdminPredictionsRoute: ManagementAdminPredictionsRoute,
+  ManagementAdminPricingBreakdownRoute: ManagementAdminPricingBreakdownRoute,
   ManagementAdminReconciliationRoute: ManagementAdminReconciliationRoute,
   ManagementAdminReviewRoute: ManagementAdminReviewRoute,
   ManagementAdminRiskSettingsRoute: ManagementAdminRiskSettingsRoute,
