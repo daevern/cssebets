@@ -272,6 +272,12 @@ function MatchCard({ match }: { match: Match }) {
         </div>
       </button>
 
+      {bettingBlocked && !locked && (
+        <div className="text-xs font-medium rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-3 py-2">
+          Market temporarily suspended while odds are being verified.
+        </div>
+      )}
+
       {!locked && match.reference_odds && (
         <div className="space-y-2">
           <div className="grid grid-cols-3 gap-2">
@@ -279,12 +285,16 @@ function MatchCard({ match }: { match: Match }) {
               const label = p === "HOME" ? match.home_team : p === "AWAY" ? match.away_team : "Draw";
               const price = p === "HOME" ? odds.home : p === "DRAW" ? odds.draw : odds.away;
               const alreadyPlaced = placedResults.has(p);
+              const disabled = alreadyPlaced || bettingBlocked;
               return (
                 <Button
                   key={p} type="button"
                   variant={pick === p ? "default" : "outline"}
-                  disabled={alreadyPlaced}
-                  title={alreadyPlaced ? "You already placed a bet on this selection" : undefined}
+                  disabled={disabled}
+                  title={
+                    bettingBlocked ? "Market suspended" :
+                    alreadyPlaced ? "You already placed a bet on this selection" : undefined
+                  }
                   onClick={() => setPick(p)} size="sm"
                   className="flex flex-col h-auto py-2 relative disabled:opacity-60"
                 >
@@ -298,8 +308,8 @@ function MatchCard({ match }: { match: Match }) {
             })}
           </div>
           <div className="flex gap-2">
-            <Input type="number" min={10} max={50000} value={stake} onChange={(e) => setStake(e.target.value)} placeholder="Stake (10-50,000)" />
-            <Button disabled={!pick || mut.isPending || Number(stake) < 10 || Number(stake) > 50000} onClick={() => mut.mutate()}>
+            <Input type="number" min={10} max={50000} value={stake} onChange={(e) => setStake(e.target.value)} placeholder="Stake (10-50,000)" disabled={bettingBlocked} />
+            <Button disabled={bettingBlocked || !pick || mut.isPending || Number(stake) < 10 || Number(stake) > 50000} onClick={() => mut.mutate()}>
               {mut.isPending ? "..." : "Submit"}
             </Button>
           </div>
@@ -311,7 +321,7 @@ function MatchCard({ match }: { match: Match }) {
         </div>
       )}
 
-      {!locked && <MarketTabs matchId={match.id} locked={locked} />}
+      {!locked && <MarketTabs matchId={match.id} locked={locked} bettingBlocked={bettingBlocked} suspendedMarkets={suspendedMarkets} />}
 
       {locked && (
         <div className="text-xs text-muted-foreground font-medium">

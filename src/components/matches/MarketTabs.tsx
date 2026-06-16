@@ -23,7 +23,9 @@ type OddsRow = { id: string; market: string; selection: string; odds: number };
 const MIN_STAKE = 10;
 const MAX_STAKE = 50000;
 
-export function MarketTabs({ matchId, locked }: { matchId: string; locked: boolean }) {
+export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedMarkets = [] }: { matchId: string; locked: boolean; bettingBlocked?: boolean; suspendedMarkets?: string[] }) {
+  const isMarketSuspended = (m: string) =>
+    bettingBlocked || suspendedMarkets.includes("ALL") || suspendedMarkets.includes(m);
   const fn = useServerFn(getMatchMarkets);
   const place = useServerFn(placeMarketBet);
   const qc = useQueryClient();
@@ -185,7 +187,7 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
   const renderMarketSection = (market: MarketKey, cols: string) => {
     const rows = orderedSelections(market, grouped[market]);
     if (!rows.length) return <div className="text-xs text-muted-foreground">Not available.</div>;
-    
+    const suspended = isMarketSuspended(market);
     const pick = picks[market];
     const stake = stakes[market] ?? String(MIN_STAKE);
     const stakeNum = Number(stake);
@@ -195,18 +197,27 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
 
     return (
       <div className="space-y-2">
+        {suspended && (
+          <div className="text-[10px] font-medium rounded border border-destructive/40 bg-destructive/10 text-destructive px-2 py-1 inline-block">
+            Suspended
+          </div>
+        )}
         <div className={`grid ${cols} gap-2`}>
           {rows.map((o) => {
             const isPicked = pick?.selection === o.selection;
             const alreadyPlaced = placedKeys.has(`${market}:${o.selection}`);
+            const disabled = alreadyPlaced || suspended;
             return (
               <Button
                 key={o.id}
                 type="button"
                 size="sm"
                 variant={isPicked ? "default" : "outline"}
-                disabled={alreadyPlaced}
-                title={alreadyPlaced ? "You already placed a bet on this selection" : undefined}
+                disabled={disabled}
+                title={
+                  suspended ? "Market suspended" :
+                  alreadyPlaced ? "You already placed a bet on this selection" : undefined
+                }
                 className="flex flex-col h-auto py-2 relative disabled:opacity-60"
                 onClick={() => setPicks((prev) => ({
                   ...prev,
@@ -223,7 +234,7 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
           })}
         </div>
 
-        {pick && (
+        {pick && !suspended && (
           <div className="space-y-2 p-3 mt-2 rounded-md bg-muted/40 border transition-all animate-in fade-in-50 duration-200">
             <div className="text-xs flex justify-between items-center">
               <div>
@@ -270,8 +281,14 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
     const selectedKeys = Object.keys(csPicks);
     const pendingSelection = csMut.isPending ? (csMut.variables as string | undefined) : undefined;
 
+    const csSuspended = isMarketSuspended("correct_score");
     return (
       <div className="space-y-3">
+        {csSuspended && (
+          <div className="text-[10px] font-medium rounded border border-destructive/40 bg-destructive/10 text-destructive px-2 py-1 inline-block">
+            Suspended
+          </div>
+        )}
         <div className="text-[10px] text-muted-foreground">
           Tap multiple scores to back several — each gets its own stake.
         </div>
@@ -279,14 +296,15 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
           {rows.map((o) => {
             const isPicked = csPicks[o.selection] !== undefined;
             const alreadyPlaced = placedKeys.has(`correct_score:${o.selection}`);
+            const disabled = alreadyPlaced || csSuspended;
             return (
               <Button
                 key={o.id}
                 type="button"
                 size="sm"
                 variant={isPicked ? "default" : "outline"}
-                disabled={alreadyPlaced}
-                title={alreadyPlaced ? "You already placed a bet on this score" : undefined}
+                disabled={disabled}
+                title={csSuspended ? "Market suspended" : alreadyPlaced ? "You already placed a bet on this score" : undefined}
                 className="flex flex-col h-auto py-2 relative disabled:opacity-60"
                 onClick={() => {
                   if (isPicked) {
@@ -310,7 +328,7 @@ export function MarketTabs({ matchId, locked }: { matchId: string; locked: boole
           })}
         </div>
 
-        {selectedKeys.length > 0 && (
+        {!csSuspended && selectedKeys.length > 0 && (
           <div className="space-y-2 pt-1">
             <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
               Your score slips ({selectedKeys.length})
