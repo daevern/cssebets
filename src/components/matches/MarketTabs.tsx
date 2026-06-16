@@ -23,7 +23,9 @@ type OddsRow = { id: string; market: string; selection: string; odds: number };
 const MIN_STAKE = 10;
 const MAX_STAKE = 50000;
 
-export function MarketTabs({ matchId, locked }: { matchId: string; locked: boolean }) {
+export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedMarkets = [] }: { matchId: string; locked: boolean; bettingBlocked?: boolean; suspendedMarkets?: string[] }) {
+  const isMarketSuspended = (m: string) =>
+    bettingBlocked || suspendedMarkets.includes("ALL") || suspendedMarkets.includes(m);
   const fn = useServerFn(getMatchMarkets);
   const place = useServerFn(placeMarketBet);
   const qc = useQueryClient();
