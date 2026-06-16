@@ -43,7 +43,15 @@ export const getMatchMarkets = createServerFn({ method: "POST" })
       .eq("match_id", data.matchId)
       .eq("active", true);
 
-    if ((!odds || odds.length === 0) && (match as any).status === "scheduled") {
+    // On-demand seeding is restricted to simulation matches. Live production
+    // matches must have odds derived from a real reference_odds sync; if the
+    // seeder has not yet been triggered server-side after a sync, callers
+    // must wait (bet placement is independently gated by odds_status).
+    if (
+      (!odds || odds.length === 0) &&
+      (match as any).status === "scheduled" &&
+      (match as any).is_simulation === true
+    ) {
       await (supabaseAdmin as any).rpc("seed_match_market_odds", { p_match_id: data.matchId });
       const r = await supabaseAdmin
         .from("match_market_odds")

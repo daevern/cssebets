@@ -1,6 +1,16 @@
-// Server-only: apply a target house margin (overround) to a set of decimal odds.
-// Reduces each odd proportionally so the implied-probability sum becomes (1 + marginPct/100).
-// If existing overround already meets/exceeds the target, returns odds unchanged.
+// Server-only: CSSEBets house pricing model.
+//
+// CSSEBets does NOT copy bookmaker odds. We take API odds as a *reference*,
+// strip the bookmaker overround to get fair probabilities, then apply the
+// CSSEBets house margin (default 25%) and convert back to decimal odds.
+//
+// Formula (1X2):
+//   p_raw_i      = 1 / api_odds_i
+//   p_fair_i     = p_raw_i / Σ p_raw
+//   p_house_i    = p_fair_i * (1 + margin)
+//   display_odds = max(1.01, round(1 / p_house_i, 2))
+//
+// Outright (N-way) markets use the same logic across all selections.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -14,49 +24,87 @@ export async function getRealOddsMarginSettings(): Promise<{ marginPct: number; 
     .eq("id", 1)
     .maybeSingle();
   const value = {
-    marginPct: Number((data as any)?.margin_pct ?? 6),
+    marginPct: Number((data as any)?.margin_pct ?? 25),
     apply: Boolean((data as any)?.apply_margin_to_real ?? true),
   };
-  _cache = { value, expiresAt: Date.now() + 60_000 }; // 1 min cache
+  _cache = { value, expiresAt: Date.now() + 60_000 };
   return value;
 }
 
-function shrinkFactor(currentOverround: number, targetOverround: number): number {
-  // new_odds = old_odds * currentOverround / targetOverround
-  if (currentOverround <= 0) return 1;
-  if (currentOverround >= targetOverround) return 1; // already enough margin
-  return currentOverround / targetOverround;
-}
-
 const MIN_ODD = 1.01;
-const clamp = (x: number) => Math.max(MIN_ODD, Number(x.toFixed(2)));
+const round2 = (x: number) => Math.round(x * 100) / 100;
+const clamp = (x: number) => Math.max(MIN_ODD, round2(x));
 
-export async function apply3WayMargin(odds: { home: number; draw: number; away: number }) {
+export type ThreeWayBreakdown = {
+  api: { home: number; draw: number; away: number };
+  fair: { home: number; draw: number; away: number };
+  house: { home: number; draw: number; away: number };
+  final: { home: number; draw: number; away: number };
+  marginPct: number;
+  floorApplied: { home: boolean; draw: boolean; away: boolean };
+};
+
+export async function compute3WayOdds(odds: {
+  home: number;
+  draw: number;
+  away: number;
+}): Promise<ThreeWayBreakdown> {
   const { marginPct, apply } = await getRealOddsMarginSettings();
-  const safe = { home: clamp(odds.home), draw: clamp(odds.draw), away: clamp(odds.away) };
-  if (!apply) return safe;
-  const target = 1 + marginPct / 100;
-  const cur = 1 / safe.home + 1 / safe.draw + 1 / safe.away;
-  const k = shrinkFactor(cur, target);
-  if (k === 1) return safe;
+  const api = {
+    home: Math.max(1.001, Number(odds.home) || 0),
+    draw: Math.max(1.001, Number(odds.draw) || 0),
+    away: Math.max(1.001, Number(odds.away) || 0),
+  };
+  const raw = { home: 1 / api.home, draw: 1 / api.draw, away: 1 / api.away };
+  const sum = raw.home + raw.draw + raw.away;
+  const fair = sum > 0
+    ? { home: raw.home / sum, draw: raw.draw / sum, away: raw.away / sum }
+    : { home: 1 / 3, draw: 1 / 3, away: 1 / 3 };
+  const mult = apply ? 1 + marginPct / 100 : 1;
+  const house = {
+    home: Math.min(0.999, fair.home * mult),
+    draw: Math.min(0.999, fair.draw * mult),
+    away: Math.min(0.999, fair.away * mult),
+  };
+  const rawFinal = {
+    home: 1 / Math.max(house.home, 1e-6),
+    draw: 1 / Math.max(house.draw, 1e-6),
+    away: 1 / Math.max(house.away, 1e-6),
+  };
+  const final = {
+    home: clamp(rawFinal.home),
+    draw: clamp(rawFinal.draw),
+    away: clamp(rawFinal.away),
+  };
   return {
-    home: clamp(safe.home * k),
-    draw: clamp(safe.draw * k),
-    away: clamp(safe.away * k),
+    api,
+    fair,
+    house,
+    final,
+    marginPct,
+    floorApplied: {
+      home: rawFinal.home < MIN_ODD,
+      draw: rawFinal.draw < MIN_ODD,
+      away: rawFinal.away < MIN_ODD,
+    },
   };
 }
 
-// For outright (N-way) markets, apply the same factor across all teams using
-// the field's combined implied-probability sum.
+export async function apply3WayMargin(odds: { home: number; draw: number; away: number }) {
+  const b = await compute3WayOdds(odds);
+  return b.final;
+}
+
 export async function applyOutrightMargin(odds: Array<{ team: string; odds: number }>) {
   const { marginPct, apply } = await getRealOddsMarginSettings();
   if (odds.length === 0) return odds;
-  const safe = odds.map((o) => ({ team: o.team, odds: clamp(o.odds) }));
-  if (!apply) return safe;
-  const target = 1 + marginPct / 100;
-  const cur = safe.reduce((s, o) => s + 1 / o.odds, 0);
-  const k = shrinkFactor(cur, target);
-  if (k === 1) return safe;
-  return safe.map((o) => ({ team: o.team, odds: clamp(o.odds * k) }));
+  const api = odds.map((o) => ({ team: o.team, odds: Math.max(1.001, Number(o.odds) || 0) }));
+  const raw = api.map((o) => 1 / o.odds);
+  const sum = raw.reduce((s, x) => s + x, 0);
+  const fair = sum > 0 ? raw.map((x) => x / sum) : raw.map(() => 1 / raw.length);
+  const mult = apply ? 1 + marginPct / 100 : 1;
+  return api.map((o, i) => {
+    const house = Math.min(0.999, fair[i] * mult);
+    return { team: o.team, odds: clamp(1 / Math.max(house, 1e-6)) };
+  });
 }
-
