@@ -29,7 +29,30 @@ function RiskSettingsPage() {
   const updFn = useServerFn(updatePlatformSettings);
   const qc = useQueryClient();
 
-  const q = useQuery({ queryKey: ["platform-settings"], queryFn: () => getFn() });
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active) setHasSession(!!data.session);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setHasSession(!!session);
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  const q = useQuery({
+    queryKey: ["platform-settings"],
+    queryFn: async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) return null;
+      return getFn();
+    },
+    enabled: hasSession === true,
+  });
 
   const [marginPct, setMarginPct] = useState("6");
   const [exposureCapPct, setExposureCapPct] = useState("0.6");
