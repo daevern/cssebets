@@ -107,7 +107,7 @@ export async function runOddsSync(opts: { force?: boolean } = {}) {
   // Pull scheduled matches still ahead of kickoff
   const { data: matches } = await supabaseAdmin
     .from("matches")
-    .select("id, home_team, away_team, kickoff_at, status")
+    .select("id, home_team, away_team, kickoff_at, status, margin_disabled")
     .eq("status", "scheduled")
     .gt("kickoff_at", new Date().toISOString());
 
