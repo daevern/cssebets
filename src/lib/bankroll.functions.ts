@@ -27,6 +27,7 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
       { count: voidBets },
       { data: poolRows },
       { data: issuanceRows },
+      { data: pendingPreds },
     ] = await Promise.all([
       (supabaseAdmin as any).from("platform_bankroll").select("*").eq("id", 1).maybeSingle(),
       supabaseAdmin
@@ -47,7 +48,11 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
       supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "void").eq("is_simulation" as any, false),
       (supabaseAdmin as any).from("match_stake_pools").select("total_pool, settled").eq("settled", false).eq("is_simulation", false),
       (supabaseAdmin as any).from("wallet_transactions").select("amount").eq("reference_type", "point_request").eq("type", "credit").eq("is_simulation", false),
-
+      (supabaseAdmin as any)
+        .from("predictions")
+        .select("match_id, market, market_text, outcome, selection_label, potential_return")
+        .eq("status", "pending")
+        .eq("is_simulation", false),
     ]);
 
     const houseUserId = (bankroll as any)?.house_user_id ?? null;
@@ -74,16 +79,86 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
     const availableBalance = balance - globalExposure;
     const safetyRatio = globalExposure > 0 ? balance / globalExposure : null;
 
-    const topMatch = (matches ?? [])[0] as any;
-    const topOutcome = topMatch
+    // ---- Full-market liability breakdown across all pending predictions ----
+    // For each match, sum potential_return per (market, selection). The worst
+    // outcome is the single (market, selection) with the largest liability.
+    type SelKey = { market: string; selection: string };
+    const perMatch = new Map<string, Map<string, { market: string; selection: string; liability: number }>>();
+    for (const p of (pendingPreds ?? []) as any[]) {
+      const matchId = p.match_id as string;
+      const market = (p.market_text ?? p.market ?? "result") as string;
+      const selection = (p.selection_label ?? p.outcome ?? "") as string;
+      const liability = Number(p.potential_return || 0);
+      if (!matchId || !selection) continue;
+      const byMatch = perMatch.get(matchId) ?? new Map();
+      const key = `${market}:${selection}`;
+      const cur = byMatch.get(key) ?? { market, selection, liability: 0 };
+      cur.liability += liability;
+      byMatch.set(key, cur);
+      perMatch.set(matchId, byMatch);
+    }
+
+    const matchLabelById = new Map(
+      (matches ?? []).map((m: any) => [m.id, `${m.home_team} vs ${m.away_team}`]),
+    );
+
+    let topMatchId: string | null = null;
+    let topMarket = "—";
+    let topSelection = "—";
+    let topLiability = 0;
+    const breakdown: Array<{ matchId: string; label: string; market: string; selection: string; liability: number }> = [];
+    for (const [matchId, byKey] of perMatch.entries()) {
+      for (const v of byKey.values()) {
+        breakdown.push({
+          matchId,
+          label: matchLabelById.get(matchId) ?? matchId.slice(0, 8),
+          market: v.market,
+          selection: v.selection,
+          liability: v.liability,
+        });
+        if (v.liability > topLiability) {
+          topLiability = v.liability;
+          topMatchId = matchId;
+          topMarket = v.market;
+          topSelection = v.selection;
+        }
+      }
+    }
+    breakdown.sort((a, b) => b.liability - a.liability);
+
+    // Fall back to legacy home/draw/away if no market-level data
+    const legacyTopMatch = (matches ?? [])[0] as any;
+    const legacyTopOutcome = legacyTopMatch
       ? (["home", "draw", "away"] as const).reduce<{ k: string; v: number }>(
           (best, k) => {
-            const v = Number(topMatch[`${k}_liability`] || 0);
+            const v = Number(legacyTopMatch[`${k}_liability`] || 0);
             return v > best.v ? { k, v } : best;
           },
           { k: "—", v: 0 },
         )
       : { k: "—", v: 0 };
+
+    const topLiabilityMatch = topMatchId
+      ? {
+          id: topMatchId,
+          label: matchLabelById.get(topMatchId) ?? topMatchId.slice(0, 8),
+          worst: topLiability,
+          outcome: `${topMarket} · ${topSelection}`,
+          outcomeValue: topLiability,
+          market: topMarket,
+          selection: topSelection,
+        }
+      : legacyTopMatch
+        ? {
+            id: legacyTopMatch.id,
+            label: `${legacyTopMatch.home_team} vs ${legacyTopMatch.away_team}`,
+            worst: Number(legacyTopMatch.worst_case_exposure || 0),
+            outcome: legacyTopOutcome.k,
+            outcomeValue: legacyTopOutcome.v,
+            market: "result",
+            selection: legacyTopOutcome.k,
+          }
+        : null;
 
     return {
       bankroll: {
@@ -103,15 +178,8 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
       },
       house,
       bets: { open: openBets ?? 0, settled: settledBets ?? 0, void: voidBets ?? 0 },
-      topLiabilityMatch: topMatch
-        ? {
-            id: topMatch.id,
-            label: `${topMatch.home_team} vs ${topMatch.away_team}`,
-            worst: Number(topMatch.worst_case_exposure || 0),
-            outcome: topOutcome.k,
-            outcomeValue: topOutcome.v,
-          }
-        : null,
+      topLiabilityMatch,
+      market_liability_breakdown: breakdown.slice(0, 50),
       matches: (matches ?? []).map((m: any) => ({
         id: m.id,
         label: `${m.home_team} vs ${m.away_team}`,
