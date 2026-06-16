@@ -212,7 +212,7 @@ function LandingPage() {
               </Link>
               <Link to="/register">
                 <Button size="sm" className="shadow-md shadow-primary/30 transition-transform hover:scale-[1.03] animate-pulse">
-                  Claim Seat
+                  Register Now
                 </Button>
               </Link>
             </div>
@@ -273,13 +273,13 @@ function LandingPage() {
           </div>
 
           <h1 className="mt-5 text-4xl font-black uppercase tracking-tight sm:text-6xl">
-            Bet the <span className="text-primary">World Cup</span>.
+            Be the <span className="text-primary">12th man</span>.
             <br />
-            Win Big.
+            Predict like the manager.
           </h1>
 
           <p className="mt-4 max-w-xl text-base font-bold uppercase tracking-wider text-primary/90 sm:text-lg">
-            Strategy Over Luck.
+            competitive strategy starts everywhere
           </p>
 
 
@@ -455,7 +455,7 @@ function LandingPage() {
             <Link to="/register" className="shrink-0">
               <Button size="sm" className="gap-1 font-bold uppercase tracking-wide shadow-lg shadow-primary/40">
                 <Zap className="h-3.5 w-3.5" />
-                Claim Seat
+                Register Now
               </Button>
             </Link>
           </div>

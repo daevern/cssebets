@@ -20,7 +20,7 @@ export function HowItWorks() {
         <div className="text-center">
           <h2 className="text-2xl font-bold sm:text-3xl">How It Works</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Tap the deck to flip through every screen — sign-up to cashout, exactly like it looks in the app.
+            click to shuffle cards
           </p>
         </div>
 
@@ -103,7 +103,7 @@ export function HowItWorks() {
             {
               title: "Cashout → bank",
               time: "24 hrs – 7 days",
-              body: "Points convert at 1 pt = $0.10 and are sent to your registered bank account.",
+              body: "Points convert at 1 pt = RM1.00 and are sent to your registered bank account.",
             },
           ].map((row) => (
             <div
@@ -406,9 +406,9 @@ function CashoutScreen() {
           transition={{ type: "spring", stiffness: 200, damping: 14 }}
           className="mt-1 text-4xl font-black tabular-nums text-white drop-shadow"
         >
-          $4,286
+          RM42,860
         </motion.div>
-        <div className="mt-1 text-[10px] text-white/70">42,860 pts · 1 pt = $0.10</div>
+        <div className="mt-1 text-[10px] text-white/70">42,860 pts · 1 pt = RM1.00</div>
       </div>
 
       <div className="mt-3 space-y-1.5 text-[10px]">
@@ -624,11 +624,11 @@ function MiniBill({ crumpled = false }: { crumpled?: boolean }) {
         </>
       )}
       <div className="absolute inset-1 rounded-[2px] border border-emerald-800/50" />
-      <span className="absolute left-1 top-0.5 text-[8px] font-black text-emerald-900">$</span>
-      <span className="absolute right-1 top-0.5 text-[8px] font-black text-emerald-900">$</span>
-      <span className="absolute bottom-0.5 left-1 text-[8px] font-black text-emerald-900">$</span>
-      <span className="absolute bottom-0.5 right-1 text-[8px] font-black text-emerald-900">$</span>
-      <div className="absolute inset-0 grid place-items-center font-serif text-sm font-black text-emerald-900">
+      <span className="absolute left-1 top-0.5 text-[8px] font-black text-emerald-900">RM</span>
+      <span className="absolute right-1 top-0.5 text-[8px] font-black text-emerald-900">RM</span>
+      <span className="absolute bottom-0.5 left-1 text-[8px] font-black text-emerald-900">RM</span>
+      <span className="absolute bottom-0.5 right-1 text-[8px] font-black text-emerald-900">RM</span>
+      <div className="absolute inset-0 grid place-items-center font-serif text-xs font-black text-emerald-900">
         100
       </div>
     </div>
