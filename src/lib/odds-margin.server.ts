@@ -44,12 +44,13 @@ export type ThreeWayBreakdown = {
   floorApplied: { home: boolean; draw: boolean; away: boolean };
 };
 
-export async function compute3WayOdds(odds: {
-  home: number;
-  draw: number;
-  away: number;
-}): Promise<ThreeWayBreakdown> {
-  const { marginPct, apply } = await getRealOddsMarginSettings();
+export async function compute3WayOdds(
+  odds: { home: number; draw: number; away: number },
+  opts?: { applyMargin?: boolean },
+): Promise<ThreeWayBreakdown> {
+  const settings = await getRealOddsMarginSettings();
+  const marginPct = settings.marginPct;
+  const apply = opts?.applyMargin ?? settings.apply;
   const api = {
     home: Math.max(1.001, Number(odds.home) || 0),
     draw: Math.max(1.001, Number(odds.draw) || 0),
@@ -81,7 +82,7 @@ export async function compute3WayOdds(odds: {
     fair,
     house,
     final,
-    marginPct,
+    marginPct: apply ? marginPct : 0,
     floorApplied: {
       home: rawFinal.home < MIN_ODD,
       draw: rawFinal.draw < MIN_ODD,
@@ -90,8 +91,11 @@ export async function compute3WayOdds(odds: {
   };
 }
 
-export async function apply3WayMargin(odds: { home: number; draw: number; away: number }) {
-  const b = await compute3WayOdds(odds);
+export async function apply3WayMargin(
+  odds: { home: number; draw: number; away: number },
+  opts?: { applyMargin?: boolean },
+) {
+  const b = await compute3WayOdds(odds, opts);
   return b.final;
 }
 
