@@ -3,9 +3,10 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { settlePredictionsForMatch } from "@/lib/settlement.server";
 import { runOddsSync } from "@/lib/odds.server";
 
-function generateOdds() {
-  return { home: 2.1, draw: 3.3, away: 3.4 };
-}
+// HOTFIX: generated/fake reference odds are NEVER allowed for real matches.
+// Real matches must rely solely on provider odds (runOddsSync). If provider
+// odds are missing, reference_odds stays NULL and refresh_odds_status_for_open_matches
+// will mark the match as 'missing' / 'awaiting_sync' and auto-suspend it.
 
 export async function runFootballDataSync(opts: { userId?: string | null } = {}) {
   const apiKey = process.env.FOOTBALL_DATA_API_KEY?.trim();
