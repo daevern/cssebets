@@ -86,6 +86,45 @@ export function HowItWorks() {
         <p className="mt-3 text-center text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70">
           {isCashout ? "Tap to shuffle again" : `${STEP_LABELS[index]} • tap card to continue`}
         </p>
+
+        {/* Timing & approval expectations */}
+        <div className="mx-auto mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
+          {[
+            {
+              title: "Registration approval",
+              time: "30 min – 6 hrs",
+              body: "New accounts are reviewed by an admin before they can place bets.",
+            },
+            {
+              title: "Points request approval",
+              time: "15 min – 2 hrs",
+              body: "Once your bank transfer proof is uploaded, points land in your wallet after admin verification.",
+            },
+            {
+              title: "Cashout → bank",
+              time: "24 hrs – 7 days",
+              body: "Points convert at 1 pt = $0.10 and are sent to your registered bank account.",
+            },
+          ].map((row) => (
+            <div
+              key={row.title}
+              className="rounded-xl border border-border/60 bg-card/60 p-4 text-left"
+            >
+              <div className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                {row.title}
+              </div>
+              <div className="mt-1 text-base font-bold text-foreground tabular-nums">
+                {row.time}
+              </div>
+              <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+                {row.body}
+              </p>
+            </div>
+          ))}
+        </div>
+        <p className="mx-auto mt-3 max-w-xl text-center text-[11px] text-muted-foreground">
+          Every step is human-reviewed for safety — that's why approvals aren't instant.
+        </p>
       </div>
     </section>
   );
