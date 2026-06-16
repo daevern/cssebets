@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { syncFootballData, settleMatch } from "@/lib/admin.functions";
-import { setMatchStatusManual, refreshMatchScore, listMatchesAdmin } from "@/lib/admin-dashboard.functions";
+import { setMatchStatusManual, refreshMatchScore, listMatchesAdmin, setMatchMarginDisabled } from "@/lib/admin-dashboard.functions";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
