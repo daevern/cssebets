@@ -543,6 +543,7 @@ export type Database = {
           is_simulation: boolean
           kickoff_at: string
           manual_override: boolean
+          margin_disabled: boolean
           odds_source: string | null
           odds_status: string
           odds_updated_at: string | null
@@ -573,6 +574,7 @@ export type Database = {
           is_simulation?: boolean
           kickoff_at: string
           manual_override?: boolean
+          margin_disabled?: boolean
           odds_source?: string | null
           odds_status?: string
           odds_updated_at?: string | null
@@ -603,6 +605,7 @@ export type Database = {
           is_simulation?: boolean
           kickoff_at?: string
           manual_override?: boolean
+          margin_disabled?: boolean
           odds_source?: string | null
           odds_status?: string
           odds_updated_at?: string | null
@@ -1518,6 +1521,10 @@ export type Database = {
       }
       admin_set_global_onboarding: {
         Args: { p_enabled: boolean }
+        Returns: undefined
+      }
+      admin_set_match_margin_disabled: {
+        Args: { p_disabled: boolean; p_match_id: string }
         Returns: undefined
       }
       admin_set_onboarding_enabled: {
