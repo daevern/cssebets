@@ -765,3 +765,190 @@ export const listMatchesForOdds = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return { matches: data ?? [] };
   });
+
+// ============== PRICING BREAKDOWN (admin diagnostics, read-only) ==============
+// Shows how API odds become CSSEBets odds. Does NOT mutate odds, pricing, or markets.
+
+export const getMatchPricingBreakdown = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ matchId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireTier(supabase, userId, ADMIN_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { compute3WayOdds, getRealOddsMarginSettings } = await import("@/lib/odds-margin.server");
+
+    const [matchRes, mktRes, alertsRes, settingsRes] = await Promise.all([
+      supabaseAdmin
+        .from("matches")
+        .select(
+          "id, home_team, away_team, kickoff_at, status, reference_odds, odds_updated_at, odds_source, odds_status, suspended_markets, manual_override, is_simulation, home_liability, draw_liability, away_liability, worst_case_exposure",
+        )
+        .eq("id", data.matchId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("match_market_odds")
+        .select("market, selection, odds, source, generated, active, updated_at")
+        .eq("match_id", data.matchId)
+        .order("market", { ascending: true })
+        .order("selection", { ascending: true }),
+      supabaseAdmin
+        .from("operational_alerts")
+        .select("id, level, category, title, message, status, created_at, metadata")
+        .or(`metadata->>match_id.eq.${data.matchId},metadata->>matchId.eq.${data.matchId}`)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabaseAdmin
+        .from("platform_settings" as any)
+        .select("margin_pct, apply_margin_to_real, max_single_bet_payout, max_match_worst_case_liability")
+        .eq("id", 1)
+        .maybeSingle(),
+    ]);
+
+    if (matchRes.error) throw new Error(matchRes.error.message);
+    const match: any = matchRes.data;
+    if (!match) throw new Error("Match not found");
+
+    const settings: any = settingsRes.data ?? {};
+    const marginCfg = await getRealOddsMarginSettings();
+    const MIN_ODD = 1.01;
+
+    const ref = (match.reference_odds ?? {}) as { home?: number; draw?: number; away?: number };
+    const has3Way = ref && Number(ref.home) > 1 && Number(ref.draw) > 1 && Number(ref.away) > 1;
+    const threeWay = has3Way
+      ? await compute3WayOdds({
+          home: Number(ref.home),
+          draw: Number(ref.draw),
+          away: Number(ref.away),
+        })
+      : null;
+
+    const rows = (mktRes.data ?? []) as any[];
+    const byMarket = new Map<string, any[]>();
+    for (const r of rows) {
+      if (!byMarket.has(r.market)) byMarket.set(r.market, []);
+      byMarket.get(r.market)!.push(r);
+    }
+    const margin = Number(marginCfg.marginPct) / 100;
+    const markets = Array.from(byMarket.entries()).map(([market, items]) => {
+      const withRaw = items.map((it: any) => {
+        const odds = Number(it.odds);
+        return {
+          ...it,
+          odds,
+          rawImpliedProb: odds > 0 ? 1 / odds : 0,
+          floorApplied: odds <= MIN_ODD + 1e-9,
+        };
+      });
+      const rawSum = withRaw.reduce((s, r) => s + r.rawImpliedProb, 0);
+      const overround = rawSum - 1;
+      const enriched = withRaw.map((r) => {
+        const housedProb = rawSum > 0 ? r.rawImpliedProb / rawSum : 0;
+        const fairProb = marginCfg.apply && 1 + margin > 0 ? housedProb / (1 + margin) : housedProb;
+        return {
+          selection: r.selection,
+          odds: r.odds,
+          source: r.source,
+          generated: r.generated,
+          active: r.active,
+          updated_at: r.updated_at,
+          rawImpliedProb: r.rawImpliedProb,
+          fairProb,
+          housedProb,
+          marginAppliedPct: marginCfg.apply ? marginCfg.marginPct : 0,
+          floorApplied: r.floorApplied,
+        };
+      });
+      let otherInfo: any = null;
+      if (market === "correct_score") {
+        const other = enriched.find((e) => e.selection === "OTHER");
+        const listed = enriched.filter((e) => e.selection !== "OTHER");
+        const listedFairSum = listed.reduce((s, e) => s + e.fairProb, 0);
+        otherInfo = {
+          residualFairProb: Math.max(0, 1 - listedFairSum),
+          listedFairSum,
+          storedOtherOdds: other?.odds ?? null,
+          storedOtherProb: other?.rawImpliedProb ?? null,
+        };
+      }
+      const isPoisson =
+        market === "btts" ||
+        market === "over_under_2_5" ||
+        market === "exact_total_goals" ||
+        market === "correct_score" ||
+        market === "half_time_full_time";
+      return {
+        market,
+        modelType: isPoisson ? "poisson_from_reference_odds" : "direct_3way",
+        rawSum,
+        overround,
+        selections: enriched,
+        otherInfo,
+      };
+    });
+
+    const maxLiab = Number(settings.max_match_worst_case_liability ?? 0);
+    const worstCase = Number(match.worst_case_exposure ?? 0);
+    const highLiability = maxLiab > 0 && worstCase >= 0.9 * maxLiab;
+
+    const warnings: Array<{ code: string; severity: "info" | "warn" | "error"; message: string }> = [];
+    if (!has3Way) warnings.push({ code: "API_ODDS_MISSING", severity: "error", message: "No reference 1X2 odds stored for this match." });
+    if (!match.odds_updated_at) warnings.push({ code: "ODDS_AWAITING_SYNC", severity: "warn", message: "Odds have never been synced from provider." });
+    if (match.odds_status && !["fresh", "ok"].includes(String(match.odds_status))) {
+      warnings.push({
+        code: `ODDS_${String(match.odds_status).toUpperCase()}`,
+        severity: match.odds_status === "stale" ? "warn" : "error",
+        message: `Odds status: ${match.odds_status}`,
+      });
+    }
+    if (Array.isArray(match.suspended_markets) && match.suspended_markets.length > 0) {
+      warnings.push({ code: "MARKET_UNAVAILABLE", severity: "warn", message: `Suspended markets: ${match.suspended_markets.join(", ")}` });
+    }
+    if (markets.some((m) => m.selections.some((s: any) => s.floorApplied))) {
+      warnings.push({ code: "ODDS_FLOOR_APPLIED", severity: "info", message: "Minimum 1.01 floor applied on one or more selections." });
+    }
+    if (highLiability) {
+      warnings.push({ code: "HIGH_LIABILITY", severity: "warn", message: `Worst-case exposure ${worstCase.toFixed(2)} ≥ 90% of cap ${maxLiab.toFixed(2)}.` });
+    }
+    if (match.manual_override) {
+      warnings.push({ code: "MANUAL_OVERRIDE", severity: "info", message: "Match odds are under manual admin override (odds cap/override applied)." });
+    }
+    if (match.is_simulation) {
+      warnings.push({ code: "SIMULATION_MATCH", severity: "info", message: "Simulation match — synthetic odds are allowed." });
+    }
+
+    return {
+      match: {
+        id: match.id,
+        home_team: match.home_team,
+        away_team: match.away_team,
+        kickoff_at: match.kickoff_at,
+        status: match.status,
+        odds_status: match.odds_status,
+        odds_updated_at: match.odds_updated_at,
+        odds_source: match.odds_source,
+        manual_override: match.manual_override,
+        is_simulation: match.is_simulation,
+        suspended_markets: match.suspended_markets ?? [],
+        reference_odds: match.reference_odds,
+        liabilities: {
+          home: Number(match.home_liability ?? 0),
+          draw: Number(match.draw_liability ?? 0),
+          away: Number(match.away_liability ?? 0),
+          worst_case: worstCase,
+          cap: maxLiab,
+        },
+      },
+      pricingConfig: {
+        marginPct: marginCfg.marginPct,
+        applyMarginToReal: marginCfg.apply,
+        minOdd: MIN_ODD,
+        maxSingleBetPayout: Number(settings.max_single_bet_payout ?? 0),
+        maxMatchWorstCaseLiability: maxLiab,
+      },
+      threeWay,
+      markets,
+      warnings,
+      alerts: alertsRes.data ?? [],
+    };
+  });
