@@ -136,9 +136,9 @@ function AdminMatchesPage() {
 }
 
 function MatchRow({
-  match, reason, canWrite, onRefresh, onStatus, onSettle, onToggleMargin,
+  match, canWrite, onRefresh, onStatus, onSettle, onToggleMargin,
 }: {
-  match: any; reason: string; canWrite: boolean;
+  match: any; canWrite: boolean;
   onRefresh: () => void;
   onStatus: (s: typeof STATUSES[number]) => void;
   onSettle: (h: number, a: number) => void;
@@ -170,7 +170,7 @@ function MatchRow({
         <select
           className="h-9 rounded-md border bg-background px-2 text-xs"
           value={match.status}
-          disabled={!canWrite || !reason}
+          disabled={!canWrite}
           onChange={(e) => onStatus(e.target.value as any)}
         >
           {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -178,8 +178,8 @@ function MatchRow({
         <Button
           size="sm"
           variant={marginOff ? "default" : "outline"}
-          disabled={!canWrite || !reason}
-          title={!reason ? "Enter a reason above first" : marginOff ? "Re-enable house margin and re-price odds" : "Disable house margin for this match — publish fair odds"}
+          disabled={!canWrite}
+          title={marginOff ? "Re-enable house margin and re-price odds" : "Disable house margin for this match — publish fair odds"}
           onClick={() => onToggleMargin(!marginOff)}
         >
           {marginOff ? "Re-enable margin" : "Disable margin"}
