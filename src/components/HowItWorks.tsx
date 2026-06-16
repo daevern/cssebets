@@ -314,6 +314,39 @@ function WalletScreen() {
   );
 }
 
+function UploadProofScreen() {
+  return (
+    <div className="flex h-full flex-col">
+      <h3 className="text-lg font-bold text-white">Upload proof</h3>
+      <p className="mt-0.5 text-[11px] text-white/60">Attach your receipt for faster approval.</p>
+
+      <motion.div
+        initial={{ scale: 0.96 }}
+        animate={{ scale: 1 }}
+        transition={{ repeat: Infinity, repeatType: "reverse", duration: 1.6 }}
+        className="mt-4 grid place-items-center rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 py-6"
+      >
+        <Upload className="h-6 w-6 text-primary" />
+        <div className="mt-2 text-[11px] font-semibold text-white">Tap to upload</div>
+        <div className="text-[9px] text-white/50">JPG, PNG, WEBP or PDF · max 10 MB</div>
+      </motion.div>
+
+      <div className="mt-3 flex items-center gap-2 rounded-lg bg-white/[0.04] p-2 ring-1 ring-primary/30">
+        <FileCheck2 className="h-4 w-4 text-primary" />
+        <div className="flex-1">
+          <div className="text-[11px] font-semibold text-white">receipt-8421.jpg</div>
+          <div className="text-[9px] text-white/50">218 KB · uploaded</div>
+        </div>
+        <CheckCircle2 className="h-4 w-4 text-primary" />
+      </div>
+
+      <div className="mt-auto rounded-lg border border-white/10 bg-white/[0.03] p-2.5 text-[10px] leading-snug text-white/60">
+        Include your Reference ID so admin can match the transfer.
+      </div>
+    </div>
+  );
+}
+
 function CashoutScreen() {
   return (
     <div className="flex h-full flex-col">
