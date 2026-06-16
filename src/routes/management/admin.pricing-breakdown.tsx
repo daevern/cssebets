@@ -153,19 +153,22 @@ function PricingBreakdownPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(["home", "draw", "away"] as const).map((k) => (
-                      <TableRow key={k}>
-                        <TableCell className="capitalize">{k}</TableCell>
-                        <TableCell className="text-right tabular-nums">{odd(d.threeWay.api[k])}</TableCell>
-                        <TableCell className="text-right tabular-nums text-muted-foreground">{pct(1 / d.threeWay.api[k])}</TableCell>
-                        <TableCell className="text-right tabular-nums">{pct(d.threeWay.fair[k])}</TableCell>
-                        <TableCell className="text-right tabular-nums">{pct(d.threeWay.house[k])}</TableCell>
-                        <TableCell className="text-right tabular-nums font-semibold">{odd(d.threeWay.final[k])}</TableCell>
-                        <TableCell className="text-right">
-                          {d.threeWay.floorApplied[k] ? <Badge variant="destructive">FLOOR</Badge> : <span className="text-muted-foreground">—</span>}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {(["home", "draw", "away"] as const).map((k) => {
+                      const tw = d.threeWay!;
+                      return (
+                        <TableRow key={k}>
+                          <TableCell className="capitalize">{k}</TableCell>
+                          <TableCell className="text-right tabular-nums">{odd(tw.api[k])}</TableCell>
+                          <TableCell className="text-right tabular-nums text-muted-foreground">{pct(1 / tw.api[k])}</TableCell>
+                          <TableCell className="text-right tabular-nums">{pct(tw.fair[k])}</TableCell>
+                          <TableCell className="text-right tabular-nums">{pct(tw.house[k])}</TableCell>
+                          <TableCell className="text-right tabular-nums font-semibold">{odd(tw.final[k])}</TableCell>
+                          <TableCell className="text-right">
+                            {tw.floorApplied[k] ? <Badge variant="destructive">FLOOR</Badge> : <span className="text-muted-foreground">—</span>}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
