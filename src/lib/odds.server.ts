@@ -147,7 +147,10 @@ export async function runOddsSync(opts: { force?: boolean } = {}) {
       away: Number(median(awayPrices).toFixed(2)),
     };
     // Apply house margin (configurable via platform_settings) before persisting.
-    const reference_odds = await apply3WayMargin(rawOdds);
+    // Per-match override: when matches.margin_disabled = true, publish fair odds.
+    const reference_odds = (m as any).margin_disabled
+      ? await apply3WayMargin(rawOdds, { applyMargin: false })
+      : await apply3WayMargin(rawOdds);
 
     const nowIso = new Date().toISOString();
 
