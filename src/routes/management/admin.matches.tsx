@@ -29,6 +29,7 @@ function AdminMatchesPage() {
   const statusFn = useServerFn(setMatchStatusManual);
   const refreshFn = useServerFn(refreshMatchScore);
   const listFn = useServerFn(listMatchesAdmin);
+  const marginFn = useServerFn(setMatchMarginDisabled);
 
   const matches = useQuery({
     queryKey: ["admin-matches-full"],
