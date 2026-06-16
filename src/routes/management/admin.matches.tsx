@@ -64,6 +64,16 @@ function AdminMatchesPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const marginMut = useMutation({
+    mutationFn: (v: { id: string; disabled: boolean }) =>
+      marginFn({ data: { matchId: v.id, disabled: v.disabled, reason } }),
+    onSuccess: (_r, v) => {
+      toast.success(v.disabled ? "Margin disabled — odds re-priced at fair value" : "Margin re-enabled — odds re-priced with house margin");
+      qc.invalidateQueries({ queryKey: ["admin-matches-full"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
