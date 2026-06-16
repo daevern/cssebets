@@ -187,7 +187,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   const renderMarketSection = (market: MarketKey, cols: string) => {
     const rows = orderedSelections(market, grouped[market]);
     if (!rows.length) return <div className="text-xs text-muted-foreground">Not available.</div>;
-    
+    const suspended = isMarketSuspended(market);
     const pick = picks[market];
     const stake = stakes[market] ?? String(MIN_STAKE);
     const stakeNum = Number(stake);
