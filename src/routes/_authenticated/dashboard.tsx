@@ -5,11 +5,12 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   Zap,
   ChevronRight,
-  Target,
+  Ticket,
   Flame,
-  ArrowRight,
   Link2,
-  Triangle,
+  ChevronUp,
+  TrendingUp,
+  ArrowRight,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLandingData } from "@/components/HeroEnhancements";
