@@ -85,7 +85,16 @@
   --sidebar-accent-foreground: oklch(0.97 0.01 250);
   --sidebar-border: oklch(0.32 0.025 255);
   --sidebar-ring: oklch(0.78 0.19 145);
+  /* Dashboard neon surface tokens */
+  --surface: #0A0F0D;
+  --surface-2: #0E1512;
+  --surface-border: #1F2A24;
+  --neon: #22E06B;
+  --neon-glow: rgba(34, 224, 107, 0.25);
+  --ink: #E6F2EA;
+  --ink-muted: #6B7A72;
 }
+
 
 @layer base {
   * { border-color: var(--color-border); }
