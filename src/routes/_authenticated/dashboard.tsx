@@ -102,9 +102,11 @@ function Countdown({ kickoff }: { kickoff: string | null }) {
   );
 }
 
-function Pill({ children }: { children: React.ReactNode }) {
+function Pill({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-surface-border)] bg-transparent px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink)]">
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink)] ${accent ? "border-[var(--color-neon)]/50 bg-[var(--color-neon)]/5" : "border-[var(--color-surface-border)] bg-transparent"}`}
+    >
       {children}
     </span>
   );
