@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Card } from "@/components/ui/card";
-import { ListChecks, History } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { CsseLogo } from "@/components/brand/CsseMark";
+import { useLandingData } from "@/components/HeroEnhancements";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -13,14 +13,60 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
 
-function Dashboard() {
-  const tiles = [
-    { to: "/bets", icon: ListChecks, label: "BET", desc: "Matches | Tournament-winner" },
-    { to: "/my-predictions", icon: History, label: "PICKS", desc: "Track your bets" },
-  ] as const;
+function AnimatedDigit({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex flex-1 flex-col items-center rounded-xl border border-border/60 bg-background/60 py-3">
+      <span
+        key={value}
+        className="animate-fade-in font-mono text-3xl font-black tabular-nums tracking-tight text-foreground sm:text-4xl"
+      >
+        {value}
+      </span>
+      <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+        {label}
+      </span>
+    </div>
+  );
+}
+
+function Countdown({ kickoff }: { kickoff: string | null }) {
+  const target = useMemo(
+    () => (kickoff ? new Date(kickoff).getTime() : Date.now() + 6 * 60 * 60 * 1000),
+    [kickoff],
+  );
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const ms = Math.max(0, target - now);
+  const h = Math.floor(ms / 3_600_000);
+  const m = Math.floor((ms % 3_600_000) / 60_000);
+  const s = Math.floor((ms % 60_000) / 1000);
+  const pad = (x: number) => x.toString().padStart(2, "0");
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-4">
+    <div className="flex items-center gap-2">
+      <AnimatedDigit value={pad(h)} label="H" />
+      <span className="font-mono text-2xl font-bold text-muted-foreground/40">:</span>
+      <AnimatedDigit value={pad(m)} label="M" />
+      <span className="font-mono text-2xl font-bold text-muted-foreground/40">:</span>
+      <AnimatedDigit value={pad(s)} label="S" />
+    </div>
+  );
+}
+
+function Dashboard() {
+  const landing = useLandingData();
+  const next = landing?.nextMatches?.[0] ?? null;
+  const kickoff = next?.kickoffAt ?? null;
+
+  // Display-only values — wire to real user data when hooks are available.
+  const tokenBalance = 101;
+  const picksToday = 0;
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-5 p-4">
       <div className="flex items-center justify-between">
         <CsseLogo size={24} />
         <span className="hidden sm:inline text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -28,16 +74,100 @@ function Dashboard() {
         </span>
       </div>
 
-      <div data-tour="quick-actions" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {tiles.map((t) => (
-          <Link key={t.to} to={t.to as string}>
-            <Card className="p-5 transition hover:border-primary hover:shadow-lg">
-              <t.icon className="mb-3 h-6 w-6 text-primary" />
-              <div className="font-semibold">{t.label}</div>
-              <div className="text-sm text-muted-foreground">{t.desc}</div>
-            </Card>
+      {/* Card 1 — Token + Next Match */}
+      <div className="group relative rounded-2xl bg-gradient-to-br from-primary/40 via-border to-border p-px transition-transform duration-300 hover:-translate-y-0.5">
+        <div className="rounded-2xl bg-card p-6 shadow-lg shadow-primary/5">
+          {/* Top row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-baseline gap-2">
+              <span className="font-mono text-5xl font-black tabular-nums tracking-tight text-foreground">
+                {tokenBalance}
+              </span>
+              <span className="text-xs font-bold uppercase tracking-[0.22em] text-muted-foreground">
+                CSSE
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className="rounded-full border border-amber-700/40 bg-amber-700/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: "color-mix(in oklab, #c08457 80%, var(--foreground))" }}
+              >
+                Bronze
+              </span>
+              <span
+                className="grid h-6 w-6 place-items-center rounded-md text-[10px] font-black text-background shadow-md"
+                style={{
+                  background:
+                    "linear-gradient(135deg, color-mix(in oklab, var(--primary) 80%, transparent), color-mix(in oklab, var(--primary) 40%, transparent))",
+                  boxShadow:
+                    "inset 0 -2px 0 color-mix(in oklab, var(--primary) 50%, black), 0 2px 6px color-mix(in oklab, var(--primary) 35%, transparent)",
+                }}
+                aria-label="Streak"
+              >
+                ★
+              </span>
+            </div>
+          </div>
+
+          <div className="my-5 h-px bg-border/60" />
+
+          {/* Middle: Next match */}
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              Next Up
+            </div>
+            <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+              <div className="min-w-0 text-right">
+                <div className="truncate text-base font-bold uppercase tracking-wide text-foreground sm:text-lg">
+                  {next?.homeTeam ?? "TBD"}
+                </div>
+              </div>
+              <div className="shrink-0 rounded-full border border-border bg-background px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                VS
+              </div>
+              <div className="min-w-0">
+                <div className="truncate text-base font-bold uppercase tracking-wide text-foreground sm:text-lg">
+                  {next?.awayTeam ?? "TBD"}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Countdown */}
+          <div className="mt-5">
+            <Countdown kickoff={kickoff} />
+          </div>
+
+          {/* CTA */}
+          <Link to="/bets" className="mt-6 block">
+            <button
+              type="button"
+              className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-md shadow-primary/30 transition-all hover:shadow-lg hover:shadow-primary/50 active:scale-[0.99]"
+            >
+              Make a bet
+              <span aria-hidden>→</span>
+            </button>
           </Link>
-        ))}
+        </div>
+      </div>
+
+      {/* Card 2 — Picks */}
+      <div className="group relative rounded-2xl bg-gradient-to-br from-border via-border to-primary/20 p-px transition-transform duration-300 hover:-translate-y-0.5">
+        <div className="rounded-2xl bg-card p-6">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+            Picks · {picksToday} Today
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground/80">You're on the sideline.</p>
+          <Link to="/my-predictions" className="mt-5 block">
+            <button
+              type="button"
+              className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-border bg-background/40 px-4 py-3 text-sm font-bold uppercase tracking-wider text-foreground transition-all hover:border-primary hover:text-primary active:scale-[0.99]"
+            >
+              Make a pick
+              <span aria-hidden>→</span>
+            </button>
+          </Link>
+        </div>
       </div>
     </div>
   );
