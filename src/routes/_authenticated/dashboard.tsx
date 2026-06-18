@@ -5,11 +5,12 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   Zap,
   ChevronRight,
-  Target,
+  Ticket,
   Flame,
-  ArrowRight,
   Link2,
-  Triangle,
+  ChevronUp,
+  TrendingUp,
+  ArrowRight,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLandingData } from "@/components/HeroEnhancements";
@@ -101,9 +102,11 @@ function Countdown({ kickoff }: { kickoff: string | null }) {
   );
 }
 
-function Pill({ children }: { children: React.ReactNode }) {
+function Pill({ children, accent }: { children: React.ReactNode; accent?: boolean }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-surface-border)] bg-transparent px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink)]">
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink)] ${accent ? "border-[var(--color-neon)]/50 bg-[var(--color-neon)]/5" : "border-[var(--color-surface-border)] bg-transparent"}`}
+    >
       {children}
     </span>
   );
@@ -126,7 +129,7 @@ function Dashboard() {
   });
   const balance = Math.round(wallet.data?.balance ?? 0);
 
-  const { data: activePicks } = useQuery({
+  const { data: picks } = useQuery({
     queryKey: ["dashboard-active-picks", uid],
     enabled: !!uid,
     refetchOnWindowFocus: true,
@@ -134,23 +137,37 @@ function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("predictions")
-        .select("id, status")
+        .select("id, status, points, potential_return")
         .eq("user_id", uid!)
         .eq("status", "pending");
       if (error) throw error;
-      return (data ?? []) as Array<{ id: string; status: string }>;
+      return (data ?? []) as Array<{
+        id: string;
+        status: string;
+        points: number;
+        potential_return: number;
+      }>;
     },
   });
 
-  const liveCount = activePicks?.length ?? 0;
+  const liveCount = picks?.length ?? 0;
+  const biggestStake = picks?.reduce((m, p) => Math.max(m, p.points ?? 0), 0) ?? 0;
+  const expectedPayout =
+    picks?.reduce((s, p) => s + (p.potential_return ?? 0), 0) ?? 0;
+  const totalRisked = picks?.reduce((s, p) => s + (p.points ?? 0), 0) ?? 0;
+  const potentialWin = Math.max(0, expectedPayout - totalRisked);
+
+  const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] px-4 py-6">
       <div className="mx-auto flex max-w-md flex-col gap-4 md:max-w-2xl">
         {/* Top bar */}
         <div className="flex items-center justify-between">
-          <CsseLogo size={20} />
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-surface-border)] bg-transparent px-3 py-1.5 text-xs font-bold text-[var(--color-ink)]">
+          <div className="flex items-center gap-2">
+            <CsseLogo size={22} />
+          </div>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-neon)]/40 bg-transparent px-3 py-1.5 text-sm font-bold text-[var(--color-ink)]">
             <Link2 className="h-3.5 w-3.5 text-[var(--color-neon)]" />
             <span className="tabular-nums">{wallet.isLoading ? "…" : balance}</span>
             <span className="text-[var(--color-neon)]">CSSE</span>
@@ -159,18 +176,18 @@ function Dashboard() {
 
         {/* Tier + streak pills — TODO: wire to real engagement/tier data */}
         <div className="flex items-center gap-2">
-          <Pill>
-            <Triangle className="h-3 w-3 fill-[var(--color-ink)]" />
+          <Pill accent>
+            <ChevronUp className="h-3.5 w-3.5 text-[var(--color-neon)]" strokeWidth={3} />
             Bronze
           </Pill>
           <Pill>
-            <Flame className="h-3 w-3 text-[var(--color-neon)]" />
-            3D
+            <Flame className="h-3 w-3 text-[var(--color-ink-muted)]" />
+            2D
           </Pill>
         </div>
 
         {/* NEXT UP CARD */}
-        <div className="relative overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-5">
+        <div className="relative overflow-hidden rounded-2xl border border-[var(--color-neon)]/20 bg-[var(--color-surface-2)] p-5">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-neon)]">
               <Zap className="h-3.5 w-3.5" />
@@ -181,7 +198,7 @@ function Dashboard() {
 
           <div className="mt-6 flex items-center justify-center gap-4">
             <TeamFlag name={next?.homeTeam ?? "TBD"} />
-            <span className="rounded-md border border-[var(--color-surface-border)] bg-[#0A1410] px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-neon)]">
+            <span className="rounded-md border border-[var(--color-neon)]/30 bg-[#0A1410] px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-neon)]">
               VS
             </span>
             <TeamFlag name={next?.awayTeam ?? "TBD"} />
@@ -194,7 +211,7 @@ function Dashboard() {
           <Link to="/bets" className="mt-6 block">
             <button
               type="button"
-              className="w-full rounded-xl bg-[var(--color-neon)] px-4 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99]"
+              className="w-full rounded-full bg-[var(--color-neon)] px-4 py-4 text-sm font-semibold uppercase tracking-[0.2em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99]"
             >
               Make a bet
             </button>
@@ -202,37 +219,68 @@ function Dashboard() {
         </div>
 
         {/* PICKS CARD */}
-        <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-5">
-          <div className="flex items-start justify-between gap-3">
+        <div className="rounded-2xl border border-[var(--color-neon)]/20 bg-[var(--color-surface-2)] p-5">
+          <div className="flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-neon)]">
-              <Target className="h-3.5 w-3.5" />
-              Picks · {liveCount} {liveCount > 0 ? "Live" : "Today"}
+              <Ticket className="h-3.5 w-3.5" />
+              Picks · {liveCount} Live Today
             </span>
-            <span className="grid h-10 w-10 place-items-center rounded-lg border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/5 text-[var(--color-neon)]">
-              <Flame className="h-4 w-4" />
-            </span>
+            <ChevronRight className="h-4 w-4 text-[var(--color-ink-muted)]" />
           </div>
 
-          <h2 className="mt-4 text-xl font-bold tracking-tight text-[var(--color-ink)]">
-            {liveCount > 0
-              ? liveCount === 1
-                ? "You have 1 pick in play."
-                : `You have ${liveCount} picks in play.`
-              : "You're on the sideline."}
-          </h2>
+          {liveCount > 0 ? (
+            <>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="rounded-xl border border-[var(--color-surface-border)] bg-[#0A1410] p-4">
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                    Biggest Stake
+                  </div>
+                  <div className="mt-2 flex items-baseline gap-1">
+                    <span className="font-display text-2xl font-bold tabular-nums text-[var(--color-ink)]">
+                      {fmt(biggestStake)}
+                    </span>
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-ink-muted)]">
+                      pts
+                    </span>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-[var(--color-surface-border)] bg-[#0A1410] p-4">
+                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-neon)]">
+                    <TrendingUp className="h-3 w-3" />
+                    Expected Payout
+                  </div>
+                  <div className="mt-2 flex items-baseline gap-1">
+                    <span className="font-display text-2xl font-bold tabular-nums text-[var(--color-neon)]">
+                      {fmt(expectedPayout)}
+                    </span>
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-neon)]/70">
+                      pts
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-          <Link
-            to={liveCount > 0 ? "/my-predictions" : "/bets"}
-            className="mt-5 block"
-          >
-            <button
-              type="button"
-              className="flex w-full items-center justify-between rounded-xl border border-[var(--color-surface-border)] bg-[#0A1410] px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-ink)] transition-all hover:border-[var(--color-neon)] hover:text-[var(--color-neon)] active:scale-[0.99]"
-            >
-              <span>{liveCount > 0 ? "View my picks" : "Make a pick"}</span>
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </Link>
+              <div className="mt-4 border-t border-[var(--color-surface-border)] pt-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                Risked <span className="tabular-nums text-[var(--color-ink)]">{fmt(totalRisked)}</span> → Win{" "}
+                <span className="tabular-nums text-[var(--color-ink)]">{fmt(potentialWin)}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="mt-4 text-xl font-bold tracking-tight text-[var(--color-ink)]">
+                You're on the sideline.
+              </h2>
+              <Link to="/bets" className="mt-5 block">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between rounded-xl border border-[var(--color-surface-border)] bg-[#0A1410] px-4 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-ink)] transition-all hover:border-[var(--color-neon)] hover:text-[var(--color-neon)] active:scale-[0.99]"
+                >
+                  <span>Make a pick</span>
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>
