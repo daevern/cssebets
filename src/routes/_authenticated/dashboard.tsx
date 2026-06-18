@@ -1,7 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { CsseLogo } from "@/components/brand/CsseMark";
 import { useLandingData } from "@/components/HeroEnhancements";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { teamFlagUrl } from "@/lib/country-flags";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -12,6 +16,25 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   }),
   component: Dashboard,
 });
+
+function TeamFlag({ name }: { name: string }) {
+  const url = teamFlagUrl(name, 160);
+  if (!url) {
+    return (
+      <span className="truncate text-base font-bold uppercase tracking-wide text-foreground sm:text-lg">
+        {name}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={`${name} flag`}
+      className="h-10 w-16 rounded-sm border border-border/40 object-cover shadow-sm sm:h-12 sm:w-20"
+      loading="lazy"
+    />
+  );
+}
 
 function AnimatedDigit({ value, label }: { value: string; label: string }) {
   return (
@@ -61,84 +84,62 @@ function Dashboard() {
   const next = landing?.nextMatches?.[0] ?? null;
   const kickoff = next?.kickoffAt ?? null;
 
-  // Display-only values — wire to real user data when hooks are available.
-  const tokenBalance = 101;
-  const picksToday = 0;
+  const { user } = useAuth();
+  const uid = user?.id;
+
+  const { data: activePicks } = useQuery({
+    queryKey: ["dashboard-active-picks", uid],
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("predictions")
+        .select("id, status, matches(status)")
+        .eq("user_id", uid!)
+        .eq("status", "pending");
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; status: string; matches: { status: string } | null }>;
+    },
+  });
+
+  const liveCount = activePicks?.length ?? 0;
 
   return (
     <div className="mx-auto max-w-2xl space-y-5 p-4">
       <div className="flex items-center justify-between">
         <CsseLogo size={24} />
-        <span className="hidden sm:inline text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span className="hidden text-xs uppercase tracking-[0.18em] text-muted-foreground sm:inline">
           Competitive Strategy Starts Everywhere
         </span>
       </div>
 
-      {/* Card 1 — Token + Next Match */}
+      {/* Card 1 — Next Match */}
       <div className="group relative rounded-2xl bg-gradient-to-br from-primary/40 via-border to-border p-px transition-transform duration-300 hover:-translate-y-0.5">
         <div className="rounded-2xl bg-card p-6 shadow-lg shadow-primary/5">
-          {/* Top row */}
           <div className="flex items-center justify-between">
-            <div className="flex items-baseline gap-2">
-              <span className="font-mono text-5xl font-black tabular-nums tracking-tight text-foreground">
-                {tokenBalance}
-              </span>
-              <span className="text-xs font-bold uppercase tracking-[0.22em] text-muted-foreground">
-                CSSE
-              </span>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
+              ⚡ Next Up
             </div>
-            <div className="flex items-center gap-2">
-              <span
-                className="rounded-full border border-amber-700/40 bg-amber-700/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider"
-                style={{ color: "color-mix(in oklab, #c08457 80%, var(--foreground))" }}
-              >
-                Bronze
-              </span>
-              <span
-                className="grid h-6 w-6 place-items-center rounded-md text-[10px] font-black text-background shadow-md"
-                style={{
-                  background:
-                    "linear-gradient(135deg, color-mix(in oklab, var(--primary) 80%, transparent), color-mix(in oklab, var(--primary) 40%, transparent))",
-                  boxShadow:
-                    "inset 0 -2px 0 color-mix(in oklab, var(--primary) 50%, black), 0 2px 6px color-mix(in oklab, var(--primary) 35%, transparent)",
-                }}
-                aria-label="Streak"
-              >
-                ★
-              </span>
+            <span className="text-muted-foreground/60" aria-hidden>›</span>
+          </div>
+
+          <div className="mt-5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+            <div className="flex min-w-0 justify-end">
+              <TeamFlag name={next?.homeTeam ?? "TBD"} />
+            </div>
+            <div className="shrink-0 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-primary">
+              VS
+            </div>
+            <div className="flex min-w-0 justify-start">
+              <TeamFlag name={next?.awayTeam ?? "TBD"} />
             </div>
           </div>
 
-          <div className="my-5 h-px bg-border/60" />
-
-          {/* Middle: Next match */}
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-              Next Up
-            </div>
-            <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
-              <div className="min-w-0 text-right">
-                <div className="truncate text-base font-bold uppercase tracking-wide text-foreground sm:text-lg">
-                  {next?.homeTeam ?? "TBD"}
-                </div>
-              </div>
-              <div className="shrink-0 rounded-full border border-border bg-background px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                VS
-              </div>
-              <div className="min-w-0">
-                <div className="truncate text-base font-bold uppercase tracking-wide text-foreground sm:text-lg">
-                  {next?.awayTeam ?? "TBD"}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Countdown */}
-          <div className="mt-5">
+          <div className="mt-6">
             <Countdown kickoff={kickoff} />
           </div>
 
-          {/* CTA */}
           <Link to="/bets" className="mt-6 block">
             <button
               type="button"
@@ -154,16 +155,22 @@ function Dashboard() {
       {/* Card 2 — Picks */}
       <div className="group relative rounded-2xl bg-gradient-to-br from-border via-border to-primary/20 p-px transition-transform duration-300 hover:-translate-y-0.5">
         <div className="rounded-2xl bg-card p-6">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-            Picks · {picksToday} Today
+          <div className="flex items-center justify-between">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              ◎ Picks · {liveCount} Live
+            </div>
           </div>
-          <p className="mt-3 text-sm text-muted-foreground/80">You're on the sideline.</p>
-          <Link to="/my-predictions" className="mt-5 block">
+          <p className="mt-3 text-sm text-muted-foreground/80">
+            {liveCount > 0
+              ? `You have ${liveCount} active pick${liveCount === 1 ? "" : "s"} in play.`
+              : "No picks today."}
+          </p>
+          <Link to={liveCount > 0 ? "/my-predictions" : "/bets"} className="mt-5 block">
             <button
               type="button"
-              className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-border bg-background/40 px-4 py-3 text-sm font-bold uppercase tracking-wider text-foreground transition-all hover:border-primary hover:text-primary active:scale-[0.99]"
+              className="flex min-h-[48px] w-full items-center justify-between gap-2 rounded-xl border border-border bg-background/40 px-4 py-3 text-sm font-bold uppercase tracking-wider text-foreground transition-all hover:border-primary hover:text-primary active:scale-[0.99]"
             >
-              Make a pick
+              <span>{liveCount > 0 ? "View my picks" : "Make a pick"}</span>
               <span aria-hidden>→</span>
             </button>
           </Link>
