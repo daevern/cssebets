@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLandingData } from "@/components/HeroEnhancements";
 import { supabase } from "@/integrations/supabase/client";
 import { teamFlagUrl } from "@/lib/country-flags";
+import { CsseLogo } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
