@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLandingData } from "@/components/HeroEnhancements";
 import { supabase } from "@/integrations/supabase/client";
 import { teamFlagUrl } from "@/lib/country-flags";
+import { CsseLogo } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -119,19 +120,9 @@ function Dashboard() {
 
   return (
     <div className="mx-auto max-w-md space-y-4 p-4">
-      {/* Brand wordmark */}
-      <div className="mb-6 flex items-center gap-2 px-1">
-        <div
-          className="h-5 w-5 bg-primary"
-          style={{
-            clipPath:
-              "polygon(20% 0%, 100% 50%, 20% 100%, 0% 80%, 60% 50%, 0% 20%)",
-          }}
-          aria-hidden
-        />
-        <span className="text-xl font-extrabold uppercase italic tracking-tighter text-foreground">
-          CSSE<span className="text-primary not-italic">Bets</span>
-        </span>
+      {/* Brand lockup — same mark + wordmark as nav/header */}
+      <div className="mb-6 flex items-center px-1">
+        <CsseLogo size={20} />
       </div>
 
       {/* NEXT UP CARD */}
