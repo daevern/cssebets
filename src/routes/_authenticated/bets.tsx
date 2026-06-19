@@ -168,8 +168,6 @@ function BetsHub() {
           </div>
           <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight md:text-4xl">
             Pick your <span className="text-[var(--color-neon)]">market</span>.
-            <br />
-            <span className="text-[var(--color-ink-muted)]">Back your Pick.</span>
           </h1>
         </section>
 

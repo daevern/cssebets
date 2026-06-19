@@ -150,13 +150,8 @@ function MatchesPage() {
         <section className="space-y-2">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
             <Radio className="h-3 w-3" />
-            FIFA World Cup · Slate
+            FIFA World Cup · 2026
           </div>
-          <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight md:text-4xl">
-            Read the <span className="text-[var(--color-neon)]">slate</span>.
-            <br />
-            <span className="text-[var(--color-ink-muted)]">Back your conviction.</span>
-          </h1>
         </section>
 
         {isLoading ? (
