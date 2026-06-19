@@ -77,3 +77,16 @@ export const getPublicPlatformStatus = createServerFn({ method: "GET" }).handler
     }>;
   },
 );
+
+export const getPublicCommunityGrowth = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const { data, error } = await publicClient().rpc("trust_community_growth");
+    if (error) throw new Error(error.message);
+    return data as {
+      members_this_month: number;
+      bets_this_month: number;
+      payouts_this_month: number;
+      updated_at: string;
+    };
+  },
+);
