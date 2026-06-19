@@ -51,7 +51,7 @@ function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
 
 type Tile = {
   to: string;
-  icon: typeof Crown;
+  icon: React.ComponentType<{ className?: string }>;
   kicker: string;
   label: string;
   desc: string;
