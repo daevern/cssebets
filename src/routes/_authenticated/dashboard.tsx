@@ -362,11 +362,6 @@ function Dashboard() {
             )}
           </div>
         </article>
-
-        {/* Footer tagline — brand soul */}
-        <p className="pt-2 text-center text-[10px] font-semibold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
-          cssebets · Skill over noise
-        </p>
       </div>
     </div>
   );
