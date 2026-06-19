@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Crown, ArrowUpRight, Radio } from "lucide-react";
-import type { SVGProps } from "react";
+import type { ComponentType, SVGProps } from "react";
+import { CsseLogo } from "@/components/brand/CsseMark";
 
 function PitchIcon(props: SVGProps<SVGSVGElement>) {
   return (
