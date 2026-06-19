@@ -319,27 +319,17 @@ function Dashboard() {
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <StatBlock
-                    label="Biggest stake"
-                    value={fmt(biggestStake)}
+                    label="Total stake"
+                    value={fmt(totalRisked)}
                     unit="pts"
                   />
                   <StatBlock
-                    label="If it all hits"
+                    label="Expected payout"
                     value={fmt(expectedPayout)}
                     unit="pts"
                     accent
                     icon={<TrendingUp className="h-3 w-3" />}
                   />
-                </div>
-                <div className="mt-4 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-                  <span>
-                    Risked{" "}
-                    <span className="tabular-nums text-[var(--color-ink)]">{fmt(totalRisked)}</span>
-                  </span>
-                  <span className="text-[var(--color-neon)]">
-                    Win{" "}
-                    <span className="tabular-nums">+{fmt(potentialWin)}</span>
-                  </span>
                 </div>
                 <Link to="/my-predictions" className="mt-4 block">
                   <button
