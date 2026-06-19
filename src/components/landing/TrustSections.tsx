@@ -22,6 +22,7 @@ import {
   getPublicRecentActivity,
   getPublicPayoutPerformance,
   getPublicPlatformStatus,
+  getPublicCommunityGrowth,
 } from "@/lib/trust-public.functions";
 
 /* ---------- formatters ---------- */
