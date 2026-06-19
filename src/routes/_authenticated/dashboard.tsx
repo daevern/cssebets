@@ -196,14 +196,6 @@ function Dashboard() {
           <Link to="/dashboard" className="flex items-center gap-2">
             <CsseLogo size={22} />
           </Link>
-          <Link
-            to="/wallet"
-            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/5 px-3 py-1.5 text-sm font-bold transition-colors hover:bg-[var(--color-neon)]/10"
-          >
-            <Link2 className="h-3.5 w-3.5 text-[var(--color-neon)]" />
-            <span className="tabular-nums">{wallet.isLoading ? "…" : fmt(balance)}</span>
-            <span className="text-[var(--color-neon)]">CSSE</span>
-          </Link>
         </header>
 
         {/* ---------- Editorial greeting ---------- */}
@@ -225,9 +217,9 @@ function Dashboard() {
             )}
           </div>
           <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight md:text-4xl">
-            Evening, <span className="text-[var(--color-neon)]">{firstName}</span>.
+            Hello, <span className="text-[var(--color-neon)]">{firstName}</span>.
             <br />
-            <span className="text-[var(--color-ink-muted)]">{tension.line}</span>
+            <span className="text-[var(--color-ink-muted)]">Ready to strategise?</span>
           </h1>
         </section>
 
@@ -292,7 +284,7 @@ function Dashboard() {
                 type="button"
                 className="group flex w-full items-center justify-between rounded-full bg-[var(--color-neon)] px-5 py-4 text-sm font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_32px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99]"
               >
-                <span>Lock in your call</span>
+                <span>Bet now</span>
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </button>
             </Link>
@@ -327,27 +319,17 @@ function Dashboard() {
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <StatBlock
-                    label="Biggest stake"
-                    value={fmt(biggestStake)}
+                    label="Total stake"
+                    value={fmt(totalRisked)}
                     unit="pts"
                   />
                   <StatBlock
-                    label="If it all hits"
+                    label="Expected payout"
                     value={fmt(expectedPayout)}
                     unit="pts"
                     accent
                     icon={<TrendingUp className="h-3 w-3" />}
                   />
-                </div>
-                <div className="mt-4 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-                  <span>
-                    Risked{" "}
-                    <span className="tabular-nums text-[var(--color-ink)]">{fmt(totalRisked)}</span>
-                  </span>
-                  <span className="text-[var(--color-neon)]">
-                    Win{" "}
-                    <span className="tabular-nums">+{fmt(potentialWin)}</span>
-                  </span>
                 </div>
                 <Link to="/my-predictions" className="mt-4 block">
                   <button
@@ -380,11 +362,6 @@ function Dashboard() {
             )}
           </div>
         </article>
-
-        {/* Footer tagline — brand soul */}
-        <p className="pt-2 text-center text-[10px] font-semibold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
-          cssebets · Skill over noise
-        </p>
       </div>
     </div>
   );
