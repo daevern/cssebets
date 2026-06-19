@@ -150,7 +150,7 @@ function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("predictions")
-        .select("id, status, points, potential_return")
+        .select("id, status, points, virtual_stake, potential_return")
         .eq("user_id", uid!)
         .eq("status", "pending");
       if (error) throw error;
@@ -158,15 +158,18 @@ function Dashboard() {
         id: string;
         status: string;
         points: number;
+        virtual_stake: number;
         potential_return: number;
       }>;
     },
   });
 
+  const stakeOf = (p: { points: number; virtual_stake: number }) =>
+    Number(p.virtual_stake ?? 0) || Number(p.points ?? 0);
   const liveCount = picks?.length ?? 0;
-  const biggestStake = picks?.reduce((m, p) => Math.max(m, p.points ?? 0), 0) ?? 0;
-  const expectedPayout = picks?.reduce((s, p) => s + (p.potential_return ?? 0), 0) ?? 0;
-  const totalRisked = picks?.reduce((s, p) => s + (p.points ?? 0), 0) ?? 0;
+  const biggestStake = picks?.reduce((m, p) => Math.max(m, stakeOf(p)), 0) ?? 0;
+  const expectedPayout = picks?.reduce((s, p) => s + Number(p.potential_return ?? 0), 0) ?? 0;
+  const totalRisked = picks?.reduce((s, p) => s + stakeOf(p), 0) ?? 0;
   const potentialWin = Math.max(0, expectedPayout - totalRisked);
 
   const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
