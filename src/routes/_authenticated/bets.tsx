@@ -64,7 +64,7 @@ function BetsHub() {
   const tiles: Tile[] = [
     {
       to: "/matches",
-      icon: ListChecks,
+      icon: PitchIcon,
       kicker: "Market №01",
       label: "Matches",
       desc: "Back a side. Fade the crowd. Match-by-match calls with live odds.",
