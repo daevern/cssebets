@@ -22,7 +22,7 @@ import { Banknote, Loader2, Clock, Eye, CheckCircle2, XCircle, ArrowUpRight, His
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
-import { PayoutPerformance } from "@/components/trust/PayoutPerformance";
+
 
 export const Route = createFileRoute("/_authenticated/payout")({
   ssr: false,
@@ -131,7 +131,7 @@ function PayoutPage() {
 
   return (
     <PageShell kicker="Cashout · Final whistle" title="Take the" titleAccent="payout.">
-      <PayoutPerformance />
+
       {/* Balance */}
       <StencilPanel
         kicker={<><Banknote className="h-3 w-3" /> Available balance</>}
