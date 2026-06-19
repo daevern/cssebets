@@ -127,7 +127,7 @@ function BetsHub() {
       illustration: TacticalPitch,
       kicker: "Market №01",
       desc: "Back a side. Fade the crowd. Match-by-match calls with live odds.",
-      cta: "Open the slate",
+      cta: "Matches",
       tour: "bet-button",
       accent: true,
     },
@@ -136,7 +136,7 @@ function BetsHub() {
       illustration: TacticalCrown,
       kicker: "Market №02",
       desc: "One pick. One champion. Lock your outright before the field tightens.",
-      cta: "Crown your pick",
+      cta: "World Champions",
     },
   ];
 
