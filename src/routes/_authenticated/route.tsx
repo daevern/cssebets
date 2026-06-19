@@ -8,8 +8,19 @@ import { getPendingPointRequestCount } from "@/lib/wallet.functions";
 import { getPendingPayoutCount, getMyPayoutActionCount } from "@/lib/payout.functions";
 import { getPendingUserCount } from "@/lib/admin.functions";
 import { getMyUnreadSupportCount } from "@/lib/support.functions";
-import { Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote, Headset, Settings as SettingsIcon, HelpCircle } from "lucide-react";
+import { Shield, LogOut, Loader2 } from "lucide-react";
 import { CsseLogo, CsseMark } from "@/components/brand/CsseMark";
+import {
+  IconHome,
+  IconBets,
+  IconPicks,
+  IconWallet,
+  IconPayout,
+  IconSupport,
+  IconHelp,
+  IconSettings,
+  IconLogout,
+} from "@/components/brand/NavIcons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
