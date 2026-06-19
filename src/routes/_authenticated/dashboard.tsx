@@ -284,7 +284,7 @@ function Dashboard() {
                 type="button"
                 className="group flex w-full items-center justify-between rounded-full bg-[var(--color-neon)] px-5 py-4 text-sm font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_32px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99]"
               >
-                <span>Lock in your call</span>
+                <span>Bet now</span>
                 <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
               </button>
             </Link>
