@@ -131,7 +131,7 @@ function PayoutPage() {
 
   return (
     <PageShell kicker="Cashout · Final whistle" title="Take the" titleAccent="payout.">
-      <PayoutPerformance />
+
       {/* Balance */}
       <StencilPanel
         kicker={<><Banknote className="h-3 w-3" /> Available balance</>}
