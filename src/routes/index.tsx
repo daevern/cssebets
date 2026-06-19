@@ -7,6 +7,13 @@ import {
   FeaturedMatches,
   useLandingData,
 } from "@/components/HeroEnhancements";
+import {
+  LivePlatformPulse,
+  RecentPlatformActivity,
+  PayoutPerformanceSection,
+  BuildingLongRun,
+  TrustCard,
+} from "@/components/landing/TrustSections";
 const HowItWorks = lazy(() =>
   import("@/components/HowItWorks").then((m) => ({ default: m.HowItWorks })),
 );
@@ -17,9 +24,6 @@ import {
   ArrowRight,
   Zap,
   Flame,
-  Users,
-  Eye,
-  TrendingUp,
   Lock,
 } from "lucide-react";
 import { CsseLogo } from "@/components/brand/CsseMark";
@@ -50,66 +54,8 @@ function scrollToId(id: string) {
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-// Rotating live activity — creates FOMO without lying about specifics
-const ACTIVITY_FEED = [
-  { name: "Ahmad", action: "won", amount: "+2,400 pts", match: "BRA vs ARG" },
-  { name: "Sarah", action: "cashed out", amount: "+1,180 pts", match: "FRA vs GER" },
-  { name: "Wei", action: "joined", amount: "", match: "" },
-  { name: "Daniel", action: "won", amount: "+5,600 pts", match: "ESP vs ITA" },
-  { name: "Aisha", action: "placed bet", amount: "800 pts", match: "ENG vs POR" },
-  { name: "Marcus", action: "won", amount: "+3,200 pts", match: "NED vs BEL" },
-  { name: "Priya", action: "joined", amount: "", match: "" },
-  { name: "Khalil", action: "cashed out", amount: "+940 pts", match: "URU vs CRO" },
-];
+// Countdown to next kickoff — real upcoming match data
 
-function LiveActivityPulse() {
-  const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setIdx((i) => (i + 1) % ACTIVITY_FEED.length), 2800);
-    return () => clearInterval(t);
-  }, []);
-  const a = ACTIVITY_FEED[idx];
-  return (
-    <div
-      key={idx}
-      className="flex animate-fade-in items-center gap-2 text-xs text-muted-foreground"
-    >
-      <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
-      </span>
-      <span className="truncate">
-        <span className="font-semibold text-foreground">{a.name}</span>{" "}
-        {a.action === "joined" ? (
-          <>just <span className="text-primary font-semibold">joined cssebets</span></>
-        ) : (
-          <>
-            {a.action}{" "}
-            {a.amount && <span className="font-mono font-bold text-primary">{a.amount}</span>}
-            {a.match && <> on <span className="text-foreground/80">{a.match}</span></>}
-          </>
-        )}
-      </span>
-    </div>
-  );
-}
-
-// Live viewer counter — slowly fluctuates, creates social pressure
-function ViewerCount() {
-  const [n, setN] = useState(() => 180 + Math.floor(Math.random() * 60));
-  useEffect(() => {
-    const t = setInterval(() => {
-      setN((v) => Math.max(140, Math.min(280, v + Math.floor(Math.random() * 7) - 3)));
-    }, 3500);
-    return () => clearInterval(t);
-  }, []);
-  return (
-    <span className="inline-flex items-center gap-1.5 font-mono">
-      <Eye className="h-3 w-3" />
-      <span className="font-bold text-foreground">{n}</span> viewing now
-    </span>
-  );
-}
 
 // Countdown to next kickoff — pure pressure
 function LockdownClock({ kickoff }: { kickoff: string | null }) {
@@ -170,8 +116,11 @@ function LandingPage() {
               Next match locks in <LockdownClock kickoff={kickoff} />
             </span>
           </div>
-          <div className="hidden items-center gap-3 text-muted-foreground sm:flex">
-            <ViewerCount />
+          <div className="hidden items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground sm:flex">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+              Platform operational
+            </span>
           </div>
         </div>
       </div>
@@ -334,13 +283,29 @@ function LandingPage() {
         `}</style>
       </section>
 
-      {/* Seamless gradient seam — hero into how it works */}
-      <div className="relative h-12 bg-gradient-to-b from-background via-card/30 to-background" />
+      {/* Seamless gradient seam — hero into trust sections */}
+      <div className="relative h-8 bg-gradient-to-b from-background via-card/30 to-background" />
 
-      {/* How it works — same bg, no harsh border */}
+      {/* SECTION 2: Live Platform Pulse — real aggregated metrics */}
+      <LivePlatformPulse />
+
+      {/* SECTION 3: Recent Platform Activity — masked, real events */}
+      <RecentPlatformActivity />
+
+      {/* SECTION 4: Payout Performance + improved cashout messaging */}
+      <PayoutPerformanceSection />
+
+      {/* SECTION 5: How it works */}
       <Suspense fallback={<div className="h-[600px]" />}>
         <HowItWorks />
       </Suspense>
+
+      {/* Building for the long run */}
+      <BuildingLongRun />
+
+      {/* Trust Card — at-a-glance live snapshot */}
+      <TrustCard />
+
 
       {/* Conversion belt — one last FOMO punch before support */}
       <section className="relative overflow-hidden bg-gradient-to-b from-background to-card/40">
