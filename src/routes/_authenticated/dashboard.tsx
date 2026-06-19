@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 /* ------------ Country flag (mirrors /matches styling) ------------ */
 function TeamFlag({ name, large = false }: { name: string; large?: boolean }) {
-  const url = teamFlagUrl(name, large ? 240 : 160);
+  const url = teamFlagUrl(name, large ? 320 : 160);
   const sizeCls = large ? "h-14 w-24" : "h-10 w-16";
   if (!url) {
     return (
