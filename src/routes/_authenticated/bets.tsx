@@ -1,5 +1,26 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ListChecks, Crown, ArrowUpRight, Radio } from "lucide-react";
+import { Crown, ArrowUpRight, Radio } from "lucide-react";
+import type { SVGProps } from "react";
+
+function PitchIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
+      {...props}
+    >
+      <rect x="2.5" y="4.5" width="19" height="15" />
+      <line x1="12" y1="4.5" x2="12" y2="19.5" />
+      <circle cx="12" cy="12" r="2.4" />
+      <rect x="2.5" y="8.5" width="3" height="7" />
+      <rect x="18.5" y="8.5" width="3" height="7" />
+    </svg>
+  );
+}
 import { CsseLogo } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/bets")({
