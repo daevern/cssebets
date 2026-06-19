@@ -13,8 +13,8 @@ export function EmptyState({ icon, message }: { icon?: ReactNode; message: strin
   );
 }
 
-export function UpdatedLive({ at }: { at: number | Date }) {
-  const d = typeof at === "number" ? new Date(at) : at;
+export function UpdatedLive({ at }: { at: number | Date | string }) {
+  const d = at instanceof Date ? at : new Date(at);
   const diff = (Date.now() - d.getTime()) / 1000;
   const rel =
     diff < 30 ? "Updated live · just now"
