@@ -116,8 +116,11 @@ function LandingPage() {
               Next match locks in <LockdownClock kickoff={kickoff} />
             </span>
           </div>
-          <div className="hidden items-center gap-3 text-muted-foreground sm:flex">
-            <ViewerCount />
+          <div className="hidden items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground sm:flex">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+              Platform operational
+            </span>
           </div>
         </div>
       </div>
