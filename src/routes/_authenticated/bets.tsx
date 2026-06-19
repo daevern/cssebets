@@ -3,22 +3,83 @@ import { Crown, ArrowUpRight, Radio } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
 import { CsseLogo } from "@/components/brand/CsseMark";
 
-function PitchIcon(props: SVGProps<SVGSVGElement>) {
+function TacticalPitch(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
-      viewBox="0 0 24 24"
+      viewBox="0 0 200 120"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.5"
-      strokeLinecap="square"
-      strokeLinejoin="miter"
+      className="w-full max-w-[200px] h-auto mx-auto text-[var(--color-neon)] opacity-90 drop-shadow-[0_0_8px_rgba(var(--color-neon-glow-rgb),0.3)]"
       {...props}
     >
-      <rect x="2.5" y="4.5" width="19" height="15" />
-      <line x1="12" y1="4.5" x2="12" y2="19.5" />
-      <circle cx="12" cy="12" r="2.4" />
-      <rect x="2.5" y="8.5" width="3" height="7" />
-      <rect x="18.5" y="8.5" width="3" height="7" />
+      {/* Field boundary */}
+      <rect x="10" y="10" width="180" height="100" rx="2" strokeWidth="2" />
+      {/* Midfield line */}
+      <line x1="100" y1="10" x2="100" y2="110" />
+      {/* Center circle */}
+      <circle cx="100" cy="60" r="20" />
+      <circle cx="100" cy="60" r="1.5" fill="currentColor" />
+      {/* Penalty Areas */}
+      <rect x="10" y="30" width="25" height="60" />
+      <rect x="165" y="30" width="25" height="60" />
+      {/* Goal Areas */}
+      <rect x="10" y="45" width="8" height="30" />
+      <rect x="182" y="45" width="8" height="30" />
+      {/* Penalty spots & arcs */}
+      <circle cx="28" cy="60" r="1" fill="currentColor" />
+      <circle cx="172" cy="60" r="1" fill="currentColor" />
+      <path d="M 35 48 A 15 15 0 0 1 35 72" />
+      <path d="M 165 48 A 15 15 0 0 0 165 72" />
+      {/* Corner Arcs */}
+      <path d="M 10 15 A 5 5 0 0 1 15 10" />
+      <path d="M 10 105 A 5 5 0 0 0 15 110" />
+      <path d="M 190 15 A 5 5 0 0 0 185 10" />
+      <path d="M 190 105 A 5 5 0 0 1 185 110" />
+      
+      {/* Tactical arrows and positions (X and O) */}
+      <circle cx="45" cy="40" r="4" strokeWidth="2" />
+      <circle cx="65" cy="80" r="4" strokeWidth="2" />
+      <circle cx="85" cy="60" r="4" strokeWidth="2" />
+      
+      <path d="M 141 76 L 149 84 M 149 76 L 141 84" stroke="currentColor" strokeWidth="2" />
+      <path d="M 121 36 L 129 44 M 129 36 L 121 44" stroke="currentColor" strokeWidth="2" />
+      
+      <path d="M 89 60 Q 115 50 135 70" stroke="var(--color-neon)" strokeWidth="1.5" strokeDasharray="3,3" />
+      <path d="M 135 70 L 135 65 M 135 70 L 130 70" stroke="var(--color-neon)" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function TacticalCrown(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 200 120"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="w-full max-w-[200px] h-auto mx-auto text-[var(--color-neon)] opacity-90 drop-shadow-[0_0_8px_rgba(var(--color-neon-glow-rgb),0.3)]"
+      {...props}
+    >
+      <path
+        d="M 30 100 L 40 40 L 80 75 L 100 30 L 120 75 L 160 40 L 170 100 Z"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <line x1="30" y1="90" x2="170" y2="90" strokeWidth="2" />
+      <rect x="50" y="93" width="10" height="4" rx="1" fill="currentColor" />
+      <rect x="95" y="93" width="10" height="4" rx="1" fill="currentColor" />
+      <rect x="140" y="93" width="10" height="4" rx="1" fill="currentColor" />
+      
+      <circle cx="40" cy="40" r="5" fill="currentColor" />
+      <circle cx="80" cy="75" r="3" fill="currentColor" />
+      <circle cx="100" cy="30" r="6" fill="currentColor" />
+      <circle cx="120" cy="75" r="3" fill="currentColor" />
+      <circle cx="160" cy="40" r="5" fill="currentColor" />
+      
+      <path d="M 70 25 L 70 35 M 65 30 L 75 30" strokeWidth="1" />
+      <path d="M 135 25 L 135 35 M 130 30 L 140 30" strokeWidth="1" />
     </svg>
   );
 }
@@ -51,9 +112,8 @@ function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
 
 type Tile = {
   to: string;
-  icon: ComponentType<{ className?: string }>;
+  illustration: ComponentType<SVGProps<SVGSVGElement>>;
   kicker: string;
-  label: string;
   desc: string;
   cta: string;
   tour?: string;
