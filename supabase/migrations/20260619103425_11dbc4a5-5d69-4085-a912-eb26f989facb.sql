@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.trust_community_growth() TO anon;
