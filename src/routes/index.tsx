@@ -283,13 +283,29 @@ function LandingPage() {
         `}</style>
       </section>
 
-      {/* Seamless gradient seam — hero into how it works */}
-      <div className="relative h-12 bg-gradient-to-b from-background via-card/30 to-background" />
+      {/* Seamless gradient seam — hero into trust sections */}
+      <div className="relative h-8 bg-gradient-to-b from-background via-card/30 to-background" />
 
-      {/* How it works — same bg, no harsh border */}
+      {/* SECTION 2: Live Platform Pulse — real aggregated metrics */}
+      <LivePlatformPulse />
+
+      {/* SECTION 3: Recent Platform Activity — masked, real events */}
+      <RecentPlatformActivity />
+
+      {/* SECTION 4: Payout Performance + improved cashout messaging */}
+      <PayoutPerformanceSection />
+
+      {/* SECTION 5: How it works */}
       <Suspense fallback={<div className="h-[600px]" />}>
         <HowItWorks />
       </Suspense>
+
+      {/* Building for the long run */}
+      <BuildingLongRun />
+
+      {/* Trust Card — at-a-glance live snapshot */}
+      <TrustCard />
+
 
       {/* Conversion belt — one last FOMO punch before support */}
       <section className="relative overflow-hidden bg-gradient-to-b from-background to-card/40">
