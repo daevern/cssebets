@@ -1,23 +1,21 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPrediction } from "@/lib/predictions.functions";
 import { getMatchOddsHistory, listMatchesForUsers } from "@/lib/matches.functions";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown, Loader2, Radio, Zap, ArrowUpRight } from "lucide-react";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { MarketTabs } from "@/components/matches/MarketTabs";
 import { useAuth } from "@/hooks/use-auth";
+import { CsseLogo } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/matches")({
   head: () => ({ meta: [{ title: "Matches — cssebets" }] }),
@@ -69,6 +67,22 @@ function formatKickoffDate(iso: string): string {
   return `${month} ${day} ${hours}:${minutes}${ampm}`;
 }
 
+/* corner tick marks, mirrored from dashboard */
+function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
+  const map: Record<typeof pos, string> = {
+    tl: "top-0 left-0 border-t border-l",
+    tr: "top-0 right-0 border-t border-r",
+    bl: "bottom-0 left-0 border-b border-l",
+    br: "bottom-0 right-0 border-b border-r",
+  };
+  return (
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute h-3 w-3 border-[var(--color-neon)] ${map[pos]}`}
+    />
+  );
+}
+
 function MatchesPage() {
   const qc = useQueryClient();
   const listMatches = useServerFn(listMatchesForUsers);
@@ -103,8 +117,6 @@ function MatchesPage() {
       if (m.status === "finished") {
         c.push(m);
       } else {
-        // Only include scheduled/live matches kickoff within the next 24 hours
-        // and also allow matches starting up to 3 hours ago (e.g. active live games)
         if (kickoff >= now - threeHours && kickoff <= now + oneDay) {
           s.push(m);
         }
@@ -114,47 +126,89 @@ function MatchesPage() {
     return { scheduled: s, completed: c };
   }, [data]);
 
-  if (isLoading) {
-    return <div className="grid place-items-center py-20"><Loader2 className="animate-spin h-6 w-6 text-muted-foreground" /></div>;
-  }
-
-  if (!data?.length) {
-    return (
-      <Card className="p-8 text-center">
-        <h2 className="text-lg font-semibold">No matches yet</h2>
-        <p className="text-sm text-muted-foreground mt-1">An admin needs to sync or add fixtures.</p>
-      </Card>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">FIFA World Cup</h1>
+    <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
+      {/* Scoreboard grain background */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
+        }}
+      />
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          GROUP STAGE ({scheduled.length})
-        </h2>
-        {scheduled.length === 0 ? (
-          <Card className="p-4 text-center text-sm text-muted-foreground">No upcoming matches.</Card>
+      <div className="relative mx-auto flex max-w-md flex-col gap-5 px-4 py-5 md:max-w-2xl md:py-8">
+        {/* Header */}
+        <header className="flex items-center justify-between">
+          <Link to="/dashboard" className="flex items-center gap-2">
+            <CsseLogo size={22} />
+          </Link>
+        </header>
+
+        {/* Editorial intro */}
+        <section className="space-y-2">
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
+            <Radio className="h-3 w-3" />
+            FIFA World Cup · Slate
+          </div>
+          <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight md:text-4xl">
+            Read the <span className="text-[var(--color-neon)]">slate</span>.
+            <br />
+            <span className="text-[var(--color-ink-muted)]">Back your conviction.</span>
+          </h1>
+        </section>
+
+        {isLoading ? (
+          <div className="grid place-items-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-[var(--color-neon)]" />
+          </div>
+        ) : !data?.length ? (
+          <article className="relative overflow-hidden border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-5 py-10 text-center">
+            <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
+            <h2 className="font-display text-lg font-bold uppercase tracking-tight">No matches yet</h2>
+            <p className="mt-1 text-sm text-[var(--color-ink-muted)]">An admin needs to sync or add fixtures.</p>
+          </article>
         ) : (
-          scheduled.map((m) => <MatchCard key={m.id} match={m} />)
-        )}
-      </section>
+          <>
+            <section className="space-y-3">
+              <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] pb-2">
+                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+                  <Zap className="h-3 w-3" /> Group Stage
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+                  {scheduled.length} on the slate
+                </span>
+              </div>
+              {scheduled.length === 0 ? (
+                <article className="relative overflow-hidden border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-5 text-center text-sm text-[var(--color-ink-muted)]">
+                  <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
+                  No upcoming matches.
+                </article>
+              ) : (
+                scheduled.map((m) => <MatchCard key={m.id} match={m} />)
+              )}
+            </section>
 
-      {completed.length > 0 && (
-        <Collapsible>
-          <CollapsibleTrigger asChild>
-            <Button variant="outline" className="w-full justify-between">
-              <span>Completed matches ({completed.length})</span>
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent className="space-y-3 mt-3">
-            {completed.map((m) => <MatchCard key={m.id} match={m} />)}
-          </CollapsibleContent>
-        </Collapsible>
-      )}
+            {completed.length > 0 && (
+              <Collapsible>
+                <CollapsibleTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] transition-colors hover:border-[var(--color-neon)] hover:text-[var(--color-neon)]"
+                  >
+                    <span>Completed matches ({completed.length})</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3 space-y-3">
+                  {completed.map((m) => <MatchCard key={m.id} match={m} />)}
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -208,8 +262,6 @@ function MatchCard({ match }: { match: Match }) {
     return history.data.filter((r: any) => new Date(r.sampled_at).getTime() >= oneDayAgo);
   }, [history.data]);
 
-  // Stable idempotency key per bet slip: re-used while pick + stake are unchanged
-  // so a double-click or transport retry collapses into a single prediction.
   const slipClientRequestId = useMemo(() => crypto.randomUUID(), [match.id, pick, stake]);
 
   const mut = useMutation({
@@ -236,10 +288,9 @@ function MatchCard({ match }: { match: Match }) {
   const stageLabel = useMemo(() => {
     const rawStage = humanize(match.stage);
     const rawGroup = humanize(match.group_name);
-    
     const parts = [rawStage, rawGroup]
       .filter(Boolean)
-      .map(part => 
+      .map(part =>
         part
           .replace(/FIFA World Cup/gi, "")
           .replace(/GROUP STAGE/gi, "")
@@ -247,137 +298,189 @@ function MatchCard({ match }: { match: Match }) {
           .trim()
       )
       .filter(Boolean);
-
     return parts.join(" · ") || "—";
   }, [match.stage, match.group_name]);
 
+  const stakeNum = Number(stake);
+  const stakeValid = stakeNum >= 10 && stakeNum <= 50000;
+
   return (
-    <Card className="p-4 space-y-3">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-full text-left space-y-2"
-        aria-expanded={open}
-      >
-        <div className="flex items-center justify-between">
-          <div className="text-xs text-muted-foreground uppercase tracking-wide">{stageLabel}</div>
-          <div className="text-xs text-muted-foreground">{formatKickoffDate(match.kickoff_at)}</div>
-        </div>
-        <div className="grid grid-cols-3 items-center text-lg font-semibold gap-3">
-          <div className="flex justify-center"><TeamFlag name={match.home_team} /></div>
-          <span className="text-muted-foreground text-sm text-center">
-            {match.status === "finished" ? `${match.home_score} – ${match.away_score}` : "vs"}
-          </span>
-          <div className="flex justify-center"><TeamFlag name={match.away_team} /></div>
-        </div>
-      </button>
+    <article className="relative overflow-hidden border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
+      <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
 
-      {bettingBlocked && !locked && (
-        <div className="text-xs font-medium rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-3 py-2">
-          Market temporarily suspended while odds are being verified.
-        </div>
-      )}
+      {/* Stencil header band */}
+      <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-5 py-3">
+        <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+          {stageLabel}
+        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+          {formatKickoffDate(match.kickoff_at)}
+        </span>
+      </div>
 
-      {!locked && match.reference_odds && (
-        <div className="space-y-2">
-          <div className="grid grid-cols-3 gap-2">
-            {(["HOME", "DRAW", "AWAY"] as const).map((p) => {
-              const label = p === "HOME" ? match.home_team : p === "AWAY" ? match.away_team : "Draw";
-              const price = p === "HOME" ? odds.home : p === "DRAW" ? odds.draw : odds.away;
-              const alreadyPlaced = placedResults.has(p);
-              const disabled = alreadyPlaced || bettingBlocked;
-              return (
-                <Button
-                  key={p} type="button"
-                  variant={pick === p ? "default" : "outline"}
-                  disabled={disabled}
-                  title={
-                    bettingBlocked ? "Market suspended" :
-                    alreadyPlaced ? "You already placed a bet on this selection" : undefined
-                  }
-                  onClick={() => setPick(p)} size="sm"
-                  className="flex flex-col h-auto py-2 relative disabled:opacity-60"
-                >
-                  <span className="truncate max-w-full text-xs">{label}</span>
-                  <span className="font-bold">{price}</span>
-                  {alreadyPlaced && (
-                    <span className="absolute top-1 right-1 text-[9px] text-primary font-bold">✓</span>
-                  )}
-                </Button>
-              );
-            })}
-          </div>
-          <div className="flex gap-2">
-            <Input type="number" min={10} max={50000} value={stake} onChange={(e) => setStake(e.target.value)} placeholder="Stake (10-50,000)" disabled={bettingBlocked} />
-            <Button disabled={bettingBlocked || !pick || mut.isPending || Number(stake) < 10 || Number(stake) > 50000} onClick={() => mut.mutate()}>
-              {mut.isPending ? "..." : "Submit"}
-            </Button>
-          </div>
-          <div className="text-[10px] text-muted-foreground">
-            {match.odds_source === "the-odds-api"
-              ? `updated by cssebets ${timeAgo(match.odds_updated_at)}`
-              : "Reference odds (awaiting live market sync)"}
-          </div>
-        </div>
-      )}
-
-      {!locked && <MarketTabs matchId={match.id} locked={locked} bettingBlocked={bettingBlocked} suspendedMarkets={suspendedMarkets} />}
-
-      {locked && (
-        <div className="text-xs text-muted-foreground font-medium">
-          {match.status === "finished" ? "Match finished." : "Betting closed — kickoff passed."}
-        </div>
-      )}
-
-      {open && (
-        <div className="pt-3 border-t space-y-2">
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Odds history
-          </div>
-          {history.isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          ) : !recentHistory.length ? (
-            <div className="text-xs text-muted-foreground">No odds snapshots recorded in the last 24 hours.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead className="text-muted-foreground">
-                  <tr className="text-left">
-                    <th className="py-1 pr-2 font-medium">When</th>
-                    <th className="py-1 pr-2 font-medium truncate">{match.home_team}</th>
-                    <th className="py-1 pr-2 font-medium">Draw</th>
-                    <th className="py-1 pr-2 font-medium truncate">{match.away_team}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentHistory.map((r: any) => (
-                    <tr key={r.id} className="border-t border-border/40">
-                      <td className="py-1 pr-2 text-muted-foreground">{formatKickoffDate(r.sampled_at)}</td>
-                      <td className="py-1 pr-2">{r.home_odds}</td>
-                      <td className="py-1 pr-2">{r.draw_odds}</td>
-                      <td className="py-1 pr-2">{r.away_odds}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      <div className="space-y-4 px-5 py-5">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full text-left"
+          aria-expanded={open}
+        >
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+            <div className="flex flex-col items-center gap-2">
+              <TeamFlag name={match.home_team} />
+              <span className="max-w-[110px] truncate text-center text-xs font-bold uppercase tracking-wide">
+                {match.home_team}
+              </span>
             </div>
-          )}
-        </div>
-      )}
-    </Card>
+            <div className="flex flex-col items-center gap-1">
+              <span className="font-display text-lg font-bold leading-none text-[var(--color-ink-muted)]">
+                {match.status === "finished" ? `${match.home_score} – ${match.away_score}` : "vs"}
+              </span>
+              <span className="h-6 w-px bg-[var(--color-neon)]/40" />
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <TeamFlag name={match.away_team} />
+              <span className="max-w-[110px] truncate text-center text-xs font-bold uppercase tracking-wide">
+                {match.away_team}
+              </span>
+            </div>
+          </div>
+        </button>
+
+        {bettingBlocked && !locked && (
+          <div className="border border-destructive/40 bg-destructive/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-destructive">
+            Market temporarily suspended while odds are being verified.
+          </div>
+        )}
+
+        {!locked && match.reference_odds && (
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-2">
+              {(["HOME", "DRAW", "AWAY"] as const).map((p) => {
+                const label = p === "HOME" ? match.home_team : p === "AWAY" ? match.away_team : "Draw";
+                const price = p === "HOME" ? odds.home : p === "DRAW" ? odds.draw : odds.away;
+                const alreadyPlaced = placedResults.has(p);
+                const disabled = alreadyPlaced || bettingBlocked;
+                const selected = pick === p;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    disabled={disabled}
+                    title={
+                      bettingBlocked ? "Market suspended" :
+                      alreadyPlaced ? "You already placed a bet on this selection" : undefined
+                    }
+                    onClick={() => setPick(p)}
+                    className={`relative flex flex-col items-center gap-1 border px-2 py-2.5 transition-colors disabled:opacity-50 ${
+                      selected
+                        ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[0_0_18px_var(--color-neon-glow)]"
+                        : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/60"
+                    }`}
+                  >
+                    <span className="max-w-full truncate text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                      {label}
+                    </span>
+                    <span className="font-display text-lg font-bold tabular-nums">{price}</span>
+                    {alreadyPlaced && (
+                      <span className="absolute right-1 top-1 text-[9px] font-bold text-[var(--color-neon)]">✓</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="number"
+                min={10}
+                max={50000}
+                value={stake}
+                onChange={(e) => setStake(e.target.value)}
+                placeholder="Stake (10-50,000)"
+                disabled={bettingBlocked}
+                className="flex-1 border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2.5 font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:opacity-50"
+              />
+              <button
+                type="button"
+                disabled={bettingBlocked || !pick || mut.isPending || !stakeValid}
+                onClick={() => mut.mutate()}
+                className="flex items-center justify-center gap-2 rounded-full bg-[var(--color-neon)] px-5 py-2.5 text-xs font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+              >
+                {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><span>Bet</span><ArrowUpRight className="h-4 w-4" /></>}
+              </button>
+            </div>
+
+            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+              {match.odds_source === "the-odds-api"
+                ? `updated by cssebets ${timeAgo(match.odds_updated_at)}`
+                : "Reference odds (awaiting live market sync)"}
+            </div>
+          </div>
+        )}
+
+        {!locked && <MarketTabs matchId={match.id} locked={locked} bettingBlocked={bettingBlocked} suspendedMarkets={suspendedMarkets} />}
+
+        {locked && (
+          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+            {match.status === "finished" ? "Match finished." : "Betting closed — kickoff passed."}
+          </div>
+        )}
+
+        {open && (
+          <div className="space-y-2 border-t border-dashed border-[var(--color-surface-border)] pt-3">
+            <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+              Odds history
+            </div>
+            {history.isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin text-[var(--color-ink-muted)]" />
+            ) : !recentHistory.length ? (
+              <div className="text-xs text-[var(--color-ink-muted)]">No odds snapshots recorded in the last 24 hours.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="text-[var(--color-ink-muted)]">
+                    <tr className="text-left">
+                      <th className="py-1 pr-2 text-[10px] font-bold uppercase tracking-wider">When</th>
+                      <th className="py-1 pr-2 text-[10px] font-bold uppercase tracking-wider">{match.home_team}</th>
+                      <th className="py-1 pr-2 text-[10px] font-bold uppercase tracking-wider">Draw</th>
+                      <th className="py-1 pr-2 text-[10px] font-bold uppercase tracking-wider">{match.away_team}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentHistory.map((r: any) => (
+                      <tr key={r.id} className="border-t border-[var(--color-surface-border)]/50">
+                        <td className="py-1 pr-2 text-[var(--color-ink-muted)]">{formatKickoffDate(r.sampled_at)}</td>
+                        <td className="py-1 pr-2 tabular-nums">{r.home_odds}</td>
+                        <td className="py-1 pr-2 tabular-nums">{r.draw_odds}</td>
+                        <td className="py-1 pr-2 tabular-nums">{r.away_odds}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </article>
   );
 }
 
 function TeamFlag({ name }: { name: string }) {
   const url = teamFlagUrl(name, 160);
   if (!url) {
-    return <span className="text-sm font-semibold truncate">{name}</span>;
+    return (
+      <div className="grid h-10 w-16 place-items-center border border-border/40 bg-[var(--color-surface)] text-[10px] font-bold uppercase tracking-wider text-[var(--color-ink)] shadow-sm">
+        {name.slice(0, 3)}
+      </div>
+    );
   }
   return (
     <img
       src={url}
       alt={`${name} flag`}
-      className="h-10 w-16 object-cover shadow-sm border border-border/40"
+      className="h-10 w-16 shrink-0 border border-border/40 object-cover shadow-sm"
       loading="lazy"
     />
   );
