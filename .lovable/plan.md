@@ -1,123 +1,101 @@
-## Onboarding & Tutorial System Plan
+# Trust & Transparency Upgrade
 
-A complete first-time user onboarding system for CSSEBets — guided tours, contextual help, walkthroughs, a Help Center, and admin controls. Nothing added to the landing page.
+Adds honest, database-backed trust signals to CSSEBets. **No fake stats, no synthetic activity, no placeholder numbers.** When data is thin, surfaces show honest "building" messaging instead.
 
----
-
-### 1. Database (1 migration)
-
-**`profiles` table — add columns:**
-- `onboarding_completed_at timestamptz`
-- `onboarding_skipped_at timestamptz`
-- `tour_progress jsonb default '{}'` — per-tour completion map, e.g. `{ "dashboard": true, "first_bet": true }`
-- `onboarding_enabled boolean default true` — admin can disable per user
-
-**New table: `onboarding_events`** (analytics)
-- `user_id`, `tour_key text`, `event text` (`started|completed|skipped|step_viewed`), `step_index int`, `metadata jsonb`, `created_at`
-- RLS: users insert their own; admins read all.
-- GRANTs for `authenticated` (insert/select own) + `service_role`.
-
-**New table: `onboarding_settings`** (global toggle)
-- single-row `id=1`, `enabled boolean`, `updated_by`, `updated_at`
-- RLS: anyone authenticated reads; only admin/super_admin writes.
-
-**RPCs:**
-- `mark_tour_complete(p_tour_key text)` — updates `tour_progress` for `auth.uid()`.
-- `mark_onboarding_complete()` / `mark_onboarding_skipped()`.
-- `admin_reset_onboarding(p_user_id uuid)` — admin only, clears flags.
-- `admin_set_onboarding_enabled(p_user_id uuid, p_enabled boolean)`.
-- `get_onboarding_completion_stats()` — admin reporting (completion rates per tour).
+All new UI uses the existing dark / neon stencil design system (`PageShell`, `StencilPanel`, custom SVG icons in the `TacticalPitch` / `SubsBench` style).
 
 ---
 
-### 2. Tour Engine (reusable)
+## 1. Real-data server functions (one new file)
 
-`src/components/onboarding/TourProvider.tsx` — React context + Radix Portal overlay.
-- Dim backdrop (SVG mask cutout around target element).
-- Auto-scroll target into view, highlight with glow ring.
-- Floating tooltip card: title, body, **Step X of Y**, Prev / Next / Skip.
-- Keyboard: Esc=skip, ←/→ nav.
-- Targets via `data-tour="key"` attributes on existing UI.
-- Persists state through `useTourState` hook (calls server fns).
+Create `src/lib/trust.functions.ts` exposing read-only, **public** server fns that aggregate anonymized stats from existing tables. Each uses the server publishable client (no auth needed for aggregates) and projects only safe columns. Numbers come from real `COUNT` / `AVG` queries; usernames are masked server-side before leaving the DB layer.
 
-Files:
-- `src/components/onboarding/TourProvider.tsx`
-- `src/components/onboarding/TourOverlay.tsx`
-- `src/components/onboarding/TourTooltip.tsx`
-- `src/components/onboarding/tours.config.ts` — all tour definitions (steps per page).
-- `src/components/onboarding/useTour.ts`
-- `src/components/onboarding/HelpIcon.tsx` — small `?` icon w/ popover (what / why / common mistakes).
-- `src/lib/onboarding.functions.ts` — server fns (mark complete, log event, admin actions, stats).
+- `getPlatformPulse` → registered members, active members (30d), bets placed, settled bets, approved payouts, total points paid out, avg payout processing time, avg point-request approval time, `updatedAt`. Each field returns `null` when the underlying count is 0 so the UI can show "Collecting platform statistics".
+- `getRecentActivity` → last 20 events from `predictions` (placed/won), `payout_requests` (requested/paid), `point_requests` (approved). Username masked to `Da***n` style (first 2 + last 1 of display_name, or `User #<short-id>` fallback). Strips amounts above a safe cap; never returns emails / phone / full names.
+- `getPayoutPerformance` → avg processing time, total completed, largest completed, success rate. Returns `{ hasHistory: false }` when fewer than ~3 completed payouts.
+- `getCommunityGrowth` → members joined this month, bets this month, payouts completed this month. Returns raw integers (including 0).
+- `getPlatformStatus` → reads `health_check_runs` + `operational_alerts` + `incidents` to derive `operational | degraded | offline` per service (Fixtures API, Odds Feed, Bet Settlement, Wallet, Payouts, Support). Falls back to `operational` only when a recent successful check exists; otherwise `unknown` (shown as "No recent check").
+- `getSupportStats` → open / in-review / awaiting-user / resolved counts + avg first-response time from `support_conversations` + `support_messages`.
 
-Mount `<TourProvider />` inside `_authenticated/route.tsx`.
+A migration adds the few narrow `TO anon` SELECT policies + GRANTs needed so these aggregates work without leaking row data. Policies project at the SQL-function level using `SECURITY DEFINER` aggregate functions (e.g. `public.pulse_counts()`) so anon never gets direct row SELECT on sensitive tables — only the aggregate output.
 
----
+## 2. Authenticated server fns for personal trackers
 
-### 3. Welcome Modal
+- `getMyPointRequestTimeline(requestId)` → returns status history (`submitted → under_review → approved → credited`) with timestamps + admin note, derived from existing `point_requests` columns. Uses `requireSupabaseAuth`.
+- `getMyBadges()` → derives badges from real activity counts (Verified Member, First Bet, 10 Bets, 100 Bets, Winning Streak ≥3, Payout Completed). Pure read, no new table.
 
-`src/components/onboarding/WelcomeModal.tsx` — shown once on first authenticated load when `onboarding_completed_at` and `onboarding_skipped_at` are both null.
-- Title "Welcome to CSSEBets", subtitle, **Start Tour** / **Skip For Now**.
-- Start Tour → kicks off Dashboard tour, then auto-chains to next page tours.
+## 3. New routes & components
 
----
+```text
+src/routes/_authenticated/
+  trust-center.tsx        # Trust Center (commitments, points, settlement, payout, responsible play)
+  status.tsx              # Platform Status
+  changelog.tsx           # Public changelog (markdown-driven)
+src/routes/
+  (none — Trust Center & Status are auth-gated to keep parity with rest of app)
+src/components/trust/
+  PlatformPulse.tsx       # Dashboard section
+  ActivityFeed.tsx        # Dashboard section
+  PayoutPerformance.tsx   # Reused on Payout page + Trust Center
+  CommunityGrowth.tsx     # Dashboard section
+  FounderNote.tsx         # "Building for the Long Run" homepage block
+  PointRequestTimeline.tsx# Used inside Wallet point-request detail
+  BadgeGrid.tsx           # Settings / profile area
+  StatusGrid.tsx          # Status page
+  SupportStats.tsx        # Support page header
+  TrustIcons.tsx          # Custom SVG icons (shield, pulse, timeline, badge) in stencil style
+src/content/
+  changelog.ts            # Hand-curated entries { date, type: 'feature'|'fix'|'improvement', title, body }
+```
 
-### 4. Page Tours
+## 4. Page edits
 
-Add `data-tour` attributes to existing components (no logic changes) on:
-- Dashboard — wallet balance, recent activity, quick actions
-- Wallet — balance, request points button, transaction history
-- Point Requests (within Wallet) — pointbank field, reference ID, proof upload, submit
-- Matches — match list, odds, bet button
-- Betting modal — stake input, potential return, place bet
-- My Predictions — pending, settled, details
-- Payout — request payout, history, proof upload
-- Support — create ticket, conversation, attachments
+- `dashboard.tsx` — insert `PlatformPulse`, `ActivityFeed`, `CommunityGrowth`, `FounderNote` panels below existing hero/bench block. Each panel handles its own loading + empty state.
+- `wallet.tsx` — add `PointRequestTimeline` to each point-request row (expandable).
+- `payout.tsx` — add `PayoutPerformance` panel above existing payout form. Add line: "Every payout request is manually reviewed for account security."
+- `support.tsx` — add `SupportStats` strip at top + per-conversation status pill.
+- `settings.tsx` — add `BadgeGrid` section.
+- `route.tsx` (auth layout nav) — add nav entries: Trust Center, Status, Changelog (with new stencil icons). Mobile nav gets the same.
 
-Each tour stored in `tours.config.ts` with `{ key, route, steps: [{ target, title, body }] }`.
+## 5. Honest empty states (everywhere)
 
----
+Each panel renders one of:
+- Real numbers, with "Updated live · <relative time>".
+- `EmptyState` component with copy like "Collecting platform statistics", "Building payout history", "Every community starts somewhere. Thank you for helping build CSSEBets."
 
-### 5. First-Time Walkthroughs
+No skeleton-as-fake-data, no animated counters spinning to random numbers.
 
-- **First Bet** — intercepts the bet sheet the first time; 5-step mini guide (Select Match → Market → Stake → Review → Confirm). Flag stored in `tour_progress.first_bet`.
-- **First Point Request** — opens automatically on first visit to Point Requests; 5 steps (Pay → Reference → Upload → Submit → Wait).
+## 6. Privacy & safety guarantees
 
----
+- Activity feed masks names in the SQL function — raw names never cross the wire.
+- No emails, phones, addresses, full amounts above a cap, or admin notes leak via public fns.
+- Trust Center copy is static, app-owner attributed, no certification claims, no "verified by Lovable" language, no compliance promises.
+- Status page reflects real `health_check_runs`; no fabricated uptime %.
 
-### 6. Help Center
+## 7. Changelog
 
-New route: `src/routes/_authenticated/help.tsx` with sections:
-- Getting Started, Wallet & Points, Betting Guide, Payout Guide, Support Guide, FAQ.
-
-Links added to user menu, footer (authenticated shell), and Support page header. Each section has a "Restart this tour" button.
-
----
-
-### 7. Admin Controls
-
-New tab in `src/routes/management/` (existing admin area):
-- `src/routes/management/onboarding.tsx` — global enable/disable toggle, per-user table (search, status badge, Reset / Enable / Disable actions), completion analytics (cards: started/completed/skipped, per-tour completion %, drop-off chart).
-
----
-
-### 8. Analytics
-
-`logOnboardingEvent` server fn writes to `onboarding_events`. Admin page reads aggregated stats via `get_onboarding_completion_stats` RPC.
+Hand-curated TS array (no DB) rendered as a clean timeline. Entries grouped by month, typed (feature / fix / improvement) with neon stencil chips. Adding entries = editing one file; honest and easy to maintain.
 
 ---
 
-### Files Summary
+## Technical notes
 
-**Migrations:** 1 (`add_onboarding_system`)
-**New routes:** `_authenticated/help.tsx`, `management/onboarding.tsx`
-**New components:** ~8 under `src/components/onboarding/`
-**New server fns:** `src/lib/onboarding.functions.ts`
-**Edited:** `_authenticated/route.tsx` (mount provider + welcome modal), and minor `data-tour=""` additions on Dashboard / Wallet / Matches / Bets / MyPredictions / Payout / Support (no behavior change).
+- All aggregate server fns are public (no `requireSupabaseAuth`) so the dashboard SSR/prerender works without a bearer token.
+- New SQL functions are `SECURITY DEFINER` + `SET search_path = public` and `GRANT EXECUTE ... TO anon, authenticated`.
+- No new tables — everything derives from existing schema (`profiles`, `predictions`, `payout_requests`, `point_requests`, `support_*`, `health_check_runs`, `operational_alerts`, `incidents`).
+- TanStack Query: each component uses `queryOptions` + `useQuery` with 30–60s `staleTime`; "Updated live" timestamp comes from `dataUpdatedAt`.
+- All new icons are inline SVGs matching the existing stroke-1.6 neon stencil style.
 
----
+## Out of scope (this pass)
 
-### Out of scope
-- No landing page changes.
-- No changes to betting/wallet/payout/admin business logic — only DOM attributes for targeting.
+- No new admin tooling for changelog (file-based is intentional for credibility + speed).
+- No new badges table — derived on the fly.
+- No realtime websockets for activity feed — polling every 30s is honest enough and cheap.
 
-Ready to build on approval.
+## Files
+
+**Migration (1):** add SECURITY DEFINER aggregate functions + GRANTs for anon stats.
+
+**Created (~14):** `src/lib/trust.functions.ts`, 3 route files, 10 components, `src/content/changelog.ts`.
+
+**Edited (~6):** `dashboard.tsx`, `wallet.tsx`, `payout.tsx`, `support.tsx`, `settings.tsx`, `_authenticated/route.tsx`.
