@@ -7,6 +7,13 @@ import {
   FeaturedMatches,
   useLandingData,
 } from "@/components/HeroEnhancements";
+import {
+  LivePlatformPulse,
+  RecentPlatformActivity,
+  PayoutPerformanceSection,
+  BuildingLongRun,
+  TrustCard,
+} from "@/components/landing/TrustSections";
 const HowItWorks = lazy(() =>
   import("@/components/HowItWorks").then((m) => ({ default: m.HowItWorks })),
 );
@@ -17,9 +24,6 @@ import {
   ArrowRight,
   Zap,
   Flame,
-  Users,
-  Eye,
-  TrendingUp,
   Lock,
 } from "lucide-react";
 import { CsseLogo } from "@/components/brand/CsseMark";
