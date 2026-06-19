@@ -1748,6 +1748,32 @@ export type Database = {
         Args: { p_reason: string; p_request_id: string; p_staff_id: string }
         Returns: undefined
       }
+      trust_community_growth: { Args: never; Returns: Json }
+      trust_mask_name: {
+        Args: { name: string; public_ref: string }
+        Returns: string
+      }
+      trust_my_badges: { Args: { _user: string }; Returns: Json }
+      trust_payout_performance: { Args: never; Returns: Json }
+      trust_platform_pulse: { Args: never; Returns: Json }
+      trust_platform_status: {
+        Args: never
+        Returns: {
+          last_checked: string
+          service: string
+          status: string
+        }[]
+      }
+      trust_recent_activity: {
+        Args: never
+        Returns: {
+          at: string
+          detail: string
+          kind: string
+          who: string
+        }[]
+      }
+      trust_support_stats: { Args: never; Returns: Json }
       update_platform_settings:
         | {
             Args: {
