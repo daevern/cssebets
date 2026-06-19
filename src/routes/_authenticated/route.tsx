@@ -8,8 +8,19 @@ import { getPendingPointRequestCount } from "@/lib/wallet.functions";
 import { getPendingPayoutCount, getMyPayoutActionCount } from "@/lib/payout.functions";
 import { getPendingUserCount } from "@/lib/admin.functions";
 import { getMyUnreadSupportCount } from "@/lib/support.functions";
-import { Home, ListChecks, History, Shield, LogOut, Loader2, Wallet as WalletIcon, Banknote, Headset, Settings as SettingsIcon, HelpCircle } from "lucide-react";
+import { Shield, LogOut, Loader2 } from "lucide-react";
 import { CsseLogo, CsseMark } from "@/components/brand/CsseMark";
+import {
+  IconHome,
+  IconBets,
+  IconPicks,
+  IconWallet,
+  IconPayout,
+  IconSupport,
+  IconHelp,
+  IconSettings,
+  IconLogout,
+} from "@/components/brand/NavIcons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
@@ -185,20 +196,20 @@ function AuthedLayout() {
 
 
   const navItems = [
-    { to: "/dashboard", label: "Home", icon: Home },
-    { to: "/bets", label: "Bets", icon: ListChecks },
-    { to: "/my-predictions", label: "PICKS", icon: History },
-    { to: "/wallet", label: "Wallet", icon: WalletIcon },
-    { to: "/payout", label: "Payout", icon: Banknote },
-    { to: "/support", label: "Support", icon: Headset },
+    { to: "/dashboard", label: "Home", icon: IconHome },
+    { to: "/bets", label: "Bets", icon: IconBets },
+    { to: "/my-predictions", label: "Picks", icon: IconPicks },
+    { to: "/wallet", label: "Wallet", icon: IconWallet },
+    { to: "/payout", label: "Payout", icon: IconPayout },
+    { to: "/support", label: "Support", icon: IconSupport },
   ] as const;
 
   const mobileNavItems = [
-    { to: "/dashboard", label: "Home", icon: Home },
-    { to: "/bets", label: "Bets", icon: ListChecks },
-    { to: "/wallet", label: "Wallet", icon: WalletIcon },
-    { to: "/payout", label: "Payout", icon: Banknote },
-    { to: "/support", label: "Support", icon: Headset },
+    { to: "/dashboard", label: "Home", icon: IconHome },
+    { to: "/bets", label: "Bets", icon: IconBets },
+    { to: "/wallet", label: "Wallet", icon: IconWallet },
+    { to: "/payout", label: "Payout", icon: IconPayout },
+    { to: "/support", label: "Support", icon: IconSupport },
   ];
 
 
@@ -212,16 +223,26 @@ function AuthedLayout() {
         uid={user?.id ?? ""}
       />
       <WelcomeModal />
-      {/* Top bar */}
-      <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
+      {/* Top bar — stencil scoreboard */}
+      <header className="sticky top-0 z-40 border-b border-[var(--color-surface-border)] bg-[var(--color-surface)]/90 backdrop-blur supports-[backdrop-filter]:bg-[var(--color-surface)]/70">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -bottom-px h-px"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(90deg, var(--color-neon) 0 6px, transparent 6px 12px)",
+            opacity: 0.4,
+          }}
+        />
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
-          <Link to="/dashboard" aria-label="CSSEBets home">
-            <span className="sm:hidden"><CsseMark className="h-7 w-7 text-foreground" title="CSSEBets" /></span>
+          <Link to="/dashboard" aria-label="CSSEBets home" className="flex items-center gap-2">
+            <span className="sm:hidden"><CsseMark className="h-7 w-7 text-[var(--color-ink)]" title="CSSEBets" /></span>
             <span className="hidden sm:inline-flex"><CsseLogo size={18} /></span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
+              const Icon = item.icon;
               const badge =
                 item.to === "/payout" ? payoutBadge :
                 item.to === "/support" ? supportBadge : 0;
@@ -229,12 +250,13 @@ function AuthedLayout() {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="relative px-3 py-1.5 rounded-md text-sm hover:bg-muted [&.active]:bg-muted [&.active]:text-primary"
+                  className="relative flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] [&.active]:text-[var(--color-neon)]"
                   activeOptions={{ exact: item.to === "/dashboard" }}
                 >
+                  <Icon className="h-4 w-4" />
                   {item.label}
                   {badge > 0 && (
-                    <span className="absolute -top-1 -right-1 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground tabular-nums">
+                    <span className="absolute -top-0.5 -right-1 inline-flex min-w-[16px] h-[16px] items-center justify-center bg-[var(--color-neon)] px-1 text-[9px] font-bold text-[var(--color-surface)] tabular-nums">
                       {badge}
                     </span>
                   )}
@@ -242,28 +264,32 @@ function AuthedLayout() {
               );
             })}
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {showBalance && (
               <Link
                 to="/wallet"
                 data-tour="wallet-balance"
-                className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-semibold tabular-nums hover:bg-muted/80"
+                className="relative flex items-center gap-1.5 border border-dashed border-[var(--color-neon)]/40 bg-[var(--color-surface-2)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] tabular-nums text-[var(--color-ink)] hover:border-[var(--color-neon)]"
                 title="Your points balance"
               >
-                <WalletIcon className="h-3.5 w-3.5 text-primary" />
+                <IconWallet className="h-3.5 w-3.5 text-[var(--color-neon)]" />
                 {wallet.isLoading ? "…" : (wallet.data?.balance ?? 0).toLocaleString()}
-                <span className="text-muted-foreground font-normal">pts</span>
+                <span className="text-[var(--color-ink-muted)] font-semibold">pts</span>
               </Link>
             )}
-            <Link to="/help" data-tour="help-link" title="Help Center" className="rounded-md p-2 hover:bg-muted text-muted-foreground hover:text-foreground">
-              <HelpCircle className="h-4 w-4" />
+            <Link to="/help" data-tour="help-link" title="Help Center" className="p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]">
+              <IconHelp className="h-4 w-4" />
             </Link>
-            <Link to="/settings" title="Settings" className="rounded-md p-2 hover:bg-muted text-muted-foreground hover:text-foreground">
-              <SettingsIcon className="h-4 w-4" />
+            <Link to="/settings" title="Settings" className="p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]">
+              <IconSettings className="h-4 w-4" />
             </Link>
-            <Button variant="ghost" size="sm" onClick={signOut}>
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <button
+              onClick={signOut}
+              title="Sign out"
+              className="p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]"
+            >
+              <IconLogout className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </header>
@@ -272,8 +298,17 @@ function AuthedLayout() {
         <Outlet />
       </main>
 
-      {/* Bottom nav mobile */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t bg-background/95 backdrop-blur">
+      {/* Bottom nav mobile — stencil dock */}
+      <nav className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 backdrop-blur">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(90deg, var(--color-neon) 0 6px, transparent 6px 12px)",
+            opacity: 0.5,
+          }}
+        />
         <div className="grid grid-cols-5 max-w-md mx-auto">
           {mobileNavItems.map((item) => {
             const active = item.to === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(item.to);
@@ -285,12 +320,18 @@ function AuthedLayout() {
               <Link
                 key={item.to}
                 to={item.to}
-                className={`relative flex flex-col items-center gap-0.5 py-2.5 text-[10px] ${active ? "text-primary" : "text-muted-foreground"}`}
+                className={`relative flex flex-col items-center gap-1 py-2.5 text-[9px] font-bold uppercase tracking-[0.18em] ${active ? "text-[var(--color-neon)]" : "text-[var(--color-ink-muted)]"}`}
               >
+                {active && (
+                  <span
+                    aria-hidden
+                    className="absolute top-0 left-1/2 h-[2px] w-8 -translate-x-1/2 bg-[var(--color-neon)]"
+                  />
+                )}
                 <div className="relative">
                   <Icon className="h-5 w-5" />
                   {badge > 0 && (
-                    <span className="absolute -top-1.5 -right-2 inline-flex min-w-[16px] h-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-semibold text-destructive-foreground tabular-nums">
+                    <span className="absolute -top-1.5 -right-2 inline-flex min-w-[14px] h-[14px] items-center justify-center bg-[var(--color-neon)] px-1 text-[8px] font-bold text-[var(--color-surface)] tabular-nums">
                       {badge}
                     </span>
                   )}
