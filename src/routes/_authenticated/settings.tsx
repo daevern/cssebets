@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, User as UserIcon, Mail, Phone, KeyRound, Save } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
+import { BadgeGrid } from "@/components/trust/BadgeGrid";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   ssr: false,
@@ -156,6 +157,7 @@ function SettingsPage() {
         </div>
         <SaveBtn onClick={savePassword} disabled={savingPw || !pw1 || !pw2} loading={savingPw} label="Update password" />
       </StencilPanel>
+      <BadgeGrid />
     </PageShell>
   );
 }

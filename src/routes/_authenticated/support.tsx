@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Paperclip, Send, Loader2, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
+import { SupportStats } from "@/components/trust/SupportStats";
 
 export const Route = createFileRoute("/_authenticated/support")({
   head: () => ({ meta: [{ title: "Support — CSSEBets" }] }),
@@ -150,6 +151,7 @@ function SupportPage() {
 
   return (
     <PageShell kicker="DIRECT LINE · OPEN" title="SUPPORT" titleAccent="DESK" wide>
+      <SupportStats />
       <StencilPanel
         accent
         kicker={<><span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-neon)] animate-pulse" /> Live channel</>}

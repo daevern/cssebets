@@ -21,6 +21,7 @@ import {
   IconSettings,
   IconLogout,
 } from "@/components/brand/NavIcons";
+import { IconShield, IconBroadcast, IconChangelog } from "@/components/trust/TrustIcons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
@@ -277,6 +278,15 @@ function AuthedLayout() {
                 <span className="text-[var(--color-ink-muted)] font-semibold">pts</span>
               </Link>
             )}
+            <Link to="/trust-center" title="Trust Center" className="hidden md:inline-flex p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]">
+              <IconShield className="h-4 w-4" />
+            </Link>
+            <Link to="/status" title="Platform Status" className="hidden md:inline-flex p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]">
+              <IconBroadcast className="h-4 w-4" />
+            </Link>
+            <Link to="/changelog" title="Changelog" className="hidden md:inline-flex p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]">
+              <IconChangelog className="h-4 w-4" />
+            </Link>
             <Link to="/help" data-tour="help-link" title="Help Center" className="p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]">
               <IconHelp className="h-4 w-4" />
             </Link>
