@@ -196,14 +196,6 @@ function Dashboard() {
           <Link to="/dashboard" className="flex items-center gap-2">
             <CsseLogo size={22} />
           </Link>
-          <Link
-            to="/wallet"
-            className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/5 px-3 py-1.5 text-sm font-bold transition-colors hover:bg-[var(--color-neon)]/10"
-          >
-            <Link2 className="h-3.5 w-3.5 text-[var(--color-neon)]" />
-            <span className="tabular-nums">{wallet.isLoading ? "…" : fmt(balance)}</span>
-            <span className="text-[var(--color-neon)]">CSSE</span>
-          </Link>
         </header>
 
         {/* ---------- Editorial greeting ---------- */}
