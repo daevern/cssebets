@@ -22,7 +22,6 @@ function PitchIcon(props: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
-import { CsseLogo } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/bets")({
   head: () => ({
