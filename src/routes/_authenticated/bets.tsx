@@ -51,7 +51,7 @@ function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
 
 type Tile = {
   to: string;
-  icon: typeof ListChecks;
+  icon: typeof Crown;
   kicker: string;
   label: string;
   desc: string;
