@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import type { SVGProps } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -18,6 +19,51 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { CsseLogo } from "@/components/brand/CsseMark";
+
+/* Subs bench drawing — same tactical-stencil style as TacticalPitch / TacticalCrown */
+function SubsBench(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 200 120"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="mx-auto w-full max-w-[200px] h-auto text-[var(--color-neon)] opacity-90 drop-shadow-[0_0_8px_rgba(var(--color-neon-glow-rgb),0.3)]"
+      {...props}
+    >
+      {/* Dugout roof */}
+      <path d="M 20 38 L 30 22 L 170 22 L 180 38 Z" strokeWidth="2" />
+      <line x1="20" y1="38" x2="180" y2="38" strokeWidth="2" />
+      {/* Roof ribs */}
+      <line x1="55" y1="22" x2="50" y2="38" strokeDasharray="2,2" />
+      <line x1="100" y1="22" x2="100" y2="38" strokeDasharray="2,2" />
+      <line x1="145" y1="22" x2="150" y2="38" strokeDasharray="2,2" />
+      {/* Back wall */}
+      <line x1="28" y1="38" x2="28" y2="80" />
+      <line x1="172" y1="38" x2="172" y2="80" />
+      {/* Bench seat */}
+      <rect x="28" y="72" width="144" height="10" strokeWidth="2" fill="currentColor" fillOpacity="0.08" />
+      {/* Bench legs */}
+      <line x1="40" y1="82" x2="40" y2="100" strokeWidth="2" />
+      <line x1="100" y1="82" x2="100" y2="100" strokeWidth="2" />
+      <line x1="160" y1="82" x2="160" y2="100" strokeWidth="2" />
+      {/* Three substitutes — circular heads + shoulder lines */}
+      <circle cx="60" cy="58" r="7" strokeWidth="2" />
+      <path d="M 48 72 Q 60 62 72 72" strokeWidth="2" />
+      <circle cx="100" cy="56" r="7" strokeWidth="2" />
+      <path d="M 88 72 Q 100 60 112 72" strokeWidth="2" />
+      <circle cx="140" cy="58" r="7" strokeWidth="2" />
+      <path d="M 128 72 Q 140 62 152 72" strokeWidth="2" />
+      {/* Ground line */}
+      <line x1="10" y1="100" x2="190" y2="100" strokeWidth="2" />
+      {/* Ball at the foot */}
+      <circle cx="178" cy="104" r="4" strokeWidth="1.5" />
+      <path d="M 178 100 L 180 104 L 178 108 L 176 104 Z" strokeWidth="1" />
+    </svg>
+  );
+}
+
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
