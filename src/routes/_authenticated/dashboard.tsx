@@ -19,8 +19,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { CsseLogo } from "@/components/brand/CsseMark";
-import { PlatformPulse } from "@/components/trust/PlatformPulse";
-import { ActivityFeed } from "@/components/trust/ActivityFeed";
 import { CommunityGrowth } from "@/components/trust/CommunityGrowth";
 import { FounderNote } from "@/components/trust/FounderNote";
 
