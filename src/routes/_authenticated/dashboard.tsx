@@ -392,11 +392,14 @@ function Dashboard() {
               </>
             ) : (
               <>
-                <p className="font-display text-2xl font-bold leading-tight tracking-tight">
-                  You're on the sideline.
+                <div className="flex justify-center pb-2">
+                  <SubsBench className="h-28 w-auto" />
+                </div>
+                <p className="text-center font-display text-xl font-bold leading-tight tracking-tight">
+                  You're on the bench.
                 </p>
-                <p className="mt-1.5 text-sm text-[var(--color-ink-muted)]">
-                  Spectators don't get paid. Pick one fixture. Back the read.
+                <p className="mx-auto mt-1.5 max-w-xs text-center text-sm text-[var(--color-ink-muted)]">
+                  Get on the team sheet now.
                 </p>
                 <Link to="/bets" className="mt-4 block">
                   <button
