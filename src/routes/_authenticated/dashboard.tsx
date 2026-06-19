@@ -418,8 +418,6 @@ function Dashboard() {
         </article>
 
         {/* ---------- Trust & Transparency surfaces ---------- */}
-        <PlatformPulse />
-        <ActivityFeed />
         <CommunityGrowth />
         <FounderNote />
       </div>
