@@ -20,7 +20,7 @@ export function PageShell({
   wide?: boolean;
 }) {
   return (
-    <div className="min-h-screen -mx-4 -my-6 bg-[var(--color-surface)] text-[var(--color-ink)]">
+    <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
       <div
         aria-hidden
         className="pointer-events-none fixed inset-0 opacity-[0.04]"
