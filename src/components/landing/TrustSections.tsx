@@ -102,45 +102,45 @@ function Stat({
   );
 }
 
-/* ---------- LIVE PLATFORM PULSE ---------- */
-export function LivePlatformPulse() {
-  const fn = useServerFn(getPublicPlatformPulse);
+/* ---------- COMMUNITY GROWTH (this month) ---------- */
+export function CommunityGrowthSection() {
+  const fn = useServerFn(getPublicCommunityGrowth);
   const q = useQuery({
-    queryKey: ["public", "pulse"],
+    queryKey: ["public", "growth"],
     queryFn: () => fn({}),
     staleTime: 45_000,
     refetchInterval: 60_000,
   });
   const d = q.data;
-  const hasData = d && (d.registered_members > 0 || d.bets_placed > 0);
+  const total =
+    (d?.members_this_month ?? 0) +
+    (d?.bets_this_month ?? 0) +
+    (d?.payouts_this_month ?? 0);
 
   return (
     <section className="bg-gradient-to-b from-background to-card/30 py-12 sm:py-16">
       <div className="mx-auto max-w-5xl px-4">
         <SectionHeader
-          kicker={<><Activity className="h-3 w-3" /> Live</>}
-          title="Live Platform Pulse"
-          subtitle="Updated automatically from real platform activity."
+          kicker={<><Users className="h-3 w-3" /> This month</>}
+          title="Community Growth"
+          subtitle="Real members, real bets, real payouts — updated automatically."
         />
-        {!hasData ? (
+        {q.isLoading && !d ? (
           <div className="rounded-md border border-dashed border-primary/20 bg-card/50 p-8 text-center text-sm text-muted-foreground">
-            {q.isLoading ? "Loading platform pulse…" : "Not enough data yet."}
+            Loading community growth…
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Stat label="Members" value={fmt(d.registered_members)} />
-              <Stat label="Active (30d)" value={fmt(d.active_members_30d)} />
-              <Stat label="Bets placed" value={fmt(d.bets_placed)} />
-              <Stat label="Bets settled" value={fmt(d.bets_settled)} />
-              <Stat label="Payouts paid" value={fmt(d.approved_payouts)} />
-              <Stat label="Points paid" value={fmt(d.total_points_paid_out)} sub="pts" />
-              <Stat label="Avg payout" value={fmtHours(d.avg_payout_processing_hours)} sub="processing" />
-              <Stat label="Avg approval" value={fmtHours(d.avg_point_approval_hours)} sub="points review" />
+            <div className="grid grid-cols-3 gap-2">
+              <Stat label="New members" value={fmt(d?.members_this_month ?? 0)} />
+              <Stat label="Bets this month" value={fmt(d?.bets_this_month ?? 0)} />
+              <Stat label="Payouts done" value={fmt(d?.payouts_this_month ?? 0)} />
             </div>
-            <p className="mt-4 text-center text-[11px] italic text-muted-foreground">
-              Statistics are generated from live platform activity and updated automatically.
-            </p>
+            {total === 0 && (
+              <p className="mt-4 text-center text-[11px] italic text-muted-foreground">
+                Every community starts somewhere. Thank you for helping build CSSEBets.
+              </p>
+            )}
           </>
         )}
       </div>
