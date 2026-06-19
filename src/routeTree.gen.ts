@@ -25,14 +25,17 @@ import { Route as ManagementChangePasswordRouteImport } from './routes/managemen
 import { Route as ManagementAdminRouteImport } from './routes/management/admin'
 import { Route as ManagementAccessDeniedRouteImport } from './routes/management/access-denied'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
+import { Route as AuthenticatedTrustCenterRouteImport } from './routes/_authenticated/trust-center'
 import { Route as AuthenticatedTournamentWinnerRouteImport } from './routes/_authenticated/tournament-winner'
 import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
+import { Route as AuthenticatedStatusRouteImport } from './routes/_authenticated/status'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedPayoutRouteImport } from './routes/_authenticated/payout'
 import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
 import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
 import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedChangelogRouteImport } from './routes/_authenticated/changelog'
 import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/bets'
 import { Route as ManagementAdminIndexRouteImport } from './routes/management/admin.index'
 import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
@@ -146,6 +149,12 @@ const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTrustCenterRoute =
+  AuthenticatedTrustCenterRouteImport.update({
+    id: '/trust-center',
+    path: '/trust-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedTournamentWinnerRoute =
   AuthenticatedTournamentWinnerRouteImport.update({
     id: '/tournament-winner',
@@ -155,6 +164,11 @@ const AuthenticatedTournamentWinnerRoute =
 const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
   id: '/support',
   path: '/support',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStatusRoute = AuthenticatedStatusRouteImport.update({
+  id: '/status',
+  path: '/status',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
@@ -186,6 +200,11 @@ const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedChangelogRoute = AuthenticatedChangelogRouteImport.update({
+  id: '/changelog',
+  path: '/changelog',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedBetsRoute = AuthenticatedBetsRouteImport.update({
@@ -375,14 +394,17 @@ export interface FileRoutesByFullPath {
   '/brand': typeof BrandRoute
   '/register': typeof RegisterRoute
   '/bets': typeof AuthenticatedBetsRoute
+  '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/help': typeof AuthenticatedHelpRoute
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/status': typeof AuthenticatedStatusRoute
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
+  '/trust-center': typeof AuthenticatedTrustCenterRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
   '/management/admin': typeof ManagementAdminRouteWithChildren
@@ -432,14 +454,17 @@ export interface FileRoutesByTo {
   '/brand': typeof BrandRoute
   '/register': typeof RegisterRoute
   '/bets': typeof AuthenticatedBetsRoute
+  '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/help': typeof AuthenticatedHelpRoute
   '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/status': typeof AuthenticatedStatusRoute
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
+  '/trust-center': typeof AuthenticatedTrustCenterRoute
   '/wallet': typeof AuthenticatedWalletRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
   '/management/change-password': typeof ManagementChangePasswordRoute
@@ -490,14 +515,17 @@ export interface FileRoutesById {
   '/brand': typeof BrandRoute
   '/register': typeof RegisterRoute
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
+  '/_authenticated/changelog': typeof AuthenticatedChangelogRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/matches': typeof AuthenticatedMatchesRoute
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/_authenticated/payout': typeof AuthenticatedPayoutRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/status': typeof AuthenticatedStatusRoute
   '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
+  '/_authenticated/trust-center': typeof AuthenticatedTrustCenterRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
   '/management/admin': typeof ManagementAdminRouteWithChildren
@@ -549,14 +577,17 @@ export interface FileRouteTypes {
     | '/brand'
     | '/register'
     | '/bets'
+    | '/changelog'
     | '/dashboard'
     | '/help'
     | '/matches'
     | '/my-predictions'
     | '/payout'
     | '/settings'
+    | '/status'
     | '/support'
     | '/tournament-winner'
+    | '/trust-center'
     | '/wallet'
     | '/management/access-denied'
     | '/management/admin'
@@ -606,14 +637,17 @@ export interface FileRouteTypes {
     | '/brand'
     | '/register'
     | '/bets'
+    | '/changelog'
     | '/dashboard'
     | '/help'
     | '/matches'
     | '/my-predictions'
     | '/payout'
     | '/settings'
+    | '/status'
     | '/support'
     | '/tournament-winner'
+    | '/trust-center'
     | '/wallet'
     | '/management/access-denied'
     | '/management/change-password'
@@ -663,14 +697,17 @@ export interface FileRouteTypes {
     | '/brand'
     | '/register'
     | '/_authenticated/bets'
+    | '/_authenticated/changelog'
     | '/_authenticated/dashboard'
     | '/_authenticated/help'
     | '/_authenticated/matches'
     | '/_authenticated/my-predictions'
     | '/_authenticated/payout'
     | '/_authenticated/settings'
+    | '/_authenticated/status'
     | '/_authenticated/support'
     | '/_authenticated/tournament-winner'
+    | '/_authenticated/trust-center'
     | '/_authenticated/wallet'
     | '/management/access-denied'
     | '/management/admin'
@@ -841,6 +878,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWalletRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/trust-center': {
+      id: '/_authenticated/trust-center'
+      path: '/trust-center'
+      fullPath: '/trust-center'
+      preLoaderRoute: typeof AuthenticatedTrustCenterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/tournament-winner': {
       id: '/_authenticated/tournament-winner'
       path: '/tournament-winner'
@@ -853,6 +897,13 @@ declare module '@tanstack/react-router' {
       path: '/support'
       fullPath: '/support'
       preLoaderRoute: typeof AuthenticatedSupportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/status': {
+      id: '/_authenticated/status'
+      path: '/status'
+      fullPath: '/status'
+      preLoaderRoute: typeof AuthenticatedStatusRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
@@ -895,6 +946,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/changelog': {
+      id: '/_authenticated/changelog'
+      path: '/changelog'
+      fullPath: '/changelog'
+      preLoaderRoute: typeof AuthenticatedChangelogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/bets': {
@@ -1126,27 +1184,33 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBetsRoute: typeof AuthenticatedBetsRoute
+  AuthenticatedChangelogRoute: typeof AuthenticatedChangelogRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
   AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRoute
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
   AuthenticatedPayoutRoute: typeof AuthenticatedPayoutRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedStatusRoute: typeof AuthenticatedStatusRoute
   AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTournamentWinnerRoute: typeof AuthenticatedTournamentWinnerRoute
+  AuthenticatedTrustCenterRoute: typeof AuthenticatedTrustCenterRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBetsRoute: AuthenticatedBetsRoute,
+  AuthenticatedChangelogRoute: AuthenticatedChangelogRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHelpRoute: AuthenticatedHelpRoute,
   AuthenticatedMatchesRoute: AuthenticatedMatchesRoute,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
   AuthenticatedPayoutRoute: AuthenticatedPayoutRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedStatusRoute: AuthenticatedStatusRoute,
   AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTournamentWinnerRoute: AuthenticatedTournamentWinnerRoute,
+  AuthenticatedTrustCenterRoute: AuthenticatedTrustCenterRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
 }
 
