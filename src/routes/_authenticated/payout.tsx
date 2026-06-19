@@ -11,7 +11,6 @@ import {
 import { getMyWallet } from "@/lib/wallet.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -19,9 +18,10 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
-import { Banknote, Loader2, Clock, Eye, CheckCircle2, XCircle } from "lucide-react";
+import { Banknote, Loader2, Clock, Eye, CheckCircle2, XCircle, ArrowUpRight, History } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 
 export const Route = createFileRoute("/_authenticated/payout")({
   ssr: false,
@@ -129,127 +129,133 @@ function PayoutPage() {
     amt <= balance;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Banknote className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold">Payout</h1>
-      </div>
-
-      <Card className="p-5">
-        <div className="text-sm text-muted-foreground">Available balance</div>
-        <div className="mt-1 text-3xl font-bold tabular-nums">
-          {wallet.isLoading ? "…" : balance.toLocaleString()}
-          <span className="text-base font-medium text-muted-foreground ml-2">pts</span>
+    <PageShell kicker="Cashout · Final whistle" title="Take the" titleAccent="payout.">
+      {/* Balance */}
+      <StencilPanel
+        kicker={<><Banknote className="h-3 w-3" /> Available balance</>}
+        meta="LIVE"
+        accent
+      >
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-5xl font-bold tabular-nums">
+            {wallet.isLoading ? "…" : balance.toLocaleString()}
+          </span>
+          <span className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">pts</span>
         </div>
-      </Card>
+      </StencilPanel>
 
-      {/* Active payout banner */}
+      {/* Active banners */}
       {active && active.status === "approved" && (
-        <Card className="p-5 border-amber-500/40 bg-amber-500/5 flex items-start gap-3">
-          <Clock className="h-5 w-5 text-amber-500 mt-0.5" />
-          <div>
-            <div className="font-semibold">Pending cashout to bank</div>
-            <p className="text-sm text-muted-foreground">
-              Your payout has been approved. The process will take 24 hours to 7 days.
-              You will be asked to confirm once the bank-transfer proof is uploaded.
-            </p>
-          </div>
-        </Card>
+        <StencilPanel kicker={<><Clock className="h-3 w-3" /> Cashout in progress</>}>
+          <div className="font-display text-lg font-bold">Pending cashout to bank</div>
+          <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
+            Your payout has been approved. The process will take 24 hours to 7 days.
+            You will be asked to confirm once the bank-transfer proof is uploaded.
+          </p>
+        </StencilPanel>
       )}
       {active && active.status === "pending" && (
-        <Card className="p-5 border-muted bg-muted/30 flex items-start gap-3">
-          <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
-          <div>
-            <div className="font-semibold">Payout request pending</div>
-            <p className="text-sm text-muted-foreground">
-              An admin will review your request shortly. New payout requests are disabled until this one is resolved.
-            </p>
-          </div>
-        </Card>
+        <StencilPanel kicker={<><Clock className="h-3 w-3" /> Awaiting admin</>}>
+          <div className="font-display text-lg font-bold">Payout request pending</div>
+          <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
+            An admin will review your request shortly. New payout requests are disabled until this one is resolved.
+          </p>
+        </StencilPanel>
       )}
 
-      {/* Awaiting user decision */}
       {active && active.status === "proof_uploaded" && (
-        <Card className="p-5 space-y-3 border-primary/40 bg-primary/5">
-          <div className="font-semibold">Proof of payment uploaded</div>
-          <p className="text-sm text-muted-foreground">
+        <StencilPanel kicker={<><Eye className="h-3 w-3" /> Action required · Review proof</>} accent>
+          <div className="font-display text-lg font-bold">Proof of payment uploaded</div>
+          <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
             Admin uploaded the bank-transfer proof. Please review and approve, or reject with a reason.
           </p>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => viewProof(active.id)}>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => viewProof(active.id)} className="border-[var(--color-surface-border)] bg-[#070D0A]">
               <Eye className="h-4 w-4 mr-1" /> View proof
             </Button>
-            <Button onClick={() => setDecision("approve")}>
-              <CheckCircle2 className="h-4 w-4 mr-1" /> Approve
-            </Button>
+            <button
+              type="button"
+              onClick={() => setDecision("approve")}
+              className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-neon)] px-4 py-2 text-xs font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_20px_var(--color-neon-glow)] hover:brightness-110"
+            >
+              <CheckCircle2 className="h-4 w-4" /> Approve
+            </button>
             <Button variant="destructive" onClick={() => setDecision("reject")}>
               <XCircle className="h-4 w-4 mr-1" /> Reject
             </Button>
           </div>
-        </Card>
+        </StencilPanel>
       )}
 
       {/* Request form */}
-      <Card className="p-5 space-y-4">
-        <h2 className="font-semibold">Request a cashout</h2>
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Bank name</label>
-          <Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. Maybank" disabled={!!active} />
+      <StencilPanel kicker={<><Banknote className="h-3 w-3" /> Request a cashout</>}>
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Bank name</label>
+          <Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. Maybank" disabled={!!active} className="bg-[#070D0A] border-[var(--color-surface-border)]" />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Bank account number</label>
-          <Input value={accNo} onChange={(e) => setAccNo(e.target.value)} placeholder="Account number" disabled={!!active} />
+        <div className="mt-3 space-y-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Bank account number</label>
+          <Input value={accNo} onChange={(e) => setAccNo(e.target.value)} placeholder="Account number" disabled={!!active} className="bg-[#070D0A] border-[var(--color-surface-border)]" />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Points to withdraw</label>
-          <Input type="number" min={50} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" disabled={!!active} />
+        <div className="mt-3 space-y-1.5">
+          <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Points to withdraw</label>
+          <Input type="number" min={50} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" disabled={!!active} className="bg-[#070D0A] border-[var(--color-surface-border)]" />
           {amount !== "" && amt < 50 && <p className="text-xs text-destructive">Minimum payout amount is 50 pts.</p>}
           {amt > balance && <p className="text-xs text-destructive">Amount exceeds your balance.</p>}
         </div>
-        <Button className="w-full" disabled={!canRequest || create.isPending} onClick={() => create.mutate()}>
-          {create.isPending ? "Submitting…" : "Request payout"}
-        </Button>
+        <button
+          type="button"
+          disabled={!canRequest || create.isPending}
+          onClick={() => create.mutate()}
+          className="group mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-neon)] px-5 py-3.5 text-xs font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
+        >
+          {create.isPending ? "Submitting…" : (
+            <>
+              <span>Request payout</span>
+              <ArrowUpRight className="h-4 w-4" />
+            </>
+          )}
+        </button>
         {active && (
-          <p className="text-xs text-muted-foreground">
+          <p className="mt-2 text-[11px] text-[var(--color-ink-muted)]">
             You have an active payout request. New requests are disabled until it's resolved.
           </p>
         )}
-      </Card>
+      </StencilPanel>
 
       {/* History */}
-      <Card className="p-5 space-y-3">
-        <h2 className="font-semibold">Payout history</h2>
+      <StencilPanel kicker={<><History className="h-3 w-3" /> Payout history</>}>
         {payouts.isLoading ? (
-          <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
+          <Loader2 className="animate-spin h-5 w-5 text-[var(--color-ink-muted)]" />
         ) : !payouts.data?.payouts.length ? (
-          <p className="text-sm text-muted-foreground">No payout requests yet.</p>
+          <p className="text-sm text-[var(--color-ink-muted)]">No payout requests yet.</p>
         ) : (
           <div className="space-y-2">
             {payouts.data.payouts.map((p: any) => (
-              <div key={p.id} className="border rounded-md p-3 text-sm flex items-start justify-between gap-3">
+              <div key={p.id} className="flex items-start justify-between gap-3 border border-[var(--color-surface-border)] bg-[#070D0A] p-3 text-sm">
                 <div className="min-w-0">
-                  <div className="font-medium">{Number(p.amount).toLocaleString()} pts → {p.bank_name}</div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="font-bold tabular-nums">{Number(p.amount).toLocaleString()} <span className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)]">pts</span> → {p.bank_name}</div>
+                  <div className="text-[11px] text-[var(--color-ink-muted)]">
                     Acc {p.bank_account_number} · {new Date(p.created_at).toLocaleString()}
                   </div>
                   {p.status === "rejected_by_admin" && p.rejection_reason && (
-                    <div className="text-xs text-destructive mt-1">Admin reason: {p.rejection_reason}</div>
+                    <div className="text-[11px] text-destructive mt-1">Admin reason: {p.rejection_reason}</div>
                   )}
                   {p.status === "rejected_by_user" && p.user_rejection_reason && (
-                    <div className="text-xs text-destructive mt-1">Your reason: {p.user_rejection_reason}</div>
+                    <div className="text-[11px] text-destructive mt-1">Your reason: {p.user_rejection_reason}</div>
                   )}
                 </div>
                 <Badge variant={
                   p.status === "completed" ? "default" :
                   p.status.startsWith("rejected") ? "destructive" : "secondary"
-                }>
+                } className="uppercase tracking-wider text-[10px]">
                   {p.status.replace(/_/g, " ")}
                 </Badge>
               </div>
             ))}
           </div>
         )}
-      </Card>
+      </StencilPanel>
 
       {/* Proof viewer */}
       <Dialog open={!!proof && !decision} onOpenChange={(o) => !o && setProof(null)}>
@@ -270,7 +276,6 @@ function PayoutPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Approve confirm */}
       <Dialog open={decision === "approve"} onOpenChange={(o) => !o && setDecision(null)}>
         <DialogContent>
           <DialogHeader>
@@ -291,7 +296,6 @@ function PayoutPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Reject — non-dismissable until reason or cancel */}
       <Dialog
         open={decision === "reject"}
         onOpenChange={() => { /* prevent close via overlay/esc */ }}
@@ -323,6 +327,6 @@ function PayoutPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PageShell>
   );
 }

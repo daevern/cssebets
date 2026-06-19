@@ -1,10 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useTour } from "@/components/onboarding/TourProvider";
 import { TOURS } from "@/components/onboarding/tours.config";
-import { Sparkles, Wallet, Banknote, Headset, ListChecks, BookOpen, RefreshCw } from "lucide-react";
+import { Sparkles, Wallet, Banknote, Headset, ListChecks, BookOpen, RefreshCw, ArrowUpRight, HelpCircle } from "lucide-react";
+import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 
 export const Route = createFileRoute("/_authenticated/help")({
   head: () => ({ meta: [{ title: "Help Center — cssebets" }] }),
@@ -64,87 +63,82 @@ const SECTIONS: Section[] = [
 ];
 
 const FAQ = [
-  {
-    q: "How do I get points?",
-    a: "Open Wallet → Request Points, transfer funds using the displayed PointBank details and your unique reference ID, upload proof, and submit. An admin reviews and credits your account.",
-  },
-  {
-    q: "Why was my bet locked?",
-    a: "Bets lock at kickoff. Any pending bet placed after the kickoff time is rejected automatically.",
-  },
-  {
-    q: "When do bets settle?",
-    a: "As soon as the match result is finalized by an admin. Winning stakes are credited to your wallet immediately.",
-  },
-  {
-    q: "Can I cancel a bet?",
-    a: "You can edit the stake of a pending bet before kickoff. You cannot fully cancel placed bets — only adjust stake.",
-  },
-  {
-    q: "How long do payouts take?",
-    a: "Most payouts are processed within 24 hours. You'll get a notification at every status change.",
-  },
-  {
-    q: "I forgot my password — what now?",
-    a: "Use the password reset link on the login page, or contact support with your reference ID.",
-  },
+  { q: "How do I get points?", a: "Open Wallet → Request Points, transfer funds using the displayed PointBank details and your unique reference ID, upload proof, and submit. An admin reviews and credits your account." },
+  { q: "Why was my bet locked?", a: "Bets lock at kickoff. Any pending bet placed after the kickoff time is rejected automatically." },
+  { q: "When do bets settle?", a: "As soon as the match result is finalized by an admin. Winning stakes are credited to your wallet immediately." },
+  { q: "Can I cancel a bet?", a: "You can edit the stake of a pending bet before kickoff. You cannot fully cancel placed bets — only adjust stake." },
+  { q: "How long do payouts take?", a: "Most payouts are processed within 24 hours. You'll get a notification at every status change." },
+  { q: "I forgot my password — what now?", a: "Use the password reset link on the login page, or contact support with your reference ID." },
 ];
 
 function HelpCenter() {
   const { startTour, startFullTour } = useTour();
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Help Center</h1>
-          <p className="text-sm text-muted-foreground">Everything you need to use CSSEBets confidently.</p>
+    <PageShell kicker="Coaches Corner · Help" title="Play the" titleAccent="manual.">
+      {/* Restart full tour */}
+      <StencilPanel kicker={<><Sparkles className="h-3 w-3" /> Full walkthrough</>} accent>
+        <div className="flex items-start justify-between gap-3 flex-col sm:flex-row sm:items-center">
+          <p className="text-sm text-[var(--color-ink-muted)] max-w-md">
+            Everything you need to use CSSEBets confidently. Restart the full guided tour at any time.
+          </p>
+          <button
+            type="button"
+            onClick={startFullTour}
+            className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[var(--color-neon)] px-4 py-2.5 text-xs font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_24px_var(--color-neon-glow)] hover:brightness-110"
+          >
+            <Sparkles className="h-4 w-4" /> Restart full tour
+          </button>
         </div>
-        <Button onClick={startFullTour} className="gap-2">
-          <Sparkles className="h-4 w-4" /> Restart full tour
-        </Button>
-      </div>
+      </StencilPanel>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {SECTIONS.map((s) => {
+      {/* Sections */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {SECTIONS.map((s, i) => {
           const Icon = s.icon;
           return (
-            <Card key={s.id} className="p-5 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 grid place-items-center">
-                  <Icon className="h-5 w-5 text-primary" />
-                </div>
-                <h2 className="font-semibold text-lg">{s.title}</h2>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">{s.body}</p>
-              <div className="flex flex-wrap items-center gap-2 pt-1">
+            <StencilPanel
+              key={s.id}
+              kicker={<><Icon className="h-3 w-3" /> {s.title}</>}
+              meta={`${String(i + 1).padStart(2, "0")} / ${String(SECTIONS.length).padStart(2, "0")}`}
+            >
+              <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">{s.body}</p>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
                 {s.link && (
-                  <Button asChild size="sm" variant="outline">
-                    <Link to={s.link.to as any}>{s.link.label}</Link>
-                  </Button>
+                  <Link
+                    to={s.link.to as any}
+                    className="inline-flex items-center gap-1.5 border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/5 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)] hover:bg-[var(--color-neon)]/10"
+                  >
+                    {s.link.label}
+                    <ArrowUpRight className="h-3 w-3" />
+                  </Link>
                 )}
                 {s.tourKey && TOURS[s.tourKey] && (
-                  <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => startTour(s.tourKey!)}>
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    Restart this tour
-                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => startTour(s.tourKey!)}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]"
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    Restart tour
+                  </button>
                 )}
               </div>
-            </Card>
+            </StencilPanel>
           );
         })}
       </div>
 
-      <Card className="p-5">
-        <h2 className="font-semibold text-lg mb-3">Frequently Asked Questions</h2>
+      {/* FAQ */}
+      <StencilPanel kicker={<><HelpCircle className="h-3 w-3" /> Frequently Asked Questions</>}>
         <Accordion type="single" collapsible className="w-full">
           {FAQ.map((f, i) => (
-            <AccordionItem value={`faq-${i}`} key={i}>
-              <AccordionTrigger className="text-left">{f.q}</AccordionTrigger>
-              <AccordionContent className="text-sm text-muted-foreground">{f.a}</AccordionContent>
+            <AccordionItem value={`faq-${i}`} key={i} className="border-[var(--color-surface-border)]">
+              <AccordionTrigger className="text-left text-sm font-semibold hover:text-[var(--color-neon)] hover:no-underline">{f.q}</AccordionTrigger>
+              <AccordionContent className="text-sm text-[var(--color-ink-muted)] leading-relaxed">{f.a}</AccordionContent>
             </AccordionItem>
           ))}
         </Accordion>
-      </Card>
-    </div>
+      </StencilPanel>
+    </PageShell>
   );
 }
