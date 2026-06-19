@@ -124,9 +124,8 @@ function BetsHub() {
   const tiles: Tile[] = [
     {
       to: "/matches",
-      icon: PitchIcon,
+      illustration: TacticalPitch,
       kicker: "Market №01",
-      label: "Matches",
       desc: "Back a side. Fade the crowd. Match-by-match calls with live odds.",
       cta: "Open the slate",
       tour: "bet-button",
@@ -134,9 +133,8 @@ function BetsHub() {
     },
     {
       to: "/tournament-winner",
-      icon: Crown,
+      illustration: TacticalCrown,
       kicker: "Market №02",
-      label: "Tournament Winner",
       desc: "One pick. One champion. Lock your outright before the field tightens.",
       cta: "Crown your pick",
     },
@@ -150,7 +148,7 @@ function BetsHub() {
         className="pointer-events-none fixed inset-0 opacity-[0.04]"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
+          "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
         }}
       />
 
@@ -185,7 +183,7 @@ function BetsHub() {
               className="group"
             >
               <article
-                className={`relative overflow-hidden border bg-[var(--color-surface-2)] transition-colors ${
+                className={`relative overflow-hidden border bg-[var(--color-surface-2)] transition-colors h-full flex flex-col justify-between ${
                   t.accent
                     ? "border-[var(--color-neon)]/25 hover:border-[var(--color-neon)]/60"
                     : "border-[var(--color-surface-border)] hover:border-[var(--color-neon)]/40"
@@ -196,27 +194,31 @@ function BetsHub() {
                 <Corner pos="bl" />
                 <Corner pos="br" />
 
-                {/* stencil header band */}
-                <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-5 py-3">
-                  <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-                    <t.icon className="h-3 w-3" />
-                    {t.kicker}
-                  </span>
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                    {String(i + 1).padStart(2, "0")} / {String(tiles.length).padStart(2, "0")}
-                  </span>
+                <div>
+                  {/* stencil header band */}
+                  <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-5 py-3">
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+                      {t.kicker}
+                    </span>
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+                      {String(i + 1).padStart(2, "0")} / {String(tiles.length).padStart(2, "0")}
+                    </span>
+                  </div>
+
+                  <div className="px-5 pb-2 pt-6 flex flex-col items-center justify-center text-center">
+                    {/* The drawing replaces the words "Matches" and "Tournament Winner" */}
+                    <div className="w-full flex items-center justify-center min-h-[130px] py-2">
+                      <t.illustration className="h-28 w-auto text-[var(--color-neon)] transition-transform duration-300 group-hover:scale-105" />
+                    </div>
+                    <p className="mt-4 text-xs leading-relaxed text-[var(--color-ink-muted)] px-2">
+                      {t.desc}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="px-5 pb-5 pt-5">
-                  <h2 className="font-display text-2xl font-bold uppercase tracking-tight">
-                    {t.label}
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
-                    {t.desc}
-                  </p>
-
+                <div className="px-5 pb-5 pt-3">
                   <div
-                    className={`mt-5 flex items-center justify-center gap-2 rounded-full px-5 py-3 text-xs font-bold uppercase tracking-[0.22em] transition-all ${
+                    className={`flex items-center justify-center gap-2 rounded-full px-5 py-3 text-xs font-bold uppercase tracking-[0.22em] transition-all ${
                       t.accent
                         ? "bg-[var(--color-neon)] text-black shadow-[0_0_24px_var(--color-neon-glow)] group-hover:brightness-110"
                         : "border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/5 text-[var(--color-neon)] group-hover:bg-[var(--color-neon)]/10"
