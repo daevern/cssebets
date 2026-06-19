@@ -217,9 +217,9 @@ function Dashboard() {
             )}
           </div>
           <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight md:text-4xl">
-            Evening, <span className="text-[var(--color-neon)]">{firstName}</span>.
+            Hello, <span className="text-[var(--color-neon)]">{firstName}</span>.
             <br />
-            <span className="text-[var(--color-ink-muted)]">{tension.line}</span>
+            <span className="text-[var(--color-ink-muted)]">Ready to strategise?</span>
           </h1>
         </section>
 
