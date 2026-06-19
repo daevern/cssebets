@@ -1,6 +1,27 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ListChecks, Crown, ArrowUpRight, Radio } from "lucide-react";
+import { Crown, ArrowUpRight, Radio } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
 import { CsseLogo } from "@/components/brand/CsseMark";
+
+function PitchIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
+      {...props}
+    >
+      <rect x="2.5" y="4.5" width="19" height="15" />
+      <line x1="12" y1="4.5" x2="12" y2="19.5" />
+      <circle cx="12" cy="12" r="2.4" />
+      <rect x="2.5" y="8.5" width="3" height="7" />
+      <rect x="18.5" y="8.5" width="3" height="7" />
+    </svg>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/bets")({
   head: () => ({
@@ -30,7 +51,7 @@ function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
 
 type Tile = {
   to: string;
-  icon: typeof ListChecks;
+  icon: ComponentType<{ className?: string }>;
   kicker: string;
   label: string;
   desc: string;
@@ -43,7 +64,7 @@ function BetsHub() {
   const tiles: Tile[] = [
     {
       to: "/matches",
-      icon: ListChecks,
+      icon: PitchIcon,
       kicker: "Market №01",
       label: "Matches",
       desc: "Back a side. Fade the crowd. Match-by-match calls with live odds.",
@@ -90,7 +111,7 @@ function BetsHub() {
           <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight md:text-4xl">
             Pick your <span className="text-[var(--color-neon)]">market</span>.
             <br />
-            <span className="text-[var(--color-ink-muted)]">Then take a side.</span>
+            <span className="text-[var(--color-ink-muted)]">Back your Pick.</span>
           </h1>
         </section>
 
