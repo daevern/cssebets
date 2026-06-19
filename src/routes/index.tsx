@@ -286,8 +286,8 @@ function LandingPage() {
       {/* Seamless gradient seam — hero into trust sections */}
       <div className="relative h-8 bg-gradient-to-b from-background via-card/30 to-background" />
 
-      {/* SECTION 2: Live Platform Pulse — real aggregated metrics */}
-      <LivePlatformPulse />
+      {/* SECTION 2: Community Growth — real members, bets, payouts this month */}
+      <CommunityGrowthSection />
 
       {/* SECTION 3: Recent Platform Activity — masked, real events */}
       <RecentPlatformActivity />
