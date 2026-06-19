@@ -22,7 +22,7 @@ import { Banknote, Loader2, Clock, Eye, CheckCircle2, XCircle, ArrowUpRight, His
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
-import { PayoutPerformance } from "@/components/trust/PayoutPerformance";
+
 
 export const Route = createFileRoute("/_authenticated/payout")({
   ssr: false,
