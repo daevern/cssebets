@@ -3,12 +3,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Loader2, User as UserIcon, Mail, Phone, KeyRound, Save } from "lucide-react";
 import { toast } from "sonner";
+import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   ssr: false,
@@ -45,7 +44,6 @@ function SettingsPage() {
     enabled: !!uid,
   });
 
-  // Treat synthetic phone-signup email as "no email"
   const currentEmail = isSyntheticPhoneEmail(user?.email) ? "" : (user?.email ?? "");
   const currentPhone = profile.data?.phone_number ?? "";
 
@@ -58,161 +56,129 @@ function SettingsPage() {
   const [savingPhone, setSavingPhone] = useState(false);
   const [savingPw, setSavingPw] = useState(false);
 
-  // Sync form values when profile/user load
-  useEffect(() => {
-    if (currentEmail) setEmail(currentEmail);
-  }, [currentEmail]);
-  useEffect(() => {
-    if (currentPhone) setPhone(currentPhone);
-  }, [currentPhone]);
+  useEffect(() => { if (currentEmail) setEmail(currentEmail); }, [currentEmail]);
+  useEffect(() => { if (currentPhone) setPhone(currentPhone); }, [currentPhone]);
 
   async function saveEmail() {
-    if (!email || !email.includes("@")) {
-      toast.error("Enter a valid email address");
-      return;
-    }
+    if (!email || !email.includes("@")) { toast.error("Enter a valid email address"); return; }
     setSavingEmail(true);
     try {
       const { error } = await supabase.auth.updateUser({ email });
       if (error) throw error;
       toast.success("Email update requested. Check your inbox to confirm.");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSavingEmail(false);
-    }
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setSavingEmail(false); }
   }
 
   async function savePhone() {
     const p = phone.trim();
-    if (p && !isValidPhone(p)) {
-      toast.error("Phone must be in international format, e.g. +60123456789");
-      return;
-    }
+    if (p && !isValidPhone(p)) { toast.error("Phone must be in international format, e.g. +60123456789"); return; }
     if (!uid) return;
     setSavingPhone(true);
     try {
-      const { error } = await supabase
-        .from("profiles")
-        .update({ phone_number: p || null })
-        .eq("id", uid);
+      const { error } = await supabase.from("profiles").update({ phone_number: p || null }).eq("id", uid);
       if (error) throw error;
       toast.success("Phone number updated.");
       qc.invalidateQueries({ queryKey: ["my-profile-settings", uid] });
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSavingPhone(false);
-    }
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setSavingPhone(false); }
   }
 
   async function savePassword() {
-    if (pw1.length < 8) {
-      toast.error("Password must be at least 8 characters");
-      return;
-    }
-    if (pw1 !== pw2) {
-      toast.error("Passwords do not match");
-      return;
-    }
+    if (pw1.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    if (pw1 !== pw2) { toast.error("Passwords do not match"); return; }
     setSavingPw(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: pw1 });
       if (error) throw error;
       toast.success("Password updated.");
-      setPw1("");
-      setPw2("");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setSavingPw(false);
-    }
+      setPw1(""); setPw2("");
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setSavingPw(false); }
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div className="flex items-center gap-2">
-        <UserIcon className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold">Settings</h1>
-      </div>
-
-      <Card className="p-5 space-y-3">
-        <h2 className="font-semibold">Profile</h2>
+    <PageShell kicker="Locker Room · Profile" title="Your" titleAccent="kit.">
+      <StencilPanel kicker={<><UserIcon className="h-3 w-3" /> Profile</>} accent>
         {profile.isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          <Loader2 className="h-4 w-4 animate-spin text-[var(--color-ink-muted)]" />
         ) : (
-          <div className="grid sm:grid-cols-2 gap-3 text-sm">
-            <div>
-              <div className="text-xs text-muted-foreground">Display name</div>
-              <div className="font-medium">{profile.data?.display_name ?? "—"}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Reference ID</div>
-              <div className="font-mono">{profile.data?.public_reference ?? "—"}</div>
-            </div>
-            <div>
-              <div className="text-xs text-muted-foreground">Sign-in method</div>
-              <div className="font-medium capitalize">{profile.data?.auth_provider ?? "—"}</div>
-            </div>
+          <div className="grid gap-3 sm:grid-cols-2 text-sm">
+            <Field label="Display name" value={profile.data?.display_name ?? "—"} />
+            <Field label="Reference ID" value={profile.data?.public_reference ?? "—"} mono />
+            <Field label="Sign-in method" value={profile.data?.auth_provider ?? "—"} capitalize />
           </div>
         )}
-      </Card>
+      </StencilPanel>
 
-      <Card className="p-5 space-y-3">
-        <h2 className="font-semibold flex items-center gap-2"><Mail className="h-4 w-4" /> Email</h2>
+      <StencilPanel kicker={<><Mail className="h-3 w-3" /> Email</>}>
         <div className="space-y-1.5">
-          <Label htmlFor="email">Email address</Label>
+          <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Email address</Label>
           <Input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
+            className="bg-[#070D0A] border-[var(--color-surface-border)]"
           />
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-[11px] text-[var(--color-ink-muted)]">
             Changing email requires confirming the new address from your inbox.
           </p>
         </div>
-        <Button onClick={saveEmail} disabled={savingEmail || email === currentEmail}>
-          {savingEmail ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-          Update email
-        </Button>
-      </Card>
+        <SaveBtn onClick={saveEmail} disabled={savingEmail || email === currentEmail} loading={savingEmail} label="Update email" />
+      </StencilPanel>
 
-      <Card className="p-5 space-y-3">
-        <h2 className="font-semibold flex items-center gap-2"><Phone className="h-4 w-4" /> Phone number</h2>
+      <StencilPanel kicker={<><Phone className="h-3 w-3" /> Phone</>}>
         <div className="space-y-1.5">
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Phone number</Label>
           <Input
             id="phone"
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="+60123456789"
+            className="bg-[#070D0A] border-[var(--color-surface-border)]"
           />
-          <p className="text-[11px] text-muted-foreground">International format, e.g. +60123456789.</p>
+          <p className="text-[11px] text-[var(--color-ink-muted)]">International format, e.g. +60123456789.</p>
         </div>
-        <Button onClick={savePhone} disabled={savingPhone || phone === currentPhone}>
-          {savingPhone ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-          Update phone
-        </Button>
-      </Card>
+        <SaveBtn onClick={savePhone} disabled={savingPhone || phone === currentPhone} loading={savingPhone} label="Update phone" />
+      </StencilPanel>
 
-      <Card className="p-5 space-y-3">
-        <h2 className="font-semibold flex items-center gap-2"><KeyRound className="h-4 w-4" /> Password</h2>
+      <StencilPanel kicker={<><KeyRound className="h-3 w-3" /> Password</>}>
         <div className="space-y-1.5">
-          <Label htmlFor="pw1">New password</Label>
-          <Input id="pw1" type="password" minLength={8} value={pw1} onChange={(e) => setPw1(e.target.value)} />
+          <Label htmlFor="pw1" className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">New password</Label>
+          <Input id="pw1" type="password" minLength={8} value={pw1} onChange={(e) => setPw1(e.target.value)} className="bg-[#070D0A] border-[var(--color-surface-border)]" />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="pw2">Confirm new password</Label>
-          <Input id="pw2" type="password" minLength={8} value={pw2} onChange={(e) => setPw2(e.target.value)} />
+        <div className="mt-3 space-y-1.5">
+          <Label htmlFor="pw2" className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Confirm new password</Label>
+          <Input id="pw2" type="password" minLength={8} value={pw2} onChange={(e) => setPw2(e.target.value)} className="bg-[#070D0A] border-[var(--color-surface-border)]" />
         </div>
-        <Button onClick={savePassword} disabled={savingPw || !pw1 || !pw2}>
-          {savingPw ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-          Update password
-        </Button>
-      </Card>
+        <SaveBtn onClick={savePassword} disabled={savingPw || !pw1 || !pw2} loading={savingPw} label="Update password" />
+      </StencilPanel>
+    </PageShell>
+  );
+}
+
+function Field({ label, value, mono, capitalize }: { label: string; value: string; mono?: boolean; capitalize?: boolean }) {
+  return (
+    <div className="border border-[var(--color-surface-border)] bg-[#070D0A] p-3">
+      <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">{label}</div>
+      <div className={`mt-1 font-semibold ${mono ? "font-mono text-[var(--color-neon)]" : ""} ${capitalize ? "capitalize" : ""}`}>{value}</div>
     </div>
+  );
+}
+
+function SaveBtn({ onClick, disabled, loading, label }: { onClick: () => void; disabled?: boolean; loading?: boolean; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="mt-4 inline-flex items-center gap-2 rounded-full bg-[var(--color-neon)] px-5 py-3 text-xs font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
+    >
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+      {label}
+    </button>
   );
 }
