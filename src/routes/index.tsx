@@ -8,7 +8,7 @@ import {
   useLandingData,
 } from "@/components/HeroEnhancements";
 import {
-  LivePlatformPulse,
+  CommunityGrowthSection,
   RecentPlatformActivity,
   PayoutPerformanceSection,
   BuildingLongRun,
