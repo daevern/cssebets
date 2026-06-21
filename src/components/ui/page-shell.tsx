@@ -32,12 +32,6 @@ export function PageShell({
       <div
         className={`relative mx-auto flex ${wide ? "max-w-3xl" : "max-w-md md:max-w-2xl"} flex-col gap-5 px-4 py-5 md:py-8`}
       >
-        <header className="flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <CsseLogo size={22} />
-          </Link>
-        </header>
-
         <section className="space-y-2">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
             <Radio className="h-3 w-3" />
@@ -55,6 +49,13 @@ export function PageShell({
         </section>
 
         {children}
+
+        <footer className="mt-6 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+          <Link to="/dashboard" className="flex items-center gap-2 hover:text-[var(--color-ink)]">
+            <CsseLogo size={16} />
+          </Link>
+          <span>© {new Date().getFullYear()} CSSEBets</span>
+        </footer>
       </div>
     </div>
   );
