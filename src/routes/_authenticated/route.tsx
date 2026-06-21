@@ -9,7 +9,8 @@ import { getPendingPayoutCount, getMyPayoutActionCount } from "@/lib/payout.func
 import { getPendingUserCount } from "@/lib/admin.functions";
 import { getMyUnreadSupportCount } from "@/lib/support.functions";
 import { Shield, LogOut, Loader2 } from "lucide-react";
-import { CsseLogo, CsseMark } from "@/components/brand/CsseMark";
+import { CsseMark } from "@/components/brand/CsseMark";
+import { CsseLogoAnimated } from "@/components/brand/CsseLogoAnimated";
 import {
   IconHome,
   IconBets,
@@ -236,9 +237,11 @@ function AuthedLayout() {
           }}
         />
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
-          <Link to="/dashboard" aria-label="CSSEBets home" className="flex items-center gap-2">
+          <Link to="/dashboard" aria-label="CSSEBets home" className="flex items-center gap-2 group">
             <span className="sm:hidden"><CsseMark className="h-7 w-7 text-[var(--color-ink)]" title="CSSEBets" /></span>
-            <span className="hidden sm:inline-flex"><CsseLogo size={18} /></span>
+            <span className="hidden sm:inline-flex">
+              <CsseLogoAnimated size={26} duration={1.6} />
+            </span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
