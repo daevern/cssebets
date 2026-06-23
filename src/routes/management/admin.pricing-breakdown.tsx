@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, AlertTriangle, Info, ShieldAlert } from "lucide-react";
 import { MARKET_LABELS, selectionLabel } from "@/lib/markets-catalog";
+import { BrandText } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/management/admin/pricing-breakdown")({
   head: () => ({ meta: [{ title: "Pricing breakdown — Admin" }] }),
