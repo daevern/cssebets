@@ -81,7 +81,7 @@ function HelpCenter() {
       <StencilPanel kicker={<><Sparkles className="h-3 w-3" /> Full walkthrough</>} accent>
         <div className="flex items-start justify-between gap-3 flex-col sm:flex-row sm:items-center">
           <p className="text-sm text-[var(--color-ink-muted)] max-w-md">
-            Everything you need to use CSSEBets confidently. Restart the full guided tour at any time.
+            Everything you need to use <BrandText /> confidently. Restart the full guided tour at any time.
           </p>
           <button
             type="button"
