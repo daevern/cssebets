@@ -156,7 +156,7 @@ function SupportPage() {
       <StencilPanel
         accent
         kicker={<><span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-neon)] animate-pulse" /> Live channel</>}
-        meta="cssebets team"
+        meta={<><BrandText /> team</>}
       >
         <div className="flex flex-col h-[60vh] min-h-[400px] -mx-1">
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-1 py-2 space-y-3">
