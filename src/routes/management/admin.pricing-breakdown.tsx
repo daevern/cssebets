@@ -46,7 +46,7 @@ function PricingBreakdownPage() {
           Pricing breakdown
         </h1>
         <p className="text-sm text-muted-foreground">
-          Admin-only. Explains how API odds become CSSEBets odds — overround stripped,
+          Admin-only. Explains how API odds become <BrandText /> odds — overround stripped,
           25% house margin applied, 1.01 floor enforced. Read-only; no logic is changed here.
         </p>
       </div>
