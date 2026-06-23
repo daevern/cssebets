@@ -102,7 +102,7 @@ function Stat({
   );
 }
 
-/* ---------- COMMUNITY GROWTH (this month) ---------- */
+/* ---------- COMMUNITY GROWTH (this week) ---------- */
 export function CommunityGrowthSection() {
   const fn = useServerFn(getPublicCommunityGrowth);
   const q = useQuery({
@@ -113,17 +113,17 @@ export function CommunityGrowthSection() {
   });
   const d = q.data;
   const total =
-    (d?.members_this_month ?? 0) +
-    (d?.bets_this_month ?? 0) +
-    (d?.payouts_this_month ?? 0);
+    (d?.views_this_week ?? 0) +
+    (d?.bets_this_week ?? 0) +
+    (Number(d?.points_paid_out_this_week ?? 0));
 
   return (
     <section className="bg-gradient-to-b from-background to-card/30 py-12 sm:py-16">
       <div className="mx-auto max-w-5xl px-4">
         <SectionHeader
-          kicker={<><Users className="h-3 w-3" /> This month</>}
+          kicker={<><Users className="h-3 w-3" /> This week</>}
           title="Community Growth"
-          subtitle="Real members, real bets, real payouts — updated automatically."
+          subtitle="Real views, real bets, real points paid out — updated automatically."
         />
         {q.isLoading && !d ? (
           <div className="rounded-md border border-dashed border-primary/20 bg-card/50 p-8 text-center text-sm text-muted-foreground">
@@ -132,9 +132,9 @@ export function CommunityGrowthSection() {
         ) : (
           <>
             <div className="grid grid-cols-3 gap-2">
-              <Stat label="New members" value={fmt(d?.members_this_month ?? 0)} />
-              <Stat label="Bets this month" value={fmt(d?.bets_this_month ?? 0)} />
-              <Stat label="Payouts done" value={fmt(d?.payouts_this_month ?? 0)} />
+              <Stat label="Views this week" value={fmt(d?.views_this_week ?? 0)} />
+              <Stat label="Bets this week" value={fmt(d?.bets_this_week ?? 0)} />
+              <Stat label="Points paid out" value={fmt(Number(d?.points_paid_out_this_week ?? 0))} sub="this week" />
             </div>
             {total === 0 && (
               <p className="mt-4 text-center text-[11px] italic text-muted-foreground">
