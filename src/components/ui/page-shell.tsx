@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Radio } from "lucide-react";
-import { CsseLogo } from "@/components/brand/CsseMark";
+import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 
 /* cssebets unified design shell — used across dashboard / bets / matches /
    wallet / payout / settings / help. Scoreboard-grain background, stencil
