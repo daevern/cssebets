@@ -12,7 +12,6 @@ import {
   RecentPlatformActivity,
   PayoutPerformanceSection,
   BuildingLongRun,
-  TrustCard,
 } from "@/components/landing/TrustSections";
 import { recordHomeView } from "@/lib/trust-public.functions";
 import { useServerFn } from "@tanstack/react-start";
@@ -304,10 +303,6 @@ function LandingPage() {
 
       {/* Building for the long run */}
       <BuildingLongRun />
-
-      {/* Trust Card — at-a-glance live snapshot */}
-      <TrustCard />
-
 
       {/* Conversion belt — one last FOMO punch before support */}
       <section className="relative overflow-hidden bg-gradient-to-b from-background to-card/40">

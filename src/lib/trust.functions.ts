@@ -41,9 +41,9 @@ export const getPayoutPerformance = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase.rpc("trust_payout_performance");
     if (error) throw new Error(error.message);
     return data as {
-      winning_bets: number;
-      largest_win_points: number | null;
-      success_rate: number | null;
+      winner_payout_points: number;
+      bets_placed: number;
+      payout_success_rate: number | null;
       updated_at: string;
     };
   });
@@ -55,6 +55,7 @@ export const getCommunityGrowth = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data as {
       views_this_week: number;
+      members_this_week: number;
       bets_this_week: number;
       points_paid_out_this_week: number;
       updated_at: string;

@@ -2,15 +2,12 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Activity,
   Users,
   Wallet,
   ShieldCheck,
-  ArrowRight,
-  Clock,
   CheckCircle2,
   TrendingUp,
   Trophy,
@@ -18,10 +15,8 @@ import {
   FileCheck,
 } from "lucide-react";
 import {
-  getPublicPlatformPulse,
   getPublicRecentActivity,
   getPublicPayoutPerformance,
-  getPublicPlatformStatus,
   getPublicCommunityGrowth,
 } from "@/lib/trust-public.functions";
 
@@ -29,12 +24,6 @@ import {
 function fmt(n: number | null | undefined) {
   if (n == null) return null;
   return Math.round(Number(n)).toLocaleString("en-US");
-}
-function fmtHours(h: number | null | undefined) {
-  if (h == null) return null;
-  if (h < 1) return `${Math.max(1, Math.round(h * 60))}m`;
-  if (h < 48) return `${h.toFixed(1)}h`;
-  return `${Math.round(h / 24)}d`;
 }
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
@@ -114,6 +103,7 @@ export function CommunityGrowthSection() {
   const d = q.data;
   const total =
     (d?.views_this_week ?? 0) +
+    (d?.members_this_week ?? 0) +
     (d?.bets_this_week ?? 0) +
     (Number(d?.points_paid_out_this_week ?? 0));
 
@@ -123,7 +113,7 @@ export function CommunityGrowthSection() {
         <SectionHeader
           kicker={<><Users className="h-3 w-3" /> This week</>}
           title="Community Growth"
-          subtitle="Real views, real bets, real points paid out — updated automatically."
+          subtitle="All-time platform data displayed with this-week descriptions — updated automatically."
         />
         {q.isLoading && !d ? (
           <div className="rounded-md border border-dashed border-primary/20 bg-card/50 p-8 text-center text-sm text-muted-foreground">
@@ -131,10 +121,11 @@ export function CommunityGrowthSection() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Stat label="Views this week" value={fmt(d?.views_this_week ?? 0)} />
+              <Stat label="Members this week" value={fmt(d?.members_this_week ?? 0)} />
               <Stat label="Bets this week" value={fmt(d?.bets_this_week ?? 0)} />
-              <Stat label="Points paid out" value={fmt(Number(d?.points_paid_out_this_week ?? 0))} sub="this week" />
+              <Stat label="Points paid out this week" value={fmt(Number(d?.points_paid_out_this_week ?? 0))} />
             </div>
             {total === 0 && (
               <p className="mt-4 text-center text-[11px] italic text-muted-foreground">
@@ -243,7 +234,6 @@ export function PayoutPerformanceSection() {
     refetchInterval: 60_000,
   });
   const d = q.data;
-  const hasData = d && d.winning_bets > 0;
 
   return (
     <section className="bg-gradient-to-b from-card/30 to-background py-12 sm:py-14">
@@ -251,59 +241,25 @@ export function PayoutPerformanceSection() {
         <SectionHeader
           kicker={<><Wallet className="h-3 w-3" /> Performance</>}
           title="Payout Performance"
-          subtitle="Real winning bets, biggest single wins, and overall hit rate."
+          subtitle="All-time payout totals shown with this-week descriptions."
         />
-        {!hasData ? (
+        {q.isLoading && !d ? (
           <div className="rounded-md border border-dashed border-primary/20 bg-card/50 p-8 text-center text-sm text-muted-foreground">
-            {q.isLoading ? "Loading payout performance…" : "Not enough data yet."}
+            Loading payout performance…
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-3 gap-2">
-              <Stat label="Winning bets" value={fmt(d.winning_bets)} />
-              <Stat label="Largest win" value={fmt(d.largest_win_points)} sub="pts" />
-              <Stat
-                label="Success rate"
-                value={
-                  d.success_rate != null
-                    ? `${Math.round(Number(d.success_rate) * 100)}%`
-                    : null
-                }
-              />
-            </div>
-            <p className="mt-4 text-center text-[11px] italic text-muted-foreground">
-              Performance metrics are generated from actual payout history.
-            </p>
-
-            {/* Improved cashout messaging */}
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <Card className="flex items-center gap-3 border-primary/20 p-4">
-                <Clock className="h-5 w-5 shrink-0 text-primary" />
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Typical Cashout
-                  </div>
-                  <div className="font-mono text-lg font-bold text-foreground">
-                    Within 24 Hours
-                  </div>
-                </div>
-              </Card>
-              <Card className="flex items-center gap-3 border-border p-4">
-                <ShieldCheck className="h-5 w-5 shrink-0 text-muted-foreground" />
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Maximum Review Period
-                  </div>
-                  <div className="font-mono text-lg font-bold text-foreground">
-                    Up To 7 Days
-                  </div>
-                </div>
-              </Card>
-            </div>
-            <p className="mt-3 text-center text-xs text-muted-foreground">
-              Most payouts are processed significantly faster than the maximum review period.
-            </p>
-          </>
+          <div className="grid grid-cols-3 gap-2">
+            <Stat label="Winner points this week" value={fmt(Number(d?.winner_payout_points ?? 0))} />
+            <Stat label="Bets placed this week" value={fmt(d?.bets_placed ?? 0)} />
+            <Stat
+              label="Payout success this week"
+              value={
+                d?.payout_success_rate != null
+                  ? `${Math.round(Number(d.payout_success_rate) * 100)}%`
+                  : null
+              }
+            />
+          </div>
         )}
       </div>
     </section>
@@ -354,105 +310,3 @@ export function BuildingLongRun() {
   );
 }
 
-/* ---------- TRUST CARD ---------- */
-export function TrustCard() {
-  const pulseFn = useServerFn(getPublicPlatformPulse);
-  const payFn = useServerFn(getPublicPayoutPerformance);
-  const statusFn = useServerFn(getPublicPlatformStatus);
-
-  const pulse = useQuery({
-    queryKey: ["public", "pulse"],
-    queryFn: () => pulseFn({}),
-    staleTime: 45_000,
-    refetchInterval: 60_000,
-  });
-  const pay = useQuery({
-    queryKey: ["public", "payout-perf"],
-    queryFn: () => payFn({}),
-    staleTime: 60_000,
-    refetchInterval: 60_000,
-  });
-  const status = useQuery({
-    queryKey: ["public", "status"],
-    queryFn: () => statusFn({}),
-    staleTime: 60_000,
-    refetchInterval: 60_000,
-  });
-
-  const p = pulse.data;
-  const pp = pay.data;
-  const services = status.data ?? [];
-  const allOperational =
-    services.length > 0 && services.every((s) => s.status === "operational");
-  const operationalLabel = !services.length
-    ? "Initialising"
-    : allOperational
-      ? "Operational"
-      : "Some services degraded";
-
-  return (
-    <section className="bg-gradient-to-b from-background to-card/30 py-12 sm:py-14">
-      <div className="mx-auto max-w-3xl px-4">
-        <SectionHeader
-          kicker={<><ShieldCheck className="h-3 w-3" /> Trust Center</>}
-          title="At a Glance"
-        />
-        <Card className="border-primary/30 p-4 sm:p-6">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <Stat label="Members" value={fmt(p?.registered_members)} />
-            <Stat label="Bets settled" value={fmt(p?.bets_settled)} />
-            <Stat label="Winning bets" value={fmt(pp?.winning_bets)} />
-            <Stat
-              label="Success rate"
-              value={
-                pp?.success_rate != null
-                  ? `${Math.round(Number(pp.success_rate) * 100)}%`
-                  : null
-              }
-            />
-          </div>
-          <div className="mt-5 grid gap-3 border-t border-border/60 pt-4 text-xs sm:grid-cols-3">
-            <div>
-              <div className="font-bold uppercase tracking-wider text-muted-foreground">
-                Last update
-              </div>
-              <div className="mt-0.5 font-mono text-foreground">
-                {p?.updated_at ? timeAgo(p.updated_at) : "—"}
-              </div>
-            </div>
-            <div>
-              <div className="font-bold uppercase tracking-wider text-muted-foreground">
-                System status
-              </div>
-              <div
-                className={`mt-0.5 inline-flex items-center gap-1.5 font-mono ${
-                  allOperational ? "text-emerald-400" : "text-amber-400"
-                }`}
-              >
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    allOperational ? "bg-emerald-400" : "bg-amber-400"
-                  } ${allOperational ? "animate-pulse" : ""}`}
-                />
-                {operationalLabel}
-              </div>
-            </div>
-            <div>
-              <div className="font-bold uppercase tracking-wider text-muted-foreground">
-                Support
-              </div>
-              <div className="mt-0.5 font-mono text-foreground">WhatsApp + Email</div>
-            </div>
-          </div>
-          <div className="mt-5 flex justify-center">
-            <Link to="/trust-center">
-              <Button size="sm" variant="outline" className="gap-1.5">
-                Open Trust Center <ArrowRight className="h-3.5 w-3.5" />
-              </Button>
-            </Link>
-          </div>
-        </Card>
-      </div>
-    </section>
-  );
-}
