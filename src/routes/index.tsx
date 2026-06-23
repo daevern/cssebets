@@ -18,7 +18,7 @@ const HowItWorks = lazy(() =>
 );
 
 import { Mail, MessageCircle, ArrowRight, Radio, Lock } from "lucide-react";
-import { CsseLogo } from "@/components/brand/CsseMark";
+import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/")({
   ssr: false,
