@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useTour } from "@/components/onboarding/TourProvider";
