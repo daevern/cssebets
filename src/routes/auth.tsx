@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CsseAppIcon, CsseWordmark } from "@/components/brand/CsseMark";
-import { ChevronRight } from "lucide-react";
+import { ArrowRight, Radio } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -15,7 +15,8 @@ export const Route = createFileRoute("/auth")({
       { title: "Sign in — CSSEBets" },
       {
         name: "description",
-        content: "Sign in to CSSEBets to make your picks and track your leaderboard standing.",
+        content:
+          "Sign in to CSSEBets to make your picks, track your standing, and call the next matchday.",
       },
     ],
   }),
@@ -33,77 +34,19 @@ function isValidPhone(p: string) {
   return digits.length >= 10 && digits.length <= 15;
 }
 
-/**
- * Tactical pitch backdrop — proprietary CSSE visual.
- * Half-pitch with center circle, passing lanes, and an "ascent" polyline
- * that mirrors the brand mark. Pure SVG, scales crisp on mobile.
- */
-function PitchBackdrop() {
+/* Tick-mark corners — identical to dashboard fixture card. */
+function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
+  const map: Record<typeof pos, string> = {
+    tl: "top-0 left-0 border-t border-l",
+    tr: "top-0 right-0 border-t border-r",
+    bl: "bottom-0 left-0 border-b border-l",
+    br: "bottom-0 right-0 border-b border-r",
+  };
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      {/* Radial brand glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-10%,oklch(0.78_0.19_145/0.18),transparent_55%)]" />
-      {/* Pitch SVG */}
-      <svg
-        viewBox="0 0 800 1000"
-        className="absolute inset-x-0 top-0 h-full w-full opacity-[0.10]"
-        preserveAspectRatio="xMidYMin slice"
-      >
-        <defs>
-          <linearGradient id="lane" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="oklch(0.78 0.19 145)" stopOpacity="0.0" />
-            <stop offset="100%" stopColor="oklch(0.78 0.19 145)" stopOpacity="0.9" />
-          </linearGradient>
-        </defs>
-        <g fill="none" stroke="currentColor" strokeWidth="1.2" className="text-foreground">
-          {/* Touchlines */}
-          <rect x="60" y="40" width="680" height="920" />
-          {/* Halfway line */}
-          <line x1="60" y1="500" x2="740" y2="500" />
-          <circle cx="400" cy="500" r="90" />
-          <circle cx="400" cy="500" r="2.5" fill="currentColor" />
-          {/* Top penalty area */}
-          <rect x="200" y="40" width="400" height="150" />
-          <rect x="300" y="40" width="200" height="60" />
-          <circle cx="400" cy="160" r="2.5" fill="currentColor" />
-          {/* Bottom penalty area */}
-          <rect x="200" y="810" width="400" height="150" />
-          <rect x="300" y="900" width="200" height="60" />
-          <circle cx="400" cy="840" r="2.5" fill="currentColor" />
-          {/* Corner arcs */}
-          <path d="M60 60 A20 20 0 0 1 80 40" />
-          <path d="M740 60 A20 20 0 0 0 720 40" />
-          <path d="M60 940 A20 20 0 0 0 80 960" />
-          <path d="M740 940 A20 20 0 0 1 720 960" />
-        </g>
-        {/* Passing lane / strategy vector */}
-        <polyline
-          points="120,920 260,720 380,640 520,460 640,260 720,120"
-          fill="none"
-          stroke="url(#lane)"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray="2 8"
-        />
-        {/* Strategy nodes */}
-        {[
-          [120, 920],
-          [380, 640],
-          [640, 260],
-        ].map(([x, y]) => (
-          <circle
-            key={`${x}-${y}`}
-            cx={x}
-            cy={y}
-            r="6"
-            fill="oklch(0.78 0.19 145)"
-            opacity="0.9"
-          />
-        ))}
-      </svg>
-      {/* Bottom fade to background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
-    </div>
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute h-3 w-3 border-[var(--color-neon)] ${map[pos]}`}
+    />
   );
 }
 
@@ -144,58 +87,78 @@ function LoginPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground">
-      <PitchBackdrop />
+    <div className="relative min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
+      {/* Scoreboard scanline grain — same as dashboard */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
+        }}
+      />
+      {/* Neon glow wash */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 top-0 h-[420px]"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 0%, rgba(34,224,107,0.12), transparent 60%)",
+        }}
+      />
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-sm flex-col px-4 py-8">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-6 md:py-10">
         {/* Brand lockup */}
         <Link to="/" className="mb-6 flex items-center justify-center gap-3">
           <CsseAppIcon size={40} />
           <CsseWordmark size={20} />
         </Link>
 
-        {/* Tagline strip — proprietary CSSE language, not landing-page copy */}
-        <div className="mb-5 flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[oklch(0.78_0.19_145)]" />
-          <span>Matchday Console</span>
-          <span className="text-border">/</span>
-          <span className="text-[oklch(0.78_0.19_145)]">Live</span>
+        {/* Matchday tag — dashboard tone */}
+        <div className="mb-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
+          <Radio className="h-3 w-3" />
+          Matchday Console · Sign in
         </div>
 
-        {/* Scoreboard-style auth card */}
-        <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/85 shadow-2xl backdrop-blur-md">
-          {/* Top accent bar mimicking a stadium scoreboard */}
-          <div className="flex items-center justify-between border-b border-border/60 bg-[oklch(0.18_0.02_240/0.6)] px-5 py-2.5">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Session
-              </span>
-              <span className="text-[10px] uppercase tracking-[0.18em] text-[oklch(0.78_0.19_145)]">
-                Sign in
-              </span>
-            </div>
-            <span className="text-[10px] text-muted-foreground">
-              CSSEBets · 01
+        {/* Scoreboard auth card — sharp corners, tick marks, dashed divider */}
+        <article className="relative overflow-hidden border border-[var(--color-neon)]/25 bg-[var(--color-surface-2)]">
+          <Corner pos="tl" />
+          <Corner pos="tr" />
+          <Corner pos="bl" />
+          <Corner pos="br" />
+
+          {/* Stencil header band */}
+          <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-5 py-3">
+            <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-neon)]" />
+              Session · 01
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+              CSSEBets
             </span>
           </div>
 
           <div className="space-y-5 px-5 py-6">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-[22px] font-bold leading-tight tracking-tight">
-                Welcome back.
+            {/* Editorial greeting — mirrors dashboard "Hello, X." */}
+            <div>
+              <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight md:text-[32px]">
+                Welcome <span className="text-[var(--color-neon)]">back.</span>
+                <br />
+                <span className="text-[var(--color-ink-muted)]">Take your side.</span>
               </h1>
             </div>
 
-            <div className="flex gap-1 rounded-lg border border-border/60 bg-muted/40 p-1">
+            {/* Channel switcher — sharp, stencil */}
+            <div className="grid grid-cols-2 gap-0 border border-[var(--color-surface-border)] bg-[#070D0A] p-0.5">
               {(["email", "phone"] as const).map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setChannel(c)}
-                  className={`flex-1 rounded-md py-1.5 text-xs font-medium transition ${
+                  className={`py-2 text-[10px] font-bold uppercase tracking-[0.28em] transition-colors ${
                     channel === c
-                      ? "bg-card text-foreground shadow"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-[var(--color-neon)] text-[#04140A]"
+                      : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
                   }`}
                 >
                   {c === "email" ? "Email" : "Phone"}
@@ -205,19 +168,18 @@ function LoginPage() {
 
             <form onSubmit={onSubmit} className="space-y-4">
               {channel === "email" ? (
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">Email</Label>
+                <FieldBlock label="Email" htmlFor="email">
                   <Input
                     id="email"
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    className="rounded-none border-[var(--color-surface-border)] bg-[#070D0A] text-[var(--color-ink)] focus-visible:border-[var(--color-neon)] focus-visible:ring-0"
                   />
-                </div>
+                </FieldBlock>
               ) : (
-                <div className="space-y-1.5">
-                  <Label htmlFor="phone">Phone number</Label>
+                <FieldBlock label="Phone" htmlFor="phone" hint="International, e.g. +60123456789">
                   <Input
                     id="phone"
                     type="tel"
@@ -226,14 +188,12 @@ function LoginPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+60123456789"
+                    className="rounded-none border-[var(--color-surface-border)] bg-[#070D0A] text-[var(--color-ink)] focus-visible:border-[var(--color-neon)] focus-visible:ring-0"
                   />
-                  <p className="text-[11px] text-muted-foreground">
-                    International format, e.g. +60123456789
-                  </p>
-                </div>
+                </FieldBlock>
               )}
-              <div className="space-y-1.5">
-                <Label htmlFor="password">Password</Label>
+
+              <FieldBlock label="Password" htmlFor="password">
                 <Input
                   id="password"
                   type="password"
@@ -241,52 +201,89 @@ function LoginPage() {
                   minLength={6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  className="rounded-none border-[var(--color-surface-border)] bg-[#070D0A] text-[var(--color-ink)] focus-visible:border-[var(--color-neon)] focus-visible:ring-0"
                 />
-              </div>
-              <Button type="submit" className="group w-full" disabled={loading}>
-                {loading ? "signing in…" : "sign in"}
+              </FieldBlock>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="group relative flex w-full items-center justify-center gap-2 border border-[var(--color-neon)] bg-[var(--color-neon)] px-4 py-3 font-display text-sm font-bold uppercase tracking-[0.28em] text-[#04140A] transition-all hover:shadow-[0_0_24px_rgba(34,224,107,0.45)] disabled:opacity-60"
+              >
+                {loading ? "Signing in…" : "Sign in"}
                 {!loading && (
-                  <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 )}
-              </Button>
+              </button>
             </form>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border/60" />
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-card px-2 uppercase tracking-[0.18em] text-muted-foreground text-[10px]">
-                  New to CSSEBets
-                </span>
-              </div>
+            {/* Divider — uppercase stencil */}
+            <div className="flex items-center gap-3">
+              <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
+              <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
+                New to CSSEBets
+              </span>
+              <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
             </div>
 
-            <Link to="/register" className="block">
-              <Button type="button" variant="outline" className="w-full">
-                create account
-              </Button>
+            <Link
+              to="/register"
+              className="flex w-full items-center justify-center gap-2 border border-[var(--color-surface-border)] bg-transparent px-4 py-3 font-display text-sm font-bold uppercase tracking-[0.28em] text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)] hover:text-[var(--color-neon)]"
+            >
+              Create account
             </Link>
           </div>
 
-          {/* Bottom strip — FIFA WORLD CUP */}
-          <div className="border-t border-border/60 bg-[oklch(0.18_0.02_240/0.4)] px-5 py-2">
-            <div className="flex items-center justify-center gap-2 overflow-hidden text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-bold">
-              <span className="text-[oklch(0.78_0.19_145)]">FIFA WORLD CUP</span>
-            </div>
+          {/* Bottom strip — competition tag (mirrors dashboard footers) */}
+          <div className="flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] px-5 py-2.5">
+            <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
+              FIFA World Cup
+            </span>
+            <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
+              Secure · Live
+            </span>
           </div>
-        </div>
+        </article>
 
         {/* Footer */}
-        <p className="mt-6 text-center text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+        <p className="mt-6 text-center text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
           Competitive Strategy Starts Everywhere
         </p>
-        <div className="mt-3 text-center text-[11px] text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">
+        <div className="mt-3 text-center text-[11px] text-[var(--color-ink-muted)]">
+          <Link to="/" className="hover:text-[var(--color-neon)]">
             ← Back home
           </Link>
         </div>
       </div>
+    </div>
+  );
+}
+
+function FieldBlock({
+  label,
+  htmlFor,
+  hint,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label
+        htmlFor={htmlFor}
+        className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]"
+      >
+        {label}
+      </Label>
+      {children}
+      {hint && (
+        <p className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }
