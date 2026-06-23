@@ -401,7 +401,7 @@ export function TrustCard() {
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Stat label="Members" value={fmt(p?.registered_members)} />
             <Stat label="Bets settled" value={fmt(p?.bets_settled)} />
-            <Stat label="Payouts paid" value={fmt(pp?.total_completed)} />
+            <Stat label="Winning bets" value={fmt(pp?.winning_bets)} />
             <Stat
               label="Success rate"
               value={
