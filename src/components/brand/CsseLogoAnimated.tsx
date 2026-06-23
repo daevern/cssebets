@@ -325,7 +325,7 @@ export function CsseLogoAnimated({
             />
           </motion.svg>
         </span>
-      </span>
+      </motion.span>
     </span>
   );
 }
