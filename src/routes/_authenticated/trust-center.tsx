@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { IconShield, IconTimeline } from "@/components/trust/TrustIcons";
+import { BrandText } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/trust-center")({
   head: () => ({
