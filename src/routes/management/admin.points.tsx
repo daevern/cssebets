@@ -233,7 +233,7 @@ function AdminWalletPage() {
           {proof && (
             <div className="relative">
               {proof.type.startsWith("image/") ? (
-                <img src={proof.url} alt={proof.name} draggable={false} className="max-h-[70vh] w-full object-contain rounded select-none" />
+                <img src={proof.url} alt={proof.name}  className="max-h-[70vh] w-full object-contain rounded " />
               ) : proof.type === "application/pdf" ? (
                 <iframe src={proof.url} title={proof.name} className="w-full h-[70vh] rounded border" />
               ) : (
