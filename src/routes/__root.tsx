@@ -7,7 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { Suspense, useEffect, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { CsseLogoLoader } from "@/components/brand/CsseLogoAnimated";
 
 import appCss from "../styles.css?url";
