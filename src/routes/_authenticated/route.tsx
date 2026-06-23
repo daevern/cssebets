@@ -26,7 +26,7 @@ import { IconShield, IconBroadcast, IconChangelog } from "@/components/trust/Tru
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
-import { ScreenProtection } from "@/components/security/ScreenProtection";
+
 import { TourProvider, useTour } from "@/components/onboarding/TourProvider";
 import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
 
