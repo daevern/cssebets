@@ -153,13 +153,6 @@ function BetsHub() {
       />
 
       <div className="relative mx-auto flex max-w-md flex-col gap-5 px-4 py-5 md:max-w-2xl md:py-8">
-        {/* Header */}
-        <header className="flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <CsseLogo size={22} />
-          </Link>
-        </header>
-
         {/* Editorial intro */}
         <section className="space-y-2">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
