@@ -13,7 +13,7 @@ import {
 import { getHouseBankrollSummary } from "@/lib/bankroll.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Badge } from "@/components/ui/badge";
 import { Plus, Loader2, Upload, X, FileCheck, Landmark, Copy, Check, Wallet as WalletIcon, ArrowUpRight, Receipt, Building2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
