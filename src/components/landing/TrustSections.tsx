@@ -2,14 +2,12 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Activity,
   Users,
   Wallet,
   ShieldCheck,
-  ArrowRight,
   CheckCircle2,
   TrendingUp,
   Trophy,
@@ -17,10 +15,8 @@ import {
   FileCheck,
 } from "lucide-react";
 import {
-  getPublicPlatformPulse,
   getPublicRecentActivity,
   getPublicPayoutPerformance,
-  getPublicPlatformStatus,
   getPublicCommunityGrowth,
 } from "@/lib/trust-public.functions";
 
@@ -28,12 +24,6 @@ import {
 function fmt(n: number | null | undefined) {
   if (n == null) return null;
   return Math.round(Number(n)).toLocaleString("en-US");
-}
-function fmtHours(h: number | null | undefined) {
-  if (h == null) return null;
-  if (h < 1) return `${Math.max(1, Math.round(h * 60))}m`;
-  if (h < 48) return `${h.toFixed(1)}h`;
-  return `${Math.round(h / 24)}d`;
 }
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
