@@ -370,7 +370,16 @@ export function CsseLogoLoader({
       />
 
       <div className="relative flex flex-col items-center gap-8">
-        <CsseLogoAnimated size={size} loop duration={2.6} />
+        {/* The animated lockup is left-anchored within a wide track (room for
+            SSE/ets to slide). Offset by half the empty trailing space so the
+            final resolved mark lands in the exact center of the screen. */}
+        <div
+          style={{
+            transform: `translateX(${-(Math.round(size * 4.6) - size) / 2}px)`,
+          }}
+        >
+          <CsseLogoAnimated size={size} loop duration={2.6} />
+        </div>
 
         {/* Tracking progress bar — the green of the chevron extended */}
         <div className="relative h-[2px] w-[200px] overflow-hidden bg-[var(--color-surface-border,#1C2520)]">
