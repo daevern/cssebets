@@ -411,7 +411,6 @@ function Dashboard() {
         </article>
 
         {/* ---------- Trust & Transparency surfaces ---------- */}
-        <CommunityGrowth />
         <FounderNote />
 
         <footer className="mt-6 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
