@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CsseAppIcon, CsseWordmark } from "@/components/brand/CsseMark";
+import { CsseAppIcon, CsseWordmark, BrandText } from "@/components/brand/CsseMark";
 import { ArrowRight, Radio } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
