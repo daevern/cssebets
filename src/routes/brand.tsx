@@ -66,7 +66,7 @@ function BrandPage() {
               Starts Everywhere.
             </h1>
             <p className="max-w-xl text-muted-foreground">
-              The CSSEBets identity is built for a product-led betting platform —
+              The <BrandText /> identity is built for a product-led betting platform —
               modern, confident, and engineered to scale from a 16px favicon to a
               stadium-side billboard.
             </p>
