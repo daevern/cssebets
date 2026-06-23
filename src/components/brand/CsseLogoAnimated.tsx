@@ -219,7 +219,7 @@ export function CsseLogoAnimated({
       {/* ============================================================
           RIGHT HALF — "Bets"  →  B (rotated -90°)  →  green chevron
           ============================================================ */}
-      <span
+      <motion.span
         className="absolute top-1/2 -translate-y-1/2"
         style={{
           left: trackWidth / 2 - cap * 0.05,
@@ -230,6 +230,13 @@ export function CsseLogoAnimated({
           fontSize: cap,
           letterSpacing: "-0.02em",
           lineHeight: 1,
+        }}
+        animate={{
+          x: [0, 0, -(trackWidth / 2 - cap * 0.05)],
+        }}
+        transition={{
+          ...baseTrans,
+          times: [0, 0.3, 0.65],
         }}
       >
         <span className="relative block h-full w-full">
