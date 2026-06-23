@@ -346,23 +346,12 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-background pb-20 sm:pb-8">
-        <div className="mx-auto max-w-5xl px-4 py-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CsseLogo size={18} />
-
-            <Link to={primaryCta.to} className="text-sm text-muted-foreground hover:text-foreground">
-              {primaryCta.label}
-            </Link>
-          </div>
-          <p className="mt-5 text-xs text-muted-foreground">
-            Convert cash for points and start placing bets. Withdrawals or cashout are processed on this platform.
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            © {new Date().getFullYear()} cssebets. All rights reserved.
-          </p>
-        </div>
+      {/* Footer — matches PageShell footer used across app pages */}
+      <footer className="mx-auto mt-6 flex max-w-md items-center justify-between border-t border-dashed border-[var(--color-surface-border)] px-4 pb-20 pt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)] sm:pb-8 md:max-w-2xl">
+        <Link to={primaryCta.to} className="flex items-center gap-2 hover:text-[var(--color-ink)]">
+          <CsseLogo size={16} />
+        </Link>
+        <span>© {new Date().getFullYear()} CSSEBets</span>
       </footer>
 
       {/* Mobile sticky FOMO CTA — always there, pulsing pressure */}
