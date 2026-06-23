@@ -4,6 +4,7 @@ import { useTour } from "@/components/onboarding/TourProvider";
 import { TOURS } from "@/components/onboarding/tours.config";
 import { Sparkles, Wallet, Banknote, Headset, ListChecks, BookOpen, RefreshCw, ArrowUpRight, HelpCircle } from "lucide-react";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
+import { BrandText } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/help")({
   head: () => ({ meta: [{ title: "Help Center — cssebets" }] }),
