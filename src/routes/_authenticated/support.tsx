@@ -13,6 +13,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { BrandText } from "@/components/brand/CsseMark";
 import { Textarea } from "@/components/ui/textarea";
 import { Paperclip, Send, Loader2, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
