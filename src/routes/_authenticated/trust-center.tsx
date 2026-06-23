@@ -49,7 +49,7 @@ function TrustCenter() {
 
       <Section title="How points work">
         <p>
-          Points are the internal unit used to place bets on CSSEBets. They are not
+          Points are the internal unit used to place bets on <BrandText />. They are not
           a cryptocurrency or a publicly traded asset.
         </p>
         <ol className="list-decimal space-y-1.5 pl-5 text-[var(--color-ink-muted)]">
