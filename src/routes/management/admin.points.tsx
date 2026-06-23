@@ -228,7 +228,7 @@ function AdminWalletPage() {
             <DialogDescription className="truncate">{proof?.name}</DialogDescription>
           </DialogHeader>
           <p className="text-[11px] text-muted-foreground -mt-2">
-            Screenshots and recordings are discouraged. A user-specific watermark is applied for security. Signed URL expires in ~10 minutes.
+            Signed URL expires in ~10 minutes.
           </p>
           {proof && (
             <div className="relative">
