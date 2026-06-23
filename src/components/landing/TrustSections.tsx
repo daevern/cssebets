@@ -243,7 +243,7 @@ export function PayoutPerformanceSection() {
     refetchInterval: 60_000,
   });
   const d = q.data;
-  const hasData = d && d.total_completed > 0;
+  const hasData = d && d.winning_bets > 0;
 
   return (
     <section className="bg-gradient-to-b from-card/30 to-background py-12 sm:py-14">
@@ -251,7 +251,7 @@ export function PayoutPerformanceSection() {
         <SectionHeader
           kicker={<><Wallet className="h-3 w-3" /> Performance</>}
           title="Payout Performance"
-          subtitle="Every payout request is reviewed manually for account security."
+          subtitle="Real winning bets, biggest single wins, and overall hit rate."
         />
         {!hasData ? (
           <div className="rounded-md border border-dashed border-primary/20 bg-card/50 p-8 text-center text-sm text-muted-foreground">
@@ -259,10 +259,9 @@ export function PayoutPerformanceSection() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Stat label="Avg payout time" value={fmtHours(d.avg_processing_hours)} sub="processing" />
-              <Stat label="Completed payouts" value={fmt(d.total_completed)} />
-              <Stat label="Largest payout" value={fmt(d.largest_completed)} sub="pts" />
+            <div className="grid grid-cols-3 gap-2">
+              <Stat label="Winning bets" value={fmt(d.winning_bets)} />
+              <Stat label="Largest win" value={fmt(d.largest_win_points)} sub="pts" />
               <Stat
                 label="Success rate"
                 value={
