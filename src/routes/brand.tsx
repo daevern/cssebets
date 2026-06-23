@@ -4,6 +4,7 @@ import {
   CsseMark,
   CsseWordmark,
   CsseAppIcon,
+  BrandText,
 } from "@/components/brand/CsseMark";
 import { Card } from "@/components/ui/card";
 
