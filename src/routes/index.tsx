@@ -14,6 +14,8 @@ import {
   BuildingLongRun,
   TrustCard,
 } from "@/components/landing/TrustSections";
+import { recordHomeView } from "@/lib/trust-public.functions";
+import { useServerFn } from "@tanstack/react-start";
 const HowItWorks = lazy(() =>
   import("@/components/HowItWorks").then((m) => ({ default: m.HowItWorks })),
 );
