@@ -57,9 +57,8 @@ export const getPublicPayoutPerformance = createServerFn({ method: "GET" }).hand
     const { data, error } = await publicClient().rpc("trust_payout_performance");
     if (error) throw new Error(error.message);
     return data as {
-      avg_processing_hours: number | null;
-      total_completed: number;
-      largest_completed: number | null;
+      winning_bets: number;
+      largest_win_points: number | null;
       success_rate: number | null;
       updated_at: string;
     };
@@ -83,10 +82,16 @@ export const getPublicCommunityGrowth = createServerFn({ method: "GET" }).handle
     const { data, error } = await publicClient().rpc("trust_community_growth");
     if (error) throw new Error(error.message);
     return data as {
-      members_this_month: number;
-      bets_this_month: number;
-      payouts_this_month: number;
+      views_this_week: number;
+      bets_this_week: number;
+      points_paid_out_this_week: number;
       updated_at: string;
     };
   },
 );
+
+export const recordHomeView = createServerFn({ method: "POST" }).handler(async () => {
+  const { error } = await publicClient().from("page_views").insert({ path: "/" });
+  if (error) return { ok: false };
+  return { ok: true };
+});
