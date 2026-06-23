@@ -345,7 +345,7 @@ function PointsRequestScreen() {
         </h3>
       </div>
       <p className="mt-0.5 text-[9px] uppercase tracking-[0.22em] text-[var(--color-ink-muted)] leading-snug">
-        Screenshots discouraged · watermark applied
+        Bank transfer · admin verified
       </p>
 
       <div className="mt-2.5 space-y-2">

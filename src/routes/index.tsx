@@ -390,55 +390,6 @@ function LandingPage() {
 
       <BuildingLongRun />
 
-      {/* CONVERSION BELT — stencil */}
-      <section className="relative overflow-hidden bg-[var(--color-surface)]">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(50% 80% at 50% 50%, rgba(34,224,107,0.16), transparent)",
-          }}
-        />
-        <div className="relative mx-auto max-w-3xl px-4 py-16 text-center">
-          <div className="inline-flex items-center gap-2 border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
-            <Radio className="h-3 w-3" />
-            Don't watch from the sidelines
-          </div>
-          <h2 className="mt-4 font-display text-[34px] font-bold uppercase leading-[1] tracking-tight sm:text-[56px]">
-            Kickoff won't <span className="text-[var(--color-neon)]">wait.</span>
-          </h2>
-          <p className="mx-auto mt-3 max-w-lg text-sm text-[var(--color-ink-muted)] sm:text-base">
-            Every minute you wait, someone else takes the value. Lock your position before the whistle.
-          </p>
-
-          <div className="relative mt-6 inline-block border border-[var(--color-neon)]/25 bg-[var(--color-surface-2)] px-5 py-4">
-            <Corner pos="tl" />
-            <Corner pos="tr" />
-            <Corner pos="bl" />
-            <Corner pos="br" />
-            <div className="mb-2 flex items-center justify-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
-              <Lock className="h-3 w-3 text-[var(--color-neon)]" />
-              Bets close in
-            </div>
-            <LockdownClockBig kickoff={kickoff} />
-          </div>
-
-          <div className="mt-6 flex items-center justify-center">
-            {authed ? (
-              <NeonButton to="/dashboard">
-                Place your bet
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </NeonButton>
-            ) : (
-              <NeonButton to="/register">
-                Make a bet
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </NeonButton>
-            )}
-          </div>
-        </div>
-      </section>
 
       {/* SUPPORT — stencil cards */}
       <section id="support" className="border-t border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/40">
