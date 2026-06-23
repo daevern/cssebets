@@ -468,7 +468,7 @@ function LandingPage() {
             Convert cash for points and start placing bets. Withdrawals or cashout are processed on this platform.
           </p>
           <p className="mt-2 text-xs text-[var(--color-ink-muted)]">
-            © {new Date().getFullYear()} cssebets. All rights reserved.
+            © {new Date().getFullYear()} <BrandText />. All rights reserved.
           </p>
         </div>
       </footer>
