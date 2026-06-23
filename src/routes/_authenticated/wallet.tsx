@@ -265,9 +265,6 @@ function WalletPage() {
         tour="request-points"
         kicker={<><Plus className="h-3 w-3" /> Top up · Request points</>}
       >
-        <p className="text-[11px] text-[var(--color-ink-muted)]">
-          Screenshots and recordings are discouraged. A user-specific watermark is applied for security.
-        </p>
 
         <div className="mt-4 space-y-1.5">
           <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Amount</label>
