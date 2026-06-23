@@ -125,7 +125,7 @@ export function CommunityGrowthSection() {
               <Stat label="Views this week" value={fmt(d?.views_this_week ?? 0)} />
               <Stat label="Members this week" value={fmt(d?.members_this_week ?? 0)} />
               <Stat label="Bets this week" value={fmt(d?.bets_this_week ?? 0)} />
-              <Stat label="Points paid out" value={fmt(Number(d?.points_paid_out_this_week ?? 0))} />
+              <Stat label="Points paid out this week" value={fmt(Number(d?.points_paid_out_this_week ?? 0))} />
             </div>
             {total === 0 && (
               <p className="mt-4 text-center text-[11px] italic text-muted-foreground">
