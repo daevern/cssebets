@@ -187,8 +187,8 @@ function SupportPage() {
                       }`}
                     >
                       {!mine && (
-                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)] mb-0.5">
-                          cssebets Support
+                        <div className="text-[10px] font-bold tracking-[0.04em] text-[var(--color-neon)] mb-0.5">
+                          <BrandText /> <span className="uppercase tracking-[0.22em]">Support</span>
                         </div>
                       )}
                       {m.body && <div className="whitespace-pre-wrap break-words">{m.body}</div>}
