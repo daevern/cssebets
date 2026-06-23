@@ -14,6 +14,8 @@ import {
   BuildingLongRun,
   TrustCard,
 } from "@/components/landing/TrustSections";
+import { recordHomeView } from "@/lib/trust-public.functions";
+import { useServerFn } from "@tanstack/react-start";
 const HowItWorks = lazy(() =>
   import("@/components/HowItWorks").then((m) => ({ default: m.HowItWorks })),
 );
@@ -81,6 +83,7 @@ function LockdownClock({ kickoff }: { kickoff: string | null }) {
 function LandingPage() {
   const [authed, setAuthed] = useState<boolean | null>(null);
   const landing = useLandingData();
+  const trackView = useServerFn(recordHomeView);
 
   useEffect(() => {
     let mounted = true;
@@ -90,11 +93,13 @@ function LandingPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
       setAuthed(!!session?.user);
     });
+    // Fire-and-forget home view tracking — never block render
+    trackView({}).catch(() => {});
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [trackView]);
 
   const primaryCta = authed
     ? { to: "/dashboard", label: "Go to Dashboard" }

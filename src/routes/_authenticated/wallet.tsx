@@ -13,7 +13,7 @@ import {
 import { getHouseBankrollSummary } from "@/lib/bankroll.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Badge } from "@/components/ui/badge";
 import { Plus, Loader2, Upload, X, FileCheck, Landmark, Copy, Check, Wallet as WalletIcon, ArrowUpRight, Receipt, Building2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -284,10 +284,6 @@ function WalletPage() {
           )}
         </div>
 
-        <div className="mt-3 space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Reason (optional)</label>
-          <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" rows={2} className="bg-[#070D0A] border-[var(--color-surface-border)]" />
-        </div>
 
         <div data-tour="pointbank-field" className="mt-4 border border-dashed border-[var(--color-surface-border)] bg-[#070D0A] p-3 space-y-3">
           <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">

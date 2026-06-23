@@ -19,7 +19,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { CsseLogo } from "@/components/brand/CsseMark";
-import { CommunityGrowth } from "@/components/trust/CommunityGrowth";
 import { FounderNote } from "@/components/trust/FounderNote";
 
 /* Subs bench drawing — same tactical-stencil style as TacticalPitch / TacticalCrown */
@@ -412,7 +411,6 @@ function Dashboard() {
         </article>
 
         {/* ---------- Trust & Transparency surfaces ---------- */}
-        <CommunityGrowth />
         <FounderNote />
 
         <footer className="mt-6 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
