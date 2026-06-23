@@ -18,7 +18,7 @@ import { useLandingData } from "@/components/HeroEnhancements";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
-import { CsseLogo } from "@/components/brand/CsseMark";
+import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 import { FounderNote } from "@/components/trust/FounderNote";
 
 /* Subs bench drawing — same tactical-stencil style as TacticalPitch / TacticalCrown */
