@@ -277,7 +277,7 @@ export function BuildingLongRun() {
           title="Building for the Long Run"
         />
         <p className="text-sm text-foreground/90">
-          CSSEBets is growing one member at a time.
+          <BrandText /> is growing one member at a time.
         </p>
         <ul className="mx-auto mt-4 inline-grid gap-1.5 text-left text-sm text-muted-foreground">
           <li>• Fair settlements</li>
