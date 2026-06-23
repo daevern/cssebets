@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Loader2, AlertTriangle, Info, ShieldAlert } from "lucide-react";
 import { MARKET_LABELS, selectionLabel } from "@/lib/markets-catalog";
+import { BrandText } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/management/admin/pricing-breakdown")({
   head: () => ({ meta: [{ title: "Pricing breakdown — Admin" }] }),
@@ -45,7 +46,7 @@ function PricingBreakdownPage() {
           Pricing breakdown
         </h1>
         <p className="text-sm text-muted-foreground">
-          Admin-only. Explains how API odds become CSSEBets odds — overround stripped,
+          Admin-only. Explains how API odds become <BrandText /> odds — overround stripped,
           25% house margin applied, 1.01 floor enforced. Read-only; no logic is changed here.
         </p>
       </div>

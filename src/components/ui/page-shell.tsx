@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Radio } from "lucide-react";
-import { CsseLogo } from "@/components/brand/CsseMark";
+import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 
 /* cssebets unified design shell — used across dashboard / bets / matches /
    wallet / payout / settings / help. Scoreboard-grain background, stencil
@@ -54,7 +54,7 @@ export function PageShell({
           <Link to="/dashboard" className="flex items-center gap-2 hover:text-[var(--color-ink)]">
             <CsseLogo size={16} />
           </Link>
-          <span>© {new Date().getFullYear()} CSSEBets</span>
+          <span>© {new Date().getFullYear()} <BrandText /></span>
         </footer>
       </div>
     </div>

@@ -4,6 +4,7 @@ import {
   CsseMark,
   CsseWordmark,
   CsseAppIcon,
+  BrandText,
 } from "@/components/brand/CsseMark";
 import { Card } from "@/components/ui/card";
 
@@ -65,7 +66,7 @@ function BrandPage() {
               Starts Everywhere.
             </h1>
             <p className="max-w-xl text-muted-foreground">
-              The CSSEBets identity is built for a product-led betting platform —
+              The <BrandText /> identity is built for a product-led betting platform —
               modern, confident, and engineered to scale from a 16px favicon to a
               stadium-side billboard.
             </p>
@@ -199,7 +200,7 @@ function BrandPage() {
 
         <footer className="pt-8 border-t border-border text-xs text-muted-foreground flex items-center justify-between">
           <CsseLogo size={14} />
-          <span>© {new Date().getFullYear()} CSSEBets</span>
+          <span>© {new Date().getFullYear()} <BrandText /></span>
         </footer>
       </div>
     </div>

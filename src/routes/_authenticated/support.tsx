@@ -13,6 +13,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { BrandText } from "@/components/brand/CsseMark";
 import { Textarea } from "@/components/ui/textarea";
 import { Paperclip, Send, Loader2, FileText, Download } from "lucide-react";
 import { toast } from "sonner";
@@ -155,7 +156,7 @@ function SupportPage() {
       <StencilPanel
         accent
         kicker={<><span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-neon)] animate-pulse" /> Live channel</>}
-        meta="cssebets team"
+        meta={<><BrandText /> team</>}
       >
         <div className="flex flex-col h-[60vh] min-h-[400px] -mx-1">
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-1 py-2 space-y-3">
@@ -186,8 +187,8 @@ function SupportPage() {
                       }`}
                     >
                       {!mine && (
-                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)] mb-0.5">
-                          cssebets Support
+                        <div className="text-[10px] font-bold tracking-[0.04em] text-[var(--color-neon)] mb-0.5">
+                          <BrandText /> <span className="uppercase tracking-[0.22em]">Support</span>
                         </div>
                       )}
                       {m.body && <div className="whitespace-pre-wrap break-words">{m.body}</div>}

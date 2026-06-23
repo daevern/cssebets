@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { IconShield, IconTimeline } from "@/components/trust/TrustIcons";
+import { BrandText } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/trust-center")({
   head: () => ({
@@ -31,7 +32,7 @@ function TrustCenter() {
       wide
     >
       <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
-        This page is maintained by the CSSEBets team to answer common questions about
+        This page is maintained by the <BrandText /> team to answer common questions about
         how we handle points, bets, payouts, and security. It is not an independent
         certification — it is our own description of how the platform works today.
       </p>
@@ -48,7 +49,7 @@ function TrustCenter() {
 
       <Section title="How points work">
         <p>
-          Points are the internal unit used to place bets on CSSEBets. They are not
+          Points are the internal unit used to place bets on <BrandText />. They are not
           a cryptocurrency or a publicly traded asset.
         </p>
         <ol className="list-decimal space-y-1.5 pl-5 text-[var(--color-ink-muted)]">

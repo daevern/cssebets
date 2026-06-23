@@ -1,9 +1,11 @@
+import type { ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useTour } from "@/components/onboarding/TourProvider";
 import { TOURS } from "@/components/onboarding/tours.config";
 import { Sparkles, Wallet, Banknote, Headset, ListChecks, BookOpen, RefreshCw, ArrowUpRight, HelpCircle } from "lucide-react";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
+import { BrandText } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/help")({
   head: () => ({ meta: [{ title: "Help Center — cssebets" }] }),
@@ -15,7 +17,7 @@ type Section = {
   title: string;
   icon: any;
   tourKey?: string;
-  body: string;
+  body: ReactNode;
   link?: { to: string; label: string };
 };
 
@@ -25,7 +27,7 @@ const SECTIONS: Section[] = [
     title: "Getting Started",
     icon: BookOpen,
     tourKey: "dashboard",
-    body: "CSSEBets is a points-based prediction platform. After approval, you'll have a wallet, can request points, place bets on matches, track predictions, and request payouts on your winnings.",
+    body: <><BrandText /> is a points-based prediction platform. After approval, you'll have a wallet, can request points, place bets on matches, track predictions, and request payouts on your winnings.</>,
     link: { to: "/dashboard", label: "Open Dashboard" },
   },
   {
@@ -79,7 +81,7 @@ function HelpCenter() {
       <StencilPanel kicker={<><Sparkles className="h-3 w-3" /> Full walkthrough</>} accent>
         <div className="flex items-start justify-between gap-3 flex-col sm:flex-row sm:items-center">
           <p className="text-sm text-[var(--color-ink-muted)] max-w-md">
-            Everything you need to use CSSEBets confidently. Restart the full guided tour at any time.
+            Everything you need to use <BrandText /> confidently. Restart the full guided tour at any time.
           </p>
           <button
             type="button"

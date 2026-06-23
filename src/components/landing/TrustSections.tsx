@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
+import { BrandText } from "@/components/brand/CsseMark";
 import {
   Activity,
   Users,
@@ -129,7 +130,7 @@ export function CommunityGrowthSection() {
             </div>
             {total === 0 && (
               <p className="mt-4 text-center text-[11px] italic text-muted-foreground">
-                Every community starts somewhere. Thank you for helping build CSSEBets.
+                Every community starts somewhere. Thank you for helping build <BrandText />.
               </p>
             )}
           </>
@@ -276,7 +277,7 @@ export function BuildingLongRun() {
           title="Building for the Long Run"
         />
         <p className="text-sm text-foreground/90">
-          CSSEBets is growing one member at a time.
+          <BrandText /> is growing one member at a time.
         </p>
         <ul className="mx-auto mt-4 inline-grid gap-1.5 text-left text-sm text-muted-foreground">
           <li>• Fair settlements</li>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CsseMark } from "@/components/brand/CsseMark";
+import { CsseMark, BrandText } from "@/components/brand/CsseMark";
 import {
   Mail,
   Lock,
@@ -214,8 +214,8 @@ function PhoneFrame({
           <span className="h-1 w-1 animate-pulse rounded-full bg-[var(--color-neon)]" />
           Session · 0{step}
         </span>
-        <span className="text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-          CSSEBets
+        <span className="text-[9px] font-bold tracking-[0.04em] text-[var(--color-ink-muted)]">
+          <BrandText />
         </span>
       </div>
 
@@ -223,8 +223,8 @@ function PhoneFrame({
       <div className="mt-3 flex items-center justify-between border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2">
         <div className="flex items-center gap-2">
           <CsseMark className="h-5 w-5 text-[var(--color-neon)]" />
-          <span className="font-display text-[12px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink)]">
-            cssebets
+          <span className="text-[12px]">
+            <BrandText />
           </span>
         </div>
         <span className="border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">

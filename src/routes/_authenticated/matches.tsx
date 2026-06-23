@@ -15,7 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { MarketTabs } from "@/components/matches/MarketTabs";
 import { useAuth } from "@/hooks/use-auth";
-import { CsseLogo } from "@/components/brand/CsseMark";
+import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/matches")({
   head: () => ({ meta: [{ title: "Matches — cssebets" }] }),
@@ -408,7 +408,7 @@ function MatchCard({ match }: { match: Match }) {
 
             <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
               {match.odds_source === "the-odds-api"
-                ? `updated by cssebets ${timeAgo(match.odds_updated_at)}`
+                ? <>updated by <BrandText /> {timeAgo(match.odds_updated_at)}</>
                 : "Reference odds (awaiting live market sync)"}
             </div>
           </div>

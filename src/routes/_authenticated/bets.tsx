@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Crown, ArrowUpRight, Radio } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
-import { CsseLogo } from "@/components/brand/CsseMark";
+import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 
 function TacticalPitch(props: SVGProps<SVGSVGElement>) {
   return (
@@ -228,7 +228,7 @@ function BetsHub() {
           <Link to="/dashboard" className="flex items-center gap-2 hover:text-[var(--color-ink)]">
             <CsseLogo size={16} />
           </Link>
-          <span>© {new Date().getFullYear()} CSSEBets</span>
+          <span>© {new Date().getFullYear()} <BrandText /></span>
         </footer>
       </div>
     </div>

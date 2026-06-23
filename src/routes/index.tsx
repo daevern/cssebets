@@ -18,7 +18,7 @@ const HowItWorks = lazy(() =>
 );
 
 import { Mail, MessageCircle, ArrowRight, Radio, Lock } from "lucide-react";
-import { CsseLogo } from "@/components/brand/CsseMark";
+import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -404,7 +404,7 @@ function LandingPage() {
                 Need <span className="text-[var(--color-neon)]">help?</span>
               </h2>
               <p className="mt-3 text-sm text-[var(--color-ink-muted)]">
-                For account access, point requests, or wallet questions — contact cssebets support.
+                For account access, point requests, or wallet questions — contact <BrandText /> support.
               </p>
               <div className="mt-5">
                 <NeonButton href="mailto:support@cssebets.com">
@@ -468,7 +468,7 @@ function LandingPage() {
             Convert cash for points and start placing bets. Withdrawals or cashout are processed on this platform.
           </p>
           <p className="mt-2 text-xs text-[var(--color-ink-muted)]">
-            © {new Date().getFullYear()} cssebets. All rights reserved.
+            © {new Date().getFullYear()} <BrandText />. All rights reserved.
           </p>
         </div>
       </footer>

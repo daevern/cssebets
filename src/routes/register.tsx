@@ -5,7 +5,7 @@ import { checkAuthRateLimit } from "@/lib/rate-limit.functions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CsseAppIcon, CsseWordmark } from "@/components/brand/CsseMark";
+import { CsseAppIcon, CsseWordmark, BrandText } from "@/components/brand/CsseMark";
 import { ArrowRight, Radio, ShieldCheck, Trophy, Users } from "lucide-react";
 
 export const Route = createFileRoute("/register")({
@@ -165,8 +165,8 @@ function RegisterPage() {
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-neon)]" />
               Session · 02
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-              CSSEBets
+            <span className="text-[10px] font-bold tracking-[0.04em] text-[var(--color-ink-muted)]">
+              <BrandText />
             </span>
           </div>
 

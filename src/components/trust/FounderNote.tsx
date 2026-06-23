@@ -1,6 +1,7 @@
 import { StencilPanel } from "@/components/ui/page-shell";
 import { IconShield } from "@/components/trust/TrustIcons";
 import { Link } from "@tanstack/react-router";
+import { BrandText } from "@/components/brand/CsseMark";
 
 export function FounderNote() {
   return (
@@ -9,7 +10,7 @@ export function FounderNote() {
       accent
     >
       <p className="text-sm leading-relaxed text-[var(--color-ink)]">
-        CSSEBets is growing one member at a time. We focus on transparent operations,
+        <BrandText /> is growing one member at a time. We focus on transparent operations,
         fair settlements, responsive support, and continuous improvement.
         Thank you for being part of the journey.
       </p>

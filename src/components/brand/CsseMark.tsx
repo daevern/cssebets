@@ -103,6 +103,33 @@ export function CsseWordmark({ className, size = 20, inverse = false }: CsseWord
   );
 }
 
+/**
+ * Inline brand name for use INSIDE sentences/captions. Inherits the
+ * surrounding font-size (1em) so it always matches the paragraph it sits in.
+ * Renders "CSSE" in current text color + "Bets" in brand neon green.
+ *
+ * Use anywhere you'd otherwise type "CSSEBets" inside JSX copy.
+ */
+export function BrandText({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn("inline-flex items-baseline leading-none align-baseline", className)}
+      style={{
+        fontFamily: BRAND_FONT,
+        fontWeight: 700,
+        fontSize: "1em",
+        letterSpacing: "-0.02em",
+        fontFeatureSettings: '"ss01", "ss02"',
+        whiteSpace: "nowrap",
+      }}
+      aria-label="CSSEBets"
+    >
+      <span style={{ color: "currentColor" }}>CSSE</span>
+      <span style={{ color: "var(--color-neon, " + ACCENT + ")" }}>Bets</span>
+    </span>
+  );
+}
+
 /* --------------------------- Lockups ------------------------------- */
 
 export interface CsseLogoProps {
