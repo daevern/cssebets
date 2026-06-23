@@ -26,7 +26,7 @@ const SECTIONS: Section[] = [
     title: "Getting Started",
     icon: BookOpen,
     tourKey: "dashboard",
-    body: "CSSEBets is a points-based prediction platform. After approval, you'll have a wallet, can request points, place bets on matches, track predictions, and request payouts on your winnings.",
+    body: <><BrandText /> is a points-based prediction platform. After approval, you'll have a wallet, can request points, place bets on matches, track predictions, and request payouts on your winnings.</>,
     link: { to: "/dashboard", label: "Open Dashboard" },
   },
   {
