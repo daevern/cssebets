@@ -125,50 +125,6 @@ function LandingPage() {
         </div>
       </div>
 
-      {/* Top nav */}
-      <header className="sticky top-[30px] z-40 border-b border-border bg-background/80 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link to="/" aria-label="CSSEBets home">
-            <CsseLogo size={18} />
-          </Link>
-
-          <nav className="hidden items-center gap-1 md:flex">
-            <button
-              onClick={() => scrollToId("how")}
-              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              How It Works
-            </button>
-            <button
-              onClick={() => scrollToId("support")}
-              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              Support
-            </button>
-          </nav>
-          {authed ? (
-            <Link to="/dashboard">
-              <Button size="sm" className="shadow-md shadow-primary/30 transition-transform hover:scale-[1.03]">
-                Go to Dashboard
-              </Button>
-            </Link>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link to="/auth" className="hidden sm:inline-flex">
-                <Button size="sm" variant="ghost" className="transition-colors hover:text-primary">
-                  Log In
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button size="sm" className="shadow-md shadow-primary/30 transition-transform hover:scale-[1.03] animate-pulse">
-                  Register Now
-                </Button>
-              </Link>
-            </div>
-          )}
-        </div>
-      </header>
-
       {/* HERO — flows directly into the next sections via shared gradient bg */}
       <section className="relative overflow-hidden">
         {/* Stadium glow backdrop */}
@@ -390,23 +346,12 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-background pb-20 sm:pb-8">
-        <div className="mx-auto max-w-5xl px-4 py-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CsseLogo size={18} />
-
-            <Link to={primaryCta.to} className="text-sm text-muted-foreground hover:text-foreground">
-              {primaryCta.label}
-            </Link>
-          </div>
-          <p className="mt-5 text-xs text-muted-foreground">
-            Convert cash for points and start placing bets. Withdrawals or cashout are processed on this platform.
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            © {new Date().getFullYear()} cssebets. All rights reserved.
-          </p>
-        </div>
+      {/* Footer — matches PageShell footer used across app pages */}
+      <footer className="mx-auto mt-6 flex max-w-md items-center justify-between border-t border-dashed border-[var(--color-surface-border)] px-4 pb-20 pt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)] sm:pb-8 md:max-w-2xl">
+        <Link to={primaryCta.to} className="flex items-center gap-2 hover:text-[var(--color-ink)]">
+          <CsseLogo size={16} />
+        </Link>
+        <span>© {new Date().getFullYear()} CSSEBets</span>
       </footer>
 
       {/* Mobile sticky FOMO CTA — always there, pulsing pressure */}
