@@ -2,12 +2,11 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { checkAuthRateLimit } from "@/lib/rate-limit.functions";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CsseAppIcon, CsseWordmark } from "@/components/brand/CsseMark";
-import { ChevronRight, ShieldCheck, Trophy, Users } from "lucide-react";
+import { ArrowRight, Radio, ShieldCheck, Trophy, Users } from "lucide-react";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -16,7 +15,7 @@ export const Route = createFileRoute("/register")({
       {
         name: "description",
         content:
-          "Join the CSSEBets matchday console. Make your picks, climb the leaderboard, get paid out for winning calls.",
+          "Join the CSSEBets matchday console. Pick a side, climb the leaderboard, get paid for winning calls.",
       },
     ],
   }),
@@ -34,70 +33,23 @@ function isValidPhone(p: string) {
   return digits.length >= 10 && digits.length <= 15;
 }
 
-// Convert "+60123456789" → "60123456789@phone.cssebets.local"
 export function phoneToSyntheticEmail(phone: string) {
   const digits = phone.replace(/\D/g, "");
   return `${digits}@phone.cssebets.local`;
 }
 
-/**
- * Same tactical pitch backdrop used on /auth — keeps the entry & onboarding
- * surfaces visually unified with the CSSE matchday language.
- */
-function PitchBackdrop() {
+function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
+  const map: Record<typeof pos, string> = {
+    tl: "top-0 left-0 border-t border-l",
+    tr: "top-0 right-0 border-t border-r",
+    bl: "bottom-0 left-0 border-b border-l",
+    br: "bottom-0 right-0 border-b border-r",
+  };
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_-10%,oklch(0.78_0.19_145/0.18),transparent_55%)]" />
-      <svg
-        viewBox="0 0 800 1000"
-        className="absolute inset-x-0 top-0 h-full w-full opacity-[0.10]"
-        preserveAspectRatio="xMidYMin slice"
-      >
-        <defs>
-          <linearGradient id="lane-reg" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="oklch(0.78 0.19 145)" stopOpacity="0.0" />
-            <stop offset="100%" stopColor="oklch(0.78 0.19 145)" stopOpacity="0.9" />
-          </linearGradient>
-        </defs>
-        <g fill="none" stroke="currentColor" strokeWidth="1.2" className="text-foreground">
-          <rect x="60" y="40" width="680" height="920" />
-          <line x1="60" y1="500" x2="740" y2="500" />
-          <circle cx="400" cy="500" r="90" />
-          <circle cx="400" cy="500" r="2.5" fill="currentColor" />
-          <rect x="200" y="40" width="400" height="150" />
-          <rect x="300" y="40" width="200" height="60" />
-          <rect x="200" y="810" width="400" height="150" />
-          <rect x="300" y="900" width="200" height="60" />
-          <path d="M60 60 A20 20 0 0 1 80 40" />
-          <path d="M740 60 A20 20 0 0 0 720 40" />
-          <path d="M60 940 A20 20 0 0 0 80 960" />
-          <path d="M740 940 A20 20 0 0 1 720 960" />
-        </g>
-        <polyline
-          points="120,920 260,720 380,640 520,460 640,260 720,120"
-          fill="none"
-          stroke="url(#lane-reg)"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray="2 8"
-        />
-        {[
-          [120, 920],
-          [380, 640],
-          [640, 260],
-        ].map(([x, y]) => (
-          <circle
-            key={`${x}-${y}`}
-            cx={x}
-            cy={y}
-            r="6"
-            fill="oklch(0.78 0.19 145)"
-            opacity="0.9"
-          />
-        ))}
-      </svg>
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
-    </div>
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute h-3 w-3 border-[var(--color-neon)] ${map[pos]}`}
+    />
   );
 }
 
@@ -169,61 +121,77 @@ function RegisterPage() {
   }
 
   const submit = channel === "email" ? handleEmail : handlePhone;
+  const inputClass =
+    "rounded-none border-[var(--color-surface-border)] bg-[#070D0A] text-[var(--color-ink)] focus-visible:border-[var(--color-neon)] focus-visible:ring-0";
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground">
-      <PitchBackdrop />
+    <div className="relative min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 top-0 h-[420px]"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 0%, rgba(34,224,107,0.12), transparent 60%)",
+        }}
+      />
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-sm flex-col px-4 py-8">
-        {/* Brand lockup */}
+      <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col px-4 py-6 md:py-10">
         <Link to="/" className="mb-6 flex items-center justify-center gap-3">
           <CsseAppIcon size={40} />
           <CsseWordmark size={20} />
         </Link>
 
-        {/* Tagline strip */}
-        <div className="mb-5 flex items-center justify-center gap-2 text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-          <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-[oklch(0.78_0.19_145)]" />
-          <span>Matchday Console</span>
-          <span className="text-border">/</span>
-          <span className="text-[oklch(0.78_0.19_145)]">New Roster</span>
+        <div className="mb-4 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
+          <Radio className="h-3 w-3" />
+          Matchday Console · New Roster
         </div>
 
-        {/* Scoreboard-style register card */}
-        <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/85 shadow-2xl backdrop-blur-md">
-          <div className="flex items-center justify-between border-b border-border/60 bg-[oklch(0.18_0.02_240/0.6)] px-5 py-2.5">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Session
-              </span>
-              <span className="text-[10px] uppercase tracking-[0.18em] text-[oklch(0.78_0.19_145)]">
-                Register
-              </span>
-            </div>
-            <span className="text-[10px] text-muted-foreground">CSSEBets · 02</span>
+        <article className="relative overflow-hidden border border-[var(--color-neon)]/25 bg-[var(--color-surface-2)]">
+          <Corner pos="tl" />
+          <Corner pos="tr" />
+          <Corner pos="bl" />
+          <Corner pos="br" />
+
+          <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-5 py-3">
+            <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-neon)]" />
+              Session · 02
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+              CSSEBets
+            </span>
           </div>
 
           <div className="space-y-5 px-5 py-6">
-            <div className="flex flex-col gap-1">
-              <h1 className="text-[22px] font-bold leading-tight tracking-tight">
-                Claim your seat.
+            <div>
+              <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight md:text-[32px]">
+                Claim your <span className="text-[var(--color-neon)]">seat.</span>
+                <br />
+                <span className="text-[var(--color-ink-muted)]">Make the call.</span>
               </h1>
-              <p className="text-xs text-muted-foreground">
-                Admin approval needed before your first pick.
+              <p className="mt-2 text-[11px] uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+                Admin approval before your first pick.
               </p>
             </div>
 
-            {/* Channel switcher */}
-            <div className="flex gap-1 rounded-lg border border-border/60 bg-muted/40 p-1">
+            <div className="grid grid-cols-2 gap-0 border border-[var(--color-surface-border)] bg-[#070D0A] p-0.5">
               {(["email", "phone"] as const).map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setChannel(c)}
-                  className={`flex-1 rounded-md py-1.5 text-xs font-medium transition ${
+                  className={`py-2 text-[10px] font-bold uppercase tracking-[0.28em] transition-colors ${
                     channel === c
-                      ? "bg-card text-foreground shadow"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-[var(--color-neon)] text-[#04140A]"
+                      : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
                   }`}
                 >
                   {c === "email" ? "Email" : "Phone"}
@@ -232,30 +200,33 @@ function RegisterPage() {
             </div>
 
             <form onSubmit={submit} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="name">Display name</Label>
+              <Field label="Display name" htmlFor="name">
                 <Input
                   id="name"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Shown on the leaderboard"
+                  className={inputClass}
                 />
-              </div>
+              </Field>
 
               {channel === "email" ? (
-                <div className="space-y-1.5">
-                  <Label htmlFor="email">Email</Label>
+                <Field label="Email" htmlFor="email">
                   <Input
                     id="email"
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    className={inputClass}
                   />
-                </div>
+                </Field>
               ) : (
-                <div className="space-y-1.5">
-                  <Label htmlFor="phone">Phone number</Label>
+                <Field
+                  label="Phone"
+                  htmlFor="phone"
+                  hint="International format. Sign in with this number + password."
+                >
                   <Input
                     id="phone"
                     type="tel"
@@ -264,16 +235,13 @@ function RegisterPage() {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="+60123456789"
+                    className={inputClass}
                   />
-                  <p className="text-[11px] text-muted-foreground">
-                    International format. No SMS — sign in with this number + your password.
-                  </p>
-                </div>
+                </Field>
               )}
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="password">Password</Label>
+                <Field label="Password" htmlFor="password">
                   <Input
                     id="password"
                     type="password"
@@ -281,10 +249,10 @@ function RegisterPage() {
                     minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    className={inputClass}
                   />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="confirm">Confirm</Label>
+                </Field>
+                <Field label="Confirm" htmlFor="confirm">
                   <Input
                     id="confirm"
                     type="password"
@@ -292,73 +260,108 @@ function RegisterPage() {
                     minLength={8}
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
+                    className={inputClass}
                   />
-                </div>
+                </Field>
               </div>
 
-              <Button type="submit" className="group w-full" disabled={loading}>
-                {loading ? "creating account…" : "create account"}
+              <button
+                type="submit"
+                disabled={loading}
+                className="group relative flex w-full items-center justify-center gap-2 border border-[var(--color-neon)] bg-[var(--color-neon)] px-4 py-3 font-display text-sm font-bold uppercase tracking-[0.28em] text-[#04140A] transition-all hover:shadow-[0_0_24px_rgba(34,224,107,0.45)] disabled:opacity-60"
+              >
+                {loading ? "Creating account…" : "Create account"}
                 {!loading && (
-                  <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                 )}
-              </Button>
+              </button>
             </form>
 
-            {/* Brand trust strip — three CSSE pillars */}
-            <div className="grid grid-cols-3 gap-2 border-t border-border/60 pt-4">
+            {/* Brand pillars — stencil style */}
+            <div className="grid grid-cols-3 gap-0 border border-[var(--color-surface-border)] bg-[#070D0A]">
               {[
                 { icon: ShieldCheck, label: "Vetted roster" },
                 { icon: Trophy, label: "Real payouts" },
                 { icon: Users, label: "Live console" },
-              ].map(({ icon: Icon, label }) => (
+              ].map(({ icon: Icon, label }, i) => (
                 <div
                   key={label}
-                  className="flex flex-col items-center gap-1 text-center"
+                  className={`flex flex-col items-center gap-1.5 py-3 ${
+                    i < 2 ? "border-r border-[var(--color-surface-border)]" : ""
+                  }`}
                 >
-                  <Icon className="h-4 w-4 text-[oklch(0.78_0.19_145)]" />
-                  <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                  <Icon className="h-4 w-4 text-[var(--color-neon)]" />
+                  <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
                     {label}
                   </span>
                 </div>
               ))}
             </div>
 
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border/60" />
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-card px-2 uppercase tracking-[0.18em] text-muted-foreground text-[10px]">
-                  Already a member
-                </span>
-              </div>
+            <div className="flex items-center gap-3">
+              <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
+              <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
+                Already a member
+              </span>
+              <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
             </div>
 
-            <Link to="/auth" className="block">
-              <Button type="button" variant="outline" className="w-full">
-                sign in instead
-              </Button>
+            <Link
+              to="/auth"
+              className="flex w-full items-center justify-center gap-2 border border-[var(--color-surface-border)] bg-transparent px-4 py-3 font-display text-sm font-bold uppercase tracking-[0.28em] text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)] hover:text-[var(--color-neon)]"
+            >
+              Sign in instead
             </Link>
           </div>
 
-          {/* Bottom strip */}
-          <div className="border-t border-border/60 bg-[oklch(0.18_0.02_240/0.4)] px-5 py-2">
-            <div className="flex items-center justify-center gap-2 overflow-hidden text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-bold">
-              <span className="text-[oklch(0.78_0.19_145)]">FIFA WORLD CUP</span>
-            </div>
+          <div className="flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] px-5 py-2.5">
+            <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
+              FIFA World Cup
+            </span>
+            <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
+              Secure · Live
+            </span>
           </div>
-        </div>
+        </article>
 
-        {/* Footer */}
-        <p className="mt-6 text-center text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+        <p className="mt-6 text-center text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
           Competitive Strategy Starts Everywhere
         </p>
-        <div className="mt-3 text-center text-[11px] text-muted-foreground">
-          <Link to="/" className="hover:text-foreground">
+        <div className="mt-3 text-center text-[11px] text-[var(--color-ink-muted)]">
+          <Link to="/" className="hover:text-[var(--color-neon)]">
             ← Back home
           </Link>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  htmlFor,
+  hint,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label
+        htmlFor={htmlFor}
+        className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]"
+      >
+        {label}
+      </Label>
+      {children}
+      {hint && (
+        <p className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+          {hint}
+        </p>
+      )}
     </div>
   );
 }
