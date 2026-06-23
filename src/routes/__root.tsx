@@ -148,12 +148,27 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSync />
-      <Suspense fallback={<CsseLogoLoader />}>
-        <Outlet />
-      </Suspense>
+      <InitialLoadGate>
+        <Suspense fallback={<CsseLogoLoader />}>
+          <Outlet />
+        </Suspense>
+      </InitialLoadGate>
       <Toaster richColors position="top-center" theme="dark" />
     </QueryClientProvider>
   );
+}
+
+function InitialLoadGate({ children }: { children: ReactNode }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    // Hold for one full morph cycle (~2.6s) on first mount so the
+    // brand animation always completes and resolves to the logo
+    // before the app is revealed.
+    const t = setTimeout(() => setReady(true), 2800);
+    return () => clearTimeout(t);
+  }, []);
+  if (!ready) return <CsseLogoLoader />;
+  return <>{children}</>;
 }
 
 function AuthSync() {
