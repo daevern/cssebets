@@ -404,7 +404,7 @@ function LandingPage() {
                 Need <span className="text-[var(--color-neon)]">help?</span>
               </h2>
               <p className="mt-3 text-sm text-[var(--color-ink-muted)]">
-                For account access, point requests, or wallet questions — contact cssebets support.
+                For account access, point requests, or wallet questions — contact <BrandText /> support.
               </p>
               <div className="mt-5">
                 <NeonButton href="mailto:support@cssebets.com">
