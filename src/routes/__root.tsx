@@ -148,7 +148,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSync />
-      <Outlet />
+      <Suspense fallback={<CsseLogoLoader />}>
+        <Outlet />
+      </Suspense>
       <Toaster richColors position="top-center" theme="dark" />
     </QueryClientProvider>
   );
