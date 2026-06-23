@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CsseMark } from "@/components/brand/CsseMark";
+import { CsseMark, BrandText } from "@/components/brand/CsseMark";
 import {
   Mail,
   Lock,
