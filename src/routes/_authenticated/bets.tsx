@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Crown, ArrowUpRight, Radio } from "lucide-react";
 import type { ComponentType, SVGProps } from "react";
-import { CsseLogo } from "@/components/brand/CsseMark";
+import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 
 function TacticalPitch(props: SVGProps<SVGSVGElement>) {
   return (
