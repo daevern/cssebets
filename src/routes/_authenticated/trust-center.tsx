@@ -32,7 +32,7 @@ function TrustCenter() {
       wide
     >
       <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
-        This page is maintained by the CSSEBets team to answer common questions about
+        This page is maintained by the <BrandText /> team to answer common questions about
         how we handle points, bets, payouts, and security. It is not an independent
         certification — it is our own description of how the platform works today.
       </p>
