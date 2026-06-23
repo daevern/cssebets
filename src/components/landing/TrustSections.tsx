@@ -10,7 +10,6 @@ import {
   Wallet,
   ShieldCheck,
   ArrowRight,
-  Clock,
   CheckCircle2,
   TrendingUp,
   Trophy,
@@ -245,7 +244,6 @@ export function PayoutPerformanceSection() {
     refetchInterval: 60_000,
   });
   const d = q.data;
-  const hasData = d && d.winning_bets > 0;
 
   return (
     <section className="bg-gradient-to-b from-card/30 to-background py-12 sm:py-14">
@@ -253,59 +251,25 @@ export function PayoutPerformanceSection() {
         <SectionHeader
           kicker={<><Wallet className="h-3 w-3" /> Performance</>}
           title="Payout Performance"
-          subtitle="Real winning bets, biggest single wins, and overall hit rate."
+          subtitle="All-time payout totals shown with this-week descriptions."
         />
-        {!hasData ? (
+        {q.isLoading && !d ? (
           <div className="rounded-md border border-dashed border-primary/20 bg-card/50 p-8 text-center text-sm text-muted-foreground">
-            {q.isLoading ? "Loading payout performance…" : "Not enough data yet."}
+            Loading payout performance…
           </div>
         ) : (
-          <>
-            <div className="grid grid-cols-3 gap-2">
-              <Stat label="Winning bets" value={fmt(d.winning_bets)} />
-              <Stat label="Largest win" value={fmt(d.largest_win_points)} sub="pts" />
-              <Stat
-                label="Success rate"
-                value={
-                  d.success_rate != null
-                    ? `${Math.round(Number(d.success_rate) * 100)}%`
-                    : null
-                }
-              />
-            </div>
-            <p className="mt-4 text-center text-[11px] italic text-muted-foreground">
-              Performance metrics are generated from actual payout history.
-            </p>
-
-            {/* Improved cashout messaging */}
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <Card className="flex items-center gap-3 border-primary/20 p-4">
-                <Clock className="h-5 w-5 shrink-0 text-primary" />
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Typical Cashout
-                  </div>
-                  <div className="font-mono text-lg font-bold text-foreground">
-                    Within 24 Hours
-                  </div>
-                </div>
-              </Card>
-              <Card className="flex items-center gap-3 border-border p-4">
-                <ShieldCheck className="h-5 w-5 shrink-0 text-muted-foreground" />
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    Maximum Review Period
-                  </div>
-                  <div className="font-mono text-lg font-bold text-foreground">
-                    Up To 7 Days
-                  </div>
-                </div>
-              </Card>
-            </div>
-            <p className="mt-3 text-center text-xs text-muted-foreground">
-              Most payouts are processed significantly faster than the maximum review period.
-            </p>
-          </>
+          <div className="grid grid-cols-3 gap-2">
+            <Stat label="Winner points this week" value={fmt(Number(d?.winner_payout_points ?? 0))} />
+            <Stat label="Bets placed this week" value={fmt(d?.bets_placed ?? 0)} />
+            <Stat
+              label="Payout success this week"
+              value={
+                d?.payout_success_rate != null
+                  ? `${Math.round(Number(d.payout_success_rate) * 100)}%`
+                  : null
+              }
+            />
+          </div>
         )}
       </div>
     </section>
