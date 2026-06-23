@@ -17,7 +17,7 @@ type Section = {
   title: string;
   icon: any;
   tourKey?: string;
-  body: React.ReactNode;
+  body: ReactNode;
   link?: { to: string; label: string };
 };
 
