@@ -69,7 +69,7 @@ export function CsseLogoAnimated({
   // Generous track so SSE / ets have room to slide before collapsing.
   const trackWidth = Math.round(size * 4.6);
 
-  const repeat = loop ? { repeat: Infinity as const, repeatDelay: 0.7 } : {};
+  const repeat = loop ? { repeat: Infinity, repeatDelay: 0.7 } : {};
 
   /* ---------- Reduced-motion fallback ---------- */
   if (reduce) {
