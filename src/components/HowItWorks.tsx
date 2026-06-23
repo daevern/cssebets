@@ -214,8 +214,8 @@ function PhoneFrame({
           <span className="h-1 w-1 animate-pulse rounded-full bg-[var(--color-neon)]" />
           Session · 0{step}
         </span>
-        <span className="text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-          CSSEBets
+        <span className="text-[9px] font-bold tracking-[0.04em] text-[var(--color-ink-muted)]">
+          <BrandText />
         </span>
       </div>
 
