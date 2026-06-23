@@ -200,7 +200,7 @@ function BrandPage() {
 
         <footer className="pt-8 border-t border-border text-xs text-muted-foreground flex items-center justify-between">
           <CsseLogo size={14} />
-          <span>© {new Date().getFullYear()} CSSEBets</span>
+          <span>© {new Date().getFullYear()} <BrandText /></span>
         </footer>
       </div>
     </div>
