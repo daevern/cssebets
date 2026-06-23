@@ -125,50 +125,6 @@ function LandingPage() {
         </div>
       </div>
 
-      {/* Top nav */}
-      <header className="sticky top-[30px] z-40 border-b border-border bg-background/80 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link to="/" aria-label="CSSEBets home">
-            <CsseLogo size={18} />
-          </Link>
-
-          <nav className="hidden items-center gap-1 md:flex">
-            <button
-              onClick={() => scrollToId("how")}
-              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              How It Works
-            </button>
-            <button
-              onClick={() => scrollToId("support")}
-              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
-            >
-              Support
-            </button>
-          </nav>
-          {authed ? (
-            <Link to="/dashboard">
-              <Button size="sm" className="shadow-md shadow-primary/30 transition-transform hover:scale-[1.03]">
-                Go to Dashboard
-              </Button>
-            </Link>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link to="/auth" className="hidden sm:inline-flex">
-                <Button size="sm" variant="ghost" className="transition-colors hover:text-primary">
-                  Log In
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button size="sm" className="shadow-md shadow-primary/30 transition-transform hover:scale-[1.03] animate-pulse">
-                  Register Now
-                </Button>
-              </Link>
-            </div>
-          )}
-        </div>
-      </header>
-
       {/* HERO — flows directly into the next sections via shared gradient bg */}
       <section className="relative overflow-hidden">
         {/* Stadium glow backdrop */}
