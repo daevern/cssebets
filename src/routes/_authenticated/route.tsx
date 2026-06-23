@@ -220,10 +220,6 @@ function AuthedLayout() {
   return (
     <TourProvider>
     <div className="min-h-screen flex flex-col pb-20 md:pb-0">
-      <ScreenProtection
-        displayName={user?.user_metadata?.display_name || user?.email?.split("@")[0] || "user"}
-        uid={user?.id ?? ""}
-      />
       <WelcomeModal />
       {/* Top bar — stencil scoreboard */}
       <header className="sticky top-0 z-40 border-b border-[var(--color-surface-border)] bg-[var(--color-surface)]/90 backdrop-blur supports-[backdrop-filter]:bg-[var(--color-surface)]/70">
