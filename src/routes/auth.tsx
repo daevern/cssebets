@@ -220,8 +220,8 @@ function LoginPage() {
             {/* Divider — uppercase stencil */}
             <div className="flex items-center gap-3">
               <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
-              <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
-                New to CSSEBets
+              <span className="flex items-center gap-1.5 text-[9px] font-bold tracking-[0.04em] text-[var(--color-ink-muted)]">
+                <span className="uppercase tracking-[0.32em]">New to</span> <BrandText />
               </span>
               <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
             </div>
