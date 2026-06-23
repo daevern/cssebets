@@ -242,12 +242,6 @@ function Dashboard() {
       />
 
       <div className="relative mx-auto flex max-w-md flex-col gap-5 px-4 py-5 md:max-w-2xl md:py-8">
-        {/* ---------- Header ---------- */}
-        <header className="flex items-center justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <CsseLogo size={22} />
-          </Link>
-        </header>
 
         {/* ---------- Editorial greeting ---------- */}
         <section className="space-y-2">
@@ -420,6 +414,13 @@ function Dashboard() {
         {/* ---------- Trust & Transparency surfaces ---------- */}
         <CommunityGrowth />
         <FounderNote />
+
+        <footer className="mt-6 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+          <Link to="/dashboard" className="flex items-center gap-2 hover:text-[var(--color-ink)]">
+            <CsseLogo size={16} />
+          </Link>
+          <span>© {new Date().getFullYear()} CSSEBets</span>
+        </footer>
       </div>
     </div>
   );
