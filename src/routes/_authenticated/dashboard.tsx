@@ -417,7 +417,7 @@ function Dashboard() {
           <Link to="/dashboard" className="flex items-center gap-2 hover:text-[var(--color-ink)]">
             <CsseLogo size={16} />
           </Link>
-          <span>© {new Date().getFullYear()} CSSEBets</span>
+          <span>© {new Date().getFullYear()} <BrandText /></span>
         </footer>
       </div>
     </div>
