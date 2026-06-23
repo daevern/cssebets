@@ -223,6 +223,13 @@ function BetsHub() {
             </Link>
           ))}
         </div>
+
+        <footer className="mt-6 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+          <Link to="/dashboard" className="flex items-center gap-2 hover:text-[var(--color-ink)]">
+            <CsseLogo size={16} />
+          </Link>
+          <span>© {new Date().getFullYear()} CSSEBets</span>
+        </footer>
       </div>
     </div>
   );
