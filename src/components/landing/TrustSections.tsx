@@ -130,7 +130,7 @@ export function CommunityGrowthSection() {
             </div>
             {total === 0 && (
               <p className="mt-4 text-center text-[11px] italic text-muted-foreground">
-                Every community starts somewhere. Thank you for helping build CSSEBets.
+                Every community starts somewhere. Thank you for helping build <BrandText />.
               </p>
             )}
           </>
