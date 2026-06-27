@@ -211,6 +211,21 @@ function Dashboard() {
     },
   });
 
+  const { data: historyCount = 0 } = useQuery({
+    queryKey: ["dashboard-history-count", uid],
+    enabled: !!uid,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("predictions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", uid!)
+        .neq("status", "pending");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   const stakeOf = (p: { points: number; virtual_stake: number }) =>
     Number(p.virtual_stake ?? 0) || Number(p.points ?? 0);
   const liveCount = picks?.length ?? 0;
@@ -385,6 +400,8 @@ function Dashboard() {
                   </button>
                 </Link>
               </>
+            ) : historyCount > 0 ? (
+              <BenchSlider historyCount={historyCount} />
             ) : (
               <>
                 <div className="flex justify-center pb-2">
@@ -499,6 +516,143 @@ function StatBlock({
         >
           {unit}
         </span>
+      </div>
+    </div>
+  );
+}
+
+/* --------- Tactical clipboard (history icon) --------- */
+function TacticalClipboard(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 200 120"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="mx-auto w-full max-w-[200px] h-auto text-[var(--color-neon)] opacity-90 drop-shadow-[0_0_8px_rgba(var(--color-neon-glow-rgb),0.3)]"
+      {...props}
+    >
+      {/* Clipboard body */}
+      <rect x="55" y="18" width="90" height="92" strokeWidth="2" fill="currentColor" fillOpacity="0.04" />
+      {/* Clip */}
+      <rect x="82" y="10" width="36" height="14" strokeWidth="2" fill="currentColor" fillOpacity="0.12" />
+      <line x1="88" y1="14" x2="112" y2="14" strokeWidth="2" />
+      {/* Header band */}
+      <line x1="55" y1="34" x2="145" y2="34" strokeDasharray="3,3" />
+      {/* Result rows (W / L / D ticks) */}
+      <line x1="64" y1="48" x2="120" y2="48" strokeWidth="1.5" />
+      <circle cx="132" cy="48" r="5" strokeWidth="2" />
+      <path d="M 129 48 L 131 50 L 135 46" strokeWidth="2" />
+
+      <line x1="64" y1="66" x2="120" y2="66" strokeWidth="1.5" />
+      <circle cx="132" cy="66" r="5" strokeWidth="2" />
+      <path d="M 129 63 L 135 69 M 135 63 L 129 69" strokeWidth="2" />
+
+      <line x1="64" y1="84" x2="120" y2="84" strokeWidth="1.5" />
+      <circle cx="132" cy="84" r="5" strokeWidth="2" />
+      <line x1="128" y1="84" x2="136" y2="84" strokeWidth="2" />
+
+      {/* Footer total */}
+      <line x1="64" y1="100" x2="136" y2="100" strokeDasharray="2,3" />
+    </svg>
+  );
+}
+
+/* ----- Bench slider: 2 slides, swipeable ----- */
+function BenchSlider({ historyCount }: { historyCount: number }) {
+  const [idx, setIdx] = useState(0);
+  const [startX, setStartX] = useState<number | null>(null);
+
+  const onTouchStart = (e: React.TouchEvent) => setStartX(e.touches[0].clientX);
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (startX == null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 40) setIdx((i) => Math.max(0, Math.min(1, i + (dx < 0 ? 1 : -1))));
+    setStartX(null);
+  };
+
+  return (
+    <div>
+      <div className="overflow-hidden" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div
+          className="flex transition-transform duration-300 ease-out"
+          style={{ transform: `translateX(-${idx * 100}%)` }}
+        >
+          {/* Slide 1 — Get in the game */}
+          <div className="w-full shrink-0 px-1">
+            <div className="flex justify-center pb-2">
+              <SubsBench className="h-28 w-auto" />
+            </div>
+            <p className="text-center font-display text-xl font-bold leading-tight tracking-tight">
+              You're on the bench.
+            </p>
+            <p className="mx-auto mt-1.5 max-w-xs text-center text-sm text-[var(--color-ink-muted)]">
+              Get on the team sheet now.
+            </p>
+            <Link to="/bets" className="mt-4 block">
+              <button
+                type="button"
+                className="flex w-full items-center justify-between rounded-md border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/5 px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--color-neon)] transition-colors hover:bg-[var(--color-neon)]/10"
+              >
+                <span>Get in the game</span>
+                <ArrowUpRight className="h-4 w-4" />
+              </button>
+            </Link>
+          </div>
+
+          {/* Slide 2 — Picks history */}
+          <div className="w-full shrink-0 px-1">
+            <div className="flex justify-center pb-2">
+              <TacticalClipboard className="h-28 w-auto" />
+            </div>
+            <p className="text-center font-display text-xl font-bold leading-tight tracking-tight">
+              Read the tape.
+            </p>
+            <p className="mx-auto mt-1.5 max-w-xs text-center text-sm text-[var(--color-ink-muted)]">
+              {historyCount.toLocaleString("en-US")} settled {historyCount === 1 ? "pick" : "picks"} on record.
+            </p>
+            <Link to="/my-predictions" className="mt-4 block">
+              <button
+                type="button"
+                className="flex w-full items-center justify-between rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] transition-colors hover:border-[var(--color-neon)] hover:text-[var(--color-neon)]"
+              >
+                <span>View picks history</span>
+                <ArrowUpRight className="h-4 w-4" />
+              </button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Dots + arrows */}
+      <div className="mt-4 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setIdx(0)}
+          aria-label="Previous"
+          className={`text-[10px] font-bold uppercase tracking-[0.22em] transition-colors ${idx === 0 ? "text-[var(--color-ink-muted)]/40" : "text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]"}`}
+        >
+          ‹ Bet
+        </button>
+        <div className="flex items-center gap-1.5">
+          {[0, 1].map((i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setIdx(i)}
+              aria-label={`Slide ${i + 1}`}
+              className={`h-1.5 transition-all ${idx === i ? "w-6 bg-[var(--color-neon)]" : "w-1.5 bg-[var(--color-surface-border)]"}`}
+            />
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setIdx(1)}
+          aria-label="Next"
+          className={`text-[10px] font-bold uppercase tracking-[0.22em] transition-colors ${idx === 1 ? "text-[var(--color-ink-muted)]/40" : "text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]"}`}
+        >
+          History ›
+        </button>
       </div>
     </div>
   );
