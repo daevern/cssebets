@@ -1940,6 +1940,7 @@ export type Database = {
         | "admin_topup"
         | "admin_withdrawal"
         | "match_pool_collected"
+        | "payout_clawback"
       point_request_status:
         | "pending_upload"
         | "pending"
@@ -2113,6 +2114,7 @@ export const Constants = {
         "admin_topup",
         "admin_withdrawal",
         "match_pool_collected",
+        "payout_clawback",
       ],
       point_request_status: [
         "pending_upload",
