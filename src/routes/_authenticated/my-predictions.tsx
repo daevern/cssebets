@@ -321,3 +321,22 @@ function PredictionRow({ p }: { p: any }) {
     </StencilPanel>
   );
 }
+
+function TeamFlag({ name }: { name: string }) {
+  const url = teamFlagUrl(name, 160);
+  if (!url) {
+    return (
+      <div className="grid h-9 w-14 place-items-center border border-border/40 bg-[var(--color-surface)] text-[10px] font-bold uppercase tracking-wider text-[var(--color-ink)] shadow-sm">
+        {name.slice(0, 3)}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={`${name} flag`}
+      className="h-9 w-14 shrink-0 border border-border/40 object-cover shadow-sm"
+      loading="lazy"
+    />
+  );
+}
