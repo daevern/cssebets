@@ -189,16 +189,31 @@ function PredictionRow({ p }: { p: any }) {
     >
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)] mb-1">Fixture</div>
-            <div className="font-display font-bold text-base leading-tight truncate">
-              {p.matches ? (
-                <>
-                  {p.matches.home_team} <span className="text-[var(--color-ink-muted)] text-xs mx-1">vs</span> {p.matches.away_team}
-                </>
-              ) : "—"}
-            </div>
-            <div className="text-[11px] text-[var(--color-ink-muted)] mt-0.5">{kickoffLabel}</div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)] mb-2">Fixture</div>
+            {p.matches ? (
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                <div className="flex flex-col items-center gap-1.5">
+                  <TeamFlag name={p.matches.home_team} />
+                  <span className="max-w-[90px] truncate text-center text-[10px] font-bold uppercase tracking-wide">
+                    {p.matches.home_team}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <span className="font-display text-xs font-bold leading-none text-[var(--color-ink-muted)]">vs</span>
+                  <span className="h-4 w-px bg-[var(--color-neon)]/40" />
+                </div>
+                <div className="flex flex-col items-center gap-1.5">
+                  <TeamFlag name={p.matches.away_team} />
+                  <span className="max-w-[90px] truncate text-center text-[10px] font-bold uppercase tracking-wide">
+                    {p.matches.away_team}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="font-display font-bold text-base leading-tight">—</div>
+            )}
+            <div className="text-[11px] text-[var(--color-ink-muted)] mt-2">{kickoffLabel}</div>
           </div>
           <div className={`shrink-0 border px-2 py-1 text-[10px] uppercase tracking-[0.22em] font-bold ${statusTone}`}>
             {p.status}
