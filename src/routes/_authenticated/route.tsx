@@ -153,20 +153,83 @@ function AuthedLayout() {
 
   if (signingOut) {
     return (
-      <div 
-        className="min-h-screen grid place-items-center p-4 cursor-pointer select-none"
+      <div
+        className="relative min-h-screen cursor-pointer bg-[var(--color-surface)] text-[var(--color-ink)]"
         onClick={triggerRedirect}
       >
-        <Card className="max-w-md p-8 text-center space-y-4 pointer-events-none">
-          <div className="h-14 w-14 mx-auto rounded-2xl bg-success/20 grid place-items-center">
-            <LogOut className="h-7 w-7 text-success" />
+        {/* Scanline grain */}
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
+          }}
+        />
+        {/* Neon top wash */}
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-x-0 top-0 h-[420px]"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 0%, rgba(34,224,107,0.12), transparent 60%)",
+          }}
+        />
+        <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center px-4 py-10">
+          <div className="mb-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-neon)]" />
+            Full-time · Session ended
           </div>
-          <h1 className="text-xl font-bold">Signed out successfully</h1>
-          <p className="text-sm text-muted-foreground">
-            You've been signed out. Redirecting you to the login page (or click anywhere to skip)...
+
+          <article className="relative w-full overflow-hidden border border-[var(--color-neon)]/25 bg-[var(--color-surface-2)]">
+            <span aria-hidden className="pointer-events-none absolute top-0 left-0 h-3 w-3 border-t border-l border-[var(--color-neon)]" />
+            <span aria-hidden className="pointer-events-none absolute top-0 right-0 h-3 w-3 border-t border-r border-[var(--color-neon)]" />
+            <span aria-hidden className="pointer-events-none absolute bottom-0 left-0 h-3 w-3 border-b border-l border-[var(--color-neon)]" />
+            <span aria-hidden className="pointer-events-none absolute bottom-0 right-0 h-3 w-3 border-b border-r border-[var(--color-neon)]" />
+
+            <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-5 py-3">
+              <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+                Signed out
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+                Locker room
+              </span>
+            </div>
+
+            <div className="space-y-5 px-6 py-8 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center border border-[var(--color-neon)]/40 bg-[#070D0A]">
+                <IconLogout className="h-7 w-7 text-[var(--color-neon)]" />
+              </div>
+
+              <h1 className="font-display text-[26px] font-bold leading-[1.05] tracking-tight md:text-[30px]">
+                Whistle blown.<br />
+                <span className="text-[var(--color-neon)]">See you next matchday.</span>
+              </h1>
+
+              <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
+                Your session is closed. Routing you back to the tunnel — tap anywhere to skip.
+              </p>
+
+              <div className="flex items-center justify-center gap-2 pt-1 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--color-neon)]" />
+                Redirecting
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] px-5 py-2.5">
+              <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
+                FIFA World Cup
+              </span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
+                Tap to skip
+              </span>
+            </div>
+          </article>
+
+          <p className="mt-6 text-center text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
+            Competitive Strategy Starts Everywhere
           </p>
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground mx-auto" />
-        </Card>
+        </div>
       </div>
     );
   }
