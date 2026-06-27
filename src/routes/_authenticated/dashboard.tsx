@@ -211,6 +211,21 @@ function Dashboard() {
     },
   });
 
+  const { data: historyCount = 0 } = useQuery({
+    queryKey: ["dashboard-history-count", uid],
+    enabled: !!uid,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("predictions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", uid!)
+        .neq("status", "pending");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   const stakeOf = (p: { points: number; virtual_stake: number }) =>
     Number(p.virtual_stake ?? 0) || Number(p.points ?? 0);
   const liveCount = picks?.length ?? 0;
