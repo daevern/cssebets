@@ -1716,6 +1716,10 @@ export type Database = {
         Returns: undefined
       }
       reset_simulation_data: { Args: { p_admin_id: string }; Returns: Json }
+      reverse_settled_predictions_for_match: {
+        Args: { p_match_id: string }
+        Returns: number
+      }
       run_reconciliation_check: { Args: never; Returns: Json }
       run_simulation_batch_settle: { Args: never; Returns: Json }
       run_simulation_tick: {
