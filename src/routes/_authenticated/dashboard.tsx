@@ -400,6 +400,8 @@ function Dashboard() {
                   </button>
                 </Link>
               </>
+            ) : historyCount > 0 ? (
+              <BenchSlider historyCount={historyCount} />
             ) : (
               <>
                 <div className="flex justify-center pb-2">
