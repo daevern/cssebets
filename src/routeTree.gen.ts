@@ -68,6 +68,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/public/hooks/sync-fixtures'
 import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
 import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
+import { Route as ApiPublicHooksApifootballSyncRouteImport } from './routes/api/public/hooks/apifootball-sync'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -386,6 +387,12 @@ const ApiPublicHooksHealthCheckRoute =
     path: '/api/public/hooks/health-check',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksApifootballSyncRoute =
+  ApiPublicHooksApifootballSyncRouteImport.update({
+    id: '/api/public/hooks/apifootball-sync',
+    path: '/api/public/hooks/apifootball-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -442,6 +449,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
@@ -501,6 +509,7 @@ export interface FileRoutesByTo {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
@@ -563,6 +572,7 @@ export interface FileRoutesById {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
@@ -625,6 +635,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin/'
+    | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
@@ -684,6 +695,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin'
+    | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
@@ -745,6 +757,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin/'
+    | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
@@ -758,6 +771,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BrandRoute: typeof BrandRoute
   RegisterRoute: typeof RegisterRoute
+  ApiPublicHooksApifootballSyncRoute: typeof ApiPublicHooksApifootballSyncRoute
   ApiPublicHooksHealthCheckRoute: typeof ApiPublicHooksHealthCheckRoute
   ApiPublicHooksReconciliationRoute: typeof ApiPublicHooksReconciliationRoute
   ApiPublicHooksSyncFixturesRoute: typeof ApiPublicHooksSyncFixturesRoute
@@ -1179,6 +1193,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksHealthCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/apifootball-sync': {
+      id: '/api/public/hooks/apifootball-sync'
+      path: '/api/public/hooks/apifootball-sync'
+      fullPath: '/api/public/hooks/apifootball-sync'
+      preLoaderRoute: typeof ApiPublicHooksApifootballSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1316,6 +1337,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BrandRoute: BrandRoute,
   RegisterRoute: RegisterRoute,
+  ApiPublicHooksApifootballSyncRoute: ApiPublicHooksApifootballSyncRoute,
   ApiPublicHooksHealthCheckRoute: ApiPublicHooksHealthCheckRoute,
   ApiPublicHooksReconciliationRoute: ApiPublicHooksReconciliationRoute,
   ApiPublicHooksSyncFixturesRoute: ApiPublicHooksSyncFixturesRoute,
