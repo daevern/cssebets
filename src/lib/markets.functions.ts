@@ -136,6 +136,10 @@ export const placeMarketBet = createServerFn({ method: "POST" })
         });
         throw new Error("Potential return exceeds platform limit.");
       }
+      if (msg.includes("USER_MATCH_STAKE_EXCEEDED")) throw new Error("You've reached your maximum stake on this match.");
+      if (msg.includes("USER_MATCH_PAYOUT_EXCEEDED")) throw new Error("You've reached your maximum potential return on this match.");
+      if (msg.includes("USER_DAILY_PAYOUT_EXCEEDED")) throw new Error("You've reached your 24-hour potential return limit. Try again later.");
+      if (msg.includes("USER_CORRELATED_PAYOUT_EXCEEDED")) throw new Error("This pick is too similar to your other bets on this match. Lower the stake or choose a different market.");
       if (msg.includes("odds unavailable")) throw new Error("Odds unavailable for that selection.");
       throw new Error(msg || "Could not place bet.");
     }

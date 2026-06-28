@@ -836,6 +836,7 @@ export type Database = {
           apply_margin_to_real: boolean
           bets_paused: boolean
           correct_score_disabled: boolean
+          correlation_groups: Json
           critical_alert_email_enabled: boolean
           disabled_markets: string[]
           exposure_cap_pct: number
@@ -853,6 +854,10 @@ export type Database = {
           max_single_bet_payout: number | null
           max_single_outcome_liability: number | null
           max_stake_per_bet: number
+          max_user_daily_potential_payout: number
+          max_user_match_correlated_payout: number
+          max_user_match_potential_payout: number
+          max_user_match_stake: number
           odds_deviation_threshold_pct: number | null
           updated_at: string
         }
@@ -862,6 +867,7 @@ export type Database = {
           apply_margin_to_real?: boolean
           bets_paused?: boolean
           correct_score_disabled?: boolean
+          correlation_groups?: Json
           critical_alert_email_enabled?: boolean
           disabled_markets?: string[]
           exposure_cap_pct?: number
@@ -879,6 +885,10 @@ export type Database = {
           max_single_bet_payout?: number | null
           max_single_outcome_liability?: number | null
           max_stake_per_bet?: number
+          max_user_daily_potential_payout?: number
+          max_user_match_correlated_payout?: number
+          max_user_match_potential_payout?: number
+          max_user_match_stake?: number
           odds_deviation_threshold_pct?: number | null
           updated_at?: string
         }
@@ -888,6 +898,7 @@ export type Database = {
           apply_margin_to_real?: boolean
           bets_paused?: boolean
           correct_score_disabled?: boolean
+          correlation_groups?: Json
           critical_alert_email_enabled?: boolean
           disabled_markets?: string[]
           exposure_cap_pct?: number
@@ -905,6 +916,10 @@ export type Database = {
           max_single_bet_payout?: number | null
           max_single_outcome_liability?: number | null
           max_stake_per_bet?: number
+          max_user_daily_potential_payout?: number
+          max_user_match_correlated_payout?: number
+          max_user_match_potential_payout?: number
+          max_user_match_stake?: number
           odds_deviation_threshold_pct?: number | null
           updated_at?: string
         }
@@ -1125,6 +1140,9 @@ export type Database = {
           onboarding_skipped_at: string | null
           phone_number: string | null
           public_reference: string
+          risk_factor: number
+          risk_factor_reason: string | null
+          risk_factor_updated_at: string | null
           suspended: boolean
           tour_progress: Json
         }
@@ -1141,6 +1159,9 @@ export type Database = {
           onboarding_skipped_at?: string | null
           phone_number?: string | null
           public_reference?: string
+          risk_factor?: number
+          risk_factor_reason?: string | null
+          risk_factor_updated_at?: string | null
           suspended?: boolean
           tour_progress?: Json
         }
@@ -1157,6 +1178,9 @@ export type Database = {
           onboarding_skipped_at?: string | null
           phone_number?: string | null
           public_reference?: string
+          risk_factor?: number
+          risk_factor_reason?: string | null
+          risk_factor_updated_at?: string | null
           suspended?: boolean
           tour_progress?: Json
         }
@@ -1569,6 +1593,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      assert_user_match_risk: {
+        Args: {
+          p_market: string
+          p_match_id: string
+          p_odds: number
+          p_selection: string
+          p_stake: number
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       cancel_pending_bet: {
         Args: { p_prediction_id: string; p_user_id: string }
         Returns: string
@@ -1585,6 +1620,10 @@ export type Database = {
           p_window_seconds: number
         }
         Returns: boolean
+      }
+      classify_correlation_groups: {
+        Args: { p_market: string; p_selection: string }
+        Returns: string[]
       }
       delete_email: {
         Args: { message_id: number; queue_name: string }
@@ -1812,6 +1851,7 @@ export type Database = {
               apply_margin_to_real: boolean
               bets_paused: boolean
               correct_score_disabled: boolean
+              correlation_groups: Json
               critical_alert_email_enabled: boolean
               disabled_markets: string[]
               exposure_cap_pct: number
@@ -1829,6 +1869,10 @@ export type Database = {
               max_single_bet_payout: number | null
               max_single_outcome_liability: number | null
               max_stake_per_bet: number
+              max_user_daily_potential_payout: number
+              max_user_match_correlated_payout: number
+              max_user_match_potential_payout: number
+              max_user_match_stake: number
               odds_deviation_threshold_pct: number | null
               updated_at: string
             }
@@ -1860,6 +1904,7 @@ export type Database = {
               apply_margin_to_real: boolean
               bets_paused: boolean
               correct_score_disabled: boolean
+              correlation_groups: Json
               critical_alert_email_enabled: boolean
               disabled_markets: string[]
               exposure_cap_pct: number
@@ -1877,6 +1922,10 @@ export type Database = {
               max_single_bet_payout: number | null
               max_single_outcome_liability: number | null
               max_stake_per_bet: number
+              max_user_daily_potential_payout: number
+              max_user_match_correlated_payout: number
+              max_user_match_potential_payout: number
+              max_user_match_stake: number
               odds_deviation_threshold_pct: number | null
               updated_at: string
             }

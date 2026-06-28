@@ -1,101 +1,100 @@
-# Trust & Transparency Upgrade
 
-Adds honest, database-backed trust signals to CSSEBets. **No fake stats, no synthetic activity, no placeholder numbers.** When data is thin, surfaces show honest "building" messaging instead.
+# Per-User Correlated Exposure Controls
 
-All new UI uses the existing dark / neon stencil design system (`PageShell`, `StencilPanel`, custom SVG icons in the `TacticalPitch` / `SubsBench` style).
+## The problem
 
----
+Bố Chiou's bet history shows a textbook correlated-stack:
+on a single match he places **Over 2.5 + BTTS YES + Exact Goals 4 / 5+ + Correct Score 1-3** simultaneously. These markets are not independent — if the match is high-scoring, most/all win together. Today the platform only checks:
 
-## 1. Real-data server functions (one new file)
+- `max_bets_per_user_per_match` (count, not money)
+- `max_stake_per_bet`, `max_potential_payout` (per single bet)
+- Pool/bankroll caps (aggregate across all users)
 
-Create `src/lib/trust.functions.ts` exposing read-only, **public** server fns that aggregate anonymized stats from existing tables. Each uses the server publishable client (no auth needed for aggregates) and projects only safe columns. Numbers come from real `COUNT` / `AVG` queries; usernames are masked server-side before leaving the DB layer.
+Nothing caps **one user's combined potential payout on one match**, and nothing recognises that "Over 2.5 + BTTS YES + Goals 4" is effectively one bet. Result: a sharp user can extract many multiples of the house's intended per-match risk.
 
-- `getPlatformPulse` → registered members, active members (30d), bets placed, settled bets, approved payouts, total points paid out, avg payout processing time, avg point-request approval time, `updatedAt`. Each field returns `null` when the underlying count is 0 so the UI can show "Collecting platform statistics".
-- `getRecentActivity` → last 20 events from `predictions` (placed/won), `payout_requests` (requested/paid), `point_requests` (approved). Username masked to `Da***n` style (first 2 + last 1 of display_name, or `User #<short-id>` fallback). Strips amounts above a safe cap; never returns emails / phone / full names.
-- `getPayoutPerformance` → avg processing time, total completed, largest completed, success rate. Returns `{ hasHistory: false }` when fewer than ~3 completed payouts.
-- `getCommunityGrowth` → members joined this month, bets this month, payouts completed this month. Returns raw integers (including 0).
-- `getPlatformStatus` → reads `health_check_runs` + `operational_alerts` + `incidents` to derive `operational | degraded | offline` per service (Fixtures API, Odds Feed, Bet Settlement, Wallet, Payouts, Support). Falls back to `operational` only when a recent successful check exists; otherwise `unknown` (shown as "No recent check").
-- `getSupportStats` → open / in-review / awaiting-user / resolved counts + avg first-response time from `support_conversations` + `support_messages`.
+## Rule set to add (bookmaker-style)
 
-A migration adds the few narrow `TO anon` SELECT policies + GRANTs needed so these aggregates work without leaking row data. Policies project at the SQL-function level using `SECURITY DEFINER` aggregate functions (e.g. `public.pulse_counts()`) so anon never gets direct row SELECT on sensitive tables — only the aggregate output.
+### 1. Per-user, per-match potential payout cap
+Hard ceiling on the sum of `potential_return` across all of a user's pending bets on the same match.
 
-## 2. Authenticated server fns for personal trackers
+- New setting: `max_user_match_potential_payout` (default e.g. 1,500 pts).
+- Enforced atomically inside `place_market_bet_atomic` / `place_bet_atomic` before debiting the wallet.
+- Error: `USER_MATCH_PAYOUT_EXCEEDED` → friendly "You've reached your max potential return on this match."
 
-- `getMyPointRequestTimeline(requestId)` → returns status history (`submitted → under_review → approved → credited`) with timestamps + admin note, derived from existing `point_requests` columns. Uses `requireSupabaseAuth`.
-- `getMyBadges()` → derives badges from real activity counts (Verified Member, First Bet, 10 Bets, 100 Bets, Winning Streak ≥3, Payout Completed). Pure read, no new table.
+### 2. Per-user, per-match stake cap
+Same idea, but on the sum of stakes (prevents whales from buying past the payout cap with huge stakes on low odds).
 
-## 3. New routes & components
+- New setting: `max_user_match_stake` (default e.g. 500 pts).
+- Error: `USER_MATCH_STAKE_EXCEEDED`.
 
-```text
-src/routes/_authenticated/
-  trust-center.tsx        # Trust Center (commitments, points, settlement, payout, responsible play)
-  status.tsx              # Platform Status
-  changelog.tsx           # Public changelog (markdown-driven)
-src/routes/
-  (none — Trust Center & Status are auth-gated to keep parity with rest of app)
-src/components/trust/
-  PlatformPulse.tsx       # Dashboard section
-  ActivityFeed.tsx        # Dashboard section
-  PayoutPerformance.tsx   # Reused on Payout page + Trust Center
-  CommunityGrowth.tsx     # Dashboard section
-  FounderNote.tsx         # "Building for the Long Run" homepage block
-  PointRequestTimeline.tsx# Used inside Wallet point-request detail
-  BadgeGrid.tsx           # Settings / profile area
-  StatusGrid.tsx          # Status page
-  SupportStats.tsx        # Support page header
-  TrustIcons.tsx          # Custom SVG icons (shield, pulse, timeline, badge) in stencil style
-src/content/
-  changelog.ts            # Hand-curated entries { date, type: 'feature'|'fix'|'improvement', title, body }
-```
+### 3. Correlated-market grouping (the key fix)
+Treat correlated markets as a single risk bucket per user per match. Within a bucket, only the **worst-case** combined payout counts, but a tighter cap applies than the generic per-match cap.
 
-## 4. Page edits
+Initial correlation groups (configurable JSON in `platform_settings.correlation_groups`):
+- **goals_up**: `over_under_2_5:OVER_2_5`, `btts:YES`, `exact_total_goals:GOALS_3/4/5_PLUS`, `correct_score` with home+away ≥ 3
+- **goals_down**: `over_under_2_5:UNDER_2_5`, `btts:NO`, `exact_total_goals:GOALS_0/1/2`, `correct_score` with home+away ≤ 2
+- **home_win_strong** / **away_win_strong**: HT/FT same side + matching correct scores
+- **draw_lean**: HT/FT DRAW_DRAW + correct score 0-0/1-1/2-2
 
-- `dashboard.tsx` — insert `PlatformPulse`, `ActivityFeed`, `CommunityGrowth`, `FounderNote` panels below existing hero/bench block. Each panel handles its own loading + empty state.
-- `wallet.tsx` — add `PointRequestTimeline` to each point-request row (expandable).
-- `payout.tsx` — add `PayoutPerformance` panel above existing payout form. Add line: "Every payout request is manually reviewed for account security."
-- `support.tsx` — add `SupportStats` strip at top + per-conversation status pill.
-- `settings.tsx` — add `BadgeGrid` section.
-- `route.tsx` (auth layout nav) — add nav entries: Trust Center, Status, Changelog (with new stencil icons). Mobile nav gets the same.
+For each group, compute the **scenario payout** = sum of `potential_return` of the user's pending bets in that group on that match (because in the worst case for the house, all of them resolve together).
 
-## 5. Honest empty states (everywhere)
+- New setting: `max_user_match_correlated_payout` (default e.g. 1,000 pts, stricter than #1).
+- Error: `USER_CORRELATED_PAYOUT_EXCEEDED` → "This selection correlates with your other picks on this match. Lower stake or pick a different market."
 
-Each panel renders one of:
-- Real numbers, with "Updated live · <relative time>".
-- `EmptyState` component with copy like "Collecting platform statistics", "Building payout history", "Every community starts somewhere. Thank you for helping build CSSEBets."
+### 4. Per-user, per-day net exposure cap
+Stops the same user spreading the same correlated stack across every match of the day.
 
-No skeleton-as-fake-data, no animated counters spinning to random numbers.
+- New setting: `max_user_daily_potential_payout` (default e.g. 8,000 pts), evaluated across all pending bets placed in the rolling 24h window.
+- Error: `USER_DAILY_PAYOUT_EXCEEDED`.
 
-## 6. Privacy & safety guarantees
+### 5. Dynamic stake-factor (sharp detection)
+Track each user's recent ROI (last N settled bets). When their ROI exceeds a threshold, automatically scale their `max_user_match_stake` and `max_user_match_potential_payout` down by a factor.
 
-- Activity feed masks names in the SQL function — raw names never cross the wire.
-- No emails, phones, addresses, full amounts above a cap, or admin notes leak via public fns.
-- Trust Center copy is static, app-owner attributed, no certification claims, no "verified by Lovable" language, no compliance promises.
-- Status page reflects real `health_check_runs`; no fabricated uptime %.
+- New columns on `profiles`: `risk_factor` numeric default 1.0, `risk_factor_reason` text, `risk_factor_updated_at`.
+- Nightly job (or on-settle trigger) recomputes `risk_factor` based on rolling ROI and total profit vs house. Sharps end up at 0.5 / 0.25.
+- All per-user caps above are multiplied by `risk_factor` at check time.
+- Admin UI: view & override `risk_factor` per user, see why it was set.
 
-## 7. Changelog
+### 6. Admin visibility
+Extend the existing risk dashboard (`src/lib/risk.functions.ts`) with:
+- New "Per-user per-match exposure" table (top 20 worst).
+- New "Correlated-group exposure per user" view.
+- Highlight users currently bumping any of the new caps.
 
-Hand-curated TS array (no DB) rendered as a clean timeline. Entries grouped by month, typed (feature / fix / improvement) with neon stencil chips. Adding entries = editing one file; honest and easy to maintain.
+## Technical sketch
 
----
+**Migration adds:**
+- 5 new columns on `platform_settings` (the four caps + `correlation_groups jsonb`).
+- 3 new columns on `profiles` (`risk_factor`, reason, updated_at).
+- New SQL function `public.assert_user_match_risk(p_user_id, p_match_id, p_market, p_selection, p_stake, p_odds)` — runs all four checks against pending predictions, respecting `risk_factor`.
+- Hook it into `place_market_bet_atomic` and `place_bet_atomic` right after `assert_betting_allowed`, before wallet debit.
+- New error codes mapped to friendly messages in `src/lib/markets.functions.ts` and `src/lib/predictions.functions.ts`.
 
-## Technical notes
+**Admin code:**
+- `src/routes/management/admin.risk-settings.tsx`: add inputs for the four new caps + correlation groups editor.
+- `src/routes/management/admin.users.tsx`: risk_factor editor.
+- `src/lib/risk.functions.ts`: extend `getRiskDashboard` payload with `userMatchExposure` and `userCorrelatedExposure`.
+- New admin panel section: "User concentration risk".
 
-- All aggregate server fns are public (no `requireSupabaseAuth`) so the dashboard SSR/prerender works without a bearer token.
-- New SQL functions are `SECURITY DEFINER` + `SET search_path = public` and `GRANT EXECUTE ... TO anon, authenticated`.
-- No new tables — everything derives from existing schema (`profiles`, `predictions`, `payout_requests`, `point_requests`, `support_*`, `health_check_runs`, `operational_alerts`, `incidents`).
-- TanStack Query: each component uses `queryOptions` + `useQuery` with 30–60s `staleTime`; "Updated live" timestamp comes from `dataUpdatedAt`.
-- All new icons are inline SVGs matching the existing stroke-1.6 neon stencil style.
+**No changes to existing wallet / settlement logic** — these are pre-trade checks only.
 
-## Out of scope (this pass)
+## Defaults (proposed — tweakable in admin before rollout)
 
-- No new admin tooling for changelog (file-based is intentional for credibility + speed).
-- No new badges table — derived on the fly.
-- No realtime websockets for activity feed — polling every 30s is honest enough and cheap.
+| Setting | Default |
+| --- | --- |
+| `max_user_match_potential_payout` | 1,500 pts |
+| `max_user_match_stake` | 500 pts |
+| `max_user_match_correlated_payout` | 1,000 pts |
+| `max_user_daily_potential_payout` | 8,000 pts |
+| Sharp ROI threshold → 0.5 factor | +30% ROI over 20 bets |
+| Sharp ROI threshold → 0.25 factor | +60% ROI over 20 bets |
 
-## Files
+With these defaults, Bố Chiou's typical 4-leg goals_up stack on one match (≈ 4,200 pts potential) would have been blocked at leg #2 with `USER_CORRELATED_PAYOUT_EXCEEDED`.
 
-**Migration (1):** add SECURITY DEFINER aggregate functions + GRANTs for anon stats.
+## Out of scope (call out before approving)
 
-**Created (~14):** `src/lib/trust.functions.ts`, 3 route files, 10 components, `src/content/changelog.ts`.
+- Auto-suspending a user (manual admin action only).
+- Changing odds on the fly per user.
+- Multi-bet (parlay/accumulator) controls — the platform is single-bet only today.
 
-**Edited (~6):** `dashboard.tsx`, `wallet.tsx`, `payout.tsx`, `support.tsx`, `settings.tsx`, `_authenticated/route.tsx`.
+Approve and I'll ship the migration + server-fn checks + admin UI in one pass.

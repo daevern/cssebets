@@ -143,6 +143,10 @@ export const submitPrediction = createServerFn({ method: "POST" })
       if (msg.includes("MAX_OUTCOME_LIABILITY") || msg.includes("MAX_MATCH_LIABILITY")) throw new Error("This selection is temporarily limited due to platform risk controls.");
       if (msg.includes("CORRECT_SCORE_OTHER_LIMIT")) throw new Error("This selection is temporarily limited due to platform risk controls.");
       if (msg.includes("DUPLICATE_REQUEST")) throw new Error("Duplicate bet detected. Please refresh and try again.");
+      if (msg.includes("USER_MATCH_STAKE_EXCEEDED")) throw new Error("You've reached your maximum stake on this match.");
+      if (msg.includes("USER_MATCH_PAYOUT_EXCEEDED")) throw new Error("You've reached your maximum potential return on this match.");
+      if (msg.includes("USER_DAILY_PAYOUT_EXCEEDED")) throw new Error("You've reached your 24-hour potential return limit. Try again later.");
+      if (msg.includes("USER_CORRELATED_PAYOUT_EXCEEDED")) throw new Error("This pick is too similar to your other bets on this match. Lower the stake or choose a different market.");
       throw new Error(msg || "Could not place bet.");
     }
 
