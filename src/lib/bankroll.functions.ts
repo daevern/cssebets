@@ -349,11 +349,20 @@ export const listMatchPools = createServerFn({ method: "GET" })
     await requireTier(supabase, userId, ADMIN_TIERS);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: pools } = await (supabaseAdmin as any)
-      .from("match_stake_pools")
-      .select("*")
-      .order("updated_at", { ascending: false })
-      .limit(200);
+    // Page through ALL match pools (Supabase caps single requests at 1000 rows).
+    const pools: any[] = [];
+    const PAGE = 1000;
+    for (let from = 0; ; from += PAGE) {
+      const { data: page, error } = await (supabaseAdmin as any)
+        .from("match_stake_pools")
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) throw error;
+      if (!page || page.length === 0) break;
+      pools.push(...page);
+      if (page.length < PAGE) break;
+    }
 
     const matchIds = (pools ?? []).map((p: any) => p.match_id);
     if (!matchIds.length) return { pools: [] };
