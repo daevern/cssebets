@@ -1,5 +1,5 @@
 // Server-only: API-Football client with daily quota guard.
-// Free plan = 100 requests / day, 10 req / minute.
+// Pro plan = 7,500 requests / day, 450 req / minute.
 // All callers MUST go through `apiFootballGet` so the quota is enforced.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
