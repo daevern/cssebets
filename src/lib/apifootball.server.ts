@@ -68,6 +68,7 @@ export async function apiFootballGet<T = any>(
     return { skipped: true, reason: "daily quota exhausted", quota };
   }
 
+  await pace();
   const res = await fetch(`${BASE}${pathWithQuery}`, {
     headers: { "x-apisports-key": key, Accept: "application/json" },
   });
