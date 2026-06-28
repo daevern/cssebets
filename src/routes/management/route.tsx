@@ -3,15 +3,67 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyStaffRole, getStaffCounts, staffUnreadConvCount, getMyForcePasswordChange } from "@/lib/management.functions";
-import { Shield, LogOut, Loader2, Crown, Headset, LayoutDashboard, MessageCircle, Settings, Users } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
+import { CsseMark } from "@/components/brand/CsseMark";
+import {
+  IconSupport,
+  IconSettings,
+  IconLogout,
+} from "@/components/brand/NavIcons";
+import type { SVGProps } from "react";
 
+/* Stencil icons specific to the staff portal */
+const stroke = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.6,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+};
+function IconUsers(p: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...stroke} {...p}>
+      <circle cx="9" cy="9" r="3.2" />
+      <path d="M3.5 19c.7-2.8 3-4.5 5.5-4.5s4.8 1.7 5.5 4.5" />
+      <circle cx="17" cy="10.5" r="2.4" />
+      <path d="M15 19c.5-2 2-3 4-3 1.4 0 2.7.6 3.5 1.8" />
+    </svg>
+  );
+}
+function IconChat(p: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...stroke} {...p}>
+      <path d="M4 5h16v11H8l-4 3z" />
+      <line x1="8" y1="10" x2="14" y2="10" />
+      <line x1="8" y1="13" x2="12" y2="13" />
+    </svg>
+  );
+}
+function IconDash(p: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...stroke} {...p}>
+      <rect x="3.5" y="3.5" width="7" height="9" />
+      <rect x="13.5" y="3.5" width="7" height="5" />
+      <rect x="3.5" y="15.5" width="7" height="5" />
+      <rect x="13.5" y="11.5" width="7" height="9" />
+    </svg>
+  );
+}
+function IconCrown(p: SVGProps<SVGSVGElement>) {
+  return (
+    <svg {...stroke} {...p}>
+      <path d="M3 8 L7 14 L12 6 L17 14 L21 8 L19.5 19 H4.5 Z" />
+      <line x1="4.5" y1="17" x2="19.5" y2="17" strokeDasharray="1.5 1.5" />
+    </svg>
+  );
+}
 
 export const Route = createFileRoute("/management")({
   ssr: false,
   beforeLoad: async ({ location }) => {
-    // Login & access-denied are open
     if (location.pathname === "/management/login" || location.pathname === "/management/access-denied") {
       return {};
     }
@@ -31,8 +83,6 @@ function ManagementLayout() {
   const isPublicRoute = path === "/management/login" || path === "/management/access-denied";
   const isChangePwRoute = path === "/management/change-password";
 
-  // Track whether a Supabase session exists; queries below must NOT fire
-  // without it (would 401 in the auth middleware).
   const [hasSession, setHasSession] = useState<boolean | null>(null);
   useEffect(() => {
     let active = true;
@@ -50,16 +100,12 @@ function ManagementLayout() {
 
   const canQuery = !isPublicRoute && hasSession === true;
 
-  // Re-check the session right before every server-fn call: polling queries
-  // can otherwise fire mid sign-out and hit the server with no bearer token.
   async function withSession<T>(fn: () => Promise<T>): Promise<T | null> {
     const { data } = await supabase.auth.getSession();
     if (!data.session) return null;
     return fn();
   }
 
-  // All hooks must run on every render, regardless of route — never put hooks
-  // after an early return (React error #310).
   const roleFn = useServerFn(getMyStaffRole);
   const roleQ = useQuery({
     queryKey: ["mgmt-role"],
@@ -91,7 +137,6 @@ function ManagementLayout() {
     enabled: canQuery && !!roleQ.data?.role,
   });
 
-
   useEffect(() => {
     if (!isPublicRoute && force.data?.force && path !== "/management/change-password") {
       router.navigate({ to: "/management/change-password", replace: true });
@@ -119,10 +164,9 @@ function ManagementLayout() {
     router.navigate({ to: "/management/login", replace: true });
   }
 
-  // ---------- Early returns (after all hooks) ----------
   if (isPublicRoute) {
     return (
-      <div className="min-h-screen bg-black text-slate-100">
+      <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
         <Outlet />
       </div>
     );
@@ -130,7 +174,7 @@ function ManagementLayout() {
 
   if (isChangePwRoute) {
     return (
-      <div className="min-h-screen bg-black text-slate-100">
+      <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
         <Outlet />
       </div>
     );
@@ -138,21 +182,30 @@ function ManagementLayout() {
 
   if (roleQ.isLoading) {
     return (
-      <div className="min-h-screen grid place-items-center bg-black text-slate-100">
-        <Loader2 className="h-6 w-6 animate-spin" />
+      <div className="min-h-screen grid place-items-center bg-[var(--color-surface)] text-[var(--color-ink)]">
+        <Loader2 className="h-6 w-6 animate-spin text-[var(--color-neon)]" />
       </div>
     );
   }
 
   if (!role) {
     return (
-      <div className="min-h-screen grid place-items-center bg-black text-slate-100 p-4">
-        <div className="max-w-md text-center space-y-4 p-8 rounded-xl border border-violet-950/50 bg-zinc-950">
-          <Shield className="h-10 w-10 mx-auto text-violet-300" />
-          <h1 className="text-xl font-bold">Staff portal</h1>
-          <p className="text-sm text-slate-400">You are signed in, but you don't have staff permissions.</p>
-          <Button variant="outline" onClick={signOut} className="w-full">Sign out</Button>
-        </div>
+      <div className="min-h-screen grid place-items-center bg-[var(--color-surface)] text-[var(--color-ink)] p-4">
+        <article className="relative max-w-md w-full overflow-hidden border border-[var(--color-neon)]/25 bg-[var(--color-surface-2)]">
+          <span aria-hidden className="pointer-events-none absolute top-0 left-0 h-3 w-3 border-t border-l border-[var(--color-neon)]" />
+          <span aria-hidden className="pointer-events-none absolute top-0 right-0 h-3 w-3 border-t border-r border-[var(--color-neon)]" />
+          <span aria-hidden className="pointer-events-none absolute bottom-0 left-0 h-3 w-3 border-b border-l border-[var(--color-neon)]" />
+          <span aria-hidden className="pointer-events-none absolute bottom-0 right-0 h-3 w-3 border-b border-r border-[var(--color-neon)]" />
+          <div className="px-6 py-8 text-center space-y-4">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center border border-[var(--color-neon)]/40 bg-[#070D0A]">
+              <CsseMark className="h-6 w-6 text-[var(--color-ink)]" />
+            </div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">Staff portal</div>
+            <h1 className="font-display text-xl font-bold">No clearance on record</h1>
+            <p className="text-sm text-[var(--color-ink-muted)]">You're signed in, but you don't have staff permissions yet.</p>
+            <Button variant="outline" onClick={signOut} className="w-full border-[var(--color-surface-border)] bg-transparent text-[var(--color-ink)] hover:bg-[var(--color-surface)]">Sign out</Button>
+          </div>
+        </article>
       </div>
     );
   }
@@ -165,32 +218,52 @@ function ManagementLayout() {
   }
 
   const nav: { to: string; label: string; icon: any; badge?: number }[] = [];
-  nav.push({ to: "/management/support", label: "Support", icon: Headset, badge: supportBadge });
-  nav.push({ to: "/management/users", label: "Users", icon: Users });
-  nav.push({ to: "/management/chat", label: "Chat", icon: MessageCircle, badge: chatBadge });
-  if (isAdminTier) nav.push({ to: "/management/admin", label: "Admin", icon: LayoutDashboard });
-  if (isSuper) nav.push({ to: "/management/super-admin", label: "Super Admin", icon: Crown });
-  nav.push({ to: "/management/settings", label: "Settings", icon: Settings });
-
+  nav.push({ to: "/management/support", label: "Support", icon: IconSupport, badge: supportBadge });
+  nav.push({ to: "/management/users", label: "Users", icon: IconUsers });
+  nav.push({ to: "/management/chat", label: "Chat", icon: IconChat, badge: chatBadge });
+  if (isAdminTier) nav.push({ to: "/management/admin", label: "Admin", icon: IconDash });
+  if (isSuper) nav.push({ to: "/management/super-admin", label: "Super", icon: IconCrown });
+  nav.push({ to: "/management/settings", label: "Settings", icon: IconSettings });
 
   function Badge({ n }: { n: number }) {
     if (!n || n <= 0) return null;
     const label = n > 99 ? "99+" : String(n);
     return (
-      <span className="absolute -top-1.5 -right-1.5 inline-flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-red-500 ring-2 ring-black px-1 text-[10px] font-bold text-white tabular-nums shadow-lg shadow-red-500/30">
+      <span className="absolute -top-1 -right-1.5 inline-flex min-w-[16px] h-[16px] items-center justify-center bg-[var(--color-neon)] px-1 text-[9px] font-bold text-[var(--color-surface)] tabular-nums">
         {label}
       </span>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-black text-slate-100">
-      <header className="sticky top-0 z-40 border-b border-violet-950/40 bg-zinc-950/90 backdrop-blur">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
-          <Link to="/management/support" className="flex items-center gap-2 font-bold">
-            <Shield className="h-5 w-5 text-violet-300" />
-            <span className="text-white">cssebets management</span>
+    <div className="relative min-h-screen flex flex-col bg-[var(--color-surface)] text-[var(--color-ink)]">
+      {/* Scanline grain */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage: "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
+        }}
+      />
+
+      <header className="sticky top-0 z-40 border-b border-[var(--color-surface-border)] bg-[var(--color-surface)]/90 backdrop-blur supports-[backdrop-filter]:bg-[var(--color-surface)]/70">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -bottom-px h-px"
+          style={{
+            backgroundImage: "repeating-linear-gradient(90deg, var(--color-neon) 0 6px, transparent 6px 12px)",
+            opacity: 0.4,
+          }}
+        />
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between gap-2">
+          <Link to="/management/support" className="flex items-center gap-2 min-w-0">
+            <CsseMark className="h-7 w-7 shrink-0 text-[var(--color-ink)]" title="CSSEBets" />
+            <div className="hidden sm:flex flex-col leading-none min-w-0">
+              <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">Staff</span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)] truncate">Management Console</span>
+            </div>
           </Link>
+
           <nav className="hidden md:flex items-center gap-1">
             {nav.map((item) => {
               const Icon = item.icon;
@@ -198,7 +271,7 @@ function ManagementLayout() {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="relative px-3 py-1.5 rounded-md text-sm text-slate-300 hover:bg-violet-950/40 hover:text-violet-200 inline-flex items-center gap-1.5 [&.active]:bg-violet-950/60 [&.active]:text-violet-200"
+                  className="relative flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] [&.active]:text-[var(--color-neon)]"
                 >
                   <Icon className="h-4 w-4" />
                   {item.label}
@@ -207,23 +280,30 @@ function ManagementLayout() {
               );
             })}
           </nav>
-          <div className="flex items-center gap-2">
-            <span className="hidden sm:inline text-xs px-2 py-1 rounded-full bg-violet-950/50 text-violet-200 capitalize">
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="hidden sm:inline-flex items-center border border-dashed border-[var(--color-neon)]/40 bg-[var(--color-surface-2)] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">
               {role.replace("_", " ")}
             </span>
-            <Button variant="ghost" size="sm" onClick={signOut} className="text-slate-300 hover:text-violet-200">
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <button
+              onClick={signOut}
+              title="Sign out"
+              className="p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]"
+            >
+              <IconLogout className="h-4 w-4" />
+            </button>
           </div>
         </div>
-        <nav className="md:hidden flex items-center gap-2 px-3 pb-2 overflow-x-auto">
+
+        {/* Mobile pill nav */}
+        <nav className="md:hidden flex items-center gap-1.5 px-3 pb-2 overflow-x-auto scrollbar-none">
           {nav.map((item) => {
             const Icon = item.icon;
             return (
               <Link
                 key={item.to}
                 to={item.to}
-                className="relative shrink-0 px-3 py-1.5 rounded-md text-xs bg-zinc-900 hover:bg-violet-950/50 inline-flex items-center gap-1.5 [&.active]:bg-violet-950 [&.active]:text-white"
+                className="relative shrink-0 inline-flex items-center gap-1.5 border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)] [&.active]:border-[var(--color-neon)]/50 [&.active]:text-[var(--color-neon)]"
               >
                 <Icon className="h-3.5 w-3.5" />
                 {item.label}
@@ -233,7 +313,8 @@ function ManagementLayout() {
           })}
         </nav>
       </header>
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
+
+      <main className="relative flex-1 max-w-6xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <Outlet />
       </main>
     </div>
