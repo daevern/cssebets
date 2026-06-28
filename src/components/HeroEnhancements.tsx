@@ -177,7 +177,7 @@ function MatchFixtureCard({ m, authed }: { m: NonNullable<LandingNextMatch>; aut
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-            Group Stage
+            Round of 32
           </span>
           <span className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
             <Clock className="h-3 w-3 text-primary" />
