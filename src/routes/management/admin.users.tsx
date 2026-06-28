@@ -317,7 +317,10 @@ function UserDrawer({
             )}
 
             <Card className="p-3 space-y-2">
-              <div className="text-sm font-semibold">Recent predictions</div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold">Prediction history</div>
+                <div className="text-xs text-muted-foreground">{d.predictions.length.toLocaleString()} all time</div>
+              </div>
               <div className="max-h-60 overflow-y-auto">
                 <Table>
                   <TableHeader>
@@ -330,7 +333,7 @@ function UserDrawer({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {d.predictions.slice(0, 30).map((p: any) => (
+                    {d.predictions.map((p: any) => (
                       <TableRow key={p.id}>
                         <TableCell className="text-xs">{p.market}</TableCell>
                         <TableCell className="text-xs">{p.outcome}</TableCell>
