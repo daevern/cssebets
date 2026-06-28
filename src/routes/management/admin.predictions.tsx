@@ -69,6 +69,9 @@ function AdminPredictionsPage() {
             className="md:max-w-sm"
           />
         </div>
+        <div className="text-xs text-muted-foreground">
+          Showing {(q.data?.predictions?.length ?? 0).toLocaleString()} predictions from all time.
+        </div>
         {q.isLoading ? (
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         ) : (
