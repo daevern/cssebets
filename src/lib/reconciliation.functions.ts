@@ -13,8 +13,7 @@ export const runReconciliation = createServerFn({ method: "POST" })
     if (!(await isAdmin(context.supabase, context.userId))) {
       throw new Error("Forbidden");
     }
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin.rpc("run_reconciliation_check" as any);
+    const { data, error } = await context.supabase.rpc("run_reconciliation_check" as any);
     if (error) throw new Error(error.message);
     return { report: data };
   });
