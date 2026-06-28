@@ -157,13 +157,20 @@ export const listMatchesAdmin = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     await requireTier(supabase, userId, ADMIN_TIERS);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
-      .from("matches")
-      .select("id, external_id, home_team, away_team, kickoff_at, status, home_score, away_score, home_score_ht, away_score_ht, stage, group_name, reference_odds, odds_updated_at, odds_source, is_simulation, margin_disabled, winner, created_at, updated_at")
-      .order("kickoff_at", { ascending: false })
-      .limit(80);
-    if (error) throw new Error(error.message);
-    return { rows: (data ?? []) as any[] };
+    const rows: any[] = [];
+    const PAGE = 1000;
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await supabaseAdmin
+        .from("matches")
+        .select("id, external_id, home_team, away_team, kickoff_at, status, home_score, away_score, home_score_ht, away_score_ht, stage, group_name, reference_odds, odds_updated_at, odds_source, is_simulation, margin_disabled, winner, created_at, updated_at")
+        .order("kickoff_at", { ascending: false })
+        .range(from, from + PAGE - 1);
+      if (error) throw new Error(error.message);
+      if (!data || data.length === 0) break;
+      rows.push(...data);
+      if (data.length < PAGE) break;
+    }
+    return { rows: rows as any[] };
   });
 
 export const listUsersAdmin = createServerFn({ method: "GET" })
