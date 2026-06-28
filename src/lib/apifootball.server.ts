@@ -40,8 +40,17 @@ export async function getQuotaStatus(): Promise<QuotaSnapshot> {
     .eq("day", today)
     .maybeSingle();
   const used = Number((data as any)?.used ?? 0);
-  const limit = Number((data as any)?.day_limit ?? 100);
+  const limit = Number((data as any)?.day_limit ?? 7500);
   return { allowed: used < limit, used, day_limit: limit, remaining: limit - used };
+}
+
+// Simple pacing so a tight loop of calls (e.g. batch sync) stays well under
+// the Pro plan's 450 req/min ceiling — caps the burst at ~5 req/sec.
+let lastCallAt = 0;
+async function pace(minGapMs = 200) {
+  const wait = lastCallAt + minGapMs - Date.now();
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  lastCallAt = Date.now();
 }
 
 /** GET against api-football, decrements the daily quota by 1. */
