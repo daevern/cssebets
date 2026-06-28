@@ -1635,10 +1635,10 @@ export type Database = {
       apifootball_consume_quota: {
         Args: { p_requests?: number }
         Returns: {
-          allowed: boolean
-          day_limit: number
-          remaining: number
-          used: number
+          out_allowed: boolean
+          out_day_limit: number
+          out_remaining: number
+          out_used: number
         }[]
       }
       assert_bet_within_liability_caps: {
