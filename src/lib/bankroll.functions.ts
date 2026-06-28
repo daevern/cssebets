@@ -363,7 +363,8 @@ export const listMatchPools = createServerFn({ method: "GET" })
       supabaseAdmin.from("predictions").select("id, match_id, status, virtual_stake, potential_return, outcome, market")
         .in("match_id", matchIds),
       (supabaseAdmin as any).from("platform_transactions").select("match_id, transaction_type, amount")
-        .in("match_id", matchIds).in("transaction_type", ["match_pool_collected", "payout_paid"]),
+        .in("match_id", matchIds)
+        .in("transaction_type", ["match_pool_collected", "payout_paid", "stake_collected", "payout_clawback", "void_refund"]),
     ]);
 
     const matchMap = new Map((matches ?? []).map((m: any) => [m.id, m]));
@@ -371,27 +372,39 @@ export const listMatchPools = createServerFn({ method: "GET" })
       pools: (pools ?? []).map((p: any) => {
         const m: any = matchMap.get(p.match_id);
         const mp = (preds ?? []).filter((x: any) => x.match_id === p.match_id);
-        const winnerPayout = (ptx ?? [])
-          .filter((t: any) => t.match_id === p.match_id && t.transaction_type === "payout_paid")
-          .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
-        const transferred = (ptx ?? [])
-          .filter((t: any) => t.match_id === p.match_id && t.transaction_type === "match_pool_collected")
-          .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+        const tx = (ptx ?? []).filter((t: any) => t.match_id === p.match_id);
+        const sumBy = (type: string) =>
+          tx.filter((t: any) => t.transaction_type === type).reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+
+        const stakesCollected = sumBy("stake_collected"); // all markets
+        const transferred = sumBy("match_pool_collected"); // 1X2 pool only
+        const payoutsPaid = sumBy("payout_paid");
+        const payoutsClawback = sumBy("payout_clawback");
+        const voidRefunds = sumBy("void_refund");
+        const netPayouts = payoutsPaid - payoutsClawback + voidRefunds;
+
+        // Per-side stake from actual placed 1X2 predictions (independent of post-settlement drain).
+        const resultPreds = mp.filter((x: any) => x.market === "result");
+        const sideStake = (side: string) =>
+          resultPreds
+            .filter((x: any) => (x.outcome ?? "").toUpperCase() === side)
+            .reduce((s: number, x: any) => s + Number(x.virtual_stake || 0), 0);
+
         return {
           matchId: p.match_id,
           label: m ? `${m.home_team} vs ${m.away_team}` : p.match_id.slice(0, 8),
           status: m?.status ?? "unknown",
           score: m && m.home_score != null ? `${m.home_score}-${m.away_score}` : null,
-          totalPool: Number(p.total_pool),
-          homePool: Number(p.home_pool),
-          drawPool: Number(p.draw_pool),
-          awayPool: Number(p.away_pool),
+          totalPool: stakesCollected,
+          homePool: sideStake("HOME"),
+          drawPool: sideStake("DRAW"),
+          awayPool: sideStake("AWAY"),
           predictionCount: mp.length,
           settled: p.settled,
           voided: p.voided,
           transferredToBankroll: transferred,
-          winnerPayoutTotal: winnerPayout,
-          profitLoss: transferred - winnerPayout,
+          winnerPayoutTotal: netPayouts,
+          profitLoss: stakesCollected - netPayouts,
         };
       }),
     };
