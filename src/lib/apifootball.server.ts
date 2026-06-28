@@ -25,10 +25,10 @@ async function consumeQuota(requests = 1): Promise<QuotaSnapshot> {
   if (error) throw new Error(`quota check failed: ${error.message}`);
   const row = Array.isArray(data) ? data[0] : data;
   return {
-    allowed: !!row?.allowed,
-    used: Number(row?.used ?? 0),
-    day_limit: Number(row?.day_limit ?? 100),
-    remaining: Number(row?.remaining ?? 0),
+    allowed: !!row?.out_allowed,
+    used: Number(row?.out_used ?? 0),
+    day_limit: Number(row?.out_day_limit ?? 7500),
+    remaining: Number(row?.out_remaining ?? 0),
   };
 }
 
