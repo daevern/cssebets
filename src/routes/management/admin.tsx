@@ -26,6 +26,7 @@ import {
   X,
   BookOpen,
   Radio,
+  Database,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
