@@ -55,6 +55,7 @@ import { Route as ManagementAdminPointsRouteImport } from './routes/management/a
 import { Route as ManagementAdminPayoutsRouteImport } from './routes/management/admin.payouts'
 import { Route as ManagementAdminOperationsRouteImport } from './routes/management/admin.operations'
 import { Route as ManagementAdminOnboardingRouteImport } from './routes/management/admin.onboarding'
+import { Route as ManagementAdminOddsProviderRouteImport } from './routes/management/admin.odds-provider'
 import { Route as ManagementAdminOddsHistoryRouteImport } from './routes/management/admin.odds-history'
 import { Route as ManagementAdminMatchesRouteImport } from './routes/management/admin.matches'
 import { Route as ManagementAdminMatchPoolsRouteImport } from './routes/management/admin.match-pools'
@@ -314,6 +315,12 @@ const ManagementAdminOnboardingRoute =
     path: '/onboarding',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminOddsProviderRoute =
+  ManagementAdminOddsProviderRouteImport.update({
+    id: '/odds-provider',
+    path: '/odds-provider',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminOddsHistoryRoute =
   ManagementAdminOddsHistoryRouteImport.update({
     id: '/odds-history',
@@ -431,6 +438,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/odds-provider': typeof ManagementAdminOddsProviderRoute
   '/management/admin/onboarding': typeof ManagementAdminOnboardingRoute
   '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
@@ -491,6 +499,7 @@ export interface FileRoutesByTo {
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/odds-provider': typeof ManagementAdminOddsProviderRoute
   '/management/admin/onboarding': typeof ManagementAdminOnboardingRoute
   '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
@@ -554,6 +563,7 @@ export interface FileRoutesById {
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/odds-provider': typeof ManagementAdminOddsProviderRoute
   '/management/admin/onboarding': typeof ManagementAdminOnboardingRoute
   '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
@@ -617,6 +627,7 @@ export interface FileRouteTypes {
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
+    | '/management/admin/odds-provider'
     | '/management/admin/onboarding'
     | '/management/admin/operations'
     | '/management/admin/payouts'
@@ -677,6 +688,7 @@ export interface FileRouteTypes {
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
+    | '/management/admin/odds-provider'
     | '/management/admin/onboarding'
     | '/management/admin/operations'
     | '/management/admin/payouts'
@@ -739,6 +751,7 @@ export interface FileRouteTypes {
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
+    | '/management/admin/odds-provider'
     | '/management/admin/onboarding'
     | '/management/admin/operations'
     | '/management/admin/payouts'
@@ -1102,6 +1115,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminOnboardingRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/odds-provider': {
+      id: '/management/admin/odds-provider'
+      path: '/odds-provider'
+      fullPath: '/management/admin/odds-provider'
+      preLoaderRoute: typeof ManagementAdminOddsProviderRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/odds-history': {
       id: '/management/admin/odds-history'
       path: '/odds-history'
@@ -1248,6 +1268,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminMatchPoolsRoute: typeof ManagementAdminMatchPoolsRoute
   ManagementAdminMatchesRoute: typeof ManagementAdminMatchesRoute
   ManagementAdminOddsHistoryRoute: typeof ManagementAdminOddsHistoryRoute
+  ManagementAdminOddsProviderRoute: typeof ManagementAdminOddsProviderRoute
   ManagementAdminOnboardingRoute: typeof ManagementAdminOnboardingRoute
   ManagementAdminOperationsRoute: typeof ManagementAdminOperationsRoute
   ManagementAdminPayoutsRoute: typeof ManagementAdminPayoutsRoute
@@ -1278,6 +1299,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminMatchPoolsRoute: ManagementAdminMatchPoolsRoute,
   ManagementAdminMatchesRoute: ManagementAdminMatchesRoute,
   ManagementAdminOddsHistoryRoute: ManagementAdminOddsHistoryRoute,
+  ManagementAdminOddsProviderRoute: ManagementAdminOddsProviderRoute,
   ManagementAdminOnboardingRoute: ManagementAdminOnboardingRoute,
   ManagementAdminOperationsRoute: ManagementAdminOperationsRoute,
   ManagementAdminPayoutsRoute: ManagementAdminPayoutsRoute,
