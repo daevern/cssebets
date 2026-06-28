@@ -35,6 +35,62 @@ export type Database = {
         }
         Relationships: []
       }
+      apifootball_odds_raw: {
+        Row: {
+          bookmaker_count: number | null
+          fetched_at: string
+          fixture_id: number
+          id: string
+          match_id: string
+          payload: Json
+        }
+        Insert: {
+          bookmaker_count?: number | null
+          fetched_at?: string
+          fixture_id: number
+          id?: string
+          match_id: string
+          payload: Json
+        }
+        Update: {
+          bookmaker_count?: number | null
+          fetched_at?: string
+          fixture_id?: number
+          id?: string
+          match_id?: string
+          payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "apifootball_odds_raw_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      apifootball_quota: {
+        Row: {
+          day: string
+          day_limit: number
+          updated_at: string
+          used: number
+        }
+        Insert: {
+          day: string
+          day_limit?: number
+          updated_at?: string
+          used?: number
+        }
+        Update: {
+          day?: string
+          day_limit?: number
+          updated_at?: string
+          used?: number
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -525,6 +581,7 @@ export type Database = {
       }
       matches: {
         Row: {
+          apifootball_fixture_id: number | null
           away_crest: string | null
           away_liability: number
           away_score: number | null
@@ -556,6 +613,7 @@ export type Database = {
           worst_case_exposure: number
         }
         Insert: {
+          apifootball_fixture_id?: number | null
           away_crest?: string | null
           away_liability?: number
           away_score?: number | null
@@ -587,6 +645,7 @@ export type Database = {
           worst_case_exposure?: number
         }
         Update: {
+          apifootball_fixture_id?: number | null
           away_crest?: string | null
           away_liability?: number
           away_score?: number | null
@@ -1572,6 +1631,15 @@ export type Database = {
       admin_set_onboarding_enabled: {
         Args: { p_enabled: boolean; p_user_id: string }
         Returns: undefined
+      }
+      apifootball_consume_quota: {
+        Args: { p_requests?: number }
+        Returns: {
+          allowed: boolean
+          day_limit: number
+          remaining: number
+          used: number
+        }[]
       }
       assert_bet_within_liability_caps: {
         Args: {

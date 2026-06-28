@@ -55,6 +55,7 @@ import { Route as ManagementAdminPointsRouteImport } from './routes/management/a
 import { Route as ManagementAdminPayoutsRouteImport } from './routes/management/admin.payouts'
 import { Route as ManagementAdminOperationsRouteImport } from './routes/management/admin.operations'
 import { Route as ManagementAdminOnboardingRouteImport } from './routes/management/admin.onboarding'
+import { Route as ManagementAdminOddsProviderRouteImport } from './routes/management/admin.odds-provider'
 import { Route as ManagementAdminOddsHistoryRouteImport } from './routes/management/admin.odds-history'
 import { Route as ManagementAdminMatchesRouteImport } from './routes/management/admin.matches'
 import { Route as ManagementAdminMatchPoolsRouteImport } from './routes/management/admin.match-pools'
@@ -68,6 +69,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/public/hooks/sync-fixtures'
 import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
 import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
+import { Route as ApiPublicHooksApifootballSyncRouteImport } from './routes/api/public/hooks/apifootball-sync'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -313,6 +315,12 @@ const ManagementAdminOnboardingRoute =
     path: '/onboarding',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminOddsProviderRoute =
+  ManagementAdminOddsProviderRouteImport.update({
+    id: '/odds-provider',
+    path: '/odds-provider',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminOddsHistoryRoute =
   ManagementAdminOddsHistoryRouteImport.update({
     id: '/odds-history',
@@ -386,6 +394,12 @@ const ApiPublicHooksHealthCheckRoute =
     path: '/api/public/hooks/health-check',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksApifootballSyncRoute =
+  ApiPublicHooksApifootballSyncRouteImport.update({
+    id: '/api/public/hooks/apifootball-sync',
+    path: '/api/public/hooks/apifootball-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -424,6 +438,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/odds-provider': typeof ManagementAdminOddsProviderRoute
   '/management/admin/onboarding': typeof ManagementAdminOnboardingRoute
   '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
@@ -442,6 +457,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
@@ -483,6 +499,7 @@ export interface FileRoutesByTo {
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/odds-provider': typeof ManagementAdminOddsProviderRoute
   '/management/admin/onboarding': typeof ManagementAdminOnboardingRoute
   '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
@@ -501,6 +518,7 @@ export interface FileRoutesByTo {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
@@ -545,6 +563,7 @@ export interface FileRoutesById {
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
+  '/management/admin/odds-provider': typeof ManagementAdminOddsProviderRoute
   '/management/admin/onboarding': typeof ManagementAdminOnboardingRoute
   '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
@@ -563,6 +582,7 @@ export interface FileRoutesById {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
@@ -607,6 +627,7 @@ export interface FileRouteTypes {
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
+    | '/management/admin/odds-provider'
     | '/management/admin/onboarding'
     | '/management/admin/operations'
     | '/management/admin/payouts'
@@ -625,6 +646,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin/'
+    | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
@@ -666,6 +688,7 @@ export interface FileRouteTypes {
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
+    | '/management/admin/odds-provider'
     | '/management/admin/onboarding'
     | '/management/admin/operations'
     | '/management/admin/payouts'
@@ -684,6 +707,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin'
+    | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
@@ -727,6 +751,7 @@ export interface FileRouteTypes {
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
+    | '/management/admin/odds-provider'
     | '/management/admin/onboarding'
     | '/management/admin/operations'
     | '/management/admin/payouts'
@@ -745,6 +770,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin/'
+    | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
@@ -758,6 +784,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BrandRoute: typeof BrandRoute
   RegisterRoute: typeof RegisterRoute
+  ApiPublicHooksApifootballSyncRoute: typeof ApiPublicHooksApifootballSyncRoute
   ApiPublicHooksHealthCheckRoute: typeof ApiPublicHooksHealthCheckRoute
   ApiPublicHooksReconciliationRoute: typeof ApiPublicHooksReconciliationRoute
   ApiPublicHooksSyncFixturesRoute: typeof ApiPublicHooksSyncFixturesRoute
@@ -1088,6 +1115,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminOnboardingRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/odds-provider': {
+      id: '/management/admin/odds-provider'
+      path: '/odds-provider'
+      fullPath: '/management/admin/odds-provider'
+      preLoaderRoute: typeof ManagementAdminOddsProviderRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/odds-history': {
       id: '/management/admin/odds-history'
       path: '/odds-history'
@@ -1179,6 +1213,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksHealthCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/apifootball-sync': {
+      id: '/api/public/hooks/apifootball-sync'
+      path: '/api/public/hooks/apifootball-sync'
+      fullPath: '/api/public/hooks/apifootball-sync'
+      preLoaderRoute: typeof ApiPublicHooksApifootballSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1227,6 +1268,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminMatchPoolsRoute: typeof ManagementAdminMatchPoolsRoute
   ManagementAdminMatchesRoute: typeof ManagementAdminMatchesRoute
   ManagementAdminOddsHistoryRoute: typeof ManagementAdminOddsHistoryRoute
+  ManagementAdminOddsProviderRoute: typeof ManagementAdminOddsProviderRoute
   ManagementAdminOnboardingRoute: typeof ManagementAdminOnboardingRoute
   ManagementAdminOperationsRoute: typeof ManagementAdminOperationsRoute
   ManagementAdminPayoutsRoute: typeof ManagementAdminPayoutsRoute
@@ -1257,6 +1299,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminMatchPoolsRoute: ManagementAdminMatchPoolsRoute,
   ManagementAdminMatchesRoute: ManagementAdminMatchesRoute,
   ManagementAdminOddsHistoryRoute: ManagementAdminOddsHistoryRoute,
+  ManagementAdminOddsProviderRoute: ManagementAdminOddsProviderRoute,
   ManagementAdminOnboardingRoute: ManagementAdminOnboardingRoute,
   ManagementAdminOperationsRoute: ManagementAdminOperationsRoute,
   ManagementAdminPayoutsRoute: ManagementAdminPayoutsRoute,
@@ -1316,6 +1359,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BrandRoute: BrandRoute,
   RegisterRoute: RegisterRoute,
+  ApiPublicHooksApifootballSyncRoute: ApiPublicHooksApifootballSyncRoute,
   ApiPublicHooksHealthCheckRoute: ApiPublicHooksHealthCheckRoute,
   ApiPublicHooksReconciliationRoute: ApiPublicHooksReconciliationRoute,
   ApiPublicHooksSyncFixturesRoute: ApiPublicHooksSyncFixturesRoute,

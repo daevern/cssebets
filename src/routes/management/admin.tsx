@@ -26,6 +26,7 @@ import {
   X,
   BookOpen,
   Radio,
+  Database,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,7 @@ const GROUPS: NavGroup[] = [
       { to: "/management/admin/matches", label: "Matches", icon: CalendarDays },
       { to: "/management/admin/tournament", label: "Tournament", icon: Shield },
       { to: "/management/admin/odds-history", label: "Odds history", icon: TrendingUp },
+      { to: "/management/admin/odds-provider", label: "Odds provider", icon: Database },
       { to: "/management/admin/pricing-breakdown", label: "Pricing", icon: ShieldAlert },
     ],
   },
