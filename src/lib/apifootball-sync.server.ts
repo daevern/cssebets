@@ -217,7 +217,7 @@ export async function syncMatchOddsApiFootball(matchId: string): Promise<SyncRes
         selection: r.selection,
         odds: r.odds,
         source: "api-football",
-        sampled_at: nowIso,
+        snapshot_at: nowIso,
       })),
     );
   }
