@@ -7,6 +7,13 @@ const WRITE_TIERS = ["admin", "super_admin"] as const;
 const SUPER_TIERS = ["super_admin"] as const;
 const REAUTH_WINDOW_MS = 5 * 60 * 1000;
 const DEFAULT_RESET_BALANCE = 1000;
+const ADMIN_PAGE_SIZE = 1000;
+
+function chunkArray<T>(items: T[], size = ADMIN_PAGE_SIZE): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size));
+  return chunks;
+}
 
 async function getRoles(supabase: any, userId: string): Promise<string[]> {
   const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
@@ -323,15 +330,23 @@ export const getUserDetail = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     await requireTier(supabase, userId, ADMIN_TIERS);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [{ data: profile }, { data: wallet }, { data: predictions }, { data: roleRows }, authResult] =
+    const predictionRows: any[] = [];
+    for (let from = 0; ; from += ADMIN_PAGE_SIZE) {
+      const { data: page, error } = await supabaseAdmin.from("predictions")
+        .select("id, match_id, market, outcome, virtual_stake, reference_odds, potential_return, points, status, created_at, settled_at")
+        .eq("user_id", data.userId)
+        .order("created_at", { ascending: false })
+        .range(from, from + ADMIN_PAGE_SIZE - 1);
+      if (error) throw new Error(error.message);
+      if (!page || page.length === 0) break;
+      predictionRows.push(...page);
+      if (page.length < ADMIN_PAGE_SIZE) break;
+    }
+
+    const [{ data: profile }, { data: wallet }, { data: roleRows }, authResult] =
       await Promise.all([
         supabaseAdmin.from("profiles").select("*").eq("id", data.userId).maybeSingle(),
         supabaseAdmin.from("wallets").select("balance, updated_at").eq("user_id", data.userId).maybeSingle(),
-        supabaseAdmin.from("predictions")
-          .select("id, match_id, market, outcome, virtual_stake, reference_odds, potential_return, points, status, created_at, settled_at")
-          .eq("user_id", data.userId)
-          .order("created_at", { ascending: false })
-          .limit(100),
         supabaseAdmin.from("user_roles").select("role").eq("user_id", data.userId),
         supabaseAdmin.auth.admin.getUserById(data.userId).catch(() => ({ data: { user: null } })),
       ]);
@@ -339,7 +354,7 @@ export const getUserDetail = createServerFn({ method: "GET" })
     return {
       profile,
       wallet: wallet ?? { balance: 0, updated_at: null },
-      predictions: predictions ?? [],
+      predictions: predictionRows,
       roles: (roleRows ?? []).map((r: any) => r.role),
       email: authUser?.email || null,
       phoneNumber: authUser?.phone || profile?.phone_number || null,
@@ -354,41 +369,61 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       matchId: z.string().uuid().optional(),
       market: z.string().max(40).optional(),
       status: z.string().max(20).optional(),
-      limit: z.number().int().min(1).max(500).default(200),
     }).parse(i ?? {}),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await requireTier(supabase, userId, ADMIN_TIERS);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    let q = supabaseAdmin
-      .from("predictions")
-      .select("id, user_id, match_id, market, outcome, virtual_stake, reference_odds, potential_return, points, status, created_at, settled_at")
-      .order("created_at", { ascending: false })
-      .limit(data.limit);
-    if (data.userId) q = q.eq("user_id", data.userId);
-    if (data.matchId) q = q.eq("match_id", data.matchId);
-    if (data.market) q = q.eq("market", data.market as any);
-    if (data.status) q = q.eq("status", data.status as any);
-    const { data: rows, error } = await q;
-    if (error) throw new Error(error.message);
+    const rows: any[] = [];
+    for (let from = 0; ; from += ADMIN_PAGE_SIZE) {
+      let q = supabaseAdmin
+        .from("predictions")
+        .select("id, user_id, match_id, market, outcome, virtual_stake, reference_odds, potential_return, points, status, created_at, settled_at")
+        .order("created_at", { ascending: false })
+        .range(from, from + ADMIN_PAGE_SIZE - 1);
+      if (data.userId) q = q.eq("user_id", data.userId);
+      if (data.matchId) q = q.eq("match_id", data.matchId);
+      if (data.market) q = q.eq("market", data.market as any);
+      if (data.status) q = q.eq("status", data.status as any);
+      const { data: page, error } = await q;
+      if (error) throw new Error(error.message);
+      if (!page || page.length === 0) break;
+      rows.push(...page);
+      if (page.length < ADMIN_PAGE_SIZE) break;
+    }
 
-    const uids = Array.from(new Set((rows ?? []).map((r: any) => r.user_id)));
-    const mids = Array.from(new Set((rows ?? []).map((r: any) => r.match_id).filter(Boolean)));
-    const [{ data: profiles }, { data: matches }] = await Promise.all([
-      supabaseAdmin.from("profiles").select("id, display_name").in("id", uids),
-      mids.length
-        ? supabaseAdmin.from("matches").select("id, home_team, away_team").in("id", mids)
-        : Promise.resolve({ data: [] as any[] }),
+    const uids = Array.from(new Set(rows.map((r: any) => r.user_id).filter(Boolean)));
+    const mids = Array.from(new Set(rows.map((r: any) => r.match_id).filter(Boolean)));
+    const profiles: any[] = [];
+    const matches: any[] = [];
+    await Promise.all([
+      ...chunkArray(uids).map(async (ids) => {
+        if (!ids.length) return;
+        const { data: page, error } = await supabaseAdmin.from("profiles").select("id, display_name").in("id", ids);
+        if (error) throw new Error(error.message);
+        profiles.push(...(page ?? []));
+      }),
+      ...chunkArray(mids).map(async (ids) => {
+        if (!ids.length) return;
+        const { data: page, error } = await supabaseAdmin.from("matches").select("id, home_team, away_team").in("id", ids);
+        if (error) throw new Error(error.message);
+        matches.push(...(page ?? []));
+      }),
     ]);
+    const profileById = new Map(profiles.map((p: any) => [p.id, p]));
+    const matchById = new Map(matches.map((m: any) => [m.id, m]));
     return {
-      predictions: (rows ?? []).map((r: any) => ({
+      total: rows.length,
+      predictions: rows.map((r: any) => {
+        const match = matchById.get(r.match_id);
+        return ({
         ...r,
-        display_name: profiles?.find((p: any) => p.id === r.user_id)?.display_name ?? r.user_id.slice(0, 8),
-        match: matches?.find((m: any) => m.id === r.match_id)
-          ? `${matches.find((m: any) => m.id === r.match_id)!.home_team} vs ${matches.find((m: any) => m.id === r.match_id)!.away_team}`
+        display_name: profileById.get(r.user_id)?.display_name ?? r.user_id.slice(0, 8),
+        match: match
+          ? `${match.home_team} vs ${match.away_team}`
           : "—",
-      })),
+      }); }),
     };
   });
 
