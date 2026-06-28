@@ -169,7 +169,7 @@ function MatchesPage() {
             <section className="space-y-3">
               <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] pb-2">
                 <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-                  <Zap className="h-3 w-3" /> Group Stage
+                  <Zap className="h-3 w-3" /> Round of 32
                 </span>
                 <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
                   {scheduled.length} on the slate
@@ -280,21 +280,7 @@ function MatchCard({ match }: { match: Match }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const stageLabel = useMemo(() => {
-    const rawStage = humanize(match.stage);
-    const rawGroup = humanize(match.group_name);
-    const parts = [rawStage, rawGroup]
-      .filter(Boolean)
-      .map(part =>
-        part
-          .replace(/FIFA World Cup/gi, "")
-          .replace(/GROUP STAGE/gi, "")
-          .replace(/^[\s·•\-]+|[\s·•\-]+$/g, "")
-          .trim()
-      )
-      .filter(Boolean);
-    return parts.join(" · ") || "—";
-  }, [match.stage, match.group_name]);
+  const stageLabel = useMemo(() => "Round of 32", []);
 
   const stakeNum = Number(stake);
   const stakeValid = stakeNum >= 10 && stakeNum <= 50000;
