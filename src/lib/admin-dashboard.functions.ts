@@ -183,14 +183,23 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
     await requireTier(supabase, userId, ADMIN_TIERS);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    let q = supabaseAdmin
-      .from("profiles")
-      .select("id, display_name, suspended, created_at")
-      .order("display_name", { ascending: true })
-      .limit(500);
-    if (data.search) q = q.ilike("display_name", `%${data.search}%`);
-    const { data: profiles, error } = await q;
-    if (error) throw new Error(error.message);
+    const profiles: any[] = [];
+    {
+      const PAGE = 1000;
+      for (let from = 0; ; from += PAGE) {
+        let q = supabaseAdmin
+          .from("profiles")
+          .select("id, display_name, suspended, created_at")
+          .order("display_name", { ascending: true })
+          .range(from, from + PAGE - 1);
+        if (data.search) q = q.ilike("display_name", `%${data.search}%`);
+        const { data: page, error } = await q;
+        if (error) throw new Error(error.message);
+        if (!page || page.length === 0) break;
+        profiles.push(...page);
+        if (page.length < PAGE) break;
+      }
+    }
 
     const ids = (profiles ?? []).map((p: any) => p.id);
     const [{ data: wallets }, { data: roleRows }, { data: predCounts }] = await Promise.all([
