@@ -63,7 +63,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   const grouped = useMemo(() => {
     const g: Record<MarketKey, OddsRow[]> = {
       over_under_2_5: [], btts: [], correct_score: [],
-      half_time_full_time: [], exact_total_goals: [],
+      half_time_full_time: [], exact_total_goals: [], to_qualify: [],
     };
     for (const o of (data?.odds ?? []) as OddsRow[]) {
       if (o.market in g) g[o.market as MarketKey].push(o);
@@ -172,6 +172,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   }
 
   const hasHtFt = grouped.half_time_full_time.length > 0;
+  const hasToQualify = grouped.to_qualify.length > 0;
+  const hasSpecials = hasHtFt || hasToQualify;
 
   const orderedSelections = (market: MarketKey, rows: OddsRow[]) => {
     const order =
@@ -179,7 +181,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       market === "half_time_full_time" ? HTFT_OPTIONS :
       market === "exact_total_goals" ? EXACT_GOALS_OPTIONS :
       market === "over_under_2_5" ? ["OVER_2_5","UNDER_2_5"] :
-      market === "btts" ? ["YES","NO"] : [];
+      market === "btts" ? ["YES","NO"] :
+      market === "to_qualify" ? ["HOME","AWAY"] : [];
     const byKey = new Map(rows.map(r => [r.selection, r]));
     return order.map(s => byKey.get(s)).filter(Boolean) as OddsRow[];
   };
@@ -402,7 +405,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         <TabsList className="grid grid-cols-3 w-full">
           <TabsTrigger value="goals" className="text-xs">Goals</TabsTrigger>
           <TabsTrigger value="cs" className="text-xs">Score</TabsTrigger>
-          <TabsTrigger value="sp" className="text-xs" disabled={!hasHtFt}>Specials</TabsTrigger>
+          <TabsTrigger value="sp" className="text-xs" disabled={!hasSpecials}>Specials</TabsTrigger>
         </TabsList>
 
         <TabsContent value="goals" className="space-y-4 mt-2">
@@ -424,9 +427,22 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
           {renderCorrectScore()}
         </TabsContent>
 
-        <TabsContent value="sp" className="space-y-2 mt-2">
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.half_time_full_time}</div>
-          {renderMarketSection("half_time_full_time", "grid-cols-3")}
+        <TabsContent value="sp" className="space-y-4 mt-2">
+          {hasToQualify && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                {MARKET_LABELS.to_qualify}
+                <span className="ml-2 font-normal normal-case text-muted-foreground/80">· paid on who advances (incl. ET &amp; penalties)</span>
+              </div>
+              {renderMarketSection("to_qualify", "grid-cols-2")}
+            </div>
+          )}
+          {hasHtFt && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.half_time_full_time}</div>
+              {renderMarketSection("half_time_full_time", "grid-cols-3")}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

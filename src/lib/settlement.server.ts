@@ -9,16 +9,17 @@ export async function settlePredictionsForMatch(
   awayScore: number,
   homeScoreHt: number | null = null,
   awayScoreHt: number | null = null,
+  qualifier: "HOME" | "AWAY" | null = null,
 ) {
-  // Wrapper settles existing markets (result/correct_score/total_goals/btts)
-  // AND the new high-margin markets (over_under_2_5, btts via market_text,
-  // correct_score grid, exact_total_goals, half_time_full_time).
+  // Settles every market: 90-min (result, O/U, BTTS, CS, exact goals, HT/FT)
+  // plus to_qualify (graded on who advances after ET + penalties).
   const { data, error } = await (supabaseAdmin as any).rpc("settle_match_all_markets_atomic", {
     p_match_id: matchId,
     p_home: homeScore,
     p_away: awayScore,
     p_home_ht: homeScoreHt,
     p_away_ht: awayScoreHt,
+    p_qualifier: qualifier,
   });
   if (error) throw new Error(error.message);
   return (data as number) ?? 0;

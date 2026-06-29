@@ -9,6 +9,7 @@ const MARKET_KEYS = [
   "correct_score",
   "half_time_full_time",
   "exact_total_goals",
+  "to_qualify",
 ] as const;
 
 type MarketOdds = {

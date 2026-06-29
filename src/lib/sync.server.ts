@@ -44,32 +44,47 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
 
     const competition = m.competition?.name ?? null;
     const stageLabel = m.stage ? (competition ? `${competition} · ${m.stage}` : m.stage) : competition;
-    // SETTLEMENT POLICY: 90-minute whistle ONLY.
-    // football-data v4 `score.fullTime` is the AGGREGATE score, including
-    // extra time goals AND penalty shootout goals (see
-    // https://docs.football-data.org/general/v4/overtime.html). The 90-min
-    // score lives in `score.regularTime`. We grade every market (Result,
-    // O/U, BTTS, Correct Score, Exact Goals, HT/FT) on regulation only,
-    // because that is what the Odds API / API-Football prices quote.
+    // SETTLEMENT POLICY: 90-minute whistle ONLY for goal-based markets.
+    // `score.fullTime` is the AGGREGATE (regulation + extra time + shootout
+    // goals). The 90-min score lives in `score.regularTime`. Markets priced
+    // for 90 minutes (Result, O/U, BTTS, CS, Exact Goals, HT/FT) grade on
+    // regulation only.
     //
-    // Knockout ties decided in ET or on penalties therefore settle as a
-    // DRAW on Match Winner — correct for a 90-min market. A separate
-    // "To Qualify" market (priced + graded on advancement) is the only
-    // place ET/penalties should pay out.
+    // The "To Qualify / Advance" market is the exception: it grades on who
+    // actually advances after ET and penalties. We derive that from
+    // `score.winner` (HOME_TEAM/AWAY_TEAM) when the stage is a knockout.
     const duration: string | null = m.score?.duration ?? null;
     const regHome = m.score?.regularTime?.home ?? null;
     const regAway = m.score?.regularTime?.away ?? null;
     const ftHome = m.score?.fullTime?.home ?? null;
     const ftAway = m.score?.fullTime?.away ?? null;
-    // Prefer regularTime when present (always present for ET/PENALTY_SHOOTOUT
-    // finishes). For a REGULAR-duration finish, regularTime may be omitted —
-    // fullTime then equals the 90-min score and is safe to use.
     const homeScore = regHome ?? (duration === "REGULAR" || duration == null ? ftHome : null);
     const awayScore = regAway ?? (duration === "REGULAR" || duration == null ? ftAway : null);
     const homeScoreHt = m.score?.halfTime?.home ?? null;
     const awayScoreHt = m.score?.halfTime?.away ?? null;
     const winner = status === "finished" && homeScore !== null && awayScore !== null
       ? (homeScore > awayScore ? "HOME" : homeScore < awayScore ? "AWAY" : "DRAW") : null;
+
+    // Qualifier: who advances on a knockout tie (used for to_qualify market).
+    // Prefer football-data's `score.winner` (HOME_TEAM/AWAY_TEAM) on finished
+    // matches because it already reflects ET + penalty shootout outcomes. If
+    // it reports DRAW (group stage), leave qualifier NULL.
+    const isKnockoutStage = typeof m.stage === "string" && /FINAL|SEMI|QUARTER|ROUND_OF/i.test(m.stage);
+    let qualifier: "HOME" | "AWAY" | null = null;
+    if (status === "finished" && isKnockoutStage) {
+      const w = m.score?.winner;
+      if (w === "HOME_TEAM") qualifier = "HOME";
+      else if (w === "AWAY_TEAM") qualifier = "AWAY";
+      else if (ftHome !== null && ftAway !== null && ftHome !== ftAway) {
+        qualifier = ftHome > ftAway ? "HOME" : "AWAY";
+      } else if (m.score?.penalties) {
+        const ph = m.score.penalties.home ?? null;
+        const pa = m.score.penalties.away ?? null;
+        if (ph !== null && pa !== null && ph !== pa) {
+          qualifier = ph > pa ? "HOME" : "AWAY";
+        }
+      }
+    }
 
     const payload: any = {
       external_id: String(m.id),
@@ -86,9 +101,7 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
       home_score_ht: homeScoreHt,
       away_score_ht: awayScoreHt,
       winner,
-      // HOTFIX: never inject fake odds for real matches. Keep existing
-      // provider odds if present; otherwise leave NULL so the match is
-      // auto-suspended as 'missing' until runOddsSync supplies real values.
+      qualifier,
       reference_odds: existing?.reference_odds ?? null,
       updated_at: new Date().toISOString(),
     };
@@ -112,7 +125,7 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
 
       if (pendingPrediction) {
         try {
-          autoSettled += await settlePredictionsForMatch(matchId, homeScore, awayScore, homeScoreHt, awayScoreHt);
+          autoSettled += await settlePredictionsForMatch(matchId, homeScore, awayScore, homeScoreHt, awayScoreHt, qualifier);
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           settlementWarnings.push(`${payload.home_team} vs ${payload.away_team}: ${message}`);

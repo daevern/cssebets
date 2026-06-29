@@ -129,6 +129,7 @@ const PREVIEW_ODDS: Record<MarketKey, Record<string, number>> = {
     DRAW_HOME: 5.50, DRAW_DRAW: 5.00, DRAW_AWAY: 9.00,
     AWAY_HOME: 41.0, AWAY_DRAW: 26.0, AWAY_AWAY: 6.00,
   },
+  to_qualify: { HOME: 1.72, AWAY: 2.10 },
 };
 
 const MIN_STAKE = 10;
