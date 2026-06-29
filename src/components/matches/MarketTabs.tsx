@@ -420,21 +420,35 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   return (
     <div className="space-y-3 pt-2 border-t">
       <Tabs defaultValue="goals" className="w-full">
-        <TabsList className="grid grid-cols-3 w-full">
+        <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="goals" className="text-xs">Goals</TabsTrigger>
           <TabsTrigger value="cs" className="text-xs">Score</TabsTrigger>
+          <TabsTrigger value="ex" className="text-xs" disabled={!hasExtras}>Extras</TabsTrigger>
           <TabsTrigger value="sp" className="text-xs" disabled={!hasSpecials}>Specials</TabsTrigger>
         </TabsList>
 
         <TabsContent value="goals" className="space-y-4 mt-2">
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.over_under_2_5}</div>
-            {renderMarketSection("over_under_2_5", "grid-cols-2")}
-          </div>
+          {OVER_UNDER_LINES.map((mk) => {
+            if (getGroup(mk).length === 0) return null;
+            return (
+              <div key={mk}>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                  {MARKET_LABELS[mk]}
+                </div>
+                {renderMarketSection(mk, "grid-cols-2")}
+              </div>
+            );
+          })}
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.btts}</div>
             {renderMarketSection("btts", "grid-cols-2")}
           </div>
+          {getGroup("goals_odd_even").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.goals_odd_even}</div>
+              {renderMarketSection("goals_odd_even", "grid-cols-2")}
+            </div>
+          )}
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.exact_total_goals}</div>
             {renderMarketSection("exact_total_goals", "grid-cols-3")}
@@ -443,6 +457,48 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
         <TabsContent value="cs" className="space-y-3 mt-2">
           {renderCorrectScore()}
+        </TabsContent>
+
+        <TabsContent value="ex" className="space-y-4 mt-2">
+          {getGroup("double_chance").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.double_chance}</div>
+              {renderMarketSection("double_chance", "grid-cols-3")}
+            </div>
+          )}
+          {getGroup("draw_no_bet").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                {MARKET_LABELS.draw_no_bet}
+                <span className="ml-2 font-normal normal-case text-muted-foreground/80">· stake refunded on a draw</span>
+              </div>
+              {renderMarketSection("draw_no_bet", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("clean_sheet_home").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.clean_sheet_home}</div>
+              {renderMarketSection("clean_sheet_home", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("clean_sheet_away").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.clean_sheet_away}</div>
+              {renderMarketSection("clean_sheet_away", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("win_to_nil_home").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.win_to_nil_home}</div>
+              {renderMarketSection("win_to_nil_home", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("win_to_nil_away").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.win_to_nil_away}</div>
+              {renderMarketSection("win_to_nil_away", "grid-cols-2")}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="sp" className="space-y-4 mt-2">
