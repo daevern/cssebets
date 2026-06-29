@@ -296,7 +296,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   };
 
   const renderCorrectScore = () => {
-    const rows = orderedSelections("correct_score", grouped.correct_score);
+    const rows = orderedSelections("correct_score", getGroup("correct_score"));
     if (!rows.length) return <div className="text-xs text-muted-foreground">Not available.</div>;
 
     const selectedKeys = Object.keys(csPicks);
