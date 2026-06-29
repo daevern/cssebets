@@ -171,24 +171,42 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     return <div className="text-xs text-muted-foreground flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Loading markets…</div>;
   }
 
-  const hasHtFt = grouped.half_time_full_time.length > 0;
-  const hasToQualify = grouped.to_qualify.length > 0;
+  const hasHtFt = getGroup("half_time_full_time").length > 0;
+  const hasToQualify = getGroup("to_qualify").length > 0;
+  const hasExtras =
+    getGroup("double_chance").length > 0 ||
+    getGroup("draw_no_bet").length > 0 ||
+    getGroup("goals_odd_even").length > 0 ||
+    getGroup("clean_sheet_home").length > 0 ||
+    getGroup("clean_sheet_away").length > 0 ||
+    getGroup("win_to_nil_home").length > 0 ||
+    getGroup("win_to_nil_away").length > 0;
   const hasSpecials = hasHtFt || hasToQualify;
 
   const orderedSelections = (market: MarketKey, rows: OddsRow[]) => {
-    const order =
-      market === "correct_score" ? CORRECT_SCORES :
-      market === "half_time_full_time" ? HTFT_OPTIONS :
-      market === "exact_total_goals" ? EXACT_GOALS_OPTIONS :
-      market === "over_under_2_5" ? ["OVER_2_5","UNDER_2_5"] :
-      market === "btts" ? ["YES","NO"] :
-      market === "to_qualify" ? ["HOME","AWAY"] : [];
+    let order: string[] = [];
+    if (market === "correct_score") order = CORRECT_SCORES;
+    else if (market === "half_time_full_time") order = HTFT_OPTIONS;
+    else if (market === "exact_total_goals") order = EXACT_GOALS_OPTIONS;
+    else if (market === "btts") order = ["YES", "NO"];
+    else if (market === "to_qualify") order = ["HOME", "AWAY"];
+    else if (market === "double_chance") order = ["HOME_OR_DRAW", "HOME_OR_AWAY", "DRAW_OR_AWAY"];
+    else if (market === "draw_no_bet") order = ["HOME", "AWAY"];
+    else if (market === "goals_odd_even") order = ["ODD", "EVEN"];
+    else if (
+      market === "clean_sheet_home" || market === "clean_sheet_away" ||
+      market === "win_to_nil_home" || market === "win_to_nil_away"
+    ) order = ["YES", "NO"];
+    else if (market.startsWith("over_under_")) {
+      const line = market.replace("over_under_", "");
+      order = [`OVER_${line}`, `UNDER_${line}`];
+    }
     const byKey = new Map(rows.map(r => [r.selection, r]));
     return order.map(s => byKey.get(s)).filter(Boolean) as OddsRow[];
   };
 
   const renderMarketSection = (market: MarketKey, cols: string) => {
-    const rows = orderedSelections(market, grouped[market]);
+    const rows = orderedSelections(market, getGroup(market));
     if (!rows.length) return <div className="text-xs text-muted-foreground">Not available.</div>;
     const suspended = isMarketSuspended(market);
     const pick = picks[market];
