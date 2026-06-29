@@ -120,13 +120,88 @@ export function parseBookmakerPayload(bookmakers: Bookmaker[]): {
         continue;
       }
 
-      // Goals Over/Under (2.5 only, Phase 1)
+      // Goals Over/Under — all supported lines (0.5 → 6.5)
       if (name === "Goals Over/Under") {
         for (const v of bet.values ?? []) {
           const val = String(v.value).trim();
           const odd = Number(v.odd);
-          if (val === "Over 2.5") push("over_under_2_5", "OVER_2_5", odd);
-          else if (val === "Under 2.5") push("over_under_2_5", "UNDER_2_5", odd);
+          const m = val.match(/^(Over|Under)\s+(0\.5|1\.5|2\.5|3\.5|4\.5|5\.5|6\.5)$/i);
+          if (!m) continue;
+          const side = m[1].toUpperCase() === "OVER" ? "OVER" : "UNDER";
+          const lineKey = m[2].replace(".", "_"); // "2_5"
+          const market = `over_under_${lineKey}` as ParsedOdds["market"];
+          push(market, `${side}_${lineKey}`, odd);
+        }
+        continue;
+      }
+
+      // Double Chance: values "Home/Draw", "Home/Away", "Draw/Away" (sometimes "1X","12","X2")
+      if (name === "Double Chance") {
+        for (const v of bet.values ?? []) {
+          const val = String(v.value).trim().toLowerCase().replace(/\s/g, "");
+          const odd = Number(v.odd);
+          if (val === "home/draw" || val === "1x") push("double_chance", "HOME_OR_DRAW", odd);
+          else if (val === "home/away" || val === "12") push("double_chance", "HOME_OR_AWAY", odd);
+          else if (val === "draw/away" || val === "x2") push("double_chance", "DRAW_OR_AWAY", odd);
+        }
+        continue;
+      }
+
+      if (name === "Draw No Bet" || name === "DNB") {
+        for (const v of bet.values ?? []) {
+          const val = String(v.value).trim().toLowerCase();
+          const odd = Number(v.odd);
+          if (val === "home" || val === "1") push("draw_no_bet", "HOME", odd);
+          else if (val === "away" || val === "2") push("draw_no_bet", "AWAY", odd);
+        }
+        continue;
+      }
+
+      if (name === "Odd/Even" || name === "Total - Odd/Even" || name === "Odd Even") {
+        for (const v of bet.values ?? []) {
+          const val = String(v.value).trim().toLowerCase();
+          const odd = Number(v.odd);
+          if (val === "odd") push("goals_odd_even", "ODD", odd);
+          else if (val === "even") push("goals_odd_even", "EVEN", odd);
+        }
+        continue;
+      }
+
+      // Clean Sheet — sometimes split per side, sometimes combined values
+      if (name === "Clean Sheet - Home" || name === "Home Team Clean Sheet") {
+        for (const v of bet.values ?? []) {
+          const val = String(v.value).trim().toLowerCase();
+          const odd = Number(v.odd);
+          if (val === "yes") push("clean_sheet_home", "YES", odd);
+          else if (val === "no") push("clean_sheet_home", "NO", odd);
+        }
+        continue;
+      }
+      if (name === "Clean Sheet - Away" || name === "Away Team Clean Sheet") {
+        for (const v of bet.values ?? []) {
+          const val = String(v.value).trim().toLowerCase();
+          const odd = Number(v.odd);
+          if (val === "yes") push("clean_sheet_away", "YES", odd);
+          else if (val === "no") push("clean_sheet_away", "NO", odd);
+        }
+        continue;
+      }
+
+      if (name === "Win to Nil - Home" || name === "Home Win to Nil") {
+        for (const v of bet.values ?? []) {
+          const val = String(v.value).trim().toLowerCase();
+          const odd = Number(v.odd);
+          if (val === "yes") push("win_to_nil_home", "YES", odd);
+          else if (val === "no") push("win_to_nil_home", "NO", odd);
+        }
+        continue;
+      }
+      if (name === "Win to Nil - Away" || name === "Away Win to Nil") {
+        for (const v of bet.values ?? []) {
+          const val = String(v.value).trim().toLowerCase();
+          const odd = Number(v.odd);
+          if (val === "yes") push("win_to_nil_away", "YES", odd);
+          else if (val === "no") push("win_to_nil_away", "NO", odd);
         }
         continue;
       }
