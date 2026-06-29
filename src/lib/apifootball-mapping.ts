@@ -162,6 +162,25 @@ export function parseBookmakerPayload(bookmakers: Bookmaker[]): {
         }
         continue;
       }
+
+      // To Qualify / Advance — knockout only. API-Football names vary across
+      // markets ("To Qualify", "Home/Away", "Qualification", "Team to Qualify").
+      // Values are typically "Home"/"Away" (sometimes "1"/"2").
+      if (
+        name === "To Qualify" ||
+        name === "Qualification" ||
+        name === "Team to Qualify" ||
+        name === "Home/Away" ||
+        name === "Home-Away"
+      ) {
+        for (const v of bet.values ?? []) {
+          const val = String(v.value).trim().toLowerCase();
+          const odd = Number(v.odd);
+          if (val === "home" || val === "1") push("to_qualify", "HOME", odd);
+          else if (val === "away" || val === "2") push("to_qualify", "AWAY", odd);
+        }
+        continue;
+      }
     }
   }
 
