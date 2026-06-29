@@ -62,15 +62,14 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   }, [myBets.data]);
 
   const grouped = useMemo(() => {
-    const g: Record<MarketKey, OddsRow[]> = {
-      over_under_2_5: [], btts: [], correct_score: [],
-      half_time_full_time: [], exact_total_goals: [], to_qualify: [],
-    };
+    const g: Partial<Record<MarketKey, OddsRow[]>> = {};
     for (const o of (data?.odds ?? []) as OddsRow[]) {
-      if (o.market in g) g[o.market as MarketKey].push(o);
+      const key = o.market as MarketKey;
+      (g[key] ??= []).push(o);
     }
     return g;
   }, [data]);
+  const getGroup = (k: MarketKey): OddsRow[] => grouped[k] ?? [];
 
   const [stakes, setStakes] = useState<Record<string, string>>({});
   const [picks, setPicks] = useState<Record<string, { selection: string; odds: number } | null>>({});
