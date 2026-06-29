@@ -4,12 +4,25 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceRateLimit } from "@/lib/rate-limit.functions";
 
 const MARKET_KEYS = [
+  "over_under_0_5",
+  "over_under_1_5",
   "over_under_2_5",
+  "over_under_3_5",
+  "over_under_4_5",
+  "over_under_5_5",
+  "over_under_6_5",
   "btts",
   "correct_score",
   "half_time_full_time",
   "exact_total_goals",
   "to_qualify",
+  "double_chance",
+  "draw_no_bet",
+  "goals_odd_even",
+  "clean_sheet_home",
+  "clean_sheet_away",
+  "win_to_nil_home",
+  "win_to_nil_away",
 ] as const;
 
 type MarketOdds = {
