@@ -604,6 +604,7 @@ export type Database = {
           odds_source: string | null
           odds_status: string
           odds_updated_at: string | null
+          qualifier: string | null
           reference_odds: Json | null
           stage: string | null
           status: Database["public"]["Enums"]["match_status"]
@@ -636,6 +637,7 @@ export type Database = {
           odds_source?: string | null
           odds_status?: string
           odds_updated_at?: string | null
+          qualifier?: string | null
           reference_odds?: Json | null
           stage?: string | null
           status?: Database["public"]["Enums"]["match_status"]
@@ -668,6 +670,7 @@ export type Database = {
           odds_source?: string | null
           odds_status?: string
           odds_updated_at?: string | null
+          qualifier?: string | null
           reference_odds?: Json | null
           stage?: string | null
           status?: Database["public"]["Enums"]["match_status"]
@@ -1848,6 +1851,7 @@ export type Database = {
           p_home: number
           p_home_ht?: number
           p_match_id: string
+          p_qualifier?: string
         }
         Returns: number
       }
@@ -1863,6 +1867,10 @@ export type Database = {
           p_home_ht?: number
           p_match_id: string
         }
+        Returns: number
+      }
+      settle_to_qualify_for_match: {
+        Args: { p_match_id: string; p_qualifier: string }
         Returns: number
       }
       settle_tournament_winner_atomic: {
