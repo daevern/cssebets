@@ -44,8 +44,28 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
 
     const competition = m.competition?.name ?? null;
     const stageLabel = m.stage ? (competition ? `${competition} · ${m.stage}` : m.stage) : competition;
-    const homeScore = m.score?.fullTime?.home ?? null;
-    const awayScore = m.score?.fullTime?.away ?? null;
+    // SETTLEMENT POLICY: 90-minute whistle ONLY.
+    // football-data v4 `score.fullTime` is the AGGREGATE score, including
+    // extra time goals AND penalty shootout goals (see
+    // https://docs.football-data.org/general/v4/overtime.html). The 90-min
+    // score lives in `score.regularTime`. We grade every market (Result,
+    // O/U, BTTS, Correct Score, Exact Goals, HT/FT) on regulation only,
+    // because that is what the Odds API / API-Football prices quote.
+    //
+    // Knockout ties decided in ET or on penalties therefore settle as a
+    // DRAW on Match Winner — correct for a 90-min market. A separate
+    // "To Qualify" market (priced + graded on advancement) is the only
+    // place ET/penalties should pay out.
+    const duration: string | null = m.score?.duration ?? null;
+    const regHome = m.score?.regularTime?.home ?? null;
+    const regAway = m.score?.regularTime?.away ?? null;
+    const ftHome = m.score?.fullTime?.home ?? null;
+    const ftAway = m.score?.fullTime?.away ?? null;
+    // Prefer regularTime when present (always present for ET/PENALTY_SHOOTOUT
+    // finishes). For a REGULAR-duration finish, regularTime may be omitted —
+    // fullTime then equals the 90-min score and is safe to use.
+    const homeScore = regHome ?? (duration === "REGULAR" || duration == null ? ftHome : null);
+    const awayScore = regAway ?? (duration === "REGULAR" || duration == null ? ftAway : null);
     const homeScoreHt = m.score?.halfTime?.home ?? null;
     const awayScoreHt = m.score?.halfTime?.away ?? null;
     const winner = status === "finished" && homeScore !== null && awayScore !== null
