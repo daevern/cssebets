@@ -15,6 +15,7 @@ import {
   CORRECT_SCORES,
   HTFT_OPTIONS,
   EXACT_GOALS_OPTIONS,
+  OVER_UNDER_LINES,
   type MarketKey,
 } from "@/lib/markets-catalog";
 
@@ -61,15 +62,14 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   }, [myBets.data]);
 
   const grouped = useMemo(() => {
-    const g: Record<MarketKey, OddsRow[]> = {
-      over_under_2_5: [], btts: [], correct_score: [],
-      half_time_full_time: [], exact_total_goals: [], to_qualify: [],
-    };
+    const g: Partial<Record<MarketKey, OddsRow[]>> = {};
     for (const o of (data?.odds ?? []) as OddsRow[]) {
-      if (o.market in g) g[o.market as MarketKey].push(o);
+      const key = o.market as MarketKey;
+      (g[key] ??= []).push(o);
     }
     return g;
   }, [data]);
+  const getGroup = (k: MarketKey): OddsRow[] => grouped[k] ?? [];
 
   const [stakes, setStakes] = useState<Record<string, string>>({});
   const [picks, setPicks] = useState<Record<string, { selection: string; odds: number } | null>>({});
@@ -171,24 +171,42 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     return <div className="text-xs text-muted-foreground flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Loading markets…</div>;
   }
 
-  const hasHtFt = grouped.half_time_full_time.length > 0;
-  const hasToQualify = grouped.to_qualify.length > 0;
+  const hasHtFt = getGroup("half_time_full_time").length > 0;
+  const hasToQualify = getGroup("to_qualify").length > 0;
+  const hasExtras =
+    getGroup("double_chance").length > 0 ||
+    getGroup("draw_no_bet").length > 0 ||
+    getGroup("goals_odd_even").length > 0 ||
+    getGroup("clean_sheet_home").length > 0 ||
+    getGroup("clean_sheet_away").length > 0 ||
+    getGroup("win_to_nil_home").length > 0 ||
+    getGroup("win_to_nil_away").length > 0;
   const hasSpecials = hasHtFt || hasToQualify;
 
   const orderedSelections = (market: MarketKey, rows: OddsRow[]) => {
-    const order =
-      market === "correct_score" ? CORRECT_SCORES :
-      market === "half_time_full_time" ? HTFT_OPTIONS :
-      market === "exact_total_goals" ? EXACT_GOALS_OPTIONS :
-      market === "over_under_2_5" ? ["OVER_2_5","UNDER_2_5"] :
-      market === "btts" ? ["YES","NO"] :
-      market === "to_qualify" ? ["HOME","AWAY"] : [];
+    let order: string[] = [];
+    if (market === "correct_score") order = CORRECT_SCORES;
+    else if (market === "half_time_full_time") order = HTFT_OPTIONS;
+    else if (market === "exact_total_goals") order = EXACT_GOALS_OPTIONS;
+    else if (market === "btts") order = ["YES", "NO"];
+    else if (market === "to_qualify") order = ["HOME", "AWAY"];
+    else if (market === "double_chance") order = ["HOME_OR_DRAW", "HOME_OR_AWAY", "DRAW_OR_AWAY"];
+    else if (market === "draw_no_bet") order = ["HOME", "AWAY"];
+    else if (market === "goals_odd_even") order = ["ODD", "EVEN"];
+    else if (
+      market === "clean_sheet_home" || market === "clean_sheet_away" ||
+      market === "win_to_nil_home" || market === "win_to_nil_away"
+    ) order = ["YES", "NO"];
+    else if (market.startsWith("over_under_")) {
+      const line = market.replace("over_under_", "");
+      order = [`OVER_${line}`, `UNDER_${line}`];
+    }
     const byKey = new Map(rows.map(r => [r.selection, r]));
     return order.map(s => byKey.get(s)).filter(Boolean) as OddsRow[];
   };
 
   const renderMarketSection = (market: MarketKey, cols: string) => {
-    const rows = orderedSelections(market, grouped[market]);
+    const rows = orderedSelections(market, getGroup(market));
     if (!rows.length) return <div className="text-xs text-muted-foreground">Not available.</div>;
     const suspended = isMarketSuspended(market);
     const pick = picks[market];
@@ -278,7 +296,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   };
 
   const renderCorrectScore = () => {
-    const rows = orderedSelections("correct_score", grouped.correct_score);
+    const rows = orderedSelections("correct_score", getGroup("correct_score"));
     if (!rows.length) return <div className="text-xs text-muted-foreground">Not available.</div>;
 
     const selectedKeys = Object.keys(csPicks);
@@ -402,21 +420,35 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   return (
     <div className="space-y-3 pt-2 border-t">
       <Tabs defaultValue="goals" className="w-full">
-        <TabsList className="grid grid-cols-3 w-full">
+        <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="goals" className="text-xs">Goals</TabsTrigger>
           <TabsTrigger value="cs" className="text-xs">Score</TabsTrigger>
+          <TabsTrigger value="ex" className="text-xs" disabled={!hasExtras}>Extras</TabsTrigger>
           <TabsTrigger value="sp" className="text-xs" disabled={!hasSpecials}>Specials</TabsTrigger>
         </TabsList>
 
         <TabsContent value="goals" className="space-y-4 mt-2">
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.over_under_2_5}</div>
-            {renderMarketSection("over_under_2_5", "grid-cols-2")}
-          </div>
+          {OVER_UNDER_LINES.map((mk) => {
+            if (getGroup(mk).length === 0) return null;
+            return (
+              <div key={mk}>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                  {MARKET_LABELS[mk]}
+                </div>
+                {renderMarketSection(mk, "grid-cols-2")}
+              </div>
+            );
+          })}
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.btts}</div>
             {renderMarketSection("btts", "grid-cols-2")}
           </div>
+          {getGroup("goals_odd_even").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.goals_odd_even}</div>
+              {renderMarketSection("goals_odd_even", "grid-cols-2")}
+            </div>
+          )}
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.exact_total_goals}</div>
             {renderMarketSection("exact_total_goals", "grid-cols-3")}
@@ -425,6 +457,48 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
         <TabsContent value="cs" className="space-y-3 mt-2">
           {renderCorrectScore()}
+        </TabsContent>
+
+        <TabsContent value="ex" className="space-y-4 mt-2">
+          {getGroup("double_chance").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.double_chance}</div>
+              {renderMarketSection("double_chance", "grid-cols-3")}
+            </div>
+          )}
+          {getGroup("draw_no_bet").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                {MARKET_LABELS.draw_no_bet}
+                <span className="ml-2 font-normal normal-case text-muted-foreground/80">· stake refunded on a draw</span>
+              </div>
+              {renderMarketSection("draw_no_bet", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("clean_sheet_home").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.clean_sheet_home}</div>
+              {renderMarketSection("clean_sheet_home", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("clean_sheet_away").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.clean_sheet_away}</div>
+              {renderMarketSection("clean_sheet_away", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("win_to_nil_home").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.win_to_nil_home}</div>
+              {renderMarketSection("win_to_nil_home", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("win_to_nil_away").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.win_to_nil_away}</div>
+              {renderMarketSection("win_to_nil_away", "grid-cols-2")}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="sp" className="space-y-4 mt-2">

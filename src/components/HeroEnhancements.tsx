@@ -109,7 +109,7 @@ export function StatsRow({ stats }: { stats: LandingStats }) {
 // Static demo market odds shown on the landing preview. Shape mirrors
 // what the real MarketTabs component renders so the user sees exactly
 // what placing a bet looks like once they sign up.
-const PREVIEW_ODDS: Record<MarketKey, Record<string, number>> = {
+const PREVIEW_ODDS: Partial<Record<MarketKey, Record<string, number>>> = {
   over_under_2_5: { OVER_2_5: 1.85, UNDER_2_5: 1.95 },
   btts: { YES: 1.80, NO: 2.00 },
   exact_total_goals: {
