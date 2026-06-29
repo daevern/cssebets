@@ -172,6 +172,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   }
 
   const hasHtFt = grouped.half_time_full_time.length > 0;
+  const hasToQualify = grouped.to_qualify.length > 0;
+  const hasSpecials = hasHtFt || hasToQualify;
 
   const orderedSelections = (market: MarketKey, rows: OddsRow[]) => {
     const order =
@@ -179,7 +181,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       market === "half_time_full_time" ? HTFT_OPTIONS :
       market === "exact_total_goals" ? EXACT_GOALS_OPTIONS :
       market === "over_under_2_5" ? ["OVER_2_5","UNDER_2_5"] :
-      market === "btts" ? ["YES","NO"] : [];
+      market === "btts" ? ["YES","NO"] :
+      market === "to_qualify" ? ["HOME","AWAY"] : [];
     const byKey = new Map(rows.map(r => [r.selection, r]));
     return order.map(s => byKey.get(s)).filter(Boolean) as OddsRow[];
   };
