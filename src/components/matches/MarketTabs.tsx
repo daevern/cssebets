@@ -405,7 +405,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         <TabsList className="grid grid-cols-3 w-full">
           <TabsTrigger value="goals" className="text-xs">Goals</TabsTrigger>
           <TabsTrigger value="cs" className="text-xs">Score</TabsTrigger>
-          <TabsTrigger value="sp" className="text-xs" disabled={!hasHtFt}>Specials</TabsTrigger>
+          <TabsTrigger value="sp" className="text-xs" disabled={!hasSpecials}>Specials</TabsTrigger>
         </TabsList>
 
         <TabsContent value="goals" className="space-y-4 mt-2">
@@ -427,9 +427,22 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
           {renderCorrectScore()}
         </TabsContent>
 
-        <TabsContent value="sp" className="space-y-2 mt-2">
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.half_time_full_time}</div>
-          {renderMarketSection("half_time_full_time", "grid-cols-3")}
+        <TabsContent value="sp" className="space-y-4 mt-2">
+          {hasToQualify && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
+                {MARKET_LABELS.to_qualify}
+                <span className="ml-2 font-normal normal-case text-muted-foreground/80">· paid on who advances (incl. ET &amp; penalties)</span>
+              </div>
+              {renderMarketSection("to_qualify", "grid-cols-2")}
+            </div>
+          )}
+          {hasHtFt && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.half_time_full_time}</div>
+              {renderMarketSection("half_time_full_time", "grid-cols-3")}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>
