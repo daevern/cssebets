@@ -13,7 +13,7 @@
 //   "Exact Goals Number"    → exact_total_goals
 
 export type ParsedOdds = {
-  market: "over_under_2_5" | "btts" | "correct_score" | "half_time_full_time" | "exact_total_goals";
+  market: "over_under_2_5" | "btts" | "correct_score" | "half_time_full_time" | "exact_total_goals" | "to_qualify";
   selection: string;
   odds: number;
 };
