@@ -38,6 +38,8 @@ export const SELECTION_LABELS: Record<string, string> = {
   AWAY_HOME: "Away / Home",
   AWAY_DRAW: "Away / Draw",
   AWAY_AWAY: "Away / Away",
+  HOME: "Home advances",
+  AWAY: "Away advances",
 };
 
 export function selectionLabel(sel: string): string {
