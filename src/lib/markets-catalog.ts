@@ -5,7 +5,8 @@ export type MarketKey =
   | "btts"
   | "correct_score"
   | "half_time_full_time"
-  | "exact_total_goals";
+  | "exact_total_goals"
+  | "to_qualify";
 
 export const MARKET_LABELS: Record<MarketKey, string> = {
   over_under_2_5: "Over / Under 2.5 Goals",
@@ -13,6 +14,7 @@ export const MARKET_LABELS: Record<MarketKey, string> = {
   correct_score: "Score",
   half_time_full_time: "Half-Time / Full-Time",
   exact_total_goals: "Exact Total Goals",
+  to_qualify: "To Qualify / Advance",
 };
 
 export const SELECTION_LABELS: Record<string, string> = {
