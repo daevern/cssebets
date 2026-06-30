@@ -249,7 +249,99 @@ export function parseBookmakerPayload(bookmakers: Bookmaker[]): {
         continue;
       }
 
-      // To Qualify / Advance — knockout only. API-Football names vary across
+      // ── CARDS ───────────────────────────────────────────────────────────
+      if (name === "Cards Over/Under" || name === "Total Cards" || name === "Cards O/U") {
+        for (const v of bet.values ?? []) {
+          const val = String(v.value).trim();
+          const odd = Number(v.odd);
+          const m = val.match(/^(Over|Under)\s+(2\.5|3\.5|4\.5|5\.5)$/i);
+          if (!m) continue;
+          const side = m[1].toUpperCase() === "OVER" ? "OVER" : "UNDER";
+          const lineKey = m[2].replace(".", "_");
+          push(`cards_over_under_${lineKey}` as ParsedOdds["market"], `${side}_${lineKey}`, odd);
+        }
+        continue;
+      }
+      if (name === "Home Team Total Cards" || name === "Home Cards Over/Under") {
+        for (const v of bet.values ?? []) {
+          const m = String(v.value).trim().match(/^(Over|Under)\s+(1\.5)$/i);
+          if (!m) continue;
+          const side = m[1].toUpperCase() === "OVER" ? "OVER" : "UNDER";
+          push("home_cards_over_under_1_5", `${side}_1_5`, Number(v.odd));
+        }
+        continue;
+      }
+      if (name === "Away Team Total Cards" || name === "Away Cards Over/Under") {
+        for (const v of bet.values ?? []) {
+          const m = String(v.value).trim().match(/^(Over|Under)\s+(1\.5)$/i);
+          if (!m) continue;
+          const side = m[1].toUpperCase() === "OVER" ? "OVER" : "UNDER";
+          push("away_cards_over_under_1_5", `${side}_1_5`, Number(v.odd));
+        }
+        continue;
+      }
+      if (name === "Red Card" || name === "Sending Off" || name === "Red Card in Match") {
+        for (const v of bet.values ?? []) {
+          const val = String(v.value).trim().toLowerCase();
+          const odd = Number(v.odd);
+          if (val === "yes") push("red_card_match", "YES", odd);
+          else if (val === "no") push("red_card_match", "NO", odd);
+        }
+        continue;
+      }
+      if (name === "First Card" || name === "Team First Card" || name === "First Team To Be Booked") {
+        for (const v of bet.values ?? []) {
+          const val = String(v.value).trim().toLowerCase();
+          const odd = Number(v.odd);
+          if (val === "home" || val === "1") push("first_card", "HOME", odd);
+          else if (val === "away" || val === "2") push("first_card", "AWAY", odd);
+          else if (val === "no card" || val === "none" || val === "no cards") push("first_card", "NONE", odd);
+        }
+        continue;
+      }
+
+      // ── CORNERS ─────────────────────────────────────────────────────────
+      if (name === "Corners Over/Under" || name === "Total Corners" || name === "Corners O/U") {
+        for (const v of bet.values ?? []) {
+          const val = String(v.value).trim();
+          const odd = Number(v.odd);
+          const m = val.match(/^(Over|Under)\s+(8\.5|9\.5|10\.5|11\.5)$/i);
+          if (!m) continue;
+          const side = m[1].toUpperCase() === "OVER" ? "OVER" : "UNDER";
+          const lineKey = m[2].replace(".", "_");
+          push(`corners_over_under_${lineKey}` as ParsedOdds["market"], `${side}_${lineKey}`, odd);
+        }
+        continue;
+      }
+      if (name === "Home Team Total Corners" || name === "Home Corners Over/Under") {
+        for (const v of bet.values ?? []) {
+          const m = String(v.value).trim().match(/^(Over|Under)\s+(4\.5)$/i);
+          if (!m) continue;
+          const side = m[1].toUpperCase() === "OVER" ? "OVER" : "UNDER";
+          push("home_corners_over_under_4_5", `${side}_4_5`, Number(v.odd));
+        }
+        continue;
+      }
+      if (name === "Away Team Total Corners" || name === "Away Corners Over/Under") {
+        for (const v of bet.values ?? []) {
+          const m = String(v.value).trim().match(/^(Over|Under)\s+(4\.5)$/i);
+          if (!m) continue;
+          const side = m[1].toUpperCase() === "OVER" ? "OVER" : "UNDER";
+          push("away_corners_over_under_4_5", `${side}_4_5`, Number(v.odd));
+        }
+        continue;
+      }
+      if (name === "First Corner" || name === "Team First Corner") {
+        for (const v of bet.values ?? []) {
+          const val = String(v.value).trim().toLowerCase();
+          const odd = Number(v.odd);
+          if (val === "home" || val === "1") push("first_corner", "HOME", odd);
+          else if (val === "away" || val === "2") push("first_corner", "AWAY", odd);
+          else if (val === "no corner" || val === "none" || val === "no corners") push("first_corner", "NONE", odd);
+        }
+        continue;
+      }
+
       // markets ("To Qualify", "Home/Away", "Qualification", "Team to Qualify").
       // Values are typically "Home"/"Away" (sometimes "1"/"2").
       if (
