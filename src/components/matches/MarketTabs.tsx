@@ -184,6 +184,17 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     getGroup("win_to_nil_home").length > 0 ||
     getGroup("win_to_nil_away").length > 0;
   const hasSpecials = hasHtFt || hasToQualify;
+  const hasCards =
+    CARDS_LINES.some((k) => getGroup(k).length > 0) ||
+    getGroup("home_cards_over_under_1_5").length > 0 ||
+    getGroup("away_cards_over_under_1_5").length > 0 ||
+    getGroup("red_card_match").length > 0 ||
+    getGroup("first_card").length > 0;
+  const hasCorners =
+    CORNERS_LINES.some((k) => getGroup(k).length > 0) ||
+    getGroup("home_corners_over_under_4_5").length > 0 ||
+    getGroup("away_corners_over_under_4_5").length > 0 ||
+    getGroup("first_corner").length > 0;
 
   const orderedSelections = (market: MarketKey, rows: OddsRow[]) => {
     let order: string[] = [];
