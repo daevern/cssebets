@@ -301,7 +301,12 @@ export function parseBookmakerPayload(bookmakers: Bookmaker[]): {
       }
 
       // ── CORNERS ─────────────────────────────────────────────────────────
-      if (name === "Corners Over/Under" || name === "Total Corners" || name === "Corners O/U") {
+      if (
+        name === "Corners Over/Under" ||
+        name === "Corners Over Under" ||
+        name === "Total Corners" ||
+        name === "Corners O/U"
+      ) {
         for (const v of bet.values ?? []) {
           const val = String(v.value).trim();
           const odd = Number(v.odd);
@@ -313,6 +318,7 @@ export function parseBookmakerPayload(bookmakers: Bookmaker[]): {
         }
         continue;
       }
+
       if (name === "Home Team Total Corners" || name === "Home Corners Over/Under") {
         for (const v of bet.values ?? []) {
           const m = String(v.value).trim().match(/^(Over|Under)\s+(4\.5)$/i);
