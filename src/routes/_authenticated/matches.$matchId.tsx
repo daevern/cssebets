@@ -1050,14 +1050,14 @@ function StatsCompare({ home, away, homeName, awayName }: { home: any; away: any
 
 /* ---------- Event timeline ---------- */
 
-function EventTimeline({ events, home, away }: { events: any[]; home: string; away: string }) {
+function EventTimeline({ events, home, away, compact }: { events: any[]; home: string; away: string; compact?: boolean }) {
   // Newest first
   const ordered = [...events].sort((a, b) => {
     const am = (a.minute ?? 0) + (a.extra_minute ?? 0);
     const bm = (b.minute ?? 0) + (b.extra_minute ?? 0);
     return bm - am;
   });
-  const hasMore = ordered.length > 7;
+  const hasMore = !compact && ordered.length > 7;
   return (
     <div className="relative">
       <div className="max-h-[300px] overflow-y-auto pr-1">
