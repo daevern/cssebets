@@ -443,11 +443,13 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   return (
     <div className="space-y-3 pt-2 border-t">
       <Tabs defaultValue="goals" className="w-full">
-        <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="goals" className="text-xs">Goals</TabsTrigger>
-          <TabsTrigger value="cs" className="text-xs">Score</TabsTrigger>
-          <TabsTrigger value="ex" className="text-xs" disabled={!hasExtras}>Extras</TabsTrigger>
-          <TabsTrigger value="sp" className="text-xs" disabled={!hasSpecials}>Specials</TabsTrigger>
+        <TabsList className="flex w-full overflow-x-auto no-scrollbar">
+          <TabsTrigger value="goals" className="text-xs flex-1 min-w-[64px]">Goals</TabsTrigger>
+          <TabsTrigger value="cs" className="text-xs flex-1 min-w-[64px]">Score</TabsTrigger>
+          <TabsTrigger value="ex" className="text-xs flex-1 min-w-[64px]" disabled={!hasExtras}>Extras</TabsTrigger>
+          <TabsTrigger value="cards" className="text-xs flex-1 min-w-[64px]" disabled={!hasCards}>Cards</TabsTrigger>
+          <TabsTrigger value="corners" className="text-xs flex-1 min-w-[72px]" disabled={!hasCorners}>Corners</TabsTrigger>
+          <TabsTrigger value="sp" className="text-xs flex-1 min-w-[72px]" disabled={!hasSpecials}>Specials</TabsTrigger>
         </TabsList>
 
         <TabsContent value="goals" className="space-y-4 mt-2">
