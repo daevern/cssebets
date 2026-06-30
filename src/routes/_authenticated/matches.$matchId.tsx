@@ -393,9 +393,11 @@ function MatchHero({
 }
 
 /* 90-minute strip with HT mark and event markers. */
-function MatchProgress({ pct, markers }: { pct: number; markers: Array<{ side: "home"|"away"; kind: string; min: number | null; extra?: number | null; detail?: string }> }) {
-  // Show 0..90 + an injury slot up to 95.
-  const cap = 95;
+function MatchProgress({ pct, cap = 90, markers }: { pct: number; cap?: number; markers: Array<{ side: "home"|"away"; kind: string; min: number | null; extra?: number | null; detail?: string }> }) {
+  const isET = cap > 90;
+  // HT sits at 45/cap. For ET also show a 90' tick.
+  const htPct = (45 / cap) * 100;
+  const ftPct = (90 / cap) * 100;
   return (
     <div className="mt-4">
       <div className="relative h-7">
@@ -406,13 +408,20 @@ function MatchProgress({ pct, markers }: { pct: number; markers: Array<{ side: "
           className="absolute top-3 left-0 h-1 bg-[var(--color-neon)] shadow-[0_0_10px_var(--color-neon-glow)] transition-all duration-1000"
           style={{ width: `${pct}%` }}
         />
-        {/* HT tick at 50% */}
-        <div className="absolute top-1.5 h-4 w-px bg-[var(--color-surface-border)]" style={{ left: "50%" }} />
-        <span className="absolute -top-0.5 -translate-x-1/2 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]" style={{ left: "50%" }}>HT</span>
+        {/* HT tick */}
+        <div className="absolute top-1.5 h-4 w-px bg-[var(--color-surface-border)]" style={{ left: `${htPct}%` }} />
+        <span className="absolute -top-0.5 -translate-x-1/2 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]" style={{ left: `${htPct}%` }}>HT</span>
+        {/* 90' tick (visible once ET starts) */}
+        {isET && (
+          <>
+            <div className="absolute top-1.5 h-4 w-px bg-[var(--color-surface-border)]" style={{ left: `${ftPct}%` }} />
+            <span className="absolute -top-0.5 -translate-x-1/2 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]" style={{ left: `${ftPct}%` }}>90'</span>
+          </>
+        )}
         {/* Markers */}
         {markers.map((m, i) => {
           const minute = Math.min(cap, (m.min ?? 0) + (m.extra ?? 0));
-          const left = `${Math.min(100, (minute / 90) * 100)}%`;
+          const left = `${Math.min(100, (minute / cap) * 100)}%`;
           const isHome = m.side === "home";
           return (
             <div
@@ -427,7 +436,7 @@ function MatchProgress({ pct, markers }: { pct: number; markers: Array<{ side: "
         })}
       </div>
       <div className="mt-1 flex justify-between font-display text-[9px] font-bold tabular-nums text-[var(--color-ink-muted)]">
-        <span>0'</span><span>45'</span><span>90'</span>
+        <span>0'</span><span>{Math.round(cap / 2)}'</span><span>{cap}'</span>
       </div>
     </div>
   );
