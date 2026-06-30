@@ -475,10 +475,12 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
               {renderMarketSection("goals_odd_even", "grid-cols-2")}
             </div>
           )}
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.exact_total_goals}</div>
-            {renderMarketSection("exact_total_goals", "grid-cols-3")}
-          </div>
+          {getGroup("exact_total_goals").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.exact_total_goals}</div>
+              {renderMarketSection("exact_total_goals", "grid-cols-3")}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="cs" className="space-y-3 mt-2">
