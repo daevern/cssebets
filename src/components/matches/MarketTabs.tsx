@@ -18,6 +18,7 @@ import {
   OVER_UNDER_LINES,
   CARDS_LINES,
   CORNERS_LINES,
+  isMarketActive,
   type MarketKey,
 } from "@/lib/markets-catalog";
 
@@ -71,7 +72,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     }
     return g;
   }, [data]);
-  const getGroup = (k: MarketKey): OddsRow[] => grouped[k] ?? [];
+  const getGroup = (k: MarketKey): OddsRow[] => (isMarketActive(k) ? (grouped[k] ?? []) : []);
 
   const [stakes, setStakes] = useState<Record<string, string>>({});
   const [picks, setPicks] = useState<Record<string, { selection: string; odds: number } | null>>({});
@@ -474,10 +475,12 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
               {renderMarketSection("goals_odd_even", "grid-cols-2")}
             </div>
           )}
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.exact_total_goals}</div>
-            {renderMarketSection("exact_total_goals", "grid-cols-3")}
-          </div>
+          {getGroup("exact_total_goals").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.exact_total_goals}</div>
+              {renderMarketSection("exact_total_goals", "grid-cols-3")}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="cs" className="space-y-3 mt-2">

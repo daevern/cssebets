@@ -156,3 +156,36 @@ export const HTFT_OPTIONS = [
 ];
 
 export const EXACT_GOALS_OPTIONS = ["GOALS_0","GOALS_1","GOALS_2","GOALS_3","GOALS_4","GOALS_5_PLUS"];
+
+// Curated shortlist of markets surfaced to users. Retired markets remain typed
+// (so historical tickets keep their labels and continue to settle) but are
+// hidden from the bet slip. Edit this set to expand/retract the live offering.
+export const ACTIVE_MARKETS: ReadonlySet<MarketKey> = new Set<MarketKey>([
+  // Match result family
+  "to_qualify",
+  "double_chance",
+  "draw_no_bet",
+  "half_time_full_time",
+  // Goals — keep only the three standard lines
+  "over_under_1_5",
+  "over_under_2_5",
+  "over_under_3_5",
+  "btts",
+  "correct_score",
+  "goals_odd_even",
+  "clean_sheet_home",
+  "clean_sheet_away",
+  // Cards — middle lines only
+  "cards_over_under_3_5",
+  "cards_over_under_4_5",
+  "red_card_match",
+  // Corners — middle lines + team specials
+  "corners_over_under_9_5",
+  "corners_over_under_10_5",
+  "home_corners_over_under_4_5",
+  "away_corners_over_under_4_5",
+]);
+
+export function isMarketActive(market: string): boolean {
+  return ACTIVE_MARKETS.has(market as MarketKey);
+}
