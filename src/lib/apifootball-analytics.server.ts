@@ -159,6 +159,45 @@ export async function syncEvents(matchId: string) {
   return { ok: true, events: inserted };
 }
 
+// ---------- Live score + status ----------
+// Maps API-Football status.short -> our matches.status.
+function mapStatus(short: string | null | undefined): string | null {
+  const s = String(short ?? "").toUpperCase();
+  if (!s) return null;
+  if (["TBD", "NS", "PST", "CANC", "ABD", "AWD", "WO"].includes(s)) return "scheduled";
+  if (["1H", "HT", "2H", "ET", "BT", "P", "SUSP", "INT", "LIVE"].includes(s)) return "live";
+  if (["FT", "AET", "PEN"].includes(s)) return "finished";
+  return null;
+}
+
+export async function syncScore(matchId: string) {
+  const match = await loadMatch(matchId);
+  if (!match) return { ok: false, reason: "match not found" };
+  const fixtureId = await resolveFixtureId(match);
+  if (!fixtureId) return { ok: false, reason: "no fixture id" };
+  const res = await apiFootballGet<any[]>(`/fixtures?id=${fixtureId}`);
+  if ("skipped" in res) return { ok: false, reason: res.reason };
+  const fx = res.data?.[0];
+  if (!fx) return { ok: false, reason: "no fixture" };
+
+  const homeGoals = fx?.goals?.home;
+  const awayGoals = fx?.goals?.away;
+  const newStatus = mapStatus(fx?.fixture?.status?.short);
+
+  const update: Record<string, any> = { updated_at: new Date().toISOString() };
+  if (typeof homeGoals === "number") update.home_score = homeGoals;
+  if (typeof awayGoals === "number") update.away_score = awayGoals;
+  // Never downgrade a finished match back to live/scheduled.
+  if (newStatus && !(match.status === "finished" && newStatus !== "finished")) {
+    update.status = newStatus;
+  }
+
+  if (Object.keys(update).length > 1) {
+    await (supabaseAdmin as any).from("matches").update(update).eq("id", match.id);
+  }
+  return { ok: true, home: homeGoals, away: awayGoals, status: newStatus };
+}
+
 // ---------- Statistics ----------
 function pickStat(stats: any[], type: string): any {
   const row = stats?.find((s: any) => String(s?.type).toLowerCase() === type.toLowerCase());
