@@ -111,12 +111,12 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
 
   // Section tab model — collapses long vertical scroll into bite-sized tabs.
   type TabKey = "overview" | "events" | "lineups" | "history";
-  const tabs: { key: TabKey; label: string; show: boolean; count?: number }[] = [
-    { key: "overview", label: "Overview", show: true },
-    { key: "events", label: "Events", show: hasEvents, count: events.length },
-    { key: "lineups", label: "Lineups", show: hasLineups || phase === "pre" || phase === "lineups" },
-    { key: "history", label: "History", show: hasInjuries || hasRatings || hasH2H },
-  ].filter((t) => t.show);
+  const tabs: { key: TabKey; label: string; show: boolean; count?: number }[] = ([
+    { key: "overview" as TabKey, label: "Overview", show: true },
+    { key: "events" as TabKey, label: "Events", show: hasEvents, count: events.length },
+    { key: "lineups" as TabKey, label: "Lineups", show: hasLineups || phase === "pre" || phase === "lineups" },
+    { key: "history" as TabKey, label: "History", show: hasInjuries || hasRatings || hasH2H },
+  ]).filter((t) => t.show);
   const [tab, setTab] = useState<TabKey>(tabs[0].key);
 
   return (
