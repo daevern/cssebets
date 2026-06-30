@@ -280,7 +280,13 @@ export function parseBookmakerPayload(bookmakers: Bookmaker[]): {
         }
         continue;
       }
-      if (name === "Red Card" || name === "Sending Off" || name === "Red Card in Match") {
+      if (
+        name === "Red Card" ||
+        name === "Sending Off" ||
+        name === "Red Card in Match" ||
+        name === "Red Card In The Match" ||
+        name === "Red Card In Match"
+      ) {
         for (const v of bet.values ?? []) {
           const val = String(v.value).trim().toLowerCase();
           const odd = Number(v.odd);
@@ -289,6 +295,7 @@ export function parseBookmakerPayload(bookmakers: Bookmaker[]): {
         }
         continue;
       }
+
       if (name === "First Card" || name === "Team First Card" || name === "First Team To Be Booked") {
         for (const v of bet.values ?? []) {
           const val = String(v.value).trim().toLowerCase();
