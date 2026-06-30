@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPrediction } from "@/lib/predictions.functions";
-import { getMatchOddsHistory, listMatchesForUsers } from "@/lib/matches.functions";
+import { listMatchesForUsers } from "@/lib/matches.functions";
 import {
   Collapsible,
   CollapsibleContent,
@@ -210,12 +210,10 @@ function MatchesPage() {
 
 function MatchCard({ match }: { match: Match }) {
   const submit = useServerFn(submitPrediction);
-  const historyFn = useServerFn(getMatchOddsHistory);
   const qc = useQueryClient();
   const { user } = useAuth();
   const [stake, setStake] = useState("10");
   const [pick, setPick] = useState<"HOME" | "DRAW" | "AWAY" | null>(null);
-  const [open, setOpen] = useState(false);
 
   const oddsTrusted = !match.odds_status || match.odds_status === "trusted" || match.manual_override === true;
   const suspendedMarkets = match.suspended_markets ?? [];
@@ -245,17 +243,6 @@ function MatchCard({ match }: { match: Match }) {
     return s;
   }, [myResultBets.data]);
 
-  const history = useQuery({
-    queryKey: ["match-odds-history", match.id],
-    queryFn: () => historyFn({ data: { matchId: match.id } }),
-    enabled: open,
-  });
-
-  const recentHistory = useMemo(() => {
-    if (!history.data) return [];
-    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    return history.data.filter((r: any) => new Date(r.sampled_at).getTime() >= oneDayAgo);
-  }, [history.data]);
 
   const slipClientRequestId = useMemo(() => crypto.randomUUID(), [match.id, pick, stake]);
 
@@ -300,11 +287,11 @@ function MatchCard({ match }: { match: Match }) {
       </div>
 
       <div className="space-y-4 px-5 py-5">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="w-full text-left"
-          aria-expanded={open}
+        <Link
+          to="/matches/$matchId"
+          params={{ matchId: match.id }}
+          className="block w-full text-left transition-opacity hover:opacity-90"
+          aria-label="Open match analytics"
         >
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
             <div className="flex flex-col items-center gap-2">
@@ -318,6 +305,7 @@ function MatchCard({ match }: { match: Match }) {
                 {match.status === "finished" ? `${match.home_score} – ${match.away_score}` : "vs"}
               </span>
               <span className="h-6 w-px bg-[var(--color-neon)]/40" />
+              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">View analytics →</span>
             </div>
             <div className="flex flex-col items-center gap-2">
               <TeamFlag name={match.away_team} />
@@ -326,7 +314,7 @@ function MatchCard({ match }: { match: Match }) {
               </span>
             </div>
           </div>
-        </button>
+        </Link>
 
         {bettingBlocked && !locked && (
           <div className="border border-destructive/40 bg-destructive/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-destructive">
@@ -408,41 +396,6 @@ function MatchCard({ match }: { match: Match }) {
           </div>
         )}
 
-        {open && (
-          <div className="space-y-2 border-t border-dashed border-[var(--color-surface-border)] pt-3">
-            <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-              Odds history
-            </div>
-            {history.isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-[var(--color-ink-muted)]" />
-            ) : !recentHistory.length ? (
-              <div className="text-xs text-[var(--color-ink-muted)]">No odds snapshots recorded in the last 24 hours.</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead className="text-[var(--color-ink-muted)]">
-                    <tr className="text-left">
-                      <th className="py-1 pr-2 text-[10px] font-bold uppercase tracking-wider">When</th>
-                      <th className="py-1 pr-2 text-[10px] font-bold uppercase tracking-wider">{match.home_team}</th>
-                      <th className="py-1 pr-2 text-[10px] font-bold uppercase tracking-wider">Draw</th>
-                      <th className="py-1 pr-2 text-[10px] font-bold uppercase tracking-wider">{match.away_team}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentHistory.map((r: any) => (
-                      <tr key={r.id} className="border-t border-[var(--color-surface-border)]/50">
-                        <td className="py-1 pr-2 text-[var(--color-ink-muted)]">{formatKickoffDate(r.sampled_at)}</td>
-                        <td className="py-1 pr-2 tabular-nums">{r.home_odds}</td>
-                        <td className="py-1 pr-2 tabular-nums">{r.draw_odds}</td>
-                        <td className="py-1 pr-2 tabular-nums">{r.away_odds}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </article>
   );
