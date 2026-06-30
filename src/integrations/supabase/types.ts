@@ -931,6 +931,8 @@ export type Database = {
           odds_source: string | null
           odds_status: string
           odds_updated_at: string | null
+          penalty_away_score: number | null
+          penalty_home_score: number | null
           qualifier: string | null
           red_card_occurred: boolean | null
           reference_odds: Json | null
@@ -974,6 +976,8 @@ export type Database = {
           odds_source?: string | null
           odds_status?: string
           odds_updated_at?: string | null
+          penalty_away_score?: number | null
+          penalty_home_score?: number | null
           qualifier?: string | null
           red_card_occurred?: boolean | null
           reference_odds?: Json | null
@@ -1017,6 +1021,8 @@ export type Database = {
           odds_source?: string | null
           odds_status?: string
           odds_updated_at?: string | null
+          penalty_away_score?: number | null
+          penalty_home_score?: number | null
           qualifier?: string | null
           red_card_occurred?: boolean | null
           reference_odds?: Json | null
