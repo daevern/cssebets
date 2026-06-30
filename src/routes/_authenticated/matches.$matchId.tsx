@@ -166,22 +166,22 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
             <MomentumStrip stats={stats} homeName={home} awayName={away} />
           )}
           {hasEvents && locked && (
-            <StencilPanel
+            <AnalysisSection
               kicker={<><Activity className="h-3 w-3" /> Match momentum</>}
               meta={phase === "finished" ? "Full match" : "Live"}
             >
               <MomentumGraph events={events} homeName={home} awayName={away} phase={phase} kickoffISO={match.kickoff_at} />
-            </StencilPanel>
+            </AnalysisSection>
           )}
           {hasStats && (
-            <StencilPanel kicker={<><Activity className="h-3 w-3" /> Key stats</>} meta={phase === "finished" ? "Final" : "Live"}>
+            <AnalysisSection kicker={<><Activity className="h-3 w-3" /> Key stats</>} meta={phase === "finished" ? "Final" : "Live"}>
               <KeyStatsGrid home={stats.home} away={stats.away} homeName={home} awayName={away} />
-            </StencilPanel>
+            </AnalysisSection>
           )}
           {hasEvents && (
-            <StencilPanel kicker={<><Activity className="h-3 w-3" /> Latest events</>} meta={`${Math.min(5, events.length)} of ${events.length}`}>
-              <EventTimeline events={events.slice(-5)} home={home} away={away} compact />
-            </StencilPanel>
+            <AnalysisSection kicker={<><Activity className="h-3 w-3" /> Latest events</>} meta={`${Math.min(7, events.length)} of ${events.length}`}>
+              <EventTimeline events={events.slice(-7)} home={home} away={away} compact />
+            </AnalysisSection>
           )}
           {!hasLineups && !hasStats && !hasEvents && !hasH2H && phase === "pre" && (
             <StencilPanel>
@@ -194,15 +194,15 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
       )}
 
       {tab === "stats" && hasStats && (
-        <StencilPanel kicker={<><Activity className="h-3 w-3" /> Full stats</>} meta={phase === "finished" ? "Final" : "Live"}>
+        <AnalysisSection kicker={<><Activity className="h-3 w-3" /> Full stats</>} meta={phase === "finished" ? "Final" : "Live"}>
           <StatsCompare home={stats.home} away={stats.away} homeName={home} awayName={away} />
-        </StencilPanel>
+        </AnalysisSection>
       )}
 
       {tab === "lineups" && (
         <>
           {hasLineups ? (
-            <StencilPanel kicker={<><Users className="h-3 w-3" /> Lineups</>} meta="Confirmed XI">
+            <AnalysisSection kicker={<><Users className="h-3 w-3" /> Lineups</>} meta="Confirmed XI">
               <div className="space-y-5">
                 {(lineups.home?.formation || lineups.away?.formation) && (
                   <FormationPitch home={lineups.home} away={lineups.away} />
@@ -210,47 +210,67 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
                 <LineupSplit lineup={lineups.home} side="home" teamName={home} />
                 <LineupSplit lineup={lineups.away} side="away" teamName={away} />
               </div>
-            </StencilPanel>
+            </AnalysisSection>
           ) : (
-            <StencilPanel kicker={<><Users className="h-3 w-3" /> Lineups</>} meta="Pending">
+            <AnalysisSection kicker={<><Users className="h-3 w-3" /> Lineups</>} meta="Pending">
               <p className="text-sm text-[var(--color-ink-muted)]">
                 {phase === "lineups"
                   ? "Confirmed lineups drop in the next hour — check back shortly."
                   : "Lineups are released roughly 1 hour before kickoff."}
               </p>
-            </StencilPanel>
+            </AnalysisSection>
           )}
           {hasInjuries && (
-            <StencilPanel kicker={<><AlertTriangle className="h-3 w-3" /> Injury report</>}>
+            <AnalysisSection kicker={<><AlertTriangle className="h-3 w-3" /> Injury report</>}>
               <div className="grid gap-4 md:grid-cols-2">
                 <InjuryList items={injuries.home} title={home} />
                 <InjuryList items={injuries.away} title={away} />
               </div>
-            </StencilPanel>
+            </AnalysisSection>
           )}
           {hasRatings && (
-            <StencilPanel kicker={<><Star className="h-3 w-3" /> Player ratings</>}>
+            <AnalysisSection kicker={<><Star className="h-3 w-3" /> Player ratings</>}>
               <div className="grid gap-5 md:grid-cols-2">
                 <RatingsTable rows={ratings.home} title={home} />
                 <RatingsTable rows={ratings.away} title={away} />
               </div>
-            </StencilPanel>
+            </AnalysisSection>
           )}
         </>
       )}
 
       {tab === "events" && hasEvents && (
-        <StencilPanel kicker={<><Activity className="h-3 w-3" /> Match events</>} meta={`${events.length} entries`}>
-          <EventTimeline events={events} home={home} away={away} />
-        </StencilPanel>
+        <AnalysisSection kicker={<><Activity className="h-3 w-3" /> Match events</>} meta={`${Math.min(7, events.length)} latest`}>
+          <EventTimeline events={events.slice(-7)} home={home} away={away} />
+        </AnalysisSection>
       )}
 
       {tab === "h2h" && hasH2H && (
-        <StencilPanel kicker={<><History className="h-3 w-3" /> Head to head</>} meta={`Last ${h2h.length}`}>
+        <AnalysisSection kicker={<><History className="h-3 w-3" /> Head to head</>} meta={`Last ${h2h.length}`}>
           <H2HList rows={h2h} />
-        </StencilPanel>
+        </AnalysisSection>
       )}
     </>
+  );
+}
+
+function AnalysisSection({ kicker, meta, children }: { kicker?: React.ReactNode; meta?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="relative -mx-4 border-y border-[var(--color-surface-border)]/70 bg-[var(--color-surface-2)]/35 px-4 py-4 md:mx-0 md:border md:bg-[var(--color-surface-2)] md:px-5 md:py-5">
+      <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        {kicker && (
+          <span className="flex min-w-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-neon)]">
+            {kicker}
+          </span>
+        )}
+        {meta && (
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+            {meta}
+          </span>
+        )}
+      </div>
+      {children}
+    </section>
   );
 }
 
@@ -265,13 +285,13 @@ function KeyStatsGrid({ home, away, homeName, awayName }: { home: any; away: any
     { key: "passes_pct", label: "Pass %" },
   ];
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-3 items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em]">
-        <span className="truncate text-left text-[var(--color-neon)]">{homeName}</span>
-        <span className="text-center text-[var(--color-ink-muted)]">vs</span>
-        <span className="truncate text-right">{awayName}</span>
+    <div className="space-y-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 text-[10px] font-black uppercase tracking-[0.18em]">
+        <span className="min-w-0 truncate text-left text-[var(--color-neon)]">{homeName}</span>
+        <span className="shrink-0 text-center text-[var(--color-ink-muted)]">vs</span>
+        <span className="min-w-0 truncate text-right">{awayName}</span>
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <div className="grid gap-2.5 sm:grid-cols-2">
         {rows.map((r) => {
           const h = home?.[r.key];
           const a = away?.[r.key];
@@ -282,13 +302,13 @@ function KeyStatsGrid({ home, away, homeName, awayName }: { home: any; away: any
           const hPct = (hv / total) * 100;
           const lead = hv === av ? null : hv > av ? "home" : "away";
           return (
-            <div key={r.key} className="border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-2.5">
-              <div className="mb-1.5 text-center text-[9px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">{r.label}</div>
-              <div className="flex items-baseline justify-between gap-1 font-display text-base font-black tabular-nums">
-                <span className={lead === "home" ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]"}>{h ?? "—"}</span>
-                <span className={lead === "away" ? "text-white" : "text-[var(--color-ink)]"}>{a ?? "—"}</span>
+            <div key={r.key} className="border border-[var(--color-surface-border)]/70 bg-[var(--color-surface)]/45 px-3.5 py-3">
+              <div className="mb-2 grid grid-cols-[56px_1fr_56px] items-baseline gap-2">
+                <span className={`font-display text-xl font-black tabular-nums ${lead === "home" ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]"}`}>{h ?? "—"}</span>
+                <span className="text-center text-[10px] font-black uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">{r.label}</span>
+                <span className={`text-right font-display text-xl font-black tabular-nums ${lead === "away" ? "text-[var(--color-ink)]" : "text-[var(--color-ink)]/80"}`}>{a ?? "—"}</span>
               </div>
-              <div className="mt-1.5 flex h-1 overflow-hidden bg-[var(--color-surface)]">
+              <div className="flex h-2 overflow-hidden bg-[var(--color-surface-border)]/40">
                 <div className="bg-[var(--color-neon)] transition-all duration-700" style={{ width: `${hPct}%` }} />
                 <div className="bg-white/60 transition-all duration-700" style={{ width: `${100 - hPct}%` }} />
               </div>
