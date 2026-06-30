@@ -127,11 +127,7 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
         </StencilPanel>
       )}
       {locked && (
-        <StencilPanel kicker={<><Radio className="h-3 w-3 animate-pulse text-[var(--color-neon)]" /> Betting</>}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-            {phase === "finished" ? "Match finished — markets settled." : "Betting closed — match in play. Follow live below."}
-          </p>
-        </StencilPanel>
+        <BettingRibbon phase={phase} />
       )}
 
       {/* Momentum strip — quick visual when live */}
