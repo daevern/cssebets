@@ -18,6 +18,7 @@ import {
   OVER_UNDER_LINES,
   CARDS_LINES,
   CORNERS_LINES,
+  isMarketActive,
   type MarketKey,
 } from "@/lib/markets-catalog";
 
