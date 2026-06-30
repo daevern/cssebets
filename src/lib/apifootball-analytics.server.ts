@@ -138,7 +138,18 @@ export async function syncEvents(matchId: string) {
     const detail = e?.detail ?? null;
     const player = e?.player?.name ?? null;
     const assist = e?.assist?.name ?? null;
-    const dedup = `${minute ?? "x"}-${extra ?? "x"}-${type}-${detail ?? ""}-${player ?? ""}-${side ?? ""}`;
+    // Stable dedup: API returns "C. Gakpo" vs "Cody Gakpo" and "90+1" vs "91"
+    // at different polling moments. Normalize by effective minute and last-name token.
+    const effMin = (minute ?? 0) + (extra ?? 0);
+    const lastName = String(player ?? "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z\s]/g, "")
+      .trim()
+      .split(/\s+/)
+      .pop() ?? "";
+    const dedup = `${side ?? "x"}|${type.toLowerCase()}|${effMin}|${lastName}`;
     const { error } = await (supabaseAdmin as any).from("match_events").upsert(
       {
         match_id: match.id,
