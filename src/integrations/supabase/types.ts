@@ -2484,6 +2484,38 @@ export type Database = {
         | "first_scorer"
         | "tournament_winner"
         | "group_winner"
+        | "over_under_0_5"
+        | "over_under_1_5"
+        | "over_under_2_5"
+        | "over_under_3_5"
+        | "over_under_4_5"
+        | "over_under_5_5"
+        | "over_under_6_5"
+        | "half_time_full_time"
+        | "exact_total_goals"
+        | "to_qualify"
+        | "double_chance"
+        | "draw_no_bet"
+        | "goals_odd_even"
+        | "clean_sheet_home"
+        | "clean_sheet_away"
+        | "win_to_nil_home"
+        | "win_to_nil_away"
+        | "cards_over_under_2_5"
+        | "cards_over_under_3_5"
+        | "cards_over_under_4_5"
+        | "cards_over_under_5_5"
+        | "home_cards_over_under_1_5"
+        | "away_cards_over_under_1_5"
+        | "red_card_match"
+        | "first_card"
+        | "corners_over_under_8_5"
+        | "corners_over_under_9_5"
+        | "corners_over_under_10_5"
+        | "corners_over_under_11_5"
+        | "home_corners_over_under_4_5"
+        | "away_corners_over_under_4_5"
+        | "first_corner"
       prediction_status: "pending" | "won" | "lost" | "void"
       wallet_ref_type:
         | "point_request"
@@ -2660,6 +2692,38 @@ export const Constants = {
         "first_scorer",
         "tournament_winner",
         "group_winner",
+        "over_under_0_5",
+        "over_under_1_5",
+        "over_under_2_5",
+        "over_under_3_5",
+        "over_under_4_5",
+        "over_under_5_5",
+        "over_under_6_5",
+        "half_time_full_time",
+        "exact_total_goals",
+        "to_qualify",
+        "double_chance",
+        "draw_no_bet",
+        "goals_odd_even",
+        "clean_sheet_home",
+        "clean_sheet_away",
+        "win_to_nil_home",
+        "win_to_nil_away",
+        "cards_over_under_2_5",
+        "cards_over_under_3_5",
+        "cards_over_under_4_5",
+        "cards_over_under_5_5",
+        "home_cards_over_under_1_5",
+        "away_cards_over_under_1_5",
+        "red_card_match",
+        "first_card",
+        "corners_over_under_8_5",
+        "corners_over_under_9_5",
+        "corners_over_under_10_5",
+        "corners_over_under_11_5",
+        "home_corners_over_under_4_5",
+        "away_corners_over_under_4_5",
+        "first_corner",
       ],
       prediction_status: ["pending", "won", "lost", "void"],
       wallet_ref_type: [
