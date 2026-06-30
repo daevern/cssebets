@@ -432,18 +432,18 @@ function MatchHero({
   const progressPct = Math.min(100, (currentMinute / progressCap) * 100);
 
   return (
-    <article className="relative overflow-hidden border border-[var(--color-neon)]/30 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-30px_var(--color-neon-glow)]">
+    <article className="relative -mx-4 overflow-hidden border-y border-[var(--color-neon)]/30 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-30px_var(--color-neon-glow)] md:mx-0 md:border">
       <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
       <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04]">
         <PitchIcon size={260} className="text-[var(--color-neon)]" />
       </div>
 
       {/* Ticker row */}
-      <div className="relative flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-4 py-2.5">
-        <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+      <div className="relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-dashed border-[var(--color-surface-border)] px-4 py-3">
+        <span className="flex min-w-0 items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">
           <WhistleIcon size={12} /> {stage}
         </span>
-        <span className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+        <span className="flex shrink-0 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
           {isLive ? (
             <span className="flex items-center gap-1.5 text-destructive">
               <span className="relative flex h-2 w-2">
@@ -467,8 +467,8 @@ function MatchHero({
       </div>
 
       {/* Scoreboard — generous mobile spacing */}
-      <div className="relative px-3 pb-4 pt-5 sm:px-4">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
+      <div className="relative px-4 pb-5 pt-6 sm:px-5">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-4">
           <HeroTeam name={match.home_team} accent="home" align="left" goals={homeGoals} />
           <div className="flex flex-col items-center justify-start pt-2">
             {showScore ? (
@@ -517,8 +517,8 @@ function HeroTeam({ name, accent, align, goals }: { name: string; accent: "home"
     : "border-white/40";
   const itemsAlign = align === "right" ? "items-end text-right" : "items-start text-left";
   return (
-    <div className={`flex min-w-0 flex-col gap-2 ${itemsAlign}`}>
-      <div className={`relative h-14 w-20 overflow-hidden border ${accentCls}`}>
+    <div className={`flex min-w-0 flex-col gap-2.5 ${itemsAlign}`}>
+      <div className={`relative h-16 w-full max-w-24 overflow-hidden border ${accentCls}`}>
         {url ? (
           <img src={url} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
         ) : (
@@ -528,7 +528,7 @@ function HeroTeam({ name, accent, align, goals }: { name: string; accent: "home"
         )}
         <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/30" />
       </div>
-      <span className="w-full truncate font-display text-[11px] font-black uppercase tracking-[0.16em]" title={name}>
+      <span className="w-full truncate font-display text-xs font-black uppercase tracking-[0.12em]" title={name}>
         {name}
       </span>
       {goals.length > 0 && (
