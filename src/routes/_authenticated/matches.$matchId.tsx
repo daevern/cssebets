@@ -914,36 +914,50 @@ function EventTimeline({ events, home, away }: { events: any[]; home: string; aw
     const bm = (b.minute ?? 0) + (b.extra_minute ?? 0);
     return bm - am;
   });
+  const hasMore = ordered.length > 7;
   return (
-    <ul className="relative space-y-2">
-      {/* Vertical timeline rail */}
-      <span aria-hidden className="pointer-events-none absolute bottom-1 left-[44px] top-1 w-px bg-[var(--color-surface-border)]" />
-      {ordered.map((e) => {
-        const sideLabel = e.side === "home" ? home : e.side === "away" ? away : "";
-        const isHome = e.side === "home";
-        return (
-          <li key={e.id} className="relative grid grid-cols-[36px_24px_1fr] items-center gap-2 text-xs">
-            <span className="font-display text-[11px] font-black tabular-nums text-[var(--color-ink-muted)]">
-              {e.minute ?? "—"}{e.extra_minute ? `+${e.extra_minute}` : ""}'
-            </span>
-            <span className="relative z-10 grid h-6 w-6 place-items-center border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
-              {eventMark(e.type, e.detail, 12)}
-            </span>
-            <div className="min-w-0 border-l-2 pl-2 leading-tight" style={{ borderColor: isHome ? "var(--color-neon)" : "rgba(255,255,255,0.5)" }}>
-              <div className="truncate">
-                <span className="font-semibold">{e.player_name ?? e.detail ?? e.type}</span>
-                {e.assist_name && <span className="text-[var(--color-ink-muted)]"> · assist {e.assist_name}</span>}
-              </div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                {e.detail ?? e.type}{sideLabel && ` · ${sideLabel}`}
-              </div>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="relative">
+      <div className="max-h-[300px] overflow-y-auto pr-1">
+        <ul className="relative space-y-2">
+          {/* Vertical timeline rail */}
+          <span aria-hidden className="pointer-events-none absolute bottom-1 left-[44px] top-1 w-px bg-[var(--color-surface-border)]" />
+          {ordered.map((e) => {
+            const sideLabel = e.side === "home" ? home : e.side === "away" ? away : "";
+            const isHome = e.side === "home";
+            return (
+              <li key={e.id} className="relative grid grid-cols-[36px_24px_1fr] items-center gap-2 text-xs">
+                <span className="font-display text-[11px] font-black tabular-nums text-[var(--color-ink-muted)]">
+                  {e.minute ?? "—"}{e.extra_minute ? `+${e.extra_minute}` : ""}'
+                </span>
+                <span className="relative z-10 grid h-6 w-6 place-items-center border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
+                  {eventMark(e.type, e.detail, 12)}
+                </span>
+                <div className="min-w-0 border-l-2 pl-2 leading-tight" style={{ borderColor: isHome ? "var(--color-neon)" : "rgba(255,255,255,0.5)" }}>
+                  <div className="truncate">
+                    <span className="font-semibold">{e.player_name ?? e.detail ?? e.type}</span>
+                    {e.assist_name && <span className="text-[var(--color-ink-muted)]"> · assist {e.assist_name}</span>}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+                    {e.detail ?? e.type}{sideLabel && ` · ${sideLabel}`}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+      {hasMore && (
+        <>
+          <div aria-hidden className="pointer-events-none absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-[var(--color-surface)] to-transparent" />
+          <div className="mt-1 text-center text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+            Scroll for more events
+          </div>
+        </>
+      )}
+    </div>
   );
 }
+
 
 
 /* ---------- Injuries ---------- */
