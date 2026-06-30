@@ -195,10 +195,20 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     else if (market === "double_chance") order = ["HOME_OR_DRAW", "HOME_OR_AWAY", "DRAW_OR_AWAY"];
     else if (market === "draw_no_bet") order = ["HOME", "AWAY"];
     else if (market === "goals_odd_even") order = ["ODD", "EVEN"];
+    else if (market === "red_card_match") order = ["YES", "NO"];
+    else if (market === "first_card" || market === "first_corner") order = ["HOME", "AWAY", "NONE"];
     else if (
       market === "clean_sheet_home" || market === "clean_sheet_away" ||
       market === "win_to_nil_home" || market === "win_to_nil_away"
     ) order = ["YES", "NO"];
+    else if (market.startsWith("cards_over_under_") || market === "home_cards_over_under_1_5" || market === "away_cards_over_under_1_5") {
+      const line = market.replace(/^.*over_under_/, "");
+      order = [`OVER_${line}`, `UNDER_${line}`];
+    }
+    else if (market.startsWith("corners_over_under_") || market === "home_corners_over_under_4_5" || market === "away_corners_over_under_4_5") {
+      const line = market.replace(/^.*over_under_/, "");
+      order = [`OVER_${line}`, `UNDER_${line}`];
+    }
     else if (market.startsWith("over_under_")) {
       const line = market.replace("over_under_", "");
       order = [`OVER_${line}`, `UNDER_${line}`];
