@@ -65,7 +65,7 @@ import { Route as ManagementAdminBankrollRouteImport } from './routes/management
 import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
 import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
 import { Route as ManagementAdminAlertsRouteImport } from './routes/management/admin.alerts'
-import { Route as AuthenticatedMatchesMatchIdRouteImport } from './routes/_authenticated/matches.$matchId'
+import { Route as AuthenticatedMatchesMatchIdRouteImport } from './routes/_authenticated/matches_.$matchId'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/public/hooks/sync-fixtures'
 import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
@@ -377,9 +377,9 @@ const ManagementAdminAlertsRoute = ManagementAdminAlertsRouteImport.update({
 } as any)
 const AuthenticatedMatchesMatchIdRoute =
   AuthenticatedMatchesMatchIdRouteImport.update({
-    id: '/$matchId',
-    path: '/$matchId',
-    getParentRoute: () => AuthenticatedMatchesRoute,
+    id: '/matches_/$matchId',
+    path: '/matches/$matchId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
@@ -446,7 +446,7 @@ export interface FileRoutesByFullPath {
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/help': typeof AuthenticatedHelpRoute
-  '/matches': typeof AuthenticatedMatchesRouteWithChildren
+  '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -513,7 +513,7 @@ export interface FileRoutesByTo {
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/help': typeof AuthenticatedHelpRoute
-  '/matches': typeof AuthenticatedMatchesRouteWithChildren
+  '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -581,7 +581,7 @@ export interface FileRoutesById {
   '/_authenticated/changelog': typeof AuthenticatedChangelogRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/help': typeof AuthenticatedHelpRoute
-  '/_authenticated/matches': typeof AuthenticatedMatchesRouteWithChildren
+  '/_authenticated/matches': typeof AuthenticatedMatchesRoute
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/_authenticated/payout': typeof AuthenticatedPayoutRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -599,7 +599,7 @@ export interface FileRoutesById {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
-  '/_authenticated/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
+  '/_authenticated/matches_/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
@@ -802,7 +802,7 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
-    | '/_authenticated/matches/$matchId'
+    | '/_authenticated/matches_/$matchId'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
     | '/management/admin/audit'
@@ -1254,12 +1254,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminAlertsRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/matches/$matchId': {
-      id: '/_authenticated/matches/$matchId'
-      path: '/$matchId'
+    '/_authenticated/matches_/$matchId': {
+      id: '/_authenticated/matches_/$matchId'
+      path: '/matches/$matchId'
       fullPath: '/matches/$matchId'
       preLoaderRoute: typeof AuthenticatedMatchesMatchIdRouteImport
-      parentRoute: typeof AuthenticatedMatchesRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -1327,23 +1327,12 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedMatchesRouteChildren {
-  AuthenticatedMatchesMatchIdRoute: typeof AuthenticatedMatchesMatchIdRoute
-}
-
-const AuthenticatedMatchesRouteChildren: AuthenticatedMatchesRouteChildren = {
-  AuthenticatedMatchesMatchIdRoute: AuthenticatedMatchesMatchIdRoute,
-}
-
-const AuthenticatedMatchesRouteWithChildren =
-  AuthenticatedMatchesRoute._addFileChildren(AuthenticatedMatchesRouteChildren)
-
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBetsRoute: typeof AuthenticatedBetsRoute
   AuthenticatedChangelogRoute: typeof AuthenticatedChangelogRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
-  AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRouteWithChildren
+  AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRoute
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
   AuthenticatedPayoutRoute: typeof AuthenticatedPayoutRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -1352,6 +1341,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTournamentWinnerRoute: typeof AuthenticatedTournamentWinnerRoute
   AuthenticatedTrustCenterRoute: typeof AuthenticatedTrustCenterRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
+  AuthenticatedMatchesMatchIdRoute: typeof AuthenticatedMatchesMatchIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1359,7 +1349,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChangelogRoute: AuthenticatedChangelogRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHelpRoute: AuthenticatedHelpRoute,
-  AuthenticatedMatchesRoute: AuthenticatedMatchesRouteWithChildren,
+  AuthenticatedMatchesRoute: AuthenticatedMatchesRoute,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
   AuthenticatedPayoutRoute: AuthenticatedPayoutRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -1368,6 +1358,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTournamentWinnerRoute: AuthenticatedTournamentWinnerRoute,
   AuthenticatedTrustCenterRoute: AuthenticatedTrustCenterRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
+  AuthenticatedMatchesMatchIdRoute: AuthenticatedMatchesMatchIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
