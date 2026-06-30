@@ -2,12 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Loader2, Radio, Activity, Users, Shield, AlertTriangle, History, Star } from "lucide-react";
+import { ArrowLeft, Loader2, Activity, Users, AlertTriangle, History, Star } from "lucide-react";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { getMatchAnalytics, type AnalyticsBundle, type LineupPlayer } from "@/lib/match-analytics.functions";
 import { MarketTabs } from "@/components/matches/MarketTabs";
 import { Corner, StencilPanel } from "@/components/ui/page-shell";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
+import { eventMark, WhistleIcon, PitchIcon, GoalIcon, YellowCardIcon, RedCardIcon } from "@/components/matches/MatchIcons";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
