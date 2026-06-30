@@ -2,10 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMatchMarkets, placeMarketBet } from "@/lib/markets.functions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2, Check } from "lucide-react";
+import { Loader2, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -27,6 +24,151 @@ type OddsRow = { id: string; market: string; selection: string; odds: number };
 const MIN_STAKE = 10;
 const MAX_STAKE = 50000;
 
+/* ---------- Custom CSSEBets stencil primitives ---------- */
+
+function SectionLabel({ children, note }: { children: React.ReactNode; note?: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 mb-2">
+      <span className="h-1.5 w-1.5 bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon-glow)]" />
+      <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+        {children}
+      </span>
+      {note && (
+        <span className="text-[9px] font-medium normal-case tracking-normal text-[var(--color-ink-muted)]/70">
+          · {note}
+        </span>
+      )}
+      <span className="flex-1 border-t border-dashed border-[var(--color-surface-border)]" />
+    </div>
+  );
+}
+
+function OddsButton({
+  label,
+  price,
+  selected,
+  alreadyPlaced,
+  disabled,
+  title,
+  onClick,
+}: {
+  label: string;
+  price: number;
+  selected: boolean;
+  alreadyPlaced: boolean;
+  disabled: boolean;
+  title?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      title={title}
+      onClick={onClick}
+      className={`relative flex flex-col items-center gap-1 border px-2 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+        selected
+          ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[0_0_18px_var(--color-neon-glow)]"
+          : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/60"
+      }`}
+    >
+      <span className="max-w-full truncate text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+        {label}
+      </span>
+      <span className="font-display text-base font-bold tabular-nums">{price.toFixed(2)}</span>
+      {alreadyPlaced && (
+        <span className="absolute right-1 top-1 text-[9px] font-bold text-[var(--color-neon)]">✓</span>
+      )}
+    </button>
+  );
+}
+
+function StakeSlip({
+  marketLabel,
+  selectionText,
+  odds,
+  stake,
+  setStake,
+  onSubmit,
+  onClear,
+  isPending,
+  error,
+}: {
+  marketLabel: string;
+  selectionText: string;
+  odds: number;
+  stake: string;
+  setStake: (s: string) => void;
+  onSubmit: () => void;
+  onClear: () => void;
+  isPending: boolean;
+  error: string | null;
+}) {
+  const potential = (Number(stake) * odds || 0).toFixed(2);
+  return (
+    <div className="mt-2 border border-[var(--color-surface-border)] bg-[#070D0A] p-3 space-y-2 animate-in fade-in-50 duration-200">
+      <div className="flex justify-between items-start gap-2">
+        <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)] leading-relaxed">
+          <span className="text-[var(--color-neon)] font-bold">{marketLabel}</span>
+          <span className="mx-1 opacity-50">/</span>
+          <span className="text-[var(--color-ink)]">{selectionText}</span>
+          <span className="mx-1 opacity-50">@</span>
+          <span className="font-display font-bold tabular-nums text-[var(--color-ink)]">{odds.toFixed(2)}</span>
+        </div>
+        <button
+          type="button"
+          onClick={onClear}
+          className="text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] text-sm leading-none px-1"
+        >
+          ×
+        </button>
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="number"
+          min={MIN_STAKE}
+          max={MAX_STAKE}
+          value={stake}
+          onChange={(e) => setStake(e.target.value)}
+          placeholder={`Stake (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
+          className="flex-1 border border-[var(--color-surface-border)] bg-black px-3 py-2 font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)]"
+        />
+        <button
+          type="button"
+          disabled={isPending || !!error}
+          onClick={onSubmit}
+          className="flex items-center justify-center gap-1.5 rounded-full bg-[var(--color-neon)] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+        >
+          {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : (
+            <><span>Bet → {potential}</span><ArrowUpRight className="h-3 w-3" /></>
+          )}
+        </button>
+      </div>
+      {error && <div className="text-[10px] uppercase tracking-wider text-destructive">{error}</div>}
+    </div>
+  );
+}
+
+function SuspendedBadge() {
+  return (
+    <div className="inline-block border border-destructive/40 bg-destructive/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-destructive">
+      Suspended
+    </div>
+  );
+}
+
+/* ---------- Main component ---------- */
+
+const TAB_DEFS = [
+  { id: "goals", label: "Goals" },
+  { id: "cs", label: "Score" },
+  { id: "ex", label: "Extras" },
+  { id: "cards", label: "Cards" },
+  { id: "corners", label: "Corners" },
+  { id: "sp", label: "Specials" },
+] as const;
+type TabId = (typeof TAB_DEFS)[number]["id"];
+
 export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedMarkets = [] }: { matchId: string; locked: boolean; bettingBlocked?: boolean; suspendedMarkets?: string[] }) {
   const isMarketSuspended = (m: string) =>
     bettingBlocked || suspendedMarkets.includes("ALL") || suspendedMarkets.includes(m);
@@ -34,6 +176,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   const place = useServerFn(placeMarketBet);
   const qc = useQueryClient();
   const { user } = useAuth();
+  const [tab, setTab] = useState<TabId>("goals");
 
   const { data, isLoading } = useQuery({
     queryKey: ["match-markets", matchId],
@@ -76,8 +219,6 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
   const [stakes, setStakes] = useState<Record<string, string>>({});
   const [picks, setPicks] = useState<Record<string, { selection: string; odds: number } | null>>({});
-
-  // Multi-select state for Score (correct_score) — selection -> odds; one stake per selection
   const [csPicks, setCsPicks] = useState<Record<string, number>>({});
   const [csStakes, setCsStakes] = useState<Record<string, string>>({});
 
@@ -88,9 +229,6 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         ? `Maximum stake is ${MAX_STAKE.toLocaleString()} points.`
         : null;
 
-  // Stable idempotency keys per bet slip. Same key is reused for retries
-  // of the same (market, selection, stake) so double-clicks or transport
-  // retries collapse into one prediction server-side.
   const slipIdsRef = useRef<Map<string, { sig: string; id: string }>>(new Map());
   const getSlipId = (key: string, sig: string) => {
     const cur = slipIdsRef.current.get(key);
@@ -111,13 +249,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       if (err) throw new Error(err);
       const slipId = getSlipId(`single:${market}`, `${pick.selection}:${pick.odds}:${n}`);
       return place({
-        data: {
-          matchId,
-          market,
-          selection: pick.selection,
-          stake: n,
-          clientRequestId: slipId,
-        },
+        data: { matchId, market, selection: pick.selection, stake: n, clientRequestId: slipId },
       });
     },
     onSuccess: (_, market) => {
@@ -141,26 +273,14 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       if (err) throw new Error(err);
       const slipId = getSlipId(`cs:${selection}`, `${odds}:${n}`);
       return place({
-        data: {
-          matchId,
-          market: "correct_score",
-          selection,
-          stake: n,
-          clientRequestId: slipId,
-        },
+        data: { matchId, market: "correct_score", selection, stake: n, clientRequestId: slipId },
       });
     },
     onSuccess: (_, selection) => {
       toast.success(`Bet placed on ${selectionLabel(selection)}`);
       clearSlipId(`cs:${selection}`);
-      setCsPicks((prev) => {
-        const { [selection]: _omit, ...rest } = prev;
-        return rest;
-      });
-      setCsStakes((prev) => {
-        const { [selection]: _omit, ...rest } = prev;
-        return rest;
-      });
+      setCsPicks((prev) => { const { [selection]: _o, ...rest } = prev; return rest; });
+      setCsStakes((prev) => { const { [selection]: _o, ...rest } = prev; return rest; });
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
       qc.invalidateQueries({ queryKey: ["my-match-pending-bets", matchId, user?.id] });
@@ -168,22 +288,23 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     onError: (e: Error) => toast.error(e.message),
   });
 
-
   if (locked) return null;
   if (isLoading) {
-    return <div className="text-xs text-muted-foreground flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Loading markets…</div>;
+    return (
+      <div className="border-t border-dashed border-[var(--color-surface-border)] pt-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+        <Loader2 className="h-3 w-3 animate-spin text-[var(--color-neon)]" />
+        Loading markets…
+      </div>
+    );
   }
 
   const hasHtFt = getGroup("half_time_full_time").length > 0;
   const hasToQualify = getGroup("to_qualify").length > 0;
   const hasExtras =
-    getGroup("double_chance").length > 0 ||
-    getGroup("draw_no_bet").length > 0 ||
+    getGroup("double_chance").length > 0 || getGroup("draw_no_bet").length > 0 ||
     getGroup("goals_odd_even").length > 0 ||
-    getGroup("clean_sheet_home").length > 0 ||
-    getGroup("clean_sheet_away").length > 0 ||
-    getGroup("win_to_nil_home").length > 0 ||
-    getGroup("win_to_nil_away").length > 0;
+    getGroup("clean_sheet_home").length > 0 || getGroup("clean_sheet_away").length > 0 ||
+    getGroup("win_to_nil_home").length > 0 || getGroup("win_to_nil_away").length > 0;
   const hasSpecials = hasHtFt || hasToQualify;
   const hasCards =
     CARDS_LINES.some((k) => getGroup(k).length > 0) ||
@@ -196,6 +317,10 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     getGroup("home_corners_over_under_4_5").length > 0 ||
     getGroup("away_corners_over_under_4_5").length > 0 ||
     getGroup("first_corner").length > 0;
+
+  const tabEnabled: Record<TabId, boolean> = {
+    goals: true, cs: true, ex: hasExtras, cards: hasCards, corners: hasCorners, sp: hasSpecials,
+  };
 
   const orderedSelections = (market: MarketKey, rows: OddsRow[]) => {
     let order: string[] = [];
@@ -231,89 +356,50 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
   const renderMarketSection = (market: MarketKey, cols: string) => {
     const rows = orderedSelections(market, getGroup(market));
-    if (!rows.length) return <div className="text-xs text-muted-foreground">Not available.</div>;
+    if (!rows.length) return <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-muted)]">Not available.</div>;
     const suspended = isMarketSuspended(market);
     const pick = picks[market];
     const stake = stakes[market] ?? String(MIN_STAKE);
-    const stakeNum = Number(stake);
-    const sErr = stakeError(stakeNum);
-    const potential = pick ? (stakeNum * pick.odds || 0).toFixed(2) : "0.00";
+    const sErr = stakeError(Number(stake));
     const isPending = mut.isPending && mut.variables === market;
 
     return (
-      <div className="space-y-2">
-        {suspended && (
-          <div className="text-[10px] font-medium rounded border border-destructive/40 bg-destructive/10 text-destructive px-2 py-1 inline-block">
-            Suspended
-          </div>
-        )}
+      <div>
+        {suspended && <div className="mb-2"><SuspendedBadge /></div>}
         <div className={`grid ${cols} gap-2`}>
           {rows.map((o) => {
             const isPicked = pick?.selection === o.selection;
             const alreadyPlaced = placedKeys.has(`${market}:${o.selection}`);
-            const disabled = alreadyPlaced || suspended;
             return (
-              <Button
+              <OddsButton
                 key={o.id}
-                type="button"
-                size="sm"
-                variant={isPicked ? "default" : "outline"}
-                disabled={disabled}
-                title={
-                  suspended ? "Market suspended" :
-                  alreadyPlaced ? "You already placed a bet on this selection" : undefined
-                }
-                className="flex flex-col h-auto py-2 relative disabled:opacity-60"
+                label={selectionLabel(o.selection)}
+                price={Number(o.odds)}
+                selected={isPicked}
+                alreadyPlaced={alreadyPlaced}
+                disabled={alreadyPlaced || suspended}
+                title={suspended ? "Market suspended" : alreadyPlaced ? "You already placed a bet on this selection" : undefined}
                 onClick={() => setPicks((prev) => ({
                   ...prev,
                   [market]: isPicked ? null : { selection: o.selection, odds: Number(o.odds) }
                 }))}
-              >
-                <span className="text-[10px] truncate max-w-full">{selectionLabel(o.selection)}</span>
-                <span className="font-bold text-sm">{Number(o.odds).toFixed(2)}</span>
-                {alreadyPlaced && (
-                  <Check className="absolute top-1 right-1 h-3 w-3 text-primary" />
-                )}
-              </Button>
+              />
             );
           })}
         </div>
 
         {pick && !suspended && (
-          <div className="space-y-2 p-3 mt-2 rounded-md bg-muted/40 border transition-all animate-in fade-in-50 duration-200">
-            <div className="text-xs flex justify-between items-center">
-              <div>
-                <span className="font-semibold">{MARKET_LABELS[market]}</span>
-                {" · "}{selectionLabel(pick.selection)}
-                {" · "}@ <span className="font-mono font-bold">{pick.odds.toFixed(2)}</span>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-4 w-4 text-muted-foreground hover:text-foreground"
-                onClick={() => setPicks((prev) => ({ ...prev, [market]: null }))}
-              >
-                ×
-              </Button>
-            </div>
-            <div className="flex gap-2">
-              <Input
-                type="number" min={MIN_STAKE} max={MAX_STAKE} value={stake}
-                onChange={(e) => setStakes((prev) => ({ ...prev, [market]: e.target.value }))}
-                placeholder={`Stake (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
-                className="h-8 text-xs"
-              />
-              <Button
-                size="sm"
-                disabled={isPending || !!sErr}
-                onClick={() => mut.mutate(market)}
-                className="h-8 text-xs shrink-0"
-              >
-                {isPending ? "..." : `Bet → ${potential}`}
-              </Button>
-            </div>
-            {sErr && <div className="text-[10px] text-destructive">{sErr}</div>}
-          </div>
+          <StakeSlip
+            marketLabel={MARKET_LABELS[market]}
+            selectionText={selectionLabel(pick.selection)}
+            odds={pick.odds}
+            stake={stake}
+            setStake={(v) => setStakes((prev) => ({ ...prev, [market]: v }))}
+            onSubmit={() => mut.mutate(market)}
+            onClear={() => setPicks((prev) => ({ ...prev, [market]: null }))}
+            isPending={isPending}
+            error={sErr}
+          />
         )}
       </div>
     );
@@ -321,118 +407,65 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
   const renderCorrectScore = () => {
     const rows = orderedSelections("correct_score", getGroup("correct_score"));
-    if (!rows.length) return <div className="text-xs text-muted-foreground">Not available.</div>;
-
+    if (!rows.length) return <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-muted)]">Not available.</div>;
     const selectedKeys = Object.keys(csPicks);
     const pendingSelection = csMut.isPending ? (csMut.variables as string | undefined) : undefined;
-
     const csSuspended = isMarketSuspended("correct_score");
     return (
-      <div className="space-y-3">
-        {csSuspended && (
-          <div className="text-[10px] font-medium rounded border border-destructive/40 bg-destructive/10 text-destructive px-2 py-1 inline-block">
-            Suspended
-          </div>
-        )}
-        <div className="text-[10px] text-muted-foreground">
-          Tap multiple scores to back several — each gets its own stake.
+      <div>
+        {csSuspended && <div className="mb-2"><SuspendedBadge /></div>}
+        <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)] mb-2">
+          Tap multiple scores — each gets its own stake.
         </div>
         <div className="grid grid-cols-4 gap-2">
           {rows.map((o) => {
             const isPicked = csPicks[o.selection] !== undefined;
             const alreadyPlaced = placedKeys.has(`correct_score:${o.selection}`);
-            const disabled = alreadyPlaced || csSuspended;
             return (
-              <Button
+              <OddsButton
                 key={o.id}
-                type="button"
-                size="sm"
-                variant={isPicked ? "default" : "outline"}
-                disabled={disabled}
+                label={selectionLabel(o.selection)}
+                price={Number(o.odds)}
+                selected={isPicked}
+                alreadyPlaced={alreadyPlaced}
+                disabled={alreadyPlaced || csSuspended}
                 title={csSuspended ? "Market suspended" : alreadyPlaced ? "You already placed a bet on this score" : undefined}
-                className="flex flex-col h-auto py-2 relative disabled:opacity-60"
                 onClick={() => {
                   if (isPicked) {
-                    setCsPicks((prev) => {
-                      const { [o.selection]: _omit, ...rest } = prev;
-                      return rest;
-                    });
+                    setCsPicks((prev) => { const { [o.selection]: _o, ...rest } = prev; return rest; });
                   } else {
                     setCsPicks((prev) => ({ ...prev, [o.selection]: Number(o.odds) }));
                     setCsStakes((prev) => ({ ...prev, [o.selection]: prev[o.selection] ?? String(MIN_STAKE) }));
                   }
                 }}
-              >
-                <span className="text-[10px] truncate max-w-full">{selectionLabel(o.selection)}</span>
-                <span className="font-bold text-sm">{Number(o.odds).toFixed(2)}</span>
-                {alreadyPlaced && (
-                  <Check className="absolute top-1 right-1 h-3 w-3 text-primary" />
-                )}
-              </Button>
+              />
             );
           })}
         </div>
 
         {!csSuspended && selectedKeys.length > 0 && (
-          <div className="space-y-2 pt-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              Your score slips ({selectedKeys.length})
+          <div className="mt-3 space-y-2">
+            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">
+              Your score slips · {selectedKeys.length}
             </div>
             {selectedKeys.map((sel) => {
               const odds = csPicks[sel];
               const stake = csStakes[sel] ?? String(MIN_STAKE);
-              const stakeNum = Number(stake);
-              const sErr = stakeError(stakeNum);
-              const potential = (stakeNum * odds || 0).toFixed(2);
+              const sErr = stakeError(Number(stake));
               const isPending = pendingSelection === sel;
               return (
-                <div
+                <StakeSlip
                   key={sel}
-                  className="space-y-2 p-3 rounded-md bg-muted/40 border animate-in fade-in-50 duration-200"
-                >
-                  <div className="text-xs flex justify-between items-center">
-                    <div>
-                      <span className="font-semibold">Score</span>
-                      {" · "}{selectionLabel(sel)}
-                      {" · "}@ <span className="font-mono font-bold">{odds.toFixed(2)}</span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-4 w-4 text-muted-foreground hover:text-foreground"
-                      onClick={() => {
-                        setCsPicks((prev) => {
-                          const { [sel]: _omit, ...rest } = prev;
-                          return rest;
-                        });
-                      }}
-                    >
-                      ×
-                    </Button>
-                  </div>
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      min={MIN_STAKE}
-                      max={MAX_STAKE}
-                      value={stake}
-                      onChange={(e) =>
-                        setCsStakes((prev) => ({ ...prev, [sel]: e.target.value }))
-                      }
-                      placeholder={`Stake (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
-                      className="h-8 text-xs"
-                    />
-                    <Button
-                      size="sm"
-                      disabled={isPending || !!sErr}
-                      onClick={() => csMut.mutate(sel)}
-                      className="h-8 text-xs shrink-0"
-                    >
-                      {isPending ? "..." : `Bet → ${potential}`}
-                    </Button>
-                  </div>
-                  {sErr && <div className="text-[10px] text-destructive">{sErr}</div>}
-                </div>
+                  marketLabel="Score"
+                  selectionText={selectionLabel(sel)}
+                  odds={odds}
+                  stake={stake}
+                  setStake={(v) => setCsStakes((prev) => ({ ...prev, [sel]: v }))}
+                  onSubmit={() => csMut.mutate(sel)}
+                  onClear={() => setCsPicks((prev) => { const { [sel]: _o, ...rest } = prev; return rest; })}
+                  isPending={isPending}
+                  error={sErr}
+                />
               );
             })}
           </div>
@@ -441,182 +474,103 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     );
   };
 
+  const Section = ({ market, label, cols, note }: { market: MarketKey; label?: string; cols: string; note?: React.ReactNode }) => (
+    <div>
+      <SectionLabel note={note}>{label ?? MARKET_LABELS[market]}</SectionLabel>
+      {renderMarketSection(market, cols)}
+    </div>
+  );
+
   return (
-    <div className="space-y-3 pt-2 border-t">
-      <Tabs defaultValue="goals" className="w-full">
-        <TabsList className="flex w-full overflow-x-auto no-scrollbar">
-          <TabsTrigger value="goals" className="text-xs flex-1 min-w-[64px]">Goals</TabsTrigger>
-          <TabsTrigger value="cs" className="text-xs flex-1 min-w-[64px]">Score</TabsTrigger>
-          <TabsTrigger value="ex" className="text-xs flex-1 min-w-[64px]" disabled={!hasExtras}>Extras</TabsTrigger>
-          <TabsTrigger value="cards" className="text-xs flex-1 min-w-[64px]" disabled={!hasCards}>Cards</TabsTrigger>
-          <TabsTrigger value="corners" className="text-xs flex-1 min-w-[72px]" disabled={!hasCorners}>Corners</TabsTrigger>
-          <TabsTrigger value="sp" className="text-xs flex-1 min-w-[72px]" disabled={!hasSpecials}>Specials</TabsTrigger>
-        </TabsList>
+    <div className="border-t border-dashed border-[var(--color-surface-border)] pt-3 space-y-3">
+      {/* Stencil tab bar */}
+      <div className="flex w-full overflow-x-auto no-scrollbar border border-[var(--color-surface-border)] bg-[#070D0A]">
+        {TAB_DEFS.map((t) => {
+          const enabled = tabEnabled[t.id];
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              disabled={!enabled}
+              onClick={() => setTab(t.id)}
+              className={`flex-1 min-w-[68px] px-2 py-2 text-[10px] font-bold uppercase tracking-[0.22em] transition-colors border-r border-[var(--color-surface-border)] last:border-r-0 ${
+                active
+                  ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
+                  : enabled
+                    ? "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                    : "text-[var(--color-ink-muted)]/30 cursor-not-allowed"
+              }`}
+            >
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
 
-        <TabsContent value="goals" className="space-y-4 mt-2">
-          {OVER_UNDER_LINES.map((mk) => {
-            if (getGroup(mk).length === 0) return null;
-            return (
-              <div key={mk}>
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
-                  {MARKET_LABELS[mk]}
-                </div>
-                {renderMarketSection(mk, "grid-cols-2")}
-              </div>
-            );
-          })}
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.btts}</div>
-            {renderMarketSection("btts", "grid-cols-2")}
-          </div>
-          {getGroup("goals_odd_even").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.goals_odd_even}</div>
-              {renderMarketSection("goals_odd_even", "grid-cols-2")}
-            </div>
+      {tab === "goals" && (
+        <div className="space-y-4">
+          {OVER_UNDER_LINES.map((mk) =>
+            getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
           )}
-          {getGroup("exact_total_goals").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.exact_total_goals}</div>
-              {renderMarketSection("exact_total_goals", "grid-cols-3")}
-            </div>
-          )}
-        </TabsContent>
+          <Section market="btts" cols="grid-cols-2" />
+          {getGroup("goals_odd_even").length > 0 && <Section market="goals_odd_even" cols="grid-cols-2" />}
+          {getGroup("exact_total_goals").length > 0 && <Section market="exact_total_goals" cols="grid-cols-3" />}
+        </div>
+      )}
 
-        <TabsContent value="cs" className="space-y-3 mt-2">
-          {renderCorrectScore()}
-        </TabsContent>
+      {tab === "cs" && <div>{renderCorrectScore()}</div>}
 
-        <TabsContent value="ex" className="space-y-4 mt-2">
-          {getGroup("double_chance").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.double_chance}</div>
-              {renderMarketSection("double_chance", "grid-cols-3")}
-            </div>
-          )}
+      {tab === "ex" && (
+        <div className="space-y-4">
+          {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}
           {getGroup("draw_no_bet").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
-                {MARKET_LABELS.draw_no_bet}
-                <span className="ml-2 font-normal normal-case text-muted-foreground/80">· stake refunded on a draw</span>
-              </div>
-              {renderMarketSection("draw_no_bet", "grid-cols-2")}
-            </div>
+            <Section market="draw_no_bet" cols="grid-cols-2" note="stake refunded on a draw" />
           )}
-          {getGroup("clean_sheet_home").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.clean_sheet_home}</div>
-              {renderMarketSection("clean_sheet_home", "grid-cols-2")}
-            </div>
-          )}
-          {getGroup("clean_sheet_away").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.clean_sheet_away}</div>
-              {renderMarketSection("clean_sheet_away", "grid-cols-2")}
-            </div>
-          )}
-          {getGroup("win_to_nil_home").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.win_to_nil_home}</div>
-              {renderMarketSection("win_to_nil_home", "grid-cols-2")}
-            </div>
-          )}
-          {getGroup("win_to_nil_away").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.win_to_nil_away}</div>
-              {renderMarketSection("win_to_nil_away", "grid-cols-2")}
-            </div>
-          )}
-        </TabsContent>
+          {getGroup("clean_sheet_home").length > 0 && <Section market="clean_sheet_home" cols="grid-cols-2" />}
+          {getGroup("clean_sheet_away").length > 0 && <Section market="clean_sheet_away" cols="grid-cols-2" />}
+          {getGroup("win_to_nil_home").length > 0 && <Section market="win_to_nil_home" cols="grid-cols-2" />}
+          {getGroup("win_to_nil_away").length > 0 && <Section market="win_to_nil_away" cols="grid-cols-2" />}
+        </div>
+      )}
 
-        <TabsContent value="cards" className="space-y-4 mt-2">
-          <div className="text-[10px] text-muted-foreground">
-            Settled on full-time card counts. Stake refunded if cards data is unavailable.
+      {tab === "cards" && (
+        <div className="space-y-4">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)] border-l-2 border-[var(--color-neon)]/60 pl-2">
+            Settled on full-time card counts. Stake refunded if data unavailable.
           </div>
           {CARDS_LINES.map((mk) =>
-            getGroup(mk).length > 0 ? (
-              <div key={mk}>
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS[mk]}</div>
-                {renderMarketSection(mk, "grid-cols-2")}
-              </div>
-            ) : null,
+            getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
           )}
-          {getGroup("home_cards_over_under_1_5").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.home_cards_over_under_1_5}</div>
-              {renderMarketSection("home_cards_over_under_1_5", "grid-cols-2")}
-            </div>
-          )}
-          {getGroup("away_cards_over_under_1_5").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.away_cards_over_under_1_5}</div>
-              {renderMarketSection("away_cards_over_under_1_5", "grid-cols-2")}
-            </div>
-          )}
-          {getGroup("red_card_match").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.red_card_match}</div>
-              {renderMarketSection("red_card_match", "grid-cols-2")}
-            </div>
-          )}
-          {getGroup("first_card").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.first_card}</div>
-              {renderMarketSection("first_card", "grid-cols-3")}
-            </div>
-          )}
-        </TabsContent>
+          {getGroup("home_cards_over_under_1_5").length > 0 && <Section market="home_cards_over_under_1_5" cols="grid-cols-2" />}
+          {getGroup("away_cards_over_under_1_5").length > 0 && <Section market="away_cards_over_under_1_5" cols="grid-cols-2" />}
+          {getGroup("red_card_match").length > 0 && <Section market="red_card_match" cols="grid-cols-2" />}
+          {getGroup("first_card").length > 0 && <Section market="first_card" cols="grid-cols-3" />}
+        </div>
+      )}
 
-        <TabsContent value="corners" className="space-y-4 mt-2">
-          <div className="text-[10px] text-muted-foreground">
-            Settled on full-time corner counts. Stake refunded if corner data is unavailable.
+      {tab === "corners" && (
+        <div className="space-y-4">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)] border-l-2 border-[var(--color-neon)]/60 pl-2">
+            Settled on full-time corner counts. Stake refunded if data unavailable.
           </div>
           {CORNERS_LINES.map((mk) =>
-            getGroup(mk).length > 0 ? (
-              <div key={mk}>
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS[mk]}</div>
-                {renderMarketSection(mk, "grid-cols-2")}
-              </div>
-            ) : null,
+            getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
           )}
-          {getGroup("home_corners_over_under_4_5").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.home_corners_over_under_4_5}</div>
-              {renderMarketSection("home_corners_over_under_4_5", "grid-cols-2")}
-            </div>
-          )}
-          {getGroup("away_corners_over_under_4_5").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.away_corners_over_under_4_5}</div>
-              {renderMarketSection("away_corners_over_under_4_5", "grid-cols-2")}
-            </div>
-          )}
-          {getGroup("first_corner").length > 0 && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.first_corner}</div>
-              {renderMarketSection("first_corner", "grid-cols-3")}
-            </div>
-          )}
-        </TabsContent>
+          {getGroup("home_corners_over_under_4_5").length > 0 && <Section market="home_corners_over_under_4_5" cols="grid-cols-2" />}
+          {getGroup("away_corners_over_under_4_5").length > 0 && <Section market="away_corners_over_under_4_5" cols="grid-cols-2" />}
+          {getGroup("first_corner").length > 0 && <Section market="first_corner" cols="grid-cols-3" />}
+        </div>
+      )}
 
-        <TabsContent value="sp" className="space-y-4 mt-2">
+      {tab === "sp" && (
+        <div className="space-y-4">
           {hasToQualify && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">
-                {MARKET_LABELS.to_qualify}
-                <span className="ml-2 font-normal normal-case text-muted-foreground/80">· paid on who advances (incl. ET &amp; penalties)</span>
-              </div>
-              {renderMarketSection("to_qualify", "grid-cols-2")}
-            </div>
+            <Section market="to_qualify" cols="grid-cols-2" note="paid on who advances (incl. ET & penalties)" />
           )}
-          {hasHtFt && (
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.half_time_full_time}</div>
-              {renderMarketSection("half_time_full_time", "grid-cols-3")}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+          {hasHtFt && <Section market="half_time_full_time" cols="grid-cols-3" />}
+        </div>
+      )}
     </div>
   );
 }
