@@ -140,6 +140,10 @@ export const getMatchAnalytics = createServerFn({ method: "POST" })
           await mod.syncEvents(matchId);
           if (isStale(statsAge, 2)) await mod.syncStats(matchId);
         } else if (phase === "finished") {
+          // Top up penalty shootout score once if missing (AET/PEN matches)
+          if (m.penalty_home_score == null && m.penalty_away_score == null) {
+            await mod.syncScore(matchId);
+          }
           if (isStale(ratingsAge, 60 * 24)) {
             await mod.syncPlayerRatings(matchId);
             await mod.syncStats(matchId);
