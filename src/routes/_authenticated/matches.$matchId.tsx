@@ -873,10 +873,10 @@ function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "
           {lineup.formation ?? ""}
         </span>
       </div>
-      <ul className="grid grid-cols-2 gap-x-3 gap-y-1 text-[12px] sm:grid-cols-3">
+      <ul className="grid gap-y-1.5 text-sm sm:grid-cols-2 sm:gap-x-3 md:grid-cols-3">
         {starters.map((p, i) => (
-          <li key={`s-${i}`} className="flex items-baseline gap-2">
-            <span className="w-6 text-right font-display text-[11px] font-bold tabular-nums text-[var(--color-neon)]">
+          <li key={`s-${i}`} className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-baseline gap-2">
+            <span className="text-right font-display text-xs font-bold tabular-nums text-[var(--color-neon)]">
               {p.number ?? ""}
             </span>
             <span className="truncate">{p.name}</span>
@@ -889,10 +889,10 @@ function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "
           <div className="mt-3 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
             Bench
           </div>
-          <ul className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-[12px] sm:grid-cols-3">
+          <ul className="mt-2 grid gap-y-1.5 text-sm sm:grid-cols-2 sm:gap-x-3 md:grid-cols-3">
             {subs.map((p, i) => (
-              <li key={`b-${i}`} className="flex items-baseline gap-2 text-[var(--color-ink-muted)]">
-                <span className="w-6 text-right font-display text-[11px] font-bold tabular-nums">{p.number ?? ""}</span>
+              <li key={`b-${i}`} className="grid grid-cols-[28px_minmax(0,1fr)] items-baseline gap-2 text-[var(--color-ink-muted)]">
+                <span className="text-right font-display text-xs font-bold tabular-nums">{p.number ?? ""}</span>
                 <span className="truncate">{p.name}</span>
               </li>
             ))}
@@ -1023,11 +1023,11 @@ function StatsCompare({ home, away, homeName, awayName }: { home: any; away: any
     { key: "xg", label: "xG" },
   ];
   return (
-    <div className="space-y-2.5">
-      <div className="grid grid-cols-3 gap-2 text-[10px] font-black uppercase tracking-[0.22em]">
-        <span className="text-left text-[var(--color-neon)]">{homeName}</span>
-        <span className="text-center text-[var(--color-ink-muted)]">stat</span>
-        <span className="text-right">{awayName}</span>
+    <div className="space-y-3.5">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-3 text-[10px] font-black uppercase tracking-[0.18em]">
+        <span className="min-w-0 truncate text-left text-[var(--color-neon)]">{homeName}</span>
+        <span className="shrink-0 text-center text-[var(--color-ink-muted)]">stat</span>
+        <span className="min-w-0 truncate text-right">{awayName}</span>
       </div>
       {rows.map((r) => {
         const h = home?.[r.key];
@@ -1040,21 +1040,21 @@ function StatsCompare({ home, away, homeName, awayName }: { home: any; away: any
         const aPct = (av / total) * 100;
         const homeLeads = hv > av;
         return (
-          <div key={r.key} className="space-y-1">
-            <div className="grid grid-cols-3 items-center gap-2 text-xs">
-              <span className={`text-left font-display font-black tabular-nums ${homeLeads ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]"}`}>{h ?? "—"}</span>
-              <span className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">{r.label}</span>
-              <span className={`text-right font-display font-black tabular-nums ${!homeLeads && av > 0 ? "text-white" : "text-[var(--color-ink)]"}`}>{a ?? "—"}</span>
+          <div key={r.key} className="border-b border-dashed border-[var(--color-surface-border)]/55 pb-3 last:border-0 last:pb-0">
+            <div className="mb-2 grid grid-cols-[64px_1fr_64px] items-baseline gap-2">
+              <span className={`text-left font-display text-xl font-black tabular-nums ${homeLeads ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]"}`}>{h ?? "—"}</span>
+              <span className="text-center text-[10px] font-black uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">{r.label}</span>
+              <span className={`text-right font-display text-xl font-black tabular-nums ${!homeLeads && av > 0 ? "text-[var(--color-ink)]" : "text-[var(--color-ink)]/80"}`}>{a ?? "—"}</span>
             </div>
             {/* Mirror bars meeting in the centre */}
             <div className="grid grid-cols-2 items-center">
-              <div className="flex h-1.5 justify-end bg-[var(--color-surface)]">
+              <div className="flex h-2.5 justify-end bg-[var(--color-surface)]">
                 <div
                   className="h-full bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon-glow)] transition-all duration-700"
                   style={{ width: `${hPct}%` }}
                 />
               </div>
-              <div className="flex h-1.5 bg-[var(--color-surface)]">
+              <div className="flex h-2.5 bg-[var(--color-surface)]">
                 <div
                   className="h-full bg-white/70 transition-all duration-700"
                   style={{ width: `${aPct}%` }}
@@ -1080,23 +1080,23 @@ function EventTimeline({ events, home, away, compact }: { events: any[]; home: s
   const hasMore = !compact && ordered.length > 7;
   return (
     <div className="relative">
-      <div className={compact ? "" : "max-h-[300px] overflow-y-auto pr-1"}>
+      <div className={compact ? "" : "md:max-h-[420px] md:overflow-y-auto md:pr-1"}>
 
-        <ul className="relative space-y-2">
+        <ul className="relative space-y-3">
           {/* Vertical timeline rail */}
-          <span aria-hidden className="pointer-events-none absolute bottom-1 left-[44px] top-1 w-px bg-[var(--color-surface-border)]" />
+          <span aria-hidden className="pointer-events-none absolute bottom-2 left-[48px] top-2 w-px bg-[var(--color-surface-border)]" />
           {ordered.map((e) => {
             const sideLabel = e.side === "home" ? home : e.side === "away" ? away : "";
             const isHome = e.side === "home";
             return (
-              <li key={e.id} className="relative grid grid-cols-[36px_24px_1fr] items-center gap-2 text-xs">
-                <span className="font-display text-[11px] font-black tabular-nums text-[var(--color-ink-muted)]">
+              <li key={e.id} className="relative grid grid-cols-[40px_28px_minmax(0,1fr)] items-center gap-2.5 text-sm">
+                <span className="font-display text-xs font-black tabular-nums text-[var(--color-ink-muted)]">
                   {e.minute ?? "—"}{e.extra_minute ? `+${e.extra_minute}` : ""}'
                 </span>
-                <span className="relative z-10 grid h-6 w-6 place-items-center border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
+                <span className="relative z-10 grid h-7 w-7 place-items-center border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
                   {eventMark(e.type, e.detail, 12)}
                 </span>
-                <div className="min-w-0 border-l-2 pl-2 leading-tight" style={{ borderColor: isHome ? "var(--color-neon)" : "rgba(255,255,255,0.5)" }}>
+                <div className="min-w-0 border-l-2 py-1 pl-3 leading-snug" style={{ borderColor: isHome ? "var(--color-neon)" : "rgba(255,255,255,0.5)" }}>
                   <div className="truncate">
                     <span className="font-semibold">{e.player_name ?? e.detail ?? e.type}</span>
                     {e.assist_name && <span className="text-[var(--color-ink-muted)]"> · assist {e.assist_name}</span>}
