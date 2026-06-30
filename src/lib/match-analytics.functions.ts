@@ -48,13 +48,14 @@ export const getMatchAnalytics = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const matchId = data.matchId;
 
-    const { data: m } = await (supabaseAdmin as any)
+    const { data: mRaw } = await (supabaseAdmin as any)
       .from("matches")
       .select(
-        "id, home_team, away_team, kickoff_at, status, stage, group_name, home_score, away_score, venue, referee, apifootball_fixture_id",
+        "id, home_team, away_team, kickoff_at, status, stage, group_name, home_score, away_score, apifootball_fixture_id",
       )
       .eq("id", matchId)
       .maybeSingle();
+    const m = mRaw ? { ...mRaw, venue: null, referee: null } : null;
     if (!m) {
       return {
         match: null,
