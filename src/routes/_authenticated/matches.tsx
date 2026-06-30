@@ -210,12 +210,10 @@ function MatchesPage() {
 
 function MatchCard({ match }: { match: Match }) {
   const submit = useServerFn(submitPrediction);
-  const historyFn = useServerFn(getMatchOddsHistory);
   const qc = useQueryClient();
   const { user } = useAuth();
   const [stake, setStake] = useState("10");
   const [pick, setPick] = useState<"HOME" | "DRAW" | "AWAY" | null>(null);
-  const [open, setOpen] = useState(false);
 
   const oddsTrusted = !match.odds_status || match.odds_status === "trusted" || match.manual_override === true;
   const suspendedMarkets = match.suspended_markets ?? [];
@@ -245,17 +243,6 @@ function MatchCard({ match }: { match: Match }) {
     return s;
   }, [myResultBets.data]);
 
-  const history = useQuery({
-    queryKey: ["match-odds-history", match.id],
-    queryFn: () => historyFn({ data: { matchId: match.id } }),
-    enabled: open,
-  });
-
-  const recentHistory = useMemo(() => {
-    if (!history.data) return [];
-    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    return history.data.filter((r: any) => new Date(r.sampled_at).getTime() >= oneDayAgo);
-  }, [history.data]);
 
   const slipClientRequestId = useMemo(() => crypto.randomUUID(), [match.id, pick, stake]);
 
