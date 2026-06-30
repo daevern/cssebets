@@ -1060,7 +1060,8 @@ function EventTimeline({ events, home, away, compact }: { events: any[]; home: s
   const hasMore = !compact && ordered.length > 7;
   return (
     <div className="relative">
-      <div className="max-h-[300px] overflow-y-auto pr-1">
+      <div className={compact ? "" : "max-h-[300px] overflow-y-auto pr-1"}>
+
         <ul className="relative space-y-2">
           {/* Vertical timeline rail */}
           <span aria-hidden className="pointer-events-none absolute bottom-1 left-[44px] top-1 w-px bg-[var(--color-surface-border)]" />
