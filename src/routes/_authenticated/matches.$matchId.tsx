@@ -2,12 +2,13 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Loader2, Radio, Activity, Users, Shield, AlertTriangle, History, Star } from "lucide-react";
+import { ArrowLeft, Loader2, Activity, Users, AlertTriangle, History, Star } from "lucide-react";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { getMatchAnalytics, type AnalyticsBundle, type LineupPlayer } from "@/lib/match-analytics.functions";
 import { MarketTabs } from "@/components/matches/MarketTabs";
 import { Corner, StencilPanel } from "@/components/ui/page-shell";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
+import { eventMark, WhistleIcon, PitchIcon, GoalIcon, YellowCardIcon, RedCardIcon } from "@/components/matches/MatchIcons";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -126,11 +127,7 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
         </StencilPanel>
       )}
       {locked && (
-        <StencilPanel kicker={<><Radio className="h-3 w-3 animate-pulse text-[var(--color-neon)]" /> Betting</>}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-            {phase === "finished" ? "Match finished — markets settled." : "Betting closed — match in play. Follow live below."}
-          </p>
-        </StencilPanel>
+        <BettingRibbon phase={phase} />
       )}
 
       {/* Momentum strip — quick visual when live */}
@@ -275,55 +272,94 @@ function MatchHero({
   const isLive = phase === "live";
   const showScore = isFinished || match.home_score != null || isLive;
 
+  // Build markers (goals/cards) for the 90-min progress strip
+  const markers = useMemo(() => {
+    return (([] as any[])).concat(homeGoals.map((g) => ({ side: "home", kind: "goal", min: g.minute, extra: g.extra_minute, detail: g.detail })),
+      awayGoals.map((g) => ({ side: "away", kind: "goal", min: g.minute, extra: g.extra_minute, detail: g.detail })));
+  }, [homeGoals, awayGoals]);
+
+  // Match clock progress 0..100 (treat 0..90 linearly, HT freezes at 50%).
+  const progressPct = (() => {
+    if (isFinished) return 100;
+    if (!isLive) return 0;
+    const ms = Date.now() - kickoff.getTime();
+    let min = Math.max(0, Math.floor(ms / 60000));
+    if (min > 45 && min < 60) min = 45;
+    else if (min >= 60) min = min - 15;
+    return Math.min(100, (min / 90) * 100);
+  })();
+
   return (
-    <article className="relative overflow-hidden border border-[var(--color-neon)]/25 bg-[var(--color-surface-2)]">
+    <article className="relative overflow-hidden border border-[var(--color-neon)]/30 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-30px_var(--color-neon-glow)]">
       <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
-      <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-5 py-3">
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-          <Radio className="h-3 w-3" /> {stage}
+      {/* Background watermark */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04]">
+        <PitchIcon size={260} className="text-[var(--color-neon)]" />
+      </div>
+
+      {/* Top ticker row */}
+      <div className="relative flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-4 py-2.5">
+        <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+          <WhistleIcon size={12} /> {stage}
         </span>
         <span className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-          {isLive && (
-            <span className="flex items-center gap-1 text-destructive">
+          {isLive ? (
+            <span className="flex items-center gap-1.5 text-destructive">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
               </span>
-              <span className="font-bold tracking-[0.28em]">LIVE {liveClock.label}</span>
+              <span className="font-black tracking-[0.32em]">LIVE</span>
             </span>
+          ) : (
+            <span className="font-bold tracking-[0.28em]">{phaseLabel}</span>
           )}
-          {!isLive && <span>{phaseLabel}</span>}
         </span>
       </div>
-      <div className="px-5 py-5">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
-          <TeamBlock name={match.home_team} goals={homeGoals} />
-          <div className="flex flex-col items-center gap-1 pt-2">
+
+      {/* Scoreboard */}
+      <div className="relative px-4 pb-3 pt-5">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2">
+          <TeamBlock name={match.home_team} goals={homeGoals} accent="home" />
+          <div className="flex flex-col items-center justify-start pt-1">
             {showScore ? (
-              <span className="font-display text-4xl font-bold tabular-nums leading-none">
-                {match.home_score ?? 0}<span className="mx-1 text-[var(--color-ink-muted)]">–</span>{match.away_score ?? 0}
-              </span>
+              <div className="flex items-baseline gap-2 font-display leading-none tracking-tight">
+                <span className="text-5xl font-black tabular-nums text-[var(--color-neon)] drop-shadow-[0_0_18px_var(--color-neon-glow)] md:text-6xl">
+                  {match.home_score ?? 0}
+                </span>
+                <span className="text-3xl font-light text-[var(--color-ink-muted)] md:text-4xl">:</span>
+                <span className="text-5xl font-black tabular-nums md:text-6xl">
+                  {match.away_score ?? 0}
+                </span>
+              </div>
             ) : (
-              <span className="font-display text-3xl font-bold leading-none text-[var(--color-ink-muted)]">vs</span>
+              <span className="font-display text-3xl font-black uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">vs</span>
             )}
-            <span className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+            <div className="mt-3 flex items-center gap-1.5 border border-dashed border-[var(--color-surface-border)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+              <span className="h-1 w-1 bg-[var(--color-neon)]" />
               {dateStr} · {timeStr}
-            </span>
+            </div>
             {countdown && !isLive && !isFinished && (
-              <span className="mt-1 rounded-sm border border-[var(--color-neon)]/30 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-                ⏱ {countdown}
+              <span className="mt-1.5 bg-[var(--color-neon)]/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.28em] text-[var(--color-neon)]">
+                Kick-off in {countdown}
               </span>
             )}
             {isLive && liveClock.label && (
-              <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.28em] text-destructive">
+              <span className="mt-1.5 font-display text-sm font-black tabular-nums text-destructive">
                 {liveClock.label}
               </span>
             )}
           </div>
-          <TeamBlock name={match.away_team} goals={awayGoals} align="right" />
+          <TeamBlock name={match.away_team} goals={awayGoals} align="right" accent="away" />
         </div>
+
+        {/* 90-minute progress bar with goal/card markers */}
+        {(isLive || isFinished) && (
+          <MatchProgress pct={progressPct} markers={markers} />
+        )}
+
         {(isLive || isFinished) && (stats.home || stats.away) && (
-          <div className="mt-4 grid grid-cols-3 gap-2 border-t border-dashed border-[var(--color-surface-border)] pt-3 text-center">
+          <div className="mt-3 grid grid-cols-3 gap-2 border-t border-dashed border-[var(--color-surface-border)] pt-3 text-center">
             <MicroStat label="Shots" h={stats.home?.shots_total} a={stats.away?.shots_total} />
             <MicroStat label="On Tgt" h={stats.home?.shots_on} a={stats.away?.shots_on} />
             <MicroStat label="Poss %" h={stats.home?.possession} a={stats.away?.possession} />
@@ -333,6 +369,71 @@ function MatchHero({
     </article>
   );
 }
+
+/* 90-minute strip with HT mark and event markers. */
+function MatchProgress({ pct, markers }: { pct: number; markers: Array<{ side: "home"|"away"; kind: string; min: number | null; extra?: number | null; detail?: string }> }) {
+  // Show 0..90 + an injury slot up to 95.
+  const cap = 95;
+  return (
+    <div className="mt-4">
+      <div className="relative h-7">
+        {/* Track */}
+        <div className="absolute inset-x-0 top-3 h-1 bg-[var(--color-surface-border)]" />
+        {/* Progress fill */}
+        <div
+          className="absolute top-3 left-0 h-1 bg-[var(--color-neon)] shadow-[0_0_10px_var(--color-neon-glow)] transition-all duration-1000"
+          style={{ width: `${pct}%` }}
+        />
+        {/* HT tick at 50% */}
+        <div className="absolute top-1.5 h-4 w-px bg-[var(--color-surface-border)]" style={{ left: "50%" }} />
+        <span className="absolute -top-0.5 -translate-x-1/2 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]" style={{ left: "50%" }}>HT</span>
+        {/* Markers */}
+        {markers.map((m, i) => {
+          const minute = Math.min(cap, (m.min ?? 0) + (m.extra ?? 0));
+          const left = `${Math.min(100, (minute / 90) * 100)}%`;
+          const isHome = m.side === "home";
+          return (
+            <div
+              key={i}
+              className="absolute"
+              style={{ left, top: isHome ? 0 : 18, transform: "translateX(-50%)" }}
+              title={`${minute}' — ${m.detail ?? "Goal"}`}
+            >
+              <GoalIcon size={11} className={isHome ? "text-[var(--color-neon)]" : "text-white"} />
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-1 flex justify-between font-display text-[9px] font-bold tabular-nums text-[var(--color-ink-muted)]">
+        <span>0'</span><span>45'</span><span>90'</span>
+      </div>
+    </div>
+  );
+}
+
+/* Compact betting closed/settled ribbon — replaces a full panel with a thin status bar. */
+function BettingRibbon({ phase }: { phase: AnalyticsBundle["phase"] }) {
+  const finished = phase === "finished";
+  return (
+    <div className="relative flex items-center justify-between border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-4 py-2.5">
+      <Corner pos="tl" /><Corner pos="br" />
+      <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.28em]">
+        {finished ? (
+          <WhistleIcon size={12} className="text-[var(--color-ink-muted)]" />
+        ) : (
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-destructive" />
+        )}
+        <span className={finished ? "text-[var(--color-ink-muted)]" : "text-destructive"}>
+          {finished ? "Full time" : "Markets closed"}
+        </span>
+      </span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+        {finished ? "All bets settled" : "In play · live coverage below"}
+      </span>
+    </div>
+  );
+}
+
 
 function MicroStat({ label, h, a }: { label: string; h: any; a: any }) {
   return (
@@ -372,20 +473,22 @@ function MomentumStrip({ stats, homeName, awayName }: { stats: AnalyticsBundle["
   );
 }
 
-function TeamBlock({ name, goals = [], align = "left" }: { name: string; goals?: any[]; align?: "left" | "right" }) {
+function TeamBlock({ name, goals = [], align = "left", accent = "home" }: { name: string; goals?: any[]; align?: "left" | "right"; accent?: "home" | "away" }) {
   const url = teamFlagUrl(name, 160);
-  const alignCls = align === "right" ? "items-end text-right" : "items-start text-left";
-  // Center on small layout, but allow scorer column to align inward
+  const accentCls = accent === "home" ? "border-[var(--color-neon)]/50 shadow-[0_0_18px_-6px_var(--color-neon-glow)]" : "border-white/40";
   return (
     <div className="flex flex-col items-center gap-2">
-      {url ? (
-        <img src={url} alt={`${name} flag`} className="h-12 w-20 border border-border/40 object-cover shadow-sm" loading="lazy" />
-      ) : (
-        <div className="grid h-12 w-20 place-items-center border border-border/40 bg-[var(--color-surface)] text-[10px] font-bold uppercase">
-          {name.slice(0, 3)}
-        </div>
-      )}
-      <span className="max-w-[120px] truncate text-center text-xs font-bold uppercase tracking-wide">{name}</span>
+      <div className={`relative h-14 w-20 overflow-hidden border ${accentCls}`}>
+        {url ? (
+          <img src={url} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
+        ) : (
+          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[11px] font-black uppercase tracking-wider">
+            {name.slice(0, 3)}
+          </div>
+        )}
+        <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/30" />
+      </div>
+      <span className="max-w-[120px] truncate text-center font-display text-[11px] font-black uppercase tracking-[0.18em]">{name}</span>
       {goals.length > 0 && (
         <ul className={`flex w-full flex-col gap-0.5 text-[10px] leading-tight ${align === "right" ? "items-end" : "items-start"}`}>
           {goals.map((g, i) => {
@@ -394,10 +497,10 @@ function TeamBlock({ name, goals = [], align = "left" }: { name: string; goals?:
             const isOG = String(g.detail || "").toLowerCase().includes("own");
             const last = (g.player_name || "").split(" ").slice(-1)[0];
             return (
-              <li key={i} className="flex items-baseline gap-1 text-[var(--color-ink)]">
-                <span>⚽</span>
-                <span className="font-semibold truncate max-w-[100px]">{last}</span>
-                <span className="font-display tabular-nums text-[var(--color-neon)]">{min}</span>
+              <li key={i} className={`flex items-center gap-1 text-[var(--color-ink)] ${align === "right" ? "flex-row-reverse" : ""}`}>
+                <GoalIcon size={9} className={accent === "home" ? "text-[var(--color-neon)]" : "text-white"} />
+                <span className="font-semibold truncate max-w-[90px]">{last}</span>
+                <span className="font-display tabular-nums text-[var(--color-ink-muted)]">{min}</span>
                 {isPen && <span className="text-[var(--color-ink-muted)]">(P)</span>}
                 {isOG && <span className="text-[var(--color-ink-muted)]">(OG)</span>}
               </li>
@@ -408,6 +511,7 @@ function TeamBlock({ name, goals = [], align = "left" }: { name: string; goals?:
     </div>
   );
 }
+
 
 /* ---------- Lineups ---------- */
 
@@ -579,9 +683,9 @@ function StatsCompare({ home, away, homeName, awayName }: { home: any; away: any
     { key: "xg", label: "xG" },
   ];
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-3 gap-2 text-[10px] font-bold uppercase tracking-[0.22em]">
-        <span className="text-left">{homeName}</span>
+    <div className="space-y-2.5">
+      <div className="grid grid-cols-3 gap-2 text-[10px] font-black uppercase tracking-[0.22em]">
+        <span className="text-left text-[var(--color-neon)]">{homeName}</span>
         <span className="text-center text-[var(--color-ink-muted)]">stat</span>
         <span className="text-right">{awayName}</span>
       </div>
@@ -593,16 +697,29 @@ function StatsCompare({ home, away, homeName, awayName }: { home: any; away: any
         const av = Number(a ?? 0);
         const total = hv + av || 1;
         const hPct = (hv / total) * 100;
+        const aPct = (av / total) * 100;
+        const homeLeads = hv > av;
         return (
           <div key={r.key} className="space-y-1">
             <div className="grid grid-cols-3 items-center gap-2 text-xs">
-              <span className="text-left font-display font-bold tabular-nums">{h ?? "—"}</span>
-              <span className="text-center text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">{r.label}</span>
-              <span className="text-right font-display font-bold tabular-nums">{a ?? "—"}</span>
+              <span className={`text-left font-display font-black tabular-nums ${homeLeads ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]"}`}>{h ?? "—"}</span>
+              <span className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">{r.label}</span>
+              <span className={`text-right font-display font-black tabular-nums ${!homeLeads && av > 0 ? "text-white" : "text-[var(--color-ink)]"}`}>{a ?? "—"}</span>
             </div>
-            <div className="flex h-1 overflow-hidden bg-[var(--color-surface)]">
-              <div className="bg-[var(--color-neon)]" style={{ width: `${hPct}%` }} />
-              <div className="bg-white/40" style={{ width: `${100 - hPct}%` }} />
+            {/* Mirror bars meeting in the centre */}
+            <div className="grid grid-cols-2 items-center">
+              <div className="flex h-1.5 justify-end bg-[var(--color-surface)]">
+                <div
+                  className="h-full bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon-glow)] transition-all duration-700"
+                  style={{ width: `${hPct}%` }}
+                />
+              </div>
+              <div className="flex h-1.5 bg-[var(--color-surface)]">
+                <div
+                  className="h-full bg-white/70 transition-all duration-700"
+                  style={{ width: `${aPct}%` }}
+                />
+              </div>
             </div>
           </div>
         );
@@ -614,19 +731,35 @@ function StatsCompare({ home, away, homeName, awayName }: { home: any; away: any
 /* ---------- Event timeline ---------- */
 
 function EventTimeline({ events, home, away }: { events: any[]; home: string; away: string }) {
+  // Newest first
+  const ordered = [...events].sort((a, b) => {
+    const am = (a.minute ?? 0) + (a.extra_minute ?? 0);
+    const bm = (b.minute ?? 0) + (b.extra_minute ?? 0);
+    return bm - am;
+  });
   return (
-    <ul className="space-y-1.5">
-      {events.map((e) => {
+    <ul className="relative space-y-2">
+      {/* Vertical timeline rail */}
+      <span aria-hidden className="pointer-events-none absolute bottom-1 left-[44px] top-1 w-px bg-[var(--color-surface-border)]" />
+      {ordered.map((e) => {
         const sideLabel = e.side === "home" ? home : e.side === "away" ? away : "";
+        const isHome = e.side === "home";
         return (
-          <li key={e.id} className="grid grid-cols-[40px_24px_1fr] items-baseline gap-2 border-b border-dashed border-[var(--color-surface-border)]/60 pb-1 text-xs last:border-0">
-            <span className="font-display text-[11px] font-bold tabular-nums text-[var(--color-neon)]">
+          <li key={e.id} className="relative grid grid-cols-[36px_24px_1fr] items-center gap-2 text-xs">
+            <span className="font-display text-[11px] font-black tabular-nums text-[var(--color-ink-muted)]">
               {e.minute ?? "—"}{e.extra_minute ? `+${e.extra_minute}` : ""}'
             </span>
-            <span className="text-base leading-none">{eventIcon(e.type, e.detail)}</span>
-            <div className="min-w-0">
-              <div className="truncate"><span className="font-semibold">{e.player_name ?? e.detail ?? e.type}</span>{e.assist_name && <span className="text-[var(--color-ink-muted)]"> · assist {e.assist_name}</span>}</div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">{e.detail ?? e.type} {sideLabel && `· ${sideLabel}`}</div>
+            <span className="relative z-10 grid h-6 w-6 place-items-center border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
+              {eventMark(e.type, e.detail, 12)}
+            </span>
+            <div className="min-w-0 border-l-2 pl-2 leading-tight" style={{ borderColor: isHome ? "var(--color-neon)" : "rgba(255,255,255,0.5)" }}>
+              <div className="truncate">
+                <span className="font-semibold">{e.player_name ?? e.detail ?? e.type}</span>
+                {e.assist_name && <span className="text-[var(--color-ink-muted)]"> · assist {e.assist_name}</span>}
+              </div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+                {e.detail ?? e.type}{sideLabel && ` · ${sideLabel}`}
+              </div>
             </div>
           </li>
         );
@@ -634,15 +767,7 @@ function EventTimeline({ events, home, away }: { events: any[]; home: string; aw
     </ul>
   );
 }
-function eventIcon(type: string, detail: string | null): string {
-  const t = (type || "").toLowerCase();
-  const d = (detail || "").toLowerCase();
-  if (t === "goal") return d.includes("own") ? "🥅" : d.includes("penalty") ? "🎯" : "⚽";
-  if (t === "card") return d.includes("red") ? "🟥" : "🟨";
-  if (t === "subst") return "🔁";
-  if (t === "var") return "📺";
-  return "•";
-}
+
 
 /* ---------- Injuries ---------- */
 
