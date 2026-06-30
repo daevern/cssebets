@@ -396,41 +396,6 @@ function MatchCard({ match }: { match: Match }) {
           </div>
         )}
 
-        {open && (
-          <div className="space-y-2 border-t border-dashed border-[var(--color-surface-border)] pt-3">
-            <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-              Odds history
-            </div>
-            {history.isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-[var(--color-ink-muted)]" />
-            ) : !recentHistory.length ? (
-              <div className="text-xs text-[var(--color-ink-muted)]">No odds snapshots recorded in the last 24 hours.</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead className="text-[var(--color-ink-muted)]">
-                    <tr className="text-left">
-                      <th className="py-1 pr-2 text-[10px] font-bold uppercase tracking-wider">When</th>
-                      <th className="py-1 pr-2 text-[10px] font-bold uppercase tracking-wider">{match.home_team}</th>
-                      <th className="py-1 pr-2 text-[10px] font-bold uppercase tracking-wider">Draw</th>
-                      <th className="py-1 pr-2 text-[10px] font-bold uppercase tracking-wider">{match.away_team}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentHistory.map((r: any) => (
-                      <tr key={r.id} className="border-t border-[var(--color-surface-border)]/50">
-                        <td className="py-1 pr-2 text-[var(--color-ink-muted)]">{formatKickoffDate(r.sampled_at)}</td>
-                        <td className="py-1 pr-2 tabular-nums">{r.home_odds}</td>
-                        <td className="py-1 pr-2 tabular-nums">{r.draw_odds}</td>
-                        <td className="py-1 pr-2 tabular-nums">{r.away_odds}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </article>
   );
