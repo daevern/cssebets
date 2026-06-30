@@ -24,6 +24,8 @@ export type AnalyticsBundle = {
     group_name: string | null;
     home_score: number | null;
     away_score: number | null;
+    penalty_home_score: number | null;
+    penalty_away_score: number | null;
     venue: string | null;
     referee: string | null;
     apifootball_fixture_id: number | null;
@@ -51,7 +53,7 @@ export const getMatchAnalytics = createServerFn({ method: "POST" })
     const { data: mRaw } = await (supabaseAdmin as any)
       .from("matches")
       .select(
-        "id, home_team, away_team, kickoff_at, status, stage, group_name, home_score, away_score, apifootball_fixture_id",
+        "id, home_team, away_team, kickoff_at, status, stage, group_name, home_score, away_score, penalty_home_score, penalty_away_score, apifootball_fixture_id, live_elapsed, live_status_short",
       )
       .eq("id", matchId)
       .maybeSingle();
@@ -138,6 +140,10 @@ export const getMatchAnalytics = createServerFn({ method: "POST" })
           await mod.syncEvents(matchId);
           if (isStale(statsAge, 2)) await mod.syncStats(matchId);
         } else if (phase === "finished") {
+          // Top up penalty shootout score once if missing (AET/PEN matches)
+          if (m.penalty_home_score == null && m.penalty_away_score == null) {
+            await mod.syncScore(matchId);
+          }
           if (isStale(ratingsAge, 60 * 24)) {
             await mod.syncPlayerRatings(matchId);
             await mod.syncStats(matchId);

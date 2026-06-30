@@ -1,0 +1,1 @@
+ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS penalty_home_score INTEGER; ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS penalty_away_score INTEGER;

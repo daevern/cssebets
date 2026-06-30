@@ -193,6 +193,8 @@ export async function syncScore(matchId: string) {
 
   const homeGoals = fx?.goals?.home;
   const awayGoals = fx?.goals?.away;
+  const penHome = fx?.score?.penalty?.home;
+  const penAway = fx?.score?.penalty?.away;
   const shortStatus = fx?.fixture?.status?.short ?? null;
   const elapsed = fx?.fixture?.status?.elapsed ?? null;
   const newStatus = mapStatus(shortStatus);
@@ -200,6 +202,8 @@ export async function syncScore(matchId: string) {
   const update: Record<string, any> = { updated_at: new Date().toISOString() };
   if (typeof homeGoals === "number") update.home_score = homeGoals;
   if (typeof awayGoals === "number") update.away_score = awayGoals;
+  if (typeof penHome === "number") update.penalty_home_score = penHome;
+  if (typeof penAway === "number") update.penalty_away_score = penAway;
   if (shortStatus) update.live_status_short = shortStatus;
   if (typeof elapsed === "number") update.live_elapsed = elapsed;
   // Never downgrade a finished match back to live/scheduled.

@@ -365,29 +365,35 @@ function MatchHero({
       </div>
 
       {/* Scoreboard */}
-      <div className="relative px-4 pb-3 pt-5">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2">
-          <TeamBlock name={match.home_team} goals={homeGoals} accent="home" />
-          <div className="flex flex-col items-center justify-start pt-1">
+      <div className="relative px-3 pb-3 pt-4 sm:px-4 sm:pt-5">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+          <TeamHeader name={match.home_team} accent="home" />
+          <div className="flex flex-col items-center justify-start">
             {showScore ? (
-              <div className="flex items-baseline gap-2 font-display leading-none tracking-tight">
-                <span className="text-5xl font-black tabular-nums text-[var(--color-neon)] drop-shadow-[0_0_18px_var(--color-neon-glow)] md:text-6xl">
+              <div className="flex items-baseline gap-1.5 font-display leading-none tracking-tight">
+                <span className="text-4xl font-black tabular-nums text-[var(--color-neon)] drop-shadow-[0_0_18px_var(--color-neon-glow)] sm:text-5xl md:text-6xl">
                   {match.home_score ?? 0}
                 </span>
-                <span className="text-3xl font-light text-[var(--color-ink-muted)] md:text-4xl">:</span>
-                <span className="text-5xl font-black tabular-nums md:text-6xl">
+                <span className="text-2xl font-light text-[var(--color-ink-muted)] sm:text-3xl md:text-4xl">:</span>
+                <span className="text-4xl font-black tabular-nums sm:text-5xl md:text-6xl">
                   {match.away_score ?? 0}
                 </span>
               </div>
             ) : (
-              <span className="font-display text-3xl font-black uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">vs</span>
+              <span className="font-display text-2xl font-black uppercase tracking-[0.18em] text-[var(--color-ink-muted)] sm:text-3xl">vs</span>
             )}
-            <div className="mt-3 flex items-center gap-1.5 border border-dashed border-[var(--color-surface-border)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+            {(match.penalty_home_score != null || match.penalty_away_score != null) && (
+              <div className="mt-1 flex items-center gap-1 border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/5 px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-neon)]">
+                <span>PEN</span>
+                <span className="tabular-nums">{match.penalty_home_score ?? 0} – {match.penalty_away_score ?? 0}</span>
+              </div>
+            )}
+            <div className="mt-2 flex items-center gap-1 whitespace-nowrap border border-dashed border-[var(--color-surface-border)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)] sm:text-[10px] sm:tracking-[0.24em]">
               <span className="h-1 w-1 bg-[var(--color-neon)]" />
               {dateStr} · {timeStr}
             </div>
             {countdown && !isLive && !isFinished && (
-              <span className="mt-1.5 bg-[var(--color-neon)]/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.28em] text-[var(--color-neon)]">
+              <span className="mt-1.5 whitespace-nowrap bg-[var(--color-neon)]/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--color-neon)]">
                 Kick-off in {countdown}
               </span>
             )}
@@ -397,8 +403,16 @@ function MatchHero({
               </span>
             )}
           </div>
-          <TeamBlock name={match.away_team} goals={awayGoals} align="right" accent="away" />
+          <TeamHeader name={match.away_team} accent="away" align="right" />
         </div>
+
+        {/* Goal scorers — full width row below the scoreboard */}
+        {(homeGoals.length > 0 || awayGoals.length > 0) && (
+          <div className="mt-3 grid grid-cols-2 gap-3 border-t border-dashed border-[var(--color-surface-border)] pt-3">
+            <GoalList goals={homeGoals} accent="home" align="left" />
+            <GoalList goals={awayGoals} accent="away" align="right" />
+          </div>
+        )}
 
         {/* 90-minute progress bar with goal/card markers */}
         {(isLive || isFinished) && (
@@ -414,6 +428,49 @@ function MatchHero({
         )}
       </div>
     </article>
+  );
+}
+
+function TeamHeader({ name, accent, align = "left" }: { name: string; accent: "home"|"away"; align?: "left"|"right" }) {
+  const url = teamFlagUrl(name, 160);
+  const accentCls = accent === "home" ? "border-[var(--color-neon)]/50 shadow-[0_0_18px_-6px_var(--color-neon-glow)]" : "border-white/40";
+  return (
+    <div className={`flex min-w-0 flex-col items-center gap-1.5`}>
+      <div className={`relative h-12 w-16 overflow-hidden border sm:h-14 sm:w-20 ${accentCls}`}>
+        {url ? (
+          <img src={url} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
+        ) : (
+          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[10px] font-black uppercase tracking-wider">
+            {name.slice(0, 3)}
+          </div>
+        )}
+        <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/30" />
+      </div>
+      <span className="w-full truncate text-center font-display text-[10px] font-black uppercase tracking-[0.14em] sm:text-[11px] sm:tracking-[0.18em]" title={name}>{name}</span>
+    </div>
+  );
+}
+
+function GoalList({ goals, accent, align }: { goals: any[]; accent: "home"|"away"; align: "left"|"right" }) {
+  if (!goals.length) return <div />;
+  return (
+    <ul className={`flex flex-col gap-0.5 text-[10px] leading-tight sm:text-[11px] ${align === "right" ? "items-end" : "items-start"}`}>
+      {goals.map((g, i) => {
+        const min = `${g.minute ?? ""}${g.extra_minute ? `+${g.extra_minute}` : ""}'`;
+        const isPen = String(g.detail || "").toLowerCase().includes("penalty");
+        const isOG = String(g.detail || "").toLowerCase().includes("own");
+        const last = (g.player_name || "").split(" ").slice(-1)[0];
+        return (
+          <li key={i} className={`flex max-w-full items-center gap-1 text-[var(--color-ink)] ${align === "right" ? "flex-row-reverse" : ""}`}>
+            <GoalIcon size={9} className={accent === "home" ? "text-[var(--color-neon)] shrink-0" : "text-white shrink-0"} />
+            <span className="truncate font-semibold">{last}</span>
+            <span className="shrink-0 font-display tabular-nums text-[var(--color-ink-muted)]">{min}</span>
+            {isPen && <span className="shrink-0 text-[var(--color-ink-muted)]">(P)</span>}
+            {isOG && <span className="shrink-0 text-[var(--color-ink-muted)]">(OG)</span>}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
