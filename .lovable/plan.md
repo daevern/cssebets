@@ -1,147 +1,126 @@
-# API-Football Integration — Maximize Markets on Free Tier
 
-## The hard constraint
-Free plan = **100 requests / day, 10 req/minute, current season only**. World Cup 2026 is the current season ✅. Every market we add must fit inside that quota. Budgeting is the entire game here — get it wrong and the API dies at 3pm.
+# Match Analytics Page — Plan
 
-## Daily request budget (knockout phase, peak day = 8 fixtures)
+Goal: when a user opens a fixture (from Matches, Picks, or anywhere a match is clickable), instead of the current odds-history / "bets closed" placeholder, render a dedicated analytics page for that specific match. Same dark scoreboard / stencil aesthetic as the rest of the app. Mobile-first. No new data sources beyond what API-Football and football-data.org already give us.
 
-| Job | Endpoint | Frequency | Req/day |
+## What the page shows (by phase)
+
+The page adapts to the match clock. Sections appear/disappear based on what data is actually available — never show empty stencil panels.
+
+### Phase A — Pre-match, no lineup yet (T-∞ → T-60min)
+1. **Header block** — flags, team names, kickoff countdown, stage label (Round of 16 etc.), venue, referee (if API-Football has it).
+2. **Form guide** — last 5 matches per team (W/D/L pills with score + opponent). From `/teams/statistics` + `/fixtures?team=&last=5`.
+3. **Head-to-head** — last 5 H2H meetings with scores. From `/fixtures/headtohead`.
+4. **Season stats side-by-side** — goals for/against, clean sheets, BTTS %, avg corners, avg cards, win % by venue (home/away split). From `/teams/statistics`.
+5. **Tournament standing / path** — for knockouts, show the bracket path (who they beat to get here); for groups, group table snippet.
+6. **Odds movement** — keep existing odds-history chart but downsize it to one panel, not the whole page.
+7. **Place bet CTA** — sticky on mobile, links into the existing bet flow.
+
+### Phase B — Lineups released (T-60 → kickoff)
+8. **Confirmed lineups** — both XI with formation label (4-3-3 etc.). From `/fixtures/lineups`.
+9. **Formation pitch diagram** — SVG pitch with player dots positioned by API-Football grid coords. Tap a dot → mini player card (number, position, season goals/assists/cards from `/players?team=&season=`).
+10. **Bench** — list of substitutes with numbers.
+11. **Coach** — names per side.
+12. **Missing / predicted absences** — players in the squad but not in the 18, with a "rotation / injury / suspension" note if API-Football flags it via `/injuries`.
+
+### Phase C — In-play (kickoff → final whistle)
+13. **Live score + clock** — from `/fixtures?id=&live=all` polling cadence we already set up.
+14. **Event timeline** — goals, cards, subs, VAR. From `/fixtures/events`. Stencil ticker style.
+15. **Live stats** — possession %, shots, shots on target, corners, cards, xG if available. From `/fixtures/statistics`.
+16. **Live formation** — same pitch diagram, swaps in subs as they happen.
+17. **Momentum bar** — derived from recent events (last 10 min weighted) — pure client-side calc, no extra API.
+
+### Phase D — Full time
+18. **Final score banner** with HT score, ET / pens breakdown if applicable.
+19. **Full match stats** — same panel as live, frozen.
+20. **Player ratings** — from `/fixtures/players` (API-Football provides ratings & per-player stats).
+21. **Settlement summary** — which markets paid, which voided, list of user's own bets on this match with outcome (only for signed-in user).
+
+## Data sources & API-Football endpoints used
+
+All net-new endpoints. Each is added to the quota tracker before first call.
+
+| Endpoint | When | Cache TTL | Quota notes |
 |---|---|---|---|
-| Fixture list refresh | `/fixtures?league=1&season=2026` | 2× | 2 |
-| Pre-match odds (per fixture, all bookmakers) | `/odds?fixture=` | 1× per fixture, 24h before kickoff | 8 |
-| Pre-match odds refresh (T-3h sharper line) | `/odds?fixture=` | 1× per fixture | 8 |
-| Lineups (T-60min) | `/fixtures/lineups?fixture=` | 1× per fixture | 8 |
-| Live fixture state (in-play only) | `/fixtures?live=all` | every 60s during live windows | ~40 |
-| Events (goals, cards, subs) | `/fixtures/events?fixture=` | every 90s per live fixture | ~25 |
-| Final stats & player ratings (T+15min) | `/fixtures/statistics`, `/fixtures/players` | 1× per fixture | 8 |
-| **Total peak day** | | | **~99** |
+| `/fixtures?id=` | On open + every 60s if live | 60s pre, 60s live | low |
+| `/fixtures/lineups?fixture=` | Every 5 min in T-90→T-30 window, then frozen | until kickoff | 1×/fixture once published |
+| `/fixtures/events?fixture=` | Every 90s during live | 90s | live-only |
+| `/fixtures/statistics?fixture=` | Every 2 min during live + once at FT | 2 min | live-only |
+| `/fixtures/players?fixture=` | Once at FT | permanent | 1×/fixture |
+| `/fixtures/headtohead?h2h=A-B` | First open per match, cached 24h | 24h | 1×/match |
+| `/teams/statistics?team=&league=&season=` | Once per team per tournament, cached | 7d | 2×/match max |
+| `/injuries?fixture=` | Once 24h pre + once 2h pre | 12h | 2×/fixture |
+| `/standings?league=&season=` | Once daily | 24h | 1×/day |
 
-Non-match days drop to <10 req. We never poll `/odds` live (burns quota); pre-match prices are frozen at kickoff and our derived in-play logic takes over.
+Already-used `/odds?fixture=` stays as-is for bet pricing.
 
-## Markets to add (using API-Football real bookmaker prices)
+Football-data.org stays as the settlement source-of-truth for goals (90-min rule we already enforce).
 
-API-Football exposes **30+ bet types** per fixture via `/odds`. Onboarding priority:
+## Database additions (one migration)
 
-### Phase 1 — Pre-match, real bookmaker prices (replaces today's fabricated odds)
-1. **Match Winner (1X2)** — replaces current derived
-2. **Goals Over/Under** — full ladder 0.5 → 6.5 (today: only 2.5)
-3. **Both Teams Score**
-4. **HT/FT Double** — real prices (today: fabricated from h2h)
-5. **Correct Score** — real prices (today: fabricated; this caused settlement disputes)
-6. **Double Chance** (1X, X2, 12) — new
-7. **First Half Winner** + **Second Half Winner** — new
-8. **HT Goals Over/Under 0.5, 1.5, 2.5** — new
-9. **Exact Goals Number** — real prices
-10. **Odd / Even Goals** — new, easy market, 50/50ish
-11. **Team to Score First** + **Team to Score Last** — new
-12. **Clean Sheet — Home / Away** — new
-13. **Win to Nil** — new
+- `match_lineups` (match_id, side, formation, coach, starters jsonb [{number, player_id, name, pos, grid}], substitutes jsonb, fetched_at) — unique on (match_id, side).
+- `match_events` (id, match_id, minute, extra_minute, type, team_side, player_name, assist_name, detail, comments, created_at) — append-only, dedup key (match_id, minute, type, player_name).
+- `match_stats` (match_id, side, possession, shots_total, shots_on, corners, fouls, yellow, red, xg, saves, passes_total, passes_accurate, fetched_at) — unique on (match_id, side).
+- `match_player_ratings` (match_id, side, player_id, player_name, minutes, goals, assists, rating, shots, passes, tackles, yellow, red, fetched_at).
+- `match_h2h` (team_a_key, team_b_key, fixtures jsonb, fetched_at) — pair key normalized.
+- `team_season_stats` (team_key, league_id, season, payload jsonb, fetched_at).
+- `match_injuries` (match_id, side, player_name, type, reason, fetched_at).
 
-### Phase 2 — Cards & corners (high-margin, sharps avoid)
-14. **Total Cards Over/Under** (3.5, 4.5, 5.5)
-15. **Home/Away Cards Over/Under**
-16. **Red Card in Match — Yes/No**
-17. **Total Corners Over/Under** (8.5, 9.5, 10.5)
-18. **First Corner — Home/Away**
-19. **Booking Points Over/Under**
+All public-schema tables get the standard GRANT + RLS block:
+- `SELECT TO anon, authenticated` (this is non-sensitive public match data)
+- `ALL TO service_role`
+- Writes only via service-role server functions (no INSERT/UPDATE/DELETE policy for `authenticated`).
 
-### Phase 3 — Lineup-gated (publish only after `/fixtures/lineups` returns at T-60)
-20. **Anytime Goalscorer** — per starting XI
-21. **First Goalscorer**
-22. **Last Goalscorer**
-23. **Player to Score 2+** — premium-priced
-24. **Player to be Booked**
-25. **Player to be Sent Off**
+## Server functions & jobs
 
-### Phase 4 — Knockout-specific
-26. **To Qualify** (advance to next round, includes ET + pens)
-27. **Method of Qualification** — 90min / ET / Pens
-28. **To Win the Match in Regular Time** — distinct from "To Qualify"
-29. **Penalty Shootout — Yes/No**
-30. **Lift the Trophy** (already have via outrights endpoint)
+New files:
+- `src/lib/apifootball-analytics.server.ts` — wrappers per endpoint, each routes through the existing quota guard in `apifootball.server.ts`.
+- `src/lib/match-analytics.functions.ts` — `getMatchAnalytics({ matchId })` returns a single bundle (header, h2h, form, stats, lineups if present, events if live, player ratings if FT). Auth-required. Uses the cached tables; triggers on-demand refresh only when cache is stale.
+- `src/lib/match-analytics-sync.server.ts` — pure server helpers: `syncLineups(matchId)`, `syncLiveState(matchId)`, `syncFullTime(matchId)`, `syncPreMatch(matchId)`.
 
-### Phase 5 — In-play (uses our own live state, not paid live-odds endpoint)
-31. **Next Goal — Home/Away/None** — recomputed every 60s from live state we already poll
-32. **Race to 2 / 3 Goals**
-33. **Total Goals after current minute** — dynamic line
+New cron hooks under `src/routes/api/public/hooks/`:
+- `apifootball-lineups.ts` — every 5 min, picks fixtures with kickoff in next 90 min and no lineup yet.
+- `apifootball-live.ts` — every 60s, only fires when ≥1 fixture is in-play; pulls live fixture + events + stats for each.
+- `apifootball-fulltime.ts` — every 10 min, picks fixtures that ended 5–60 min ago and have no player ratings row yet.
+- `apifootball-prematch.ts` — every 30 min, picks fixtures in next 48h missing H2H or team stats.
 
-## Real-time match state upgrade
-- Replace football-data.org polling with `/fixtures?live=all` (every 60s during live windows only).
-- Push goal/card events via Supabase realtime → bet UI auto-updates without refresh.
-- Settlement uses `/fixtures/statistics` + `/fixtures/events` as source of truth (audit-grade, prevents the Egypt-Iran style mis-settle).
+All hooks share the existing quota guard and bail out cleanly if quota is near cap. Live hook is bypassed when no live fixtures exist (zero req cost).
 
-## House profitability levers this unlocks
-- **More lines = more slips.** Each market carries its own 5–8% overround. 30 markets vs today's 5 ≈ 6× the theoretical hold per fixture.
-- **Player props have 12–18% margins** — far higher than 1X2 (~5%). Recreational users love them, sharps usually skip them (small markets, hard to model).
-- **Card/corner markets have 10–15% margins** and zero correlation with goal markets — diversifies house risk.
-- **Lineup-gated markets** are released late and close fast — minimal sharp action window.
+## UI files
 
-## Required correlation groups (must extend BEFORE shipping new markets)
-The current `correlation_groups` JSON only covers `goals_up` / `goals_down`. Add:
-- `home_dominance`: home_win + home_clean_sheet + away_no_score + first_goal_home + home_-1_handicap
-- `away_dominance`: mirror
-- `low_event`: under_2.5 + under_corners + under_cards + 0-0
-- `high_event`: over_3.5 + BTTS + over_cards + over_corners
-- `player_team_link`: anytime_scorer_X correlates with team_X_win, team_X_-1_handicap
-- `card_redcard`: over_cards + red_card_yes
-Each new market gets tagged into ≥1 group in `markets_catalog.ts`.
+- `src/routes/_authenticated/matches.$matchId.tsx` — new route, full-page analytics view. Replaces the current "open match → modal/drawer with odds history" interaction.
+- Make existing match rows in `matches.tsx`, `my-predictions.tsx`, dashboard `BenchSlider` link to `/matches/$matchId`.
+- `src/components/match-analytics/` — new folder:
+  - `MatchHeader.tsx` (flags, countdown, stage, venue, ref)
+  - `FormGuide.tsx` (W/D/L pills per side)
+  - `HeadToHead.tsx`
+  - `TeamStatsCompare.tsx` (side-by-side bar comparisons)
+  - `FormationPitch.tsx` (SVG pitch + dots, tap → `PlayerCard.tsx`)
+  - `LineupList.tsx` (numbered list, bench)
+  - `InjuryList.tsx`
+  - `EventTimeline.tsx` (live ticker)
+  - `LiveStatsPanel.tsx` (possession bar, shots, etc.)
+  - `MomentumBar.tsx` (client-derived)
+  - `PlayerRatingsTable.tsx`
+  - `OddsMovementCompact.tsx` (downsized chart, reuses existing data)
+  - `BetCtaSticky.tsx` (mobile sticky bottom bar → opens market sheet)
+- All styled with the existing PageShell / StencilPanel + scanline aesthetic, custom NavIcons style for any new icons (formation, whistle, pitch, card).
 
-## Risk caps to revisit
-Current cap `max_user_match_correlated_payout = 1000 pts` was raised after the 2-2 incident. With cards/scorers added (anytime scorer odds 4.0–12.0), recommend per-group caps in `platform_settings`:
-- `player_props_group_cap`: 400 pts potential per group
-- `cards_corners_group_cap`: 600 pts potential per group
-- Generic correlated cap stays at 1000
+## Behaviour & loading rules
 
-## Technical sketch
+- Sections render independently. If lineups aren't out, the Lineups & Formation cards show a stencil "Lineups drop ~1h before kickoff" state, not a spinner forever.
+- If API-Football returns no data for a section (e.g. injuries unavailable for that league), the section is hidden — never an empty card.
+- Loader: `_authenticated` route loader pre-fetches `getMatchAnalytics` via TanStack Query so the initial paint already has cached data; live sections subscribe via `useQuery` with 60s polling only when status === `live`.
+- Mobile-first: vertical stacking, sticky bet CTA, horizontal-scroll only for stats comparison bars when they overflow.
+- The current "bets closed" panel becomes a single inline notice inside the markets module; the analytics page itself never disappears for in-play or finished matches.
 
-**New files**
-- `src/lib/apifootball.server.ts` — single client, league/season pinned to WC 2026 (`league=1, season=2026`), quota tracker writing to `platform_settings.api_football_quota_used_today`
-- `src/lib/apifootball-markets.server.ts` — maps API-Football `bet.id` → our `MarketKey`; one function per phase
-- `src/lib/lineups.server.ts` — fetches + caches starting XI; emits realtime event when lineups land
-- `src/lib/live-state.server.ts` — replaces football-data poller, drives realtime fixture updates
-- `src/lib/settlement-apifootball.server.ts` — grades player/card/corner markets from final statistics
+## What stays out of scope
 
-**New tables (one migration)**
-- `match_lineups` (match_id, side, formation, starters jsonb, substitutes jsonb, fetched_at)
-- `match_events` (match_id, minute, type, team, player_id, player_name, detail) — live event stream
-- `match_player_stats` (match_id, player_id, goals, assists, shots, cards) — for settlement
-- `player_props_catalog` (match_id, market_key, player_id, player_name, selection, odds, created_at) — late-published props
-- Extend `match_market_odds`: add ~25 new `market_key` enum values
+- No paid live-odds endpoint, no OpticOdds, no extra subscription.
+- No player-prop pricing UI changes (those still live under markets).
+- No bracket editor / what-if simulator — read-only analytics only.
+- No push notifications.
 
-**New scheduled hooks** (`src/routes/api/public/hooks/`)
-- `apifootball-fixtures.ts` — twice daily
-- `apifootball-prematch-odds.ts` — runs every 30min, picks fixtures in T-24h to T-3h window
-- `apifootball-lineups.ts` — runs every 5min during T-90 to T-30 windows
-- `apifootball-live-poll.ts` — runs every 60s, only when at least one fixture is live
-- `apifootball-settle.ts` — runs at T+15min per finished fixture
+## Open question before I build
 
-**Quota safety**
-- Hard daily counter in DB. If `quota_used >= 95`, all jobs except settlement skip with a logged warning.
-- Admin dashboard tile: "API-Football quota — 67/100 today, resets in 4h 12m".
-
-**Admin UI additions**
-- `admin.api-football.tsx` — toggle each market on/off, view quota burn chart, manual fixture refresh button
-- Risk dashboard: per-market exposure column
-
-**Settings secret**
-- Reuse `add_secret` tool to store `API_FOOTBALL_KEY` (you'll paste it after I switch to build mode).
-
-## Phased rollout (so quota stays safe and bugs stay small)
-1. **Week 1** — Phase 1 markets + replace today's fabricated CS/HTFT/Exact with real prices. Test on 2 fixtures.
-2. **Week 2** — Phase 2 (cards/corners) + correlation groups + risk caps.
-3. **Week 3** — Phase 3 (lineups + player props) + realtime push.
-4. **Week 4** — Phase 4 (knockout markets: To Qualify, Method of Qualification, Penalty Shootout). Critical for current World Cup stage.
-5. **Week 5** — Phase 5 (in-play next-goal markets) using our own live state.
-
-## Out of scope (call out)
-- **Live in-play odds from API-Football.** Burns 10× the quota. Use our derived model for in-play; upgrade to OpticOdds/OddsJam ($750+/mo) only when turnover justifies it.
-- **Multi-fixture parlays.** Platform is single-bet today; adding accumulators is a separate project.
-- **Upgrading API-Football plan.** Pro = $25/mo gets 7.5k req/day and removes the season restriction — recommend this the moment Phase 3 ships. Free tier is enough to get Phase 1 + 2 live.
-
-## Decisions needed before I switch to build mode
-1. Approve the **5-phase rollout** above, or do you want all markets shipped in one wave (higher risk)?
-2. Approve **deferring in-play odds** (use our derived model, not API-Football live endpoint)?
-3. Approve the **correlation-group + risk-cap additions** as prerequisites to Phase 2?
-4. OK to **replace football-data.org live polling** with API-Football `/fixtures?live=all`?
-
-Reply with picks and I'll start with Phase 1.
+Quota: phases C + D add ~3 extra requests per live fixture per minute (live fixture poll + events + stats). On an 8-fixture peak day with everything live for ~110 min, that's ~2.6k req across the live window — well inside Pro's 7.5k/day, but only if we also keep the existing 30-min `/odds` sync. I will gate live polling so it only runs while at least one fixture is in-play, and skip refresh if the fixture's last-event timestamp hasn't moved. Confirm this is acceptable, or tell me to cut a section, before I start.
