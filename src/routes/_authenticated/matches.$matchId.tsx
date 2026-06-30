@@ -109,16 +109,6 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
   const homeGoals = goals.filter((e: any) => e.side === "home");
   const awayGoals = goals.filter((e: any) => e.side === "away");
 
-  // Section tab model — collapses long vertical scroll into bite-sized tabs.
-  type TabKey = "overview" | "events" | "lineups" | "history";
-  const tabs: { key: TabKey; label: string; show: boolean; count?: number }[] = ([
-    { key: "overview" as TabKey, label: "Overview", show: true },
-    { key: "events" as TabKey, label: "Events", show: hasEvents, count: events.length },
-    { key: "lineups" as TabKey, label: "Lineups", show: hasLineups || phase === "pre" || phase === "lineups" },
-    { key: "history" as TabKey, label: "History", show: hasInjuries || hasRatings || hasH2H },
-  ]).filter((t) => t.show);
-  const [tab, setTab] = useState<TabKey>(tabs[0].key);
-
   return (
     <>
       <MatchHero
@@ -130,78 +120,33 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
         stats={stats}
       />
 
-      {/* Sticky section nav — keeps everything one tap away */}
-      <nav className="sticky top-0 z-20 -mx-4 flex gap-1 overflow-x-auto border-y border-dashed border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 px-4 py-2 backdrop-blur md:mx-0 md:px-0">
-        {tabs.map((t) => {
-          const active = tab === t.key;
-          return (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`relative shrink-0 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.28em] transition-colors ${
-                active
-                  ? "bg-[var(--color-neon)]/12 text-[var(--color-neon)] shadow-[0_0_18px_-8px_var(--color-neon-glow)]"
-                  : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-              }`}
-            >
-              <Corner pos="tl" /><Corner pos="br" />
-              {t.label}
-              {typeof t.count === "number" && (
-                <span className="ml-1.5 font-display tabular-nums opacity-70">{t.count}</span>
-              )}
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* OVERVIEW — scoreboard auxiliary: markets/ribbon + momentum at a glance */}
-      {tab === "overview" && (
-        <div className="grid gap-5 md:grid-cols-2">
-          {/* Markets / ribbon spans full width since it's the primary CTA */}
-          <div className="md:col-span-2">
-            {!locked ? (
-              <StencilPanel kicker={<><Activity className="h-3 w-3" /> Markets</>}>
-                <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} />
-              </StencilPanel>
-            ) : (
-              <BettingRibbon phase={phase} />
-            )}
-          </div>
-
-          {phase === "live" && hasStats && (
-            <div className="md:col-span-2"><MomentumStrip stats={stats} homeName={home} awayName={away} /></div>
-          )}
-
-          {hasEvents && locked && (
-            <StencilPanel
-              kicker={<><Activity className="h-3 w-3" /> Match momentum</>}
-              meta={phase === "finished" ? "Full match" : "Live"}
-            >
-              <MomentumGraph events={events} homeName={home} awayName={away} phase={phase} kickoffISO={match.kickoff_at} />
-            </StencilPanel>
-          )}
-
-          {hasStats && (
-            <StencilPanel kicker={<><Activity className="h-3 w-3" /> Match stats</>} meta={phase === "finished" ? "Final" : "Live"}>
-              <StatsCompare home={stats.home} away={stats.away} homeName={home} awayName={away} />
-            </StencilPanel>
-          )}
-
-          {!hasLineups && !hasStats && !hasEvents && !hasInjuries && !hasH2H && phase === "pre" && (
-            <div className="md:col-span-2">
-              <StencilPanel>
-                <p className="text-sm text-[var(--color-ink-muted)]">
-                  Analytics data warms up as kickoff nears. Head-to-head and injury reports populate first, then lineups,
-                  then live stats once the whistle goes.
-                </p>
-              </StencilPanel>
-            </div>
-          )}
-        </div>
+      {/* Markets — only show pre-kickoff */}
+      {!locked && (
+        <StencilPanel kicker={<><Activity className="h-3 w-3" /> Markets</>}>
+          <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} />
+        </StencilPanel>
+      )}
+      {locked && (
+        <BettingRibbon phase={phase} />
       )}
 
-      {/* EVENTS — full timeline */}
-      {tab === "events" && hasEvents && (
+      {/* Momentum strip — quick visual when live */}
+      {phase === "live" && hasStats && (
+        <MomentumStrip stats={stats} homeName={home} awayName={away} />
+      )}
+
+      {/* Match momentum graph — overlaid pressure curves for both sides */}
+      {hasEvents && (locked) && (
+        <StencilPanel
+          kicker={<><Activity className="h-3 w-3" /> Match momentum</>}
+          meta={phase === "finished" ? "Full match" : "Live"}
+        >
+          <MomentumGraph events={events} homeName={home} awayName={away} phase={phase} kickoffISO={match.kickoff_at} />
+        </StencilPanel>
+      )}
+
+      {/* Live event timeline */}
+      {hasEvents && (
         <StencilPanel
           kicker={<><Activity className="h-3 w-3" /> Match events</>}
           meta={`${events.length} entries`}
@@ -210,58 +155,68 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
         </StencilPanel>
       )}
 
-      {/* LINEUPS — pitch full-width, rosters side by side on desktop */}
-      {tab === "lineups" && (
-        hasLineups ? (
-          <StencilPanel kicker={<><Users className="h-3 w-3" /> Lineups</>} meta="Confirmed XI">
-            <div className="space-y-5">
-              {(lineups.home?.formation || lineups.away?.formation) && (
-                <FormationPitch home={lineups.home} away={lineups.away} />
-              )}
-              <div className="grid gap-5 md:grid-cols-2">
-                <LineupSplit lineup={lineups.home} side="home" teamName={home} />
-                <LineupSplit lineup={lineups.away} side="away" teamName={away} />
-              </div>
-            </div>
-          </StencilPanel>
-        ) : (
-          <StencilPanel kicker={<><Users className="h-3 w-3" /> Lineups</>} meta="Pending">
-            <p className="text-sm text-[var(--color-ink-muted)]">
-              {phase === "lineups"
-                ? "Confirmed lineups drop in the next hour — check back shortly."
-                : "Lineups are released roughly 1 hour before kickoff."}
-            </p>
-          </StencilPanel>
-        )
+      {/* Live / FT stats */}
+      {hasStats && (
+        <StencilPanel kicker={<><Activity className="h-3 w-3" /> Match stats</>} meta={phase === "finished" ? "Final" : "Live"}>
+          <StatsCompare home={stats.home} away={stats.away} homeName={home} awayName={away} />
+        </StencilPanel>
       )}
 
-      {/* HISTORY — injuries, ratings, H2H grouped together */}
-      {tab === "history" && (
-        <div className="grid gap-5 md:grid-cols-2">
-          {hasInjuries && (
-            <StencilPanel kicker={<><AlertTriangle className="h-3 w-3" /> Injury report</>}>
-              <div className="grid gap-4">
-                <InjuryList items={injuries.home} title={home} />
-                <InjuryList items={injuries.away} title={away} />
-              </div>
-            </StencilPanel>
-          )}
-          {hasRatings && (
-            <StencilPanel kicker={<><Star className="h-3 w-3" /> Player ratings</>}>
-              <div className="grid gap-5">
-                <RatingsTable rows={ratings.home} title={home} />
-                <RatingsTable rows={ratings.away} title={away} />
-              </div>
-            </StencilPanel>
-          )}
-          {hasH2H && (
-            <div className="md:col-span-2">
-              <StencilPanel kicker={<><History className="h-3 w-3" /> Head to head</>} meta={`Last ${h2h.length}`}>
-                <H2HList rows={h2h} />
-              </StencilPanel>
-            </div>
-          )}
-        </div>
+      {/* Lineups */}
+      {hasLineups ? (
+        <StencilPanel kicker={<><Users className="h-3 w-3" /> Lineups</>} meta="Confirmed XI">
+          <div className="space-y-5">
+            {(lineups.home?.formation || lineups.away?.formation) && (
+              <FormationPitch home={lineups.home} away={lineups.away} />
+            )}
+            <LineupSplit lineup={lineups.home} side="home" teamName={home} />
+            <LineupSplit lineup={lineups.away} side="away" teamName={away} />
+          </div>
+        </StencilPanel>
+      ) : (phase === "pre" || phase === "lineups") && (
+        <StencilPanel kicker={<><Users className="h-3 w-3" /> Lineups</>} meta="Pending">
+          <p className="text-sm text-[var(--color-ink-muted)]">
+            {phase === "lineups"
+              ? "Confirmed lineups drop in the next hour — check back shortly."
+              : "Lineups are released roughly 1 hour before kickoff."}
+          </p>
+        </StencilPanel>
+      )}
+
+      {/* Injuries / absences */}
+      {hasInjuries && (
+        <StencilPanel kicker={<><AlertTriangle className="h-3 w-3" /> Injury report</>}>
+          <div className="grid gap-4 md:grid-cols-2">
+            <InjuryList items={injuries.home} title={home} />
+            <InjuryList items={injuries.away} title={away} />
+          </div>
+        </StencilPanel>
+      )}
+
+      {/* Player ratings — post-match */}
+      {hasRatings && (
+        <StencilPanel kicker={<><Star className="h-3 w-3" /> Player ratings</>}>
+          <div className="grid gap-5 md:grid-cols-2">
+            <RatingsTable rows={ratings.home} title={home} />
+            <RatingsTable rows={ratings.away} title={away} />
+          </div>
+        </StencilPanel>
+      )}
+
+      {/* Head to head */}
+      {hasH2H && (
+        <StencilPanel kicker={<><History className="h-3 w-3" /> Head to head</>} meta={`Last ${h2h.length}`}>
+          <H2HList rows={h2h} />
+        </StencilPanel>
+      )}
+
+      {!hasLineups && !hasStats && !hasEvents && !hasInjuries && !hasH2H && phase === "pre" && (
+        <StencilPanel>
+          <p className="text-sm text-[var(--color-ink-muted)]">
+            Analytics data warms up as kickoff nears. Head-to-head and injury reports populate first, then lineups,
+            then live stats once the whistle goes.
+          </p>
+        </StencilPanel>
       )}
     </>
   );
