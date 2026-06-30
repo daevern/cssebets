@@ -103,9 +103,21 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
     phase === "live" ? "Live" :
     phase === "lineups" ? "Lineups out" : "Pre-match";
 
+  // Derive goal scorers per side from events
+  const goals = events.filter((e: any) => String(e.type).toLowerCase() === "goal");
+  const homeGoals = goals.filter((e: any) => e.side === "home");
+  const awayGoals = goals.filter((e: any) => e.side === "away");
+
   return (
     <>
-      <MatchHero match={match} phaseLabel={phaseLabel} />
+      <MatchHero
+        match={match}
+        phaseLabel={phaseLabel}
+        phase={phase}
+        homeGoals={homeGoals}
+        awayGoals={awayGoals}
+        stats={stats}
+      />
 
       {/* Markets — only show pre-kickoff */}
       {!locked && (
@@ -114,16 +126,24 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
         </StencilPanel>
       )}
       {locked && (
-        <StencilPanel kicker={<><Radio className="h-3 w-3" /> Betting</>}>
+        <StencilPanel kicker={<><Radio className="h-3 w-3 animate-pulse text-[var(--color-neon)]" /> Betting</>}>
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-            {phase === "finished" ? "Match finished — markets settled." : "Betting closed — match in play."}
+            {phase === "finished" ? "Match finished — markets settled." : "Betting closed — match in play. Follow live below."}
           </p>
         </StencilPanel>
       )}
 
+      {/* Momentum strip — quick visual when live */}
+      {phase === "live" && hasStats && (
+        <MomentumStrip stats={stats} homeName={home} awayName={away} />
+      )}
+
       {/* Live event timeline */}
       {hasEvents && (
-        <StencilPanel kicker={<><Activity className="h-3 w-3" /> Match events</>} meta={`${events.length} entries`}>
+        <StencilPanel
+          kicker={<><Activity className="h-3 w-3" /> Match events</>}
+          meta={`${events.length} entries`}
+        >
           <EventTimeline events={events} home={home} away={away} />
         </StencilPanel>
       )}
