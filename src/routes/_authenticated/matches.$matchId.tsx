@@ -26,7 +26,7 @@ function MatchAnalyticsPage() {
     queryFn: () => fn({ data: { matchId } }) as Promise<AnalyticsBundle>,
     refetchInterval: (q) => {
       const phase = (q.state.data as AnalyticsBundle | undefined)?.phase;
-      if (phase === "live") return 60_000;
+      if (phase === "live") return 30_000;
       if (phase === "lineups") return 5 * 60_000;
       return false;
     },
