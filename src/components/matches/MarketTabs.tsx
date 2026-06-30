@@ -72,7 +72,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     }
     return g;
   }, [data]);
-  const getGroup = (k: MarketKey): OddsRow[] => grouped[k] ?? [];
+  const getGroup = (k: MarketKey): OddsRow[] => (isMarketActive(k) ? (grouped[k] ?? []) : []);
 
   const [stakes, setStakes] = useState<Record<string, string>>({});
   const [picks, setPicks] = useState<Record<string, { selection: string; odds: number } | null>>({});
