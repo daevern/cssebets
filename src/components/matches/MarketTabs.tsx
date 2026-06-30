@@ -16,6 +16,8 @@ import {
   HTFT_OPTIONS,
   EXACT_GOALS_OPTIONS,
   OVER_UNDER_LINES,
+  CARDS_LINES,
+  CORNERS_LINES,
   type MarketKey,
 } from "@/lib/markets-catalog";
 
