@@ -683,9 +683,9 @@ function StatsCompare({ home, away, homeName, awayName }: { home: any; away: any
     { key: "xg", label: "xG" },
   ];
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-3 gap-2 text-[10px] font-bold uppercase tracking-[0.22em]">
-        <span className="text-left">{homeName}</span>
+    <div className="space-y-2.5">
+      <div className="grid grid-cols-3 gap-2 text-[10px] font-black uppercase tracking-[0.22em]">
+        <span className="text-left text-[var(--color-neon)]">{homeName}</span>
         <span className="text-center text-[var(--color-ink-muted)]">stat</span>
         <span className="text-right">{awayName}</span>
       </div>
@@ -697,16 +697,29 @@ function StatsCompare({ home, away, homeName, awayName }: { home: any; away: any
         const av = Number(a ?? 0);
         const total = hv + av || 1;
         const hPct = (hv / total) * 100;
+        const aPct = (av / total) * 100;
+        const homeLeads = hv > av;
         return (
           <div key={r.key} className="space-y-1">
             <div className="grid grid-cols-3 items-center gap-2 text-xs">
-              <span className="text-left font-display font-bold tabular-nums">{h ?? "—"}</span>
-              <span className="text-center text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">{r.label}</span>
-              <span className="text-right font-display font-bold tabular-nums">{a ?? "—"}</span>
+              <span className={`text-left font-display font-black tabular-nums ${homeLeads ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]"}`}>{h ?? "—"}</span>
+              <span className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">{r.label}</span>
+              <span className={`text-right font-display font-black tabular-nums ${!homeLeads && av > 0 ? "text-white" : "text-[var(--color-ink)]"}`}>{a ?? "—"}</span>
             </div>
-            <div className="flex h-1 overflow-hidden bg-[var(--color-surface)]">
-              <div className="bg-[var(--color-neon)]" style={{ width: `${hPct}%` }} />
-              <div className="bg-white/40" style={{ width: `${100 - hPct}%` }} />
+            {/* Mirror bars meeting in the centre */}
+            <div className="grid grid-cols-2 items-center">
+              <div className="flex h-1.5 justify-end bg-[var(--color-surface)]">
+                <div
+                  className="h-full bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon-glow)] transition-all duration-700"
+                  style={{ width: `${hPct}%` }}
+                />
+              </div>
+              <div className="flex h-1.5 bg-[var(--color-surface)]">
+                <div
+                  className="h-full bg-white/70 transition-all duration-700"
+                  style={{ width: `${aPct}%` }}
+                />
+              </div>
             </div>
           </div>
         );
@@ -718,19 +731,35 @@ function StatsCompare({ home, away, homeName, awayName }: { home: any; away: any
 /* ---------- Event timeline ---------- */
 
 function EventTimeline({ events, home, away }: { events: any[]; home: string; away: string }) {
+  // Newest first
+  const ordered = [...events].sort((a, b) => {
+    const am = (a.minute ?? 0) + (a.extra_minute ?? 0);
+    const bm = (b.minute ?? 0) + (b.extra_minute ?? 0);
+    return bm - am;
+  });
   return (
-    <ul className="space-y-1.5">
-      {events.map((e) => {
+    <ul className="relative space-y-2">
+      {/* Vertical timeline rail */}
+      <span aria-hidden className="pointer-events-none absolute bottom-1 left-[44px] top-1 w-px bg-[var(--color-surface-border)]" />
+      {ordered.map((e) => {
         const sideLabel = e.side === "home" ? home : e.side === "away" ? away : "";
+        const isHome = e.side === "home";
         return (
-          <li key={e.id} className="grid grid-cols-[40px_24px_1fr] items-baseline gap-2 border-b border-dashed border-[var(--color-surface-border)]/60 pb-1 text-xs last:border-0">
-            <span className="font-display text-[11px] font-bold tabular-nums text-[var(--color-neon)]">
+          <li key={e.id} className="relative grid grid-cols-[36px_24px_1fr] items-center gap-2 text-xs">
+            <span className="font-display text-[11px] font-black tabular-nums text-[var(--color-ink-muted)]">
               {e.minute ?? "—"}{e.extra_minute ? `+${e.extra_minute}` : ""}'
             </span>
-            <span className="text-base leading-none">{eventIcon(e.type, e.detail)}</span>
-            <div className="min-w-0">
-              <div className="truncate"><span className="font-semibold">{e.player_name ?? e.detail ?? e.type}</span>{e.assist_name && <span className="text-[var(--color-ink-muted)]"> · assist {e.assist_name}</span>}</div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">{e.detail ?? e.type} {sideLabel && `· ${sideLabel}`}</div>
+            <span className="relative z-10 grid h-6 w-6 place-items-center border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
+              {eventMark(e.type, e.detail, 12)}
+            </span>
+            <div className="min-w-0 border-l-2 pl-2 leading-tight" style={{ borderColor: isHome ? "var(--color-neon)" : "rgba(255,255,255,0.5)" }}>
+              <div className="truncate">
+                <span className="font-semibold">{e.player_name ?? e.detail ?? e.type}</span>
+                {e.assist_name && <span className="text-[var(--color-ink-muted)]"> · assist {e.assist_name}</span>}
+              </div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+                {e.detail ?? e.type}{sideLabel && ` · ${sideLabel}`}
+              </div>
             </div>
           </li>
         );
@@ -738,15 +767,7 @@ function EventTimeline({ events, home, away }: { events: any[]; home: string; aw
     </ul>
   );
 }
-function eventIcon(type: string, detail: string | null): string {
-  const t = (type || "").toLowerCase();
-  const d = (detail || "").toLowerCase();
-  if (t === "goal") return d.includes("own") ? "🥅" : d.includes("penalty") ? "🎯" : "⚽";
-  if (t === "card") return d.includes("red") ? "🟥" : "🟨";
-  if (t === "subst") return "🔁";
-  if (t === "var") return "📺";
-  return "•";
-}
+
 
 /* ---------- Injuries ---------- */
 
