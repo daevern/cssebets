@@ -483,6 +483,152 @@ function MomentumStrip({ stats, homeName, awayName }: { stats: AnalyticsBundle["
   );
 }
 
+/* Overlaid momentum curves — derives per-side "pressure" from event timeline.
+ * Each event contributes a Gaussian-decayed weight to nearby minutes.
+ * Home renders as neon area; away as white area; both share the same baseline. */
+function MomentumGraph({
+  events,
+  homeName,
+  awayName,
+  phase,
+  kickoffISO,
+}: {
+  events: any[];
+  homeName: string;
+  awayName: string;
+  phase: AnalyticsBundle["phase"];
+  kickoffISO: string;
+}) {
+  const W = 600;
+  const H = 140;
+  const PAD_L = 4;
+  const PAD_R = 4;
+  const PAD_T = 8;
+  const PAD_B = 18;
+  const innerW = W - PAD_L - PAD_R;
+  const innerH = H - PAD_T - PAD_B;
+  const CAP = 95;
+  const SIGMA = 4.5; // minute spread per event
+
+  const liveClock = useLiveMinute(kickoffISO, phase === "finished" ? "finished" : "live");
+  const liveMinute = (() => {
+    if (phase === "finished") return CAP;
+    const m = parseInt(String(liveClock.label).replace(/\D/g, ""), 10);
+    return Number.isFinite(m) ? Math.min(CAP, Math.max(0, m)) : 0;
+  })();
+
+  const { homeSeries, awaySeries, maxVal } = useMemo(() => {
+    const weightFor = (e: any): number => {
+      const t = String(e?.type ?? "").toLowerCase();
+      const d = String(e?.detail ?? "").toLowerCase();
+      if (t === "goal") return d.includes("own") ? 6 : 12;
+      if (t === "card") return d.includes("red") ? 5 : 2.5;
+      if (t === "var") return 2;
+      if (t === "subst") return 1.2;
+      return 1.5;
+    };
+    const h = new Array(CAP + 1).fill(0);
+    const a = new Array(CAP + 1).fill(0);
+    for (const e of events) {
+      const min = Math.min(CAP, Math.max(0, (e.minute ?? 0) + (e.extra_minute ?? 0)));
+      const w = weightFor(e);
+      const target = e.side === "home" ? h : e.side === "away" ? a : null;
+      if (!target) continue;
+      for (let i = 0; i <= CAP; i++) {
+        const dx = i - min;
+        target[i] += w * Math.exp(-(dx * dx) / (2 * SIGMA * SIGMA));
+      }
+    }
+    const max = Math.max(1, ...h, ...a);
+    return { homeSeries: h, awaySeries: a, maxVal: max };
+  }, [events]);
+
+  const toPath = (series: number[], closed = true) => {
+    const xs = (i: number) => PAD_L + (i / CAP) * innerW;
+    const ys = (v: number) => PAD_T + innerH - (v / maxVal) * innerH;
+    let d = `M ${xs(0)} ${ys(series[0] ?? 0)}`;
+    for (let i = 1; i <= CAP; i++) d += ` L ${xs(i)} ${ys(series[i] ?? 0)}`;
+    if (closed) d += ` L ${xs(CAP)} ${PAD_T + innerH} L ${xs(0)} ${PAD_T + innerH} Z`;
+    return d;
+  };
+
+  const liveX = PAD_L + (liveMinute / CAP) * innerW;
+  const htX = PAD_L + (45 / CAP) * innerW;
+  const hasAny = homeSeries.some((v) => v > 0) || awaySeries.some((v) => v > 0);
+
+  return (
+    <div className="relative">
+      <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.24em]">
+        <span className="flex items-center gap-1.5 text-[var(--color-neon)]">
+          <span className="h-1.5 w-3 bg-[var(--color-neon)]" /> {homeName}
+        </span>
+        <span className="text-[var(--color-ink-muted)]">Pressure index</span>
+        <span className="flex items-center gap-1.5">
+          {awayName} <span className="h-1.5 w-3 bg-white/70" />
+        </span>
+      </div>
+
+      {hasAny ? (
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="mg-home" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-neon)" stopOpacity="0.7" />
+              <stop offset="100%" stopColor="var(--color-neon)" stopOpacity="0.05" />
+            </linearGradient>
+            <linearGradient id="mg-away" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.5" />
+              <stop offset="100%" stopColor="#ffffff" stopOpacity="0.04" />
+            </linearGradient>
+          </defs>
+
+          {/* grid */}
+          {[0.25, 0.5, 0.75].map((g) => (
+            <line key={g} x1={PAD_L} x2={W - PAD_R} y1={PAD_T + innerH * g} y2={PAD_T + innerH * g}
+              stroke="var(--color-surface-border)" strokeDasharray="2 3" strokeWidth="0.5" />
+          ))}
+
+          {/* HT marker */}
+          <line x1={htX} x2={htX} y1={PAD_T} y2={PAD_T + innerH}
+            stroke="var(--color-surface-border)" strokeDasharray="2 2" strokeWidth="0.6" />
+          <text x={htX} y={H - 4} textAnchor="middle" fontSize="8" fill="var(--color-ink-muted)" fontWeight="700">HT</text>
+
+          {/* areas */}
+          <path d={toPath(awaySeries)} fill="url(#mg-away)" stroke="rgba(255,255,255,0.85)" strokeWidth="1" />
+          <path d={toPath(homeSeries)} fill="url(#mg-home)" stroke="var(--color-neon)" strokeWidth="1.2" />
+
+          {/* event ticks */}
+          {events.map((e: any, i: number) => {
+            const t = String(e?.type ?? "").toLowerCase();
+            if (t !== "goal") return null;
+            const min = Math.min(CAP, Math.max(0, (e.minute ?? 0) + (e.extra_minute ?? 0)));
+            const x = PAD_L + (min / CAP) * innerW;
+            const isHome = e.side === "home";
+            return (
+              <circle key={i} cx={x} cy={isHome ? PAD_T + 2 : PAD_T + innerH - 2}
+                r="2" fill={isHome ? "var(--color-neon)" : "#ffffff"} />
+            );
+          })}
+
+          {/* live cursor */}
+          {phase === "live" && liveMinute > 0 && (
+            <>
+              <line x1={liveX} x2={liveX} y1={PAD_T} y2={PAD_T + innerH}
+                stroke="hsl(var(--destructive))" strokeWidth="1" />
+              <circle cx={liveX} cy={PAD_T} r="2.5" fill="hsl(var(--destructive))" />
+            </>
+          )}
+
+          {/* axis labels */}
+          <text x={PAD_L} y={H - 4} fontSize="8" fill="var(--color-ink-muted)" fontWeight="700">0'</text>
+          <text x={W - PAD_R} y={H - 4} textAnchor="end" fontSize="8" fill="var(--color-ink-muted)" fontWeight="700">90'</text>
+        </svg>
+      ) : (
+        <p className="py-6 text-center text-xs text-[var(--color-ink-muted)]">Momentum builds once events roll in.</p>
+      )}
+    </div>
+  );
+}
+
 function TeamBlock({ name, goals = [], align = "left", accent = "home" }: { name: string; goals?: any[]; align?: "left" | "right"; accent?: "home" | "away" }) {
   const url = teamFlagUrl(name, 160);
   const accentCls = accent === "home" ? "border-[var(--color-neon)]/50 shadow-[0_0_18px_-6px_var(--color-neon-glow)]" : "border-white/40";
