@@ -302,7 +302,10 @@ function MatchHero({
     return () => clearInterval(id);
   }, [match.kickoff_at, match.status]);
 
-  const liveClock = useLiveMinute(match.kickoff_at, match.status);
+  const liveClock = useLiveMinute(match.kickoff_at, match.status, {
+    liveElapsed: (match as any).live_elapsed,
+    liveStatusShort: (match as any).live_status_short,
+  });
   const stage = match.stage ? match.stage.replace(/_/g, " ") : (match.group_name ?? "Round of 32");
   const isFinished = match.status === "finished";
   const isLive = phase === "live";
