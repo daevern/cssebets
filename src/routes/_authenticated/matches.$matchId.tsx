@@ -473,20 +473,22 @@ function MomentumStrip({ stats, homeName, awayName }: { stats: AnalyticsBundle["
   );
 }
 
-function TeamBlock({ name, goals = [], align = "left" }: { name: string; goals?: any[]; align?: "left" | "right" }) {
+function TeamBlock({ name, goals = [], align = "left", accent = "home" }: { name: string; goals?: any[]; align?: "left" | "right"; accent?: "home" | "away" }) {
   const url = teamFlagUrl(name, 160);
-  const alignCls = align === "right" ? "items-end text-right" : "items-start text-left";
-  // Center on small layout, but allow scorer column to align inward
+  const accentCls = accent === "home" ? "border-[var(--color-neon)]/50 shadow-[0_0_18px_-6px_var(--color-neon-glow)]" : "border-white/40";
   return (
     <div className="flex flex-col items-center gap-2">
-      {url ? (
-        <img src={url} alt={`${name} flag`} className="h-12 w-20 border border-border/40 object-cover shadow-sm" loading="lazy" />
-      ) : (
-        <div className="grid h-12 w-20 place-items-center border border-border/40 bg-[var(--color-surface)] text-[10px] font-bold uppercase">
-          {name.slice(0, 3)}
-        </div>
-      )}
-      <span className="max-w-[120px] truncate text-center text-xs font-bold uppercase tracking-wide">{name}</span>
+      <div className={`relative h-14 w-20 overflow-hidden border ${accentCls}`}>
+        {url ? (
+          <img src={url} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
+        ) : (
+          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[11px] font-black uppercase tracking-wider">
+            {name.slice(0, 3)}
+          </div>
+        )}
+        <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/30" />
+      </div>
+      <span className="max-w-[120px] truncate text-center font-display text-[11px] font-black uppercase tracking-[0.18em]">{name}</span>
       {goals.length > 0 && (
         <ul className={`flex w-full flex-col gap-0.5 text-[10px] leading-tight ${align === "right" ? "items-end" : "items-start"}`}>
           {goals.map((g, i) => {
@@ -495,10 +497,10 @@ function TeamBlock({ name, goals = [], align = "left" }: { name: string; goals?:
             const isOG = String(g.detail || "").toLowerCase().includes("own");
             const last = (g.player_name || "").split(" ").slice(-1)[0];
             return (
-              <li key={i} className="flex items-baseline gap-1 text-[var(--color-ink)]">
-                <span>⚽</span>
-                <span className="font-semibold truncate max-w-[100px]">{last}</span>
-                <span className="font-display tabular-nums text-[var(--color-neon)]">{min}</span>
+              <li key={i} className={`flex items-center gap-1 text-[var(--color-ink)] ${align === "right" ? "flex-row-reverse" : ""}`}>
+                <GoalIcon size={9} className={accent === "home" ? "text-[var(--color-neon)]" : "text-white"} />
+                <span className="font-semibold truncate max-w-[90px]">{last}</span>
+                <span className="font-display tabular-nums text-[var(--color-ink-muted)]">{min}</span>
                 {isPen && <span className="text-[var(--color-ink-muted)]">(P)</span>}
                 {isOG && <span className="text-[var(--color-ink-muted)]">(OG)</span>}
               </li>
@@ -509,6 +511,7 @@ function TeamBlock({ name, goals = [], align = "left" }: { name: string; goals?:
     </div>
   );
 }
+
 
 /* ---------- Lineups ---------- */
 
