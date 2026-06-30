@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPrediction } from "@/lib/predictions.functions";
-import { getMatchOddsHistory, listMatchesForUsers } from "@/lib/matches.functions";
+import { listMatchesForUsers } from "@/lib/matches.functions";
 import {
   Collapsible,
   CollapsibleContent,
