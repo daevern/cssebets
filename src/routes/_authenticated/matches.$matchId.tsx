@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft, Loader2, Activity, Users, AlertTriangle, History, Star } from "lucide-react";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { getMatchAnalytics, type AnalyticsBundle, type LineupPlayer } from "@/lib/match-analytics.functions";
@@ -254,7 +254,7 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
   );
 }
 
-function AnalysisSection({ kicker, meta, children }: { kicker?: React.ReactNode; meta?: React.ReactNode; children: React.ReactNode }) {
+function AnalysisSection({ kicker, meta, children }: { kicker?: ReactNode; meta?: ReactNode; children: ReactNode }) {
   return (
     <section className="relative -mx-4 border-y border-[var(--color-surface-border)]/70 bg-[var(--color-surface-2)]/35 px-4 py-4 md:mx-0 md:border md:bg-[var(--color-surface-2)] md:px-5 md:py-5">
       <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
