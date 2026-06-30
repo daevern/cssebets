@@ -18,7 +18,13 @@ export type ParsedOdds = {
     | "over_under_4_5" | "over_under_5_5" | "over_under_6_5"
     | "btts" | "correct_score" | "half_time_full_time" | "exact_total_goals" | "to_qualify"
     | "double_chance" | "draw_no_bet" | "goals_odd_even"
-    | "clean_sheet_home" | "clean_sheet_away" | "win_to_nil_home" | "win_to_nil_away";
+    | "clean_sheet_home" | "clean_sheet_away" | "win_to_nil_home" | "win_to_nil_away"
+    | "cards_over_under_2_5" | "cards_over_under_3_5" | "cards_over_under_4_5" | "cards_over_under_5_5"
+    | "home_cards_over_under_1_5" | "away_cards_over_under_1_5"
+    | "red_card_match" | "first_card"
+    | "corners_over_under_8_5" | "corners_over_under_9_5" | "corners_over_under_10_5" | "corners_over_under_11_5"
+    | "home_corners_over_under_4_5" | "away_corners_over_under_4_5"
+    | "first_corner";
   selection: string;
   odds: number;
 };
