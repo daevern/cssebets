@@ -582,6 +582,8 @@ export type Database = {
       matches: {
         Row: {
           apifootball_fixture_id: number | null
+          away_cards: number | null
+          away_corners: number | null
           away_crest: string | null
           away_liability: number
           away_score: number | null
@@ -590,7 +592,11 @@ export type Database = {
           created_at: string
           draw_liability: number
           external_id: string | null
+          first_card_team: string | null
+          first_corner_team: string | null
           group_name: string | null
+          home_cards: number | null
+          home_corners: number | null
           home_crest: string | null
           home_liability: number
           home_score: number | null
@@ -605,8 +611,10 @@ export type Database = {
           odds_status: string
           odds_updated_at: string | null
           qualifier: string | null
+          red_card_occurred: boolean | null
           reference_odds: Json | null
           stage: string | null
+          stats_status: string
           status: Database["public"]["Enums"]["match_status"]
           suspended_markets: string[]
           updated_at: string
@@ -615,6 +623,8 @@ export type Database = {
         }
         Insert: {
           apifootball_fixture_id?: number | null
+          away_cards?: number | null
+          away_corners?: number | null
           away_crest?: string | null
           away_liability?: number
           away_score?: number | null
@@ -623,7 +633,11 @@ export type Database = {
           created_at?: string
           draw_liability?: number
           external_id?: string | null
+          first_card_team?: string | null
+          first_corner_team?: string | null
           group_name?: string | null
+          home_cards?: number | null
+          home_corners?: number | null
           home_crest?: string | null
           home_liability?: number
           home_score?: number | null
@@ -638,8 +652,10 @@ export type Database = {
           odds_status?: string
           odds_updated_at?: string | null
           qualifier?: string | null
+          red_card_occurred?: boolean | null
           reference_odds?: Json | null
           stage?: string | null
+          stats_status?: string
           status?: Database["public"]["Enums"]["match_status"]
           suspended_markets?: string[]
           updated_at?: string
@@ -648,6 +664,8 @@ export type Database = {
         }
         Update: {
           apifootball_fixture_id?: number | null
+          away_cards?: number | null
+          away_corners?: number | null
           away_crest?: string | null
           away_liability?: number
           away_score?: number | null
@@ -656,7 +674,11 @@ export type Database = {
           created_at?: string
           draw_liability?: number
           external_id?: string | null
+          first_card_team?: string | null
+          first_corner_team?: string | null
           group_name?: string | null
+          home_cards?: number | null
+          home_corners?: number | null
           home_crest?: string | null
           home_liability?: number
           home_score?: number | null
@@ -671,8 +693,10 @@ export type Database = {
           odds_status?: string
           odds_updated_at?: string | null
           qualifier?: string | null
+          red_card_occurred?: boolean | null
           reference_odds?: Json | null
           stage?: string | null
+          stats_status?: string
           status?: Database["public"]["Enums"]["match_status"]
           suspended_markets?: string[]
           updated_at?: string
@@ -1696,6 +1720,15 @@ export type Database = {
         Args: { p_market: string; p_selection: string }
         Returns: string[]
       }
+      credit_user_void_refund: {
+        Args: {
+          p_amount: number
+          p_match: string
+          p_pred: string
+          p_user: string
+        }
+        Returns: undefined
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1836,6 +1869,10 @@ export type Database = {
         Args: { p_match_duration_minutes?: number }
         Returns: Json
       }
+      seed_cards_corners_odds: {
+        Args: { p_match_id: string }
+        Returns: undefined
+      }
       seed_match_market_odds: {
         Args: { p_match_id: string }
         Returns: undefined
@@ -1843,6 +1880,10 @@ export type Database = {
       set_house_user: {
         Args: { p_admin_id: string; p_house_user_id: string }
         Returns: string
+      }
+      settle_cards_corners_for_match: {
+        Args: { p_match_id: string }
+        Returns: number
       }
       settle_match_all_markets_atomic: {
         Args: {
