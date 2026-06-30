@@ -377,7 +377,7 @@ function MatchHero({
 
         {/* 90-minute progress bar with goal/card markers */}
         {(isLive || isFinished) && (
-          <MatchProgress pct={progressPct} markers={markers} />
+          <MatchProgress pct={progressPct} cap={progressCap} markers={markers} />
         )}
 
         {(isLive || isFinished) && (stats.home || stats.away) && (
