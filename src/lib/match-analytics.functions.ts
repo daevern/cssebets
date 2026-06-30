@@ -115,9 +115,9 @@ export const getMatchAnalytics = createServerFn({ method: "POST" })
     const homeInj = (injR.data ?? []).filter((r: any) => r.side === "home");
     const awayInj = (injR.data ?? []).filter((r: any) => r.side === "away");
 
-    // On-demand refresh — gated to phase and cache freshness, never blocking response.
-    // We fire-and-forget so the UI returns immediately with whatever is cached.
-    const triggerSync = async () => {
+    // On-demand refresh — fire-and-forget so the response returns immediately.
+    // Cron jobs keep cached rows fresh; this is best-effort top-up only.
+    void (async () => {
       try {
         const mod = await import("@/lib/apifootball-analytics.server");
         const isStale = (iso: string | null, maxMin: number) =>
@@ -146,26 +146,13 @@ export const getMatchAnalytics = createServerFn({ method: "POST" })
       } catch {
         // Quota / network failures must not break the page.
       }
-    };
-    // Block briefly so first paint has fresh data, but cap so UI stays snappy.
-    await Promise.race([triggerSync(), new Promise((r) => setTimeout(r, 2500))]);
+    })();
 
-    // Re-read after potential refresh
-    const [l2, e2, s2, r2, i2] = await Promise.all([
-      (supabaseAdmin as any).from("match_lineups").select("*").eq("match_id", matchId),
-      (supabaseAdmin as any)
-        .from("match_events")
-        .select("*")
-        .eq("match_id", matchId)
-        .order("minute", { ascending: true }),
-      (supabaseAdmin as any).from("match_stats").select("*").eq("match_id", matchId),
-      (supabaseAdmin as any)
-        .from("match_player_ratings")
-        .select("*")
-        .eq("match_id", matchId)
-        .order("rating", { ascending: false }),
-      (supabaseAdmin as any).from("match_injuries").select("*").eq("match_id", matchId),
-    ]);
+    const l2 = lineupsR;
+    const e2 = eventsR;
+    const s2 = statsR;
+    const r2 = ratingsR;
+
 
     return {
       match: m,
