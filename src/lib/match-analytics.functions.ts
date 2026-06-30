@@ -24,6 +24,8 @@ export type AnalyticsBundle = {
     group_name: string | null;
     home_score: number | null;
     away_score: number | null;
+    penalty_home_score: number | null;
+    penalty_away_score: number | null;
     venue: string | null;
     referee: string | null;
     apifootball_fixture_id: number | null;
