@@ -272,55 +272,94 @@ function MatchHero({
   const isLive = phase === "live";
   const showScore = isFinished || match.home_score != null || isLive;
 
+  // Build markers (goals/cards) for the 90-min progress strip
+  const markers = useMemo(() => {
+    return (([] as any[])).concat(homeGoals.map((g) => ({ side: "home", kind: "goal", min: g.minute, extra: g.extra_minute, detail: g.detail })),
+      awayGoals.map((g) => ({ side: "away", kind: "goal", min: g.minute, extra: g.extra_minute, detail: g.detail })));
+  }, [homeGoals, awayGoals]);
+
+  // Match clock progress 0..100 (treat 0..90 linearly, HT freezes at 50%).
+  const progressPct = (() => {
+    if (isFinished) return 100;
+    if (!isLive) return 0;
+    const ms = Date.now() - kickoff.getTime();
+    let min = Math.max(0, Math.floor(ms / 60000));
+    if (min > 45 && min < 60) min = 45;
+    else if (min >= 60) min = min - 15;
+    return Math.min(100, (min / 90) * 100);
+  })();
+
   return (
-    <article className="relative overflow-hidden border border-[var(--color-neon)]/25 bg-[var(--color-surface-2)]">
+    <article className="relative overflow-hidden border border-[var(--color-neon)]/30 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-30px_var(--color-neon-glow)]">
       <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
-      <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-5 py-3">
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-          <Radio className="h-3 w-3" /> {stage}
+      {/* Background watermark */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04]">
+        <PitchIcon size={260} className="text-[var(--color-neon)]" />
+      </div>
+
+      {/* Top ticker row */}
+      <div className="relative flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-4 py-2.5">
+        <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+          <WhistleIcon size={12} /> {stage}
         </span>
         <span className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-          {isLive && (
-            <span className="flex items-center gap-1 text-destructive">
+          {isLive ? (
+            <span className="flex items-center gap-1.5 text-destructive">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
               </span>
-              <span className="font-bold tracking-[0.28em]">LIVE {liveClock.label}</span>
+              <span className="font-black tracking-[0.32em]">LIVE</span>
             </span>
+          ) : (
+            <span className="font-bold tracking-[0.28em]">{phaseLabel}</span>
           )}
-          {!isLive && <span>{phaseLabel}</span>}
         </span>
       </div>
-      <div className="px-5 py-5">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
-          <TeamBlock name={match.home_team} goals={homeGoals} />
-          <div className="flex flex-col items-center gap-1 pt-2">
+
+      {/* Scoreboard */}
+      <div className="relative px-4 pb-3 pt-5">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-2">
+          <TeamBlock name={match.home_team} goals={homeGoals} accent="home" />
+          <div className="flex flex-col items-center justify-start pt-1">
             {showScore ? (
-              <span className="font-display text-4xl font-bold tabular-nums leading-none">
-                {match.home_score ?? 0}<span className="mx-1 text-[var(--color-ink-muted)]">–</span>{match.away_score ?? 0}
-              </span>
+              <div className="flex items-baseline gap-2 font-display leading-none tracking-tight">
+                <span className="text-5xl font-black tabular-nums text-[var(--color-neon)] drop-shadow-[0_0_18px_var(--color-neon-glow)] md:text-6xl">
+                  {match.home_score ?? 0}
+                </span>
+                <span className="text-3xl font-light text-[var(--color-ink-muted)] md:text-4xl">:</span>
+                <span className="text-5xl font-black tabular-nums md:text-6xl">
+                  {match.away_score ?? 0}
+                </span>
+              </div>
             ) : (
-              <span className="font-display text-3xl font-bold leading-none text-[var(--color-ink-muted)]">vs</span>
+              <span className="font-display text-3xl font-black uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">vs</span>
             )}
-            <span className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+            <div className="mt-3 flex items-center gap-1.5 border border-dashed border-[var(--color-surface-border)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+              <span className="h-1 w-1 bg-[var(--color-neon)]" />
               {dateStr} · {timeStr}
-            </span>
+            </div>
             {countdown && !isLive && !isFinished && (
-              <span className="mt-1 rounded-sm border border-[var(--color-neon)]/30 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-                ⏱ {countdown}
+              <span className="mt-1.5 bg-[var(--color-neon)]/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.28em] text-[var(--color-neon)]">
+                Kick-off in {countdown}
               </span>
             )}
             {isLive && liveClock.label && (
-              <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.28em] text-destructive">
+              <span className="mt-1.5 font-display text-sm font-black tabular-nums text-destructive">
                 {liveClock.label}
               </span>
             )}
           </div>
-          <TeamBlock name={match.away_team} goals={awayGoals} align="right" />
+          <TeamBlock name={match.away_team} goals={awayGoals} align="right" accent="away" />
         </div>
+
+        {/* 90-minute progress bar with goal/card markers */}
+        {(isLive || isFinished) && (
+          <MatchProgress pct={progressPct} markers={markers} />
+        )}
+
         {(isLive || isFinished) && (stats.home || stats.away) && (
-          <div className="mt-4 grid grid-cols-3 gap-2 border-t border-dashed border-[var(--color-surface-border)] pt-3 text-center">
+          <div className="mt-3 grid grid-cols-3 gap-2 border-t border-dashed border-[var(--color-surface-border)] pt-3 text-center">
             <MicroStat label="Shots" h={stats.home?.shots_total} a={stats.away?.shots_total} />
             <MicroStat label="On Tgt" h={stats.home?.shots_on} a={stats.away?.shots_on} />
             <MicroStat label="Poss %" h={stats.home?.possession} a={stats.away?.possession} />
@@ -330,6 +369,71 @@ function MatchHero({
     </article>
   );
 }
+
+/* 90-minute strip with HT mark and event markers. */
+function MatchProgress({ pct, markers }: { pct: number; markers: Array<{ side: "home"|"away"; kind: string; min: number | null; extra?: number | null; detail?: string }> }) {
+  // Show 0..90 + an injury slot up to 95.
+  const cap = 95;
+  return (
+    <div className="mt-4">
+      <div className="relative h-7">
+        {/* Track */}
+        <div className="absolute inset-x-0 top-3 h-1 bg-[var(--color-surface-border)]" />
+        {/* Progress fill */}
+        <div
+          className="absolute top-3 left-0 h-1 bg-[var(--color-neon)] shadow-[0_0_10px_var(--color-neon-glow)] transition-all duration-1000"
+          style={{ width: `${pct}%` }}
+        />
+        {/* HT tick at 50% */}
+        <div className="absolute top-1.5 h-4 w-px bg-[var(--color-surface-border)]" style={{ left: "50%" }} />
+        <span className="absolute -top-0.5 -translate-x-1/2 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]" style={{ left: "50%" }}>HT</span>
+        {/* Markers */}
+        {markers.map((m, i) => {
+          const minute = Math.min(cap, (m.min ?? 0) + (m.extra ?? 0));
+          const left = `${Math.min(100, (minute / 90) * 100)}%`;
+          const isHome = m.side === "home";
+          return (
+            <div
+              key={i}
+              className="absolute"
+              style={{ left, top: isHome ? 0 : 18, transform: "translateX(-50%)" }}
+              title={`${minute}' — ${m.detail ?? "Goal"}`}
+            >
+              <GoalIcon size={11} className={isHome ? "text-[var(--color-neon)]" : "text-white"} />
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-1 flex justify-between font-display text-[9px] font-bold tabular-nums text-[var(--color-ink-muted)]">
+        <span>0'</span><span>45'</span><span>90'</span>
+      </div>
+    </div>
+  );
+}
+
+/* Compact betting closed/settled ribbon — replaces a full panel with a thin status bar. */
+function BettingRibbon({ phase }: { phase: AnalyticsBundle["phase"] }) {
+  const finished = phase === "finished";
+  return (
+    <div className="relative flex items-center justify-between border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-4 py-2.5">
+      <Corner pos="tl" /><Corner pos="br" />
+      <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.28em]">
+        {finished ? (
+          <WhistleIcon size={12} className="text-[var(--color-ink-muted)]" />
+        ) : (
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-destructive" />
+        )}
+        <span className={finished ? "text-[var(--color-ink-muted)]" : "text-destructive"}>
+          {finished ? "Full time" : "Markets closed"}
+        </span>
+      </span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+        {finished ? "All bets settled" : "In play · live coverage below"}
+      </span>
+    </div>
+  );
+}
+
 
 function MicroStat({ label, h, a }: { label: string; h: any; a: any }) {
   return (
