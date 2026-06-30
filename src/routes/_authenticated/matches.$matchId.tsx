@@ -135,6 +135,16 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
         <MomentumStrip stats={stats} homeName={home} awayName={away} />
       )}
 
+      {/* Match momentum graph — overlaid pressure curves for both sides */}
+      {hasEvents && (locked) && (
+        <StencilPanel
+          kicker={<><Activity className="h-3 w-3" /> Match momentum</>}
+          meta={phase === "finished" ? "Full match" : "Live"}
+        >
+          <MomentumGraph events={events} homeName={home} awayName={away} phase={phase} kickoffISO={match.kickoff_at} />
+        </StencilPanel>
+      )}
+
       {/* Live event timeline */}
       {hasEvents && (
         <StencilPanel
