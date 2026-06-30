@@ -233,12 +233,16 @@ function useLiveMinute(kickoffISO: string, status: string, events: any[] = []) {
   const kickoff = new Date(kickoffISO).getTime();
   const diffMin = Math.floor((now - kickoff) / 60000);
   if (diffMin < 0) return { label: "", isLive: false };
-  // Heuristic clock with HT break (45..60 -> HT). Cap at 90 + injury inferred from events.
+  // Walk through standard halves + breaks. Knockout matches may go to ET (105+15) and PEN.
   if (diffMin <= 45) return { label: `${diffMin}'`, isLive: true };
   if (diffMin < 60) return { label: "HT", isLive: true };
-  const second = diffMin - 15; // subtract 15 min HT
-  if (second <= 90) return { label: `${second}'`, isLive: true };
-  return { label: "90'+", isLive: true };
+  // 2H starts after ~15 min HT break.
+  const second = diffMin - 15;
+  if (second <= 105) return { label: `${second}'`, isLive: true };
+  // ~5 min break before ET, then ET clock continues from 90'.
+  const et = second - 5;
+  if (et <= 120) return { label: `${et}'`, isLive: true };
+  return { label: `${et}'`, isLive: true };
 }
 
 function MatchHero({
