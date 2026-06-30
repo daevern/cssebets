@@ -286,22 +286,30 @@ function MatchHero({
   const isLive = phase === "live";
   const showScore = isFinished || match.home_score != null || isLive;
 
-  // Build markers (goals/cards) for the 90-min progress strip
+  // Build markers (goals/cards) for the progress strip
   const markers = useMemo(() => {
     return (([] as any[])).concat(homeGoals.map((g) => ({ side: "home", kind: "goal", min: g.minute, extra: g.extra_minute, detail: g.detail })),
       awayGoals.map((g) => ({ side: "away", kind: "goal", min: g.minute, extra: g.extra_minute, detail: g.detail })));
   }, [homeGoals, awayGoals]);
 
-  // Match clock progress 0..100 (treat 0..90 linearly, HT freezes at 50%).
-  const progressPct = (() => {
-    if (isFinished) return 100;
+  // Current elapsed minute (live or finished). Mirrors useLiveMinute math.
+  const currentMinute = (() => {
+    if (isFinished) {
+      const lastEvt = Math.max(0, ...markers.map((m) => (m.min ?? 0) + (m.extra ?? 0)));
+      return Math.max(90, lastEvt);
+    }
     if (!isLive) return 0;
-    const ms = Date.now() - kickoff.getTime();
-    let min = Math.max(0, Math.floor(ms / 60000));
-    if (min > 45 && min < 60) min = 45;
-    else if (min >= 60) min = min - 15;
-    return Math.min(100, (min / 90) * 100);
+    const min = Math.max(0, Math.floor((Date.now() - kickoff.getTime()) / 60000));
+    if (min <= 45) return min;
+    if (min < 60) return 45;
+    const second = min - 15;
+    if (second <= 105) return second;
+    return Math.min(120, second - 5);
   })();
+
+  // Cap progress bar at 90' for regulation matches; extend to 120' once we cross 90.
+  const progressCap = currentMinute > 90 ? 120 : 90;
+  const progressPct = Math.min(100, (currentMinute / progressCap) * 100);
 
   return (
     <article className="relative overflow-hidden border border-[var(--color-neon)]/30 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-30px_var(--color-neon-glow)]">
