@@ -526,6 +526,76 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
           )}
         </TabsContent>
 
+        <TabsContent value="cards" className="space-y-4 mt-2">
+          <div className="text-[10px] text-muted-foreground">
+            Settled on full-time card counts. Stake refunded if cards data is unavailable.
+          </div>
+          {CARDS_LINES.map((mk) =>
+            getGroup(mk).length > 0 ? (
+              <div key={mk}>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS[mk]}</div>
+                {renderMarketSection(mk, "grid-cols-2")}
+              </div>
+            ) : null,
+          )}
+          {getGroup("home_cards_over_under_1_5").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.home_cards_over_under_1_5}</div>
+              {renderMarketSection("home_cards_over_under_1_5", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("away_cards_over_under_1_5").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.away_cards_over_under_1_5}</div>
+              {renderMarketSection("away_cards_over_under_1_5", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("red_card_match").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.red_card_match}</div>
+              {renderMarketSection("red_card_match", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("first_card").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.first_card}</div>
+              {renderMarketSection("first_card", "grid-cols-3")}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="corners" className="space-y-4 mt-2">
+          <div className="text-[10px] text-muted-foreground">
+            Settled on full-time corner counts. Stake refunded if corner data is unavailable.
+          </div>
+          {CORNERS_LINES.map((mk) =>
+            getGroup(mk).length > 0 ? (
+              <div key={mk}>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS[mk]}</div>
+                {renderMarketSection(mk, "grid-cols-2")}
+              </div>
+            ) : null,
+          )}
+          {getGroup("home_corners_over_under_4_5").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.home_corners_over_under_4_5}</div>
+              {renderMarketSection("home_corners_over_under_4_5", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("away_corners_over_under_4_5").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.away_corners_over_under_4_5}</div>
+              {renderMarketSection("away_corners_over_under_4_5", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("first_corner").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.first_corner}</div>
+              {renderMarketSection("first_corner", "grid-cols-3")}
+            </div>
+          )}
+        </TabsContent>
+
         <TabsContent value="sp" className="space-y-4 mt-2">
           {hasToQualify && (
             <div>
