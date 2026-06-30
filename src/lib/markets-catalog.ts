@@ -19,7 +19,24 @@ export type MarketKey =
   | "clean_sheet_home"
   | "clean_sheet_away"
   | "win_to_nil_home"
-  | "win_to_nil_away";
+  | "win_to_nil_away"
+  // Cards
+  | "cards_over_under_2_5"
+  | "cards_over_under_3_5"
+  | "cards_over_under_4_5"
+  | "cards_over_under_5_5"
+  | "home_cards_over_under_1_5"
+  | "away_cards_over_under_1_5"
+  | "red_card_match"
+  | "first_card"
+  // Corners
+  | "corners_over_under_8_5"
+  | "corners_over_under_9_5"
+  | "corners_over_under_10_5"
+  | "corners_over_under_11_5"
+  | "home_corners_over_under_4_5"
+  | "away_corners_over_under_4_5"
+  | "first_corner";
 
 export const OVER_UNDER_LINES = [
   "over_under_0_5",
@@ -29,6 +46,20 @@ export const OVER_UNDER_LINES = [
   "over_under_4_5",
   "over_under_5_5",
   "over_under_6_5",
+] as const;
+
+export const CARDS_LINES = [
+  "cards_over_under_2_5",
+  "cards_over_under_3_5",
+  "cards_over_under_4_5",
+  "cards_over_under_5_5",
+] as const;
+
+export const CORNERS_LINES = [
+  "corners_over_under_8_5",
+  "corners_over_under_9_5",
+  "corners_over_under_10_5",
+  "corners_over_under_11_5",
 ] as const;
 
 export const MARKET_LABELS: Record<MarketKey, string> = {
@@ -51,6 +82,21 @@ export const MARKET_LABELS: Record<MarketKey, string> = {
   clean_sheet_away: "Away Clean Sheet",
   win_to_nil_home: "Home Win to Nil",
   win_to_nil_away: "Away Win to Nil",
+  cards_over_under_2_5: "Total Cards Over / Under 2.5",
+  cards_over_under_3_5: "Total Cards Over / Under 3.5",
+  cards_over_under_4_5: "Total Cards Over / Under 4.5",
+  cards_over_under_5_5: "Total Cards Over / Under 5.5",
+  home_cards_over_under_1_5: "Home Cards Over / Under 1.5",
+  away_cards_over_under_1_5: "Away Cards Over / Under 1.5",
+  red_card_match: "Red Card in Match",
+  first_card: "First Team Carded",
+  corners_over_under_8_5: "Total Corners Over / Under 8.5",
+  corners_over_under_9_5: "Total Corners Over / Under 9.5",
+  corners_over_under_10_5: "Total Corners Over / Under 10.5",
+  corners_over_under_11_5: "Total Corners Over / Under 11.5",
+  home_corners_over_under_4_5: "Home Corners Over / Under 4.5",
+  away_corners_over_under_4_5: "Away Corners Over / Under 4.5",
+  first_corner: "First Corner",
 };
 
 export const SELECTION_LABELS: Record<string, string> = {
@@ -61,8 +107,13 @@ export const SELECTION_LABELS: Record<string, string> = {
   OVER_4_5: "Over 4.5", UNDER_4_5: "Under 4.5",
   OVER_5_5: "Over 5.5", UNDER_5_5: "Under 5.5",
   OVER_6_5: "Over 6.5", UNDER_6_5: "Under 6.5",
+  OVER_8_5: "Over 8.5", UNDER_8_5: "Under 8.5",
+  OVER_9_5: "Over 9.5", UNDER_9_5: "Under 9.5",
+  OVER_10_5: "Over 10.5", UNDER_10_5: "Under 10.5",
+  OVER_11_5: "Over 11.5", UNDER_11_5: "Under 11.5",
   YES: "Yes",
   NO: "No",
+  NONE: "No card / corner",
   OTHER: "Other score",
   ODD: "Odd",
   EVEN: "Even",
