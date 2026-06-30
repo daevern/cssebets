@@ -1,0 +1,1 @@
+ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS live_elapsed INT, ADD COLUMN IF NOT EXISTS live_status_short TEXT;

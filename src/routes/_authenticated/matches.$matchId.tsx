@@ -222,7 +222,11 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
   );
 }
 
-function useLiveMinute(kickoffISO: string, status: string, events: any[] = []) {
+function useLiveMinute(
+  kickoffISO: string,
+  status: string,
+  opts: { liveElapsed?: number | null; liveStatusShort?: string | null } = {},
+) {
   const [now, setNow] = useState<number>(Date.now());
   useEffect(() => {
     if (status === "finished") return;
@@ -230,19 +234,37 @@ function useLiveMinute(kickoffISO: string, status: string, events: any[] = []) {
     return () => clearInterval(id);
   }, [status]);
   if (status === "finished") return { label: "FT", isLive: false };
+
+  // Prefer API-Football live status when available — handles HT, ET, breaks, and penalties correctly.
+  const short = (opts.liveStatusShort ?? "").toUpperCase();
+  const elapsed = typeof opts.liveElapsed === "number" ? opts.liveElapsed : null;
+  if (short) {
+    if (short === "HT") return { label: "HT", isLive: true };
+    if (short === "BT") return { label: "BT", isLive: true };
+    if (short === "P") return { label: "PEN", isLive: true };
+    if (short === "SUSP" || short === "INT") return { label: short, isLive: true };
+    if (short === "FT" || short === "AET" || short === "PEN") return { label: short, isLive: false };
+    if (elapsed != null) {
+      if (short === "ET") {
+        // ET runs 90-120; some APIs report 1..30, others 91..120
+        const m = elapsed <= 30 ? 90 + elapsed : elapsed;
+        return { label: `${Math.min(120, m)}'`, isLive: true };
+      }
+      // 1H, 2H, LIVE
+      return { label: `${elapsed}'`, isLive: true };
+    }
+  }
+
+  // Fallback: wall-clock approximation (no API data yet)
   const kickoff = new Date(kickoffISO).getTime();
   const diffMin = Math.floor((now - kickoff) / 60000);
   if (diffMin < 0) return { label: "", isLive: false };
-  // Walk through standard halves + breaks. Knockout matches may go to ET (105+15) and PEN.
   if (diffMin <= 45) return { label: `${diffMin}'`, isLive: true };
   if (diffMin < 60) return { label: "HT", isLive: true };
-  // 2H starts after ~15 min HT break.
   const second = diffMin - 15;
-  if (second <= 105) return { label: `${second}'`, isLive: true };
-  // ~5 min break before ET, then ET clock continues from 90'.
-  const et = second - 5;
-  if (et <= 120) return { label: `${et}'`, isLive: true };
-  return { label: `${et}'`, isLive: true };
+  if (second <= 90) return { label: `${second}'`, isLive: true };
+  // After 90', don't keep counting blindly — likely FT or ET; show 90'+ until API confirms.
+  return { label: `90'+`, isLive: true };
 }
 
 function MatchHero({
@@ -280,7 +302,10 @@ function MatchHero({
     return () => clearInterval(id);
   }, [match.kickoff_at, match.status]);
 
-  const liveClock = useLiveMinute(match.kickoff_at, match.status);
+  const liveClock = useLiveMinute(match.kickoff_at, match.status, {
+    liveElapsed: (match as any).live_elapsed,
+    liveStatusShort: (match as any).live_status_short,
+  });
   const stage = match.stage ? match.stage.replace(/_/g, " ") : (match.group_name ?? "Round of 32");
   const isFinished = match.status === "finished";
   const isLive = phase === "live";

@@ -924,6 +924,8 @@ export type Database = {
           id: string
           is_simulation: boolean
           kickoff_at: string
+          live_elapsed: number | null
+          live_status_short: string | null
           manual_override: boolean
           margin_disabled: boolean
           odds_source: string | null
@@ -965,6 +967,8 @@ export type Database = {
           id?: string
           is_simulation?: boolean
           kickoff_at: string
+          live_elapsed?: number | null
+          live_status_short?: string | null
           manual_override?: boolean
           margin_disabled?: boolean
           odds_source?: string | null
@@ -1006,6 +1010,8 @@ export type Database = {
           id?: string
           is_simulation?: boolean
           kickoff_at?: string
+          live_elapsed?: number | null
+          live_status_short?: string | null
           manual_override?: boolean
           margin_disabled?: boolean
           odds_source?: string | null
