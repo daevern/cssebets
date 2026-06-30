@@ -300,11 +300,11 @@ function MatchCard({ match }: { match: Match }) {
       </div>
 
       <div className="space-y-4 px-5 py-5">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="w-full text-left"
-          aria-expanded={open}
+        <Link
+          to="/matches/$matchId"
+          params={{ matchId: match.id }}
+          className="block w-full text-left transition-opacity hover:opacity-90"
+          aria-label="Open match analytics"
         >
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
             <div className="flex flex-col items-center gap-2">
@@ -318,6 +318,7 @@ function MatchCard({ match }: { match: Match }) {
                 {match.status === "finished" ? `${match.home_score} – ${match.away_score}` : "vs"}
               </span>
               <span className="h-6 w-px bg-[var(--color-neon)]/40" />
+              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">View analytics →</span>
             </div>
             <div className="flex flex-col items-center gap-2">
               <TeamFlag name={match.away_team} />
@@ -326,7 +327,7 @@ function MatchCard({ match }: { match: Match }) {
               </span>
             </div>
           </div>
-        </button>
+        </Link>
 
         {bettingBlocked && !locked && (
           <div className="border border-destructive/40 bg-destructive/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-destructive">
