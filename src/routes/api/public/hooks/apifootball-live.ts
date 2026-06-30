@@ -8,7 +8,7 @@ export const Route = createFileRoute("/api/public/hooks/apifootball-live")({
       POST: async () => {
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { syncEvents, syncStats } = await import("@/lib/apifootball-analytics.server");
+          const { syncEvents, syncStats, syncScore } = await import("@/lib/apifootball-analytics.server");
           const { getQuotaStatus } = await import("@/lib/apifootball.server");
 
           const now = new Date();
@@ -30,9 +30,10 @@ export const Route = createFileRoute("/api/public/hooks/apifootball-live")({
           const results: any[] = [];
           for (const m of matches) {
             const id = (m as any).id;
+            const sc = await syncScore(id);
             const ev = await syncEvents(id);
             const st = await syncStats(id);
-            results.push({ matchId: id, events: ev, stats: st });
+            results.push({ matchId: id, score: sc, events: ev, stats: st });
           }
           return new Response(JSON.stringify({ ok: true, processed: results.length, quota: await getQuotaStatus(), results }), {
             headers: { "content-type": "application/json" },
