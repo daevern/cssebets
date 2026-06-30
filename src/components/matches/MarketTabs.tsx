@@ -16,6 +16,8 @@ import {
   HTFT_OPTIONS,
   EXACT_GOALS_OPTIONS,
   OVER_UNDER_LINES,
+  CARDS_LINES,
+  CORNERS_LINES,
   type MarketKey,
 } from "@/lib/markets-catalog";
 
@@ -182,6 +184,17 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     getGroup("win_to_nil_home").length > 0 ||
     getGroup("win_to_nil_away").length > 0;
   const hasSpecials = hasHtFt || hasToQualify;
+  const hasCards =
+    CARDS_LINES.some((k) => getGroup(k).length > 0) ||
+    getGroup("home_cards_over_under_1_5").length > 0 ||
+    getGroup("away_cards_over_under_1_5").length > 0 ||
+    getGroup("red_card_match").length > 0 ||
+    getGroup("first_card").length > 0;
+  const hasCorners =
+    CORNERS_LINES.some((k) => getGroup(k).length > 0) ||
+    getGroup("home_corners_over_under_4_5").length > 0 ||
+    getGroup("away_corners_over_under_4_5").length > 0 ||
+    getGroup("first_corner").length > 0;
 
   const orderedSelections = (market: MarketKey, rows: OddsRow[]) => {
     let order: string[] = [];
@@ -193,10 +206,20 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     else if (market === "double_chance") order = ["HOME_OR_DRAW", "HOME_OR_AWAY", "DRAW_OR_AWAY"];
     else if (market === "draw_no_bet") order = ["HOME", "AWAY"];
     else if (market === "goals_odd_even") order = ["ODD", "EVEN"];
+    else if (market === "red_card_match") order = ["YES", "NO"];
+    else if (market === "first_card" || market === "first_corner") order = ["HOME", "AWAY", "NONE"];
     else if (
       market === "clean_sheet_home" || market === "clean_sheet_away" ||
       market === "win_to_nil_home" || market === "win_to_nil_away"
     ) order = ["YES", "NO"];
+    else if (market.startsWith("cards_over_under_") || market === "home_cards_over_under_1_5" || market === "away_cards_over_under_1_5") {
+      const line = market.replace(/^.*over_under_/, "");
+      order = [`OVER_${line}`, `UNDER_${line}`];
+    }
+    else if (market.startsWith("corners_over_under_") || market === "home_corners_over_under_4_5" || market === "away_corners_over_under_4_5") {
+      const line = market.replace(/^.*over_under_/, "");
+      order = [`OVER_${line}`, `UNDER_${line}`];
+    }
     else if (market.startsWith("over_under_")) {
       const line = market.replace("over_under_", "");
       order = [`OVER_${line}`, `UNDER_${line}`];
@@ -420,11 +443,13 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   return (
     <div className="space-y-3 pt-2 border-t">
       <Tabs defaultValue="goals" className="w-full">
-        <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="goals" className="text-xs">Goals</TabsTrigger>
-          <TabsTrigger value="cs" className="text-xs">Score</TabsTrigger>
-          <TabsTrigger value="ex" className="text-xs" disabled={!hasExtras}>Extras</TabsTrigger>
-          <TabsTrigger value="sp" className="text-xs" disabled={!hasSpecials}>Specials</TabsTrigger>
+        <TabsList className="flex w-full overflow-x-auto no-scrollbar">
+          <TabsTrigger value="goals" className="text-xs flex-1 min-w-[64px]">Goals</TabsTrigger>
+          <TabsTrigger value="cs" className="text-xs flex-1 min-w-[64px]">Score</TabsTrigger>
+          <TabsTrigger value="ex" className="text-xs flex-1 min-w-[64px]" disabled={!hasExtras}>Extras</TabsTrigger>
+          <TabsTrigger value="cards" className="text-xs flex-1 min-w-[64px]" disabled={!hasCards}>Cards</TabsTrigger>
+          <TabsTrigger value="corners" className="text-xs flex-1 min-w-[72px]" disabled={!hasCorners}>Corners</TabsTrigger>
+          <TabsTrigger value="sp" className="text-xs flex-1 min-w-[72px]" disabled={!hasSpecials}>Specials</TabsTrigger>
         </TabsList>
 
         <TabsContent value="goals" className="space-y-4 mt-2">
@@ -497,6 +522,76 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.win_to_nil_away}</div>
               {renderMarketSection("win_to_nil_away", "grid-cols-2")}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="cards" className="space-y-4 mt-2">
+          <div className="text-[10px] text-muted-foreground">
+            Settled on full-time card counts. Stake refunded if cards data is unavailable.
+          </div>
+          {CARDS_LINES.map((mk) =>
+            getGroup(mk).length > 0 ? (
+              <div key={mk}>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS[mk]}</div>
+                {renderMarketSection(mk, "grid-cols-2")}
+              </div>
+            ) : null,
+          )}
+          {getGroup("home_cards_over_under_1_5").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.home_cards_over_under_1_5}</div>
+              {renderMarketSection("home_cards_over_under_1_5", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("away_cards_over_under_1_5").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.away_cards_over_under_1_5}</div>
+              {renderMarketSection("away_cards_over_under_1_5", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("red_card_match").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.red_card_match}</div>
+              {renderMarketSection("red_card_match", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("first_card").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.first_card}</div>
+              {renderMarketSection("first_card", "grid-cols-3")}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="corners" className="space-y-4 mt-2">
+          <div className="text-[10px] text-muted-foreground">
+            Settled on full-time corner counts. Stake refunded if corner data is unavailable.
+          </div>
+          {CORNERS_LINES.map((mk) =>
+            getGroup(mk).length > 0 ? (
+              <div key={mk}>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS[mk]}</div>
+                {renderMarketSection(mk, "grid-cols-2")}
+              </div>
+            ) : null,
+          )}
+          {getGroup("home_corners_over_under_4_5").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.home_corners_over_under_4_5}</div>
+              {renderMarketSection("home_corners_over_under_4_5", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("away_corners_over_under_4_5").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.away_corners_over_under_4_5}</div>
+              {renderMarketSection("away_corners_over_under_4_5", "grid-cols-2")}
+            </div>
+          )}
+          {getGroup("first_corner").length > 0 && (
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">{MARKET_LABELS.first_corner}</div>
+              {renderMarketSection("first_corner", "grid-cols-3")}
             </div>
           )}
         </TabsContent>
