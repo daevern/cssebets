@@ -257,7 +257,7 @@ function MatchHero({ match, phaseLabel }: { match: NonNullable<AnalyticsBundle["
 }
 
 function TeamBlock({ name }: { name: string }) {
-  const url = teamFlagUrl(name, 200);
+  const url = teamFlagUrl(name, 160);
   return (
     <div className="flex flex-col items-center gap-2">
       {url ? (
