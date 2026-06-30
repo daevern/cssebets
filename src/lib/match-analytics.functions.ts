@@ -134,6 +134,7 @@ export const getMatchAnalytics = createServerFn({ method: "POST" })
           if (isStale(injAge, 12 * 60)) await mod.syncInjuries(matchId);
         } else if (phase === "live") {
           if (isStale(lineupAge, 60)) await mod.syncLineups(matchId);
+          await mod.syncScore(matchId);
           await mod.syncEvents(matchId);
           if (isStale(statsAge, 2)) await mod.syncStats(matchId);
         } else if (phase === "finished") {
