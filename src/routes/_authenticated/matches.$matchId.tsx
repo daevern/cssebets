@@ -233,12 +233,16 @@ function useLiveMinute(kickoffISO: string, status: string, events: any[] = []) {
   const kickoff = new Date(kickoffISO).getTime();
   const diffMin = Math.floor((now - kickoff) / 60000);
   if (diffMin < 0) return { label: "", isLive: false };
-  // Heuristic clock with HT break (45..60 -> HT). Cap at 90 + injury inferred from events.
+  // Walk through standard halves + breaks. Knockout matches may go to ET (105+15) and PEN.
   if (diffMin <= 45) return { label: `${diffMin}'`, isLive: true };
   if (diffMin < 60) return { label: "HT", isLive: true };
-  const second = diffMin - 15; // subtract 15 min HT
-  if (second <= 90) return { label: `${second}'`, isLive: true };
-  return { label: "90'+", isLive: true };
+  // 2H starts after ~15 min HT break.
+  const second = diffMin - 15;
+  if (second <= 105) return { label: `${second}'`, isLive: true };
+  // ~5 min break before ET, then ET clock continues from 90'.
+  const et = second - 5;
+  if (et <= 120) return { label: `${et}'`, isLive: true };
+  return { label: `${et}'`, isLive: true };
 }
 
 function MatchHero({
@@ -282,22 +286,30 @@ function MatchHero({
   const isLive = phase === "live";
   const showScore = isFinished || match.home_score != null || isLive;
 
-  // Build markers (goals/cards) for the 90-min progress strip
+  // Build markers (goals/cards) for the progress strip
   const markers = useMemo(() => {
     return (([] as any[])).concat(homeGoals.map((g) => ({ side: "home", kind: "goal", min: g.minute, extra: g.extra_minute, detail: g.detail })),
       awayGoals.map((g) => ({ side: "away", kind: "goal", min: g.minute, extra: g.extra_minute, detail: g.detail })));
   }, [homeGoals, awayGoals]);
 
-  // Match clock progress 0..100 (treat 0..90 linearly, HT freezes at 50%).
-  const progressPct = (() => {
-    if (isFinished) return 100;
+  // Current elapsed minute (live or finished). Mirrors useLiveMinute math.
+  const currentMinute = (() => {
+    if (isFinished) {
+      const lastEvt = Math.max(0, ...markers.map((m) => (m.min ?? 0) + (m.extra ?? 0)));
+      return Math.max(90, lastEvt);
+    }
     if (!isLive) return 0;
-    const ms = Date.now() - kickoff.getTime();
-    let min = Math.max(0, Math.floor(ms / 60000));
-    if (min > 45 && min < 60) min = 45;
-    else if (min >= 60) min = min - 15;
-    return Math.min(100, (min / 90) * 100);
+    const min = Math.max(0, Math.floor((Date.now() - kickoff.getTime()) / 60000));
+    if (min <= 45) return min;
+    if (min < 60) return 45;
+    const second = min - 15;
+    if (second <= 105) return second;
+    return Math.min(120, second - 5);
   })();
+
+  // Cap progress bar at 90' for regulation matches; extend to 120' once we cross 90.
+  const progressCap = currentMinute > 90 ? 120 : 90;
+  const progressPct = Math.min(100, (currentMinute / progressCap) * 100);
 
   return (
     <article className="relative overflow-hidden border border-[var(--color-neon)]/30 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-30px_var(--color-neon-glow)]">
@@ -365,7 +377,7 @@ function MatchHero({
 
         {/* 90-minute progress bar with goal/card markers */}
         {(isLive || isFinished) && (
-          <MatchProgress pct={progressPct} markers={markers} />
+          <MatchProgress pct={progressPct} cap={progressCap} markers={markers} />
         )}
 
         {(isLive || isFinished) && (stats.home || stats.away) && (
@@ -381,9 +393,11 @@ function MatchHero({
 }
 
 /* 90-minute strip with HT mark and event markers. */
-function MatchProgress({ pct, markers }: { pct: number; markers: Array<{ side: "home"|"away"; kind: string; min: number | null; extra?: number | null; detail?: string }> }) {
-  // Show 0..90 + an injury slot up to 95.
-  const cap = 95;
+function MatchProgress({ pct, cap = 90, markers }: { pct: number; cap?: number; markers: Array<{ side: "home"|"away"; kind: string; min: number | null; extra?: number | null; detail?: string }> }) {
+  const isET = cap > 90;
+  // HT sits at 45/cap. For ET also show a 90' tick.
+  const htPct = (45 / cap) * 100;
+  const ftPct = (90 / cap) * 100;
   return (
     <div className="mt-4">
       <div className="relative h-7">
@@ -394,13 +408,20 @@ function MatchProgress({ pct, markers }: { pct: number; markers: Array<{ side: "
           className="absolute top-3 left-0 h-1 bg-[var(--color-neon)] shadow-[0_0_10px_var(--color-neon-glow)] transition-all duration-1000"
           style={{ width: `${pct}%` }}
         />
-        {/* HT tick at 50% */}
-        <div className="absolute top-1.5 h-4 w-px bg-[var(--color-surface-border)]" style={{ left: "50%" }} />
-        <span className="absolute -top-0.5 -translate-x-1/2 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]" style={{ left: "50%" }}>HT</span>
+        {/* HT tick */}
+        <div className="absolute top-1.5 h-4 w-px bg-[var(--color-surface-border)]" style={{ left: `${htPct}%` }} />
+        <span className="absolute -top-0.5 -translate-x-1/2 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]" style={{ left: `${htPct}%` }}>HT</span>
+        {/* 90' tick (visible once ET starts) */}
+        {isET && (
+          <>
+            <div className="absolute top-1.5 h-4 w-px bg-[var(--color-surface-border)]" style={{ left: `${ftPct}%` }} />
+            <span className="absolute -top-0.5 -translate-x-1/2 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]" style={{ left: `${ftPct}%` }}>90'</span>
+          </>
+        )}
         {/* Markers */}
         {markers.map((m, i) => {
           const minute = Math.min(cap, (m.min ?? 0) + (m.extra ?? 0));
-          const left = `${Math.min(100, (minute / 90) * 100)}%`;
+          const left = `${Math.min(100, (minute / cap) * 100)}%`;
           const isHome = m.side === "home";
           return (
             <div
@@ -415,7 +436,7 @@ function MatchProgress({ pct, markers }: { pct: number; markers: Array<{ side: "
         })}
       </div>
       <div className="mt-1 flex justify-between font-display text-[9px] font-bold tabular-nums text-[var(--color-ink-muted)]">
-        <span>0'</span><span>45'</span><span>90'</span>
+        <span>0'</span><span>{Math.round(cap / 2)}'</span><span>{cap}'</span>
       </div>
     </div>
   );
