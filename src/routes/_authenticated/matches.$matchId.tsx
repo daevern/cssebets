@@ -215,7 +215,40 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
   );
 }
 
-function MatchHero({ match, phaseLabel }: { match: NonNullable<AnalyticsBundle["match"]>; phaseLabel: string }) {
+function useLiveMinute(kickoffISO: string, status: string, events: any[] = []) {
+  const [now, setNow] = useState<number>(Date.now());
+  useEffect(() => {
+    if (status === "finished") return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [status]);
+  if (status === "finished") return { label: "FT", isLive: false };
+  const kickoff = new Date(kickoffISO).getTime();
+  const diffMin = Math.floor((now - kickoff) / 60000);
+  if (diffMin < 0) return { label: "", isLive: false };
+  // Heuristic clock with HT break (45..60 -> HT). Cap at 90 + injury inferred from events.
+  if (diffMin <= 45) return { label: `${diffMin}'`, isLive: true };
+  if (diffMin < 60) return { label: "HT", isLive: true };
+  const second = diffMin - 15; // subtract 15 min HT
+  if (second <= 90) return { label: `${second}'`, isLive: true };
+  return { label: "90'+", isLive: true };
+}
+
+function MatchHero({
+  match,
+  phaseLabel,
+  phase,
+  homeGoals,
+  awayGoals,
+  stats,
+}: {
+  match: NonNullable<AnalyticsBundle["match"]>;
+  phaseLabel: string;
+  phase: AnalyticsBundle["phase"];
+  homeGoals: any[];
+  awayGoals: any[];
+  stats: AnalyticsBundle["stats"];
+}) {
   const kickoff = new Date(match.kickoff_at);
   const dateStr = kickoff.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
   const timeStr = kickoff.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
@@ -225,7 +258,7 @@ function MatchHero({ match, phaseLabel }: { match: NonNullable<AnalyticsBundle["
     if (match.status === "finished") return;
     const tick = () => {
       const ms = kickoff.getTime() - Date.now();
-      if (ms <= 0) { setCountdown("LIVE"); return; }
+      if (ms <= 0) { setCountdown(""); return; }
       const h = Math.floor(ms / 3600000);
       const m = Math.floor((ms % 3600000) / 60000);
       const s = Math.floor((ms % 60000) / 1000);
@@ -236,7 +269,11 @@ function MatchHero({ match, phaseLabel }: { match: NonNullable<AnalyticsBundle["
     return () => clearInterval(id);
   }, [match.kickoff_at, match.status]);
 
+  const liveClock = useLiveMinute(match.kickoff_at, match.status);
   const stage = match.stage ? match.stage.replace(/_/g, " ") : (match.group_name ?? "Round of 32");
+  const isFinished = match.status === "finished";
+  const isLive = phase === "live";
+  const showScore = isFinished || match.home_score != null || isLive;
 
   return (
     <article className="relative overflow-hidden border border-[var(--color-neon)]/25 bg-[var(--color-surface-2)]">
@@ -245,39 +282,100 @@ function MatchHero({ match, phaseLabel }: { match: NonNullable<AnalyticsBundle["
         <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
           <Radio className="h-3 w-3" /> {stage}
         </span>
-        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-          {phaseLabel}
+        <span className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+          {isLive && (
+            <span className="flex items-center gap-1 text-destructive">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
+              </span>
+              <span className="font-bold tracking-[0.28em]">LIVE {liveClock.label}</span>
+            </span>
+          )}
+          {!isLive && <span>{phaseLabel}</span>}
         </span>
       </div>
       <div className="px-5 py-5">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <TeamBlock name={match.home_team} />
-          <div className="flex flex-col items-center gap-1">
-            {match.status === "finished" || match.home_score != null ? (
-              <span className="font-display text-3xl font-bold tabular-nums leading-none">
-                {match.home_score ?? 0} – {match.away_score ?? 0}
+        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
+          <TeamBlock name={match.home_team} goals={homeGoals} />
+          <div className="flex flex-col items-center gap-1 pt-2">
+            {showScore ? (
+              <span className="font-display text-4xl font-bold tabular-nums leading-none">
+                {match.home_score ?? 0}<span className="mx-1 text-[var(--color-ink-muted)]">–</span>{match.away_score ?? 0}
               </span>
             ) : (
               <span className="font-display text-3xl font-bold leading-none text-[var(--color-ink-muted)]">vs</span>
             )}
-            <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+            <span className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
               {dateStr} · {timeStr}
             </span>
-            {countdown && match.status !== "finished" && (
-              <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-                {countdown}
+            {countdown && !isLive && !isFinished && (
+              <span className="mt-1 rounded-sm border border-[var(--color-neon)]/30 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+                ⏱ {countdown}
+              </span>
+            )}
+            {isLive && liveClock.label && (
+              <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.28em] text-destructive">
+                {liveClock.label}
               </span>
             )}
           </div>
-          <TeamBlock name={match.away_team} />
+          <TeamBlock name={match.away_team} goals={awayGoals} align="right" />
         </div>
+        {(isLive || isFinished) && (stats.home || stats.away) && (
+          <div className="mt-4 grid grid-cols-3 gap-2 border-t border-dashed border-[var(--color-surface-border)] pt-3 text-center">
+            <MicroStat label="Shots" h={stats.home?.shots_total} a={stats.away?.shots_total} />
+            <MicroStat label="On Tgt" h={stats.home?.shots_on} a={stats.away?.shots_on} />
+            <MicroStat label="Poss %" h={stats.home?.possession} a={stats.away?.possession} />
+          </div>
+        )}
       </div>
     </article>
   );
 }
 
-function TeamBlock({ name }: { name: string }) {
+function MicroStat({ label, h, a }: { label: string; h: any; a: any }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className="font-display text-xs font-bold tabular-nums">
+        <span className="text-[var(--color-neon)]">{h ?? "—"}</span>
+        <span className="mx-1 text-[var(--color-ink-muted)]">·</span>
+        <span>{a ?? "—"}</span>
+      </div>
+      <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">{label}</div>
+    </div>
+  );
+}
+
+function MomentumStrip({ stats, homeName, awayName }: { stats: AnalyticsBundle["stats"]; homeName: string; awayName: string }) {
+  const hPoss = Number(stats.home?.possession ?? 0);
+  const aPoss = Number(stats.away?.possession ?? 0);
+  const total = hPoss + aPoss || 1;
+  const hPct = (hPoss / total) * 100;
+  return (
+    <div className="relative overflow-hidden border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-4 py-3">
+      <Corner pos="tl" /><Corner pos="br" />
+      <div className="mb-1.5 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+        <span>{homeName}</span>
+        <span className="text-[var(--color-neon)]">Possession</span>
+        <span>{awayName}</span>
+      </div>
+      <div className="flex h-2 overflow-hidden bg-[var(--color-surface)]">
+        <div className="bg-[var(--color-neon)] transition-all duration-700" style={{ width: `${hPct}%` }} />
+        <div className="bg-white/40 transition-all duration-700" style={{ width: `${100 - hPct}%` }} />
+      </div>
+      <div className="mt-1 flex justify-between text-[10px] font-display font-bold tabular-nums">
+        <span className="text-[var(--color-neon)]">{hPoss || 0}%</span>
+        <span className="text-[var(--color-ink-muted)]">{aPoss || 0}%</span>
+      </div>
+    </div>
+  );
+}
+
+function TeamBlock({ name, goals = [], align = "left" }: { name: string; goals?: any[]; align?: "left" | "right" }) {
   const url = teamFlagUrl(name, 160);
+  const alignCls = align === "right" ? "items-end text-right" : "items-start text-left";
+  // Center on small layout, but allow scorer column to align inward
   return (
     <div className="flex flex-col items-center gap-2">
       {url ? (
@@ -288,6 +386,25 @@ function TeamBlock({ name }: { name: string }) {
         </div>
       )}
       <span className="max-w-[120px] truncate text-center text-xs font-bold uppercase tracking-wide">{name}</span>
+      {goals.length > 0 && (
+        <ul className={`flex w-full flex-col gap-0.5 text-[10px] leading-tight ${align === "right" ? "items-end" : "items-start"}`}>
+          {goals.map((g, i) => {
+            const min = `${g.minute ?? ""}${g.extra_minute ? `+${g.extra_minute}` : ""}'`;
+            const isPen = String(g.detail || "").toLowerCase().includes("penalty");
+            const isOG = String(g.detail || "").toLowerCase().includes("own");
+            const last = (g.player_name || "").split(" ").slice(-1)[0];
+            return (
+              <li key={i} className="flex items-baseline gap-1 text-[var(--color-ink)]">
+                <span>⚽</span>
+                <span className="font-semibold truncate max-w-[100px]">{last}</span>
+                <span className="font-display tabular-nums text-[var(--color-neon)]">{min}</span>
+                {isPen && <span className="text-[var(--color-ink-muted)]">(P)</span>}
+                {isOG && <span className="text-[var(--color-ink-muted)]">(OG)</span>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
