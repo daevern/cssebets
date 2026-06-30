@@ -17,7 +17,7 @@ import { MarketTabs } from "@/components/matches/MarketTabs";
 import { useAuth } from "@/hooks/use-auth";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 
-export const Route = createFileRoute("/_authenticated/matches")({
+export const Route = createFileRoute("/_authenticated/matches/")({
   head: () => ({ meta: [{ title: "Matches — cssebets" }] }),
   component: MatchesPage,
 });
