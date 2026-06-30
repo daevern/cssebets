@@ -11,7 +11,7 @@ import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
-export const Route = createFileRoute("/_authenticated/matches_/$matchId")({
+export const Route = createFileRoute("/_authenticated/matches/$matchId")({
   head: () => ({ meta: [{ title: "Match analytics — cssebets" }] }),
   component: MatchAnalyticsPage,
 });

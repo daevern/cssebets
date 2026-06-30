@@ -38,6 +38,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedChangelogRouteImport } from './routes/_authenticated/changelog'
 import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/bets'
 import { Route as ManagementAdminIndexRouteImport } from './routes/management/admin.index'
+import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
 import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
 import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
 import { Route as ManagementAdminTournamentRouteImport } from './routes/management/admin.tournament'
@@ -65,7 +66,7 @@ import { Route as ManagementAdminBankrollRouteImport } from './routes/management
 import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
 import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
 import { Route as ManagementAdminAlertsRouteImport } from './routes/management/admin.alerts'
-import { Route as AuthenticatedMatchesMatchIdRouteImport } from './routes/_authenticated/matches_.$matchId'
+import { Route as AuthenticatedMatchesMatchIdRouteImport } from './routes/_authenticated/matches.$matchId'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/public/hooks/sync-fixtures'
 import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
@@ -224,6 +225,12 @@ const ManagementAdminIndexRoute = ManagementAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
+const AuthenticatedMatchesIndexRoute =
+  AuthenticatedMatchesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedMatchesRoute,
+  } as any)
 const ManagementAdminWalletLedgerRoute =
   ManagementAdminWalletLedgerRouteImport.update({
     id: '/wallet-ledger',
@@ -377,9 +384,9 @@ const ManagementAdminAlertsRoute = ManagementAdminAlertsRouteImport.update({
 } as any)
 const AuthenticatedMatchesMatchIdRoute =
   AuthenticatedMatchesMatchIdRouteImport.update({
-    id: '/matches_/$matchId',
-    path: '/matches/$matchId',
-    getParentRoute: () => AuthenticatedRouteRoute,
+    id: '/$matchId',
+    path: '/$matchId',
+    getParentRoute: () => AuthenticatedMatchesRoute,
   } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
@@ -446,7 +453,7 @@ export interface FileRoutesByFullPath {
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/help': typeof AuthenticatedHelpRoute
-  '/matches': typeof AuthenticatedMatchesRoute
+  '/matches': typeof AuthenticatedMatchesRouteWithChildren
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -492,6 +499,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/matches/': typeof AuthenticatedMatchesIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
@@ -513,7 +521,6 @@ export interface FileRoutesByTo {
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/help': typeof AuthenticatedHelpRoute
-  '/matches': typeof AuthenticatedMatchesRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/payout': typeof AuthenticatedPayoutRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -558,6 +565,7 @@ export interface FileRoutesByTo {
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/matches': typeof AuthenticatedMatchesIndexRoute
   '/management/admin': typeof ManagementAdminIndexRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
@@ -581,7 +589,7 @@ export interface FileRoutesById {
   '/_authenticated/changelog': typeof AuthenticatedChangelogRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/help': typeof AuthenticatedHelpRoute
-  '/_authenticated/matches': typeof AuthenticatedMatchesRoute
+  '/_authenticated/matches': typeof AuthenticatedMatchesRouteWithChildren
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/_authenticated/payout': typeof AuthenticatedPayoutRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -599,7 +607,7 @@ export interface FileRoutesById {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
-  '/_authenticated/matches_/$matchId': typeof AuthenticatedMatchesMatchIdRoute
+  '/_authenticated/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
@@ -627,6 +635,7 @@ export interface FileRoutesById {
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
@@ -696,6 +705,7 @@ export interface FileRouteTypes {
     | '/management/admin/tournament'
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
+    | '/matches/'
     | '/management/admin/'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
@@ -717,7 +727,6 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/dashboard'
     | '/help'
-    | '/matches'
     | '/my-predictions'
     | '/payout'
     | '/settings'
@@ -762,6 +771,7 @@ export interface FileRouteTypes {
     | '/management/admin/tournament'
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
+    | '/matches'
     | '/management/admin'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
@@ -802,7 +812,7 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
-    | '/_authenticated/matches_/$matchId'
+    | '/_authenticated/matches/$matchId'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
     | '/management/admin/audit'
@@ -830,6 +840,7 @@ export interface FileRouteTypes {
     | '/management/admin/tournament'
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
+    | '/_authenticated/matches/'
     | '/management/admin/'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
@@ -1065,6 +1076,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminIndexRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/_authenticated/matches/': {
+      id: '/_authenticated/matches/'
+      path: '/'
+      fullPath: '/matches/'
+      preLoaderRoute: typeof AuthenticatedMatchesIndexRouteImport
+      parentRoute: typeof AuthenticatedMatchesRoute
+    }
     '/management/admin/wallet-ledger': {
       id: '/management/admin/wallet-ledger'
       path: '/wallet-ledger'
@@ -1254,12 +1272,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminAlertsRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
-    '/_authenticated/matches_/$matchId': {
-      id: '/_authenticated/matches_/$matchId'
-      path: '/matches/$matchId'
+    '/_authenticated/matches/$matchId': {
+      id: '/_authenticated/matches/$matchId'
+      path: '/$matchId'
       fullPath: '/matches/$matchId'
       preLoaderRoute: typeof AuthenticatedMatchesMatchIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      parentRoute: typeof AuthenticatedMatchesRoute
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -1327,12 +1345,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedMatchesRouteChildren {
+  AuthenticatedMatchesMatchIdRoute: typeof AuthenticatedMatchesMatchIdRoute
+  AuthenticatedMatchesIndexRoute: typeof AuthenticatedMatchesIndexRoute
+}
+
+const AuthenticatedMatchesRouteChildren: AuthenticatedMatchesRouteChildren = {
+  AuthenticatedMatchesMatchIdRoute: AuthenticatedMatchesMatchIdRoute,
+  AuthenticatedMatchesIndexRoute: AuthenticatedMatchesIndexRoute,
+}
+
+const AuthenticatedMatchesRouteWithChildren =
+  AuthenticatedMatchesRoute._addFileChildren(AuthenticatedMatchesRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBetsRoute: typeof AuthenticatedBetsRoute
   AuthenticatedChangelogRoute: typeof AuthenticatedChangelogRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
-  AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRoute
+  AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRouteWithChildren
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
   AuthenticatedPayoutRoute: typeof AuthenticatedPayoutRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -1341,7 +1372,6 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTournamentWinnerRoute: typeof AuthenticatedTournamentWinnerRoute
   AuthenticatedTrustCenterRoute: typeof AuthenticatedTrustCenterRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
-  AuthenticatedMatchesMatchIdRoute: typeof AuthenticatedMatchesMatchIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1349,7 +1379,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChangelogRoute: AuthenticatedChangelogRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedHelpRoute: AuthenticatedHelpRoute,
-  AuthenticatedMatchesRoute: AuthenticatedMatchesRoute,
+  AuthenticatedMatchesRoute: AuthenticatedMatchesRouteWithChildren,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
   AuthenticatedPayoutRoute: AuthenticatedPayoutRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
@@ -1358,7 +1388,6 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTournamentWinnerRoute: AuthenticatedTournamentWinnerRoute,
   AuthenticatedTrustCenterRoute: AuthenticatedTrustCenterRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
-  AuthenticatedMatchesMatchIdRoute: AuthenticatedMatchesMatchIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
