@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowLeft, Loader2, Activity, Users, AlertTriangle, History, Star } from "lucide-react";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { getMatchAnalytics, type AnalyticsBundle, type LineupPlayer } from "@/lib/match-analytics.functions";
@@ -166,22 +166,22 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
             <MomentumStrip stats={stats} homeName={home} awayName={away} />
           )}
           {hasEvents && locked && (
-            <StencilPanel
+            <AnalysisSection
               kicker={<><Activity className="h-3 w-3" /> Match momentum</>}
               meta={phase === "finished" ? "Full match" : "Live"}
             >
               <MomentumGraph events={events} homeName={home} awayName={away} phase={phase} kickoffISO={match.kickoff_at} />
-            </StencilPanel>
+            </AnalysisSection>
           )}
           {hasStats && (
-            <StencilPanel kicker={<><Activity className="h-3 w-3" /> Key stats</>} meta={phase === "finished" ? "Final" : "Live"}>
+            <AnalysisSection kicker={<><Activity className="h-3 w-3" /> Key stats</>} meta={phase === "finished" ? "Final" : "Live"}>
               <KeyStatsGrid home={stats.home} away={stats.away} homeName={home} awayName={away} />
-            </StencilPanel>
+            </AnalysisSection>
           )}
           {hasEvents && (
-            <StencilPanel kicker={<><Activity className="h-3 w-3" /> Latest events</>} meta={`${Math.min(5, events.length)} of ${events.length}`}>
-              <EventTimeline events={events.slice(-5)} home={home} away={away} compact />
-            </StencilPanel>
+            <AnalysisSection kicker={<><Activity className="h-3 w-3" /> Latest events</>} meta={`${Math.min(7, events.length)} of ${events.length}`}>
+              <EventTimeline events={events.slice(-7)} home={home} away={away} compact />
+            </AnalysisSection>
           )}
           {!hasLineups && !hasStats && !hasEvents && !hasH2H && phase === "pre" && (
             <StencilPanel>
@@ -194,15 +194,15 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
       )}
 
       {tab === "stats" && hasStats && (
-        <StencilPanel kicker={<><Activity className="h-3 w-3" /> Full stats</>} meta={phase === "finished" ? "Final" : "Live"}>
+        <AnalysisSection kicker={<><Activity className="h-3 w-3" /> Full stats</>} meta={phase === "finished" ? "Final" : "Live"}>
           <StatsCompare home={stats.home} away={stats.away} homeName={home} awayName={away} />
-        </StencilPanel>
+        </AnalysisSection>
       )}
 
       {tab === "lineups" && (
         <>
           {hasLineups ? (
-            <StencilPanel kicker={<><Users className="h-3 w-3" /> Lineups</>} meta="Confirmed XI">
+            <AnalysisSection kicker={<><Users className="h-3 w-3" /> Lineups</>} meta="Confirmed XI">
               <div className="space-y-5">
                 {(lineups.home?.formation || lineups.away?.formation) && (
                   <FormationPitch home={lineups.home} away={lineups.away} />
@@ -210,47 +210,67 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
                 <LineupSplit lineup={lineups.home} side="home" teamName={home} />
                 <LineupSplit lineup={lineups.away} side="away" teamName={away} />
               </div>
-            </StencilPanel>
+            </AnalysisSection>
           ) : (
-            <StencilPanel kicker={<><Users className="h-3 w-3" /> Lineups</>} meta="Pending">
+            <AnalysisSection kicker={<><Users className="h-3 w-3" /> Lineups</>} meta="Pending">
               <p className="text-sm text-[var(--color-ink-muted)]">
                 {phase === "lineups"
                   ? "Confirmed lineups drop in the next hour — check back shortly."
                   : "Lineups are released roughly 1 hour before kickoff."}
               </p>
-            </StencilPanel>
+            </AnalysisSection>
           )}
           {hasInjuries && (
-            <StencilPanel kicker={<><AlertTriangle className="h-3 w-3" /> Injury report</>}>
+            <AnalysisSection kicker={<><AlertTriangle className="h-3 w-3" /> Injury report</>}>
               <div className="grid gap-4 md:grid-cols-2">
                 <InjuryList items={injuries.home} title={home} />
                 <InjuryList items={injuries.away} title={away} />
               </div>
-            </StencilPanel>
+            </AnalysisSection>
           )}
           {hasRatings && (
-            <StencilPanel kicker={<><Star className="h-3 w-3" /> Player ratings</>}>
+            <AnalysisSection kicker={<><Star className="h-3 w-3" /> Player ratings</>}>
               <div className="grid gap-5 md:grid-cols-2">
                 <RatingsTable rows={ratings.home} title={home} />
                 <RatingsTable rows={ratings.away} title={away} />
               </div>
-            </StencilPanel>
+            </AnalysisSection>
           )}
         </>
       )}
 
       {tab === "events" && hasEvents && (
-        <StencilPanel kicker={<><Activity className="h-3 w-3" /> Match events</>} meta={`${events.length} entries`}>
-          <EventTimeline events={events} home={home} away={away} />
-        </StencilPanel>
+        <AnalysisSection kicker={<><Activity className="h-3 w-3" /> Match events</>} meta={`${Math.min(7, events.length)} latest`}>
+          <EventTimeline events={events.slice(-7)} home={home} away={away} />
+        </AnalysisSection>
       )}
 
       {tab === "h2h" && hasH2H && (
-        <StencilPanel kicker={<><History className="h-3 w-3" /> Head to head</>} meta={`Last ${h2h.length}`}>
+        <AnalysisSection kicker={<><History className="h-3 w-3" /> Head to head</>} meta={`Last ${h2h.length}`}>
           <H2HList rows={h2h} />
-        </StencilPanel>
+        </AnalysisSection>
       )}
     </>
+  );
+}
+
+function AnalysisSection({ kicker, meta, children }: { kicker?: ReactNode; meta?: ReactNode; children: ReactNode }) {
+  return (
+    <section className="relative -mx-4 border-y border-[var(--color-surface-border)]/70 bg-[var(--color-surface-2)]/35 px-4 py-4 md:mx-0 md:border md:bg-[var(--color-surface-2)] md:px-5 md:py-5">
+      <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+        {kicker && (
+          <span className="flex min-w-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-neon)]">
+            {kicker}
+          </span>
+        )}
+        {meta && (
+          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+            {meta}
+          </span>
+        )}
+      </div>
+      {children}
+    </section>
   );
 }
 
@@ -265,13 +285,13 @@ function KeyStatsGrid({ home, away, homeName, awayName }: { home: any; away: any
     { key: "passes_pct", label: "Pass %" },
   ];
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-3 items-center gap-2 text-[10px] font-black uppercase tracking-[0.22em]">
-        <span className="truncate text-left text-[var(--color-neon)]">{homeName}</span>
-        <span className="text-center text-[var(--color-ink-muted)]">vs</span>
-        <span className="truncate text-right">{awayName}</span>
+    <div className="space-y-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 text-[10px] font-black uppercase tracking-[0.18em]">
+        <span className="min-w-0 truncate text-left text-[var(--color-neon)]">{homeName}</span>
+        <span className="shrink-0 text-center text-[var(--color-ink-muted)]">vs</span>
+        <span className="min-w-0 truncate text-right">{awayName}</span>
       </div>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <div className="grid gap-2.5 sm:grid-cols-2">
         {rows.map((r) => {
           const h = home?.[r.key];
           const a = away?.[r.key];
@@ -282,13 +302,13 @@ function KeyStatsGrid({ home, away, homeName, awayName }: { home: any; away: any
           const hPct = (hv / total) * 100;
           const lead = hv === av ? null : hv > av ? "home" : "away";
           return (
-            <div key={r.key} className="border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-2.5">
-              <div className="mb-1.5 text-center text-[9px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">{r.label}</div>
-              <div className="flex items-baseline justify-between gap-1 font-display text-base font-black tabular-nums">
-                <span className={lead === "home" ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]"}>{h ?? "—"}</span>
-                <span className={lead === "away" ? "text-white" : "text-[var(--color-ink)]"}>{a ?? "—"}</span>
+            <div key={r.key} className="border border-[var(--color-surface-border)]/70 bg-[var(--color-surface)]/45 px-3.5 py-3">
+              <div className="mb-2 grid grid-cols-[56px_1fr_56px] items-baseline gap-2">
+                <span className={`font-display text-xl font-black tabular-nums ${lead === "home" ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]"}`}>{h ?? "—"}</span>
+                <span className="text-center text-[10px] font-black uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">{r.label}</span>
+                <span className={`text-right font-display text-xl font-black tabular-nums ${lead === "away" ? "text-[var(--color-ink)]" : "text-[var(--color-ink)]/80"}`}>{a ?? "—"}</span>
               </div>
-              <div className="mt-1.5 flex h-1 overflow-hidden bg-[var(--color-surface)]">
+              <div className="flex h-2 overflow-hidden bg-[var(--color-surface-border)]/40">
                 <div className="bg-[var(--color-neon)] transition-all duration-700" style={{ width: `${hPct}%` }} />
                 <div className="bg-white/60 transition-all duration-700" style={{ width: `${100 - hPct}%` }} />
               </div>
@@ -412,18 +432,18 @@ function MatchHero({
   const progressPct = Math.min(100, (currentMinute / progressCap) * 100);
 
   return (
-    <article className="relative overflow-hidden border border-[var(--color-neon)]/30 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-30px_var(--color-neon-glow)]">
+    <article className="relative -mx-4 overflow-hidden border-y border-[var(--color-neon)]/30 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-30px_var(--color-neon-glow)] md:mx-0 md:border">
       <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
       <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04]">
         <PitchIcon size={260} className="text-[var(--color-neon)]" />
       </div>
 
       {/* Ticker row */}
-      <div className="relative flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-4 py-2.5">
-        <span className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+      <div className="relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-dashed border-[var(--color-surface-border)] px-4 py-3">
+        <span className="flex min-w-0 items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">
           <WhistleIcon size={12} /> {stage}
         </span>
-        <span className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+        <span className="flex shrink-0 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
           {isLive ? (
             <span className="flex items-center gap-1.5 text-destructive">
               <span className="relative flex h-2 w-2">
@@ -447,8 +467,8 @@ function MatchHero({
       </div>
 
       {/* Scoreboard — generous mobile spacing */}
-      <div className="relative px-3 pb-4 pt-5 sm:px-4">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3">
+      <div className="relative px-4 pb-5 pt-6 sm:px-5">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-4">
           <HeroTeam name={match.home_team} accent="home" align="left" goals={homeGoals} />
           <div className="flex flex-col items-center justify-start pt-2">
             {showScore ? (
@@ -497,8 +517,8 @@ function HeroTeam({ name, accent, align, goals }: { name: string; accent: "home"
     : "border-white/40";
   const itemsAlign = align === "right" ? "items-end text-right" : "items-start text-left";
   return (
-    <div className={`flex min-w-0 flex-col gap-2 ${itemsAlign}`}>
-      <div className={`relative h-14 w-20 overflow-hidden border ${accentCls}`}>
+    <div className={`flex min-w-0 flex-col gap-2.5 ${itemsAlign}`}>
+      <div className={`relative h-16 w-full max-w-24 overflow-hidden border ${accentCls}`}>
         {url ? (
           <img src={url} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
         ) : (
@@ -508,7 +528,7 @@ function HeroTeam({ name, accent, align, goals }: { name: string; accent: "home"
         )}
         <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/30" />
       </div>
-      <span className="w-full truncate font-display text-[11px] font-black uppercase tracking-[0.16em]" title={name}>
+      <span className="w-full truncate font-display text-xs font-black uppercase tracking-[0.12em]" title={name}>
         {name}
       </span>
       {goals.length > 0 && (
@@ -853,10 +873,10 @@ function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "
           {lineup.formation ?? ""}
         </span>
       </div>
-      <ul className="grid grid-cols-2 gap-x-3 gap-y-1 text-[12px] sm:grid-cols-3">
+      <ul className="grid gap-y-1.5 text-sm sm:grid-cols-2 sm:gap-x-3 md:grid-cols-3">
         {starters.map((p, i) => (
-          <li key={`s-${i}`} className="flex items-baseline gap-2">
-            <span className="w-6 text-right font-display text-[11px] font-bold tabular-nums text-[var(--color-neon)]">
+          <li key={`s-${i}`} className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-baseline gap-2">
+            <span className="text-right font-display text-xs font-bold tabular-nums text-[var(--color-neon)]">
               {p.number ?? ""}
             </span>
             <span className="truncate">{p.name}</span>
@@ -869,10 +889,10 @@ function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "
           <div className="mt-3 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
             Bench
           </div>
-          <ul className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-[12px] sm:grid-cols-3">
+          <ul className="mt-2 grid gap-y-1.5 text-sm sm:grid-cols-2 sm:gap-x-3 md:grid-cols-3">
             {subs.map((p, i) => (
-              <li key={`b-${i}`} className="flex items-baseline gap-2 text-[var(--color-ink-muted)]">
-                <span className="w-6 text-right font-display text-[11px] font-bold tabular-nums">{p.number ?? ""}</span>
+              <li key={`b-${i}`} className="grid grid-cols-[28px_minmax(0,1fr)] items-baseline gap-2 text-[var(--color-ink-muted)]">
+                <span className="text-right font-display text-xs font-bold tabular-nums">{p.number ?? ""}</span>
                 <span className="truncate">{p.name}</span>
               </li>
             ))}
@@ -1003,11 +1023,11 @@ function StatsCompare({ home, away, homeName, awayName }: { home: any; away: any
     { key: "xg", label: "xG" },
   ];
   return (
-    <div className="space-y-2.5">
-      <div className="grid grid-cols-3 gap-2 text-[10px] font-black uppercase tracking-[0.22em]">
-        <span className="text-left text-[var(--color-neon)]">{homeName}</span>
-        <span className="text-center text-[var(--color-ink-muted)]">stat</span>
-        <span className="text-right">{awayName}</span>
+    <div className="space-y-3.5">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-3 text-[10px] font-black uppercase tracking-[0.18em]">
+        <span className="min-w-0 truncate text-left text-[var(--color-neon)]">{homeName}</span>
+        <span className="shrink-0 text-center text-[var(--color-ink-muted)]">stat</span>
+        <span className="min-w-0 truncate text-right">{awayName}</span>
       </div>
       {rows.map((r) => {
         const h = home?.[r.key];
@@ -1020,21 +1040,21 @@ function StatsCompare({ home, away, homeName, awayName }: { home: any; away: any
         const aPct = (av / total) * 100;
         const homeLeads = hv > av;
         return (
-          <div key={r.key} className="space-y-1">
-            <div className="grid grid-cols-3 items-center gap-2 text-xs">
-              <span className={`text-left font-display font-black tabular-nums ${homeLeads ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]"}`}>{h ?? "—"}</span>
-              <span className="text-center text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">{r.label}</span>
-              <span className={`text-right font-display font-black tabular-nums ${!homeLeads && av > 0 ? "text-white" : "text-[var(--color-ink)]"}`}>{a ?? "—"}</span>
+          <div key={r.key} className="border-b border-dashed border-[var(--color-surface-border)]/55 pb-3 last:border-0 last:pb-0">
+            <div className="mb-2 grid grid-cols-[64px_1fr_64px] items-baseline gap-2">
+              <span className={`text-left font-display text-xl font-black tabular-nums ${homeLeads ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]"}`}>{h ?? "—"}</span>
+              <span className="text-center text-[10px] font-black uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">{r.label}</span>
+              <span className={`text-right font-display text-xl font-black tabular-nums ${!homeLeads && av > 0 ? "text-[var(--color-ink)]" : "text-[var(--color-ink)]/80"}`}>{a ?? "—"}</span>
             </div>
             {/* Mirror bars meeting in the centre */}
             <div className="grid grid-cols-2 items-center">
-              <div className="flex h-1.5 justify-end bg-[var(--color-surface)]">
+              <div className="flex h-2.5 justify-end bg-[var(--color-surface)]">
                 <div
                   className="h-full bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon-glow)] transition-all duration-700"
                   style={{ width: `${hPct}%` }}
                 />
               </div>
-              <div className="flex h-1.5 bg-[var(--color-surface)]">
+              <div className="flex h-2.5 bg-[var(--color-surface)]">
                 <div
                   className="h-full bg-white/70 transition-all duration-700"
                   style={{ width: `${aPct}%` }}
@@ -1060,23 +1080,23 @@ function EventTimeline({ events, home, away, compact }: { events: any[]; home: s
   const hasMore = !compact && ordered.length > 7;
   return (
     <div className="relative">
-      <div className={compact ? "" : "max-h-[300px] overflow-y-auto pr-1"}>
+      <div className={compact ? "" : "md:max-h-[420px] md:overflow-y-auto md:pr-1"}>
 
-        <ul className="relative space-y-2">
+        <ul className="relative space-y-3">
           {/* Vertical timeline rail */}
-          <span aria-hidden className="pointer-events-none absolute bottom-1 left-[44px] top-1 w-px bg-[var(--color-surface-border)]" />
+          <span aria-hidden className="pointer-events-none absolute bottom-2 left-[48px] top-2 w-px bg-[var(--color-surface-border)]" />
           {ordered.map((e) => {
             const sideLabel = e.side === "home" ? home : e.side === "away" ? away : "";
             const isHome = e.side === "home";
             return (
-              <li key={e.id} className="relative grid grid-cols-[36px_24px_1fr] items-center gap-2 text-xs">
-                <span className="font-display text-[11px] font-black tabular-nums text-[var(--color-ink-muted)]">
+              <li key={e.id} className="relative grid grid-cols-[40px_28px_minmax(0,1fr)] items-center gap-2.5 text-sm">
+                <span className="font-display text-xs font-black tabular-nums text-[var(--color-ink-muted)]">
                   {e.minute ?? "—"}{e.extra_minute ? `+${e.extra_minute}` : ""}'
                 </span>
-                <span className="relative z-10 grid h-6 w-6 place-items-center border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
+                <span className="relative z-10 grid h-7 w-7 place-items-center border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
                   {eventMark(e.type, e.detail, 12)}
                 </span>
-                <div className="min-w-0 border-l-2 pl-2 leading-tight" style={{ borderColor: isHome ? "var(--color-neon)" : "rgba(255,255,255,0.5)" }}>
+                <div className="min-w-0 border-l-2 py-1 pl-3 leading-snug" style={{ borderColor: isHome ? "var(--color-neon)" : "rgba(255,255,255,0.5)" }}>
                   <div className="truncate">
                     <span className="font-semibold">{e.player_name ?? e.detail ?? e.type}</span>
                     {e.assist_name && <span className="text-[var(--color-ink-muted)]"> · assist {e.assist_name}</span>}
