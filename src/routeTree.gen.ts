@@ -71,6 +71,10 @@ import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/pub
 import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
 import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
 import { Route as ApiPublicHooksApifootballSyncRouteImport } from './routes/api/public/hooks/apifootball-sync'
+import { Route as ApiPublicHooksApifootballPrematchRouteImport } from './routes/api/public/hooks/apifootball-prematch'
+import { Route as ApiPublicHooksApifootballLiveRouteImport } from './routes/api/public/hooks/apifootball-live'
+import { Route as ApiPublicHooksApifootballLineupsRouteImport } from './routes/api/public/hooks/apifootball-lineups'
+import { Route as ApiPublicHooksApifootballFulltimeRouteImport } from './routes/api/public/hooks/apifootball-fulltime'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -407,6 +411,30 @@ const ApiPublicHooksApifootballSyncRoute =
     path: '/api/public/hooks/apifootball-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksApifootballPrematchRoute =
+  ApiPublicHooksApifootballPrematchRouteImport.update({
+    id: '/api/public/hooks/apifootball-prematch',
+    path: '/api/public/hooks/apifootball-prematch',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksApifootballLiveRoute =
+  ApiPublicHooksApifootballLiveRouteImport.update({
+    id: '/api/public/hooks/apifootball-live',
+    path: '/api/public/hooks/apifootball-live',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksApifootballLineupsRoute =
+  ApiPublicHooksApifootballLineupsRouteImport.update({
+    id: '/api/public/hooks/apifootball-lineups',
+    path: '/api/public/hooks/apifootball-lineups',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksApifootballFulltimeRoute =
+  ApiPublicHooksApifootballFulltimeRouteImport.update({
+    id: '/api/public/hooks/apifootball-fulltime',
+    path: '/api/public/hooks/apifootball-fulltime',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -465,6 +493,10 @@ export interface FileRoutesByFullPath {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
+  '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
+  '/api/public/hooks/apifootball-live': typeof ApiPublicHooksApifootballLiveRoute
+  '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
@@ -527,6 +559,10 @@ export interface FileRoutesByTo {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
+  '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
+  '/api/public/hooks/apifootball-live': typeof ApiPublicHooksApifootballLiveRoute
+  '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
@@ -592,6 +628,10 @@ export interface FileRoutesById {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
+  '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
+  '/api/public/hooks/apifootball-live': typeof ApiPublicHooksApifootballLiveRoute
+  '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
@@ -657,6 +697,10 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin/'
+    | '/api/public/hooks/apifootball-fulltime'
+    | '/api/public/hooks/apifootball-lineups'
+    | '/api/public/hooks/apifootball-live'
+    | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
@@ -719,6 +763,10 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin'
+    | '/api/public/hooks/apifootball-fulltime'
+    | '/api/public/hooks/apifootball-lineups'
+    | '/api/public/hooks/apifootball-live'
+    | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
@@ -783,6 +831,10 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-ledger'
     | '/management/admin/'
+    | '/api/public/hooks/apifootball-fulltime'
+    | '/api/public/hooks/apifootball-lineups'
+    | '/api/public/hooks/apifootball-live'
+    | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/reconciliation'
@@ -797,6 +849,10 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BrandRoute: typeof BrandRoute
   RegisterRoute: typeof RegisterRoute
+  ApiPublicHooksApifootballFulltimeRoute: typeof ApiPublicHooksApifootballFulltimeRoute
+  ApiPublicHooksApifootballLineupsRoute: typeof ApiPublicHooksApifootballLineupsRoute
+  ApiPublicHooksApifootballLiveRoute: typeof ApiPublicHooksApifootballLiveRoute
+  ApiPublicHooksApifootballPrematchRoute: typeof ApiPublicHooksApifootballPrematchRoute
   ApiPublicHooksApifootballSyncRoute: typeof ApiPublicHooksApifootballSyncRoute
   ApiPublicHooksHealthCheckRoute: typeof ApiPublicHooksHealthCheckRoute
   ApiPublicHooksReconciliationRoute: typeof ApiPublicHooksReconciliationRoute
@@ -1240,6 +1296,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksApifootballSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/apifootball-prematch': {
+      id: '/api/public/hooks/apifootball-prematch'
+      path: '/api/public/hooks/apifootball-prematch'
+      fullPath: '/api/public/hooks/apifootball-prematch'
+      preLoaderRoute: typeof ApiPublicHooksApifootballPrematchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/apifootball-live': {
+      id: '/api/public/hooks/apifootball-live'
+      path: '/api/public/hooks/apifootball-live'
+      fullPath: '/api/public/hooks/apifootball-live'
+      preLoaderRoute: typeof ApiPublicHooksApifootballLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/apifootball-lineups': {
+      id: '/api/public/hooks/apifootball-lineups'
+      path: '/api/public/hooks/apifootball-lineups'
+      fullPath: '/api/public/hooks/apifootball-lineups'
+      preLoaderRoute: typeof ApiPublicHooksApifootballLineupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/apifootball-fulltime': {
+      id: '/api/public/hooks/apifootball-fulltime'
+      path: '/api/public/hooks/apifootball-fulltime'
+      fullPath: '/api/public/hooks/apifootball-fulltime'
+      preLoaderRoute: typeof ApiPublicHooksApifootballFulltimeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1390,6 +1474,12 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BrandRoute: BrandRoute,
   RegisterRoute: RegisterRoute,
+  ApiPublicHooksApifootballFulltimeRoute:
+    ApiPublicHooksApifootballFulltimeRoute,
+  ApiPublicHooksApifootballLineupsRoute: ApiPublicHooksApifootballLineupsRoute,
+  ApiPublicHooksApifootballLiveRoute: ApiPublicHooksApifootballLiveRoute,
+  ApiPublicHooksApifootballPrematchRoute:
+    ApiPublicHooksApifootballPrematchRoute,
   ApiPublicHooksApifootballSyncRoute: ApiPublicHooksApifootballSyncRoute,
   ApiPublicHooksHealthCheckRoute: ApiPublicHooksHealthCheckRoute,
   ApiPublicHooksReconciliationRoute: ApiPublicHooksReconciliationRoute,
