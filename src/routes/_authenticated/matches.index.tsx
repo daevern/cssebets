@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
-import { ArrowUpRight, Loader2, Radio } from "lucide-react";
+import { ArrowUpRight, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/matches/")({
@@ -41,18 +41,16 @@ function useTicker(intervalMs = 30_000): number {
 
 function formatKickoff(iso: string, now: number): string {
   const diff = new Date(iso).getTime() - now;
-  if (diff <= 0) return "Kicked off";
+  const d = new Date(iso);
+  const dateStr = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (diff <= 0) return `${dateStr} · ${timeStr}`;
   const m = Math.floor(diff / 60_000);
   if (m < 60) return `Kicks off in ${m}m`;
   const h = Math.floor(m / 60);
   const rm = m % 60;
-  if (h < 24) return rm ? `Kicks off in ${h}h ${rm}m` : `Kicks off in ${h}h`;
-  const d = Math.floor(h / 24);
-  return `Kicks off in ${d}d ${h % 24}h`;
-}
-
-function abbreviate(name: string): string {
-  return name.slice(0, 3).toUpperCase();
+  if (h < 12) return rm ? `Kicks off in ${h}h ${rm}m` : `Kicks off in ${h}h`;
+  return `${dateStr} · ${timeStr}`;
 }
 
 function MatchesPage() {
@@ -91,7 +89,7 @@ function MatchesPage() {
         l.push(m);
       } else if (m.status === "finished") {
         c.push(m);
-      } else if (kickoff > now && kickoff <= now + oneDay) {
+      } else if (kickoff > now && kickoff <= now + oneDay * 3) {
         u.push(m);
       }
     }
@@ -101,45 +99,43 @@ function MatchesPage() {
     return { live: l, upcoming: u, completed: c };
   }, [data, now]);
 
-  const totalToday = live.length + upcoming.length;
-
   return (
     <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
-      {/* atmospheric grain */}
+      {/* subtle brand grid */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 opacity-[0.04]"
+        className="pointer-events-none fixed inset-0 opacity-[0.025]"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
+            "linear-gradient(var(--color-neon) 1px, transparent 1px), linear-gradient(90deg, var(--color-neon) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
         }}
       />
-      {/* stadium glow */}
+      {/* soft top bloom */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-x-0 top-0 h-[340px]"
+        className="pointer-events-none fixed inset-x-0 top-0 h-[280px]"
         style={{
           background:
-            "radial-gradient(ellipse at 50% 0%, rgba(34,224,107,0.10) 0%, rgba(34,224,107,0.02) 40%, transparent 70%)",
+            "radial-gradient(ellipse at 50% -10%, color-mix(in oklab, var(--color-neon) 8%, transparent) 0%, transparent 60%)",
         }}
       />
 
       <div
-        className="relative mx-auto flex max-w-md flex-col gap-8 px-4 pt-6 md:max-w-2xl md:pt-10"
+        className="relative mx-auto flex max-w-md flex-col gap-8 px-4 pt-8 md:max-w-2xl md:pt-12"
         style={{ paddingBottom: "calc(200px + env(safe-area-inset-bottom))" }}
       >
-        {/* Header */}
-        <header className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
-            <Radio className="h-3 w-3" />
-            Matchday
+        {/* Header — quiet, confident */}
+        <header className="flex flex-col gap-1.5">
+          <div className="text-[10px] font-medium uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+            Sports · Soccer
           </div>
-          <h1 className="font-display text-[32px] font-bold leading-[1.02] tracking-tight md:text-5xl">
-            World Cup <span className="text-[var(--color-neon)]">Markets</span>
+          <h1 className="font-display text-[28px] font-semibold leading-[1.05] tracking-tight text-[var(--color-ink)] md:text-4xl">
+            World Cup
           </h1>
-          <p className="text-[12px] uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
-            Round of 32{totalToday > 0 && <span> · {totalToday} fixture{totalToday === 1 ? "" : "s"}</span>}
-          </p>
+          <div className="text-[11px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]">
+            FIFA World Cup · Round of 32
+          </div>
         </header>
 
         {isLoading ? (
@@ -149,41 +145,24 @@ function MatchesPage() {
         ) : !data?.length ? (
           <EmptyState />
         ) : (
-          <>
+          <div className="flex flex-col gap-8">
             {live.length > 0 && (
-              <Section title="Live now" pulse>
-                <div className="flex flex-col gap-3">
-                  {live.map((m) => (
-                    <MatchCard key={m.id} match={m} tone="live" now={now} />
-                  ))}
-                </div>
+              <Section title="Live" pulse>
+                {live.map((m) => <MatchCard key={m.id} match={m} tone="live" now={now} />)}
               </Section>
             )}
-
             {upcoming.length > 0 && (
               <Section title="Upcoming">
-                <div className="flex flex-col gap-3">
-                  {upcoming.map((m) => (
-                    <MatchCard key={m.id} match={m} tone="upcoming" now={now} />
-                  ))}
-                </div>
+                {upcoming.map((m) => <MatchCard key={m.id} match={m} tone="upcoming" now={now} />)}
               </Section>
             )}
-
             {completed.length > 0 && (
               <Section title="Completed">
-                <div className="flex flex-col gap-3">
-                  {completed.slice(0, 8).map((m) => (
-                    <MatchCard key={m.id} match={m} tone="closed" now={now} />
-                  ))}
-                </div>
+                {completed.slice(0, 8).map((m) => <MatchCard key={m.id} match={m} tone="closed" now={now} />)}
               </Section>
             )}
-
-            {live.length === 0 && upcoming.length === 0 && completed.length === 0 && (
-              <EmptyState />
-            )}
-          </>
+            {live.length === 0 && upcoming.length === 0 && completed.length === 0 && <EmptyState />}
+          </div>
         )}
       </div>
     </div>
@@ -195,19 +174,29 @@ function Section({ title, pulse, children }: { title: string; pulse?: boolean; c
     <section className="space-y-3">
       <div className="flex items-center gap-2">
         {pulse && (
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-neon)] opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--color-neon)]" />
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-70" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-destructive" />
           </span>
         )}
-        <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+        <span className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${pulse ? "text-destructive" : "text-[var(--color-ink-muted)]"}`}>
           {title}
         </span>
-        <span className="h-px flex-1 bg-gradient-to-r from-[var(--color-surface-border)] to-transparent" />
       </div>
-      {children}
+      <div className="flex flex-col gap-2.5">{children}</div>
     </section>
   );
+}
+
+function computeSideChances(odds: Match["reference_odds"]): { home: number; away: number } | null {
+  if (!odds || !odds.home || !odds.away || !odds.draw) return null;
+  const raw = [1 / odds.home, 1 / odds.draw, 1 / odds.away];
+  const sum = raw.reduce((a, b) => a + b, 0);
+  if (!sum) return null;
+  // Fold draw into each side (advance-style)
+  const home = (raw[0] + raw[1] / 2) / sum;
+  const away = (raw[2] + raw[1] / 2) / sum;
+  return { home: Math.round(home * 100), away: Math.round(away * 100) };
 }
 
 function MatchCard({ match, tone, now }: { match: Match; tone: "live" | "upcoming" | "closed"; now: number }) {
@@ -222,106 +211,72 @@ function MatchCard({ match, tone, now }: { match: Match; tone: "live" | "upcomin
       ? "Full time"
       : formatKickoff(match.kickoff_at, now);
 
-  const odds = match.reference_odds;
-  const probs = useMemo(() => {
-    if (!odds) return null;
-    const raw = [1 / odds.home, 1 / odds.draw, 1 / odds.away];
-    const sum = raw.reduce((a, b) => a + b, 0);
-    if (!sum) return null;
-    return {
-      home: Math.round((raw[0] / sum) * 100),
-      draw: Math.round((raw[1] / sum) * 100),
-      away: Math.round((raw[2] / sum) * 100),
-    };
-  }, [odds]);
+  const chances = useMemo(() => computeSideChances(match.reference_odds), [match.reference_odds]);
+  const hScore = match.home_score;
+  const aScore = match.away_score;
+  const showScore = (live && (hScore != null || aScore != null)) || finished;
 
   return (
     <Link
       to="/matches/$matchId"
       params={{ matchId: match.id }}
       aria-label={`Open market for ${match.home_team} vs ${match.away_team}`}
-      className={`group relative block overflow-hidden rounded-lg border bg-[var(--color-surface-2)] transition-all ${
+      className={`group relative block overflow-hidden rounded-xl border bg-[var(--color-surface-2)]/70 backdrop-blur-sm transition-all ${
         live
-          ? "border-[var(--color-neon)]/40 shadow-[0_0_0_1px_rgba(34,224,107,0.08),0_10px_30px_-15px_rgba(34,224,107,0.3)]"
+          ? "border-destructive/30 hover:border-destructive/50"
           : finished
-            ? "border-[var(--color-surface-border)]/60 opacity-90"
-            : "border-[var(--color-surface-border)] hover:border-[var(--color-neon)]/30"
+            ? "border-[var(--color-surface-border)]/50 opacity-80 hover:opacity-100"
+            : "border-[var(--color-surface-border)]/70 hover:border-[var(--color-neon)]/40"
       }`}
     >
-      {/* live left ribbon */}
-      {live && (
-        <span
-          aria-hidden
-          className="absolute inset-y-0 left-0 w-[2px] bg-gradient-to-b from-[var(--color-neon)] via-[var(--color-neon)]/60 to-transparent"
-        />
-      )}
-
-      <div className="flex flex-col gap-4 px-4 py-4">
+      <div className="flex flex-col gap-3.5 px-4 py-3.5">
         {/* status row */}
         <div className="flex items-center justify-between">
+          <span className="truncate text-[15px] font-semibold leading-none tracking-tight text-[var(--color-ink)]">
+            {match.home_team} <span className="text-[var(--color-ink-muted)]">vs</span> {match.away_team}
+          </span>
           <span
-            className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.22em] ${
-              live
-                ? "text-[var(--color-neon)]"
-                : finished
-                  ? "text-[var(--color-ink-muted)]"
-                  : "text-[var(--color-ink-muted)]"
+            className={`shrink-0 pl-3 text-[10px] font-semibold uppercase tracking-[0.2em] ${
+              live ? "text-destructive" : finished ? "text-[var(--color-ink-muted)]" : "text-[var(--color-ink-muted)]"
             }`}
           >
             {live && (
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon)]" />
+              <span className="mr-1.5 inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-destructive align-middle" />
             )}
             {statusLabel}
           </span>
-          {finished && match.home_score != null && match.away_score != null ? (
-            <span className="text-[13px] font-semibold tabular-nums text-[var(--color-ink)]">
-              {match.home_score} – {match.away_score}
-            </span>
-          ) : (
-            <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-              {new Date(match.kickoff_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </span>
-          )}
         </div>
 
-        {/* teams */}
-        <div className="flex flex-col gap-2.5">
-          <TeamRow name={match.home_team} flag={homeFlag} />
-          <div className="flex items-center gap-2">
-            <span className="h-px flex-1 bg-[var(--color-surface-border)]/60" />
-            <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[var(--color-ink-muted)]">
-              vs
-            </span>
-            <span className="h-px flex-1 bg-[var(--color-surface-border)]/60" />
-          </div>
-          <TeamRow name={match.away_team} flag={awayFlag} />
+        {/* team market rows */}
+        <div className="flex flex-col gap-1.5">
+          <TeamMarketRow
+            name={match.home_team}
+            flag={homeFlag}
+            score={showScore ? hScore : null}
+            multiplier={!showScore ? match.reference_odds?.home : null}
+            chance={chances?.home}
+            emphasis={live || finished}
+          />
+          <TeamMarketRow
+            name={match.away_team}
+            flag={awayFlag}
+            score={showScore ? aScore : null}
+            multiplier={!showScore ? match.reference_odds?.away : null}
+            chance={chances?.away}
+            emphasis={live || finished}
+          />
         </div>
 
-        {/* market estimate */}
-        {probs && (
-          <div className="flex items-center justify-between gap-3 rounded-md border border-[var(--color-surface-border)]/60 bg-[var(--color-surface)]/50 px-3 py-2">
-            <ProbCell label={abbreviate(match.home_team)} value={probs.home} />
-            <span className="h-6 w-px bg-[var(--color-surface-border)]/60" />
-            <ProbCell label="DRAW" value={probs.draw} />
-            <span className="h-6 w-px bg-[var(--color-surface-border)]/60" />
-            <ProbCell label={abbreviate(match.away_team)} value={probs.away} />
-          </div>
-        )}
-
-        {/* CTA */}
-        <div className="flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)]/70 pt-3">
-          <span className="text-[10px] font-medium uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
-            {finished ? "View result" : "Open market"}
-          </span>
+        {/* footer */}
+        <div className="flex items-center justify-between pt-1 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+          <span>{finished ? "Result" : "Prediction market"}</span>
           <span
-            className={`inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.2em] transition-colors ${
-              finished
-                ? "text-[var(--color-ink-muted)] group-hover:text-[var(--color-ink)]"
-                : "text-[var(--color-neon)]"
+            className={`inline-flex items-center gap-1 font-semibold ${
+              finished ? "text-[var(--color-ink-muted)] group-hover:text-[var(--color-ink)]" : "text-[var(--color-neon)]"
             }`}
           >
-            {finished ? "Open" : "Predict"}
-            <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            Open Market
+            <ArrowUpRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </span>
         </div>
       </div>
@@ -329,36 +284,43 @@ function MatchCard({ match, tone, now }: { match: Match; tone: "live" | "upcomin
   );
 }
 
-function TeamRow({ name, flag }: { name: string; flag: string | null }) {
+function TeamMarketRow({
+  name,
+  flag,
+  score,
+  multiplier,
+  chance,
+  emphasis,
+}: {
+  name: string;
+  flag: string | null;
+  score: number | null;
+  multiplier: number | null | undefined;
+  chance: number | undefined;
+  emphasis: boolean;
+}) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 rounded-md border border-transparent bg-[var(--color-surface)]/40 px-2.5 py-2 transition-colors hover:border-[var(--color-surface-border)]/60">
       {flag ? (
         <img
           src={flag}
           alt=""
-          className="h-6 w-8 rounded-sm object-cover shadow-[0_1px_3px_rgba(0,0,0,0.4)] ring-1 ring-black/40"
+          className="h-5 w-7 rounded-sm object-cover ring-1 ring-black/40"
           loading="lazy"
         />
       ) : (
-        <span className="grid h-6 w-8 place-items-center rounded-sm bg-[var(--color-surface-border)]/60 text-[9px] font-bold text-[var(--color-ink-muted)]">
+        <span className="grid h-5 w-7 place-items-center rounded-sm bg-[var(--color-surface-border)]/50 text-[9px] font-semibold text-[var(--color-ink-muted)]">
           {name.slice(0, 2).toUpperCase()}
         </span>
       )}
-      <span className="text-[15px] font-semibold leading-none tracking-tight text-[var(--color-ink)]">
-        {name}
+      <span className="truncate text-[13px] font-medium text-[var(--color-ink)]">
+        {name} <span className="font-normal text-[var(--color-ink-muted)]">advances</span>
       </span>
-    </div>
-  );
-}
-
-function ProbCell({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex flex-1 flex-col items-center gap-0.5">
-      <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-        {label}
+      <span className={`w-10 text-right text-[12px] font-semibold tabular-nums ${emphasis ? "text-[var(--color-ink)]" : "text-[var(--color-ink-muted)]"}`}>
+        {score != null ? score : multiplier ? `${multiplier.toFixed(2)}x` : "—"}
       </span>
-      <span className="text-[13px] font-semibold tabular-nums text-[var(--color-ink)]">
-        {value}%
+      <span className="w-11 text-right text-[12px] font-semibold tabular-nums text-[var(--color-neon)]">
+        {chance != null ? `${chance}%` : ""}
       </span>
     </div>
   );
@@ -366,8 +328,8 @@ function ProbCell({ label, value }: { label: string; value: number }) {
 
 function EmptyState() {
   return (
-    <div className="rounded-lg border border-dashed border-[var(--color-surface-border)] px-6 py-16 text-center">
-      <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+    <div className="rounded-xl border border-dashed border-[var(--color-surface-border)] px-6 py-16 text-center">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
         No fixtures on the slate
       </p>
       <p className="mt-2 text-[13px] text-[var(--color-ink-muted)]">
