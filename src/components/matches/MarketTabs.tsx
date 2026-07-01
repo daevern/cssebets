@@ -207,7 +207,7 @@ function StakeSlip({
       : "Lock Prediction";
 
   const wrapperClass = sticky
-    ? "sticky z-50 rounded-lg border border-[var(--color-neon)]/40 bg-[#050A08]/98 backdrop-blur p-3.5 space-y-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)]"
+    ? "fixed inset-x-0 z-50 mx-auto max-w-2xl border border-[var(--color-neon)]/40 bg-[#050A08]/98 backdrop-blur p-3.5 space-y-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)] rounded-t-lg"
     : "mt-2 rounded-lg border border-[var(--color-surface-border)] bg-[#070D0A] p-3.5 space-y-2.5 animate-in fade-in-50 duration-200";
 
   return (
@@ -216,7 +216,7 @@ function StakeSlip({
       style={
         sticky
           ? {
-              bottom: "calc(88px + env(safe-area-inset-bottom))",
+              bottom: "calc(72px + env(safe-area-inset-bottom))",
               paddingBottom: "0.875rem",
             }
           : undefined
