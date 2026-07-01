@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPrediction } from "@/lib/predictions.functions";
 import { listMatchesForUsers } from "@/lib/matches.functions";
+import { getMyWallet } from "@/lib/wallet.functions";
 import {
   Collapsible,
   CollapsibleContent,
@@ -16,6 +17,7 @@ import { toast } from "sonner";
 import { MarketTabs } from "@/components/matches/MarketTabs";
 import { useAuth } from "@/hooks/use-auth";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
+
 
 export const Route = createFileRoute("/_authenticated/matches/")({
   head: () => ({ meta: [{ title: "Matches — cssebets" }] }),
