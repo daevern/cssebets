@@ -196,29 +196,17 @@ function AdminWalletPage() {
         )}
       </Card>
 
-      <Card className="p-5 space-y-3">
+      <Card className="p-5 space-y-2">
         <h2 className="font-semibold">Wallet adjustments</h2>
-        <p className="text-xs text-muted-foreground">Positive amount = credit, negative = debit. Use sparingly.</p>
-        {users.isLoading ? (
-          <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
-        ) : (
-          <div className="space-y-2">
-            {(users.data?.users ?? []).map((u: any) => (
-              <AdjustRow
-                key={u.id}
-                user={u}
-                onApply={async (amount, note) => {
-                  try {
-                    const r: any = await adjustFn({ data: { targetUserId: u.id, amount, note } });
-                    toast.success(`New balance: ${r.newBalance}`);
-                    qc.invalidateQueries({ queryKey: ["admin-users-wallets"] });
-                  } catch (e) { toast.error((e as Error).message); }
-                }}
-              />
-            ))}
-          </div>
-        )}
+        <p className="text-xs text-muted-foreground">
+          Direct wallet edits are disabled. All manual credits/debits now flow through the
+          maker-checker Wallet Adjustment Requests queue.
+        </p>
+        <Button asChild size="sm" variant="outline" className="w-fit">
+          <a href="/management/admin/wallet-adjustments">Open Wallet Adjustment Requests →</a>
+        </Button>
       </Card>
+
 
       {/* Proof viewer */}
       <Dialog open={!!proof} onOpenChange={(o) => !o && setProof(null)}>
