@@ -397,15 +397,17 @@ function MatchHero({
   phase,
   homeGoals,
   awayGoals,
+  lastEvent,
 }: {
   match: NonNullable<AnalyticsBundle["match"]>;
   phaseLabel: string;
   phase: AnalyticsBundle["phase"];
   homeGoals: any[];
   awayGoals: any[];
+  lastEvent?: any | null;
 }) {
   const kickoff = new Date(match.kickoff_at);
-  const dateStr = kickoff.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+  const dateStr = kickoff.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   const timeStr = kickoff.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 
   const [countdown, setCountdown] = useState("");
@@ -432,151 +434,142 @@ function MatchHero({
   const isFinished = match.status === "finished";
   const isLive = phase === "live";
   const showScore = isFinished || match.home_score != null || isLive;
+  void homeGoals; void awayGoals; void phaseLabel;
 
-  const markers = useMemo(() => {
-    return (([] as any[])).concat(
-      homeGoals.map((g) => ({ side: "home", kind: "goal", min: g.minute, extra: g.extra_minute, detail: g.detail })),
-      awayGoals.map((g) => ({ side: "away", kind: "goal", min: g.minute, extra: g.extra_minute, detail: g.detail })),
-    );
-  }, [homeGoals, awayGoals]);
+  const homeFlag = teamFlagUrl(match.home_team, 120);
+  const awayFlag = teamFlagUrl(match.away_team, 120);
 
-  const currentMinute = (() => {
-    if (isFinished) {
-      const lastEvt = Math.max(0, ...markers.map((m) => (m.min ?? 0) + (m.extra ?? 0)));
-      return Math.max(90, lastEvt);
-    }
-    if (!isLive) return 0;
-    const min = Math.max(0, Math.floor((Date.now() - kickoff.getTime()) / 60000));
-    if (min <= 45) return min;
-    if (min < 60) return 45;
-    const second = min - 15;
-    if (second <= 105) return second;
-    return Math.min(120, second - 5);
+  const lastPlay = (() => {
+    if (!isLive || !lastEvent) return null;
+    const min = `${lastEvent.minute ?? ""}${lastEvent.extra_minute ? `+${lastEvent.extra_minute}` : ""}'`;
+    const side = lastEvent.side === "home" ? match.home_team : match.away_team;
+    const type = String(lastEvent.type || "").toLowerCase();
+    const detail = String(lastEvent.detail || "").trim();
+    const label =
+      type === "goal" ? "Goal" :
+      type === "card" ? (detail || "Card") :
+      type === "subst" ? "Substitution" :
+      type === "var" ? "VAR" :
+      (detail || type || "Event");
+    return { side, label, min };
   })();
 
-  const progressCap = currentMinute > 90 ? 120 : 90;
-  const progressPct = Math.min(100, (currentMinute / progressCap) * 100);
-
   return (
-    <article className="relative">
-      {/* Ticker row — small, quiet metadata line */}
-      <div className="mb-5 flex items-center justify-between gap-3 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-        <span className="flex min-w-0 items-center gap-2">
-          <WhistleIcon size={11} /> {stage}
-          <span className="hidden text-[var(--color-ink-muted)]/50 sm:inline">·</span>
-          <span className="hidden sm:inline">{dateStr} · {timeStr}</span>
-        </span>
-        <span className="flex shrink-0 items-center gap-2">
+    <article className="relative flex flex-col gap-6">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+        <span>Sports</span>
+        <span className="opacity-40">/</span>
+        <span>Soccer</span>
+        <span className="opacity-40">/</span>
+        <span>FIFA World Cup</span>
+        <span className="opacity-40">/</span>
+        <span className="truncate text-[var(--color-ink)]/80">{stage}</span>
+      </nav>
+
+      {/* Title + status */}
+      <div className="flex flex-col gap-3">
+        <h1 className="font-display text-[26px] font-semibold leading-[1.05] tracking-tight text-[var(--color-ink)] md:text-4xl">
+          {match.home_team} <span className="text-[var(--color-ink-muted)]/70">vs</span> {match.away_team}
+        </h1>
+        <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.02em]">
           {isLive ? (
-            <span className="flex items-center gap-1.5 text-destructive">
+            <span className="inline-flex items-center gap-1.5 text-destructive">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-destructive" />
               </span>
-              <span className="font-semibold tracking-[0.22em]">LIVE {liveClock.label}</span>
+              <span className="font-semibold uppercase tracking-[0.22em]">LIVE · {liveClock.label}</span>
+            </span>
+          ) : isFinished ? (
+            <span className="font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Full time</span>
+          ) : countdown ? (
+            <span className="text-[var(--color-ink-muted)]">
+              Begins in <span className="font-semibold text-[var(--color-neon)]">{countdown}</span>
             </span>
           ) : (
-            <span className="font-medium tracking-[0.2em]">{phaseLabel}</span>
+            <span className="text-[var(--color-ink-muted)]">
+              Kicks off <span className="text-[var(--color-ink)]">{dateStr} · {timeStr}</span>
+            </span>
           )}
-        </span>
-      </div>
-
-      {/* Kickoff line — mobile-only date/time */}
-      <div className="mb-6 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--color-ink-muted)] sm:hidden">
-        {dateStr} · {timeStr}
-      </div>
-
-      {/* Scoreboard — editorial hero, no chrome */}
-      <div className="relative">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-4 md:gap-6">
-          <HeroTeam name={match.home_team} accent="home" align="left" goals={homeGoals} />
-          <div className="flex flex-col items-center justify-start pt-3">
-            {showScore ? (
-              <div className="flex items-baseline gap-2 font-display leading-none tracking-tight">
-                <span className="text-5xl font-semibold tabular-nums text-[var(--color-ink)] sm:text-6xl md:text-7xl">
-                  {match.home_score ?? 0}
-                </span>
-                <span className="text-3xl font-light text-[var(--color-ink-muted)]/60 sm:text-4xl">–</span>
-                <span className="text-5xl font-semibold tabular-nums text-[var(--color-ink)] sm:text-6xl md:text-7xl">
-                  {match.away_score ?? 0}
-                </span>
-              </div>
-            ) : (
-              <span className="font-display text-2xl font-light tracking-tight text-[var(--color-ink-muted)] sm:text-3xl">vs</span>
-            )}
-            {(match.penalty_home_score != null || match.penalty_away_score != null) && (
-              <div className="mt-3 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-                Pens <span className="tabular-nums text-[var(--color-ink)]">{match.penalty_home_score ?? 0}–{match.penalty_away_score ?? 0}</span>
-              </div>
-            )}
-            {countdown && !isLive && !isFinished && (
-              <span className="mt-3 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-                Kicks off in <span className="text-[var(--color-neon)]">{countdown}</span>
-              </span>
-            )}
-          </div>
-          <HeroTeam name={match.away_team} accent="away" align="right" goals={awayGoals} />
         </div>
-
-        {/* 90-minute progress bar */}
-        {(isLive || isFinished) && (
-          <MatchProgress pct={progressPct} cap={progressCap} markers={markers} />
-        )}
       </div>
 
-      {/* Trust line — quiet, single row */}
-      <div className="mt-6 text-[10px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]/80">
+      {/* Scoreboard */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 md:gap-8">
+        <ScoreTeam name={match.home_team} flag={homeFlag} align="left" />
+        <div className="flex flex-col items-center">
+          {showScore ? (
+            <div className="flex items-baseline gap-2 font-display leading-none tracking-tight">
+              <span className="text-4xl font-semibold tabular-nums text-[var(--color-ink)] sm:text-5xl md:text-6xl">
+                {match.home_score ?? 0}
+              </span>
+              <span className="text-2xl font-light text-[var(--color-ink-muted)]/50 sm:text-3xl">–</span>
+              <span className="text-4xl font-semibold tabular-nums text-[var(--color-ink)] sm:text-5xl md:text-6xl">
+                {match.away_score ?? 0}
+              </span>
+            </div>
+          ) : (
+            <span className="font-display text-xl font-light tracking-tight text-[var(--color-ink-muted)] sm:text-2xl">vs</span>
+          )}
+          {(match.penalty_home_score != null || match.penalty_away_score != null) && (
+            <div className="mt-2 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+              Pens <span className="tabular-nums text-[var(--color-ink)]">{match.penalty_home_score ?? 0}–{match.penalty_away_score ?? 0}</span>
+            </div>
+          )}
+        </div>
+        <ScoreTeam name={match.away_team} flag={awayFlag} align="right" />
+      </div>
+
+      {/* Last play */}
+      {lastPlay && (
+        <div className="text-[11px] tracking-[0.02em] text-[var(--color-ink-muted)]">
+          <span className="font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]/80">Last play</span>
+          <span className="mx-2 opacity-40">·</span>
+          <span className="text-[var(--color-ink)]">{lastPlay.side}</span>{" "}
+          <span>{lastPlay.label}</span>{" "}
+          <span className="tabular-nums text-[var(--color-ink-muted)]">({lastPlay.min})</span>
+        </div>
+      )}
+
+      {/* Trust line */}
+      <div className="text-[10px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]/70">
         Virtual points · Official result settlement · Audit logged
       </div>
+
+      {/* Divider before graph */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
     </article>
   );
 }
 
-
-/* Vertical hero team: flag → name → goal scorers, all aligned left or right.
- * Mobile-first: each team gets its own column of breathing room. */
-function HeroTeam({ name, accent, align, goals }: { name: string; accent: "home"|"away"; align: "left"|"right"; goals: any[] }) {
-  const url = teamFlagUrl(name, 160);
-  const accentCls = "border-[var(--color-surface-border)]/60";
-  const itemsAlign = align === "right" ? "items-end text-right" : "items-start text-left";
+/* Compact scoreboard team cell — flag + team name, aligned. */
+function ScoreTeam({ name, flag, align }: { name: string; flag: string | null; align: "left" | "right" }) {
+  const isRight = align === "right";
   return (
-    <div className={`flex min-w-0 flex-col gap-3 ${itemsAlign}`}>
-      <div className={`relative h-14 w-full max-w-20 overflow-hidden border ${accentCls}`}>
-        {url ? (
-          <img src={url} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
+    <div className={`flex min-w-0 items-center gap-2.5 sm:gap-3 ${isRight ? "flex-row-reverse text-right" : "text-left"}`}>
+      <div className="relative h-8 w-11 shrink-0 overflow-hidden rounded-sm border border-[var(--color-surface-border)]/60 sm:h-10 sm:w-14">
+        {flag ? (
+          <img src={flag} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[10px] font-semibold uppercase tracking-wider">
+          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[9px] font-semibold uppercase tracking-wider">
             {name.slice(0, 3)}
           </div>
         )}
-        <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/20" />
+        <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/25" />
       </div>
-      <span className="w-full truncate font-display text-base font-semibold tracking-tight text-[var(--color-ink)] sm:text-lg md:text-xl" title={name}>
-        {name}
-      </span>
-
-      {goals.length > 0 && (
-        <ul className={`flex w-full flex-col gap-1 text-[11px] leading-tight ${align === "right" ? "items-end" : "items-start"}`}>
-          {goals.map((g, i) => {
-            const min = `${g.minute ?? ""}${g.extra_minute ? `+${g.extra_minute}` : ""}'`;
-            const isPen = String(g.detail || "").toLowerCase().includes("penalty");
-            const isOG = String(g.detail || "").toLowerCase().includes("own");
-            const last = (g.player_name || "").split(" ").slice(-1)[0];
-            return (
-              <li key={i} className={`flex max-w-full items-center gap-1.5 text-[var(--color-ink)] ${align === "right" ? "flex-row-reverse" : ""}`}>
-                <GoalIcon size={10} className={accent === "home" ? "shrink-0 text-[var(--color-neon)]" : "shrink-0 text-white"} />
-                <span className="truncate font-semibold">{last}</span>
-                <span className="shrink-0 font-display tabular-nums text-[var(--color-ink-muted)]">{min}</span>
-                {isPen && <span className="shrink-0 text-[var(--color-ink-muted)]">(P)</span>}
-                {isOG && <span className="shrink-0 text-[var(--color-ink-muted)]">(OG)</span>}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <div className="min-w-0 flex flex-col">
+        <span className="truncate font-display text-sm font-semibold tracking-tight text-[var(--color-ink)] sm:text-base md:text-lg" title={name}>
+          {name}
+        </span>
+        <span className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]/70">
+          {name.slice(0, 3).toUpperCase()}
+        </span>
+      </div>
     </div>
   );
 }
+
 
 
 /* 90-minute strip with HT mark and event markers. */
