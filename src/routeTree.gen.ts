@@ -60,6 +60,7 @@ import { Route as ManagementAdminOddsProviderRouteImport } from './routes/manage
 import { Route as ManagementAdminOddsHistoryRouteImport } from './routes/management/admin.odds-history'
 import { Route as ManagementAdminMatchesRouteImport } from './routes/management/admin.matches'
 import { Route as ManagementAdminMatchPoolsRouteImport } from './routes/management/admin.match-pools'
+import { Route as ManagementAdminMarketRulesRouteImport } from './routes/management/admin.market-rules'
 import { Route as ManagementAdminIncidentsRouteImport } from './routes/management/admin.incidents'
 import { Route as ManagementAdminHealthRouteImport } from './routes/management/admin.health'
 import { Route as ManagementAdminBankrollRouteImport } from './routes/management/admin.bankroll'
@@ -350,6 +351,12 @@ const ManagementAdminMatchPoolsRoute =
     path: '/match-pools',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminMarketRulesRoute =
+  ManagementAdminMarketRulesRouteImport.update({
+    id: '/market-rules',
+    path: '/market-rules',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminIncidentsRoute =
   ManagementAdminIncidentsRouteImport.update({
     id: '/incidents',
@@ -478,6 +485,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
   '/management/admin/health': typeof ManagementAdminHealthRoute
   '/management/admin/incidents': typeof ManagementAdminIncidentsRoute
+  '/management/admin/market-rules': typeof ManagementAdminMarketRulesRoute
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
@@ -544,6 +552,7 @@ export interface FileRoutesByTo {
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
   '/management/admin/health': typeof ManagementAdminHealthRoute
   '/management/admin/incidents': typeof ManagementAdminIncidentsRoute
+  '/management/admin/market-rules': typeof ManagementAdminMarketRulesRoute
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
@@ -614,6 +623,7 @@ export interface FileRoutesById {
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
   '/management/admin/health': typeof ManagementAdminHealthRoute
   '/management/admin/incidents': typeof ManagementAdminIncidentsRoute
+  '/management/admin/market-rules': typeof ManagementAdminMarketRulesRoute
   '/management/admin/match-pools': typeof ManagementAdminMatchPoolsRoute
   '/management/admin/matches': typeof ManagementAdminMatchesRoute
   '/management/admin/odds-history': typeof ManagementAdminOddsHistoryRoute
@@ -684,6 +694,7 @@ export interface FileRouteTypes {
     | '/management/admin/bankroll'
     | '/management/admin/health'
     | '/management/admin/incidents'
+    | '/management/admin/market-rules'
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
@@ -750,6 +761,7 @@ export interface FileRouteTypes {
     | '/management/admin/bankroll'
     | '/management/admin/health'
     | '/management/admin/incidents'
+    | '/management/admin/market-rules'
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
@@ -819,6 +831,7 @@ export interface FileRouteTypes {
     | '/management/admin/bankroll'
     | '/management/admin/health'
     | '/management/admin/incidents'
+    | '/management/admin/market-rules'
     | '/management/admin/match-pools'
     | '/management/admin/matches'
     | '/management/admin/odds-history'
@@ -1230,6 +1243,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminMatchPoolsRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/market-rules': {
+      id: '/management/admin/market-rules'
+      path: '/market-rules'
+      fullPath: '/management/admin/market-rules'
+      preLoaderRoute: typeof ManagementAdminMarketRulesRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/incidents': {
       id: '/management/admin/incidents'
       path: '/incidents'
@@ -1400,6 +1420,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminBankrollRoute: typeof ManagementAdminBankrollRoute
   ManagementAdminHealthRoute: typeof ManagementAdminHealthRoute
   ManagementAdminIncidentsRoute: typeof ManagementAdminIncidentsRoute
+  ManagementAdminMarketRulesRoute: typeof ManagementAdminMarketRulesRoute
   ManagementAdminMatchPoolsRoute: typeof ManagementAdminMatchPoolsRoute
   ManagementAdminMatchesRoute: typeof ManagementAdminMatchesRoute
   ManagementAdminOddsHistoryRoute: typeof ManagementAdminOddsHistoryRoute
@@ -1431,6 +1452,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminBankrollRoute: ManagementAdminBankrollRoute,
   ManagementAdminHealthRoute: ManagementAdminHealthRoute,
   ManagementAdminIncidentsRoute: ManagementAdminIncidentsRoute,
+  ManagementAdminMarketRulesRoute: ManagementAdminMarketRulesRoute,
   ManagementAdminMatchPoolsRoute: ManagementAdminMatchPoolsRoute,
   ManagementAdminMatchesRoute: ManagementAdminMatchesRoute,
   ManagementAdminOddsHistoryRoute: ManagementAdminOddsHistoryRoute,
