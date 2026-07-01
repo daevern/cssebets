@@ -1365,9 +1365,13 @@ export type Database = {
         Row: {
           amount: number
           approved_at: string | null
+          approved_by: string | null
           bank_account_number: string
           bank_name: string
+          bank_reference_no: string | null
+          checker_notes: string | null
           completed_at: string | null
+          completed_by: string | null
           created_at: string
           id: string
           proof_file_name: string | null
@@ -1375,6 +1379,8 @@ export type Database = {
           proof_file_size: number | null
           proof_file_type: string | null
           proof_uploaded_at: string | null
+          rejected_at: string | null
+          rejected_by: string | null
           rejection_reason: string | null
           reviewed_by: string | null
           status: Database["public"]["Enums"]["payout_request_status"]
@@ -1386,9 +1392,13 @@ export type Database = {
         Insert: {
           amount: number
           approved_at?: string | null
+          approved_by?: string | null
           bank_account_number: string
           bank_name: string
+          bank_reference_no?: string | null
+          checker_notes?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           id?: string
           proof_file_name?: string | null
@@ -1396,6 +1406,8 @@ export type Database = {
           proof_file_size?: number | null
           proof_file_type?: string | null
           proof_uploaded_at?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
           rejection_reason?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["payout_request_status"]
@@ -1407,9 +1419,13 @@ export type Database = {
         Update: {
           amount?: number
           approved_at?: string | null
+          approved_by?: string | null
           bank_account_number?: string
           bank_name?: string
+          bank_reference_no?: string | null
+          checker_notes?: string | null
           completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
           id?: string
           proof_file_name?: string | null
@@ -1417,6 +1433,8 @@ export type Database = {
           proof_file_size?: number | null
           proof_file_type?: string | null
           proof_uploaded_at?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
           rejection_reason?: string | null
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["payout_request_status"]
@@ -1467,6 +1485,7 @@ export type Database = {
         Row: {
           admin_alert_emails: string[]
           alert_suppression_window_minutes: number
+          allow_single_admin_self_approval: boolean
           apply_margin_to_real: boolean
           bets_paused: boolean
           correct_score_disabled: boolean
@@ -1498,6 +1517,7 @@ export type Database = {
         Insert: {
           admin_alert_emails?: string[]
           alert_suppression_window_minutes?: number
+          allow_single_admin_self_approval?: boolean
           apply_margin_to_real?: boolean
           bets_paused?: boolean
           correct_score_disabled?: boolean
@@ -1529,6 +1549,7 @@ export type Database = {
         Update: {
           admin_alert_emails?: string[]
           alert_suppression_window_minutes?: number
+          allow_single_admin_self_approval?: boolean
           apply_margin_to_real?: boolean
           bets_paused?: boolean
           correct_score_disabled?: boolean
@@ -2139,6 +2160,66 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_adjustment_requests: {
+        Row: {
+          adjustment_type: string
+          after_balance: number | null
+          amount: number
+          applied_at: string | null
+          approved_at: string | null
+          approved_by: string | null
+          before_balance: number | null
+          created_at: string
+          id: string
+          metadata: Json
+          reason: string
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          requested_by: string
+          status: string
+          target_user_id: string
+        }
+        Insert: {
+          adjustment_type: string
+          after_balance?: number | null
+          amount: number
+          applied_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          before_balance?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          reason: string
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          requested_by: string
+          status?: string
+          target_user_id: string
+        }
+        Update: {
+          adjustment_type?: string
+          after_balance?: number | null
+          amount?: number
+          applied_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          before_balance?: number | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          reason?: string
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          requested_by?: string
+          status?: string
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       wallet_transactions: {
         Row: {
           admin_action_id: string | null
@@ -2264,6 +2345,7 @@ export type Database = {
         Returns: boolean
       }
       _exposure_norm: { Args: { txt: string }; Returns: string }
+      _is_admin_maker_checker: { Args: { _uid: string }; Returns: boolean }
       _live_bankroll: { Args: never; Returns: number }
       adjust_correct_score_odds: {
         Args: {
@@ -2297,6 +2379,10 @@ export type Database = {
           out_remaining: number
           out_used: number
         }[]
+      }
+      approve_wallet_adjustment: {
+        Args: { p_checker_note?: string; p_request_id: string }
+        Returns: Json
       }
       assert_bet_within_liability_caps: {
         Args: {
@@ -2332,6 +2418,10 @@ export type Database = {
       cancel_pending_bet: {
         Args: { p_prediction_id: string; p_user_id: string }
         Returns: string
+      }
+      cancel_wallet_adjustment: {
+        Args: { p_request_id: string }
+        Returns: Json
       }
       check_match_market_betting: {
         Args: { p_market: string; p_match_id: string }
@@ -2523,6 +2613,19 @@ export type Database = {
         Args: { p_match_id: string }
         Returns: undefined
       }
+      reject_wallet_adjustment: {
+        Args: { p_rejection_reason: string; p_request_id: string }
+        Returns: Json
+      }
+      request_wallet_adjustment: {
+        Args: {
+          p_adjustment_type: string
+          p_amount: number
+          p_reason: string
+          p_target_user_id: string
+        }
+        Returns: Json
+      }
       reset_simulation_data: { Args: { p_admin_id: string }; Returns: Json }
       resolve_correlated_exposure_alert: {
         Args: { p_alert_id: string; p_resolution_note: string }
@@ -2634,6 +2737,7 @@ export type Database = {
             Returns: {
               admin_alert_emails: string[]
               alert_suppression_window_minutes: number
+              allow_single_admin_self_approval: boolean
               apply_margin_to_real: boolean
               bets_paused: boolean
               correct_score_disabled: boolean
@@ -2687,6 +2791,7 @@ export type Database = {
             Returns: {
               admin_alert_emails: string[]
               alert_suppression_window_minutes: number
+              allow_single_admin_self_approval: boolean
               apply_margin_to_real: boolean
               bets_paused: boolean
               correct_score_disabled: boolean
