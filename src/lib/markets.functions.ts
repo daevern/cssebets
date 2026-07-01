@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceRateLimit } from "@/lib/rate-limit.functions";
 
-const MARKET_KEYS = [
+export const MARKET_KEYS = [
   "over_under_0_5",
   "over_under_1_5",
   "over_under_2_5",
@@ -23,7 +23,6 @@ const MARKET_KEYS = [
   "clean_sheet_away",
   "win_to_nil_home",
   "win_to_nil_away",
-  // Cards
   "cards_over_under_2_5",
   "cards_over_under_3_5",
   "cards_over_under_4_5",
@@ -32,7 +31,6 @@ const MARKET_KEYS = [
   "away_cards_over_under_1_5",
   "red_card_match",
   "first_card",
-  // Corners
   "corners_over_under_8_5",
   "corners_over_under_9_5",
   "corners_over_under_10_5",
@@ -52,7 +50,47 @@ type MarketOdds = {
   source: string;
 };
 
-// Fetch all market odds for a match. Auto-seeds if empty.
+export const PlaceMarketBetSchema = z.object({
+  matchId: z.string().uuid(),
+  market: z.enum(MARKET_KEYS),
+  selection: z.string().min(1).max(40),
+  stake: z.number().min(1).max(1_000_000),
+  clientRequestId: z.string().uuid().optional(),
+});
+
+export function mapPlaceMarketBetErrorMessage(message = "") {
+  if (message.includes("BETTING_PAUSED")) return "Bet placement is temporarily paused.";
+  if (message.includes("MARKET_DISABLED")) return "This market is currently disabled.";
+  if (message.includes("HIGH_ODDS_DISABLED")) return "High-odds markets are temporarily disabled.";
+  if (message.includes("MAX_BETS_PER_MATCH")) return "You have reached the maximum bets allowed on this match.";
+  if (message.includes("MAX_PAYOUT_NOT_CONFIGURED")) return "Bet placement is disabled: platform payout limit is not configured. Please contact an admin.";
+  if (message.includes("INSUFFICIENT_BALANCE")) return "Insufficient points balance.";
+  if (message.includes("MATCH_LOCKED")) return "Match has kicked off — bets locked.";
+  if (
+    message.includes("MARKET_SUSPENDED") ||
+    message.includes("ODDS_NOT_TRUSTED") ||
+    message.includes("ODDS_MISSING") ||
+    message.includes("ODDS_AWAITING_SYNC") ||
+    message.includes("ODDS_STALE")
+  ) {
+    return "Market temporarily suspended while odds are being verified.";
+  }
+  if (message.includes("HIGH_ODDS_STAKE_LIMIT")) return "This selection has a reduced stake limit. Please lower your stake.";
+  if (message.includes("MAX_SINGLE_BET_PAYOUT")) return "Potential return exceeds the per-bet limit.";
+  if (message.includes("MAX_OUTCOME_LIABILITY") || message.includes("MAX_MATCH_LIABILITY") || message.includes("CORRECT_SCORE_OTHER_LIMIT")) {
+    return "This selection is temporarily limited due to platform risk controls.";
+  }
+  if (message.includes("DUPLICATE_REQUEST")) return "Duplicate submit detected — please try again.";
+  if (message.includes("MAX_STAKE_EXCEEDED")) return "Stake exceeds per-bet maximum.";
+  if (message.includes("MAX_PAYOUT_EXCEEDED")) return "Potential return exceeds platform limit.";
+  if (message.includes("USER_MATCH_STAKE_EXCEEDED")) return "You've reached your maximum stake on this match.";
+  if (message.includes("USER_MATCH_PAYOUT_EXCEEDED")) return "You've reached your maximum potential return on this match.";
+  if (message.includes("USER_DAILY_PAYOUT_EXCEEDED")) return "You've reached your 24-hour potential return limit. Try again later.";
+  if (message.includes("USER_CORRELATED_PAYOUT_EXCEEDED")) return "This pick is too similar to your other bets on this match. Lower the stake or choose a different market.";
+  if (message.includes("odds unavailable")) return "Odds unavailable for that selection.";
+  return message || "Could not place bet.";
+}
+
 export const getMatchMarkets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { matchId: string }) =>
@@ -74,10 +112,6 @@ export const getMatchMarkets = createServerFn({ method: "POST" })
       .eq("match_id", data.matchId)
       .eq("active", true);
 
-    // On-demand seeding is restricted to simulation matches. Live production
-    // matches must have odds derived from a real reference_odds sync; if the
-    // seeder has not yet been triggered server-side after a sync, callers
-    // must wait (bet placement is independently gated by odds_status).
     if (
       (!odds || odds.length === 0) &&
       (match as any).status === "scheduled" &&
@@ -92,7 +126,6 @@ export const getMatchMarkets = createServerFn({ method: "POST" })
       odds = r.data ?? [];
     }
 
-    // Hide HT/FT for real matches that have no HT score support yet.
     const hasHtSupport =
       (match as any).is_simulation === true ||
       (match as any).home_score_ht !== null;
@@ -105,18 +138,9 @@ export const getMatchMarkets = createServerFn({ method: "POST" })
     return { odds: filtered as MarketOdds[], hasHtSupport };
   });
 
-// Place a bet on one of the new markets.
-const PlaceSchema = z.object({
-  matchId: z.string().uuid(),
-  market: z.enum(MARKET_KEYS),
-  selection: z.string().min(1).max(40),
-  stake: z.number().min(1).max(1_000_000),
-  clientRequestId: z.string().uuid().optional(),
-});
-
 export const placeMarketBet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => PlaceSchema.parse(input))
+  .inputValidator((input: unknown) => PlaceMarketBetSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
@@ -143,36 +167,13 @@ export const placeMarketBet = createServerFn({ method: "POST" })
 
     if (error) {
       const msg = error.message ?? "";
-      if (msg.includes("BETTING_PAUSED")) throw new Error("Bet placement is temporarily paused.");
-      if (msg.includes("MARKET_DISABLED")) throw new Error("This market is currently disabled.");
-      if (msg.includes("HIGH_ODDS_DISABLED")) throw new Error("High-odds markets are temporarily disabled.");
-      if (msg.includes("MAX_BETS_PER_MATCH")) throw new Error("You have reached the maximum bets allowed on this match.");
-      if (msg.includes("MAX_PAYOUT_NOT_CONFIGURED")) throw new Error("Bet placement is disabled: platform payout limit is not configured. Please contact an admin.");
-      if (msg.includes("INSUFFICIENT_BALANCE")) throw new Error("Insufficient points balance.");
-      if (msg.includes("MATCH_LOCKED")) throw new Error("Match has kicked off — bets locked.");
-      if (msg.includes("MARKET_SUSPENDED") || msg.includes("ODDS_NOT_TRUSTED") || msg.includes("ODDS_MISSING") || msg.includes("ODDS_AWAITING_SYNC") || msg.includes("ODDS_STALE")) {
-        throw new Error("Market temporarily suspended while odds are being verified.");
-      }
-      if (msg.includes("HIGH_ODDS_STAKE_LIMIT")) throw new Error("This selection has a reduced stake limit. Please lower your stake.");
-      if (msg.includes("MAX_SINGLE_BET_PAYOUT")) throw new Error("Potential return exceeds the per-bet limit.");
-      if (msg.includes("MAX_OUTCOME_LIABILITY") || msg.includes("MAX_MATCH_LIABILITY") || msg.includes("CORRECT_SCORE_OTHER_LIMIT")) {
-        throw new Error("This selection is temporarily limited due to platform risk controls.");
-      }
-      if (msg.includes("DUPLICATE_REQUEST")) throw new Error("Duplicate submit detected — please try again.");
-      if (msg.includes("MAX_STAKE_EXCEEDED")) throw new Error("Stake exceeds per-bet maximum.");
       if (msg.includes("MAX_PAYOUT_EXCEEDED")) {
         await supabaseAdmin.from("audit_log").insert({
           user_id: userId, action: "high_payout_attempt_blocked", entity: "prediction", entity_id: null,
           metadata: { market: data.market, selection: data.selection, stake: data.stake },
         });
-        throw new Error("Potential return exceeds platform limit.");
       }
-      if (msg.includes("USER_MATCH_STAKE_EXCEEDED")) throw new Error("You've reached your maximum stake on this match.");
-      if (msg.includes("USER_MATCH_PAYOUT_EXCEEDED")) throw new Error("You've reached your maximum potential return on this match.");
-      if (msg.includes("USER_DAILY_PAYOUT_EXCEEDED")) throw new Error("You've reached your 24-hour potential return limit. Try again later.");
-      if (msg.includes("USER_CORRELATED_PAYOUT_EXCEEDED")) throw new Error("This pick is too similar to your other bets on this match. Lower the stake or choose a different market.");
-      if (msg.includes("odds unavailable")) throw new Error("Odds unavailable for that selection.");
-      throw new Error(msg || "Could not place bet.");
+      throw new Error(mapPlaceMarketBetErrorMessage(msg));
     }
 
     await supabaseAdmin.from("audit_log").insert({
@@ -186,7 +187,6 @@ export const placeMarketBet = createServerFn({ method: "POST" })
     return { id: predId };
   });
 
-// Admin: exposure grouped by match/market/selection.
 export const getMarketExposure = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
