@@ -256,9 +256,18 @@ export const adminRejectPayout = createServerFn({ method: "POST" })
         status: "rejected_by_admin",
         rejection_reason: data.reason,
         reviewed_by: userId,
-      })
+        rejected_by: userId,
+        rejected_at: new Date().toISOString(),
+      } as any)
       .eq("id", data.payoutId);
     if (error) throw new Error(error.message);
+    await supabaseAdmin.from("audit_log").insert({
+      user_id: userId,
+      action: "payout_rejected",
+      entity: "payout_request",
+      entity_id: data.payoutId,
+      metadata: { rejected_by: userId, reason: data.reason },
+    });
     return { ok: true };
   });
 
@@ -268,6 +277,8 @@ const ProofSchema = z.object({
   fileName: z.string().min(1).max(255),
   fileType: z.string().min(1).max(100),
   fileSize: z.number().int().min(1).max(10 * 1024 * 1024),
+  bankReferenceNo: z.string().trim().max(120).optional(),
+  checkerNotes: z.string().trim().max(500).optional(),
 });
 
 export const adminConfirmPayoutProof = createServerFn({ method: "POST" })
@@ -279,11 +290,30 @@ export const adminConfirmPayoutProof = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin
       .from("payout_requests")
-      .select("id, user_id, status")
+      .select("id, user_id, status, approved_by, reviewed_by")
       .eq("id", data.payoutId)
       .maybeSingle();
     if (!row) throw new Error("Not found");
     if (row.status !== "approved") throw new Error(`Cannot upload proof: status=${row.status}`);
+
+    // Maker-checker: the admin who approved must differ from the admin who completes,
+    // unless allow_single_admin_self_approval is enabled in platform_settings.
+    const approvedBy = (row as any).approved_by ?? (row as any).reviewed_by ?? null;
+    const isSelf = approvedBy && approvedBy === userId;
+    let allowSelf = false;
+    if (isSelf) {
+      const { data: ps } = await supabaseAdmin
+        .from("platform_settings" as any)
+        .select("allow_single_admin_self_approval")
+        .eq("id", 1)
+        .maybeSingle();
+      allowSelf = !!(ps as any)?.allow_single_admin_self_approval;
+      if (!allowSelf) {
+        throw new Error(
+          "Another admin must complete this payout. Single-admin self-approval is disabled in platform settings.",
+        );
+      }
+    }
 
     const expectedPrefix = `payouts/${row.user_id}/${row.id}/`;
     if (!data.filePath.startsWith(expectedPrefix)) throw new Error("Invalid file path");
@@ -297,11 +327,28 @@ export const adminConfirmPayoutProof = createServerFn({ method: "POST" })
         proof_file_size: data.fileSize,
         proof_uploaded_at: new Date().toISOString(),
         status: "proof_uploaded",
-      })
+        completed_by: userId,
+        bank_reference_no: data.bankReferenceNo ?? null,
+        checker_notes: data.checkerNotes ?? null,
+      } as any)
       .eq("id", data.payoutId);
     if (error) throw new Error(error.message);
-    return { ok: true };
+    await supabaseAdmin.from("audit_log").insert({
+      user_id: userId,
+      action: "payout_completed",
+      entity: "payout_request",
+      entity_id: data.payoutId,
+      metadata: {
+        completed_by: userId,
+        approved_by: approvedBy,
+        self_approval: !!isSelf,
+        self_approval_allowed: !!allowSelf,
+        bank_reference_no: data.bankReferenceNo ?? null,
+      },
+    });
+    return { ok: true, selfApproval: !!isSelf };
   });
+
 
 export const getPayoutProofSignedUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
