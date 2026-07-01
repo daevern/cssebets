@@ -9,6 +9,7 @@ import { MarketTabs } from "@/components/matches/MarketTabs";
 import { Corner, StencilPanel } from "@/components/ui/page-shell";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 import { eventMark, WhistleIcon, PitchIcon, GoalIcon, YellowCardIcon, RedCardIcon } from "@/components/matches/MatchIcons";
+import { MarketAnalyticsCard } from "@/components/matches/MarketAnalyticsCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -129,6 +130,9 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
         homeGoals={homeGoals}
         awayGoals={awayGoals}
       />
+
+      {/* Market Analytics — historical odds / implied probability */}
+      <MarketAnalyticsCard matchId={match.id} />
 
       {/* Markets — only show pre-kickoff */}
       {!locked && (
