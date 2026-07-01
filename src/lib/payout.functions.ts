@@ -104,12 +104,24 @@ export const userConfirmPayoutProof = createServerFn({ method: "POST" })
       if (m.includes("INVALID_STATUS")) throw new Error("Not awaiting your confirmation");
       throw new Error(m || "Could not confirm payout");
     }
+    const { data: pr } = await supabaseAdmin
+      .from("payout_requests")
+      .select("user_id, amount, status, approved_by, completed_by, bank_reference_no")
+      .eq("id", data.payoutId)
+      .maybeSingle();
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
+      target_user_id: pr?.user_id ?? userId,
       action: "payout.user_confirm",
       entity: "payout_request",
       entity_id: data.payoutId,
-      metadata: {},
+      metadata: {
+        amount: pr?.amount ?? null,
+        status: pr?.status ?? "completed",
+        approved_by: (pr as any)?.approved_by ?? null,
+        completed_by: (pr as any)?.completed_by ?? null,
+        bank_reference_no: (pr as any)?.bank_reference_no ?? null,
+      },
     });
     return { ok: true };
   });
@@ -131,15 +143,27 @@ export const userRejectPayoutProof = createServerFn({ method: "POST" })
       p_reason: data.reason,
     });
     if (rpcErr) throw new Error(rpcErr.message);
+    const { data: pr } = await supabaseAdmin
+      .from("payout_requests")
+      .select("user_id, amount, status, approved_by")
+      .eq("id", data.payoutId)
+      .maybeSingle();
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
+      target_user_id: pr?.user_id ?? userId,
       action: "payout.user_reject",
       entity: "payout_request",
       entity_id: data.payoutId,
-      metadata: { reason: data.reason.slice(0, 200) },
+      metadata: {
+        amount: pr?.amount ?? null,
+        status: pr?.status ?? null,
+        approved_by: (pr as any)?.approved_by ?? null,
+        reason: data.reason.slice(0, 200),
+      },
     });
     return { ok: true };
   });
+
 
 
 // ---------------- ADMIN ----------------
@@ -219,12 +243,26 @@ export const adminApprovePayout = createServerFn({ method: "POST" })
       if (m.includes("already")) throw new Error("Payout has already been processed.");
       throw new Error(m || "Could not approve payout.");
     }
+    const { data: pr } = await supabaseAdmin
+      .from("payout_requests")
+      .select("user_id, amount, status, approved_by, bank_reference_no")
+      .eq("id", data.payoutId)
+      .maybeSingle();
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
+      target_user_id: pr?.user_id ?? null,
       action: "payout_approved",
       entity: "payout_request",
       entity_id: data.payoutId,
-      metadata: { approved_by: userId },
+      metadata: {
+        amount: pr?.amount ?? null,
+        status: pr?.status ?? "approved",
+        approved_by: userId,
+        completed_by: null,
+        bank_reference_no: (pr as any)?.bank_reference_no ?? null,
+        self_approval: false,
+        self_approval_allowed: false,
+      },
     });
     return { ok: true };
   });
@@ -245,7 +283,7 @@ export const adminRejectPayout = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin
       .from("payout_requests")
-      .select("status")
+      .select("status, user_id, amount, approved_by")
       .eq("id", data.payoutId)
       .maybeSingle();
     if (!row) throw new Error("Not found");
@@ -263,10 +301,17 @@ export const adminRejectPayout = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
+      target_user_id: (row as any).user_id ?? null,
       action: "payout_rejected",
       entity: "payout_request",
       entity_id: data.payoutId,
-      metadata: { rejected_by: userId, reason: data.reason },
+      metadata: {
+        amount: (row as any).amount ?? null,
+        status: "rejected_by_admin",
+        approved_by: (row as any).approved_by ?? null,
+        rejected_by: userId,
+        reason: data.reason,
+      },
     });
     return { ok: true };
   });
@@ -290,7 +335,7 @@ export const adminConfirmPayoutProof = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin
       .from("payout_requests")
-      .select("id, user_id, status, approved_by, reviewed_by")
+      .select("id, user_id, amount, status, approved_by, reviewed_by")
       .eq("id", data.payoutId)
       .maybeSingle();
     if (!row) throw new Error("Not found");
@@ -335,10 +380,13 @@ export const adminConfirmPayoutProof = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
+      target_user_id: (row as any).user_id ?? null,
       action: "payout_completed",
       entity: "payout_request",
       entity_id: data.payoutId,
       metadata: {
+        amount: (row as any)?.amount ?? null,
+        status: "proof_uploaded",
         completed_by: userId,
         approved_by: approvedBy,
         self_approval: !!isSelf,
