@@ -40,6 +40,7 @@ import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/b
 import { Route as ManagementAdminIndexRouteImport } from './routes/management/admin.index'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
 import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
+import { Route as ManagementAdminWalletAdjustmentsRouteImport } from './routes/management/admin.wallet-adjustments'
 import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
 import { Route as ManagementAdminTournamentRouteImport } from './routes/management/admin.tournament'
 import { Route as ManagementAdminSupportOpsRouteImport } from './routes/management/admin.support-ops'
@@ -237,6 +238,12 @@ const ManagementAdminWalletLedgerRoute =
   ManagementAdminWalletLedgerRouteImport.update({
     id: '/wallet-ledger',
     path: '/wallet-ledger',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminWalletAdjustmentsRoute =
+  ManagementAdminWalletAdjustmentsRouteImport.update({
+    id: '/wallet-adjustments',
+    path: '/wallet-adjustments',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
 const ManagementAdminUsersRoute = ManagementAdminUsersRouteImport.update({
@@ -514,6 +521,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
+  '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/matches/': typeof AuthenticatedMatchesIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
@@ -582,6 +590,7 @@ export interface FileRoutesByTo {
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
+  '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/matches': typeof AuthenticatedMatchesIndexRoute
   '/management/admin': typeof ManagementAdminIndexRoute
@@ -654,6 +663,7 @@ export interface FileRoutesById {
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
+  '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
@@ -726,6 +736,7 @@ export interface FileRouteTypes {
     | '/management/admin/support-ops'
     | '/management/admin/tournament'
     | '/management/admin/users'
+    | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
     | '/matches/'
     | '/management/admin/'
@@ -794,6 +805,7 @@ export interface FileRouteTypes {
     | '/management/admin/support-ops'
     | '/management/admin/tournament'
     | '/management/admin/users'
+    | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
     | '/matches'
     | '/management/admin'
@@ -865,6 +877,7 @@ export interface FileRouteTypes {
     | '/management/admin/support-ops'
     | '/management/admin/tournament'
     | '/management/admin/users'
+    | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
     | '/_authenticated/matches/'
     | '/management/admin/'
@@ -1114,6 +1127,13 @@ declare module '@tanstack/react-router' {
       path: '/wallet-ledger'
       fullPath: '/management/admin/wallet-ledger'
       preLoaderRoute: typeof ManagementAdminWalletLedgerRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/wallet-adjustments': {
+      id: '/management/admin/wallet-adjustments'
+      path: '/wallet-adjustments'
+      fullPath: '/management/admin/wallet-adjustments'
+      preLoaderRoute: typeof ManagementAdminWalletAdjustmentsRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
     '/management/admin/users': {
@@ -1462,6 +1482,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminSupportOpsRoute: typeof ManagementAdminSupportOpsRoute
   ManagementAdminTournamentRoute: typeof ManagementAdminTournamentRoute
   ManagementAdminUsersRoute: typeof ManagementAdminUsersRoute
+  ManagementAdminWalletAdjustmentsRoute: typeof ManagementAdminWalletAdjustmentsRoute
   ManagementAdminWalletLedgerRoute: typeof ManagementAdminWalletLedgerRoute
   ManagementAdminIndexRoute: typeof ManagementAdminIndexRoute
 }
@@ -1495,6 +1516,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminSupportOpsRoute: ManagementAdminSupportOpsRoute,
   ManagementAdminTournamentRoute: ManagementAdminTournamentRoute,
   ManagementAdminUsersRoute: ManagementAdminUsersRoute,
+  ManagementAdminWalletAdjustmentsRoute: ManagementAdminWalletAdjustmentsRoute,
   ManagementAdminWalletLedgerRoute: ManagementAdminWalletLedgerRoute,
   ManagementAdminIndexRoute: ManagementAdminIndexRoute,
 }

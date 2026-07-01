@@ -42,10 +42,13 @@ function AdminPayoutPage() {
   const [rejectFor, setRejectFor] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [proof, setProof] = useState<{ url: string; type: string; name: string } | null>(null);
-  const [uploadFor, setUploadFor] = useState<{ id: string; userId: string } | null>(null);
+  const [uploadFor, setUploadFor] = useState<{ id: string; userId: string; approvedBy?: string | null } | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [bankRef, setBankRef] = useState("");
+  const [checkerNotes, setCheckerNotes] = useState("");
   const fileRef = useRef<HTMLInputElement | null>(null);
+
 
   const payouts = useQuery({
     queryKey: ["admin-payouts", status],
@@ -105,11 +108,14 @@ function AdminPayoutPage() {
           fileName: file.name,
           fileType: file.type,
           fileSize: file.size,
+          bankReferenceNo: bankRef.trim() || undefined,
+          checkerNotes: checkerNotes.trim() || undefined,
         },
       });
       toast.success("Proof uploaded. Awaiting user confirmation.");
-      setUploadFor(null); setFile(null);
+      setUploadFor(null); setFile(null); setBankRef(""); setCheckerNotes("");
       if (fileRef.current) fileRef.current.value = "";
+
       qc.invalidateQueries({ queryKey: ["admin-payouts"] });
       qc.invalidateQueries({ queryKey: ["pending-payout-count"] });
     } catch (e) {
@@ -171,6 +177,24 @@ function AdminPayoutPage() {
                         <FileCheck className="h-3.5 w-3.5" /> Proof: {p.proof_file_name}
                       </div>
                     )}
+                    {p.approved_by && (
+                      <div className="text-[11px] text-muted-foreground">
+                        Approved by <span className="font-mono">{String(p.approved_by).slice(0, 8)}</span>
+                        {p.approved_at ? ` · ${new Date(p.approved_at).toLocaleString()}` : ""}
+                      </div>
+                    )}
+                    {p.completed_by && (
+                      <div className="text-[11px] text-muted-foreground">
+                        Completed by <span className="font-mono">{String(p.completed_by).slice(0, 8)}</span>
+                        {p.completed_at ? ` · ${new Date(p.completed_at).toLocaleString()}` : ""}
+                      </div>
+                    )}
+                    {p.bank_reference_no && (
+                      <div className="text-[11px]">Bank ref: <span className="font-mono">{p.bank_reference_no}</span></div>
+                    )}
+                    {p.checker_notes && (
+                      <div className="text-[11px] text-muted-foreground">Note: {p.checker_notes}</div>
+                    )}
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Badge variant={
@@ -189,11 +213,12 @@ function AdminPayoutPage() {
                       </>
                     )}
                     {p.status === "approved" && (
-                      <Button size="sm" onClick={() => { setUploadFor({ id: p.id, userId: p.user_id }); setFile(null); }}>
+                      <Button size="sm" onClick={() => { setUploadFor({ id: p.id, userId: p.user_id, approvedBy: p.approved_by ?? p.reviewed_by ?? null }); setFile(null); setBankRef(""); setCheckerNotes(""); }}>
                         <Upload className="h-4 w-4 mr-1" /> Upload proof
                       </Button>
                     )}
                   </div>
+
                 </div>
               </div>
             ))}
@@ -242,11 +267,14 @@ function AdminPayoutPage() {
       </Dialog>
 
       {/* Upload proof */}
-      <Dialog open={!!uploadFor} onOpenChange={(o) => { if (!o) { setUploadFor(null); setFile(null); } }}>
+      <Dialog open={!!uploadFor} onOpenChange={(o) => { if (!o) { setUploadFor(null); setFile(null); setBankRef(""); setCheckerNotes(""); } }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Upload proof of payment</DialogTitle>
-            <DialogDescription>PDF/JPG/PNG/WEBP, max 10MB. Click confirm to notify the user.</DialogDescription>
+            <DialogTitle>Complete payout — upload proof</DialogTitle>
+            <DialogDescription>
+              PDF/JPG/PNG/WEBP, max 10MB. The completer must differ from the approver unless single-admin
+              self-approval is enabled in platform settings.
+            </DialogDescription>
           </DialogHeader>
           <Input
             ref={fileRef}
@@ -256,10 +284,23 @@ function AdminPayoutPage() {
             disabled={uploading}
           />
           {file && <p className="text-xs text-muted-foreground truncate">Selected: {file.name}</p>}
+          <Input
+            placeholder="Bank reference number (optional)"
+            value={bankRef}
+            onChange={(e) => setBankRef(e.target.value)}
+            disabled={uploading}
+          />
+          <Textarea
+            placeholder="Checker notes (optional)"
+            rows={2}
+            value={checkerNotes}
+            onChange={(e) => setCheckerNotes(e.target.value)}
+            disabled={uploading}
+          />
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setUploadFor(null); setFile(null); }} disabled={uploading}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setUploadFor(null); setFile(null); setBankRef(""); setCheckerNotes(""); }} disabled={uploading}>Cancel</Button>
             <Button disabled={!file || uploading} onClick={uploadProofAndConfirm}>
-              {uploading ? "Uploading…" : "Confirm"}
+              {uploading ? "Uploading…" : "Confirm & complete"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -267,3 +308,4 @@ function AdminPayoutPage() {
     </div>
   );
 }
+

@@ -70,6 +70,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { to: "/management/admin/points", label: "Point requests", icon: Wallet, badgeKey: "pendingPointRequests" },
       { to: "/management/admin/payouts", label: "Payouts", icon: Banknote, badgeKey: "pendingPayouts" },
+      { to: "/management/admin/wallet-adjustments", label: "Wallet adjustments", icon: Wallet },
       { to: "/management/admin/wallet-ledger", label: "Wallet ledger", icon: Wallet },
       { to: "/management/admin/bankroll", label: "Bankroll", icon: TrendingUp },
       { to: "/management/admin/match-pools", label: "Match pools", icon: Wallet },
