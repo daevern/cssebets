@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/matches/$matchId")({
-  head: () => ({ meta: [{ title: "Match analytics — cssebets" }] }),
+  head: () => ({ meta: [{ title: "Match market — cssebets" }] }),
   component: MatchAnalyticsPage,
 });
 
