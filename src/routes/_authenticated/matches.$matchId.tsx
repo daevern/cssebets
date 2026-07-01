@@ -485,8 +485,8 @@ function MatchHero({
       </div>
 
       {/* Scoreboard */}
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 md:gap-8">
-        <ScoreTeam name={match.home_team} flag={homeFlag} align="left" />
+      <div className="flex items-center justify-center gap-5 sm:gap-8 md:gap-12">
+        <ScoreTeam name={match.home_team} flag={homeFlag} />
         <div className="flex flex-col items-center">
           {showScore ? (
             <div className="flex items-baseline gap-2 font-display leading-none tracking-tight">
@@ -507,7 +507,7 @@ function MatchHero({
             </div>
           )}
         </div>
-        <ScoreTeam name={match.away_team} flag={awayFlag} align="right" />
+        <ScoreTeam name={match.away_team} flag={awayFlag} />
       </div>
 
       {/* Last play */}
