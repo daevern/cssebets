@@ -243,12 +243,26 @@ export const adminApprovePayout = createServerFn({ method: "POST" })
       if (m.includes("already")) throw new Error("Payout has already been processed.");
       throw new Error(m || "Could not approve payout.");
     }
+    const { data: pr } = await supabaseAdmin
+      .from("payout_requests")
+      .select("user_id, amount, status, approved_by, bank_reference_no")
+      .eq("id", data.payoutId)
+      .maybeSingle();
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
+      target_user_id: pr?.user_id ?? null,
       action: "payout_approved",
       entity: "payout_request",
       entity_id: data.payoutId,
-      metadata: { approved_by: userId },
+      metadata: {
+        amount: pr?.amount ?? null,
+        status: pr?.status ?? "approved",
+        approved_by: userId,
+        completed_by: null,
+        bank_reference_no: (pr as any)?.bank_reference_no ?? null,
+        self_approval: false,
+        self_approval_allowed: false,
+      },
     });
     return { ok: true };
   });
