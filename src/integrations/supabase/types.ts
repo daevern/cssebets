@@ -384,6 +384,66 @@ export type Database = {
         }
         Relationships: []
       }
+      market_rules: {
+        Row: {
+          audit_notes: string | null
+          category: string
+          created_at: string
+          data_required: string[]
+          display_name: string
+          id: string
+          is_active: boolean
+          is_scoreline_dependent: boolean
+          is_stat_dependent: boolean
+          market_aliases: string[]
+          market_key: string
+          risk_notes: string | null
+          settlement_basis: string
+          supported_outcomes: string[]
+          updated_at: string
+          user_facing_note: string | null
+          void_conditions: string[]
+        }
+        Insert: {
+          audit_notes?: string | null
+          category: string
+          created_at?: string
+          data_required?: string[]
+          display_name: string
+          id?: string
+          is_active?: boolean
+          is_scoreline_dependent?: boolean
+          is_stat_dependent?: boolean
+          market_aliases?: string[]
+          market_key: string
+          risk_notes?: string | null
+          settlement_basis: string
+          supported_outcomes?: string[]
+          updated_at?: string
+          user_facing_note?: string | null
+          void_conditions?: string[]
+        }
+        Update: {
+          audit_notes?: string | null
+          category?: string
+          created_at?: string
+          data_required?: string[]
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          is_scoreline_dependent?: boolean
+          is_stat_dependent?: boolean
+          market_aliases?: string[]
+          market_key?: string
+          risk_notes?: string | null
+          settlement_basis?: string
+          supported_outcomes?: string[]
+          updated_at?: string
+          user_facing_note?: string | null
+          void_conditions?: string[]
+        }
+        Relationships: []
+      }
       match_events: {
         Row: {
           assist_name: string | null
