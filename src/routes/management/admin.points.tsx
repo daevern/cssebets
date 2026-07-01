@@ -5,10 +5,9 @@ import {
   adminListRequests,
   adminApproveRequest,
   adminRejectRequest,
-  adminListUsers,
-  adminAdjustWallet,
   adminGetProofSignedUrl,
 } from "@/lib/wallet.functions";
+
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
