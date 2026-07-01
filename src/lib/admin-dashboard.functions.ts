@@ -81,8 +81,8 @@ export const getAdminMetrics = createServerFn({ method: "GET" })
       supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "pending"),
       supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "void"),
-      supabaseAdmin.from("predictions").select("user_id, virtual_stake, points, status"),
-      supabaseAdmin.from("wallet_transactions").select("type, amount, created_at"),
+      supabaseAdmin.from("predictions").select("user_id, virtual_stake, potential_return, gross_payout, net_profit, house_profit_loss, points, status"),
+      supabaseAdmin.from("wallet_transactions").select("type, amount, transaction_category, created_at"),
       supabaseAdmin.from("profiles").select("id, display_name"),
     ]);
 
@@ -91,16 +91,28 @@ export const getAdminMetrics = createServerFn({ method: "GET" })
       .from("predictions").select("user_id").gte("created_at", sinceActive);
     const activeUsers = new Set((activeRows ?? []).map((r: any) => r.user_id)).size;
 
+    // Betting accounting (from settled predictions, NOT from all wallet credits).
     const totalStake = (preds ?? []).reduce((s: number, p: any) => s + Number(p.virtual_stake || 0), 0);
-    const totalPayouts = (txns ?? [])
-      .filter((t: any) => t.type === "credit" && t.amount > 0)
-      .reduce((s: number, t: any) => s + Number(t.amount), 0);
-    const totalDebits = (txns ?? [])
-      .filter((t: any) => t.type === "debit")
-      .reduce((s: number, t: any) => s + Number(t.amount), 0);
-    const netMovement = totalPayouts - totalDebits;
+    const wonPreds = (preds ?? []).filter((p: any) => p.status === "won");
+    const totalGrossPayouts = wonPreds.reduce((s: number, p: any) => s + Number(p.gross_payout || 0), 0);
+    const totalRefunds = (preds ?? []).filter((p: any) => p.status === "void")
+      .reduce((s: number, p: any) => s + Number(p.gross_payout || p.virtual_stake || 0), 0);
+    const houseProfitLoss = (preds ?? [])
+      .filter((p: any) => p.status === "won" || p.status === "lost")
+      .reduce((s: number, p: any) => s + Number(p.house_profit_loss || 0), 0);
+    const pendingStake = (preds ?? []).filter((p: any) => p.status === "pending")
+      .reduce((s: number, p: any) => s + Number(p.virtual_stake || 0), 0);
+    const openGrossExposure = (preds ?? []).filter((p: any) => p.status === "pending")
+      .reduce((s: number, p: any) => s + Number(p.potential_return || 0), 0);
 
-    // Aggregate per user points
+    // Wallet movement (separated so admin credits/deposits don't pollute payout totals).
+    const walletByCategory = new Map<string, number>();
+    for (const t of txns ?? []) {
+      const cat = t.transaction_category ?? "uncategorized";
+      walletByCategory.set(cat, (walletByCategory.get(cat) ?? 0) + Number(t.amount || 0));
+    }
+
+    // Aggregate per user points (gamification only, NOT payout).
     const pmap = new Map<string, number>();
     for (const p of preds ?? []) {
       pmap.set(p.user_id, (pmap.get(p.user_id) ?? 0) + Number(p.points || 0));
@@ -117,14 +129,20 @@ export const getAdminMetrics = createServerFn({ method: "GET" })
       activeUsers,
       totalPredictions: totalPredictions ?? 0,
       totalStake,
-      totalPayouts,
-      netMovement,
+      totalPayouts: totalGrossPayouts,
+      totalRefunds,
+      houseProfitLoss,
+      pendingStake,
+      openGrossExposure,
+      netMovement: totalGrossPayouts - totalStake,
+      walletByCategory: Object.fromEntries(walletByCategory),
       unsettled: unsettled ?? 0,
       voided: voided ?? 0,
       topWinners,
       topLosers,
     };
   });
+
 
 export const getMatchExposure = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
