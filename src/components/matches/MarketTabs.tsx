@@ -122,22 +122,35 @@ function StakeSlip({
   const stakeNum = Number(stake) || 0;
   const potentialPayout = stakeNum * odds;
   const potentialProfit = potentialPayout - stakeNum;
-  const insufficient = stakeNum > balance;
-  const canSubmit = !isPending && !error && !insufficient && stakeNum >= MIN_STAKE;
+  const noBalance = balance <= 0;
+  const overBalance = stakeNum > balance && stakeNum > 0;
+  const canSubmit = !isPending && !error && !noBalance && !overBalance && stakeNum >= MIN_STAKE;
+  const buttonLabel = noBalance
+    ? "Insufficient points"
+    : overBalance
+      ? "Stake exceeds balance"
+      : "Place Bet";
 
   const wrapperClass = sticky
-    ? "sticky bottom-0 z-30 border border-[var(--color-neon)]/50 bg-[#050A08]/98 backdrop-blur p-3 space-y-2 shadow-[0_-8px_24px_rgba(0,0,0,0.6)]"
+    ? "sticky z-30 border border-[var(--color-neon)]/50 bg-[#050A08]/98 backdrop-blur p-3 space-y-2 shadow-[0_-8px_24px_rgba(0,0,0,0.6)]"
     : "mt-2 border border-[var(--color-surface-border)] bg-[#070D0A] p-3 space-y-2 animate-in fade-in-50 duration-200";
 
   return (
     <div
       className={wrapperClass}
-      style={sticky ? { paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" } : undefined}
+      style={
+        sticky
+          ? {
+              bottom: "calc(72px + env(safe-area-inset-bottom))",
+              paddingBottom: "0.75rem",
+            }
+          : undefined
+      }
     >
       <div className="flex justify-between items-start gap-2">
         <div className="min-w-0 flex-1 space-y-0.5">
           {matchName && (
-            <div className="truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--color-ink-muted)]">
+            <div className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-ink-muted)]">
               {matchName}
             </div>
           )}
@@ -167,17 +180,18 @@ function StakeSlip({
           max={MAX_STAKE}
           value={stake}
           onChange={(e) => setStake(e.target.value)}
+          disabled={noBalance}
           placeholder={`Stake (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
-          className="flex-1 min-w-0 border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-base font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)]"
+          className="flex-1 min-w-0 border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-base font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:opacity-40 disabled:cursor-not-allowed"
         />
         <button
           type="button"
           disabled={!canSubmit}
           onClick={onSubmit}
-          className="flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-[var(--color-neon)] px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+          className="flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-[var(--color-neon)] px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)]"
         >
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (
-            <><span>Place Bet</span><ArrowUpRight className="h-3.5 w-3.5" /></>
+            <><span>{buttonLabel}</span>{canSubmit && <ArrowUpRight className="h-3.5 w-3.5" />}</>
           )}
         </button>
       </div>
@@ -197,19 +211,22 @@ function StakeSlip({
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.12em] text-[var(--color-ink-muted)]">
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.1em] text-[var(--color-ink-muted)]">
         <span>Balance: <span className="font-bold tabular-nums text-[var(--color-ink)]">{balance.toFixed(2)}</span></span>
-        {insufficient && stakeNum > 0 && (
-          <span className="font-bold text-destructive">Insufficient points</span>
+        {(noBalance || overBalance) && (
+          <span className="font-bold text-destructive normal-case tracking-normal">
+            {noBalance ? "Insufficient points" : "Stake exceeds balance"}
+          </span>
         )}
       </div>
 
-      {error && !insufficient && (
+      {error && !overBalance && !noBalance && (
         <div className="text-[11px] normal-case text-destructive">{error}</div>
       )}
     </div>
   );
 }
+
 
 function SuspendedBadge() {
   return (
