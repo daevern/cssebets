@@ -527,28 +527,19 @@ function MatchHero({
   );
 }
 
-/* Compact scoreboard team cell — flag + team name, aligned. */
-function ScoreTeam({ name, flag, align }: { name: string; flag: string | null; align: "left" | "right" }) {
-  const isRight = align === "right";
+/* Scoreboard team cell — centered flag only. */
+function ScoreTeam({ name, flag }: { name: string; flag: string | null }) {
   return (
-    <div className={`flex min-w-0 items-center gap-2.5 sm:gap-3 ${isRight ? "flex-row-reverse text-right" : "text-left"}`}>
-      <div className="relative h-8 w-11 shrink-0 overflow-hidden rounded-sm border border-[var(--color-surface-border)]/60 sm:h-10 sm:w-14">
+    <div className="flex items-center justify-center">
+      <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-md border border-[var(--color-surface-border)]/60 sm:h-20 sm:w-28 md:h-24 md:w-32">
         {flag ? (
           <img src={flag} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[9px] font-semibold uppercase tracking-wider">
+          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[11px] font-semibold uppercase tracking-wider">
             {name.slice(0, 3)}
           </div>
         )}
         <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/25" />
-      </div>
-      <div className="min-w-0 flex flex-col">
-        <span className="truncate font-display text-sm font-semibold tracking-tight text-[var(--color-ink)] sm:text-base md:text-lg" title={name}>
-          {name}
-        </span>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]/70">
-          {name.slice(0, 3).toUpperCase()}
-        </span>
       </div>
     </div>
   );
