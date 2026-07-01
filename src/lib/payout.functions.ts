@@ -380,10 +380,13 @@ export const adminConfirmPayoutProof = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
+      target_user_id: (row as any).user_id ?? null,
       action: "payout_completed",
       entity: "payout_request",
       entity_id: data.payoutId,
       metadata: {
+        amount: (row as any)?.amount ?? null,
+        status: "proof_uploaded",
         completed_by: userId,
         approved_by: approvedBy,
         self_approval: !!isSelf,
