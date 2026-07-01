@@ -497,6 +497,65 @@ export type Database = {
           },
         ]
       }
+      match_exposure_scenarios: {
+        Row: {
+          assumptions: Json
+          away_goals: number | null
+          calculated_at: string
+          contributing_bet_ids: string[]
+          exposure_breakdown: Json
+          gross_payout: number
+          home_goals: number | null
+          id: string
+          match_id: string
+          net_liability: number
+          scenario_key: string
+          scenario_label: string
+          total_stake_involved: number
+          winning_bet_count: number
+        }
+        Insert: {
+          assumptions?: Json
+          away_goals?: number | null
+          calculated_at?: string
+          contributing_bet_ids?: string[]
+          exposure_breakdown?: Json
+          gross_payout?: number
+          home_goals?: number | null
+          id?: string
+          match_id: string
+          net_liability?: number
+          scenario_key: string
+          scenario_label: string
+          total_stake_involved?: number
+          winning_bet_count?: number
+        }
+        Update: {
+          assumptions?: Json
+          away_goals?: number | null
+          calculated_at?: string
+          contributing_bet_ids?: string[]
+          exposure_breakdown?: Json
+          gross_payout?: number
+          home_goals?: number | null
+          id?: string
+          match_id?: string
+          net_liability?: number
+          scenario_key?: string
+          scenario_label?: string
+          total_stake_involved?: number
+          winning_bet_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_exposure_scenarios_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       match_h2h: {
         Row: {
           fetched_at: string
@@ -976,6 +1035,8 @@ export type Database = {
           away_team: string
           created_at: string
           draw_liability: number
+          exposure_is_stale: boolean
+          exposure_last_calculated_at: string | null
           external_id: string | null
           first_card_team: string | null
           first_corner_team: string | null
@@ -1009,6 +1070,10 @@ export type Database = {
           updated_at: string
           winner: string | null
           worst_case_exposure: number
+          worst_case_gross_payout: number
+          worst_case_net_liability: number
+          worst_case_scenario_key: string | null
+          worst_case_scenario_label: string | null
         }
         Insert: {
           apifootball_fixture_id?: number | null
@@ -1021,6 +1086,8 @@ export type Database = {
           away_team: string
           created_at?: string
           draw_liability?: number
+          exposure_is_stale?: boolean
+          exposure_last_calculated_at?: string | null
           external_id?: string | null
           first_card_team?: string | null
           first_corner_team?: string | null
@@ -1054,6 +1121,10 @@ export type Database = {
           updated_at?: string
           winner?: string | null
           worst_case_exposure?: number
+          worst_case_gross_payout?: number
+          worst_case_net_liability?: number
+          worst_case_scenario_key?: string | null
+          worst_case_scenario_label?: string | null
         }
         Update: {
           apifootball_fixture_id?: number | null
@@ -1066,6 +1137,8 @@ export type Database = {
           away_team?: string
           created_at?: string
           draw_liability?: number
+          exposure_is_stale?: boolean
+          exposure_last_calculated_at?: string | null
           external_id?: string | null
           first_card_team?: string | null
           first_corner_team?: string | null
@@ -1099,6 +1172,10 @@ export type Database = {
           updated_at?: string
           winner?: string | null
           worst_case_exposure?: number
+          worst_case_gross_payout?: number
+          worst_case_net_liability?: number
+          worst_case_scenario_key?: string | null
+          worst_case_scenario_label?: string | null
         }
         Relationships: []
       }
@@ -2098,6 +2175,18 @@ export type Database = {
       }
     }
     Functions: {
+      _exposure_bet_wins: {
+        Args: {
+          p_away: number
+          p_home: number
+          p_market: string
+          p_market_text: string
+          p_outcome: string
+          p_selection: string
+        }
+        Returns: boolean
+      }
+      _exposure_norm: { Args: { txt: string }; Returns: string }
       adjust_correct_score_odds: {
         Args: {
           p_match_id: string
@@ -2228,6 +2317,10 @@ export type Database = {
         Returns: number
       }
       generate_public_reference: { Args: never; Returns: string }
+      get_match_exposure_summary: {
+        Args: { p_match_id: string }
+        Returns: Json
+      }
       get_onboarding_completion_stats: { Args: never; Returns: Json }
       get_simulation_outcome_analytics: { Args: never; Returns: Json }
       get_simulation_stress_metrics: { Args: never; Returns: Json }
@@ -2334,6 +2427,10 @@ export type Database = {
       recalc_match_liabilities: {
         Args: { p_match_id: string }
         Returns: undefined
+      }
+      recalculate_match_scenario_exposure: {
+        Args: { p_match_id: string }
+        Returns: Json
       }
       refresh_odds_status_for_open_matches: { Args: never; Returns: undefined }
       regenerate_match_market_odds: {
