@@ -31,19 +31,21 @@ const POPULAR_SCORES = ["0-0", "1-0", "0-1", "1-1", "2-0", "0-2", "2-1", "1-2", 
 
 /* ---------- Primitives ---------- */
 
-function SectionLabel({ children, note }: { children: React.ReactNode; note?: React.ReactNode }) {
+function QuestionHeading({
+  question,
+  note,
+}: {
+  question: React.ReactNode;
+  note?: React.ReactNode;
+}) {
   return (
-    <div className="flex items-baseline gap-2 mb-2 flex-wrap">
-      <span className="h-1.5 w-1.5 self-center bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon-glow)]" />
-      <span className="text-[12px] font-bold uppercase tracking-[0.05em] text-[var(--color-ink)]">
-        {children}
-      </span>
+    <div className="mb-2 space-y-0.5">
+      <h4 className="text-[15px] font-semibold leading-snug text-[var(--color-ink)]">
+        {question}
+      </h4>
       {note && (
-        <span className="text-[11px] font-normal normal-case tracking-normal text-[var(--color-ink-muted)]">
-          · {note}
-        </span>
+        <p className="text-[11px] leading-snug text-[var(--color-ink-muted)]">{note}</p>
       )}
-      <span className="flex-1 border-t border-dashed border-[var(--color-surface-border)]" />
     </div>
   );
 }
@@ -57,6 +59,7 @@ function OddsButton({
   disabled,
   title,
   onClick,
+  showProbability = true,
 }: {
   label: string;
   price: number;
@@ -65,30 +68,34 @@ function OddsButton({
   disabled: boolean;
   title?: string;
   onClick: () => void;
+  showProbability?: boolean;
 }) {
+  const prob = impliedProbability(price);
   return (
     <button
       type="button"
       disabled={disabled}
       title={title}
       onClick={onClick}
-      className={`relative flex min-h-[62px] flex-col items-center justify-center gap-1 border px-2 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+      className={`relative flex min-h-[68px] flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
         selected
-          ? "border-[var(--color-neon)] bg-[var(--color-neon)]/15 text-[var(--color-neon)] shadow-[0_0_18px_var(--color-neon-glow)]"
-          : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/60"
+          ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-ink)]"
+          : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/50"
       }`}
     >
-      <span className="w-full whitespace-normal break-words text-center text-[11px] font-semibold leading-tight text-[var(--color-ink-muted)]">
+      <span className="w-full whitespace-normal break-words text-center text-[12px] font-medium leading-tight text-[var(--color-ink)]">
         {label}
       </span>
-      <span className="font-display text-base font-bold tabular-nums text-[var(--color-ink)]">
-        {price.toFixed(2)}
+      <span className="font-display text-base font-bold tabular-nums text-[var(--color-neon)]">
+        {price.toFixed(2)}x
       </span>
-      {selected && (
-        <span className="absolute inset-x-0 bottom-0 h-[2px] bg-[var(--color-neon)]" />
+      {showProbability && prob > 0 && (
+        <span className="text-[10px] tabular-nums text-[var(--color-ink-muted)]">
+          ~{prob}%
+        </span>
       )}
       {alreadyPlaced && (
-        <span className="absolute right-1 top-1 text-[10px] font-bold text-[var(--color-neon)]">✓</span>
+        <span className="absolute right-1.5 top-1 text-[10px] font-bold text-[var(--color-neon)]">✓</span>
       )}
     </button>
   );
@@ -96,6 +103,7 @@ function OddsButton({
 
 function StakeSlip({
   marketLabel,
+  question,
   selectionText,
   odds,
   stake,
@@ -109,6 +117,7 @@ function StakeSlip({
   matchName,
 }: {
   marketLabel: string;
+  question?: string;
   selectionText: string;
   odds: number;
   stake: string;
@@ -122,20 +131,21 @@ function StakeSlip({
   matchName?: string;
 }) {
   const stakeNum = Number(stake) || 0;
-  const potentialPayout = stakeNum * odds;
-  const potentialProfit = potentialPayout - stakeNum;
+  const potentialReturn = stakeNum * odds;
+  const potentialGain = potentialReturn - stakeNum;
+  const prob = impliedProbability(odds);
   const noBalance = balance <= 0;
   const overBalance = stakeNum > balance && stakeNum > 0;
   const canSubmit = !isPending && !error && !noBalance && !overBalance && stakeNum >= MIN_STAKE;
   const buttonLabel = noBalance
-    ? "Insufficient points"
+    ? "Add Points to Lock"
     : overBalance
-      ? "Stake exceeds balance"
-      : "Place Bet";
+      ? "Stake exceeds points balance"
+      : "Lock Prediction";
 
   const wrapperClass = sticky
-    ? "sticky z-30 border border-[var(--color-neon)]/50 bg-[#050A08]/98 backdrop-blur p-3 space-y-2 shadow-[0_-8px_24px_rgba(0,0,0,0.6)]"
-    : "mt-2 border border-[var(--color-surface-border)] bg-[#070D0A] p-3 space-y-2 animate-in fade-in-50 duration-200";
+    ? "sticky z-30 rounded-lg border border-[var(--color-neon)]/40 bg-[#050A08]/98 backdrop-blur p-3.5 space-y-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)]"
+    : "mt-2 rounded-lg border border-[var(--color-surface-border)] bg-[#070D0A] p-3.5 space-y-2.5 animate-in fade-in-50 duration-200";
 
   return (
     <div
@@ -144,24 +154,33 @@ function StakeSlip({
         sticky
           ? {
               bottom: "calc(72px + env(safe-area-inset-bottom))",
-              paddingBottom: "0.75rem",
+              paddingBottom: "0.875rem",
             }
           : undefined
       }
     >
-      <div className="flex justify-between items-start gap-2">
-        <div className="min-w-0 flex-1 space-y-0.5">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-neon)]">
+            Your prediction
+          </div>
           {matchName && (
-            <div className="truncate text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-ink-muted)]">
-              {matchName}
-            </div>
+            <div className="truncate text-[11px] text-[var(--color-ink-muted)]">{matchName}</div>
           )}
-          <div className="text-[12px] leading-snug text-[var(--color-ink)]">
-            <span className="font-bold text-[var(--color-neon)]">{marketLabel}</span>
-            <span className="mx-1 opacity-50">·</span>
-            <span>{selectionText}</span>
-            <span className="mx-1 opacity-50">@</span>
-            <span className="font-display font-bold tabular-nums">{odds.toFixed(2)}</span>
+          <div className="text-[13px] leading-snug text-[var(--color-ink)]">
+            {question ?? marketLabel}
+          </div>
+          <div className="text-[13px] leading-snug text-[var(--color-ink)]">
+            <span className="font-semibold">{selectionText}</span>
+            <span className="mx-1.5 text-[var(--color-ink-muted)]">·</span>
+            <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
+              {odds.toFixed(2)}x
+            </span>
+            {prob > 0 && (
+              <span className="ml-1.5 text-[11px] text-[var(--color-ink-muted)]">
+                market estimate ~{prob}%
+              </span>
+            )}
           </div>
         </div>
         <button
@@ -183,14 +202,14 @@ function StakeSlip({
           value={stake}
           onChange={(e) => setStake(e.target.value)}
           disabled={noBalance}
-          placeholder={`Stake (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
-          className="flex-1 min-w-0 border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-base font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:opacity-40 disabled:cursor-not-allowed"
+          placeholder={`Points (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
+          className="flex-1 min-w-0 rounded-md border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-base font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:opacity-40 disabled:cursor-not-allowed"
         />
         <button
           type="button"
           disabled={!canSubmit}
           onClick={onSubmit}
-          className="flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-[var(--color-neon)] px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.08em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)]"
+          className="flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[var(--color-neon)] px-4 py-2.5 text-[12px] font-bold text-black transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)]"
         >
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (
             <><span>{buttonLabel}</span>{canSubmit && <ArrowUpRight className="h-3.5 w-3.5" />}</>
@@ -199,31 +218,39 @@ function StakeSlip({
       </div>
 
       <div className="grid grid-cols-2 gap-2 text-[11px]">
-        <div className="flex items-center justify-between border border-[var(--color-surface-border)]/60 bg-black/40 px-2 py-1.5">
-          <span className="text-[var(--color-ink-muted)]">Payout</span>
+        <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+          <span className="text-[var(--color-ink-muted)]">Return</span>
           <span className="font-display font-bold tabular-nums text-[var(--color-ink)]">
-            {potentialPayout.toFixed(2)}
+            {potentialReturn.toFixed(2)}
           </span>
         </div>
-        <div className="flex items-center justify-between border border-[var(--color-surface-border)]/60 bg-black/40 px-2 py-1.5">
-          <span className="text-[var(--color-ink-muted)]">Profit</span>
+        <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+          <span className="text-[var(--color-ink-muted)]">Gain</span>
           <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
-            +{potentialProfit.toFixed(2)}
+            +{potentialGain.toFixed(2)}
           </span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.1em] text-[var(--color-ink-muted)]">
-        <span>Balance: <span className="font-bold tabular-nums text-[var(--color-ink)]">{balance.toFixed(2)}</span></span>
-        {(noBalance || overBalance) && (
-          <span className="font-bold text-destructive normal-case tracking-normal">
-            {noBalance ? "Insufficient points" : "Stake exceeds balance"}
+      <div className="flex items-center justify-between text-[11px] text-[var(--color-ink-muted)]">
+        <span>
+          Points balance:{" "}
+          <span className="font-bold tabular-nums text-[var(--color-ink)]">
+            {balance.toFixed(2)}
           </span>
+        </span>
+        {noBalance && (
+          <span className="font-semibold text-destructive">
+            You need points to lock this prediction.
+          </span>
+        )}
+        {!noBalance && overBalance && (
+          <span className="font-semibold text-destructive">Stake exceeds points balance</span>
         )}
       </div>
 
       {error && !overBalance && !noBalance && (
-        <div className="text-[11px] normal-case text-destructive">{error}</div>
+        <div className="text-[11px] text-destructive">{error}</div>
       )}
     </div>
   );
@@ -232,15 +259,15 @@ function StakeSlip({
 
 function SuspendedBadge() {
   return (
-    <div className="inline-block border border-destructive/40 bg-destructive/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-destructive">
-      Suspended
+    <div className="inline-block rounded border border-destructive/40 bg-destructive/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-destructive">
+      Market paused
     </div>
   );
 }
 
 function SettlementNote({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-sm border-l-2 border-[var(--color-neon)]/70 bg-[var(--color-neon)]/5 px-3 py-2 text-[12px] leading-snug text-[var(--color-ink)]/85">
+    <div className="rounded-md border-l-2 border-[var(--color-neon)]/60 bg-[var(--color-neon)]/5 px-3 py-2 text-[12px] leading-snug text-[var(--color-ink)]/85">
       {children}
     </div>
   );
