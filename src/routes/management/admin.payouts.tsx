@@ -267,11 +267,14 @@ function AdminPayoutPage() {
       </Dialog>
 
       {/* Upload proof */}
-      <Dialog open={!!uploadFor} onOpenChange={(o) => { if (!o) { setUploadFor(null); setFile(null); } }}>
+      <Dialog open={!!uploadFor} onOpenChange={(o) => { if (!o) { setUploadFor(null); setFile(null); setBankRef(""); setCheckerNotes(""); } }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Upload proof of payment</DialogTitle>
-            <DialogDescription>PDF/JPG/PNG/WEBP, max 10MB. Click confirm to notify the user.</DialogDescription>
+            <DialogTitle>Complete payout — upload proof</DialogTitle>
+            <DialogDescription>
+              PDF/JPG/PNG/WEBP, max 10MB. The completer must differ from the approver unless single-admin
+              self-approval is enabled in platform settings.
+            </DialogDescription>
           </DialogHeader>
           <Input
             ref={fileRef}
@@ -281,10 +284,23 @@ function AdminPayoutPage() {
             disabled={uploading}
           />
           {file && <p className="text-xs text-muted-foreground truncate">Selected: {file.name}</p>}
+          <Input
+            placeholder="Bank reference number (optional)"
+            value={bankRef}
+            onChange={(e) => setBankRef(e.target.value)}
+            disabled={uploading}
+          />
+          <Textarea
+            placeholder="Checker notes (optional)"
+            rows={2}
+            value={checkerNotes}
+            onChange={(e) => setCheckerNotes(e.target.value)}
+            disabled={uploading}
+          />
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setUploadFor(null); setFile(null); }} disabled={uploading}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setUploadFor(null); setFile(null); setBankRef(""); setCheckerNotes(""); }} disabled={uploading}>Cancel</Button>
             <Button disabled={!file || uploading} onClick={uploadProofAndConfirm}>
-              {uploading ? "Uploading…" : "Confirm"}
+              {uploading ? "Uploading…" : "Confirm & complete"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -292,3 +308,4 @@ function AdminPayoutPage() {
     </div>
   );
 }
+
