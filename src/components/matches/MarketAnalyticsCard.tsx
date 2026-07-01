@@ -106,15 +106,13 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
     <SectionShell
       updatedAt={data.updatedAt}
       right={
-        <div className="flex items-center gap-1 rounded border border-[var(--color-surface-border)] p-0.5">
+        <div className="flex items-center gap-4 text-[11px] font-medium">
           {(["prob", "mult"] as Mode[]).map((m) => (
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={`rounded px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors ${
-                mode === m
-                  ? "bg-[var(--color-neon)]/15 text-[var(--color-neon)]"
-                  : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+              className={`transition-colors ${
+                mode === m ? "text-[var(--neon)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"
               }`}
             >
               {m === "prob" ? "Probability" : "Multiplier"}
@@ -123,18 +121,18 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
         </div>
       }
     >
-      {/* Market selector */}
-      <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
+      {/* Market selector — clean chip row, no borders */}
+      <div className="mb-5 flex gap-4 overflow-x-auto pb-1 scrollbar-none">
         {data.availableMarkets.map((m) => {
           const active = m.key === data.market;
           return (
             <button
               key={m.key}
               onClick={() => setMarket(m.key)}
-              className={`shrink-0 border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors ${
+              className={`shrink-0 pb-1 text-[12px] font-medium whitespace-nowrap transition-colors ${
                 active
-                  ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
-                  : "border-[var(--color-surface-border)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                  ? "text-[var(--ink)] border-b border-[var(--neon)]"
+                  : "text-[var(--ink-muted)] hover:text-[var(--ink)] border-b border-transparent"
               }`}
             >
               {m.label}
@@ -143,8 +141,9 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
         })}
       </div>
 
-      {/* Live legend */}
-      <div className="mb-3 grid gap-1.5 sm:grid-cols-3">
+
+      {/* Live legend — flat row, no boxes */}
+      <div className="mb-6 grid gap-x-6 gap-y-3 sm:grid-cols-3">
         {filteredSeries.map((s, idx) => {
           const last = s.points.at(-1);
           const first = s.points[0];
@@ -158,24 +157,21 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
             : 0;
           const Trend = change > 0.05 ? TrendingUp : change < -0.05 ? TrendingDown : Minus;
           const trendColor = change > 0.05
-            ? "text-[var(--color-neon)]"
+            ? "text-[var(--neon)]"
             : change < -0.05
             ? "text-rose-400"
-            : "text-[var(--color-ink-muted)]";
+            : "text-[var(--ink-faint)]";
           return (
-            <div
-              key={s.key}
-              className="flex items-center justify-between gap-2 border border-[var(--color-surface-border)]/70 bg-[var(--color-surface)]/40 px-2.5 py-2"
-            >
+            <div key={s.key} className="flex items-baseline justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
                 <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  className="h-1.5 w-6 shrink-0"
                   style={{ background: SERIES_COLORS[idx % SERIES_COLORS.length] }}
                 />
-                <span className="truncate text-[11px] font-semibold text-[var(--color-ink)]">{s.label}</span>
+                <span className="truncate text-[12px] font-medium text-[var(--ink-2)]">{s.label}</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-display text-sm font-black tabular-nums text-[var(--color-ink)]">
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-display text-base font-medium tabular-nums tracking-tight text-[var(--ink)]">
                   {value}
                 </span>
                 {s.points.length > 1 && (
@@ -187,32 +183,37 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
         })}
       </div>
 
-      {/* Chart */}
-      <div className="h-56 w-full sm:h-64">
+      {/* Chart — thin strokes, breathing room, minimal chrome */}
+      <div className="h-64 w-full sm:h-72">
         {chartData.length === 0 ? (
           <EmptyGraph />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 4, left: -12 }}>
-              <CartesianGrid strokeDasharray="2 4" stroke="var(--color-surface-border)" vertical={false} />
+            <LineChart data={chartData} margin={{ top: 10, right: 4, bottom: 4, left: -18 }}>
+              <CartesianGrid strokeDasharray="1 6" stroke="var(--surface-hairline)" vertical={false} />
               <XAxis
                 dataKey="t"
-                stroke="var(--color-ink-muted)"
-                tick={{ fontSize: 10 }}
+                stroke="var(--ink-faint)"
+                tick={{ fontSize: 10, fill: "var(--ink-faint)" }}
+                tickLine={false}
+                axisLine={false}
                 tickFormatter={(v) => new Date(v).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                 minTickGap={40}
               />
               <YAxis
-                stroke="var(--color-ink-muted)"
-                tick={{ fontSize: 10 }}
+                stroke="var(--ink-faint)"
+                tick={{ fontSize: 10, fill: "var(--ink-faint)" }}
+                tickLine={false}
+                axisLine={false}
                 domain={mode === "prob" ? [0, 100] : ["auto", "auto"]}
                 tickFormatter={(v) => (mode === "prob" ? `${v}%` : `${v}x`)}
                 width={44}
               />
               <Tooltip
                 contentStyle={{
-                  background: "var(--color-surface-2)",
-                  border: "1px solid var(--color-surface-border)",
+                  background: "var(--surface-2)",
+                  border: "1px solid var(--surface-border)",
+                  borderRadius: 2,
                   fontSize: 11,
                 }}
                 labelFormatter={(v) => new Date(v as string).toLocaleString()}
@@ -225,7 +226,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
                   dataKey={s.key}
                   name={s.label}
                   stroke={SERIES_COLORS[idx % SERIES_COLORS.length]}
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                   dot={false}
                   isAnimationActive={false}
                   connectNulls
@@ -237,13 +238,13 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
       </div>
 
       {isFlat && (
-        <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+        <p className="mt-3 text-[11px] text-[var(--ink-muted)]">
           Only one snapshot recorded so far — movement will appear as odds update.
         </p>
       )}
 
-      {/* Range chips */}
-      <div className="mt-3 flex items-center justify-end gap-1">
+      {/* Range chips — flat text */}
+      <div className="mt-5 flex items-center justify-end gap-4">
         {RANGES.map((r) => {
           const supported = supportedRanges.includes(r);
           const active = r === range && supported;
@@ -252,12 +253,12 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
               key={r}
               disabled={!supported}
               onClick={() => setRange(r)}
-              className={`rounded px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors ${
+              className={`text-[11px] font-medium transition-colors ${
                 active
-                  ? "bg-[var(--color-neon)]/15 text-[var(--color-neon)]"
+                  ? "text-[var(--neon)]"
                   : supported
-                  ? "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-                  : "cursor-not-allowed text-[var(--color-ink-muted)]/30"
+                  ? "text-[var(--ink-muted)] hover:text-[var(--ink)]"
+                  : "cursor-not-allowed text-[var(--ink-faint)]/40"
               }`}
             >
               {r}
@@ -269,6 +270,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
   );
 }
 
+
 function SectionShell({
   children,
   right,
@@ -279,18 +281,20 @@ function SectionShell({
   updatedAt?: string | null;
 }) {
   return (
-    <section className="relative -mx-4 border-y border-[var(--color-surface-border)]/70 bg-[var(--color-surface-2)]/35 px-4 py-4 md:mx-0 md:border md:bg-[var(--color-surface-2)] md:px-5 md:py-5">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <Activity className="h-3 w-3 text-[var(--color-neon)]" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-neon)]">
+    <section className="relative py-10">
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-[var(--ink-faint)]">
             Market analytics
-          </span>
-          {updatedAt && (
-            <span className="hidden text-[9px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)] sm:inline">
-              · {new Date(updatedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
-            </span>
-          )}
+            {updatedAt && (
+              <span className="ml-2 text-[var(--ink-faint)]">
+                · {new Date(updatedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
+          </p>
+          <h3 className="mt-1 font-display text-2xl font-medium tracking-tight text-[var(--ink)] md:text-3xl">
+            Price movement<span className="text-[var(--ink-faint)]">.</span>
+          </h3>
         </div>
         {right}
       </div>
@@ -301,15 +305,16 @@ function SectionShell({
 
 function EmptyGraph() {
   return (
-    <div className="grid h-48 place-items-center border border-dashed border-[var(--color-surface-border)]/70 bg-[var(--color-surface)]/30 text-center">
-      <div className="space-y-1 px-4">
-        <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--color-ink)]">
+    <div className="grid h-48 place-items-center">
+      <div className="space-y-1 text-center">
+        <p className="font-display text-lg font-medium tracking-tight text-[var(--ink)]">
           No market history yet
         </p>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-          Market movement will appear once price history is available.
+        <p className="text-[12px] text-[var(--ink-muted)]">
+          Movement will appear once price history is available.
         </p>
       </div>
     </div>
   );
 }
+

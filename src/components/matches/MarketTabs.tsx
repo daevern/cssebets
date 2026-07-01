@@ -39,17 +39,16 @@ function QuestionHeading({
   note?: React.ReactNode;
 }) {
   return (
-    <div className="mb-2 space-y-0.5">
-      <h4 className="text-[15px] font-semibold leading-snug text-[var(--color-ink)]">
+    <div className="mb-3 flex items-baseline justify-between gap-4">
+      <h4 className="text-[16px] font-medium leading-snug text-[var(--ink)]">
         {question}
       </h4>
       {note && (
-        <p className="text-[11px] leading-snug text-[var(--color-ink-muted)]">{note}</p>
+        <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--ink-faint)]">{note}</span>
       )}
     </div>
   );
 }
-
 
 function OddsButton({
   label,
@@ -78,28 +77,29 @@ function OddsButton({
       title={title}
       onClick={onClick}
       aria-pressed={selected}
-      className={`relative flex min-h-[68px] flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+      className={`relative flex min-h-[64px] flex-col items-start justify-center gap-1 rounded-sm px-3.5 py-3 text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
         selected
-          ? "border-2 border-[var(--color-neon)] bg-[var(--color-neon)]/15 text-[var(--color-ink)] shadow-[0_0_0_1px_var(--color-neon)]"
-          : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/50"
+          ? "bg-[var(--neon)]/10 ring-1 ring-inset ring-[var(--neon)]/60"
+          : "bg-[var(--surface-2)]/60 hover:bg-[var(--surface-3)]/60"
       }`}
     >
-      <span className="w-full whitespace-normal break-words text-center text-[12px] font-medium leading-tight text-[var(--color-ink)]">
+      <span className={`w-full truncate text-[11px] font-medium uppercase tracking-[0.14em] ${selected ? "text-[var(--neon)]" : "text-[var(--ink-muted)]"}`}>
         {label}
       </span>
-      <span className="font-display text-base font-bold tabular-nums text-[var(--color-neon)]">
-        {price.toFixed(2)}x
-      </span>
-      {showProbability && prob > 0 && (
-        <span className="text-[10px] tabular-nums text-[var(--color-ink-muted)]" title="Estimates are based on current multipliers and may include platform margin.">
-          ~{prob}%
+      <div className="flex items-baseline gap-1.5">
+        <span className={`font-display text-xl font-medium tabular-nums tracking-tight ${selected ? "text-[var(--neon)]" : "text-[var(--ink)]"}`}>
+          {price.toFixed(2)}
         </span>
-      )}
-      {selected && !alreadyPlaced && (
-        <span className="absolute right-1.5 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-neon)] text-[9px] font-bold text-black">✓</span>
-      )}
+        {showProbability && prob > 0 && (
+          <span className="text-[10px] font-medium tabular-nums text-[var(--ink-faint)]">
+            {prob}%
+          </span>
+        )}
+      </div>
       {alreadyPlaced && (
-        <span className="absolute right-1.5 top-1 text-[10px] font-bold text-[var(--color-neon)]">✓</span>
+        <span className="absolute right-2 top-2 text-[9px] font-medium uppercase tracking-[0.12em] text-[var(--neon)]">
+          Locked
+        </span>
       )}
     </button>
   );
@@ -137,145 +137,119 @@ function StakeSlip({
   const stakeNum = Number(stake) || 0;
   const potentialReturn = stakeNum * odds;
   const potentialGain = potentialReturn - stakeNum;
-  const prob = impliedProbability(odds);
   const noBalance = balance <= 0;
   const overBalance = stakeNum > balance && stakeNum > 0;
   const canSubmit = !isPending && !error && !noBalance && !overBalance && stakeNum >= MIN_STAKE;
   const buttonLabel = noBalance
-    ? "Add Points to Lock"
+    ? "Add points to lock"
     : overBalance
-      ? "Stake exceeds points balance"
-      : "Lock Prediction";
+      ? "Exceeds balance"
+      : "Lock prediction";
 
   const wrapperClass = sticky
-    ? "sticky z-50 rounded-lg border border-[var(--color-neon)]/40 bg-[#050A08]/98 backdrop-blur p-3.5 space-y-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)]"
-    : "mt-2 rounded-lg border border-[var(--color-surface-border)] bg-[#070D0A] p-3.5 space-y-2.5 animate-in fade-in-50 duration-200";
+    ? "sticky z-50 rounded-sm border border-[var(--neon)]/40 bg-[#050A08]/95 p-4 space-y-4 shadow-[0_-12px_40px_rgba(0,0,0,0.6)] backdrop-blur"
+    : "mt-4 rounded-sm bg-[var(--surface-2)]/60 p-5 space-y-4 animate-in fade-in-50 duration-200";
 
   return (
     <div
       className={wrapperClass}
       style={
         sticky
-          ? {
-              bottom: "calc(88px + env(safe-area-inset-bottom))",
-              paddingBottom: "0.875rem",
-            }
+          ? { bottom: "calc(88px + env(safe-area-inset-bottom))" }
           : undefined
       }
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1 space-y-1">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-neon)]">
-            Your prediction
-          </div>
-          {matchName && (
-            <div className="truncate text-[11px] text-[var(--color-ink-muted)]">{matchName}</div>
-          )}
-          <div className="text-[13px] leading-snug text-[var(--color-ink)]">
-            {question ?? marketLabel}
-          </div>
-          <div className="text-[13px] leading-snug text-[var(--color-ink)]">
-            <span className="font-semibold">{selectionText}</span>
-            <span className="mx-1.5 text-[var(--color-ink-muted)]">·</span>
-            <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
-              {odds.toFixed(2)}x
-            </span>
-            {prob > 0 && (
-              <span className="ml-1.5 text-[11px] text-[var(--color-ink-muted)]">
-                market estimate ~{prob}%
-              </span>
-            )}
-          </div>
-        </div>
+      <div className="flex items-baseline justify-between text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--ink-faint)]">
+        <span>Your prediction</span>
         <button
           type="button"
           onClick={onClear}
           aria-label="Clear selection"
-          className="shrink-0 rounded-full p-1 text-[var(--color-ink-muted)] hover:bg-white/5 hover:text-[var(--color-ink)]"
+          className="text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)]"
         >
-          <X className="h-4 w-4" />
+          Clear
         </button>
       </div>
 
-      <div className="flex gap-2">
-        <input
-          type="number"
-          inputMode="numeric"
-          min={MIN_STAKE}
-          max={MAX_STAKE}
-          value={stake}
-          onChange={(e) => setStake(e.target.value)}
-          disabled={noBalance}
-          placeholder={`Points (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
-          className="flex-1 min-w-0 rounded-md border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-base font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:opacity-40 disabled:cursor-not-allowed"
-        />
-        <button
-          type="button"
-          disabled={!canSubmit}
-          onClick={onSubmit}
-          className="flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[var(--color-neon)] px-4 py-2.5 text-[12px] font-bold text-black transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)]"
-        >
-          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (
-            <><span>{buttonLabel}</span>{canSubmit && <ArrowUpRight className="h-3.5 w-3.5" />}</>
-          )}
-        </button>
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 text-[11px]">
-        <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
-          <span className="text-[var(--color-ink-muted)]">Return</span>
-          <span className="font-display font-bold tabular-nums text-[var(--color-ink)]">
-            {potentialReturn.toFixed(2)}
-          </span>
-        </div>
-        <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
-          <span className="text-[var(--color-ink-muted)]">Gain</span>
-          <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
-            +{potentialGain.toFixed(2)}
-          </span>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between text-[11px] text-[var(--color-ink-muted)]">
-        <span>
-          Points balance:{" "}
-          <span className="font-bold tabular-nums text-[var(--color-ink)]">
-            {balance.toFixed(2)}
-          </span>
+      {matchName && (
+        <div className="text-[11px] text-[var(--ink-muted)]">{matchName}</div>
+      )}
+      <p className="text-[14px] leading-snug text-[var(--ink-2)]">{question ?? marketLabel}</p>
+      <p className="text-[15px] leading-snug text-[var(--ink)]">
+        <span className="font-medium">{selectionText}</span>{" "}
+        <span className="text-[var(--ink-muted)]">at</span>{" "}
+        <span className="font-display font-medium tabular-nums text-[var(--neon)]">
+          {odds.toFixed(2)}x
         </span>
-        {noBalance && (
-          <span className="font-semibold text-destructive">
-            You need points to lock this prediction.
+      </p>
+
+      <div className="grid grid-cols-[1fr_auto] gap-3">
+        <label className="block">
+          <span className="mb-1 block text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--ink-faint)]">
+            Points
           </span>
-        )}
-        {!noBalance && overBalance && (
-          <span className="font-semibold text-destructive">Stake exceeds points balance</span>
-        )}
+          <input
+            type="number"
+            inputMode="numeric"
+            min={MIN_STAKE}
+            max={MAX_STAKE}
+            value={stake}
+            onChange={(e) => setStake(e.target.value)}
+            disabled={noBalance}
+            className="w-full border-0 border-b border-[var(--surface-border)] bg-transparent px-0 pb-2 font-display text-2xl font-medium tabular-nums text-[var(--ink)] outline-none transition-colors focus:border-[var(--neon)] disabled:opacity-40"
+          />
+        </label>
+        <div className="self-end">
+          <button
+            type="button"
+            disabled={!canSubmit}
+            onClick={onSubmit}
+            className="inline-flex h-11 items-center gap-2 rounded-sm bg-[var(--neon)] px-5 text-[13px] font-medium text-black transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[var(--surface-border)] disabled:text-[var(--ink-muted)]"
+          >
+            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+              <>{buttonLabel}{canSubmit && <ArrowUpRight className="h-3.5 w-3.5" />}</>
+            )}
+          </button>
+        </div>
       </div>
 
+      <div className="flex items-baseline justify-between text-[12px]">
+        <div className="flex items-baseline gap-6 text-[var(--ink-2)]">
+          <span>Return <span className="ml-1 font-display font-medium tabular-nums text-[var(--ink)]">{potentialReturn.toFixed(2)}</span></span>
+          <span>Gain <span className="ml-1 font-display font-medium tabular-nums text-[var(--neon)]">+{potentialGain.toFixed(2)}</span></span>
+        </div>
+        <span className="text-[var(--ink-faint)]">Bal {balance.toFixed(0)}</span>
+      </div>
+
+      {noBalance && (
+        <p className="text-[11px] text-[var(--ink-muted)]">You need points to lock this prediction.</p>
+      )}
+      {!noBalance && overBalance && (
+        <p className="text-[11px] text-destructive">Stake exceeds your balance.</p>
+      )}
       {error && !overBalance && !noBalance && (
-        <div className="text-[11px] text-destructive">{error}</div>
+        <p className="text-[11px] text-destructive">{error}</p>
       )}
     </div>
   );
 }
 
-
 function SuspendedBadge() {
   return (
-    <div className="inline-block rounded border border-destructive/40 bg-destructive/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-destructive">
+    <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-destructive">
       Market paused
-    </div>
+    </p>
   );
 }
 
 function SettlementNote({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-md border-l-2 border-[var(--color-neon)]/60 bg-[var(--color-neon)]/5 px-3 py-2 text-[12px] leading-snug text-[var(--color-ink)]/85">
+    <p className="border-l-2 border-[var(--neon)]/50 pl-3 text-[12px] leading-snug text-[var(--ink-2)]">
       {children}
-    </div>
+    </p>
   );
 }
+
 
 /* ---------- Main ---------- */
 
@@ -645,10 +619,9 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   );
 
   return (
-    <div className="pt-4 space-y-4 -mx-3 sm:-mx-2 md:mx-0">
-      {/* Consistent scrollable tab bar */}
-      <div className="flex overflow-x-auto rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none">
-
+    <div className="space-y-8">
+      {/* Text-only tab bar — no box, no border, just a rhythm of labels */}
+      <div className="-mx-1 flex overflow-x-auto pb-1 scrollbar-none border-b border-[var(--surface-hairline)]">
         {TAB_DEFS.map((t) => {
           const enabled = tabEnabled[t.id];
           const active = tab === t.id;
@@ -658,33 +631,36 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
               type="button"
               disabled={!enabled}
               onClick={() => setTab(t.id)}
-              className={`shrink-0 px-4 py-2.5 text-center text-[13px] font-semibold whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)]/60 last:border-r-0 ${
+              className={`relative shrink-0 px-3 py-2.5 text-[13px] font-medium whitespace-nowrap transition-colors ${
                 active
-                  ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
+                  ? "text-[var(--ink)]"
                   : enabled
-                    ? "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-                    : "text-[var(--color-ink-muted)]/30 cursor-not-allowed"
+                    ? "text-[var(--ink-muted)] hover:text-[var(--ink)]"
+                    : "text-[var(--ink-faint)]/50 cursor-not-allowed"
               }`}
             >
               {t.label}
+              {active && (
+                <span className="absolute inset-x-3 -bottom-px h-px bg-[var(--neon)]" aria-hidden />
+              )}
             </button>
           );
         })}
       </div>
 
-      <div className="px-3 sm:px-2 md:px-0">
+      <div className="space-y-8">
         {tab === "pop" && (
-          <div className="space-y-4">
+          <div className="space-y-8">
             {getGroup("over_under_2_5").length > 0 && <Section market="over_under_2_5" cols="grid-cols-2" />}
             {getGroup("btts").length > 0 && <Section market="btts" cols="grid-cols-2" />}
             {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}
-            {hasToQualify && <Section market="to_qualify" cols="grid-cols-2" note="paid on who advances (incl. ET & penalties)" />}
-            {!hasPopular && <div className="text-[12px] text-[var(--color-ink-muted)]">No popular markets available.</div>}
+            {hasToQualify && <Section market="to_qualify" cols="grid-cols-2" note="advances incl. ET & pens" />}
+            {!hasPopular && <div className="text-[12px] text-[var(--ink-muted)]">No popular markets available.</div>}
           </div>
         )}
 
         {tab === "goals" && (
-          <div className="space-y-4">
+          <div className="space-y-8">
             {OVER_UNDER_LINES.map((mk) =>
               getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
             )}
@@ -697,7 +673,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         {tab === "cs" && <div>{renderCorrectScore()}</div>}
 
         {tab === "ex" && (
-          <div className="space-y-4">
+          <div className="space-y-8">
             {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}
             {getGroup("draw_no_bet").length > 0 && (
               <Section market="draw_no_bet" cols="grid-cols-2" note="stake refunded on a draw" />
@@ -710,7 +686,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         )}
 
         {tab === "cards" && (
-          <div className="space-y-4">
+          <div className="space-y-8">
             <SettlementNote>
               Settled on official full-time card counts. Stake refunded if official data is unavailable.
             </SettlementNote>
@@ -725,7 +701,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         )}
 
         {tab === "corners" && (
-          <div className="space-y-4">
+          <div className="space-y-8">
             <SettlementNote>
               Settled on official full-time corner counts. Stake refunded if official data is unavailable.
             </SettlementNote>
@@ -739,13 +715,14 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         )}
 
         {tab === "sp" && (
-          <div className="space-y-4">
+          <div className="space-y-8">
             {hasToQualify && (
-              <Section market="to_qualify" cols="grid-cols-2" note="paid on who advances (incl. ET & penalties)" />
+              <Section market="to_qualify" cols="grid-cols-2" note="advances incl. ET & pens" />
             )}
             {hasHtFt && <Section market="half_time_full_time" cols="grid-cols-3" />}
           </div>
         )}
+
       </div>
     </div>
   );
