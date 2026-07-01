@@ -134,9 +134,9 @@ export const SELECTION_LABELS: Record<string, string> = {
   AWAY_AWAY: "Away / Away",
   HOME: "Home",
   AWAY: "Away",
-  HOME_OR_DRAW: "Home or Draw (1X)",
-  HOME_OR_AWAY: "Home or Away (12)",
-  DRAW_OR_AWAY: "Draw or Away (X2)",
+  HOME_OR_DRAW: "Home or Draw",
+  HOME_OR_AWAY: "Home or Away",
+  DRAW_OR_AWAY: "Draw or Away",
 };
 
 export function selectionLabel(sel: string): string {
