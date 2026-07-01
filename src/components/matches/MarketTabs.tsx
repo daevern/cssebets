@@ -720,80 +720,9 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
               <Section market="to_qualify" cols="grid-cols-2" note="advances incl. ET & pens" />
             )}
             {hasHtFt && <Section market="half_time_full_time" cols="grid-cols-3" />}
-
-        {tab === "pop" && (
-          <div className="space-y-4">
-            {getGroup("over_under_2_5").length > 0 && <Section market="over_under_2_5" cols="grid-cols-2" />}
-            {getGroup("btts").length > 0 && <Section market="btts" cols="grid-cols-2" />}
-            {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}
-            {hasToQualify && <Section market="to_qualify" cols="grid-cols-2" note="paid on who advances (incl. ET & penalties)" />}
-            {!hasPopular && <div className="text-[12px] text-[var(--color-ink-muted)]">No popular markets available.</div>}
           </div>
         )}
 
-        {tab === "goals" && (
-          <div className="space-y-4">
-            {OVER_UNDER_LINES.map((mk) =>
-              getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
-            )}
-            <Section market="btts" cols="grid-cols-2" />
-            {getGroup("goals_odd_even").length > 0 && <Section market="goals_odd_even" cols="grid-cols-2" />}
-            {getGroup("exact_total_goals").length > 0 && <Section market="exact_total_goals" cols="grid-cols-3" />}
-          </div>
-        )}
-
-        {tab === "cs" && <div>{renderCorrectScore()}</div>}
-
-        {tab === "ex" && (
-          <div className="space-y-4">
-            {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}
-            {getGroup("draw_no_bet").length > 0 && (
-              <Section market="draw_no_bet" cols="grid-cols-2" note="stake refunded on a draw" />
-            )}
-            {getGroup("clean_sheet_home").length > 0 && <Section market="clean_sheet_home" cols="grid-cols-2" />}
-            {getGroup("clean_sheet_away").length > 0 && <Section market="clean_sheet_away" cols="grid-cols-2" />}
-            {getGroup("win_to_nil_home").length > 0 && <Section market="win_to_nil_home" cols="grid-cols-2" />}
-            {getGroup("win_to_nil_away").length > 0 && <Section market="win_to_nil_away" cols="grid-cols-2" />}
-          </div>
-        )}
-
-        {tab === "cards" && (
-          <div className="space-y-4">
-            <SettlementNote>
-              Settled on official full-time card counts. Stake refunded if official data is unavailable.
-            </SettlementNote>
-            {CARDS_LINES.map((mk) =>
-              getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
-            )}
-            {getGroup("home_cards_over_under_1_5").length > 0 && <Section market="home_cards_over_under_1_5" cols="grid-cols-2" />}
-            {getGroup("away_cards_over_under_1_5").length > 0 && <Section market="away_cards_over_under_1_5" cols="grid-cols-2" />}
-            {getGroup("red_card_match").length > 0 && <Section market="red_card_match" cols="grid-cols-2" />}
-            {getGroup("first_card").length > 0 && <Section market="first_card" cols="grid-cols-3" />}
-          </div>
-        )}
-
-        {tab === "corners" && (
-          <div className="space-y-4">
-            <SettlementNote>
-              Settled on official full-time corner counts. Stake refunded if official data is unavailable.
-            </SettlementNote>
-            {CORNERS_LINES.map((mk) =>
-              getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
-            )}
-            {getGroup("home_corners_over_under_4_5").length > 0 && <Section market="home_corners_over_under_4_5" cols="grid-cols-2" />}
-            {getGroup("away_corners_over_under_4_5").length > 0 && <Section market="away_corners_over_under_4_5" cols="grid-cols-2" />}
-            {getGroup("first_corner").length > 0 && <Section market="first_corner" cols="grid-cols-3" />}
-          </div>
-        )}
-
-        {tab === "sp" && (
-          <div className="space-y-4">
-            {hasToQualify && (
-              <Section market="to_qualify" cols="grid-cols-2" note="paid on who advances (incl. ET & penalties)" />
-            )}
-            {hasHtFt && <Section market="half_time_full_time" cols="grid-cols-3" />}
-          </div>
-        )}
       </div>
     </div>
   );
