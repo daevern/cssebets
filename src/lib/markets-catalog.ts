@@ -143,6 +143,59 @@ export function selectionLabel(sel: string): string {
   return SELECTION_LABELS[sel] ?? sel;
 }
 
+// Question-style market titles for the prediction-market UI.
+// {home} / {away} are replaced with team names at render time.
+export const MARKET_QUESTIONS: Record<MarketKey, string> = {
+  over_under_0_5: "Will there be a goal?",
+  over_under_1_5: "Will there be over 1.5 goals?",
+  over_under_2_5: "Will there be over 2.5 goals?",
+  over_under_3_5: "Will there be over 3.5 goals?",
+  over_under_4_5: "Will there be over 4.5 goals?",
+  over_under_5_5: "Will there be over 5.5 goals?",
+  over_under_6_5: "Will there be over 6.5 goals?",
+  btts: "Will both teams score?",
+  correct_score: "What will the final score be?",
+  half_time_full_time: "How will half-time and full-time land?",
+  exact_total_goals: "How many goals will be scored?",
+  to_qualify: "Who will advance?",
+  double_chance: "Which two outcomes will cover it?",
+  draw_no_bet: "Who wins? (draw refunds)",
+  goals_odd_even: "Will total goals be odd or even?",
+  clean_sheet_home: "Will {home} keep a clean sheet?",
+  clean_sheet_away: "Will {away} keep a clean sheet?",
+  win_to_nil_home: "Will {home} win to nil?",
+  win_to_nil_away: "Will {away} win to nil?",
+  cards_over_under_2_5: "Will there be over 2.5 cards?",
+  cards_over_under_3_5: "Will there be over 3.5 cards?",
+  cards_over_under_4_5: "Will there be over 4.5 cards?",
+  cards_over_under_5_5: "Will there be over 5.5 cards?",
+  home_cards_over_under_1_5: "Will {home} pick up over 1.5 cards?",
+  away_cards_over_under_1_5: "Will {away} pick up over 1.5 cards?",
+  red_card_match: "Will there be a red card?",
+  first_card: "Who gets the first card?",
+  corners_over_under_8_5: "Will there be over 8.5 corners?",
+  corners_over_under_9_5: "Will there be over 9.5 corners?",
+  corners_over_under_10_5: "Will there be over 10.5 corners?",
+  corners_over_under_11_5: "Will there be over 11.5 corners?",
+  home_corners_over_under_4_5: "Will {home} win over 4.5 corners?",
+  away_corners_over_under_4_5: "Will {away} win over 4.5 corners?",
+  first_corner: "Who wins the first corner?",
+};
+
+export function marketQuestion(
+  market: MarketKey,
+  home?: string,
+  away?: string,
+): string {
+  const q = MARKET_QUESTIONS[market] ?? MARKET_LABELS[market];
+  return q.replace(/\{home\}/g, home ?? "Home").replace(/\{away\}/g, away ?? "Away");
+}
+
+export function impliedProbability(multiplier: number): number {
+  if (!Number.isFinite(multiplier) || multiplier <= 0) return 0;
+  return Math.round((1 / multiplier) * 100);
+}
+
 export const CORRECT_SCORES = [
   "0-0","1-0","0-1","1-1","2-0","0-2","2-1","1-2","2-2",
   "3-0","0-3","3-1","1-3","3-2","2-3","3-3",
