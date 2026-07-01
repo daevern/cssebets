@@ -51,6 +51,7 @@ function OddsButton({
   disabled,
   title,
   onClick,
+  inline = false,
 }: {
   label: string;
   price: number;
@@ -59,18 +60,39 @@ function OddsButton({
   disabled: boolean;
   title?: string;
   onClick: () => void;
+  inline?: boolean;
 }) {
+  const stateClasses = selected
+    ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[0_0_18px_var(--color-neon-glow)]"
+    : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/60";
+  if (inline) {
+    return (
+      <button
+        type="button"
+        disabled={disabled}
+        title={title}
+        onClick={onClick}
+        className={`relative flex items-center justify-between gap-2 border px-3 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${stateClasses}`}
+      >
+        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+          {label}
+        </span>
+        <span className="font-display text-sm font-bold tabular-nums text-[var(--color-ink)]">
+          {price.toFixed(2)}
+        </span>
+        {alreadyPlaced && (
+          <span className="absolute right-1 top-1 text-[9px] font-bold text-[var(--color-neon)]">✓</span>
+        )}
+      </button>
+    );
+  }
   return (
     <button
       type="button"
       disabled={disabled}
       title={title}
       onClick={onClick}
-      className={`relative flex flex-col items-center gap-1 border px-2 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-        selected
-          ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[0_0_18px_var(--color-neon-glow)]"
-          : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/60"
-      }`}
+      className={`relative flex flex-col items-center gap-1 border px-2 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${stateClasses}`}
     >
       <span className="max-w-full truncate text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
         {label}
@@ -80,6 +102,22 @@ function OddsButton({
         <span className="absolute right-1 top-1 text-[9px] font-bold text-[var(--color-neon)]">✓</span>
       )}
     </button>
+  );
+}
+
+function EmptySide() {
+  return (
+    <div className="flex items-center justify-center border border-dashed border-[var(--color-surface-border)] bg-[#070D0A]/50 px-3 py-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]/40">
+      —
+    </div>
+  );
+}
+
+function LinePill({ line }: { line: string }) {
+  return (
+    <div className="flex items-center justify-center border border-[var(--color-surface-border)] bg-black/40 px-2 py-2.5 font-display text-sm font-bold tabular-nums text-[var(--color-ink)]">
+      {line}
+    </div>
   );
 }
 
