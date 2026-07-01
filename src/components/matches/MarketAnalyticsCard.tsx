@@ -106,15 +106,13 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
     <SectionShell
       updatedAt={data.updatedAt}
       right={
-        <div className="flex items-center gap-1 rounded border border-[var(--color-surface-border)] p-0.5">
+        <div className="flex items-center gap-4 text-[11px] font-medium">
           {(["prob", "mult"] as Mode[]).map((m) => (
             <button
               key={m}
               onClick={() => setMode(m)}
-              className={`rounded px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors ${
-                mode === m
-                  ? "bg-[var(--color-neon)]/15 text-[var(--color-neon)]"
-                  : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+              className={`transition-colors ${
+                mode === m ? "text-[var(--neon)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"
               }`}
             >
               {m === "prob" ? "Probability" : "Multiplier"}
@@ -123,18 +121,18 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
         </div>
       }
     >
-      {/* Market selector */}
-      <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
+      {/* Market selector — clean chip row, no borders */}
+      <div className="mb-5 flex gap-4 overflow-x-auto pb-1 scrollbar-none">
         {data.availableMarkets.map((m) => {
           const active = m.key === data.market;
           return (
             <button
               key={m.key}
               onClick={() => setMarket(m.key)}
-              className={`shrink-0 border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors ${
+              className={`shrink-0 pb-1 text-[12px] font-medium whitespace-nowrap transition-colors ${
                 active
-                  ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
-                  : "border-[var(--color-surface-border)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                  ? "text-[var(--ink)] border-b border-[var(--neon)]"
+                  : "text-[var(--ink-muted)] hover:text-[var(--ink)] border-b border-transparent"
               }`}
             >
               {m.label}
@@ -142,6 +140,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
           );
         })}
       </div>
+
 
       {/* Live legend */}
       <div className="mb-3 grid gap-1.5 sm:grid-cols-3">
