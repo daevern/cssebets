@@ -8,7 +8,7 @@ import { getMatchAnalytics, type AnalyticsBundle, type LineupPlayer } from "@/li
 import { MarketTabs } from "@/components/matches/MarketTabs";
 import { Corner, StencilPanel } from "@/components/ui/page-shell";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
-import { eventMark, WhistleIcon, PitchIcon, GoalIcon, YellowCardIcon, RedCardIcon } from "@/components/matches/MatchIcons";
+import { eventMark, WhistleIcon, GoalIcon, YellowCardIcon, RedCardIcon } from "@/components/matches/MatchIcons";
 import { MarketAnalyticsCard } from "@/components/matches/MarketAnalyticsCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -49,36 +49,40 @@ function MatchAnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
+      {/* Deep atmospheric background — soft radial bloom, no grid */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 opacity-[0.04]"
+        className="pointer-events-none fixed inset-0"
         style={{
-          backgroundImage:
-            "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
+          background:
+            "radial-gradient(1200px 600px at 50% -10%, color-mix(in oklab, var(--color-neon) 6%, transparent), transparent 60%), radial-gradient(900px 500px at 100% 100%, color-mix(in oklab, var(--color-neon) 3%, transparent), transparent 70%)",
         }}
       />
-      <div className="relative mx-auto flex max-w-md flex-col gap-5 px-4 py-5 md:max-w-3xl md:py-8">
+      <div
+        className="relative mx-auto flex max-w-md flex-col gap-8 px-4 pt-5 md:max-w-3xl md:gap-10 md:py-10"
+        style={{ paddingBottom: "calc(220px + env(safe-area-inset-bottom))" }}
+      >
         <header className="flex items-center justify-between">
           <Link
             to="/matches"
-            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-neon)]"
+            className="flex items-center gap-2 text-[11px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)]"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Matches
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to matches
           </Link>
           <Link to="/dashboard"><CsseLogo size={22} /></Link>
         </header>
 
         {isLoading || !data ? (
-          <div className="grid place-items-center py-20">
+          <div className="grid place-items-center py-24">
             <Loader2 className="h-6 w-6 animate-spin text-[var(--color-neon)]" />
           </div>
         ) : !data.match ? (
-          <StencilPanel><div className="text-center text-sm text-[var(--color-ink-muted)]">Match not found.</div></StencilPanel>
+          <div className="py-16 text-center text-sm text-[var(--color-ink-muted)]">Match not found.</div>
         ) : (
           <Analytics bundle={data} />
         )}
 
-        <footer className="mt-6 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+        <footer className="mt-6 flex items-center justify-between border-t border-[var(--color-surface-border)]/40 pt-6 text-[10px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]">
           <Link to="/dashboard" className="flex items-center gap-2 hover:text-[var(--color-ink)]"><CsseLogo size={16} /></Link>
           <span>© {new Date().getFullYear()} <BrandText /></span>
         </footer>
@@ -86,6 +90,7 @@ function MatchAnalyticsPage() {
     </div>
   );
 }
+
 
 type TabKey = "summary" | "stats" | "lineups" | "events" | "h2h";
 
@@ -134,35 +139,47 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
       {/* Market Analytics — historical odds / implied probability */}
       <MarketAnalyticsCard matchId={match.id} />
 
-      {/* Markets — only show pre-kickoff */}
+      {/* Markets — only show pre-kickoff. Unboxed: header + content, no panel chrome. */}
       {!locked && (
-        <StencilPanel kicker={<><Activity className="h-3 w-3" /> Markets</>}>
+        <section className="space-y-4">
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-display text-lg font-semibold tracking-tight text-[var(--color-ink)] md:text-xl">
+              Take a position
+            </h2>
+            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+              Markets
+            </span>
+          </div>
           <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} />
-        </StencilPanel>
+        </section>
       )}
       {locked && <BettingRibbon phase={phase} />}
 
-      {/* Sticky section tabs — mobile-first nav */}
-      <div className="sticky top-0 z-20 -mx-4 border-y border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 px-4 py-2 backdrop-blur md:mx-0 md:border md:px-0">
-        <div className="flex gap-1 overflow-x-auto md:justify-center">
+      {/* Sticky section tabs — quieter, no boxy chips */}
+      <div className="sticky top-0 z-20 -mx-4 border-b border-[var(--color-surface-border)]/40 bg-[var(--color-surface)]/90 px-4 py-2.5 backdrop-blur md:mx-0 md:border-0 md:bg-transparent md:backdrop-blur-0 md:px-0 md:py-0">
+        <div className="flex gap-5 overflow-x-auto md:justify-center md:gap-8">
           {tabs.map((t) => {
             const active = tab === t.key;
             return (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`relative shrink-0 border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] transition-all ${
+                className={`relative shrink-0 pb-1.5 text-[12px] font-medium tracking-tight transition-colors ${
                   active
-                    ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[0_0_12px_-4px_var(--color-neon-glow)]"
-                    : "border-[var(--color-surface-border)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                    ? "text-[var(--color-ink)]"
+                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
                 }`}
               >
                 {t.label}
+                {active && (
+                  <span className="absolute inset-x-0 -bottom-px h-px bg-[var(--color-neon)]" />
+                )}
               </button>
             );
           })}
         </div>
       </div>
+
 
       {tab === "summary" && (
         <>
@@ -260,15 +277,15 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
 
 function AnalysisSection({ kicker, meta, children }: { kicker?: ReactNode; meta?: ReactNode; children: ReactNode }) {
   return (
-    <section className="relative -mx-4 border-y border-[var(--color-surface-border)]/70 bg-[var(--color-surface-2)]/35 px-4 py-4 md:mx-0 md:border md:bg-[var(--color-surface-2)] md:px-5 md:py-5">
-      <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+    <section className="relative space-y-4">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3">
         {kicker && (
-          <span className="flex min-w-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-neon)]">
+          <span className="flex min-w-0 items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
             {kicker}
           </span>
         )}
         {meta && (
-          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+          <span className="shrink-0 text-[10px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]">
             {meta}
           </span>
         )}
@@ -277,6 +294,7 @@ function AnalysisSection({ kicker, meta, children }: { kicker?: ReactNode; meta?
     </section>
   );
 }
+
 
 /* Compact key-stat grid — large readable tiles for the Summary tab on mobile. */
 function KeyStatsGrid({ home, away, homeName, awayName }: { home: any; away: any; homeName: string; awayName: string }) {
@@ -436,67 +454,60 @@ function MatchHero({
   const progressPct = Math.min(100, (currentMinute / progressCap) * 100);
 
   return (
-    <article className="relative -mx-4 overflow-hidden border-y border-[var(--color-neon)]/30 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-30px_var(--color-neon-glow)] md:mx-0 md:border">
-      <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
-      <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04]">
-        <PitchIcon size={260} className="text-[var(--color-neon)]" />
-      </div>
-
-      {/* Ticker row */}
-      <div className="relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-dashed border-[var(--color-surface-border)] px-4 py-3">
-        <span className="flex min-w-0 items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">
-          <WhistleIcon size={12} /> {stage}
+    <article className="relative">
+      {/* Ticker row — small, quiet metadata line */}
+      <div className="mb-5 flex items-center justify-between gap-3 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+        <span className="flex min-w-0 items-center gap-2">
+          <WhistleIcon size={11} /> {stage}
+          <span className="hidden text-[var(--color-ink-muted)]/50 sm:inline">·</span>
+          <span className="hidden sm:inline">{dateStr} · {timeStr}</span>
         </span>
-        <span className="flex shrink-0 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+        <span className="flex shrink-0 items-center gap-2">
           {isLive ? (
             <span className="flex items-center gap-1.5 text-destructive">
-              <span className="relative flex h-2 w-2">
+              <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-destructive" />
               </span>
-              <span className="font-black tracking-[0.32em]">LIVE {liveClock.label}</span>
+              <span className="font-semibold tracking-[0.22em]">LIVE {liveClock.label}</span>
             </span>
           ) : (
-            <span className="font-bold tracking-[0.28em]">{phaseLabel}</span>
+            <span className="font-medium tracking-[0.2em]">{phaseLabel}</span>
           )}
         </span>
       </div>
 
-      {/* Kickoff chip — its own row, no longer crammed under the score */}
-      <div className="relative flex justify-center border-b border-dashed border-[var(--color-surface-border)] py-2">
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap border border-dashed border-[var(--color-surface-border)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-          <span className="h-1 w-1 bg-[var(--color-neon)]" />
-          {dateStr} · {timeStr}
-        </span>
+      {/* Kickoff line — mobile-only date/time */}
+      <div className="mb-6 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--color-ink-muted)] sm:hidden">
+        {dateStr} · {timeStr}
       </div>
 
-      {/* Scoreboard — generous mobile spacing */}
-      <div className="relative px-4 pb-5 pt-6 sm:px-5">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-4">
+      {/* Scoreboard — editorial hero, no chrome */}
+      <div className="relative">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-4 md:gap-6">
           <HeroTeam name={match.home_team} accent="home" align="left" goals={homeGoals} />
-          <div className="flex flex-col items-center justify-start pt-2">
+          <div className="flex flex-col items-center justify-start pt-3">
             {showScore ? (
               <div className="flex items-baseline gap-2 font-display leading-none tracking-tight">
-                <span className="text-5xl font-black tabular-nums text-[var(--color-neon)] drop-shadow-[0_0_18px_var(--color-neon-glow)] sm:text-6xl">
+                <span className="text-5xl font-semibold tabular-nums text-[var(--color-ink)] sm:text-6xl md:text-7xl">
                   {match.home_score ?? 0}
                 </span>
-                <span className="text-3xl font-light text-[var(--color-ink-muted)] sm:text-4xl">:</span>
-                <span className="text-5xl font-black tabular-nums sm:text-6xl">
+                <span className="text-3xl font-light text-[var(--color-ink-muted)]/60 sm:text-4xl">–</span>
+                <span className="text-5xl font-semibold tabular-nums text-[var(--color-ink)] sm:text-6xl md:text-7xl">
                   {match.away_score ?? 0}
                 </span>
               </div>
             ) : (
-              <span className="font-display text-3xl font-black uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">vs</span>
+              <span className="font-display text-2xl font-light tracking-tight text-[var(--color-ink-muted)] sm:text-3xl">vs</span>
             )}
             {(match.penalty_home_score != null || match.penalty_away_score != null) && (
-              <div className="mt-2 flex items-center gap-1 border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/5 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-neon)]">
-                <span>PEN</span>
-                <span className="tabular-nums">{match.penalty_home_score ?? 0} – {match.penalty_away_score ?? 0}</span>
+              <div className="mt-3 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+                Pens <span className="tabular-nums text-[var(--color-ink)]">{match.penalty_home_score ?? 0}–{match.penalty_away_score ?? 0}</span>
               </div>
             )}
             {countdown && !isLive && !isFinished && (
-              <span className="mt-2 whitespace-nowrap bg-[var(--color-neon)]/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--color-neon)]">
-                Kicks off in {countdown}
+              <span className="mt-3 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+                Kicks off in <span className="text-[var(--color-neon)]">{countdown}</span>
               </span>
             )}
           </div>
@@ -508,33 +519,38 @@ function MatchHero({
           <MatchProgress pct={progressPct} cap={progressCap} markers={markers} />
         )}
       </div>
+
+      {/* Trust line — quiet, single row */}
+      <div className="mt-6 text-[10px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]/80">
+        Virtual points · Official result settlement · Audit logged
+      </div>
     </article>
   );
 }
+
 
 /* Vertical hero team: flag → name → goal scorers, all aligned left or right.
  * Mobile-first: each team gets its own column of breathing room. */
 function HeroTeam({ name, accent, align, goals }: { name: string; accent: "home"|"away"; align: "left"|"right"; goals: any[] }) {
   const url = teamFlagUrl(name, 160);
-  const accentCls = accent === "home"
-    ? "border-[var(--color-neon)]/50 shadow-[0_0_18px_-6px_var(--color-neon-glow)]"
-    : "border-white/40";
+  const accentCls = "border-[var(--color-surface-border)]/60";
   const itemsAlign = align === "right" ? "items-end text-right" : "items-start text-left";
   return (
-    <div className={`flex min-w-0 flex-col gap-2.5 ${itemsAlign}`}>
-      <div className={`relative h-16 w-full max-w-24 overflow-hidden border ${accentCls}`}>
+    <div className={`flex min-w-0 flex-col gap-3 ${itemsAlign}`}>
+      <div className={`relative h-14 w-full max-w-20 overflow-hidden border ${accentCls}`}>
         {url ? (
           <img src={url} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[10px] font-black uppercase tracking-wider">
+          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[10px] font-semibold uppercase tracking-wider">
             {name.slice(0, 3)}
           </div>
         )}
-        <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/30" />
+        <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/20" />
       </div>
-      <span className="w-full truncate font-display text-xs font-black uppercase tracking-[0.12em]" title={name}>
+      <span className="w-full truncate font-display text-base font-semibold tracking-tight text-[var(--color-ink)] sm:text-lg md:text-xl" title={name}>
         {name}
       </span>
+
       {goals.length > 0 && (
         <ul className={`flex w-full flex-col gap-1 text-[11px] leading-tight ${align === "right" ? "items-end" : "items-start"}`}>
           {goals.map((g, i) => {
