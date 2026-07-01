@@ -77,9 +77,10 @@ function OddsButton({
       disabled={disabled}
       title={title}
       onClick={onClick}
+      aria-pressed={selected}
       className={`relative flex min-h-[68px] flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
         selected
-          ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-ink)]"
+          ? "border-2 border-[var(--color-neon)] bg-[var(--color-neon)]/15 text-[var(--color-ink)] shadow-[0_0_0_1px_var(--color-neon)]"
           : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/50"
       }`}
     >
@@ -90,9 +91,12 @@ function OddsButton({
         {price.toFixed(2)}x
       </span>
       {showProbability && prob > 0 && (
-        <span className="text-[10px] tabular-nums text-[var(--color-ink-muted)]">
+        <span className="text-[10px] tabular-nums text-[var(--color-ink-muted)]" title="Estimates are based on current multipliers and may include platform margin.">
           ~{prob}%
         </span>
+      )}
+      {selected && !alreadyPlaced && (
+        <span className="absolute right-1.5 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-neon)] text-[9px] font-bold text-black">✓</span>
       )}
       {alreadyPlaced && (
         <span className="absolute right-1.5 top-1 text-[10px] font-bold text-[var(--color-neon)]">✓</span>
