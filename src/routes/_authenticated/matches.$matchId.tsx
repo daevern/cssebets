@@ -277,15 +277,15 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
 
 function AnalysisSection({ kicker, meta, children }: { kicker?: ReactNode; meta?: ReactNode; children: ReactNode }) {
   return (
-    <section className="relative -mx-4 border-y border-[var(--color-surface-border)]/70 bg-[var(--color-surface-2)]/35 px-4 py-4 md:mx-0 md:border md:bg-[var(--color-surface-2)] md:px-5 md:py-5">
-      <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+    <section className="relative space-y-4">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3">
         {kicker && (
-          <span className="flex min-w-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-neon)]">
+          <span className="flex min-w-0 items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
             {kicker}
           </span>
         )}
         {meta && (
-          <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+          <span className="shrink-0 text-[10px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]">
             {meta}
           </span>
         )}
@@ -294,6 +294,7 @@ function AnalysisSection({ kicker, meta, children }: { kicker?: ReactNode; meta?
     </section>
   );
 }
+
 
 /* Compact key-stat grid — large readable tiles for the Summary tab on mobile. */
 function KeyStatsGrid({ home, away, homeName, awayName }: { home: any; away: any; homeName: string; awayName: string }) {
