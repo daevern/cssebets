@@ -30,8 +30,8 @@ function AdminWalletPage() {
   const listFn = useServerFn(adminListRequests);
   const approveFn = useServerFn(adminApproveRequest);
   const rejectFn = useServerFn(adminRejectRequest);
-  const usersFn = useServerFn(adminListUsers);
-  const adjustFn = useServerFn(adminAdjustWallet);
+  const proofFn2 = null; // removed
+
   const proofFn = useServerFn(adminGetProofSignedUrl);
   const qc = useQueryClient();
 
