@@ -279,18 +279,20 @@ function SectionShell({
   updatedAt?: string | null;
 }) {
   return (
-    <section className="relative -mx-4 border-y border-[var(--color-surface-border)]/70 bg-[var(--color-surface-2)]/35 px-4 py-4 md:mx-0 md:border md:bg-[var(--color-surface-2)] md:px-5 md:py-5">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <Activity className="h-3 w-3 text-[var(--color-neon)]" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-neon)]">
+    <section className="relative py-10">
+      <div className="mb-6 flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-[var(--ink-faint)]">
             Market analytics
-          </span>
-          {updatedAt && (
-            <span className="hidden text-[9px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)] sm:inline">
-              · {new Date(updatedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
-            </span>
-          )}
+            {updatedAt && (
+              <span className="ml-2 text-[var(--ink-faint)]">
+                · {new Date(updatedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
+          </p>
+          <h3 className="mt-1 font-display text-2xl font-medium tracking-tight text-[var(--ink)] md:text-3xl">
+            Price movement<span className="text-[var(--ink-faint)]">.</span>
+          </h3>
         </div>
         {right}
       </div>
@@ -301,15 +303,16 @@ function SectionShell({
 
 function EmptyGraph() {
   return (
-    <div className="grid h-48 place-items-center border border-dashed border-[var(--color-surface-border)]/70 bg-[var(--color-surface)]/30 text-center">
-      <div className="space-y-1 px-4">
-        <p className="text-xs font-black uppercase tracking-[0.24em] text-[var(--color-ink)]">
+    <div className="grid h-48 place-items-center">
+      <div className="space-y-1 text-center">
+        <p className="font-display text-lg font-medium tracking-tight text-[var(--ink)]">
           No market history yet
         </p>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-          Market movement will appear once price history is available.
+        <p className="text-[12px] text-[var(--ink-muted)]">
+          Movement will appear once price history is available.
         </p>
       </div>
     </div>
   );
 }
+
