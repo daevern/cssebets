@@ -1,23 +1,38 @@
-## Frontend-only shortlist: 36 → 22 markets
+## Verification
 
-Retire 14 markets that are extreme O/U lines, duplicates, or low-signal novelties. Keep the high-margin core that drives most football-book revenue. No DB migration, no settlement code touched — historical and open tickets on retired markets still settle normally.
+Ivory Coast vs Norway final corner stats (from `match_stats`):
+- Ivory Coast (home): **14 corners**
+- Norway (away): **3 corners**
+- **Total: 17 corners**
 
-### Keep (22)
-- **Result family**: To Qualify, Double Chance, Draw No Bet, HT/FT
-- **Goals**: O/U 1.5, O/U 2.5, O/U 3.5, BTTS, Correct Score, Odd/Even, Clean Sheet Home, Clean Sheet Away
-- **Cards**: Total Cards O/U 3.5, O/U 4.5, Red Card in Match
-- **Corners**: Total Corners O/U 9.5, O/U 10.5, Home Corners O/U 4.5, Away Corners O/U 4.5
+The bet `corners_over_under_9_5 / OVER_9_5` at odds 1.79, stake 200 → **17 > 9.5 → should be WON** (payout 358).
+It was settled as **LOST**. This is incorrect — same class of bug as the previous Ivory Coast vs Norway mis-settlements (Under 3.5 goals, To Qualify Norway) that we just fixed.
 
-### Retire (14, hidden from UI)
-- O/U 0.5, 4.5, 5.5, 6.5 goals
-- Exact Total Goals
-- Win to Nil Home / Away
-- Cards O/U 2.5, 5.5; Home Cards O/U 1.5; Away Cards O/U 1.5
-- Corners O/U 8.5, 11.5
-- First Card, First Corner
+## Root cause hypothesis
 
-### Changes
-1. `src/lib/markets-catalog.ts` — add `ACTIVE_MARKETS` set + `isMarketActive()` helper. Types stay intact so old tickets keep their labels.
-2. `src/components/matches/MarketTabs.tsx` — gate `getGroup()` with `isMarketActive`, and wrap the unconditional Exact Total Goals block in a length check so it disappears with the rest.
+`settle_cards_corners_for_match` (in `settle_match_all_markets_atomic`) likely ran before `match_stats` had the final corner totals, or the corners settler falls through to a default LOST branch when stats are missing/zero. Because the previous fix only addressed goals/qualify markets settling to a legacy LOST default, corners/cards settlers still have the same shape of bug for this match.
 
-No DB migration, no seeder changes, no settlement-logic changes.
+## Plan
+
+1. **Investigate the settler**
+   - Read `settle_cards_corners_for_match` (Postgres function) to confirm whether it defaulted to LOST when `match_stats` was not yet populated at settlement time, or whether the totals it read were stale.
+   - Check the settlement audit trail for this prediction to see what totals the function used.
+
+2. **Reverse the mis-settled bet**
+   - Migration that:
+     - Refunds the house: debit platform bankroll 358, credit user `Bố Chiou` wallet 358 (net correction from LOST=0 to WON=358).
+     - Updates the prediction row: `status = 'won'`, `points = 358`, add audit log entry citing manual correction.
+   - Re-scan all predictions on `225d6ddf-4b05-40ec-81fd-13f65db0d826` for other corner/card markets that may have been mis-settled the same way, and correct them in the same migration.
+
+3. **Fix the settler so this cannot recur**
+   - In `settle_cards_corners_for_match`, if `match_stats` corner totals are NULL/0 for a match that is `finished`, **leave the bet pending** (do not default to LOST) and re-attempt on the next stats sync. Same guard for cards.
+   - Add a small check: if home+away corners is 0 but the match has `finished` status and goals > 0, treat stats as "not yet ingested" and skip settlement for corner/card markets rather than grading them.
+
+4. **Verify**
+   - Re-run settlement for the match and confirm the corners_over_9_5 bet resolves to WON.
+   - Query all `corners_*` and `cards_*` predictions for the last 7 days of finished matches and spot-check a handful against `match_stats`.
+
+## Files / DB objects touched
+
+- Migration: reverse mis-settlement + patch `settle_cards_corners_for_match` (and mirror the guard in the cards branch).
+- No frontend changes.
