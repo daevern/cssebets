@@ -521,11 +521,6 @@ function MatchHero({
         </div>
       )}
 
-      {/* Trust line */}
-      <div className="text-[10px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]/70">
-        Virtual points · Official result settlement · Audit logged
-      </div>
-
       {/* Divider before graph */}
       <div className="h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
     </article>
