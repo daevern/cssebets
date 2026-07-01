@@ -10,7 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ChevronDown, Loader2, ArrowUpRight } from "lucide-react";
+import { ChevronDown, Loader2, Radio, Zap, ArrowUpRight } from "lucide-react";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -42,6 +42,11 @@ type Match = {
   manual_override?: boolean | null;
 };
 
+function humanize(s: string | null | undefined): string {
+  if (!s) return "";
+  return s.replace(/_/g, " ").trim();
+}
+
 function timeAgo(iso: string | null): string {
   if (!iso) return "never";
   const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -51,12 +56,33 @@ function timeAgo(iso: string | null): string {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-function formatKickoff(iso: string): { date: string; time: string } {
+function formatKickoffDate(iso: string): string {
   const d = new Date(iso);
-  return {
-    date: d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }),
-    time: d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }),
+  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  const month = months[d.getMonth()];
+  const day = d.getDate();
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  return `${month} ${day} ${hours}:${minutes}${ampm}`;
+}
+
+/* corner tick marks, mirrored from dashboard */
+function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
+  const map: Record<typeof pos, string> = {
+    tl: "top-0 left-0 border-t border-l",
+    tr: "top-0 right-0 border-t border-r",
+    bl: "bottom-0 left-0 border-b border-l",
+    br: "bottom-0 right-0 border-b border-r",
   };
+  return (
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute h-3 w-3 border-[var(--color-neon)] ${map[pos]}`}
+    />
+  );
 }
 
 function MatchesPage() {
@@ -65,7 +91,10 @@ function MatchesPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["matches"],
-    queryFn: async () => (await listMatches()) as Match[],
+    queryFn: async () => {
+      const rows = await listMatches();
+      return rows as Match[];
+    },
   });
 
   useEffect(() => {
@@ -84,63 +113,82 @@ function MatchesPage() {
     const now = Date.now();
     const oneDay = 24 * 60 * 60 * 1000;
     const threeHours = 3 * 60 * 60 * 1000;
+
     for (const m of data ?? []) {
       const kickoff = new Date(m.kickoff_at).getTime();
-      if (m.status === "finished") c.push(m);
-      else if (kickoff >= now - threeHours && kickoff <= now + oneDay) s.push(m);
+      if (m.status === "finished") {
+        c.push(m);
+      } else {
+        if (kickoff >= now - threeHours && kickoff <= now + oneDay) {
+          s.push(m);
+        }
+      }
     }
     c.sort((a, b) => new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime());
     return { scheduled: s, completed: c };
   }, [data]);
 
   return (
-    <div className="relative min-h-screen text-[var(--ink)]">
+    <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
+      {/* Scoreboard grain background */}
       <div
-        className="relative mx-auto flex max-w-2xl flex-col gap-16 px-5 pt-10 md:px-8 md:pt-16"
+        aria-hidden
+        className="pointer-events-none fixed inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
+        }}
+      />
+
+      <div
+        className="relative mx-auto flex max-w-md flex-col gap-5 px-3 py-5 md:max-w-2xl md:px-4 md:py-8"
         style={{ paddingBottom: "calc(220px + env(safe-area-inset-bottom))" }}
       >
-        {/* Editorial masthead — one line, quiet, confident */}
-        <header className="flex items-baseline justify-between">
-          <Link to="/dashboard" className="flex items-center gap-2.5">
-            <CsseLogo size={20} />
+
+
+        {/* Header */}
+        <header className="flex items-center justify-between">
+          <Link to="/dashboard" className="flex items-center gap-2">
+            <CsseLogo size={22} />
           </Link>
-          <span className="text-[10px] font-medium uppercase tracking-[0.28em] text-[var(--ink-faint)]">
-            FIFA World Cup · 2026
-          </span>
         </header>
 
-        {/* Section title — typography as the design element */}
+        {/* Editorial intro */}
         <section className="space-y-2">
-          <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--ink-faint)]">
-            Round of 32
-          </p>
-          <h1 className="font-display text-4xl font-medium leading-[1.05] tracking-tight text-[var(--ink)] md:text-5xl">
-            The slate<span className="text-[var(--ink-faint)]">.</span>
-          </h1>
-          <p className="max-w-md text-[14px] leading-relaxed text-[var(--ink-2)]">
-            {scheduled.length} live and upcoming fixture{scheduled.length === 1 ? "" : "s"}. Settled on official
-            result. Priced against real bookmaker markets.
-          </p>
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
+            <Radio className="h-3 w-3" />
+            FIFA World Cup · 2026
+          </div>
         </section>
 
         {isLoading ? (
-          <div className="grid place-items-center py-24">
-            <Loader2 className="h-5 w-5 animate-spin text-[var(--neon)]" />
+          <div className="grid place-items-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-[var(--color-neon)]" />
           </div>
         ) : !data?.length ? (
-          <div className="py-16 text-center">
-            <h2 className="font-display text-2xl font-medium tracking-tight">No matches yet</h2>
-            <p className="mt-2 text-sm text-[var(--ink-muted)]">An admin needs to sync or add fixtures.</p>
-          </div>
+          <article className="relative overflow-hidden border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-5 py-10 text-center">
+            <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
+            <h2 className="font-display text-lg font-bold uppercase tracking-tight">No matches yet</h2>
+            <p className="mt-1 text-sm text-[var(--color-ink-muted)]">An admin needs to sync or add fixtures.</p>
+          </article>
         ) : (
           <>
-            <section className="divide-y divide-[var(--surface-hairline)]">
+            <section className="space-y-3">
+              <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] pb-2">
+                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+                  <Zap className="h-3 w-3" /> Round of 32
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+                  {scheduled.length} on the slate
+                </span>
+              </div>
               {scheduled.length === 0 ? (
-                <p className="py-10 text-center text-sm text-[var(--ink-muted)]">
-                  No upcoming matches on the slate right now.
-                </p>
+                <article className="relative overflow-hidden border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-5 text-center text-sm text-[var(--color-ink-muted)]">
+                  <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
+                  No upcoming matches.
+                </article>
               ) : (
-                scheduled.map((m) => <MatchRow key={m.id} match={m} />)
+                scheduled.map((m) => <MatchCard key={m.id} match={m} />)
               )}
             </section>
 
@@ -149,31 +197,25 @@ function MatchesPage() {
                 <CollapsibleTrigger asChild>
                   <button
                     type="button"
-                    className="mx-auto flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)]"
+                    className="flex w-full items-center justify-between rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] transition-colors hover:border-[var(--color-neon)] hover:text-[var(--color-neon)]"
                   >
-                    <span>Completed · {completed.length}</span>
-                    <ChevronDown className="h-3.5 w-3.5" />
+                    <span>Completed matches ({completed.length})</span>
+                    <ChevronDown className="h-4 w-4" />
                   </button>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="mt-8 divide-y divide-[var(--surface-hairline)]">
-                  {completed.map((m) => <MatchRow key={m.id} match={m} />)}
+                <CollapsibleContent className="mt-3 space-y-3">
+                  {completed.map((m) => <MatchCard key={m.id} match={m} />)}
                 </CollapsibleContent>
               </Collapsible>
             )}
           </>
         )}
-
-        <footer className="mt-10 border-t border-[var(--surface-hairline)] pt-6 text-[10px] font-medium uppercase tracking-[0.24em] text-[var(--ink-faint)]">
-          © {new Date().getFullYear()} <BrandText />
-        </footer>
       </div>
     </div>
   );
 }
 
-/* Editorial fixture row — no card, no border, no glow.
- * Typography and space carry the hierarchy. */
-function MatchRow({ match }: { match: Match }) {
+function MatchCard({ match }: { match: Match }) {
   const submit = useServerFn(submitPrediction);
   const walletFn = useServerFn(getMyWallet);
   const qc = useQueryClient();
@@ -187,7 +229,6 @@ function MatchRow({ match }: { match: Match }) {
   const locked = new Date(match.kickoff_at).getTime() <= Date.now() || match.status !== "scheduled";
   const bettingBlocked = !oddsTrusted || resultSuspended;
   const odds = match.reference_odds ?? { home: 2.0, draw: 3.2, away: 3.5 };
-  const kickoff = formatKickoff(match.kickoff_at);
 
   const wallet = useQuery({
     queryKey: ["my-wallet", user?.id],
@@ -204,8 +245,10 @@ function MatchRow({ match }: { match: Match }) {
       const { data, error } = await supabase
         .from("predictions")
         .select("outcome")
-        .eq("match_id", match.id).eq("user_id", user!.id)
-        .eq("market", "result").eq("status", "pending");
+        .eq("match_id", match.id)
+        .eq("user_id", user!.id)
+        .eq("market", "result")
+        .eq("status", "pending");
       if (error) throw error;
       return data ?? [];
     },
@@ -215,6 +258,7 @@ function MatchRow({ match }: { match: Match }) {
     for (const b of (myResultBets.data ?? []) as Array<{ outcome: string }>) s.add(b.outcome);
     return s;
   }, [myResultBets.data]);
+
 
   const slipClientRequestId = useMemo(() => crypto.randomUUID(), [match.id, pick, stake]);
 
@@ -231,7 +275,7 @@ function MatchRow({ match }: { match: Match }) {
       });
     },
     onSuccess: () => {
-      toast.success("Prediction locked");
+      toast.success("Prediction submitted");
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
       qc.invalidateQueries({ queryKey: ["my-wallet"] });
       qc.invalidateQueries({ queryKey: ["my-match-result-bets", match.id, user?.id] });
@@ -240,6 +284,8 @@ function MatchRow({ match }: { match: Match }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const stageLabel = useMemo(() => "Round of 32", []);
+
   const stakeNum = Number(stake);
   const stakeValid = stakeNum >= 10 && stakeNum <= 50000;
   const noBalance = balance <= 0;
@@ -247,240 +293,206 @@ function MatchRow({ match }: { match: Match }) {
   const canBet = !!pick && stakeValid && !noBalance && !overBalance && !bettingBlocked && !mut.isPending;
   const potentialReturn = stakeValid && pick ? stakeNum * (pick === "HOME" ? odds.home : pick === "DRAW" ? odds.draw : odds.away) : 0;
   const potentialGain = potentialReturn - (stakeValid ? stakeNum : 0);
-  const buttonLabel = noBalance ? "Add points to lock" : overBalance ? "Exceeds balance" : "Lock prediction";
+  const buttonLabel = noBalance
+    ? "Add Points to Lock"
+    : overBalance
+      ? "Stake exceeds points balance"
+      : "Lock Prediction";
+
 
   return (
-    <article className="group py-10 first:pt-0">
-      {/* Metadata line — small, quiet, information-dense */}
-      <div className="mb-6 flex items-baseline justify-between text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--ink-faint)]">
-        <span>{kickoff.date} · {kickoff.time}</span>
+    <article className="relative overflow-hidden rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
+      {/* Match header band */}
+      <div className="flex items-center justify-between border-b border-[var(--color-surface-border)] px-5 py-3">
+        <span className="text-[11px] font-semibold text-[var(--color-neon)]">
+          FIFA World Cup 2026 · {stageLabel}
+        </span>
+        <span className="text-[11px] text-[var(--color-ink-muted)]">
+          {formatKickoffDate(match.kickoff_at)}
+        </span>
+      </div>
+
+      <div className="space-y-4 px-3 py-4 sm:px-5 sm:py-5">
         <Link
           to="/matches/$matchId"
           params={{ matchId: match.id }}
-          className="inline-flex items-center gap-1 text-[var(--ink-muted)] transition-colors hover:text-[var(--neon)]"
+          className="block w-full text-left transition-opacity hover:opacity-90"
+          aria-label="Open match analytics"
         >
-          Analytics <ArrowUpRight className="h-3 w-3" />
-        </Link>
-      </div>
-
-      {/* Fixture — editorial, typography-led */}
-      <Link
-        to="/matches/$matchId"
-        params={{ matchId: match.id }}
-        className="block"
-      >
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 md:gap-8">
-          <TeamBlock name={match.home_team} align="right" />
-          <div className="flex min-w-0 flex-col items-center gap-1">
-            {match.status === "finished" ? (
-              <div className="flex items-baseline gap-2 font-display text-4xl font-medium tabular-nums tracking-tight md:text-5xl">
-                <span>{match.home_score ?? 0}</span>
-                <span className="text-[var(--ink-faint)]">–</span>
-                <span>{match.away_score ?? 0}</span>
-              </div>
-            ) : (
-              <span className="font-display text-2xl font-light italic tracking-tight text-[var(--ink-faint)] md:text-3xl">
-                v
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+            <div className="flex flex-col items-center gap-2">
+              <TeamFlag name={match.home_team} />
+              <span className="max-w-[110px] truncate text-center text-sm font-semibold">
+                {match.home_team}
               </span>
-            )}
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <span className="font-display text-lg font-bold leading-none text-[var(--color-ink-muted)]">
+                {match.status === "finished" ? `${match.home_score} – ${match.away_score}` : "vs"}
+              </span>
+              <span className="h-6 w-px bg-[var(--color-neon)]/40" />
+              <span className="text-[10px] font-semibold text-[var(--color-neon)]">View analytics →</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <TeamFlag name={match.away_team} />
+              <span className="max-w-[110px] truncate text-center text-sm font-semibold">
+                {match.away_team}
+              </span>
+            </div>
           </div>
-          <TeamBlock name={match.away_team} align="left" />
+        </Link>
+
+        {/* Trust line */}
+        <div className="rounded-md border border-[var(--color-surface-border)]/60 bg-black/30 px-3 py-2 text-center text-[11px] leading-snug text-[var(--color-ink-muted)]">
+          Virtual points · Official result settlement · Audit logged
         </div>
-      </Link>
 
-      {bettingBlocked && !locked && (
-        <p className="mt-6 text-center text-[12px] text-[var(--ink-muted)]">
-          Market temporarily paused while odds are being verified.
-        </p>
-      )}
-
-      {/* Match Result — conversational, no framing */}
-      {!locked && match.reference_odds && (
-        <div className="mt-8 space-y-4">
-          <div className="flex items-baseline justify-between">
-            <h3 className="text-[17px] font-medium leading-snug text-[var(--ink)]">
-              Who wins?
-            </h3>
-            <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--ink-faint)]">
-              Multiplier · Chance
-            </span>
+        {bettingBlocked && !locked && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-[12px] font-medium text-destructive">
+            Market temporarily paused while odds are being verified.
           </div>
+        )}
 
-          <div className="grid grid-cols-3 gap-2 md:gap-3">
-            {(["HOME", "DRAW", "AWAY"] as const).map((p) => {
-              const label = p === "HOME" ? match.home_team : p === "AWAY" ? match.away_team : "Draw";
-              const price = p === "HOME" ? odds.home : p === "DRAW" ? odds.draw : odds.away;
-              const alreadyPlaced = placedResults.has(p);
-              const disabled = alreadyPlaced || bettingBlocked;
-              const selected = pick === p;
-              const prob = price > 0 ? Math.round((1 / Number(price)) * 100) : 0;
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  disabled={disabled}
-                  title={
-                    bettingBlocked ? "Market paused" :
-                    alreadyPlaced ? "You already locked this prediction" : undefined
-                  }
-                  onClick={() => setPick(p)}
-                  aria-pressed={selected}
-                  className={`group/tile relative flex flex-col items-start gap-1.5 rounded-sm px-4 py-4 text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
-                    selected
-                      ? "bg-[var(--neon)]/10 ring-1 ring-inset ring-[var(--neon)]/60"
-                      : "bg-[var(--surface-2)]/60 hover:bg-[var(--surface-3)]/60"
-                  }`}
-                >
-                  <span className={`truncate text-[11px] font-medium uppercase tracking-[0.14em] ${selected ? "text-[var(--neon)]" : "text-[var(--ink-muted)]"}`}>
-                    {label}
-                  </span>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className={`font-display text-2xl font-medium tabular-nums tracking-tight ${selected ? "text-[var(--neon)]" : "text-[var(--ink)]"}`}>
-                      {Number(price).toFixed(2)}
-                    </span>
-                    <span className="text-[10px] font-medium tabular-nums text-[var(--ink-faint)]">
-                      {prob}%
-                    </span>
-                  </div>
-                  {alreadyPlaced && (
-                    <span className="absolute right-2 top-2 text-[10px] font-medium text-[var(--neon)]">Locked</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Trade ticket — spacious, minimal, primary action dominates */}
-          {pick && (
-            <div className="mt-6 space-y-4 rounded-sm bg-[var(--surface-2)]/60 p-5">
-              <div className="flex items-baseline justify-between text-[11px] font-medium uppercase tracking-[0.2em] text-[var(--ink-faint)]">
-                <span>Your prediction</span>
-                <button
-                  type="button"
-                  onClick={() => setPick(null)}
-                  className="text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)]"
-                >
-                  Clear
-                </button>
-              </div>
-              <p className="text-[15px] leading-snug text-[var(--ink)]">
-                <span className="font-medium">
-                  {pick === "HOME" ? match.home_team : pick === "AWAY" ? match.away_team : "Draw"}
-                </span>{" "}
-                <span className="text-[var(--ink-muted)]">at</span>{" "}
-                <span className="font-display font-medium tabular-nums text-[var(--neon)]">
-                  {(pick === "HOME" ? odds.home : pick === "DRAW" ? odds.draw : odds.away).toFixed(2)}x
-                </span>
+        {!locked && match.reference_odds && (
+          <div className="space-y-3">
+            <div className="space-y-0.5">
+              <h3 className="text-[15px] font-semibold text-[var(--color-ink)]">
+                Who will win?
+              </h3>
+              <p className="text-[11px] text-[var(--color-ink-muted)]" title="Estimates are based on current multipliers and may include platform margin.">
+                Multiplier · Est. chance
               </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {(["HOME", "DRAW", "AWAY"] as const).map((p) => {
+                const label = p === "HOME" ? match.home_team : p === "AWAY" ? match.away_team : "Draw";
+                const price = p === "HOME" ? odds.home : p === "DRAW" ? odds.draw : odds.away;
+                const alreadyPlaced = placedResults.has(p);
+                const disabled = alreadyPlaced || bettingBlocked;
+                const selected = pick === p;
+                const prob = price > 0 ? Math.round((1 / Number(price)) * 100) : 0;
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    disabled={disabled}
+                    title={
+                      bettingBlocked ? "Market paused" :
+                      alreadyPlaced ? "You already locked this prediction" : undefined
+                    }
+                    onClick={() => setPick(p)}
+                    className={`relative flex flex-col items-center gap-0.5 rounded-md border px-2 py-2.5 transition-colors disabled:opacity-50 ${
+                      selected
+                        ? "border-2 border-[var(--color-neon)] bg-[var(--color-neon)]/15 text-[var(--color-ink)] shadow-[0_0_0_1px_var(--color-neon)]"
+                        : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/50"
+                    }`}
+                    aria-pressed={selected}
+                  >
+                    <span className="max-w-full truncate text-[11px] font-medium text-[var(--color-ink)]">
+                      {label}
+                    </span>
+                    <span className="font-display text-lg font-bold tabular-nums text-[var(--color-neon)]">{Number(price).toFixed(2)}x</span>
+                    <span className="text-[10px] tabular-nums text-[var(--color-ink-muted)]">~{prob}%</span>
+                    {selected && !alreadyPlaced && (
+                      <span className="absolute right-1.5 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-neon)] text-[9px] font-bold text-black">✓</span>
+                    )}
+                    {alreadyPlaced && (
+                      <span className="absolute right-1.5 top-1 text-[10px] font-bold text-[var(--color-neon)]">✓</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
 
-              <div className="grid grid-cols-[1fr_auto] gap-3">
-                <label className="block">
-                  <span className="mb-1 block text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--ink-faint)]">
-                    Points
+            {pick && (
+              <div className="rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] p-3 space-y-2">
+                <div className="text-[11px] leading-snug text-[var(--color-ink)]">
+                  <span className="font-semibold">
+                    {pick === "HOME" ? match.home_team : pick === "AWAY" ? match.away_team : "Draw"}
                   </span>
+                  <span className="mx-1.5 text-[var(--color-ink-muted)]">·</span>
+                  <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
+                    {(pick === "HOME" ? odds.home : pick === "DRAW" ? odds.draw : odds.away).toFixed(2)}x
+                  </span>
+                </div>
+                <div className="flex gap-2">
                   <input
                     type="number"
                     min={10}
                     max={50000}
                     value={stake}
                     onChange={(e) => setStake(e.target.value)}
+                    placeholder="Points (10-50,000)"
                     disabled={bettingBlocked || noBalance}
-                    className="w-full border-0 border-b border-[var(--surface-border)] bg-transparent px-0 pb-2 font-display text-2xl font-medium tabular-nums text-[var(--ink)] outline-none transition-colors focus:border-[var(--neon)] disabled:opacity-40"
+                    className="flex-1 rounded-md border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:opacity-40 disabled:cursor-not-allowed"
                   />
-                </label>
-                <div className="self-end">
                   <button
                     type="button"
                     disabled={!canBet}
                     onClick={() => mut.mutate()}
-                    className="inline-flex h-11 items-center gap-2 rounded-sm bg-[var(--neon)] px-5 text-[13px] font-medium text-black transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[var(--surface-border)] disabled:text-[var(--ink-muted)]"
+                    className="flex items-center justify-center gap-2 rounded-md bg-[var(--color-neon)] px-4 py-2.5 text-[12px] font-bold text-black transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)]"
                   >
-                    {mut.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>{buttonLabel}{canBet && <ArrowUpRight className="h-3.5 w-3.5" />}</>
-                    )}
+                    {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><span>{buttonLabel}</span>{canBet && <ArrowUpRight className="h-4 w-4" />}</>}
                   </button>
                 </div>
-              </div>
-
-              <div className="flex items-baseline justify-between text-[12px]">
-                <div className="flex items-baseline gap-6 text-[var(--ink-2)]">
-                  <span>Return <span className="ml-1 font-display font-medium tabular-nums text-[var(--ink)]">{potentialReturn.toFixed(2)}</span></span>
-                  <span>Gain <span className="ml-1 font-display font-medium tabular-nums text-[var(--neon)]">+{potentialGain.toFixed(2)}</span></span>
+                {stakeValid && (
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+                      <span className="text-[var(--color-ink-muted)]">Return</span>
+                      <span className="font-display font-bold tabular-nums">{potentialReturn.toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+                      <span className="text-[var(--color-ink-muted)]">Gain</span>
+                      <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">+{potentialGain.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-[11px] text-[var(--color-ink-muted)]">
+                  <span>Points balance: <span className="font-bold tabular-nums text-[var(--color-ink)]">{balance.toFixed(2)}</span></span>
+                  {noBalance && <span className="font-semibold text-destructive">You need points to lock this prediction.</span>}
                 </div>
-                <span className="text-[var(--ink-faint)]">Bal {balance.toFixed(0)}</span>
               </div>
-              {noBalance && (
-                <p className="text-[11px] text-[var(--ink-muted)]">
-                  You need points to lock this prediction.
-                </p>
-              )}
+            )}
+
+            <div className="flex items-center justify-between text-[11px] text-[var(--color-ink-muted)]">
+              <span>
+                {match.odds_source === "the-odds-api"
+                  ? <>Multipliers updated by <BrandText /> {timeAgo(match.odds_updated_at)}</>
+                  : "Reference multipliers"}
+              </span>
             </div>
-          )}
+          </div>
+        )}
 
-          <p className="text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--ink-faint)]">
-            {match.odds_source === "the-odds-api"
-              ? <>Bookmaker priced · updated {timeAgo(match.odds_updated_at)}</>
-              : <>Reference multipliers</>}
-            <span className="mx-2 text-[var(--ink-faint)]">·</span>
-            Virtual points · Audit logged
-          </p>
-        </div>
-      )}
 
-      {!locked && (
-        <div className="mt-8">
-          <MarketTabs
-            matchId={match.id}
-            locked={locked}
-            bettingBlocked={bettingBlocked}
-            suspendedMarkets={suspendedMarkets}
-            homeTeam={match.home_team}
-            awayTeam={match.away_team}
-          />
-        </div>
-      )}
+        {!locked && <MarketTabs matchId={match.id} locked={locked} bettingBlocked={bettingBlocked} suspendedMarkets={suspendedMarkets} homeTeam={match.home_team} awayTeam={match.away_team} />}
 
-      {locked && (
-        <p className="mt-6 text-[12px] text-[var(--ink-muted)]">
-          {match.status === "finished" ? "Match finished." : "Predictions closed — kickoff passed."}
-        </p>
-      )}
+        {locked && (
+          <div className="text-[12px] font-medium text-[var(--color-ink-muted)]">
+            {match.status === "finished" ? "Match finished." : "Predictions closed — kickoff passed."}
+          </div>
+        )}
+
+      </div>
     </article>
   );
 }
 
-function TeamBlock({ name, align }: { name: string; align: "left" | "right" }) {
+function TeamFlag({ name }: { name: string }) {
   const url = teamFlagUrl(name, 160);
-  const isRight = align === "right";
-  return (
-    <div className={`flex min-w-0 items-center gap-3 md:gap-4 ${isRight ? "justify-end text-right" : "justify-start text-left"}`}>
-      {isRight && (
-        <span
-          className="font-display truncate text-[15px] font-medium leading-tight tracking-tight text-[var(--ink)] md:text-lg"
-          title={name}
-        >
-          {name}
-        </span>
-      )}
-      <div className="h-8 w-11 shrink-0 overflow-hidden md:h-9 md:w-12">
-        {url ? (
-          <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
-        ) : (
-          <div className="grid h-full w-full place-items-center bg-[var(--surface-3)] text-[9px] font-medium tracking-wider text-[var(--ink-muted)]">
-            {name.slice(0, 3).toUpperCase()}
-          </div>
-        )}
+  if (!url) {
+    return (
+      <div className="grid h-10 w-16 place-items-center border border-border/40 bg-[var(--color-surface)] text-[10px] font-bold uppercase tracking-wider text-[var(--color-ink)] shadow-sm">
+        {name.slice(0, 3)}
       </div>
-      {!isRight && (
-        <span
-          className="font-display truncate text-[15px] font-medium leading-tight tracking-tight text-[var(--ink)] md:text-lg"
-          title={name}
-        >
-          {name}
-        </span>
-      )}
-    </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={`${name} flag`}
+      className="h-10 w-16 shrink-0 border border-border/40 object-cover shadow-sm"
+      loading="lazy"
+    />
   );
 }
