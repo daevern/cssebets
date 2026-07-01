@@ -1228,6 +1228,8 @@ export type Database = {
           created_at: string
           house_user_id: string | null
           id: number
+          is_active: boolean
+          kind: string
           total_payouts_paid: number
           total_stakes_collected: number
           updated_at: string
@@ -1237,6 +1239,8 @@ export type Database = {
           created_at?: string
           house_user_id?: string | null
           id?: number
+          is_active?: boolean
+          kind?: string
           total_payouts_paid?: number
           total_stakes_collected?: number
           updated_at?: string
@@ -1246,6 +1250,8 @@ export type Database = {
           created_at?: string
           house_user_id?: string | null
           id?: number
+          is_active?: boolean
+          kind?: string
           total_payouts_paid?: number
           total_stakes_collected?: number
           updated_at?: string
