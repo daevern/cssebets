@@ -283,7 +283,7 @@ export const adminRejectPayout = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin
       .from("payout_requests")
-      .select("status")
+      .select("status, user_id, amount, approved_by")
       .eq("id", data.payoutId)
       .maybeSingle();
     if (!row) throw new Error("Not found");
@@ -301,10 +301,17 @@ export const adminRejectPayout = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
+      target_user_id: (row as any).user_id ?? null,
       action: "payout_rejected",
       entity: "payout_request",
       entity_id: data.payoutId,
-      metadata: { rejected_by: userId, reason: data.reason },
+      metadata: {
+        amount: (row as any).amount ?? null,
+        status: "rejected_by_admin",
+        approved_by: (row as any).approved_by ?? null,
+        rejected_by: userId,
+        reason: data.reason,
+      },
     });
     return { ok: true };
   });
