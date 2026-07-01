@@ -139,35 +139,47 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
       {/* Market Analytics — historical odds / implied probability */}
       <MarketAnalyticsCard matchId={match.id} />
 
-      {/* Markets — only show pre-kickoff */}
+      {/* Markets — only show pre-kickoff. Unboxed: header + content, no panel chrome. */}
       {!locked && (
-        <StencilPanel kicker={<><Activity className="h-3 w-3" /> Markets</>}>
+        <section className="space-y-4">
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-display text-lg font-semibold tracking-tight text-[var(--color-ink)] md:text-xl">
+              Take a position
+            </h2>
+            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+              Markets
+            </span>
+          </div>
           <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} />
-        </StencilPanel>
+        </section>
       )}
       {locked && <BettingRibbon phase={phase} />}
 
-      {/* Sticky section tabs — mobile-first nav */}
-      <div className="sticky top-0 z-20 -mx-4 border-y border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 px-4 py-2 backdrop-blur md:mx-0 md:border md:px-0">
-        <div className="flex gap-1 overflow-x-auto md:justify-center">
+      {/* Sticky section tabs — quieter, no boxy chips */}
+      <div className="sticky top-0 z-20 -mx-4 border-b border-[var(--color-surface-border)]/40 bg-[var(--color-surface)]/90 px-4 py-2.5 backdrop-blur md:mx-0 md:border-0 md:bg-transparent md:backdrop-blur-0 md:px-0 md:py-0">
+        <div className="flex gap-5 overflow-x-auto md:justify-center md:gap-8">
           {tabs.map((t) => {
             const active = tab === t.key;
             return (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`relative shrink-0 border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] transition-all ${
+                className={`relative shrink-0 pb-1.5 text-[12px] font-medium tracking-tight transition-colors ${
                   active
-                    ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[0_0_12px_-4px_var(--color-neon-glow)]"
-                    : "border-[var(--color-surface-border)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                    ? "text-[var(--color-ink)]"
+                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
                 }`}
               >
                 {t.label}
+                {active && (
+                  <span className="absolute inset-x-0 -bottom-px h-px bg-[var(--color-neon)]" />
+                )}
               </button>
             );
           })}
         </div>
       </div>
+
 
       {tab === "summary" && (
         <>
