@@ -33,7 +33,7 @@ function SectionLabel({ children, note }: { children: React.ReactNode; note?: Re
   return (
     <div className="flex items-baseline gap-2 mb-2 flex-wrap">
       <span className="h-1.5 w-1.5 self-center bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon-glow)]" />
-      <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-ink)]">
+      <span className="text-[12px] font-bold uppercase tracking-[0.05em] text-[var(--color-ink)]">
         {children}
       </span>
       {note && (
@@ -45,6 +45,7 @@ function SectionLabel({ children, note }: { children: React.ReactNode; note?: Re
     </div>
   );
 }
+
 
 function OddsButton({
   label,
