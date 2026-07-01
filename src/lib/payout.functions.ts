@@ -221,13 +221,14 @@ export const adminApprovePayout = createServerFn({ method: "POST" })
     }
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
-      action: "payout.approve",
+      action: "payout_approved",
       entity: "payout_request",
       entity_id: data.payoutId,
-      metadata: {},
+      metadata: { approved_by: userId },
     });
     return { ok: true };
   });
+
 
 
 export const adminRejectPayout = createServerFn({ method: "POST" })
