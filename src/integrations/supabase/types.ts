@@ -145,6 +145,74 @@ export type Database = {
         }
         Relationships: []
       }
+      correlated_exposure_alerts: {
+        Row: {
+          bet_ids: string[]
+          correlation_group: string
+          created_at: string
+          gross_payout: number
+          id: string
+          match_id: string
+          net_liability: number
+          related_markets: string[]
+          related_outcomes: string[]
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          total_stake: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          bet_ids?: string[]
+          correlation_group: string
+          created_at?: string
+          gross_payout?: number
+          id?: string
+          match_id: string
+          net_liability?: number
+          related_markets?: string[]
+          related_outcomes?: string[]
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          total_stake?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          bet_ids?: string[]
+          correlation_group?: string
+          created_at?: string
+          gross_payout?: number
+          id?: string
+          match_id?: string
+          net_liability?: number
+          related_markets?: string[]
+          related_outcomes?: string[]
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          total_stake?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "correlated_exposure_alerts_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -2175,6 +2243,15 @@ export type Database = {
       }
     }
     Functions: {
+      _correlation_groups_for: {
+        Args: {
+          p_market: string
+          p_market_text: string
+          p_outcome: string
+          p_selection: string
+        }
+        Returns: string[]
+      }
       _exposure_bet_wins: {
         Args: {
           p_away: number
@@ -2187,6 +2264,7 @@ export type Database = {
         Returns: boolean
       }
       _exposure_norm: { Args: { txt: string }; Returns: string }
+      _live_bankroll: { Args: never; Returns: number }
       adjust_correct_score_odds: {
         Args: {
           p_match_id: string
@@ -2317,6 +2395,10 @@ export type Database = {
         Returns: number
       }
       generate_public_reference: { Args: never; Returns: string }
+      get_correlated_exposure_alerts: {
+        Args: { p_status?: string }
+        Returns: Json
+      }
       get_match_exposure_summary: {
         Args: { p_match_id: string }
         Returns: Json
@@ -2428,6 +2510,10 @@ export type Database = {
         Args: { p_match_id: string }
         Returns: undefined
       }
+      recalculate_correlated_exposure: {
+        Args: { p_match_id: string }
+        Returns: Json
+      }
       recalculate_match_scenario_exposure: {
         Args: { p_match_id: string }
         Returns: Json
@@ -2438,6 +2524,10 @@ export type Database = {
         Returns: undefined
       }
       reset_simulation_data: { Args: { p_admin_id: string }; Returns: Json }
+      resolve_correlated_exposure_alert: {
+        Args: { p_alert_id: string; p_resolution_note: string }
+        Returns: Json
+      }
       reverse_settled_predictions_for_match: {
         Args: { p_match_id: string }
         Returns: number
