@@ -530,7 +530,7 @@ function MatchHero({
 function ScoreTeam({ name, flag }: { name: string; flag: string | null }) {
   return (
     <div className="flex items-center justify-center">
-      <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-md border border-[var(--color-surface-border)]/60 sm:h-20 sm:w-28 md:h-24 md:w-32">
+      <div className="relative h-14 w-20 shrink-0 overflow-hidden sm:h-20 sm:w-28 md:h-24 md:w-32">
         {flag ? (
           <img src={flag} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
         ) : (
@@ -538,7 +538,6 @@ function ScoreTeam({ name, flag }: { name: string; flag: string | null }) {
             {name.slice(0, 3)}
           </div>
         )}
-        <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/25" />
       </div>
     </div>
   );
