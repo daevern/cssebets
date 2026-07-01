@@ -104,6 +104,8 @@ export type Database = {
           new_value: Json | null
           old_value: Json | null
           reason: string | null
+          request_id: string | null
+          target_user_id: string | null
           user_agent: string | null
           user_id: string | null
         }
@@ -119,6 +121,8 @@ export type Database = {
           new_value?: Json | null
           old_value?: Json | null
           reason?: string | null
+          request_id?: string | null
+          target_user_id?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
@@ -134,6 +138,8 @@ export type Database = {
           new_value?: Json | null
           old_value?: Json | null
           reason?: string | null
+          request_id?: string | null
+          target_user_id?: string | null
           user_agent?: string | null
           user_id?: string | null
         }
@@ -2110,6 +2116,24 @@ export type Database = {
       classify_correlation_groups: {
         Args: { p_market: string; p_selection: string }
         Returns: string[]
+      }
+      create_audit_log: {
+        Args: {
+          p_action: string
+          p_actor_user_id?: string
+          p_after?: Json
+          p_before?: Json
+          p_entity: string
+          p_entity_id?: string
+          p_ip?: string
+          p_is_simulation?: boolean
+          p_metadata?: Json
+          p_reason?: string
+          p_request_id?: string
+          p_target_user_id?: string
+          p_user_agent?: string
+        }
+        Returns: string
       }
       credit_user_void_refund: {
         Args: {
