@@ -7,7 +7,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
-import { Activity, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Activity } from "lucide-react";
 import { getMarketHistory, type MarketHistoryPayload, type MarketSeries } from "@/lib/market-history.functions";
 
 const SERIES_COLORS = [
@@ -124,71 +124,6 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
         </div>
       }
     >
-      {/* Market selector — quiet, no bordered chips */}
-      <div className="mb-6 flex gap-4 overflow-x-auto pb-1 text-[11px]">
-        {data.availableMarkets.map((m) => {
-          const active = m.key === data.market;
-          return (
-            <button
-              key={m.key}
-              onClick={() => setMarket(m.key)}
-              className={`relative shrink-0 pb-1 font-medium tracking-tight transition-colors ${
-                active
-                  ? "text-[var(--color-ink)]"
-                  : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-              }`}
-            >
-              {m.label}
-              {active && <span className="absolute inset-x-0 -bottom-px h-px bg-[var(--color-neon)]" />}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Current market prices — clean rows, no boxes */}
-      <div className="mb-6 space-y-2.5">
-        {filteredSeries.map((s, idx) => {
-          const last = s.points.at(-1);
-          const first = s.points[0];
-          const value = last
-            ? (mode === "prob"
-                ? `${Math.round(last.prob * 100)}%`
-                : `${last.odds.toFixed(2)}x`)
-            : "—";
-          const change = last && first
-            ? (mode === "prob" ? (last.prob - first.prob) * 100 : last.odds - first.odds)
-            : 0;
-          const Trend = change > 0.05 ? TrendingUp : change < -0.05 ? TrendingDown : Minus;
-          const trendColor = change > 0.05
-            ? "text-[var(--color-neon)]"
-            : change < -0.05
-            ? "text-rose-400"
-            : "text-[var(--color-ink-muted)]/60";
-          return (
-            <div
-              key={s.key}
-              className="flex items-baseline justify-between gap-3 border-b border-[var(--color-surface-border)]/30 pb-2.5 last:border-b-0"
-            >
-              <div className="flex min-w-0 items-center gap-2.5">
-                <span
-                  className="h-2 w-2 shrink-0 rounded-full"
-                  style={{ background: SERIES_COLORS[idx % SERIES_COLORS.length] }}
-                />
-                <span className="truncate text-[13px] font-medium tracking-tight text-[var(--color-ink)]">{s.label}</span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="font-display text-lg font-semibold tabular-nums text-[var(--color-ink)]">
-                  {value}
-                </span>
-                {s.points.length > 1 && (
-                  <Trend className={`h-3.5 w-3.5 ${trendColor}`} />
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
       {/* Chart — the soul of the page. Taller, minimal chrome. */}
       <div className="h-72 w-full sm:h-80 md:h-96">
         {chartData.length === 0 ? (

@@ -430,7 +430,6 @@ function MatchHero({
     liveElapsed: (match as any).live_elapsed,
     liveStatusShort: (match as any).live_status_short,
   });
-  const stage = match.stage ? match.stage.replace(/_/g, " ") : (match.group_name ?? "Round of 32");
   const isFinished = match.status === "finished";
   const isLive = phase === "live";
   const showScore = isFinished || match.home_score != null || isLive;
@@ -456,17 +455,6 @@ function MatchHero({
 
   return (
     <article className="relative flex flex-col gap-6">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-        <span>Sports</span>
-        <span className="opacity-40">/</span>
-        <span>Soccer</span>
-        <span className="opacity-40">/</span>
-        <span>FIFA World Cup</span>
-        <span className="opacity-40">/</span>
-        <span className="truncate text-[var(--color-ink)]/80">{stage}</span>
-      </nav>
-
       {/* Title + status */}
       <div className="flex flex-col gap-3">
         <h1 className="font-display text-[26px] font-semibold leading-[1.05] tracking-tight text-[var(--color-ink)] md:text-4xl">
@@ -496,8 +484,8 @@ function MatchHero({
       </div>
 
       {/* Scoreboard */}
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 md:gap-8">
-        <ScoreTeam name={match.home_team} flag={homeFlag} align="left" />
+      <div className="flex items-center justify-center gap-5 sm:gap-8 md:gap-12">
+        <ScoreTeam name={match.home_team} flag={homeFlag} />
         <div className="flex flex-col items-center">
           {showScore ? (
             <div className="flex items-baseline gap-2 font-display leading-none tracking-tight">
@@ -518,7 +506,7 @@ function MatchHero({
             </div>
           )}
         </div>
-        <ScoreTeam name={match.away_team} flag={awayFlag} align="right" />
+        <ScoreTeam name={match.away_team} flag={awayFlag} />
       </div>
 
       {/* Last play */}
@@ -532,39 +520,25 @@ function MatchHero({
         </div>
       )}
 
-      {/* Trust line */}
-      <div className="text-[10px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]/70">
-        Virtual points · Official result settlement · Audit logged
-      </div>
-
       {/* Divider before graph */}
       <div className="h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
     </article>
   );
 }
 
-/* Compact scoreboard team cell — flag + team name, aligned. */
-function ScoreTeam({ name, flag, align }: { name: string; flag: string | null; align: "left" | "right" }) {
-  const isRight = align === "right";
+/* Scoreboard team cell — centered flag only. */
+function ScoreTeam({ name, flag }: { name: string; flag: string | null }) {
   return (
-    <div className={`flex min-w-0 items-center gap-2.5 sm:gap-3 ${isRight ? "flex-row-reverse text-right" : "text-left"}`}>
-      <div className="relative h-8 w-11 shrink-0 overflow-hidden rounded-sm border border-[var(--color-surface-border)]/60 sm:h-10 sm:w-14">
+    <div className="flex items-center justify-center">
+      <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded-md border border-[var(--color-surface-border)]/60 sm:h-20 sm:w-28 md:h-24 md:w-32">
         {flag ? (
           <img src={flag} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[9px] font-semibold uppercase tracking-wider">
+          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[11px] font-semibold uppercase tracking-wider">
             {name.slice(0, 3)}
           </div>
         )}
         <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/25" />
-      </div>
-      <div className="min-w-0 flex flex-col">
-        <span className="truncate font-display text-sm font-semibold tracking-tight text-[var(--color-ink)] sm:text-base md:text-lg" title={name}>
-          {name}
-        </span>
-        <span className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]/70">
-          {name.slice(0, 3).toUpperCase()}
-        </span>
       </div>
     </div>
   );
