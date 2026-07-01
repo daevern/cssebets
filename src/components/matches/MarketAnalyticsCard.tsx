@@ -7,7 +7,7 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
-import { Activity, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Activity } from "lucide-react";
 import { getMarketHistory, type MarketHistoryPayload, type MarketSeries } from "@/lib/market-history.functions";
 
 const SERIES_COLORS = [
