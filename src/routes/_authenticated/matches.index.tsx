@@ -359,8 +359,8 @@ function MatchCard({ match }: { match: Match }) {
               <h3 className="text-[15px] font-semibold text-[var(--color-ink)]">
                 Who will win?
               </h3>
-              <p className="text-[11px] text-[var(--color-ink-muted)]">
-                Multiplier · Market estimate
+              <p className="text-[11px] text-[var(--color-ink-muted)]" title="Estimates are based on current multipliers and may include platform margin.">
+                Multiplier · Est. chance
               </p>
             </div>
             <div className="grid grid-cols-3 gap-2">
