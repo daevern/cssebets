@@ -63,6 +63,7 @@ import { Route as ManagementAdminMatchPoolsRouteImport } from './routes/manageme
 import { Route as ManagementAdminMarketRulesRouteImport } from './routes/management/admin.market-rules'
 import { Route as ManagementAdminIncidentsRouteImport } from './routes/management/admin.incidents'
 import { Route as ManagementAdminHealthRouteImport } from './routes/management/admin.health'
+import { Route as ManagementAdminCorrelatedRiskRouteImport } from './routes/management/admin.correlated-risk'
 import { Route as ManagementAdminBankrollRouteImport } from './routes/management/admin.bankroll'
 import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
 import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
@@ -368,6 +369,12 @@ const ManagementAdminHealthRoute = ManagementAdminHealthRouteImport.update({
   path: '/health',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
+const ManagementAdminCorrelatedRiskRoute =
+  ManagementAdminCorrelatedRiskRouteImport.update({
+    id: '/correlated-risk',
+    path: '/correlated-risk',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminBankrollRoute = ManagementAdminBankrollRouteImport.update({
   id: '/bankroll',
   path: '/bankroll',
@@ -483,6 +490,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
   '/management/admin/health': typeof ManagementAdminHealthRoute
   '/management/admin/incidents': typeof ManagementAdminIncidentsRoute
   '/management/admin/market-rules': typeof ManagementAdminMarketRulesRoute
@@ -550,6 +558,7 @@ export interface FileRoutesByTo {
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
   '/management/admin/health': typeof ManagementAdminHealthRoute
   '/management/admin/incidents': typeof ManagementAdminIncidentsRoute
   '/management/admin/market-rules': typeof ManagementAdminMarketRulesRoute
@@ -621,6 +630,7 @@ export interface FileRoutesById {
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
   '/management/admin/health': typeof ManagementAdminHealthRoute
   '/management/admin/incidents': typeof ManagementAdminIncidentsRoute
   '/management/admin/market-rules': typeof ManagementAdminMarketRulesRoute
@@ -692,6 +702,7 @@ export interface FileRouteTypes {
     | '/management/admin/analytics'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
+    | '/management/admin/correlated-risk'
     | '/management/admin/health'
     | '/management/admin/incidents'
     | '/management/admin/market-rules'
@@ -759,6 +770,7 @@ export interface FileRouteTypes {
     | '/management/admin/analytics'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
+    | '/management/admin/correlated-risk'
     | '/management/admin/health'
     | '/management/admin/incidents'
     | '/management/admin/market-rules'
@@ -829,6 +841,7 @@ export interface FileRouteTypes {
     | '/management/admin/analytics'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
+    | '/management/admin/correlated-risk'
     | '/management/admin/health'
     | '/management/admin/incidents'
     | '/management/admin/market-rules'
@@ -1264,6 +1277,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminHealthRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/correlated-risk': {
+      id: '/management/admin/correlated-risk'
+      path: '/correlated-risk'
+      fullPath: '/management/admin/correlated-risk'
+      preLoaderRoute: typeof ManagementAdminCorrelatedRiskRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/bankroll': {
       id: '/management/admin/bankroll'
       path: '/bankroll'
@@ -1418,6 +1438,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminAnalyticsRoute: typeof ManagementAdminAnalyticsRoute
   ManagementAdminAuditRoute: typeof ManagementAdminAuditRoute
   ManagementAdminBankrollRoute: typeof ManagementAdminBankrollRoute
+  ManagementAdminCorrelatedRiskRoute: typeof ManagementAdminCorrelatedRiskRoute
   ManagementAdminHealthRoute: typeof ManagementAdminHealthRoute
   ManagementAdminIncidentsRoute: typeof ManagementAdminIncidentsRoute
   ManagementAdminMarketRulesRoute: typeof ManagementAdminMarketRulesRoute
@@ -1450,6 +1471,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminAnalyticsRoute: ManagementAdminAnalyticsRoute,
   ManagementAdminAuditRoute: ManagementAdminAuditRoute,
   ManagementAdminBankrollRoute: ManagementAdminBankrollRoute,
+  ManagementAdminCorrelatedRiskRoute: ManagementAdminCorrelatedRiskRoute,
   ManagementAdminHealthRoute: ManagementAdminHealthRoute,
   ManagementAdminIncidentsRoute: ManagementAdminIncidentsRoute,
   ManagementAdminMarketRulesRoute: ManagementAdminMarketRulesRoute,
