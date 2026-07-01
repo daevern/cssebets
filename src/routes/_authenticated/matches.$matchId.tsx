@@ -500,43 +500,41 @@ function MatchHero({
 }
 
 
-/* Vertical hero team: flag → name → goal scorers, all aligned left or right.
- * Mobile-first: each team gets its own column of breathing room. */
-function HeroTeam({ name, accent, align, goals }: { name: string; accent: "home"|"away"; align: "left"|"right"; goals: any[] }) {
+/* Editorial hero team — flag + name, quiet goal list. */
+function HeroTeam({ name, align, goals }: { name: string; align: "left"|"right"; goals: any[] }) {
   const url = teamFlagUrl(name, 160);
-  const accentCls = accent === "home"
-    ? "border-[var(--color-neon)]/50 shadow-[0_0_18px_-6px_var(--color-neon-glow)]"
-    : "border-white/40";
-  const itemsAlign = align === "right" ? "items-end text-right" : "items-start text-left";
+  const isRight = align === "right";
+  const itemsAlign = isRight ? "items-end text-right" : "items-start text-left";
   return (
-    <div className={`flex min-w-0 flex-col gap-2.5 ${itemsAlign}`}>
-      <div className={`relative h-16 w-full max-w-24 overflow-hidden border ${accentCls}`}>
+    <div className={`flex min-w-0 flex-col gap-3 ${itemsAlign}`}>
+      <div className="h-11 w-16 shrink-0 overflow-hidden md:h-14 md:w-20">
         {url ? (
-          <img src={url} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
+          <img src={url} alt="" className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[10px] font-black uppercase tracking-wider">
+          <div className="grid h-full w-full place-items-center bg-[var(--surface-3)] font-display text-[10px] font-medium uppercase tracking-wider text-[var(--ink-muted)]">
             {name.slice(0, 3)}
           </div>
         )}
-        <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/30" />
       </div>
-      <span className="w-full truncate font-display text-xs font-black uppercase tracking-[0.12em]" title={name}>
+      <span
+        className="w-full truncate font-display text-[15px] font-medium leading-tight tracking-tight md:text-lg"
+        title={name}
+      >
         {name}
       </span>
       {goals.length > 0 && (
-        <ul className={`flex w-full flex-col gap-1 text-[11px] leading-tight ${align === "right" ? "items-end" : "items-start"}`}>
+        <ul className={`flex w-full flex-col gap-1 text-[12px] leading-tight text-[var(--ink-2)] ${isRight ? "items-end" : "items-start"}`}>
           {goals.map((g, i) => {
             const min = `${g.minute ?? ""}${g.extra_minute ? `+${g.extra_minute}` : ""}'`;
             const isPen = String(g.detail || "").toLowerCase().includes("penalty");
             const isOG = String(g.detail || "").toLowerCase().includes("own");
             const last = (g.player_name || "").split(" ").slice(-1)[0];
             return (
-              <li key={i} className={`flex max-w-full items-center gap-1.5 text-[var(--color-ink)] ${align === "right" ? "flex-row-reverse" : ""}`}>
-                <GoalIcon size={10} className={accent === "home" ? "shrink-0 text-[var(--color-neon)]" : "shrink-0 text-white"} />
-                <span className="truncate font-semibold">{last}</span>
-                <span className="shrink-0 font-display tabular-nums text-[var(--color-ink-muted)]">{min}</span>
-                {isPen && <span className="shrink-0 text-[var(--color-ink-muted)]">(P)</span>}
-                {isOG && <span className="shrink-0 text-[var(--color-ink-muted)]">(OG)</span>}
+              <li key={i} className={`flex max-w-full items-baseline gap-1.5 ${isRight ? "flex-row-reverse" : ""}`}>
+                <span className="truncate font-medium">{last}</span>
+                <span className="shrink-0 font-display tabular-nums text-[var(--ink-faint)]">{min}</span>
+                {isPen && <span className="shrink-0 text-[var(--ink-faint)]">(P)</span>}
+                {isOG && <span className="shrink-0 text-[var(--ink-faint)]">(OG)</span>}
               </li>
             );
           })}
@@ -545,6 +543,7 @@ function HeroTeam({ name, accent, align, goals }: { name: string; accent: "home"
     </div>
   );
 }
+
 
 
 /* 90-minute strip with HT mark and event markers. */
