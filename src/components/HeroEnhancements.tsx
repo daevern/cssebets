@@ -157,6 +157,31 @@ const DEMO_MATCH_2: NonNullable<LandingNextMatch> = {
 
 type Pick = { selection: string; odds: number };
 
+function formatKickoffDate(iso: string): string {
+  const d = new Date(iso);
+  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  return `${months[d.getMonth()]} ${d.getDate()} ${hours}:${minutes}${ampm}`;
+}
+
+function FixtureCorner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
+  const map: Record<typeof pos, string> = {
+    tl: "top-0 left-0 border-t border-l",
+    tr: "top-0 right-0 border-t border-r",
+    bl: "bottom-0 left-0 border-b border-l",
+    br: "bottom-0 right-0 border-b border-r",
+  };
+  return (
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute h-3 w-3 border-[var(--color-neon)] ${map[pos]}`}
+    />
+  );
+}
+
 function MatchFixtureCard({ m, authed }: { m: NonNullable<LandingNextMatch>; authed: boolean | null }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -172,33 +197,48 @@ function MatchFixtureCard({ m, authed }: { m: NonNullable<LandingNextMatch>; aut
   const [resultPick, setResultPick] = useState<Pick | null>(null);
   const [resultStake, setResultStake] = useState<string>(String(MIN_STAKE));
   const ctaTo = authed ? "/dashboard" : "/register";
+  const stakeNum = Number(resultStake);
+  const stakeValid = stakeNum >= MIN_STAKE && stakeNum <= MAX_STAKE;
+  const potential = stakeValid && resultPick ? (stakeNum * resultPick.odds).toFixed(2) : "0.00";
 
   return (
-    <Card className="p-4 space-y-3 bg-card/60 backdrop-blur border-border hover:border-primary/30 transition-colors">
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-            Round of 32
-          </span>
-          <span className="text-[10px] text-muted-foreground inline-flex items-center gap-1">
-            <Clock className="h-3 w-3 text-primary" />
-            Kickoff in {ko}
-          </span>
-        </div>
-        <div className="grid grid-cols-3 items-center text-sm font-bold gap-3 py-1">
-          <div className="flex flex-col items-center gap-1 text-center">
-            <PreviewFlag name={m.homeTeam} />
-            <span className="truncate max-w-[90px] text-xs font-semibold">{m.homeTeam}</span>
-          </div>
-          <span className="text-muted-foreground text-xs text-center font-normal">vs</span>
-          <div className="flex flex-col items-center gap-1 text-center">
-            <PreviewFlag name={m.awayTeam} />
-            <span className="truncate max-w-[90px] text-xs font-semibold">{m.awayTeam}</span>
-          </div>
-        </div>
+    <article className="relative overflow-hidden border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
+      <FixtureCorner pos="tl" /><FixtureCorner pos="tr" />
+      <FixtureCorner pos="bl" /><FixtureCorner pos="br" />
+
+      {/* Stencil header band */}
+      <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-4 py-3">
+        <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+          Round of 32
+        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+          {formatKickoffDate(m.kickoffAt)}
+        </span>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-4 px-4 py-5">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <div className="flex flex-col items-center gap-2">
+            <PreviewFlag name={m.homeTeam} />
+            <span className="max-w-[110px] truncate text-center text-xs font-bold uppercase tracking-wide">
+              {m.homeTeam}
+            </span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            <span className="font-display text-lg font-bold leading-none text-[var(--color-ink-muted)]">vs</span>
+            <span className="h-6 w-px bg-[var(--color-neon)]/40" />
+            <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">
+              <Clock className="h-2.5 w-2.5" /> {ko}
+            </span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <PreviewFlag name={m.awayTeam} />
+            <span className="max-w-[110px] truncate text-center text-xs font-bold uppercase tracking-wide">
+              {m.awayTeam}
+            </span>
+          </div>
+        </div>
+
         <div className="grid grid-cols-3 gap-2">
           {[
             { p: "HOME", label: m.homeTeam, price: home },
@@ -207,36 +247,51 @@ function MatchFixtureCard({ m, authed }: { m: NonNullable<LandingNextMatch>; aut
           ].map((o) => {
             const isPicked = resultPick?.selection === o.p;
             return (
-              <Button
+              <button
                 key={o.p}
                 type="button"
-                variant={isPicked ? "default" : "outline"}
-                size="sm"
-                className="flex flex-col h-auto py-1.5 px-1"
                 onClick={() =>
                   setResultPick(isPicked ? null : { selection: o.p, odds: o.price })
                 }
+                className={`relative flex flex-col items-center gap-1 border px-2 py-2.5 transition-colors ${
+                  isPicked
+                    ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[0_0_18px_var(--color-neon-glow)]"
+                    : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/60"
+                }`}
               >
-                <span className="truncate max-w-full text-[10px] font-normal text-muted-foreground">{o.p === "DRAW" ? "Draw" : "Win"}</span>
-                <span className="font-bold text-xs">{Number(o.price).toFixed(2)}</span>
-              </Button>
+                <span className="max-w-full truncate text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                  {o.label}
+                </span>
+                <span className="font-display text-lg font-bold tabular-nums">{Number(o.price).toFixed(2)}</span>
+              </button>
             );
           })}
         </div>
+
         {resultPick && (
-          <PreviewSlip
-            marketLabel="Match Result"
-            pick={resultPick}
-            stake={resultStake}
-            onStake={setResultStake}
-            onClear={() => setResultPick(null)}
-            ctaTo={ctaTo}
-          />
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min={MIN_STAKE}
+              max={MAX_STAKE}
+              value={resultStake}
+              onChange={(e) => setResultStake(e.target.value)}
+              placeholder="Stake"
+              className="flex-1 h-10 border border-[var(--color-surface-border)] bg-[#070D0A] font-display text-sm font-bold tabular-nums text-[var(--color-ink)] focus:border-[var(--color-neon)]"
+            />
+            <Button asChild size="sm" className="h-10 gap-1.5 rounded-full bg-[var(--color-neon)] px-5 text-[10px] font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_24px_var(--color-neon-glow)] hover:brightness-110">
+              <Link to={ctaTo}>
+                <span>Bet → {potential}</span>
+                <Zap className="h-3 w-3" />
+              </Link>
+            </Button>
+          </div>
         )}
       </div>
-    </Card>
+    </article>
   );
 }
+
 
 export function FeaturedMatches({ matches, authed }: { matches: LandingNextMatch[]; authed: boolean | null }) {
   const displayedMatches = useMemo(() => {
