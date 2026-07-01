@@ -158,7 +158,7 @@ export const MARKET_QUESTIONS: Record<MarketKey, string> = {
   half_time_full_time: "How will half-time and full-time land?",
   exact_total_goals: "How many goals will be scored?",
   to_qualify: "Who will advance?",
-  double_chance: "Which two outcomes will cover it?",
+  double_chance: "Double chance — pick two outcomes to cover",
   draw_no_bet: "Who wins? (draw refunds)",
   goals_odd_even: "Will total goals be odd or even?",
   clean_sheet_home: "Will {home} keep a clean sheet?",
