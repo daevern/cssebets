@@ -443,6 +443,125 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     );
   };
 
+  // Row layout: [line pill] [Over button] [Under button] used for O/U markets.
+  const renderLineRow = (market: MarketKey, lineLabel: string) => {
+    const rows = orderedSelections(market, getGroup(market));
+    if (!rows.length) return null;
+    const suspended = isMarketSuspended(market);
+    const pick = picks[market];
+    const stake = stakes[market] ?? String(MIN_STAKE);
+    const sErr = stakeError(Number(stake));
+    const isPending = mut.isPending && mut.variables === market;
+    const over = rows.find((r) => r.selection.startsWith("OVER_"));
+    const under = rows.find((r) => r.selection.startsWith("UNDER_"));
+
+    const renderSide = (o: OddsRow | undefined, side: "Over" | "Under") => {
+      if (!o) return <EmptySide />;
+      const isPicked = pick?.selection === o.selection;
+      const alreadyPlaced = placedKeys.has(`${market}:${o.selection}`);
+      return (
+        <OddsButton
+          inline
+          label={side}
+          price={Number(o.odds)}
+          selected={isPicked}
+          alreadyPlaced={alreadyPlaced}
+          disabled={alreadyPlaced || suspended}
+          title={suspended ? "Market suspended" : alreadyPlaced ? "You already placed a bet on this selection" : undefined}
+          onClick={() => setPicks((prev) => ({
+            ...prev,
+            [market]: isPicked ? null : { selection: o.selection, odds: Number(o.odds) },
+          }))}
+        />
+      );
+    };
+
+    return (
+      <div>
+        <div className="grid grid-cols-[56px_1fr_1fr] items-stretch gap-2">
+          <LinePill line={lineLabel} />
+          {renderSide(over, "Over")}
+          {renderSide(under, "Under")}
+        </div>
+        {pick && !suspended && (
+          <StakeSlip
+            marketLabel={MARKET_LABELS[market]}
+            selectionText={selectionLabel(pick.selection)}
+            odds={pick.odds}
+            stake={stake}
+            setStake={(v) => setStakes((prev) => ({ ...prev, [market]: v }))}
+            onSubmit={() => mut.mutate(market)}
+            onClear={() => setPicks((prev) => ({ ...prev, [market]: null }))}
+            isPending={isPending}
+            error={sErr}
+          />
+        )}
+      </div>
+    );
+  };
+
+  // Inline row for 2-option markets (BTTS, Odd/Even, Red Card, To Qualify, etc.)
+  const renderInlineRow = (market: MarketKey) => {
+    const rows = orderedSelections(market, getGroup(market));
+    if (!rows.length) return null;
+    const suspended = isMarketSuspended(market);
+    const pick = picks[market];
+    const stake = stakes[market] ?? String(MIN_STAKE);
+    const sErr = stakeError(Number(stake));
+    const isPending = mut.isPending && mut.variables === market;
+    const cols = rows.length === 3 ? "grid-cols-3" : "grid-cols-2";
+    return (
+      <div>
+        {suspended && <div className="mb-2"><SuspendedBadge /></div>}
+        <div className={`grid ${cols} gap-2`}>
+          {rows.map((o) => {
+            const isPicked = pick?.selection === o.selection;
+            const alreadyPlaced = placedKeys.has(`${market}:${o.selection}`);
+            return (
+              <OddsButton
+                inline
+                key={o.id}
+                label={selectionLabel(o.selection)}
+                price={Number(o.odds)}
+                selected={isPicked}
+                alreadyPlaced={alreadyPlaced}
+                disabled={alreadyPlaced || suspended}
+                title={suspended ? "Market suspended" : alreadyPlaced ? "You already placed a bet on this selection" : undefined}
+                onClick={() => setPicks((prev) => ({
+                  ...prev,
+                  [market]: isPicked ? null : { selection: o.selection, odds: Number(o.odds) },
+                }))}
+              />
+            );
+          })}
+        </div>
+        {pick && !suspended && (
+          <StakeSlip
+            marketLabel={MARKET_LABELS[market]}
+            selectionText={selectionLabel(pick.selection)}
+            odds={pick.odds}
+            stake={stake}
+            setStake={(v) => setStakes((prev) => ({ ...prev, [market]: v }))}
+            onSubmit={() => mut.mutate(market)}
+            onClear={() => setPicks((prev) => ({ ...prev, [market]: null }))}
+            isPending={isPending}
+            error={sErr}
+          />
+        )}
+      </div>
+    );
+  };
+
+  const GroupHeader = ({ children }: { children: React.ReactNode }) => (
+    <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink)]">{children}</div>
+  );
+
+  const SubHeader = ({ children }: { children: React.ReactNode }) => (
+    <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">{children}</div>
+  );
+
+
+
   const renderCorrectScore = () => {
     const rows = orderedSelections("correct_score", getGroup("correct_score"));
     if (!rows.length) return <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-muted)]">Not available.</div>;
