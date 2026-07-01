@@ -550,9 +550,11 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     return (
       <div>
         {csSuspended && <div className="mb-2"><SuspendedBadge /></div>}
-        <div className="mb-2 text-[11px] text-[var(--color-ink-muted)]">
-          Tap multiple scores — each gets its own stake.
-        </div>
+        <QuestionHeading
+          question="Advanced: What will the final score be?"
+          note="Tap multiple scores — each locks its own points stake."
+        />
+
         <div className="grid grid-cols-3 gap-2">
           {rows.map((o) => {
             const isPicked = csPicks[o.selection] !== undefined;
