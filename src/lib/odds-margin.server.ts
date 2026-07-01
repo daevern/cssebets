@@ -1,16 +1,8 @@
 // Server-only: CSSEBets house pricing model.
 //
-// CSSEBets does NOT copy bookmaker odds. We take API odds as a *reference*,
+// CSSEBets does NOT copy bookmaker odds. We take API odds as a reference,
 // strip the bookmaker overround to get fair probabilities, then apply the
-// CSSEBets house margin (default 25%) and convert back to decimal odds.
-//
-// Formula (1X2):
-//   p_raw_i      = 1 / api_odds_i
-//   p_fair_i     = p_raw_i / Σ p_raw
-//   p_house_i    = p_fair_i * (1 + margin)
-//   display_odds = max(1.01, round(1 / p_house_i, 2))
-//
-// Outright (N-way) markets use the same logic across all selections.
+// CSSEBets house margin and convert back to decimal odds.
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -32,8 +24,26 @@ export async function getRealOddsMarginSettings(): Promise<{ marginPct: number; 
 }
 
 const MIN_ODD = 1.01;
+const MAX_ODD = 1000;
 const round2 = (x: number) => Math.round(x * 100) / 100;
 const clamp = (x: number) => Math.max(MIN_ODD, round2(x));
+
+export function parseValidDecimalOdd(value: unknown, field = "odds"): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`${field} must be a finite number`);
+  }
+  if (value < MIN_ODD) throw new Error(`${field} must be at least ${MIN_ODD}`);
+  if (value > MAX_ODD) throw new Error(`${field} exceeds maximum supported odd ${MAX_ODD}`);
+  return value;
+}
+
+export function validateThreeWayOdds(odds: { home: unknown; draw: unknown; away: unknown }) {
+  return {
+    home: parseValidDecimalOdd(odds.home, "home"),
+    draw: parseValidDecimalOdd(odds.draw, "draw"),
+    away: parseValidDecimalOdd(odds.away, "away"),
+  };
+}
 
 export type ThreeWayBreakdown = {
   api: { home: number; draw: number; away: number };
@@ -51,11 +61,7 @@ export async function compute3WayOdds(
   const settings = await getRealOddsMarginSettings();
   const marginPct = settings.marginPct;
   const apply = opts?.applyMargin ?? settings.apply;
-  const api = {
-    home: Math.max(1.001, Number(odds.home) || 0),
-    draw: Math.max(1.001, Number(odds.draw) || 0),
-    away: Math.max(1.001, Number(odds.away) || 0),
-  };
+  const api = validateThreeWayOdds(odds);
   const raw = { home: 1 / api.home, draw: 1 / api.draw, away: 1 / api.away };
   const sum = raw.home + raw.draw + raw.away;
   const fair = sum > 0
@@ -102,7 +108,7 @@ export async function apply3WayMargin(
 export async function applyOutrightMargin(odds: Array<{ team: string; odds: number }>) {
   const { marginPct, apply } = await getRealOddsMarginSettings();
   if (odds.length === 0) return odds;
-  const api = odds.map((o) => ({ team: o.team, odds: Math.max(1.001, Number(o.odds) || 0) }));
+  const api = odds.map((o) => ({ team: o.team, odds: parseValidDecimalOdd(o.odds, `odds:${o.team}`) }));
   const raw = api.map((o) => 1 / o.odds);
   const sum = raw.reduce((s, x) => s + x, 0);
   const fair = sum > 0 ? raw.map((x) => x / sum) : raw.map(() => 1 / raw.length);
