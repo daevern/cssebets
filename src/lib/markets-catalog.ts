@@ -158,7 +158,7 @@ export const MARKET_QUESTIONS: Record<MarketKey, string> = {
   half_time_full_time: "How will half-time and full-time land?",
   exact_total_goals: "How many goals will be scored?",
   to_qualify: "Who will advance?",
-  double_chance: "Which two outcomes will cover it?",
+  double_chance: "Double chance — pick two outcomes to cover",
   draw_no_bet: "Who wins? (draw refunds)",
   goals_odd_even: "Will total goals be odd or even?",
   clean_sheet_home: "Will {home} keep a clean sheet?",
@@ -177,8 +177,8 @@ export const MARKET_QUESTIONS: Record<MarketKey, string> = {
   corners_over_under_9_5: "Will there be over 9.5 corners?",
   corners_over_under_10_5: "Will there be over 10.5 corners?",
   corners_over_under_11_5: "Will there be over 11.5 corners?",
-  home_corners_over_under_4_5: "Will {home} win over 4.5 corners?",
-  away_corners_over_under_4_5: "Will {away} win over 4.5 corners?",
+  home_corners_over_under_4_5: "Will {home} have over 4.5 corners?",
+  away_corners_over_under_4_5: "Will {away} have over 4.5 corners?",
   first_corner: "Who wins the first corner?",
 };
 
