@@ -91,6 +91,7 @@ const GROUPS: NavGroup[] = [
       { to: "/management/admin/review", label: "Action review", icon: ScrollText },
       { to: "/management/admin/audit", label: "Audit", icon: ScrollText },
       { to: "/management/admin/market-rules", label: "Market rules", icon: BookOpen },
+      { to: "/management/admin/correlated-risk", label: "Correlated risk", icon: ShieldAlert },
       { to: "/management/admin/reconciliation", label: "Reconciliation", icon: ShieldAlert },
       { to: "/management/admin/simulation", label: "Simulation", icon: ShieldAlert },
       { to: "/management/admin/settings", label: "Settings", icon: Settings },
