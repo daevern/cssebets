@@ -126,6 +126,8 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
 
   const [tab, setTab] = useState<TabKey>("summary");
 
+  const lastEvent = events.length ? events[events.length - 1] : null;
+
   return (
     <>
       <MatchHero
@@ -134,10 +136,12 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
         phase={phase}
         homeGoals={homeGoals}
         awayGoals={awayGoals}
+        lastEvent={lastEvent}
       />
 
       {/* Market Analytics — historical odds / implied probability */}
       <MarketAnalyticsCard matchId={match.id} />
+
 
       {/* Markets — only show pre-kickoff. Unboxed: header + content, no panel chrome. */}
       {!locked && (
