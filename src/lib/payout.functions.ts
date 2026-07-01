@@ -335,7 +335,7 @@ export const adminConfirmPayoutProof = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin
       .from("payout_requests")
-      .select("id, user_id, status, approved_by, reviewed_by")
+      .select("id, user_id, amount, status, approved_by, reviewed_by")
       .eq("id", data.payoutId)
       .maybeSingle();
     if (!row) throw new Error("Not found");
