@@ -619,10 +619,9 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   );
 
   return (
-    <div className="pt-4 space-y-4 -mx-3 sm:-mx-2 md:mx-0">
-      {/* Consistent scrollable tab bar */}
-      <div className="flex overflow-x-auto rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none">
-
+    <div className="space-y-8">
+      {/* Text-only tab bar — no box, no border, just a rhythm of labels */}
+      <div className="-mx-1 flex overflow-x-auto pb-1 scrollbar-none border-b border-[var(--surface-hairline)]">
         {TAB_DEFS.map((t) => {
           const enabled = tabEnabled[t.id];
           const active = tab === t.id;
@@ -632,21 +631,96 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
               type="button"
               disabled={!enabled}
               onClick={() => setTab(t.id)}
-              className={`shrink-0 px-4 py-2.5 text-center text-[13px] font-semibold whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)]/60 last:border-r-0 ${
+              className={`relative shrink-0 px-3 py-2.5 text-[13px] font-medium whitespace-nowrap transition-colors ${
                 active
-                  ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
+                  ? "text-[var(--ink)]"
                   : enabled
-                    ? "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-                    : "text-[var(--color-ink-muted)]/30 cursor-not-allowed"
+                    ? "text-[var(--ink-muted)] hover:text-[var(--ink)]"
+                    : "text-[var(--ink-faint)]/50 cursor-not-allowed"
               }`}
             >
               {t.label}
+              {active && (
+                <span className="absolute inset-x-3 -bottom-px h-px bg-[var(--neon)]" aria-hidden />
+              )}
             </button>
           );
         })}
       </div>
 
-      <div className="px-3 sm:px-2 md:px-0">
+      <div className="space-y-8">
+        {tab === "pop" && (
+          <div className="space-y-8">
+            {getGroup("over_under_2_5").length > 0 && <Section market="over_under_2_5" cols="grid-cols-2" />}
+            {getGroup("btts").length > 0 && <Section market="btts" cols="grid-cols-2" />}
+            {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}
+            {hasToQualify && <Section market="to_qualify" cols="grid-cols-2" note="advances incl. ET & pens" />}
+            {!hasPopular && <div className="text-[12px] text-[var(--ink-muted)]">No popular markets available.</div>}
+          </div>
+        )}
+
+        {tab === "goals" && (
+          <div className="space-y-8">
+            {OVER_UNDER_LINES.map((mk) =>
+              getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
+            )}
+            <Section market="btts" cols="grid-cols-2" />
+            {getGroup("goals_odd_even").length > 0 && <Section market="goals_odd_even" cols="grid-cols-2" />}
+            {getGroup("exact_total_goals").length > 0 && <Section market="exact_total_goals" cols="grid-cols-3" />}
+          </div>
+        )}
+
+        {tab === "cs" && <div>{renderCorrectScore()}</div>}
+
+        {tab === "ex" && (
+          <div className="space-y-8">
+            {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}
+            {getGroup("draw_no_bet").length > 0 && (
+              <Section market="draw_no_bet" cols="grid-cols-2" note="stake refunded on a draw" />
+            )}
+            {getGroup("clean_sheet_home").length > 0 && <Section market="clean_sheet_home" cols="grid-cols-2" />}
+            {getGroup("clean_sheet_away").length > 0 && <Section market="clean_sheet_away" cols="grid-cols-2" />}
+            {getGroup("win_to_nil_home").length > 0 && <Section market="win_to_nil_home" cols="grid-cols-2" />}
+            {getGroup("win_to_nil_away").length > 0 && <Section market="win_to_nil_away" cols="grid-cols-2" />}
+          </div>
+        )}
+
+        {tab === "cards" && (
+          <div className="space-y-8">
+            <SettlementNote>
+              Settled on official full-time card counts. Stake refunded if official data is unavailable.
+            </SettlementNote>
+            {CARDS_LINES.map((mk) =>
+              getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
+            )}
+            {getGroup("home_cards_over_under_1_5").length > 0 && <Section market="home_cards_over_under_1_5" cols="grid-cols-2" />}
+            {getGroup("away_cards_over_under_1_5").length > 0 && <Section market="away_cards_over_under_1_5" cols="grid-cols-2" />}
+            {getGroup("red_card_match").length > 0 && <Section market="red_card_match" cols="grid-cols-2" />}
+            {getGroup("first_card").length > 0 && <Section market="first_card" cols="grid-cols-3" />}
+          </div>
+        )}
+
+        {tab === "corners" && (
+          <div className="space-y-8">
+            <SettlementNote>
+              Settled on official full-time corner counts. Stake refunded if official data is unavailable.
+            </SettlementNote>
+            {CORNERS_LINES.map((mk) =>
+              getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
+            )}
+            {getGroup("home_corners_over_under_4_5").length > 0 && <Section market="home_corners_over_under_4_5" cols="grid-cols-2" />}
+            {getGroup("away_corners_over_under_4_5").length > 0 && <Section market="away_corners_over_under_4_5" cols="grid-cols-2" />}
+            {getGroup("first_corner").length > 0 && <Section market="first_corner" cols="grid-cols-3" />}
+          </div>
+        )}
+
+        {tab === "sp" && (
+          <div className="space-y-8">
+            {hasToQualify && (
+              <Section market="to_qualify" cols="grid-cols-2" note="advances incl. ET & pens" />
+            )}
+            {hasHtFt && <Section market="half_time_full_time" cols="grid-cols-3" />}
+
         {tab === "pop" && (
           <div className="space-y-4">
             {getGroup("over_under_2_5").length > 0 && <Section market="over_under_2_5" cols="grid-cols-2" />}
