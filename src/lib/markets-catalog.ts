@@ -177,8 +177,8 @@ export const MARKET_QUESTIONS: Record<MarketKey, string> = {
   corners_over_under_9_5: "Will there be over 9.5 corners?",
   corners_over_under_10_5: "Will there be over 10.5 corners?",
   corners_over_under_11_5: "Will there be over 11.5 corners?",
-  home_corners_over_under_4_5: "Will {home} win over 4.5 corners?",
-  away_corners_over_under_4_5: "Will {away} win over 4.5 corners?",
+  home_corners_over_under_4_5: "Will {home} have over 4.5 corners?",
+  away_corners_over_under_4_5: "Will {away} have over 4.5 corners?",
   first_corner: "Who wins the first corner?",
 };
 
