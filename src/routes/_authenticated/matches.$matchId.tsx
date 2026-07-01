@@ -436,81 +436,69 @@ function MatchHero({
   const progressPct = Math.min(100, (currentMinute / progressCap) * 100);
 
   return (
-    <article className="relative -mx-4 overflow-hidden border-y border-[var(--color-neon)]/30 bg-gradient-to-b from-[var(--color-surface-2)] to-[var(--color-surface)] shadow-[0_0_60px_-30px_var(--color-neon-glow)] md:mx-0 md:border">
-      <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
-      <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04]">
-        <PitchIcon size={260} className="text-[var(--color-neon)]" />
-      </div>
-
-      {/* Ticker row */}
-      <div className="relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-dashed border-[var(--color-surface-border)] px-4 py-3">
-        <span className="flex min-w-0 items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">
-          <WhistleIcon size={12} /> {stage}
-        </span>
-        <span className="flex shrink-0 items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+    <article className="relative py-6">
+      {/* Editorial metadata line */}
+      <div className="mb-8 flex items-baseline justify-between text-[11px] font-medium uppercase tracking-[0.22em] text-[var(--ink-faint)]">
+        <span>{stage}</span>
+        <span className="flex items-center gap-2">
           {isLive ? (
             <span className="flex items-center gap-1.5 text-destructive">
-              <span className="relative flex h-2 w-2">
+              <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-destructive" />
               </span>
-              <span className="font-black tracking-[0.32em]">LIVE {liveClock.label}</span>
+              <span className="tracking-[0.28em]">Live {liveClock.label}</span>
             </span>
           ) : (
-            <span className="font-bold tracking-[0.28em]">{phaseLabel}</span>
+            <span>{phaseLabel}</span>
           )}
+          <span className="text-[var(--ink-faint)]">·</span>
+          <span>{dateStr} · {timeStr}</span>
         </span>
       </div>
 
-      {/* Kickoff chip — its own row, no longer crammed under the score */}
-      <div className="relative flex justify-center border-b border-dashed border-[var(--color-surface-border)] py-2">
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap border border-dashed border-[var(--color-surface-border)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-          <span className="h-1 w-1 bg-[var(--color-neon)]" />
-          {dateStr} · {timeStr}
-        </span>
-      </div>
-
-      {/* Scoreboard — generous mobile spacing */}
-      <div className="relative px-4 pb-5 pt-6 sm:px-5">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-4">
-          <HeroTeam name={match.home_team} accent="home" align="left" goals={homeGoals} />
-          <div className="flex flex-col items-center justify-start pt-2">
-            {showScore ? (
-              <div className="flex items-baseline gap-2 font-display leading-none tracking-tight">
-                <span className="text-5xl font-black tabular-nums text-[var(--color-neon)] drop-shadow-[0_0_18px_var(--color-neon-glow)] sm:text-6xl">
-                  {match.home_score ?? 0}
-                </span>
-                <span className="text-3xl font-light text-[var(--color-ink-muted)] sm:text-4xl">:</span>
-                <span className="text-5xl font-black tabular-nums sm:text-6xl">
-                  {match.away_score ?? 0}
-                </span>
-              </div>
-            ) : (
-              <span className="font-display text-3xl font-black uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">vs</span>
-            )}
-            {(match.penalty_home_score != null || match.penalty_away_score != null) && (
-              <div className="mt-2 flex items-center gap-1 border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/5 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.2em] text-[var(--color-neon)]">
-                <span>PEN</span>
-                <span className="tabular-nums">{match.penalty_home_score ?? 0} – {match.penalty_away_score ?? 0}</span>
-              </div>
-            )}
-            {countdown && !isLive && !isFinished && (
-              <span className="mt-2 whitespace-nowrap bg-[var(--color-neon)]/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--color-neon)]">
-                Kicks off in {countdown}
+      {/* Editorial hero — teams and score dominate through pure typography */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 md:gap-8">
+        <HeroTeam name={match.home_team} align="right" goals={homeGoals} />
+        <div className="flex flex-col items-center gap-3">
+          {showScore ? (
+            <div className="flex items-baseline gap-3 font-display leading-none tracking-tight md:gap-5">
+              <span className="text-6xl font-medium tabular-nums text-[var(--ink)] md:text-7xl">
+                {match.home_score ?? 0}
               </span>
-            )}
-          </div>
-          <HeroTeam name={match.away_team} accent="away" align="right" goals={awayGoals} />
+              <span className="text-3xl font-light text-[var(--ink-faint)] md:text-4xl">–</span>
+              <span className="text-6xl font-medium tabular-nums text-[var(--ink)] md:text-7xl">
+                {match.away_score ?? 0}
+              </span>
+            </div>
+          ) : (
+            <span className="font-display text-4xl font-light italic tracking-tight text-[var(--ink-faint)] md:text-5xl">
+              v
+            </span>
+          )}
+          {(match.penalty_home_score != null || match.penalty_away_score != null) && (
+            <span className="text-[10px] font-medium uppercase tracking-[0.24em] text-[var(--neon)]">
+              PEN {match.penalty_home_score ?? 0} – {match.penalty_away_score ?? 0}
+            </span>
+          )}
+          {countdown && !isLive && !isFinished && (
+            <span className="text-[10px] font-medium uppercase tracking-[0.24em] text-[var(--ink-muted)]">
+              Kicks off in {countdown}
+            </span>
+          )}
         </div>
-
-        {/* 90-minute progress bar */}
-        {(isLive || isFinished) && (
-          <MatchProgress pct={progressPct} cap={progressCap} markers={markers} />
-        )}
+        <HeroTeam name={match.away_team} align="left" goals={awayGoals} />
       </div>
+
+      {(isLive || isFinished) && (
+        <div className="mt-10">
+          <MatchProgress pct={progressPct} cap={progressCap} markers={markers} />
+        </div>
+      )}
     </article>
   );
 }
+
 
 /* Vertical hero team: flag → name → goal scorers, all aligned left or right.
  * Mobile-first: each team gets its own column of breathing room. */
