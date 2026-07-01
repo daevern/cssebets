@@ -177,6 +177,24 @@ function AdminPayoutPage() {
                         <FileCheck className="h-3.5 w-3.5" /> Proof: {p.proof_file_name}
                       </div>
                     )}
+                    {p.approved_by && (
+                      <div className="text-[11px] text-muted-foreground">
+                        Approved by <span className="font-mono">{String(p.approved_by).slice(0, 8)}</span>
+                        {p.approved_at ? ` · ${new Date(p.approved_at).toLocaleString()}` : ""}
+                      </div>
+                    )}
+                    {p.completed_by && (
+                      <div className="text-[11px] text-muted-foreground">
+                        Completed by <span className="font-mono">{String(p.completed_by).slice(0, 8)}</span>
+                        {p.completed_at ? ` · ${new Date(p.completed_at).toLocaleString()}` : ""}
+                      </div>
+                    )}
+                    {p.bank_reference_no && (
+                      <div className="text-[11px]">Bank ref: <span className="font-mono">{p.bank_reference_no}</span></div>
+                    )}
+                    {p.checker_notes && (
+                      <div className="text-[11px] text-muted-foreground">Note: {p.checker_notes}</div>
+                    )}
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Badge variant={
@@ -195,11 +213,12 @@ function AdminPayoutPage() {
                       </>
                     )}
                     {p.status === "approved" && (
-                      <Button size="sm" onClick={() => { setUploadFor({ id: p.id, userId: p.user_id }); setFile(null); }}>
+                      <Button size="sm" onClick={() => { setUploadFor({ id: p.id, userId: p.user_id, approvedBy: p.approved_by ?? p.reviewed_by ?? null }); setFile(null); setBankRef(""); setCheckerNotes(""); }}>
                         <Upload className="h-4 w-4 mr-1" /> Upload proof
                       </Button>
                     )}
                   </div>
+
                 </div>
               </div>
             ))}
