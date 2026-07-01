@@ -46,7 +46,7 @@ function AdminWalletPage() {
     queryFn: () => listFn({ data: { status } }),
     refetchInterval: 15000,
   });
-  const users = useQuery({ queryKey: ["admin-users-wallets"], queryFn: () => usersFn({}) });
+  
 
   const approve = useMutation({
     mutationFn: (id: string) => approveFn({ data: { requestId: id } }),
