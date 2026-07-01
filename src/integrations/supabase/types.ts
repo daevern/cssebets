@@ -1462,12 +1462,15 @@ export type Database = {
           created_at: string
           flagged_for_review: boolean
           flagged_reason: string | null
+          gross_payout: number
+          house_profit_loss: number
           id: string
           is_simulation: boolean
           market: Database["public"]["Enums"]["prediction_market"]
           market_label: string | null
           market_text: string | null
           match_id: string | null
+          net_profit: number
           outcome: string
           points: number
           potential_return: number
@@ -1476,6 +1479,7 @@ export type Database = {
           selection_label: string | null
           settled_at: string | null
           settled_result: string | null
+          settlement_accounting_version: string
           status: Database["public"]["Enums"]["prediction_status"]
           user_id: string
           virtual_stake: number
@@ -1485,12 +1489,15 @@ export type Database = {
           created_at?: string
           flagged_for_review?: boolean
           flagged_reason?: string | null
+          gross_payout?: number
+          house_profit_loss?: number
           id?: string
           is_simulation?: boolean
           market: Database["public"]["Enums"]["prediction_market"]
           market_label?: string | null
           market_text?: string | null
           match_id?: string | null
+          net_profit?: number
           outcome: string
           points?: number
           potential_return?: number
@@ -1499,6 +1506,7 @@ export type Database = {
           selection_label?: string | null
           settled_at?: string | null
           settled_result?: string | null
+          settlement_accounting_version?: string
           status?: Database["public"]["Enums"]["prediction_status"]
           user_id: string
           virtual_stake?: number
@@ -1508,12 +1516,15 @@ export type Database = {
           created_at?: string
           flagged_for_review?: boolean
           flagged_reason?: string | null
+          gross_payout?: number
+          house_profit_loss?: number
           id?: string
           is_simulation?: boolean
           market?: Database["public"]["Enums"]["prediction_market"]
           market_label?: string | null
           market_text?: string | null
           match_id?: string | null
+          net_profit?: number
           outcome?: string
           points?: number
           potential_return?: number
@@ -1522,6 +1533,7 @@ export type Database = {
           selection_label?: string | null
           settled_at?: string | null
           settled_result?: string | null
+          settlement_accounting_version?: string
           status?: Database["public"]["Enums"]["prediction_status"]
           user_id?: string
           virtual_stake?: number
@@ -1912,41 +1924,56 @@ export type Database = {
       }
       wallet_transactions: {
         Row: {
+          admin_action_id: string | null
           amount: number
           balance_after: number
           balance_before: number
+          bet_id: string | null
           created_at: string
           id: string
           is_simulation: boolean
+          metadata: Json
           note: string | null
+          payout_request_id: string | null
           reference_id: string | null
           reference_type: Database["public"]["Enums"]["wallet_ref_type"]
+          transaction_category: string | null
           type: Database["public"]["Enums"]["wallet_txn_type"]
           user_id: string
         }
         Insert: {
+          admin_action_id?: string | null
           amount: number
           balance_after: number
           balance_before: number
+          bet_id?: string | null
           created_at?: string
           id?: string
           is_simulation?: boolean
+          metadata?: Json
           note?: string | null
+          payout_request_id?: string | null
           reference_id?: string | null
           reference_type: Database["public"]["Enums"]["wallet_ref_type"]
+          transaction_category?: string | null
           type: Database["public"]["Enums"]["wallet_txn_type"]
           user_id: string
         }
         Update: {
+          admin_action_id?: string | null
           amount?: number
           balance_after?: number
           balance_before?: number
+          bet_id?: string | null
           created_at?: string
           id?: string
           is_simulation?: boolean
+          metadata?: Json
           note?: string | null
+          payout_request_id?: string | null
           reference_id?: string | null
           reference_type?: Database["public"]["Enums"]["wallet_ref_type"]
+          transaction_category?: string | null
           type?: Database["public"]["Enums"]["wallet_txn_type"]
           user_id?: string
         }
