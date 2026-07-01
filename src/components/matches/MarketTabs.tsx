@@ -632,15 +632,16 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
   const Section = ({ market, label, cols, note }: { market: MarketKey; label?: string; cols: string; note?: React.ReactNode }) => (
     <div>
-      <SectionLabel note={note}>{label ?? MARKET_LABELS[market]}</SectionLabel>
+      <QuestionHeading question={label ?? marketQuestion(market, homeTeam, awayTeam)} note={note} />
       {renderMarketSection(market, cols)}
     </div>
   );
 
   return (
-    <div className="border-t border-dashed border-[var(--color-surface-border)] pt-4 space-y-4 -mx-3 sm:-mx-2 md:mx-0">
+    <div className="pt-4 space-y-4 -mx-3 sm:-mx-2 md:mx-0">
       {/* Consistent scrollable tab bar */}
-      <div className="flex overflow-x-auto border-y sm:border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none">
+      <div className="flex overflow-x-auto rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none">
+
         {TAB_DEFS.map((t) => {
           const enabled = tabEnabled[t.id];
           const active = tab === t.id;
