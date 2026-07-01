@@ -523,6 +523,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         {pick && !suspended && (
           <StakeSlip
             marketLabel={MARKET_LABELS[market]}
+            question={marketQuestion(market, homeTeam, awayTeam)}
             selectionText={selectionLabel(pick.selection)}
             odds={pick.odds}
             stake={stake}
