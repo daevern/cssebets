@@ -651,7 +651,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
               type="button"
               disabled={!enabled}
               onClick={() => setTab(t.id)}
-              className={`shrink-0 px-4 py-2.5 text-center text-[12px] font-bold uppercase tracking-[0.1em] whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)] last:border-r-0 ${
+              className={`shrink-0 px-4 py-2.5 text-center text-[13px] font-semibold whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)]/60 last:border-r-0 ${
                 active
                   ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
                   : enabled
