@@ -104,12 +104,24 @@ export const userConfirmPayoutProof = createServerFn({ method: "POST" })
       if (m.includes("INVALID_STATUS")) throw new Error("Not awaiting your confirmation");
       throw new Error(m || "Could not confirm payout");
     }
+    const { data: pr } = await supabaseAdmin
+      .from("payout_requests")
+      .select("user_id, amount, status, approved_by, completed_by, bank_reference_no")
+      .eq("id", data.payoutId)
+      .maybeSingle();
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
+      target_user_id: pr?.user_id ?? userId,
       action: "payout.user_confirm",
       entity: "payout_request",
       entity_id: data.payoutId,
-      metadata: {},
+      metadata: {
+        amount: pr?.amount ?? null,
+        status: pr?.status ?? "completed",
+        approved_by: (pr as any)?.approved_by ?? null,
+        completed_by: (pr as any)?.completed_by ?? null,
+        bank_reference_no: (pr as any)?.bank_reference_no ?? null,
+      },
     });
     return { ok: true };
   });
@@ -131,15 +143,27 @@ export const userRejectPayoutProof = createServerFn({ method: "POST" })
       p_reason: data.reason,
     });
     if (rpcErr) throw new Error(rpcErr.message);
+    const { data: pr } = await supabaseAdmin
+      .from("payout_requests")
+      .select("user_id, amount, status, approved_by")
+      .eq("id", data.payoutId)
+      .maybeSingle();
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
+      target_user_id: pr?.user_id ?? userId,
       action: "payout.user_reject",
       entity: "payout_request",
       entity_id: data.payoutId,
-      metadata: { reason: data.reason.slice(0, 200) },
+      metadata: {
+        amount: pr?.amount ?? null,
+        status: pr?.status ?? null,
+        approved_by: (pr as any)?.approved_by ?? null,
+        reason: data.reason.slice(0, 200),
+      },
     });
     return { ok: true };
   });
+
 
 
 // ---------------- ADMIN ----------------
