@@ -138,7 +138,7 @@ function MatchesPage() {
         }}
       />
 
-      <div className="relative mx-auto flex max-w-md flex-col gap-5 px-4 py-5 md:max-w-2xl md:py-8">
+      <div className="relative mx-auto flex max-w-md flex-col gap-5 px-3 py-5 md:max-w-2xl md:px-4 md:py-8">
         {/* Header */}
         <header className="flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center gap-2">
