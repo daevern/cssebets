@@ -1,38 +1,24 @@
-## Verification
+## Why it's pending
+Mexico beat Ecuador 2-0 (finished). All other markets on the match settled. Only `to_qualify` is stuck because the `matches.qualifier` column is NULL, and the to_qualify settler only grades bets when `qualifier` is explicitly set (HOME/AWAY). It was designed that way for knockouts that go to extra time / penalties, where an admin must set who advanced.
 
-Ivory Coast vs Norway final corner stats (from `match_stats`):
-- Ivory Coast (home): **14 corners**
-- Norway (away): **3 corners**
-- **Total: 17 corners**
+But when the 90-minute score is decisive (not a draw), the qualifier is unambiguous — the winner advances. Leaving qualifier NULL in that case is a bug: the settler should auto-derive it.
 
-The bet `corners_over_under_9_5 / OVER_9_5` at odds 1.79, stake 200 → **17 > 9.5 → should be WON** (payout 358).
-It was settled as **LOST**. This is incorrect — same class of bug as the previous Ivory Coast vs Norway mis-settlements (Under 3.5 goals, To Qualify Norway) that we just fixed.
+## Fix (two parts)
 
-## Root cause hypothesis
+### 1. Backfill this match now
+- Set `matches.qualifier = 'HOME'` for Mexico vs Ecuador (`4f24352d…`).
+- Re-run `settle_match_all_markets_atomic` for that match → grades bet `f8da4ed0…` as WON (10.00 stake → 12.80 payout to druggie777) and debits the platform bankroll.
+- Sweep every other `finished` match with pending `to_qualify` bets and a decisive 90-min score, derive qualifier from the scores, and re-settle.
 
-`settle_cards_corners_for_match` (in `settle_match_all_markets_atomic`) likely ran before `match_stats` had the final corner totals, or the corners settler falls through to a default LOST branch when stats are missing/zero. Because the previous fix only addressed goals/qualify markets settling to a legacy LOST default, corners/cards settlers still have the same shape of bug for this match.
+### 2. Patch the settler so this can't recur
+Update `settle_match_all_markets_atomic` (and/or the dedicated `settle_to_qualify_for_match` helper) so that, before grading to_qualify:
+- If `qualifier` is NULL AND `home_score != away_score`, derive `qualifier` from the winning side, persist it on `matches`, and grade.
+- If `qualifier` is NULL AND the match is drawn at 90, leave to_qualify pending (still needs ET/pens qualifier from admin) — same as today.
+- Add the derivation to `settleFinishedPending` catch-up path too so the picks-page trigger self-heals.
 
-## Plan
+Also: extend the reconciliation hourly check to flag `finished` matches with pending `to_qualify` bets and a decisive score as DRIFT, so any future gap alerts instead of hiding.
 
-1. **Investigate the settler**
-   - Read `settle_cards_corners_for_match` (Postgres function) to confirm whether it defaulted to LOST when `match_stats` was not yet populated at settlement time, or whether the totals it read were stale.
-   - Check the settlement audit trail for this prediction to see what totals the function used.
-
-2. **Reverse the mis-settled bet**
-   - Migration that:
-     - Refunds the house: debit platform bankroll 358, credit user `Bố Chiou` wallet 358 (net correction from LOST=0 to WON=358).
-     - Updates the prediction row: `status = 'won'`, `points = 358`, add audit log entry citing manual correction.
-   - Re-scan all predictions on `225d6ddf-4b05-40ec-81fd-13f65db0d826` for other corner/card markets that may have been mis-settled the same way, and correct them in the same migration.
-
-3. **Fix the settler so this cannot recur**
-   - In `settle_cards_corners_for_match`, if `match_stats` corner totals are NULL/0 for a match that is `finished`, **leave the bet pending** (do not default to LOST) and re-attempt on the next stats sync. Same guard for cards.
-   - Add a small check: if home+away corners is 0 but the match has `finished` status and goals > 0, treat stats as "not yet ingested" and skip settlement for corner/card markets rather than grading them.
-
-4. **Verify**
-   - Re-run settlement for the match and confirm the corners_over_9_5 bet resolves to WON.
-   - Query all `corners_*` and `cards_*` predictions for the last 7 days of finished matches and spot-check a handful against `match_stats`.
-
-## Files / DB objects touched
-
-- Migration: reverse mis-settlement + patch `settle_cards_corners_for_match` (and mirror the guard in the cards branch).
-- No frontend changes.
+## Technical notes
+- Change is a single SQL migration modifying the settlement RPC + a one-shot backfill call.
+- No UI changes.
+- No new tables, no new secrets, no risk to already-settled bets (the grader is idempotent on non-pending rows).
