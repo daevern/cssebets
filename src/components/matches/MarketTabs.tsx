@@ -51,7 +51,72 @@ function QuestionHeading({
 }
 
 
+type OddsVariant = "yes" | "no" | "home" | "draw" | "away" | "neutral";
+
+function classifySelection(selection: string): OddsVariant {
+  if (selection === "YES" || selection.startsWith("OVER_")) return "yes";
+  if (selection === "NO" || selection.startsWith("UNDER_")) return "no";
+  if (selection === "HOME") return "home";
+  if (selection === "DRAW") return "draw";
+  if (selection === "AWAY") return "away";
+  return "neutral";
+}
+
+function displayLabel(selection: string, fallback: string): string {
+  if (selection === "YES" || selection.startsWith("OVER_")) return "Yes";
+  if (selection === "NO" || selection.startsWith("UNDER_")) return "No";
+  return fallback;
+}
+
+// Chart-aligned colors: home = neon (green), draw = blue, away = pink
+// Yes = blue, No = red
+const VARIANT_STYLES: Record<OddsVariant, { base: string; selected: string; priceColor: string; badgeBg: string; badgeText: string }> = {
+  yes: {
+    base: "border-[#60a5fa]/30 bg-[#0A1220] hover:border-[#60a5fa]",
+    selected: "border-2 border-[#60a5fa] bg-[#60a5fa]/15 shadow-[0_0_0_1px_#60a5fa]",
+    priceColor: "text-[#93c5fd]",
+    badgeBg: "bg-[#60a5fa]",
+    badgeText: "text-black",
+  },
+  no: {
+    base: "border-[#fb7185]/30 bg-[#170B0D] hover:border-[#fb7185]",
+    selected: "border-2 border-[#fb7185] bg-[#fb7185]/15 shadow-[0_0_0_1px_#fb7185]",
+    priceColor: "text-[#fda4af]",
+    badgeBg: "bg-[#fb7185]",
+    badgeText: "text-black",
+  },
+  home: {
+    base: "border-[var(--color-neon)]/30 bg-[#070D0A] hover:border-[var(--color-neon)]",
+    selected: "border-2 border-[var(--color-neon)] bg-[var(--color-neon)]/15 shadow-[0_0_0_1px_var(--color-neon)]",
+    priceColor: "text-[var(--color-neon)]",
+    badgeBg: "bg-[var(--color-neon)]",
+    badgeText: "text-black",
+  },
+  draw: {
+    base: "border-[#60a5fa]/30 bg-[#0A1220] hover:border-[#60a5fa]",
+    selected: "border-2 border-[#60a5fa] bg-[#60a5fa]/15 shadow-[0_0_0_1px_#60a5fa]",
+    priceColor: "text-[#93c5fd]",
+    badgeBg: "bg-[#60a5fa]",
+    badgeText: "text-black",
+  },
+  away: {
+    base: "border-[#f472b6]/30 bg-[#160A12] hover:border-[#f472b6]",
+    selected: "border-2 border-[#f472b6] bg-[#f472b6]/15 shadow-[0_0_0_1px_#f472b6]",
+    priceColor: "text-[#f9a8d4]",
+    badgeBg: "bg-[#f472b6]",
+    badgeText: "text-black",
+  },
+  neutral: {
+    base: "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/50",
+    selected: "border-2 border-[var(--color-neon)] bg-[var(--color-neon)]/15 shadow-[0_0_0_1px_var(--color-neon)]",
+    priceColor: "text-[var(--color-neon)]",
+    badgeBg: "bg-[var(--color-neon)]",
+    badgeText: "text-black",
+  },
+};
+
 function OddsButton({
+  selection,
   label,
   price,
   selected,
@@ -59,8 +124,8 @@ function OddsButton({
   disabled,
   title,
   onClick,
-  showProbability = true,
 }: {
+  selection: string;
   label: string;
   price: number;
   selected: boolean;
@@ -68,9 +133,10 @@ function OddsButton({
   disabled: boolean;
   title?: string;
   onClick: () => void;
-  showProbability?: boolean;
 }) {
-  const prob = impliedProbability(price);
+  const variant = classifySelection(selection);
+  const styles = VARIANT_STYLES[variant];
+  const shown = displayLabel(selection, label);
   return (
     <button
       type="button"
@@ -78,28 +144,21 @@ function OddsButton({
       title={title}
       onClick={onClick}
       aria-pressed={selected}
-      className={`relative flex min-h-[68px] flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-        selected
-          ? "border-2 border-[var(--color-neon)] bg-[var(--color-neon)]/15 text-[var(--color-ink)] shadow-[0_0_0_1px_var(--color-neon)]"
-          : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/50"
+      className={`relative flex min-h-[64px] flex-col items-center justify-center gap-0.5 rounded-md border px-2 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-[var(--color-ink)] ${
+        selected ? styles.selected : styles.base
       }`}
     >
-      <span className="w-full whitespace-normal break-words text-center text-[12px] font-medium leading-tight text-[var(--color-ink)]">
-        {label}
+      <span className="w-full whitespace-normal break-words text-center text-[12px] font-medium leading-tight">
+        {shown}
       </span>
-      <span className="font-display text-base font-bold tabular-nums text-[var(--color-neon)]">
+      <span className={`font-display text-base font-bold tabular-nums ${styles.priceColor}`}>
         {price.toFixed(2)}x
       </span>
-      {showProbability && prob > 0 && (
-        <span className="text-[10px] tabular-nums text-[var(--color-ink-muted)]" title="Estimates are based on current multipliers and may include platform margin.">
-          ~{prob}%
-        </span>
-      )}
       {selected && !alreadyPlaced && (
-        <span className="absolute right-1.5 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-neon)] text-[9px] font-bold text-black">✓</span>
+        <span className={`absolute right-1.5 top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ${styles.badgeBg} ${styles.badgeText}`}>✓</span>
       )}
       {alreadyPlaced && (
-        <span className="absolute right-1.5 top-1 text-[10px] font-bold text-[var(--color-neon)]">✓</span>
+        <span className={`absolute right-1.5 top-1 text-[10px] font-bold ${styles.priceColor}`}>✓</span>
       )}
     </button>
   );
@@ -148,7 +207,7 @@ function StakeSlip({
       : "Lock Prediction";
 
   const wrapperClass = sticky
-    ? "sticky z-50 rounded-lg border border-[var(--color-neon)]/40 bg-[#050A08]/98 backdrop-blur p-3.5 space-y-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)]"
+    ? "fixed inset-x-0 z-50 mx-auto max-w-2xl border border-[var(--color-neon)]/40 bg-[#050A08]/98 backdrop-blur p-3.5 space-y-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)] rounded-t-lg"
     : "mt-2 rounded-lg border border-[var(--color-surface-border)] bg-[#070D0A] p-3.5 space-y-2.5 animate-in fade-in-50 duration-200";
 
   return (
@@ -157,7 +216,7 @@ function StakeSlip({
       style={
         sticky
           ? {
-              bottom: "calc(88px + env(safe-area-inset-bottom))",
+              bottom: "calc(72px + env(safe-area-inset-bottom))",
               paddingBottom: "0.875rem",
             }
           : undefined
@@ -509,6 +568,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
             return (
               <OddsButton
                 key={o.id}
+                selection={o.selection}
                 label={selectionLabel(o.selection)}
                 price={Number(o.odds)}
                 selected={isPicked}
@@ -566,6 +626,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
             return (
               <OddsButton
                 key={o.id}
+                selection={o.selection}
                 label={selectionLabel(o.selection)}
                 price={Number(o.odds)}
                 selected={isPicked}
