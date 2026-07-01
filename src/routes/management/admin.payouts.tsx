@@ -108,11 +108,14 @@ function AdminPayoutPage() {
           fileName: file.name,
           fileType: file.type,
           fileSize: file.size,
+          bankReferenceNo: bankRef.trim() || undefined,
+          checkerNotes: checkerNotes.trim() || undefined,
         },
       });
       toast.success("Proof uploaded. Awaiting user confirmation.");
-      setUploadFor(null); setFile(null);
+      setUploadFor(null); setFile(null); setBankRef(""); setCheckerNotes("");
       if (fileRef.current) fileRef.current.value = "";
+
       qc.invalidateQueries({ queryKey: ["admin-payouts"] });
       qc.invalidateQueries({ queryKey: ["pending-payout-count"] });
     } catch (e) {
