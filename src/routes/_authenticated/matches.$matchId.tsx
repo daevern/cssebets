@@ -134,35 +134,43 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
       {/* Market Analytics — historical odds / implied probability */}
       <MarketAnalyticsCard matchId={match.id} />
 
-      {/* Markets — only show pre-kickoff */}
+      {/* Markets — no framing, just the content */}
       {!locked && (
-        <StencilPanel kicker={<><Activity className="h-3 w-3" /> Markets</>}>
+        <section className="py-10">
+          <div className="mb-6">
+            <p className="text-[10px] font-medium uppercase tracking-[0.24em] text-[var(--ink-faint)]">Markets</p>
+            <h3 className="mt-1 font-display text-2xl font-medium tracking-tight md:text-3xl">
+              Place your prediction<span className="text-[var(--ink-faint)]">.</span>
+            </h3>
+          </div>
           <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} />
-        </StencilPanel>
+        </section>
       )}
       {locked && <BettingRibbon phase={phase} />}
 
-      {/* Sticky section tabs — mobile-first nav */}
-      <div className="sticky top-0 z-20 -mx-4 border-y border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 px-4 py-2 backdrop-blur md:mx-0 md:border md:px-0">
-        <div className="flex gap-1 overflow-x-auto md:justify-center">
+      {/* Sticky section tabs — flat text, no boxes */}
+      <div className="sticky top-0 z-20 -mx-4 border-b border-[var(--surface-hairline)] bg-[var(--surface)]/85 px-4 py-3 backdrop-blur md:mx-0 md:px-0">
+        <div className="flex gap-6 overflow-x-auto md:justify-center">
           {tabs.map((t) => {
             const active = tab === t.key;
             return (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`relative shrink-0 border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.22em] transition-all ${
+                className={`relative shrink-0 py-1 text-[12px] font-medium whitespace-nowrap transition-colors ${
                   active
-                    ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[0_0_12px_-4px_var(--color-neon-glow)]"
-                    : "border-[var(--color-surface-border)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                    ? "text-[var(--ink)]"
+                    : "text-[var(--ink-muted)] hover:text-[var(--ink)]"
                 }`}
               >
                 {t.label}
+                {active && <span className="absolute inset-x-0 -bottom-0.5 h-px bg-[var(--neon)]" aria-hidden />}
               </button>
             );
           })}
         </div>
       </div>
+
 
       {tab === "summary" && (
         <>
