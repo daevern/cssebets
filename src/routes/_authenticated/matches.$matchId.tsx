@@ -49,36 +49,40 @@ function MatchAnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
+      {/* Deep atmospheric background — soft radial bloom, no grid */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 opacity-[0.04]"
+        className="pointer-events-none fixed inset-0"
         style={{
-          backgroundImage:
-            "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
+          background:
+            "radial-gradient(1200px 600px at 50% -10%, color-mix(in oklab, var(--color-neon) 6%, transparent), transparent 60%), radial-gradient(900px 500px at 100% 100%, color-mix(in oklab, var(--color-neon) 3%, transparent), transparent 70%)",
         }}
       />
-      <div className="relative mx-auto flex max-w-md flex-col gap-5 px-4 py-5 md:max-w-3xl md:py-8">
+      <div
+        className="relative mx-auto flex max-w-md flex-col gap-8 px-4 pt-5 md:max-w-3xl md:gap-10 md:py-10"
+        style={{ paddingBottom: "calc(220px + env(safe-area-inset-bottom))" }}
+      >
         <header className="flex items-center justify-between">
           <Link
             to="/matches"
-            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-neon)]"
+            className="flex items-center gap-2 text-[11px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)]"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Matches
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to matches
           </Link>
           <Link to="/dashboard"><CsseLogo size={22} /></Link>
         </header>
 
         {isLoading || !data ? (
-          <div className="grid place-items-center py-20">
+          <div className="grid place-items-center py-24">
             <Loader2 className="h-6 w-6 animate-spin text-[var(--color-neon)]" />
           </div>
         ) : !data.match ? (
-          <StencilPanel><div className="text-center text-sm text-[var(--color-ink-muted)]">Match not found.</div></StencilPanel>
+          <div className="py-16 text-center text-sm text-[var(--color-ink-muted)]">Match not found.</div>
         ) : (
           <Analytics bundle={data} />
         )}
 
-        <footer className="mt-6 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+        <footer className="mt-6 flex items-center justify-between border-t border-[var(--color-surface-border)]/40 pt-6 text-[10px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]">
           <Link to="/dashboard" className="flex items-center gap-2 hover:text-[var(--color-ink)]"><CsseLogo size={16} /></Link>
           <span>© {new Date().getFullYear()} <BrandText /></span>
         </footer>
@@ -86,6 +90,7 @@ function MatchAnalyticsPage() {
     </div>
   );
 }
+
 
 type TabKey = "summary" | "stats" | "lineups" | "events" | "h2h";
 
