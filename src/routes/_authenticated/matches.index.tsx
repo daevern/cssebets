@@ -286,7 +286,7 @@ function MatchCard({ match }: { match: Match }) {
         </span>
       </div>
 
-      <div className="space-y-4 px-5 py-5">
+      <div className="space-y-4 px-3 py-4 sm:px-5 sm:py-5">
         <Link
           to="/matches/$matchId"
           params={{ matchId: match.id }}
