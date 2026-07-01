@@ -142,8 +142,8 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
       </div>
 
 
-      {/* Live legend */}
-      <div className="mb-3 grid gap-1.5 sm:grid-cols-3">
+      {/* Live legend — flat row, no boxes */}
+      <div className="mb-6 grid gap-x-6 gap-y-3 sm:grid-cols-3">
         {filteredSeries.map((s, idx) => {
           const last = s.points.at(-1);
           const first = s.points[0];
@@ -157,24 +157,21 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
             : 0;
           const Trend = change > 0.05 ? TrendingUp : change < -0.05 ? TrendingDown : Minus;
           const trendColor = change > 0.05
-            ? "text-[var(--color-neon)]"
+            ? "text-[var(--neon)]"
             : change < -0.05
             ? "text-rose-400"
-            : "text-[var(--color-ink-muted)]";
+            : "text-[var(--ink-faint)]";
           return (
-            <div
-              key={s.key}
-              className="flex items-center justify-between gap-2 border border-[var(--color-surface-border)]/70 bg-[var(--color-surface)]/40 px-2.5 py-2"
-            >
+            <div key={s.key} className="flex items-baseline justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
                 <span
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  className="h-1.5 w-6 shrink-0"
                   style={{ background: SERIES_COLORS[idx % SERIES_COLORS.length] }}
                 />
-                <span className="truncate text-[11px] font-semibold text-[var(--color-ink)]">{s.label}</span>
+                <span className="truncate text-[12px] font-medium text-[var(--ink-2)]">{s.label}</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-display text-sm font-black tabular-nums text-[var(--color-ink)]">
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-display text-base font-medium tabular-nums tracking-tight text-[var(--ink)]">
                   {value}
                 </span>
                 {s.points.length > 1 && (
@@ -186,32 +183,37 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
         })}
       </div>
 
-      {/* Chart */}
-      <div className="h-56 w-full sm:h-64">
+      {/* Chart — thin strokes, breathing room, minimal chrome */}
+      <div className="h-64 w-full sm:h-72">
         {chartData.length === 0 ? (
           <EmptyGraph />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 4, left: -12 }}>
-              <CartesianGrid strokeDasharray="2 4" stroke="var(--color-surface-border)" vertical={false} />
+            <LineChart data={chartData} margin={{ top: 10, right: 4, bottom: 4, left: -18 }}>
+              <CartesianGrid strokeDasharray="1 6" stroke="var(--surface-hairline)" vertical={false} />
               <XAxis
                 dataKey="t"
-                stroke="var(--color-ink-muted)"
-                tick={{ fontSize: 10 }}
+                stroke="var(--ink-faint)"
+                tick={{ fontSize: 10, fill: "var(--ink-faint)" }}
+                tickLine={false}
+                axisLine={false}
                 tickFormatter={(v) => new Date(v).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                 minTickGap={40}
               />
               <YAxis
-                stroke="var(--color-ink-muted)"
-                tick={{ fontSize: 10 }}
+                stroke="var(--ink-faint)"
+                tick={{ fontSize: 10, fill: "var(--ink-faint)" }}
+                tickLine={false}
+                axisLine={false}
                 domain={mode === "prob" ? [0, 100] : ["auto", "auto"]}
                 tickFormatter={(v) => (mode === "prob" ? `${v}%` : `${v}x`)}
                 width={44}
               />
               <Tooltip
                 contentStyle={{
-                  background: "var(--color-surface-2)",
-                  border: "1px solid var(--color-surface-border)",
+                  background: "var(--surface-2)",
+                  border: "1px solid var(--surface-border)",
+                  borderRadius: 2,
                   fontSize: 11,
                 }}
                 labelFormatter={(v) => new Date(v as string).toLocaleString()}
@@ -224,7 +226,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
                   dataKey={s.key}
                   name={s.label}
                   stroke={SERIES_COLORS[idx % SERIES_COLORS.length]}
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                   dot={false}
                   isAnimationActive={false}
                   connectNulls
@@ -236,13 +238,13 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
       </div>
 
       {isFlat && (
-        <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+        <p className="mt-3 text-[11px] text-[var(--ink-muted)]">
           Only one snapshot recorded so far — movement will appear as odds update.
         </p>
       )}
 
-      {/* Range chips */}
-      <div className="mt-3 flex items-center justify-end gap-1">
+      {/* Range chips — flat text */}
+      <div className="mt-5 flex items-center justify-end gap-4">
         {RANGES.map((r) => {
           const supported = supportedRanges.includes(r);
           const active = r === range && supported;
@@ -251,12 +253,12 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
               key={r}
               disabled={!supported}
               onClick={() => setRange(r)}
-              className={`rounded px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors ${
+              className={`text-[11px] font-medium transition-colors ${
                 active
-                  ? "bg-[var(--color-neon)]/15 text-[var(--color-neon)]"
+                  ? "text-[var(--neon)]"
                   : supported
-                  ? "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-                  : "cursor-not-allowed text-[var(--color-ink-muted)]/30"
+                  ? "text-[var(--ink-muted)] hover:text-[var(--ink)]"
+                  : "cursor-not-allowed text-[var(--ink-faint)]/40"
               }`}
             >
               {r}
@@ -267,6 +269,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
     </SectionShell>
   );
 }
+
 
 function SectionShell({
   children,
