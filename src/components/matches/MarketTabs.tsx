@@ -286,7 +286,7 @@ const TAB_DEFS = [
 ] as const;
 type TabId = (typeof TAB_DEFS)[number]["id"];
 
-export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedMarkets = [] }: { matchId: string; locked: boolean; bettingBlocked?: boolean; suspendedMarkets?: string[] }) {
+export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedMarkets = [], homeTeam, awayTeam }: { matchId: string; locked: boolean; bettingBlocked?: boolean; suspendedMarkets?: string[]; homeTeam?: string; awayTeam?: string }) {
   const isMarketSuspended = (m: string) =>
     bettingBlocked || suspendedMarkets.includes("ALL") || suspendedMarkets.includes(m);
   const fn = useServerFn(getMatchMarkets);
