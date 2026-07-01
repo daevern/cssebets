@@ -138,7 +138,7 @@ function MatchesPage() {
         }}
       />
 
-      <div className="relative mx-auto flex max-w-md flex-col gap-5 px-4 py-5 md:max-w-2xl md:py-8">
+      <div className="relative mx-auto flex max-w-md flex-col gap-5 px-3 py-5 md:max-w-2xl md:px-4 md:py-8">
         {/* Header */}
         <header className="flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center gap-2">
@@ -286,7 +286,7 @@ function MatchCard({ match }: { match: Match }) {
         </span>
       </div>
 
-      <div className="space-y-4 px-5 py-5">
+      <div className="space-y-4 px-3 py-4 sm:px-5 sm:py-5">
         <Link
           to="/matches/$matchId"
           params={{ matchId: match.id }}

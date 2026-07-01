@@ -482,9 +482,9 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   );
 
   return (
-    <div className="border-t border-dashed border-[var(--color-surface-border)] pt-3 space-y-3">
-      {/* Stencil tab bar */}
-      <div className="flex w-full overflow-x-auto no-scrollbar border border-[var(--color-surface-border)] bg-[#070D0A]">
+    <div className="border-t border-dashed border-[var(--color-surface-border)] pt-4 space-y-4 -mx-2 sm:mx-0">
+      {/* Stencil tab bar — evenly distributed, no overflow */}
+      <div className="grid grid-cols-6 border border-[var(--color-surface-border)] bg-[#070D0A]">
         {TAB_DEFS.map((t) => {
           const enabled = tabEnabled[t.id];
           const active = tab === t.id;
@@ -494,7 +494,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
               type="button"
               disabled={!enabled}
               onClick={() => setTab(t.id)}
-              className={`flex-1 min-w-[68px] px-2 py-2 text-[10px] font-bold uppercase tracking-[0.22em] transition-colors border-r border-[var(--color-surface-border)] last:border-r-0 ${
+              className={`px-1 py-2.5 text-center text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.14em] sm:tracking-[0.2em] transition-colors border-r border-[var(--color-surface-border)] last:border-r-0 truncate ${
                 active
                   ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
                   : enabled
