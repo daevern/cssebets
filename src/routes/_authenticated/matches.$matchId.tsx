@@ -430,7 +430,6 @@ function MatchHero({
     liveElapsed: (match as any).live_elapsed,
     liveStatusShort: (match as any).live_status_short,
   });
-  const stage = match.stage ? match.stage.replace(/_/g, " ") : (match.group_name ?? "Round of 32");
   const isFinished = match.status === "finished";
   const isLive = phase === "live";
   const showScore = isFinished || match.home_score != null || isLive;
