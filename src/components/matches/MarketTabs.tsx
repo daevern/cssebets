@@ -602,8 +602,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
         {!csSuspended && selectedKeys.length > 0 && (
           <div className="mt-3 space-y-2">
-            <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-neon)]">
-              Your score slips · {selectedKeys.length}
+            <div className="text-[11px] font-semibold text-[var(--color-neon)]">
+              Your score predictions · {selectedKeys.length}
             </div>
             {selectedKeys.map((sel) => {
               const odds = csPicks[sel];
@@ -613,7 +613,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
               return (
                 <StakeSlip
                   key={sel}
-                  marketLabel="Score"
+                  marketLabel="Correct Score"
+                  question={`Will the final score be ${selectionLabel(sel)}?`}
                   selectionText={selectionLabel(sel)}
                   odds={odds}
                   stake={stake}
