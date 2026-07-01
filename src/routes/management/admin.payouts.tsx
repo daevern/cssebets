@@ -42,10 +42,13 @@ function AdminPayoutPage() {
   const [rejectFor, setRejectFor] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [proof, setProof] = useState<{ url: string; type: string; name: string } | null>(null);
-  const [uploadFor, setUploadFor] = useState<{ id: string; userId: string } | null>(null);
+  const [uploadFor, setUploadFor] = useState<{ id: string; userId: string; approvedBy?: string | null } | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [bankRef, setBankRef] = useState("");
+  const [checkerNotes, setCheckerNotes] = useState("");
   const fileRef = useRef<HTMLInputElement | null>(null);
+
 
   const payouts = useQuery({
     queryKey: ["admin-payouts", status],
