@@ -347,31 +347,172 @@ const AdjustSchema = z.object({
 export const adminAdjustWallet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => AdjustSchema.parse(i))
+  .handler(async () => {
+    // DEPRECATED — direct wallet adjustments are no longer allowed.
+    // Use the maker-checker flow: requestWalletAdjustment → approveWalletAdjustment.
+    throw new Error(
+      "Direct wallet adjustments are disabled. Use the Wallet Adjustment Requests page (maker-checker flow).",
+    );
+  });
+
+// ---------- Maker-checker: wallet adjustment requests ----------
+
+const RequestAdjustSchema = z.object({
+  targetUserId: z.string().uuid(),
+  amount: z.number().positive().max(1_000_000),
+  adjustmentType: z.enum(["credit", "debit"]),
+  reason: z.string().trim().min(3).max(500),
+});
+
+export const requestWalletAdjustment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => RequestAdjustSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
-    if (data.targetUserId === userId) throw new Error("Cannot adjust your own wallet");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const type = data.amount > 0 ? "credit" : "debit";
-    const { data: result, error } = await supabaseAdmin.rpc("wallet_apply_change", {
-      p_user_id: data.targetUserId,
-      p_type: type,
-      p_amount: Math.abs(data.amount),
-      p_reference_type: "admin_adjustment",
-      p_reference_id: null as unknown as string,
-      p_note: data.note ?? `Admin adjustment by ${userId.slice(0, 8)}`,
+    const { data: res, error } = await (supabaseAdmin as any).rpc("request_wallet_adjustment", {
+      p_target_user_id: data.targetUserId,
+      p_amount: data.amount,
+      p_adjustment_type: data.adjustmentType,
+      p_reason: data.reason,
     });
+    if (error) throw new Error(error.message);
+    return res as { ok: boolean; request_id: string };
+  });
+
+export const approveWalletAdjustment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      requestId: z.string().uuid(),
+      checkerNote: z.string().trim().max(500).optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: res, error } = await (supabaseAdmin as any).rpc("approve_wallet_adjustment", {
+      p_request_id: data.requestId,
+      p_checker_note: data.checkerNote ?? null,
+    });
+    if (error) {
+      const m = error.message || "";
+      if (m.includes("SELF_APPROVAL_BLOCKED")) {
+        throw new Error(
+          "Another admin must approve this request. Single-admin self-approval is disabled in platform settings.",
+        );
+      }
+      if (m.includes("INSUFFICIENT_BALANCE")) throw new Error("Target user has insufficient balance for this debit.");
+      if (m.includes("INVALID_STATUS")) throw new Error("Request is no longer pending.");
+      throw new Error(m);
+    }
+    return res as { ok: boolean; new_balance: number; self_approval: boolean };
+  });
+
+export const rejectWalletAdjustment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      requestId: z.string().uuid(),
+      rejectionReason: z.string().trim().min(3).max(500),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: res, error } = await (supabaseAdmin as any).rpc("reject_wallet_adjustment", {
+      p_request_id: data.requestId,
+      p_rejection_reason: data.rejectionReason,
+    });
+    if (error) throw new Error(error.message);
+    return res as { ok: boolean };
+  });
+
+export const cancelWalletAdjustment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ requestId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: res, error } = await (supabaseAdmin as any).rpc("cancel_wallet_adjustment", {
+      p_request_id: data.requestId,
+    });
+    if (error) throw new Error(error.message);
+    return res as { ok: boolean };
+  });
+
+export const listWalletAdjustmentRequests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      status: z.enum(["pending", "applied", "rejected", "cancelled", "all"]).default("pending"),
+    }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin
+      .from("wallet_adjustment_requests" as any)
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (data.status !== "all") q = q.eq("status", data.status);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    const ids = Array.from(
+      new Set(
+        (rows ?? []).flatMap((r: any) =>
+          [r.target_user_id, r.requested_by, r.approved_by, r.rejected_by].filter(Boolean),
+        ),
+      ),
+    );
+    const { data: profiles } = ids.length
+      ? await supabaseAdmin.from("profiles").select("id, display_name").in("id", ids)
+      : { data: [] as any[] };
+    const nameMap = new Map((profiles ?? []).map((p: any) => [p.id, p.display_name]));
+    const settings = await supabaseAdmin
+      .from("platform_settings" as any)
+      .select("allow_single_admin_self_approval")
+      .eq("id", 1)
+      .maybeSingle();
+    return {
+      allowSelfApproval: !!(settings.data as any)?.allow_single_admin_self_approval,
+      requests: (rows ?? []).map((r: any) => ({
+        ...r,
+        target_name: nameMap.get(r.target_user_id) ?? r.target_user_id.slice(0, 8),
+        requested_by_name: nameMap.get(r.requested_by) ?? r.requested_by.slice(0, 8),
+        approved_by_name: r.approved_by ? nameMap.get(r.approved_by) ?? r.approved_by.slice(0, 8) : null,
+        rejected_by_name: r.rejected_by ? nameMap.get(r.rejected_by) ?? r.rejected_by.slice(0, 8) : null,
+      })),
+    };
+  });
+
+export const setSelfApprovalPolicy = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ allow: z.boolean() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("platform_settings" as any)
+      .update({ allow_single_admin_self_approval: data.allow })
+      .eq("id", 1);
     if (error) throw new Error(error.message);
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
-      action: "wallet.admin_adjust",
-      entity: "wallet",
-      entity_id: data.targetUserId,
-      metadata: { amount: data.amount, note: data.note ?? null },
+      action: "platform_settings.self_approval_policy",
+      entity: "platform_settings",
+      metadata: { allow_single_admin_self_approval: data.allow },
     });
-    const row = Array.isArray(result) ? result[0] : result;
-    return { ok: true, newBalance: Number(row?.new_balance ?? 0) };
+    return { ok: true, allow: data.allow };
   });
+
 
 export const adminListUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
