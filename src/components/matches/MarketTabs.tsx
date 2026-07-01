@@ -666,12 +666,31 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       </div>
 
       {tab === "goals" && (
-        <div className="space-y-4">
-          {OVER_UNDER_LINES.map((mk) =>
-            getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
+        <div className="space-y-6">
+          {OVER_UNDER_LINES.some((mk) => getGroup(mk).length > 0) && (
+            <div className="space-y-2">
+              <SectionLabel>Total Goals</SectionLabel>
+              <div className="space-y-2">
+                {OVER_UNDER_LINES.map((mk) => {
+                  if (getGroup(mk).length === 0) return null;
+                  const line = mk.replace("over_under_", "").replace("_", ".");
+                  return <div key={mk}>{renderLineRow(mk, line)}</div>;
+                })}
+              </div>
+            </div>
           )}
-          <Section market="btts" cols="grid-cols-2" />
-          {getGroup("goals_odd_even").length > 0 && <Section market="goals_odd_even" cols="grid-cols-2" />}
+          {getGroup("btts").length > 0 && (
+            <div className="space-y-2">
+              <SectionLabel>BTTS</SectionLabel>
+              {renderInlineRow("btts")}
+            </div>
+          )}
+          {getGroup("goals_odd_even").length > 0 && (
+            <div className="space-y-2">
+              <SectionLabel>Odd / Even</SectionLabel>
+              {renderInlineRow("goals_odd_even")}
+            </div>
+          )}
           {getGroup("exact_total_goals").length > 0 && <Section market="exact_total_goals" cols="grid-cols-3" />}
         </div>
       )}
@@ -692,31 +711,94 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       )}
 
       {tab === "cards" && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)] border-l-2 border-[var(--color-neon)]/60 pl-2">
             Settled on full-time card counts. Stake refunded if data unavailable.
           </div>
-          {CARDS_LINES.map((mk) =>
-            getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
+          {CARDS_LINES.some((mk) => getGroup(mk).length > 0) && (
+            <div className="space-y-2">
+              <SectionLabel>Total Cards</SectionLabel>
+              <div className="space-y-2">
+                {CARDS_LINES.map((mk) => {
+                  if (getGroup(mk).length === 0) return null;
+                  const line = mk.replace("cards_over_under_", "").replace("_", ".");
+                  return <div key={mk}>{renderLineRow(mk, line)}</div>;
+                })}
+              </div>
+            </div>
           )}
-          {getGroup("home_cards_over_under_1_5").length > 0 && <Section market="home_cards_over_under_1_5" cols="grid-cols-2" />}
-          {getGroup("away_cards_over_under_1_5").length > 0 && <Section market="away_cards_over_under_1_5" cols="grid-cols-2" />}
-          {getGroup("red_card_match").length > 0 && <Section market="red_card_match" cols="grid-cols-2" />}
-          {getGroup("first_card").length > 0 && <Section market="first_card" cols="grid-cols-3" />}
+          {(getGroup("home_cards_over_under_1_5").length > 0 || getGroup("away_cards_over_under_1_5").length > 0) && (
+            <div className="space-y-3">
+              <SectionLabel>Team Cards</SectionLabel>
+              {getGroup("home_cards_over_under_1_5").length > 0 && (
+                <div className="space-y-2">
+                  <SubHeader>Home 1.5</SubHeader>
+                  {renderLineRow("home_cards_over_under_1_5", "1.5")}
+                </div>
+              )}
+              {getGroup("away_cards_over_under_1_5").length > 0 && (
+                <div className="space-y-2">
+                  <SubHeader>Away 1.5</SubHeader>
+                  {renderLineRow("away_cards_over_under_1_5", "1.5")}
+                </div>
+              )}
+            </div>
+          )}
+          {getGroup("red_card_match").length > 0 && (
+            <div className="space-y-2">
+              <SectionLabel>Red Card</SectionLabel>
+              {renderInlineRow("red_card_match")}
+            </div>
+          )}
+          {getGroup("first_card").length > 0 && (
+            <div className="space-y-2">
+              <SectionLabel>First Card</SectionLabel>
+              {renderInlineRow("first_card")}
+            </div>
+          )}
         </div>
       )}
 
       {tab === "corners" && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)] border-l-2 border-[var(--color-neon)]/60 pl-2">
             Settled on full-time corner counts. Stake refunded if data unavailable.
           </div>
-          {CORNERS_LINES.map((mk) =>
-            getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
+          {CORNERS_LINES.some((mk) => getGroup(mk).length > 0) && (
+            <div className="space-y-2">
+              <SectionLabel>Total Corners</SectionLabel>
+              <div className="space-y-2">
+                {CORNERS_LINES.map((mk) => {
+                  if (getGroup(mk).length === 0) return null;
+                  const line = mk.replace("corners_over_under_", "").replace("_", ".");
+                  return <div key={mk}>{renderLineRow(mk, line)}</div>;
+                })}
+              </div>
+            </div>
           )}
-          {getGroup("home_corners_over_under_4_5").length > 0 && <Section market="home_corners_over_under_4_5" cols="grid-cols-2" />}
-          {getGroup("away_corners_over_under_4_5").length > 0 && <Section market="away_corners_over_under_4_5" cols="grid-cols-2" />}
-          {getGroup("first_corner").length > 0 && <Section market="first_corner" cols="grid-cols-3" />}
+          {(getGroup("home_corners_over_under_4_5").length > 0 || getGroup("away_corners_over_under_4_5").length > 0) && (
+            <div className="space-y-3">
+              <SectionLabel>Team Corners</SectionLabel>
+              {getGroup("home_corners_over_under_4_5").length > 0 && (
+                <div className="space-y-2">
+                  <SubHeader>Home 4.5</SubHeader>
+                  {renderLineRow("home_corners_over_under_4_5", "4.5")}
+                </div>
+              )}
+              {getGroup("away_corners_over_under_4_5").length > 0 && (
+                <div className="space-y-2">
+                  <SubHeader>Away 4.5</SubHeader>
+                  {renderLineRow("away_corners_over_under_4_5", "4.5")}
+                </div>
+              )}
+            </div>
+          )}
+          {getGroup("first_corner").length > 0 && (
+            <div className="space-y-2">
+              <SectionLabel>First Corner</SectionLabel>
+              {renderInlineRow("first_corner")}
+            </div>
+          )}
         </div>
       )}
 
