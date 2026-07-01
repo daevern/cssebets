@@ -217,6 +217,7 @@ function MatchesPage() {
 
 function MatchCard({ match }: { match: Match }) {
   const submit = useServerFn(submitPrediction);
+  const walletFn = useServerFn(getMyWallet);
   const qc = useQueryClient();
   const { user } = useAuth();
   const [stake, setStake] = useState("10");
@@ -228,6 +229,14 @@ function MatchCard({ match }: { match: Match }) {
   const locked = new Date(match.kickoff_at).getTime() <= Date.now() || match.status !== "scheduled";
   const bettingBlocked = !oddsTrusted || resultSuspended;
   const odds = match.reference_odds ?? { home: 2.0, draw: 3.2, away: 3.5 };
+
+  const wallet = useQuery({
+    queryKey: ["my-wallet", user?.id],
+    queryFn: () => walletFn({}),
+    enabled: !!user?.id && !locked,
+    staleTime: 15000,
+  });
+  const balance = Number(wallet.data?.balance ?? 0);
 
   const myResultBets = useQuery({
     queryKey: ["my-match-result-bets", match.id, user?.id],
@@ -268,6 +277,7 @@ function MatchCard({ match }: { match: Match }) {
     onSuccess: () => {
       toast.success("Prediction submitted");
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
+      qc.invalidateQueries({ queryKey: ["my-wallet"] });
       qc.invalidateQueries({ queryKey: ["my-match-result-bets", match.id, user?.id] });
       setPick(null);
     },
@@ -278,6 +288,15 @@ function MatchCard({ match }: { match: Match }) {
 
   const stakeNum = Number(stake);
   const stakeValid = stakeNum >= 10 && stakeNum <= 50000;
+  const noBalance = balance <= 0;
+  const overBalance = stakeNum > balance;
+  const canBet = !!pick && stakeValid && !noBalance && !overBalance && !bettingBlocked && !mut.isPending;
+  const buttonLabel = noBalance
+    ? "Insufficient points"
+    : overBalance
+      ? "Stake exceeds balance"
+      : "Bet";
+
 
   return (
     <article className="relative overflow-hidden border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
