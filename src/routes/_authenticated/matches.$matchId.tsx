@@ -456,17 +456,6 @@ function MatchHero({
 
   return (
     <article className="relative flex flex-col gap-6">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-        <span>Sports</span>
-        <span className="opacity-40">/</span>
-        <span>Soccer</span>
-        <span className="opacity-40">/</span>
-        <span>FIFA World Cup</span>
-        <span className="opacity-40">/</span>
-        <span className="truncate text-[var(--color-ink)]/80">{stage}</span>
-      </nav>
-
       {/* Title + status */}
       <div className="flex flex-col gap-3">
         <h1 className="font-display text-[26px] font-semibold leading-[1.05] tracking-tight text-[var(--color-ink)] md:text-4xl">
