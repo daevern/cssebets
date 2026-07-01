@@ -2,7 +2,8 @@ import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMatchMarkets, placeMarketBet } from "@/lib/markets.functions";
-import { Loader2, ArrowUpRight } from "lucide-react";
+import { getMyWallet } from "@/lib/wallet.functions";
+import { Loader2, ArrowUpRight, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -24,17 +25,19 @@ type OddsRow = { id: string; market: string; selection: string; odds: number };
 const MIN_STAKE = 10;
 const MAX_STAKE = 50000;
 
-/* ---------- Custom CSSEBets stencil primitives ---------- */
+const POPULAR_SCORES = ["0-0", "1-0", "0-1", "1-1", "2-0", "0-2", "2-1", "1-2", "OTHER"];
+
+/* ---------- Primitives ---------- */
 
 function SectionLabel({ children, note }: { children: React.ReactNode; note?: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 mb-2">
-      <span className="h-1.5 w-1.5 bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon-glow)]" />
-      <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+    <div className="flex items-baseline gap-2 mb-2 flex-wrap">
+      <span className="h-1.5 w-1.5 self-center bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon-glow)]" />
+      <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--color-ink)]">
         {children}
       </span>
       {note && (
-        <span className="text-[9px] font-medium normal-case tracking-normal text-[var(--color-ink-muted)]/70">
+        <span className="text-[11px] font-normal normal-case tracking-normal text-[var(--color-ink-muted)]">
           · {note}
         </span>
       )}
@@ -66,18 +69,23 @@ function OddsButton({
       disabled={disabled}
       title={title}
       onClick={onClick}
-      className={`relative flex flex-col items-center gap-1 border px-2 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+      className={`relative flex min-h-[62px] flex-col items-center justify-center gap-1 border px-2 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
         selected
-          ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[0_0_18px_var(--color-neon-glow)]"
+          ? "border-[var(--color-neon)] bg-[var(--color-neon)]/15 text-[var(--color-neon)] shadow-[0_0_18px_var(--color-neon-glow)]"
           : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/60"
       }`}
     >
-      <span className="max-w-full truncate text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+      <span className="w-full whitespace-normal break-words text-center text-[11px] font-semibold leading-tight text-[var(--color-ink-muted)]">
         {label}
       </span>
-      <span className="font-display text-base font-bold tabular-nums">{price.toFixed(2)}</span>
+      <span className="font-display text-base font-bold tabular-nums text-[var(--color-ink)]">
+        {price.toFixed(2)}
+      </span>
+      {selected && (
+        <span className="absolute inset-x-0 bottom-0 h-[2px] bg-[var(--color-neon)]" />
+      )}
       {alreadyPlaced && (
-        <span className="absolute right-1 top-1 text-[9px] font-bold text-[var(--color-neon)]">✓</span>
+        <span className="absolute right-1 top-1 text-[10px] font-bold text-[var(--color-neon)]">✓</span>
       )}
     </button>
   );
@@ -93,6 +101,9 @@ function StakeSlip({
   onClear,
   isPending,
   error,
+  balance,
+  sticky = false,
+  matchName,
 }: {
   marketLabel: string;
   selectionText: string;
@@ -103,63 +114,122 @@ function StakeSlip({
   onClear: () => void;
   isPending: boolean;
   error: string | null;
+  balance: number;
+  sticky?: boolean;
+  matchName?: string;
 }) {
-  const potential = (Number(stake) * odds || 0).toFixed(2);
+  const stakeNum = Number(stake) || 0;
+  const potentialPayout = stakeNum * odds;
+  const potentialProfit = potentialPayout - stakeNum;
+  const insufficient = stakeNum > balance;
+  const canSubmit = !isPending && !error && !insufficient && stakeNum >= MIN_STAKE;
+
+  const wrapperClass = sticky
+    ? "sticky bottom-0 z-30 border border-[var(--color-neon)]/50 bg-[#050A08]/98 backdrop-blur p-3 space-y-2 shadow-[0_-8px_24px_rgba(0,0,0,0.6)]"
+    : "mt-2 border border-[var(--color-surface-border)] bg-[#070D0A] p-3 space-y-2 animate-in fade-in-50 duration-200";
+
   return (
-    <div className="mt-2 border border-[var(--color-surface-border)] bg-[#070D0A] p-3 space-y-2 animate-in fade-in-50 duration-200">
+    <div
+      className={wrapperClass}
+      style={sticky ? { paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" } : undefined}
+    >
       <div className="flex justify-between items-start gap-2">
-        <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)] leading-relaxed">
-          <span className="text-[var(--color-neon)] font-bold">{marketLabel}</span>
-          <span className="mx-1 opacity-50">/</span>
-          <span className="text-[var(--color-ink)]">{selectionText}</span>
-          <span className="mx-1 opacity-50">@</span>
-          <span className="font-display font-bold tabular-nums text-[var(--color-ink)]">{odds.toFixed(2)}</span>
+        <div className="min-w-0 flex-1 space-y-0.5">
+          {matchName && (
+            <div className="truncate text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--color-ink-muted)]">
+              {matchName}
+            </div>
+          )}
+          <div className="text-[12px] leading-snug text-[var(--color-ink)]">
+            <span className="font-bold text-[var(--color-neon)]">{marketLabel}</span>
+            <span className="mx-1 opacity-50">·</span>
+            <span>{selectionText}</span>
+            <span className="mx-1 opacity-50">@</span>
+            <span className="font-display font-bold tabular-nums">{odds.toFixed(2)}</span>
+          </div>
         </div>
         <button
           type="button"
           onClick={onClear}
-          className="text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] text-sm leading-none px-1"
+          aria-label="Clear selection"
+          className="shrink-0 rounded-full p-1 text-[var(--color-ink-muted)] hover:bg-white/5 hover:text-[var(--color-ink)]"
         >
-          ×
+          <X className="h-4 w-4" />
         </button>
       </div>
+
       <div className="flex gap-2">
         <input
           type="number"
+          inputMode="numeric"
           min={MIN_STAKE}
           max={MAX_STAKE}
           value={stake}
           onChange={(e) => setStake(e.target.value)}
           placeholder={`Stake (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
-          className="flex-1 border border-[var(--color-surface-border)] bg-black px-3 py-2 font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)]"
+          className="flex-1 min-w-0 border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-base font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)]"
         />
         <button
           type="button"
-          disabled={isPending || !!error}
+          disabled={!canSubmit}
           onClick={onSubmit}
-          className="flex items-center justify-center gap-1.5 rounded-full bg-[var(--color-neon)] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+          className="flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-[var(--color-neon)] px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
         >
-          {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : (
-            <><span>Bet → {potential}</span><ArrowUpRight className="h-3 w-3" /></>
+          {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+            <><span>Place Bet</span><ArrowUpRight className="h-3.5 w-3.5" /></>
           )}
         </button>
       </div>
-      {error && <div className="text-[10px] uppercase tracking-wider text-destructive">{error}</div>}
+
+      <div className="grid grid-cols-2 gap-2 text-[11px]">
+        <div className="flex items-center justify-between border border-[var(--color-surface-border)]/60 bg-black/40 px-2 py-1.5">
+          <span className="text-[var(--color-ink-muted)]">Payout</span>
+          <span className="font-display font-bold tabular-nums text-[var(--color-ink)]">
+            {potentialPayout.toFixed(2)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between border border-[var(--color-surface-border)]/60 bg-black/40 px-2 py-1.5">
+          <span className="text-[var(--color-ink-muted)]">Profit</span>
+          <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
+            +{potentialProfit.toFixed(2)}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.12em] text-[var(--color-ink-muted)]">
+        <span>Balance: <span className="font-bold tabular-nums text-[var(--color-ink)]">{balance.toFixed(2)}</span></span>
+        {insufficient && stakeNum > 0 && (
+          <span className="font-bold text-destructive">Insufficient points</span>
+        )}
+      </div>
+
+      {error && !insufficient && (
+        <div className="text-[11px] normal-case text-destructive">{error}</div>
+      )}
     </div>
   );
 }
 
 function SuspendedBadge() {
   return (
-    <div className="inline-block border border-destructive/40 bg-destructive/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-destructive">
+    <div className="inline-block border border-destructive/40 bg-destructive/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-destructive">
       Suspended
     </div>
   );
 }
 
-/* ---------- Main component ---------- */
+function SettlementNote({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-sm border-l-2 border-[var(--color-neon)]/70 bg-[var(--color-neon)]/5 px-3 py-2 text-[12px] leading-snug text-[var(--color-ink)]/85">
+      {children}
+    </div>
+  );
+}
+
+/* ---------- Main ---------- */
 
 const TAB_DEFS = [
+  { id: "pop", label: "Popular" },
   { id: "goals", label: "Goals" },
   { id: "cs", label: "Score" },
   { id: "ex", label: "Extras" },
@@ -174,15 +244,25 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     bettingBlocked || suspendedMarkets.includes("ALL") || suspendedMarkets.includes(m);
   const fn = useServerFn(getMatchMarkets);
   const place = useServerFn(placeMarketBet);
+  const walletFn = useServerFn(getMyWallet);
   const qc = useQueryClient();
   const { user } = useAuth();
-  const [tab, setTab] = useState<TabId>("goals");
+  const [tab, setTab] = useState<TabId>("pop");
+  const [showAllScores, setShowAllScores] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["match-markets", matchId],
     queryFn: () => fn({ data: { matchId } }),
     enabled: !locked,
   });
+
+  const wallet = useQuery({
+    queryKey: ["my-wallet", user?.id],
+    queryFn: () => walletFn({}),
+    enabled: !!user?.id && !locked,
+    staleTime: 15000,
+  });
+  const balance = Number(wallet.data?.balance ?? 0);
 
   const myBets = useQuery({
     queryKey: ["my-match-pending-bets", matchId, user?.id],
@@ -247,6 +327,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       const n = Number(stakeVal);
       const err = stakeError(n);
       if (err) throw new Error(err);
+      if (n > balance) throw new Error("Insufficient points");
       const slipId = getSlipId(`single:${market}`, `${pick.selection}:${pick.odds}:${n}`);
       return place({
         data: { matchId, market, selection: pick.selection, stake: n, clientRequestId: slipId },
@@ -257,7 +338,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       clearSlipId(`single:${market}`);
       setPicks((prev) => ({ ...prev, [market]: null }));
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
-      qc.invalidateQueries({ queryKey: ["wallet"] });
+      qc.invalidateQueries({ queryKey: ["my-wallet"] });
       qc.invalidateQueries({ queryKey: ["my-match-pending-bets", matchId, user?.id] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -271,6 +352,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       const n = Number(stakeVal);
       const err = stakeError(n);
       if (err) throw new Error(err);
+      if (n > balance) throw new Error("Insufficient points");
       const slipId = getSlipId(`cs:${selection}`, `${odds}:${n}`);
       return place({
         data: { matchId, market: "correct_score", selection, stake: n, clientRequestId: slipId },
@@ -282,7 +364,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       setCsPicks((prev) => { const { [selection]: _o, ...rest } = prev; return rest; });
       setCsStakes((prev) => { const { [selection]: _o, ...rest } = prev; return rest; });
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
-      qc.invalidateQueries({ queryKey: ["wallet"] });
+      qc.invalidateQueries({ queryKey: ["my-wallet"] });
       qc.invalidateQueries({ queryKey: ["my-match-pending-bets", matchId, user?.id] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -291,7 +373,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   if (locked) return null;
   if (isLoading) {
     return (
-      <div className="border-t border-dashed border-[var(--color-surface-border)] pt-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+      <div className="border-t border-dashed border-[var(--color-surface-border)] pt-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-ink-muted)]">
         <Loader2 className="h-3 w-3 animate-spin text-[var(--color-neon)]" />
         Loading markets…
       </div>
@@ -317,9 +399,12 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     getGroup("home_corners_over_under_4_5").length > 0 ||
     getGroup("away_corners_over_under_4_5").length > 0 ||
     getGroup("first_corner").length > 0;
+  const hasPopular =
+    getGroup("over_under_2_5").length > 0 || getGroup("btts").length > 0 ||
+    getGroup("double_chance").length > 0 || hasToQualify;
 
   const tabEnabled: Record<TabId, boolean> = {
-    goals: true, cs: true, ex: hasExtras, cards: hasCards, corners: hasCorners, sp: hasSpecials,
+    pop: hasPopular, goals: true, cs: true, ex: hasExtras, cards: hasCards, corners: hasCorners, sp: hasSpecials,
   };
 
   const orderedSelections = (market: MarketKey, rows: OddsRow[]) => {
@@ -356,7 +441,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
   const renderMarketSection = (market: MarketKey, cols: string) => {
     const rows = orderedSelections(market, getGroup(market));
-    if (!rows.length) return <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-muted)]">Not available.</div>;
+    if (!rows.length) return <div className="text-[11px] text-[var(--color-ink-muted)]">Not available.</div>;
     const suspended = isMarketSuspended(market);
     const pick = picks[market];
     const stake = stakes[market] ?? String(MIN_STAKE);
@@ -399,6 +484,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
             onClear={() => setPicks((prev) => ({ ...prev, [market]: null }))}
             isPending={isPending}
             error={sErr}
+            balance={balance}
+            sticky
           />
         )}
       </div>
@@ -406,18 +493,19 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   };
 
   const renderCorrectScore = () => {
-    const rows = orderedSelections("correct_score", getGroup("correct_score"));
-    if (!rows.length) return <div className="text-[10px] uppercase tracking-wider text-[var(--color-ink-muted)]">Not available.</div>;
+    const allRows = orderedSelections("correct_score", getGroup("correct_score"));
+    if (!allRows.length) return <div className="text-[11px] text-[var(--color-ink-muted)]">Not available.</div>;
+    const rows = showAllScores ? allRows : allRows.filter((r) => POPULAR_SCORES.includes(r.selection));
     const selectedKeys = Object.keys(csPicks);
     const pendingSelection = csMut.isPending ? (csMut.variables as string | undefined) : undefined;
     const csSuspended = isMarketSuspended("correct_score");
     return (
       <div>
         {csSuspended && <div className="mb-2"><SuspendedBadge /></div>}
-        <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)] mb-2">
+        <div className="mb-2 text-[11px] text-[var(--color-ink-muted)]">
           Tap multiple scores — each gets its own stake.
         </div>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {rows.map((o) => {
             const isPicked = csPicks[o.selection] !== undefined;
             const alreadyPlaced = placedKeys.has(`correct_score:${o.selection}`);
@@ -443,9 +531,28 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
           })}
         </div>
 
+        {allRows.length > rows.length && !showAllScores && (
+          <button
+            type="button"
+            onClick={() => setShowAllScores(true)}
+            className="mt-3 w-full border border-dashed border-[var(--color-surface-border)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)] hover:border-[var(--color-neon)] hover:text-[var(--color-neon)] transition-colors"
+          >
+            Show all scores ({allRows.length - rows.length} more)
+          </button>
+        )}
+        {showAllScores && (
+          <button
+            type="button"
+            onClick={() => setShowAllScores(false)}
+            className="mt-3 w-full border border-dashed border-[var(--color-surface-border)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)] hover:border-[var(--color-neon)] hover:text-[var(--color-neon)] transition-colors"
+          >
+            Show less
+          </button>
+        )}
+
         {!csSuspended && selectedKeys.length > 0 && (
           <div className="mt-3 space-y-2">
-            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">
+            <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-neon)]">
               Your score slips · {selectedKeys.length}
             </div>
             {selectedKeys.map((sel) => {
@@ -465,6 +572,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
                   onClear={() => setCsPicks((prev) => { const { [sel]: _o, ...rest } = prev; return rest; })}
                   isPending={isPending}
                   error={sErr}
+                  balance={balance}
                 />
               );
             })}
@@ -482,8 +590,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   );
 
   return (
-    <div className="border-t border-dashed border-[var(--color-surface-border)] pt-4 space-y-4 -mx-5 sm:-mx-2 md:mx-0">
-      {/* Stencil tab bar — horizontal scroll on mobile so every label renders in full */}
+    <div className="border-t border-dashed border-[var(--color-surface-border)] pt-4 space-y-4 -mx-3 sm:-mx-2 md:mx-0">
+      {/* Consistent scrollable tab bar */}
       <div className="flex overflow-x-auto border-y sm:border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none">
         {TAB_DEFS.map((t) => {
           const enabled = tabEnabled[t.id];
@@ -494,7 +602,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
               type="button"
               disabled={!enabled}
               onClick={() => setTab(t.id)}
-              className={`shrink-0 flex-1 min-w-[84px] px-3 py-2.5 text-center text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)] last:border-r-0 ${
+              className={`shrink-0 px-4 py-2.5 text-center text-[12px] font-bold uppercase tracking-[0.1em] whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)] last:border-r-0 ${
                 active
                   ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
                   : enabled
@@ -508,69 +616,81 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         })}
       </div>
 
-      {tab === "goals" && (
-        <div className="space-y-4">
-          {OVER_UNDER_LINES.map((mk) =>
-            getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
-          )}
-          <Section market="btts" cols="grid-cols-2" />
-          {getGroup("goals_odd_even").length > 0 && <Section market="goals_odd_even" cols="grid-cols-2" />}
-          {getGroup("exact_total_goals").length > 0 && <Section market="exact_total_goals" cols="grid-cols-3" />}
-        </div>
-      )}
-
-      {tab === "cs" && <div>{renderCorrectScore()}</div>}
-
-      {tab === "ex" && (
-        <div className="space-y-4">
-          {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}
-          {getGroup("draw_no_bet").length > 0 && (
-            <Section market="draw_no_bet" cols="grid-cols-2" note="stake refunded on a draw" />
-          )}
-          {getGroup("clean_sheet_home").length > 0 && <Section market="clean_sheet_home" cols="grid-cols-2" />}
-          {getGroup("clean_sheet_away").length > 0 && <Section market="clean_sheet_away" cols="grid-cols-2" />}
-          {getGroup("win_to_nil_home").length > 0 && <Section market="win_to_nil_home" cols="grid-cols-2" />}
-          {getGroup("win_to_nil_away").length > 0 && <Section market="win_to_nil_away" cols="grid-cols-2" />}
-        </div>
-      )}
-
-      {tab === "cards" && (
-        <div className="space-y-4">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)] border-l-2 border-[var(--color-neon)]/60 pl-2">
-            Settled on full-time card counts. Stake refunded if data unavailable.
+      <div className="px-3 sm:px-2 md:px-0">
+        {tab === "pop" && (
+          <div className="space-y-4">
+            {getGroup("over_under_2_5").length > 0 && <Section market="over_under_2_5" cols="grid-cols-2" />}
+            {getGroup("btts").length > 0 && <Section market="btts" cols="grid-cols-2" />}
+            {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}
+            {hasToQualify && <Section market="to_qualify" cols="grid-cols-2" note="paid on who advances (incl. ET & penalties)" />}
+            {!hasPopular && <div className="text-[12px] text-[var(--color-ink-muted)]">No popular markets available.</div>}
           </div>
-          {CARDS_LINES.map((mk) =>
-            getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
-          )}
-          {getGroup("home_cards_over_under_1_5").length > 0 && <Section market="home_cards_over_under_1_5" cols="grid-cols-2" />}
-          {getGroup("away_cards_over_under_1_5").length > 0 && <Section market="away_cards_over_under_1_5" cols="grid-cols-2" />}
-          {getGroup("red_card_match").length > 0 && <Section market="red_card_match" cols="grid-cols-2" />}
-          {getGroup("first_card").length > 0 && <Section market="first_card" cols="grid-cols-3" />}
-        </div>
-      )}
+        )}
 
-      {tab === "corners" && (
-        <div className="space-y-4">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)] border-l-2 border-[var(--color-neon)]/60 pl-2">
-            Settled on full-time corner counts. Stake refunded if data unavailable.
+        {tab === "goals" && (
+          <div className="space-y-4">
+            {OVER_UNDER_LINES.map((mk) =>
+              getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
+            )}
+            <Section market="btts" cols="grid-cols-2" />
+            {getGroup("goals_odd_even").length > 0 && <Section market="goals_odd_even" cols="grid-cols-2" />}
+            {getGroup("exact_total_goals").length > 0 && <Section market="exact_total_goals" cols="grid-cols-3" />}
           </div>
-          {CORNERS_LINES.map((mk) =>
-            getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
-          )}
-          {getGroup("home_corners_over_under_4_5").length > 0 && <Section market="home_corners_over_under_4_5" cols="grid-cols-2" />}
-          {getGroup("away_corners_over_under_4_5").length > 0 && <Section market="away_corners_over_under_4_5" cols="grid-cols-2" />}
-          {getGroup("first_corner").length > 0 && <Section market="first_corner" cols="grid-cols-3" />}
-        </div>
-      )}
+        )}
 
-      {tab === "sp" && (
-        <div className="space-y-4">
-          {hasToQualify && (
-            <Section market="to_qualify" cols="grid-cols-2" note="paid on who advances (incl. ET & penalties)" />
-          )}
-          {hasHtFt && <Section market="half_time_full_time" cols="grid-cols-3" />}
-        </div>
-      )}
+        {tab === "cs" && <div>{renderCorrectScore()}</div>}
+
+        {tab === "ex" && (
+          <div className="space-y-4">
+            {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}
+            {getGroup("draw_no_bet").length > 0 && (
+              <Section market="draw_no_bet" cols="grid-cols-2" note="stake refunded on a draw" />
+            )}
+            {getGroup("clean_sheet_home").length > 0 && <Section market="clean_sheet_home" cols="grid-cols-2" />}
+            {getGroup("clean_sheet_away").length > 0 && <Section market="clean_sheet_away" cols="grid-cols-2" />}
+            {getGroup("win_to_nil_home").length > 0 && <Section market="win_to_nil_home" cols="grid-cols-2" />}
+            {getGroup("win_to_nil_away").length > 0 && <Section market="win_to_nil_away" cols="grid-cols-2" />}
+          </div>
+        )}
+
+        {tab === "cards" && (
+          <div className="space-y-4">
+            <SettlementNote>
+              Settled on official full-time card counts. Stake refunded if official data is unavailable.
+            </SettlementNote>
+            {CARDS_LINES.map((mk) =>
+              getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
+            )}
+            {getGroup("home_cards_over_under_1_5").length > 0 && <Section market="home_cards_over_under_1_5" cols="grid-cols-2" />}
+            {getGroup("away_cards_over_under_1_5").length > 0 && <Section market="away_cards_over_under_1_5" cols="grid-cols-2" />}
+            {getGroup("red_card_match").length > 0 && <Section market="red_card_match" cols="grid-cols-2" />}
+            {getGroup("first_card").length > 0 && <Section market="first_card" cols="grid-cols-3" />}
+          </div>
+        )}
+
+        {tab === "corners" && (
+          <div className="space-y-4">
+            <SettlementNote>
+              Settled on official full-time corner counts. Stake refunded if official data is unavailable.
+            </SettlementNote>
+            {CORNERS_LINES.map((mk) =>
+              getGroup(mk).length > 0 ? <Section key={mk} market={mk} cols="grid-cols-2" /> : null
+            )}
+            {getGroup("home_corners_over_under_4_5").length > 0 && <Section market="home_corners_over_under_4_5" cols="grid-cols-2" />}
+            {getGroup("away_corners_over_under_4_5").length > 0 && <Section market="away_corners_over_under_4_5" cols="grid-cols-2" />}
+            {getGroup("first_corner").length > 0 && <Section market="first_corner" cols="grid-cols-3" />}
+          </div>
+        )}
+
+        {tab === "sp" && (
+          <div className="space-y-4">
+            {hasToQualify && (
+              <Section market="to_qualify" cols="grid-cols-2" note="paid on who advances (incl. ET & penalties)" />
+            )}
+            {hasHtFt && <Section market="half_time_full_time" cols="grid-cols-3" />}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
