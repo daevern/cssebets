@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { submitPrediction } from "@/lib/predictions.functions";
 import { listMatchesForUsers } from "@/lib/matches.functions";
+import { getMyWallet } from "@/lib/wallet.functions";
 import {
   Collapsible,
   CollapsibleContent,
@@ -16,6 +17,7 @@ import { toast } from "sonner";
 import { MarketTabs } from "@/components/matches/MarketTabs";
 import { useAuth } from "@/hooks/use-auth";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
+
 
 export const Route = createFileRoute("/_authenticated/matches/")({
   head: () => ({ meta: [{ title: "Matches — cssebets" }] }),
@@ -140,8 +142,9 @@ function MatchesPage() {
 
       <div
         className="relative mx-auto flex max-w-md flex-col gap-5 px-3 py-5 md:max-w-2xl md:px-4 md:py-8"
-        style={{ paddingBottom: "calc(96px + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: "calc(180px + env(safe-area-inset-bottom))" }}
       >
+
 
         {/* Header */}
         <header className="flex items-center justify-between">
@@ -214,6 +217,7 @@ function MatchesPage() {
 
 function MatchCard({ match }: { match: Match }) {
   const submit = useServerFn(submitPrediction);
+  const walletFn = useServerFn(getMyWallet);
   const qc = useQueryClient();
   const { user } = useAuth();
   const [stake, setStake] = useState("10");
@@ -225,6 +229,14 @@ function MatchCard({ match }: { match: Match }) {
   const locked = new Date(match.kickoff_at).getTime() <= Date.now() || match.status !== "scheduled";
   const bettingBlocked = !oddsTrusted || resultSuspended;
   const odds = match.reference_odds ?? { home: 2.0, draw: 3.2, away: 3.5 };
+
+  const wallet = useQuery({
+    queryKey: ["my-wallet", user?.id],
+    queryFn: () => walletFn({}),
+    enabled: !!user?.id && !locked,
+    staleTime: 15000,
+  });
+  const balance = Number(wallet.data?.balance ?? 0);
 
   const myResultBets = useQuery({
     queryKey: ["my-match-result-bets", match.id, user?.id],
@@ -265,6 +277,7 @@ function MatchCard({ match }: { match: Match }) {
     onSuccess: () => {
       toast.success("Prediction submitted");
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
+      qc.invalidateQueries({ queryKey: ["my-wallet"] });
       qc.invalidateQueries({ queryKey: ["my-match-result-bets", match.id, user?.id] });
       setPick(null);
     },
@@ -275,6 +288,15 @@ function MatchCard({ match }: { match: Match }) {
 
   const stakeNum = Number(stake);
   const stakeValid = stakeNum >= 10 && stakeNum <= 50000;
+  const noBalance = balance <= 0;
+  const overBalance = stakeNum > balance;
+  const canBet = !!pick && stakeValid && !noBalance && !overBalance && !bettingBlocked && !mut.isPending;
+  const buttonLabel = noBalance
+    ? "Insufficient points"
+    : overBalance
+      ? "Stake exceeds balance"
+      : "Bet";
+
 
   return (
     <article className="relative overflow-hidden border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
@@ -371,26 +393,30 @@ function MatchCard({ match }: { match: Match }) {
                 value={stake}
                 onChange={(e) => setStake(e.target.value)}
                 placeholder="Stake (10-50,000)"
-                disabled={bettingBlocked}
-                className="flex-1 border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2.5 font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:opacity-50"
+                disabled={bettingBlocked || !pick || noBalance}
+                className="flex-1 border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2.5 font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:opacity-40 disabled:cursor-not-allowed"
               />
               <button
                 type="button"
-                disabled={bettingBlocked || !pick || mut.isPending || !stakeValid}
+                disabled={!canBet}
                 onClick={() => mut.mutate()}
-                className="flex items-center justify-center gap-2 rounded-full bg-[var(--color-neon)] px-5 py-2.5 text-xs font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                className="flex items-center justify-center gap-2 rounded-full bg-[var(--color-neon)] px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)]"
               >
-                {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><span>Bet</span><ArrowUpRight className="h-4 w-4" /></>}
+                {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><span>{buttonLabel}</span>{canBet && <ArrowUpRight className="h-4 w-4" />}</>}
               </button>
             </div>
 
-            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-              {match.odds_source === "the-odds-api"
-                ? <>updated by <BrandText /> {timeAgo(match.odds_updated_at)}</>
-                : "Reference odds (awaiting live market sync)"}
+            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+              <span>Balance: <span className="font-bold tabular-nums text-[var(--color-ink)]">{balance.toFixed(2)}</span></span>
+              <span>
+                {match.odds_source === "the-odds-api"
+                  ? <>updated by <BrandText /> {timeAgo(match.odds_updated_at)}</>
+                  : "Reference odds"}
+              </span>
             </div>
           </div>
         )}
+
 
         {!locked && <MarketTabs matchId={match.id} locked={locked} bettingBlocked={bettingBlocked} suspendedMarkets={suspendedMarkets} />}
 
