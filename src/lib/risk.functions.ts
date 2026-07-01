@@ -87,14 +87,19 @@ export const getRiskDashboard = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // -----------------------------------------------------------------
-    // Phase 6: canonical bankroll = platform_bankroll (singleton id = 1)
-    // No caller-provided / hardcoded / platform_settings fallback.
+    // Phase 6: canonical bankroll = platform_bankroll (singleton id = 1,
+    // kind='live', is_active=true). Enforced at DB level by
+    // platform_bankroll_one_active_live_idx. Do NOT sum multiple rows —
+    // id=2 is the simulation bankroll and must never be included here.
     // -----------------------------------------------------------------
     const { data: bankrollRow, error: bankrollErr } = await (supabaseAdmin as any)
       .from("platform_bankroll")
       .select("balance, total_stakes_collected, total_payouts_paid, updated_at")
       .eq("id", 1)
+      .eq("kind", "live")
+      .eq("is_active", true)
       .maybeSingle();
+
 
     if (bankrollErr || !bankrollRow || bankrollRow.balance === null || bankrollRow.balance === undefined) {
       const empty: RiskDashboard = {
