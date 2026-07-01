@@ -48,25 +48,18 @@ function MatchAnalyticsPage() {
   }, [matchId, qc]);
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 opacity-[0.04]"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
-        }}
-      />
-      <div className="relative mx-auto flex max-w-md flex-col gap-5 px-4 py-5 md:max-w-3xl md:py-8">
-        <header className="flex items-center justify-between">
+    <div className="relative min-h-screen text-[var(--ink)]">
+      <div className="relative mx-auto flex max-w-3xl flex-col gap-6 px-5 pt-8 md:px-8 md:pt-12">
+        <header className="flex items-baseline justify-between">
           <Link
             to="/matches"
-            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-neon)]"
+            className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)]"
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Matches
           </Link>
-          <Link to="/dashboard"><CsseLogo size={22} /></Link>
+          <Link to="/dashboard"><CsseLogo size={20} /></Link>
         </header>
+
 
         {isLoading || !data ? (
           <div className="grid place-items-center py-20">
