@@ -533,25 +533,24 @@ function MatchHero({
  * Mobile-first: each team gets its own column of breathing room. */
 function HeroTeam({ name, accent, align, goals }: { name: string; accent: "home"|"away"; align: "left"|"right"; goals: any[] }) {
   const url = teamFlagUrl(name, 160);
-  const accentCls = accent === "home"
-    ? "border-[var(--color-neon)]/50 shadow-[0_0_18px_-6px_var(--color-neon-glow)]"
-    : "border-white/40";
+  const accentCls = "border-[var(--color-surface-border)]/60";
   const itemsAlign = align === "right" ? "items-end text-right" : "items-start text-left";
   return (
-    <div className={`flex min-w-0 flex-col gap-2.5 ${itemsAlign}`}>
-      <div className={`relative h-16 w-full max-w-24 overflow-hidden border ${accentCls}`}>
+    <div className={`flex min-w-0 flex-col gap-3 ${itemsAlign}`}>
+      <div className={`relative h-14 w-full max-w-20 overflow-hidden border ${accentCls}`}>
         {url ? (
           <img src={url} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
         ) : (
-          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[10px] font-black uppercase tracking-wider">
+          <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[10px] font-semibold uppercase tracking-wider">
             {name.slice(0, 3)}
           </div>
         )}
-        <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/30" />
+        <span className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-black/20" />
       </div>
-      <span className="w-full truncate font-display text-xs font-black uppercase tracking-[0.12em]" title={name}>
+      <span className="w-full truncate font-display text-base font-semibold tracking-tight text-[var(--color-ink)] sm:text-lg md:text-xl" title={name}>
         {name}
       </span>
+
       {goals.length > 0 && (
         <ul className={`flex w-full flex-col gap-1 text-[11px] leading-tight ${align === "right" ? "items-end" : "items-start"}`}>
           {goals.map((g, i) => {
