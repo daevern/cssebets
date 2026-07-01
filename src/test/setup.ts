@@ -6,6 +6,22 @@ process.env.SUPABASE_SERVICE_ROLE_KEY ??= "test-service-role-key";
 process.env.API_FOOTBALL_KEY ??= "";
 process.env.ODDS_API_KEY ??= "";
 
+vi.mock("@tanstack/react-start", () => {
+  const builder = {
+    middleware: vi.fn(() => builder),
+    inputValidator: vi.fn(() => builder),
+    handler: vi.fn((fn) => fn),
+  };
+  return {
+    createServerFn: vi.fn(() => builder),
+    createMiddleware: vi.fn(() => ({ server: vi.fn((fn) => fn) })),
+  };
+});
+
+vi.mock("@tanstack/react-start/server", () => ({
+  getRequest: vi.fn(() => ({ headers: new Headers({ authorization: "Bearer test-token" }) })),
+}));
+
 vi.mock("@/integrations/supabase/client.server", () => ({
   supabaseAdmin: {
     from: vi.fn(() => ({
