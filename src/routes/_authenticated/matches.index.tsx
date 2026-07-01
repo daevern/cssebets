@@ -142,7 +142,7 @@ function MatchesPage() {
 
       <div
         className="relative mx-auto flex max-w-md flex-col gap-5 px-3 py-5 md:max-w-2xl md:px-4 md:py-8"
-        style={{ paddingBottom: "calc(180px + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: "calc(220px + env(safe-area-inset-bottom))" }}
       >
 
 
