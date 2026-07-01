@@ -285,7 +285,7 @@ function FixtureRow({ match }: { match: Match }) {
 }
 
 function TeamLine({ name, score }: { name: string; score: number | null }) {
-  const url = teamFlagUrl(name, 120);
+  const url = teamFlagUrl(name, 80);
   return (
     <div className="flex items-center gap-2.5">
       {url ? (
