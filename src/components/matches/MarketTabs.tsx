@@ -278,11 +278,11 @@ function SettlementNote({ children }: { children: React.ReactNode }) {
 const TAB_DEFS = [
   { id: "pop", label: "Popular" },
   { id: "goals", label: "Goals" },
-  { id: "cs", label: "Score" },
   { id: "ex", label: "Extras" },
   { id: "cards", label: "Cards" },
   { id: "corners", label: "Corners" },
   { id: "sp", label: "Specials" },
+  { id: "cs", label: "Advanced · Score" },
 ] as const;
 type TabId = (typeof TAB_DEFS)[number]["id"];
 
