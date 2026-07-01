@@ -552,13 +552,10 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     );
   };
 
-  const GroupHeader = ({ children }: { children: React.ReactNode }) => (
-    <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink)]">{children}</div>
-  );
-
   const SubHeader = ({ children }: { children: React.ReactNode }) => (
     <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">{children}</div>
   );
+
 
 
 
