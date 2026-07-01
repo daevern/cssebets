@@ -568,6 +568,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
             return (
               <OddsButton
                 key={o.id}
+                selection={o.selection}
                 label={selectionLabel(o.selection)}
                 price={Number(o.odds)}
                 selected={isPicked}
