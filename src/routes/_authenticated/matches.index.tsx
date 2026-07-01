@@ -393,26 +393,30 @@ function MatchCard({ match }: { match: Match }) {
                 value={stake}
                 onChange={(e) => setStake(e.target.value)}
                 placeholder="Stake (10-50,000)"
-                disabled={bettingBlocked}
-                className="flex-1 border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2.5 font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:opacity-50"
+                disabled={bettingBlocked || !pick || noBalance}
+                className="flex-1 border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2.5 font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:opacity-40 disabled:cursor-not-allowed"
               />
               <button
                 type="button"
-                disabled={bettingBlocked || !pick || mut.isPending || !stakeValid}
+                disabled={!canBet}
                 onClick={() => mut.mutate()}
-                className="flex items-center justify-center gap-2 rounded-full bg-[var(--color-neon)] px-5 py-2.5 text-xs font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+                className="flex items-center justify-center gap-2 rounded-full bg-[var(--color-neon)] px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)]"
               >
-                {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><span>Bet</span><ArrowUpRight className="h-4 w-4" /></>}
+                {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><span>{buttonLabel}</span>{canBet && <ArrowUpRight className="h-4 w-4" />}</>}
               </button>
             </div>
 
-            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-              {match.odds_source === "the-odds-api"
-                ? <>updated by <BrandText /> {timeAgo(match.odds_updated_at)}</>
-                : "Reference odds (awaiting live market sync)"}
+            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+              <span>Balance: <span className="font-bold tabular-nums text-[var(--color-ink)]">{balance.toFixed(2)}</span></span>
+              <span>
+                {match.odds_source === "the-odds-api"
+                  ? <>updated by <BrandText /> {timeAgo(match.odds_updated_at)}</>
+                  : "Reference odds"}
+              </span>
             </div>
           </div>
         )}
+
 
         {!locked && <MarketTabs matchId={match.id} locked={locked} bettingBlocked={bettingBlocked} suspendedMarkets={suspendedMarkets} />}
 
