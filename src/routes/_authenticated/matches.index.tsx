@@ -291,23 +291,23 @@ function MatchCard({ match }: { match: Match }) {
   const noBalance = balance <= 0;
   const overBalance = stakeNum > balance;
   const canBet = !!pick && stakeValid && !noBalance && !overBalance && !bettingBlocked && !mut.isPending;
+  const potentialReturn = stakeValid && pick ? stakeNum * (pick === "HOME" ? odds.home : pick === "DRAW" ? odds.draw : odds.away) : 0;
+  const potentialGain = potentialReturn - (stakeValid ? stakeNum : 0);
   const buttonLabel = noBalance
-    ? "Insufficient points"
+    ? "Add Points to Lock"
     : overBalance
-      ? "Stake exceeds balance"
-      : "Bet";
+      ? "Stake exceeds points balance"
+      : "Lock Prediction";
 
 
   return (
-    <article className="relative overflow-hidden border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
-      <Corner pos="tl" /><Corner pos="tr" /><Corner pos="bl" /><Corner pos="br" />
-
-      {/* Stencil header band */}
-      <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-5 py-3">
-        <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-          {stageLabel}
+    <article className="relative overflow-hidden rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
+      {/* Match header band */}
+      <div className="flex items-center justify-between border-b border-[var(--color-surface-border)] px-5 py-3">
+        <span className="text-[11px] font-semibold text-[var(--color-neon)]">
+          FIFA World Cup 2026 · {stageLabel}
         </span>
-        <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+        <span className="text-[11px] text-[var(--color-ink-muted)]">
           {formatKickoffDate(match.kickoff_at)}
         </span>
       </div>
@@ -322,7 +322,7 @@ function MatchCard({ match }: { match: Match }) {
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
             <div className="flex flex-col items-center gap-2">
               <TeamFlag name={match.home_team} />
-              <span className="max-w-[110px] truncate text-center text-xs font-bold uppercase tracking-wide">
+              <span className="max-w-[110px] truncate text-center text-sm font-semibold">
                 {match.home_team}
               </span>
             </div>
@@ -331,25 +331,38 @@ function MatchCard({ match }: { match: Match }) {
                 {match.status === "finished" ? `${match.home_score} – ${match.away_score}` : "vs"}
               </span>
               <span className="h-6 w-px bg-[var(--color-neon)]/40" />
-              <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">View analytics →</span>
+              <span className="text-[10px] font-semibold text-[var(--color-neon)]">View analytics →</span>
             </div>
             <div className="flex flex-col items-center gap-2">
               <TeamFlag name={match.away_team} />
-              <span className="max-w-[110px] truncate text-center text-xs font-bold uppercase tracking-wide">
+              <span className="max-w-[110px] truncate text-center text-sm font-semibold">
                 {match.away_team}
               </span>
             </div>
           </div>
         </Link>
 
+        {/* Trust line */}
+        <div className="rounded-md border border-[var(--color-surface-border)]/60 bg-black/30 px-3 py-2 text-center text-[11px] leading-snug text-[var(--color-ink-muted)]">
+          Virtual points · Official result settlement · Audit logged
+        </div>
+
         {bettingBlocked && !locked && (
-          <div className="border border-destructive/40 bg-destructive/10 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-destructive">
-            Market temporarily suspended while odds are being verified.
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-[12px] font-medium text-destructive">
+            Market temporarily paused while odds are being verified.
           </div>
         )}
 
         {!locked && match.reference_odds && (
           <div className="space-y-3">
+            <div className="space-y-0.5">
+              <h3 className="text-[15px] font-semibold text-[var(--color-ink)]">
+                Who will win?
+              </h3>
+              <p className="text-[11px] text-[var(--color-ink-muted)]">
+                Multiplier · Market estimate
+              </p>
+            </div>
             <div className="grid grid-cols-3 gap-2">
               {(["HOME", "DRAW", "AWAY"] as const).map((p) => {
                 const label = p === "HOME" ? match.home_team : p === "AWAY" ? match.away_team : "Draw";
@@ -357,72 +370,102 @@ function MatchCard({ match }: { match: Match }) {
                 const alreadyPlaced = placedResults.has(p);
                 const disabled = alreadyPlaced || bettingBlocked;
                 const selected = pick === p;
+                const prob = price > 0 ? Math.round((1 / Number(price)) * 100) : 0;
                 return (
                   <button
                     key={p}
                     type="button"
                     disabled={disabled}
                     title={
-                      bettingBlocked ? "Market suspended" :
-                      alreadyPlaced ? "You already placed a bet on this selection" : undefined
+                      bettingBlocked ? "Market paused" :
+                      alreadyPlaced ? "You already locked this prediction" : undefined
                     }
                     onClick={() => setPick(p)}
-                    className={`relative flex flex-col items-center gap-1 border px-2 py-2.5 transition-colors disabled:opacity-50 ${
+                    className={`relative flex flex-col items-center gap-0.5 rounded-md border px-2 py-2.5 transition-colors disabled:opacity-50 ${
                       selected
-                        ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[0_0_18px_var(--color-neon-glow)]"
-                        : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/60"
+                        ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-ink)]"
+                        : "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/50"
                     }`}
                   >
-                    <span className="max-w-full truncate text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                    <span className="max-w-full truncate text-[11px] font-medium text-[var(--color-ink)]">
                       {label}
                     </span>
-                    <span className="font-display text-lg font-bold tabular-nums">{price}</span>
+                    <span className="font-display text-lg font-bold tabular-nums text-[var(--color-neon)]">{Number(price).toFixed(2)}x</span>
+                    <span className="text-[10px] tabular-nums text-[var(--color-ink-muted)]">~{prob}%</span>
                     {alreadyPlaced && (
-                      <span className="absolute right-1 top-1 text-[9px] font-bold text-[var(--color-neon)]">✓</span>
+                      <span className="absolute right-1.5 top-1 text-[10px] font-bold text-[var(--color-neon)]">✓</span>
                     )}
                   </button>
                 );
               })}
             </div>
 
-            <div className="flex gap-2">
-              <input
-                type="number"
-                min={10}
-                max={50000}
-                value={stake}
-                onChange={(e) => setStake(e.target.value)}
-                placeholder="Stake (10-50,000)"
-                disabled={bettingBlocked || !pick || noBalance}
-                className="flex-1 border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2.5 font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:opacity-40 disabled:cursor-not-allowed"
-              />
-              <button
-                type="button"
-                disabled={!canBet}
-                onClick={() => mut.mutate()}
-                className="flex items-center justify-center gap-2 rounded-full bg-[var(--color-neon)] px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)]"
-              >
-                {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><span>{buttonLabel}</span>{canBet && <ArrowUpRight className="h-4 w-4" />}</>}
-              </button>
-            </div>
+            {pick && (
+              <div className="rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] p-3 space-y-2">
+                <div className="text-[11px] leading-snug text-[var(--color-ink)]">
+                  <span className="font-semibold">
+                    {pick === "HOME" ? match.home_team : pick === "AWAY" ? match.away_team : "Draw"}
+                  </span>
+                  <span className="mx-1.5 text-[var(--color-ink-muted)]">·</span>
+                  <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
+                    {(pick === "HOME" ? odds.home : pick === "DRAW" ? odds.draw : odds.away).toFixed(2)}x
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    min={10}
+                    max={50000}
+                    value={stake}
+                    onChange={(e) => setStake(e.target.value)}
+                    placeholder="Points (10-50,000)"
+                    disabled={bettingBlocked || noBalance}
+                    className="flex-1 rounded-md border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:opacity-40 disabled:cursor-not-allowed"
+                  />
+                  <button
+                    type="button"
+                    disabled={!canBet}
+                    onClick={() => mut.mutate()}
+                    className="flex items-center justify-center gap-2 rounded-md bg-[var(--color-neon)] px-4 py-2.5 text-[12px] font-bold text-black transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)]"
+                  >
+                    {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><span>{buttonLabel}</span>{canBet && <ArrowUpRight className="h-4 w-4" />}</>}
+                  </button>
+                </div>
+                {stakeValid && (
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+                      <span className="text-[var(--color-ink-muted)]">Return</span>
+                      <span className="font-display font-bold tabular-nums">{potentialReturn.toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+                      <span className="text-[var(--color-ink-muted)]">Gain</span>
+                      <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">+{potentialGain.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-[11px] text-[var(--color-ink-muted)]">
+                  <span>Points balance: <span className="font-bold tabular-nums text-[var(--color-ink)]">{balance.toFixed(2)}</span></span>
+                  {noBalance && <span className="font-semibold text-destructive">You need points to lock this prediction.</span>}
+                </div>
+              </div>
+            )}
 
-            <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
-              <span>Balance: <span className="font-bold tabular-nums text-[var(--color-ink)]">{balance.toFixed(2)}</span></span>
+            <div className="flex items-center justify-between text-[11px] text-[var(--color-ink-muted)]">
               <span>
                 {match.odds_source === "the-odds-api"
-                  ? <>updated by <BrandText /> {timeAgo(match.odds_updated_at)}</>
-                  : "Reference odds"}
+                  ? <>Multipliers updated by <BrandText /> {timeAgo(match.odds_updated_at)}</>
+                  : "Reference multipliers"}
               </span>
             </div>
           </div>
         )}
 
 
-        {!locked && <MarketTabs matchId={match.id} locked={locked} bettingBlocked={bettingBlocked} suspendedMarkets={suspendedMarkets} />}
+        {!locked && <MarketTabs matchId={match.id} locked={locked} bettingBlocked={bettingBlocked} suspendedMarkets={suspendedMarkets} homeTeam={match.home_team} awayTeam={match.away_team} />}
 
         {locked && (
-          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-            {match.status === "finished" ? "Match finished." : "Betting closed — kickoff passed."}
+          <div className="text-[12px] font-medium text-[var(--color-ink-muted)]">
+            {match.status === "finished" ? "Match finished." : "Predictions closed — kickoff passed."}
           </div>
         )}
 
