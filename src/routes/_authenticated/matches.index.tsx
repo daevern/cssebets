@@ -300,22 +300,20 @@ function TeamMarketRow({
   emphasis: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 rounded-md border border-transparent bg-[var(--color-surface)]/40 px-2.5 py-2 transition-colors hover:border-[var(--color-surface-border)]/60">
+    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-md border border-transparent bg-[var(--color-surface)]/40 px-2.5 py-2 transition-colors hover:border-[var(--color-surface-border)]/60">
       {flag ? (
         <img
           src={flag}
           alt=""
-          className="h-5 w-7 rounded-sm object-cover ring-1 ring-black/40"
+          className="h-5 w-7 object-cover"
           loading="lazy"
         />
       ) : (
-        <span className="grid h-5 w-7 place-items-center rounded-sm bg-[var(--color-surface-border)]/50 text-[9px] font-semibold text-[var(--color-ink-muted)]">
+        <span className="grid h-5 w-7 place-items-center bg-[var(--color-surface-border)]/50 text-[9px] font-semibold text-[var(--color-ink-muted)]">
           {name.slice(0, 2).toUpperCase()}
         </span>
       )}
-      <span className="truncate text-[13px] font-medium text-[var(--color-ink)]">
-        {name} <span className="font-normal text-[var(--color-ink-muted)]">advances</span>
-      </span>
+      <span className="sr-only">{name}</span>
       <span className={`w-10 text-right text-[12px] font-semibold tabular-nums ${emphasis ? "text-[var(--color-ink)]" : "text-[var(--color-ink-muted)]"}`}>
         {score != null ? score : multiplier ? `${multiplier.toFixed(2)}x` : "—"}
       </span>
