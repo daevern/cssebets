@@ -1,8 +1,7 @@
-// Market Analytics — historical odds/implied-probability chart for a match.
-// Reads from `getMarketHistory` server fn. No fake data: if there's no history,
-// renders an empty state. Adds a per-second "live tick" that extends the
-// x-axis forward using the last known values so the chart feels alive like
-// Kalshi, without fabricating price movement.
+// Global odds movement — historical bookmaker odds/implied-probability chart.
+// Reads from `getMarketHistory` server fn. The per-second live tick extends
+// the x-axis using the last real bookmaker values so it feels alive like a
+// prediction market without inventing fake price movement.
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -31,7 +30,7 @@ const RANGE_MS: Record<Range, number | null> = {
   ALL: null,
 };
 
-const STALE_MS = 5 * 60_000; // 5 minutes → amber "delayed" badge
+const STALE_MS = 10 * 60_000; // provider snapshot older than this → amber "delayed" badge
 
 function useNowTick(intervalMs = 1000): number {
   const [now, setNow] = useState(() => Date.now());
@@ -54,6 +53,16 @@ function useRelativeTime(iso: string | null | undefined, now: number): string {
   return `${h}h ago`;
 }
 
+function valueForPoint(point: { odds: number; prob: number }, mode: Mode): number {
+  return mode === "prob"
+    ? Math.round(point.prob * 1000) / 10
+    : Math.round(point.odds * 100) / 100;
+}
+
+function pointTime(point: { t: string }): number {
+  return new Date(point.t).getTime();
+}
+
 export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
   const fn = useServerFn(getMarketHistory);
   const qc = useQueryClient();
@@ -65,8 +74,8 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
   const q = useQuery({
     queryKey: ["market-history", matchId, market ?? "default"],
     queryFn: () => fn({ data: { matchId, market } }) as Promise<MarketHistoryPayload>,
-    refetchInterval: 15_000,
-    staleTime: 5_000,
+    refetchInterval: 5_000,
+    staleTime: 2_000,
   });
 
   // Live realtime — invalidate as soon as new odds snapshots land.
@@ -103,6 +112,11 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
     }
   }, [data, market]);
 
+  useEffect(() => {
+    if (!data || market || !data.availableMarkets.some((m) => m.key === "match_result")) return;
+    if (data.market !== "match_result") setMarket("match_result");
+  }, [data, market]);
+
   const { chartData, filteredSeries, supportedRanges, lastSnapshotAt } = useMemo(() => {
     if (!data) return {
       chartData: [] as any[],
@@ -116,6 +130,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
       return Math.max(max, now - first);
     }, 0);
     const supportedRanges = RANGES.filter((r) => {
+      if (r === "1H") return true;
       const w = RANGE_MS[r];
       return w == null || spanMs >= w * 0.15;
     });
@@ -123,15 +138,22 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
     const windowMs = RANGE_MS[effectiveRange];
     const cutoff = windowMs == null ? 0 : now - windowMs;
 
-    // Include the last point BEFORE the window so lines don't start mid-air
+    // Include the last point BEFORE the window so the 1H view always forms a
+    // visible carried-forward line, even if the provider only sent one old
+    // snapshot before the current hour.
     const filteredSeries: MarketSeries[] = data.series.map((s) => {
       if (windowMs == null) return { ...s, points: s.points };
-      const inWindow = s.points.filter((p) => new Date(p.t).getTime() >= cutoff);
-      if (inWindow.length && s.points[0] && new Date(inWindow[0].t).getTime() === new Date(s.points[0].t).getTime()) {
+      const inWindow = s.points.filter((p) => pointTime(p) >= cutoff);
+      if (inWindow.length && s.points[0] && pointTime(inWindow[0]) === pointTime(s.points[0])) {
         return { ...s, points: inWindow };
       }
-      const beforeIdx = s.points.findIndex((p) => new Date(p.t).getTime() >= cutoff);
-      const anchor = beforeIdx > 0 ? [{ ...s.points[beforeIdx - 1], t: new Date(cutoff).toISOString() }] : [];
+      const beforeIdx = s.points.findIndex((p) => pointTime(p) >= cutoff);
+      const lastBefore = beforeIdx > 0
+        ? s.points[beforeIdx - 1]
+        : beforeIdx === -1
+          ? s.points.at(-1)
+          : undefined;
+      const anchor = lastBefore ? [{ ...lastBefore, t: new Date(cutoff).toISOString() }] : [];
       return { ...s, points: [...anchor, ...inWindow] };
     });
 
@@ -140,16 +162,16 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
     for (const s of data.series) {
       const last = s.points.at(-1);
       if (!last) continue;
-      lastValueBySeries.set(s.key, mode === "prob" ? Math.round(last.prob * 1000) / 10 : Math.round(last.odds * 100) / 100);
+      lastValueBySeries.set(s.key, valueForPoint(last, mode));
     }
 
     // Merge historical points by timestamp
     const byTime = new Map<number, Record<string, number | string>>();
     for (const s of filteredSeries) {
       for (const p of s.points) {
-        const key = new Date(p.t).getTime();
+        const key = pointTime(p);
         const row = byTime.get(key) ?? { t: new Date(key).toISOString() };
-        row[s.key] = mode === "prob" ? Math.round(p.prob * 1000) / 10 : Math.round(p.odds * 100) / 100;
+        row[s.key] = valueForPoint(p, mode);
         byTime.set(key, row);
       }
     }
@@ -207,6 +229,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
       updatedAt={lastSnapshotAt}
       stale={isStale}
       now={now}
+      source={data.sourceLabel}
       right={
         <div className="flex items-center gap-4 text-[11px]">
           {(["prob", "mult"] as Mode[]).map((m) => (
@@ -354,12 +377,14 @@ function SectionShell({
   updatedAt,
   stale,
   now,
+  source,
 }: {
   children: React.ReactNode;
   right?: React.ReactNode;
   updatedAt?: string | null;
   stale?: boolean;
   now?: number;
+  source?: string;
 }) {
   const rel = useRelativeTime(updatedAt, now ?? Date.now());
   const dotColor = stale ? "#f59e0b" : "var(--color-neon)";
@@ -370,8 +395,13 @@ function SectionShell({
       <div className="mb-5 flex items-end justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
           <h2 className="font-display text-xl font-semibold tracking-tight text-[var(--color-ink)] md:text-2xl">
-            Market movement
+            Global odds movement
           </h2>
+          {source && (
+            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]/70">
+              {source}
+            </span>
+          )}
           {updatedAt && (
             <span className={`inline-flex items-center gap-1.5 text-[10px] font-medium tracking-tight ${textColor}`}>
               <span className="relative flex h-1.5 w-1.5">
@@ -380,7 +410,7 @@ function SectionShell({
                 )}
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full" style={{ background: dotColor }} />
               </span>
-              {label} · updated {rel}
+              {label} world market · updated {rel}
             </span>
           )}
         </div>
@@ -396,10 +426,10 @@ function EmptyGraph() {
     <div className="grid h-full min-h-48 place-items-center text-center">
       <div className="space-y-1.5 px-4">
         <p className="font-display text-base font-semibold tracking-tight text-[var(--color-ink)]">
-          No market history yet
+          No global market history yet
         </p>
         <p className="text-[11px] tracking-tight text-[var(--color-ink-muted)]">
-          Market movement will appear once price history is available.
+          Movement appears once bookmaker price history is available.
         </p>
       </div>
     </div>

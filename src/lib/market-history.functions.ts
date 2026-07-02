@@ -15,6 +15,7 @@ export type MarketHistoryPayload = {
   awayTeam: string;
   market: string;
   marketLabel: string;
+  sourceLabel: string;
   availableMarkets: MarketOption[];
   series: MarketSeries[];
   updatedAt: string | null;
@@ -99,7 +100,9 @@ export const getMarketHistory = createServerFn({ method: "POST" })
 
     const chosen = (data.market && counts.has(data.market))
       ? data.market
-      : availableMarkets[0]?.key ?? "match_result";
+      : counts.has("match_result")
+        ? "match_result"
+        : availableMarkets[0]?.key ?? "match_result";
 
     // Fetch series for the chosen market
     let series: MarketSeries[] = [];
@@ -172,6 +175,7 @@ export const getMarketHistory = createServerFn({ method: "POST" })
       awayTeam,
       market: chosen,
       marketLabel: marketLabel(chosen),
+      sourceLabel: chosen === "match_result" ? "Global 90-min market" : "Global bookmaker market",
       availableMarkets,
       series,
       updatedAt,

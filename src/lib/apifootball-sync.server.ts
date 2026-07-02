@@ -246,10 +246,11 @@ export async function syncMatchOddsApiFootball(matchId: string): Promise<SyncRes
 }
 
 // Batch: pick scheduled matches with kickoff in the next N hours and refresh.
-// Skips matches already refreshed within `freshnessHours`.
+// Skips matches already refreshed within `freshnessHours`; accepts decimals so
+// cron can request near-live cadence such as 0.08h (~5 min) or 0.015h (~54s).
 export async function syncUpcomingMatchOdds(opts: { hoursAhead?: number; freshnessHours?: number; maxMatches?: number } = {}) {
   const hoursAhead = opts.hoursAhead ?? 48;
-  const freshnessHours = opts.freshnessHours ?? 6;
+  const freshnessHours = Math.max(0.01, opts.freshnessHours ?? 0.08);
   const maxMatches = opts.maxMatches ?? 10;
 
   const horizon = new Date(Date.now() + hoursAhead * 3600 * 1000).toISOString();
@@ -257,8 +258,10 @@ export async function syncUpcomingMatchOdds(opts: { hoursAhead?: number; freshne
 
   const { data: matches } = await supabaseAdmin
     .from("matches")
-    .select("id, kickoff_at, odds_source, odds_updated_at")
+    .select("id, kickoff_at, odds_source, odds_updated_at, home_team, away_team")
     .eq("status", "scheduled")
+    .neq("home_team", "TBD")
+    .neq("away_team", "TBD")
     .gt("kickoff_at", new Date().toISOString())
     .lt("kickoff_at", horizon)
     .order("kickoff_at", { ascending: true })
