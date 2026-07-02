@@ -204,8 +204,11 @@ export const getMatchAnalytics = createServerFn({ method: "POST" })
         home: (r2.data ?? []).filter((r: any) => r.side === "home") ?? homeRatings,
         away: (r2.data ?? []).filter((r: any) => r.side === "away") ?? awayRatings,
       },
-      h2h: (h2hR.data as any)?.fixtures ?? [],
-      injuries: { home: homeInj, away: awayInj },
+      h2h: (h2.data as any)?.fixtures ?? (h2hR.data as any)?.fixtures ?? [],
+      injuries: {
+        home: (inj2.data ?? []).filter((r: any) => r.side === "home"),
+        away: (inj2.data ?? []).filter((r: any) => r.side === "away"),
+      },
       teamForm: { home: null, away: null },
     } as AnalyticsBundle;
   });
