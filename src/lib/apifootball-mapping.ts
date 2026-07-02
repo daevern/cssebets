@@ -14,6 +14,7 @@
 
 export type ParsedOdds = {
   market:
+    | "1x2"
     | "over_under_0_5" | "over_under_1_5" | "over_under_2_5" | "over_under_3_5"
     | "over_under_4_5" | "over_under_5_5" | "over_under_6_5"
     | "btts" | "correct_score" | "half_time_full_time" | "exact_total_goals" | "to_qualify"
@@ -113,15 +114,15 @@ export function parseBookmakerPayload(bookmakers: Bookmaker[]): {
       const name = (bet.name ?? "").trim();
       if (!name) continue;
 
-      // 1X2 reference
+      // 1X2 reference + tradable market
       if (name === "Match Winner" || name === "Full Time Result") {
         for (const v of bet.values ?? []) {
           const odd = Number(v.odd);
           if (!isFinite(odd) || odd < 1.01) continue;
           const sel = String(v.value).toLowerCase();
-          if (sel === "home" || sel === "1") refHome.push(odd);
-          else if (sel === "draw" || sel === "x") refDraw.push(odd);
-          else if (sel === "away" || sel === "2") refAway.push(odd);
+          if (sel === "home" || sel === "1") { refHome.push(odd); push("1x2", "home", odd); }
+          else if (sel === "draw" || sel === "x") { refDraw.push(odd); push("1x2", "draw", odd); }
+          else if (sel === "away" || sel === "2") { refAway.push(odd); push("1x2", "away", odd); }
         }
         continue;
       }
