@@ -107,7 +107,11 @@ function MatchesPage() {
     return { live: l, today: t, upcoming: u, completed: c };
   }, [data, now]);
 
-  const list = tab === "live" ? live : tab === "today" ? today : upcoming;
+  const list =
+    tab === "live" ? live :
+    tab === "today" ? today :
+    tab === "upcoming" ? upcoming :
+    completed;
   const auto = tab === "live" && live.length === 0 ? today : list;
 
   return (
