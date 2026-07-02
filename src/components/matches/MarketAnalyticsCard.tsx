@@ -1,13 +1,13 @@
 // Market Analytics — historical odds/implied-probability chart for a match.
 // Reads from `getMarketHistory` server fn. No fake data: if there's no history,
 // renders an empty state; a single snapshot renders as a flat line.
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
-import { Activity } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { getMarketHistory, type MarketHistoryPayload, type MarketSeries } from "@/lib/market-history.functions";
 
 const SERIES_COLORS = [
@@ -29,8 +29,27 @@ const RANGE_MS: Record<Range, number | null> = {
   ALL: null,
 };
 
+function useRelativeTime(iso: string | null | undefined): string {
+  const [, tick] = useState(0);
+  useEffect(() => {
+    if (!iso) return;
+    const id = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, [iso]);
+  if (!iso) return "";
+  const diff = Math.max(0, Date.now() - new Date(iso).getTime());
+  const s = Math.floor(diff / 1000);
+  if (s < 5) return "just now";
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  return `${h}h ago`;
+}
+
 export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
   const fn = useServerFn(getMarketHistory);
+  const qc = useQueryClient();
   const [market, setMarket] = useState<string | undefined>(undefined);
   const [mode, setMode] = useState<Mode>("prob");
   const [range, setRange] = useState<Range>("ALL");
@@ -38,9 +57,27 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
   const q = useQuery({
     queryKey: ["market-history", matchId, market ?? "default"],
     queryFn: () => fn({ data: { matchId, market } }) as Promise<MarketHistoryPayload>,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: 15_000,
+    staleTime: 5_000,
   });
+
+  // Live realtime — invalidate as soon as new odds snapshots land.
+  useEffect(() => {
+    const ch = supabase
+      .channel(`market-history-${matchId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "match_odds_snapshots", filter: `match_id=eq.${matchId}` },
+        () => qc.invalidateQueries({ queryKey: ["market-history", matchId] }),
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "market_odds_snapshots", filter: `match_id=eq.${matchId}` },
+        () => qc.invalidateQueries({ queryKey: ["market-history", matchId] }),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [matchId, qc]);
 
   const data = q.data;
 
