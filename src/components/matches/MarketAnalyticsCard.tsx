@@ -1,6 +1,8 @@
 // Market Analytics — historical odds/implied-probability chart for a match.
 // Reads from `getMarketHistory` server fn. No fake data: if there's no history,
-// renders an empty state; a single snapshot renders as a flat line.
+// renders an empty state. Adds a per-second "live tick" that extends the
+// x-axis forward using the last known values so the chart feels alive like
+// Kalshi, without fabricating price movement.
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -29,15 +31,20 @@ const RANGE_MS: Record<Range, number | null> = {
   ALL: null,
 };
 
-function useRelativeTime(iso: string | null | undefined): string {
-  const [, tick] = useState(0);
+const STALE_MS = 5 * 60_000; // 5 minutes → amber "delayed" badge
+
+function useNowTick(intervalMs = 1000): number {
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    if (!iso) return;
-    const id = setInterval(() => tick((n) => n + 1), 1000);
+    const id = setInterval(() => setNow(Date.now()), intervalMs);
     return () => clearInterval(id);
-  }, [iso]);
+  }, [intervalMs]);
+  return now;
+}
+
+function useRelativeTime(iso: string | null | undefined, now: number): string {
   if (!iso) return "";
-  const diff = Math.max(0, Date.now() - new Date(iso).getTime());
+  const diff = Math.max(0, now - new Date(iso).getTime());
   const s = Math.floor(diff / 1000);
   if (s < 5) return "just now";
   if (s < 60) return `${s}s ago`;
@@ -52,7 +59,8 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
   const qc = useQueryClient();
   const [market, setMarket] = useState<string | undefined>(undefined);
   const [mode, setMode] = useState<Mode>("prob");
-  const [range, setRange] = useState<Range>("ALL");
+  const [range, setRange] = useState<Range>("1H"); // Kalshi-style: last hour first
+  const now = useNowTick(1000);
 
   const q = useQuery({
     queryKey: ["market-history", matchId, market ?? "default"],
@@ -81,42 +89,98 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
 
   const data = q.data;
 
-  // Filter each series to the selected range, then merge into a single dataset
-  // keyed by timestamp for Recharts.
-  const { chartData, filteredSeries, supportedRanges } = useMemo(() => {
-    if (!data) return { chartData: [] as any[], filteredSeries: [] as MarketSeries[], supportedRanges: RANGES };
+  // Auto-fallback: if the currently selected market has no fresh point
+  // (nothing in the last hour) but another market does, switch to it.
+  useEffect(() => {
+    if (!data || !data.availableMarkets.length) return;
+    const cutoff = Date.now() - RANGE_MS["1H"]!;
+    const currentFresh = data.series.some((s) =>
+      s.points.some((p) => new Date(p.t).getTime() >= cutoff),
+    );
+    if (currentFresh) return;
+    if (market && market !== "match_result" && data.availableMarkets.some((m) => m.key === "match_result")) {
+      setMarket("match_result");
+    }
+  }, [data, market]);
 
-    const now = Date.now();
+  const { chartData, filteredSeries, supportedRanges, lastSnapshotAt } = useMemo(() => {
+    if (!data) return {
+      chartData: [] as any[],
+      filteredSeries: [] as MarketSeries[],
+      supportedRanges: RANGES,
+      lastSnapshotAt: null as string | null,
+    };
+
     const spanMs = data.series.reduce((max, s) => {
       const first = s.points[0]?.t ? new Date(s.points[0].t).getTime() : now;
       return Math.max(max, now - first);
     }, 0);
     const supportedRanges = RANGES.filter((r) => {
       const w = RANGE_MS[r];
-      return w == null || spanMs >= w * 0.15; // require at least 15% coverage to enable
+      return w == null || spanMs >= w * 0.15;
     });
-    const effectiveRange = supportedRanges.includes(range) ? range : "ALL";
-    const cutoff = RANGE_MS[effectiveRange];
+    const effectiveRange = supportedRanges.includes(range) ? range : "1H";
+    const windowMs = RANGE_MS[effectiveRange];
+    const cutoff = windowMs == null ? 0 : now - windowMs;
 
-    const filteredSeries = data.series.map((s) => ({
-      ...s,
-      points: cutoff == null ? s.points : s.points.filter((p) => now - new Date(p.t).getTime() <= cutoff),
-    }));
+    // Include the last point BEFORE the window so lines don't start mid-air
+    const filteredSeries: MarketSeries[] = data.series.map((s) => {
+      if (windowMs == null) return { ...s, points: s.points };
+      const inWindow = s.points.filter((p) => new Date(p.t).getTime() >= cutoff);
+      if (inWindow.length && s.points[0] && new Date(inWindow[0].t).getTime() === new Date(s.points[0].t).getTime()) {
+        return { ...s, points: inWindow };
+      }
+      const beforeIdx = s.points.findIndex((p) => new Date(p.t).getTime() >= cutoff);
+      const anchor = beforeIdx > 0 ? [{ ...s.points[beforeIdx - 1], t: new Date(cutoff).toISOString() }] : [];
+      return { ...s, points: [...anchor, ...inWindow] };
+    });
 
-    // Merge by timestamp
-    const byTime = new Map<string, Record<string, number | string>>();
+    // Compute the true last snapshot per series (for the live tick anchor)
+    const lastValueBySeries = new Map<string, number>();
+    for (const s of data.series) {
+      const last = s.points.at(-1);
+      if (!last) continue;
+      lastValueBySeries.set(s.key, mode === "prob" ? Math.round(last.prob * 1000) / 10 : Math.round(last.odds * 100) / 100);
+    }
+
+    // Merge historical points by timestamp
+    const byTime = new Map<number, Record<string, number | string>>();
     for (const s of filteredSeries) {
       for (const p of s.points) {
-        const row = byTime.get(p.t) ?? { t: p.t };
+        const key = new Date(p.t).getTime();
+        const row = byTime.get(key) ?? { t: new Date(key).toISOString() };
         row[s.key] = mode === "prob" ? Math.round(p.prob * 1000) / 10 : Math.round(p.odds * 100) / 100;
-        byTime.set(p.t, row);
+        byTime.set(key, row);
       }
     }
-    const chartData = [...byTime.values()].sort(
-      (a, b) => new Date(a.t as string).getTime() - new Date(b.t as string).getTime(),
-    );
-    return { chartData, filteredSeries, supportedRanges };
-  }, [data, range, mode]);
+
+    // Live tick: append a synthetic "now" point carrying forward the last values
+    if (lastValueBySeries.size > 0 && (windowMs == null || windowMs > 0)) {
+      const tickRow: Record<string, number | string> = { t: new Date(now).toISOString() };
+      for (const [k, v] of lastValueBySeries) tickRow[k] = v;
+      byTime.set(now, tickRow);
+    }
+
+    const chartData = [...byTime.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([, row]) => row);
+
+    // Determine last real snapshot across series (ignoring our synthetic tick)
+    let lastReal: number | null = null;
+    for (const s of data.series) {
+      const t = s.points.at(-1)?.t;
+      if (!t) continue;
+      const ms = new Date(t).getTime();
+      if (lastReal == null || ms > lastReal) lastReal = ms;
+    }
+
+    return {
+      chartData,
+      filteredSeries,
+      supportedRanges,
+      lastSnapshotAt: lastReal ? new Date(lastReal).toISOString() : null,
+    };
+  }, [data, range, mode, now]);
 
   if (q.isLoading) {
     return (
@@ -136,12 +200,13 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
     );
   }
 
-  const totalPoints = filteredSeries.reduce((n, s) => n + s.points.length, 0);
-  const isFlat = totalPoints <= filteredSeries.length; // one point per series max
+  const isStale = lastSnapshotAt ? now - new Date(lastSnapshotAt).getTime() > STALE_MS : true;
 
   return (
     <SectionShell
-      updatedAt={data.updatedAt}
+      updatedAt={lastSnapshotAt}
+      stale={isStale}
+      now={now}
       right={
         <div className="flex items-center gap-4 text-[11px]">
           {(["prob", "mult"] as Mode[]).map((m) => (
@@ -161,7 +226,6 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
         </div>
       }
     >
-      {/* Chart — the soul of the page. Taller, minimal chrome, bold strokes. */}
       <div className="h-[240px] w-full sm:h-[280px] md:h-[320px]">
         {chartData.length === 0 ? (
           <EmptyGraph />
@@ -218,7 +282,11 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
                       if (!isLast || cx == null || cy == null) return <g key={`d-${s.key}-${index}`} />;
                       return (
                         <g key={`d-${s.key}-${index}`}>
-                          <circle cx={cx} cy={cy} r={7} fill="var(--color-surface)" stroke={color} strokeWidth={3} />
+                          <circle cx={cx} cy={cy} r={9} fill={color} opacity={0.18}>
+                            <animate attributeName="r" values="7;12;7" dur="1.8s" repeatCount="indefinite" />
+                            <animate attributeName="opacity" values="0.35;0;0.35" dur="1.8s" repeatCount="indefinite" />
+                          </circle>
+                          <circle cx={cx} cy={cy} r={5} fill="var(--color-surface)" stroke={color} strokeWidth={3} />
                         </g>
                       );
                     }}
@@ -253,13 +321,6 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
         )}
       </div>
 
-      {isFlat && (
-        <p className="mt-3 text-[11px] tracking-tight text-[var(--color-ink-muted)]">
-          Only one snapshot recorded so far — movement will appear as multipliers update.
-        </p>
-      )}
-
-      {/* Range chips — text-only, restrained */}
       <div className="mt-5 flex items-center justify-end gap-4 text-[11px]">
         {RANGES.map((r) => {
           const supported = supportedRanges.includes(r);
@@ -291,12 +352,19 @@ function SectionShell({
   children,
   right,
   updatedAt,
+  stale,
+  now,
 }: {
   children: React.ReactNode;
   right?: React.ReactNode;
   updatedAt?: string | null;
+  stale?: boolean;
+  now?: number;
 }) {
-  const rel = useRelativeTime(updatedAt);
+  const rel = useRelativeTime(updatedAt, now ?? Date.now());
+  const dotColor = stale ? "#f59e0b" : "var(--color-neon)";
+  const label = stale ? "Delayed" : "Live";
+  const textColor = stale ? "text-amber-500/80" : "text-[var(--color-ink-muted)]/70";
   return (
     <section className="relative">
       <div className="mb-5 flex items-end justify-between gap-3">
@@ -305,12 +373,14 @@ function SectionShell({
             Market movement
           </h2>
           {updatedAt && (
-            <span className="inline-flex items-center gap-1.5 text-[10px] font-medium tracking-tight text-[var(--color-ink-muted)]/70">
+            <span className={`inline-flex items-center gap-1.5 text-[10px] font-medium tracking-tight ${textColor}`}>
               <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-neon)] opacity-70" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--color-neon)]" />
+                {!stale && (
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-70" style={{ background: dotColor }} />
+                )}
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full" style={{ background: dotColor }} />
               </span>
-              Live · updated {rel}
+              {label} · updated {rel}
             </span>
           )}
         </div>
@@ -335,4 +405,3 @@ function EmptyGraph() {
     </div>
   );
 }
-
