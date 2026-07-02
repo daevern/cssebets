@@ -254,22 +254,7 @@ function AuthedLayout() {
   }
 
 
-  const navItems = [
-    { to: "/dashboard", label: "Home", icon: IconHome },
-    { to: "/bets", label: "Bets", icon: IconBets },
-    { to: "/my-predictions", label: "Picks", icon: IconPicks },
-    { to: "/wallet", label: "Wallet", icon: IconWallet },
-    { to: "/payout", label: "Payout", icon: IconPayout },
-    { to: "/support", label: "Support", icon: IconSupport },
-  ] as const;
 
-  const mobileNavItems = [
-    { to: "/dashboard", label: "Home", icon: IconHome },
-    { to: "/bets", label: "Bets", icon: IconBets },
-    { to: "/wallet", label: "Wallet", icon: IconWallet },
-    { to: "/payout", label: "Payout", icon: IconPayout },
-    { to: "/support", label: "Support", icon: IconSupport },
-  ];
 
 
 
