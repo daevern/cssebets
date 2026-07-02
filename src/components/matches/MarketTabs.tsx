@@ -70,48 +70,47 @@ function displayLabel(selection: string, fallback: string): string {
   return fallback;
 }
 
-// Neutral base for every button; selection ring uses the market-specific color.
 const NEUTRAL_BASE =
-  "border-[var(--color-surface-border)] bg-[var(--color-surface-2)] hover:border-[var(--color-ink-muted)]/50";
+  "bg-[var(--color-surface-2)] border border-[var(--color-neon)]/15";
 
 const VARIANT_STYLES: Record<OddsVariant, { base: string; selected: string; priceColor: string; badgeBg: string; badgeText: string }> = {
   yes: {
-    base: NEUTRAL_BASE,
+    base: `${NEUTRAL_BASE} hover:border-[#60a5fa]/60`,
     selected: "border-2 border-[#60a5fa] bg-[var(--color-surface-2)] shadow-[0_0_0_1px_#60a5fa]",
     priceColor: "text-[var(--color-ink)]",
     badgeBg: "bg-[#60a5fa]",
     badgeText: "text-black",
   },
   no: {
-    base: NEUTRAL_BASE,
+    base: `${NEUTRAL_BASE} hover:border-[#fb7185]/60`,
     selected: "border-2 border-[#fb7185] bg-[var(--color-surface-2)] shadow-[0_0_0_1px_#fb7185]",
     priceColor: "text-[var(--color-ink)]",
     badgeBg: "bg-[#fb7185]",
     badgeText: "text-black",
   },
   home: {
-    base: NEUTRAL_BASE,
+    base: `${NEUTRAL_BASE} hover:border-[var(--color-neon)]/60`,
     selected: "border-2 border-[var(--color-neon)] bg-[var(--color-surface-2)] shadow-[0_0_0_1px_var(--color-neon)]",
     priceColor: "text-[var(--color-ink)]",
     badgeBg: "bg-[var(--color-neon)]",
     badgeText: "text-black",
   },
   draw: {
-    base: NEUTRAL_BASE,
+    base: `${NEUTRAL_BASE} hover:border-[#60a5fa]/60`,
     selected: "border-2 border-[#60a5fa] bg-[var(--color-surface-2)] shadow-[0_0_0_1px_#60a5fa]",
     priceColor: "text-[var(--color-ink)]",
     badgeBg: "bg-[#60a5fa]",
     badgeText: "text-black",
   },
   away: {
-    base: NEUTRAL_BASE,
+    base: `${NEUTRAL_BASE} hover:border-[#f472b6]/60`,
     selected: "border-2 border-[#f472b6] bg-[var(--color-surface-2)] shadow-[0_0_0_1px_#f472b6]",
     priceColor: "text-[var(--color-ink)]",
     badgeBg: "bg-[#f472b6]",
     badgeText: "text-black",
   },
   neutral: {
-    base: NEUTRAL_BASE,
+    base: `${NEUTRAL_BASE} hover:border-[var(--color-neon)]/60`,
     selected: "border-2 border-[var(--color-neon)] bg-[var(--color-surface-2)] shadow-[0_0_0_1px_var(--color-neon)]",
     priceColor: "text-[var(--color-ink)]",
     badgeBg: "bg-[var(--color-neon)]",
