@@ -70,48 +70,50 @@ function displayLabel(selection: string, fallback: string): string {
   return fallback;
 }
 
-// Chart-aligned colors: home = neon (green), draw = blue, away = pink
-// Yes = blue, No = red
+// Neutral base for every button; selection ring uses the market-specific color.
+const NEUTRAL_BASE =
+  "border-[var(--color-surface-border)] bg-[var(--color-surface-2)] hover:border-[var(--color-ink-muted)]/50";
+
 const VARIANT_STYLES: Record<OddsVariant, { base: string; selected: string; priceColor: string; badgeBg: string; badgeText: string }> = {
   yes: {
-    base: "border-[#60a5fa]/30 bg-[#0A1220] hover:border-[#60a5fa]",
-    selected: "border-2 border-[#60a5fa] bg-[#60a5fa]/15 shadow-[0_0_0_1px_#60a5fa]",
-    priceColor: "text-[#93c5fd]",
+    base: NEUTRAL_BASE,
+    selected: "border-2 border-[#60a5fa] bg-[var(--color-surface-2)] shadow-[0_0_0_1px_#60a5fa]",
+    priceColor: "text-[var(--color-ink)]",
     badgeBg: "bg-[#60a5fa]",
     badgeText: "text-black",
   },
   no: {
-    base: "border-[#fb7185]/30 bg-[#170B0D] hover:border-[#fb7185]",
-    selected: "border-2 border-[#fb7185] bg-[#fb7185]/15 shadow-[0_0_0_1px_#fb7185]",
-    priceColor: "text-[#fda4af]",
+    base: NEUTRAL_BASE,
+    selected: "border-2 border-[#fb7185] bg-[var(--color-surface-2)] shadow-[0_0_0_1px_#fb7185]",
+    priceColor: "text-[var(--color-ink)]",
     badgeBg: "bg-[#fb7185]",
     badgeText: "text-black",
   },
   home: {
-    base: "border-[var(--color-neon)]/30 bg-[#070D0A] hover:border-[var(--color-neon)]",
-    selected: "border-2 border-[var(--color-neon)] bg-[var(--color-neon)]/15 shadow-[0_0_0_1px_var(--color-neon)]",
-    priceColor: "text-[var(--color-neon)]",
+    base: NEUTRAL_BASE,
+    selected: "border-2 border-[var(--color-neon)] bg-[var(--color-surface-2)] shadow-[0_0_0_1px_var(--color-neon)]",
+    priceColor: "text-[var(--color-ink)]",
     badgeBg: "bg-[var(--color-neon)]",
     badgeText: "text-black",
   },
   draw: {
-    base: "border-[#60a5fa]/30 bg-[#0A1220] hover:border-[#60a5fa]",
-    selected: "border-2 border-[#60a5fa] bg-[#60a5fa]/15 shadow-[0_0_0_1px_#60a5fa]",
-    priceColor: "text-[#93c5fd]",
+    base: NEUTRAL_BASE,
+    selected: "border-2 border-[#60a5fa] bg-[var(--color-surface-2)] shadow-[0_0_0_1px_#60a5fa]",
+    priceColor: "text-[var(--color-ink)]",
     badgeBg: "bg-[#60a5fa]",
     badgeText: "text-black",
   },
   away: {
-    base: "border-[#f472b6]/30 bg-[#160A12] hover:border-[#f472b6]",
-    selected: "border-2 border-[#f472b6] bg-[#f472b6]/15 shadow-[0_0_0_1px_#f472b6]",
-    priceColor: "text-[#f9a8d4]",
+    base: NEUTRAL_BASE,
+    selected: "border-2 border-[#f472b6] bg-[var(--color-surface-2)] shadow-[0_0_0_1px_#f472b6]",
+    priceColor: "text-[var(--color-ink)]",
     badgeBg: "bg-[#f472b6]",
     badgeText: "text-black",
   },
   neutral: {
-    base: "border-[var(--color-surface-border)] bg-[#070D0A] hover:border-[var(--color-neon)]/50",
-    selected: "border-2 border-[var(--color-neon)] bg-[var(--color-neon)]/15 shadow-[0_0_0_1px_var(--color-neon)]",
-    priceColor: "text-[var(--color-neon)]",
+    base: NEUTRAL_BASE,
+    selected: "border-2 border-[var(--color-neon)] bg-[var(--color-surface-2)] shadow-[0_0_0_1px_var(--color-neon)]",
+    priceColor: "text-[var(--color-ink)]",
     badgeBg: "bg-[var(--color-neon)]",
     badgeText: "text-black",
   },
