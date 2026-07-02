@@ -124,13 +124,13 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
         </div>
       }
     >
-      {/* Chart — the soul of the page. Taller, minimal chrome. */}
-      <div className="h-72 w-full sm:h-80 md:h-96">
+      {/* Chart — the soul of the page. Taller, minimal chrome, bold strokes. */}
+      <div className="h-[440px] w-full sm:h-[500px] md:h-[560px]">
         {chartData.length === 0 ? (
           <EmptyGraph />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 12, right: 8, bottom: 4, left: -12 }}>
+            <LineChart data={chartData} margin={{ top: 16, right: 76, bottom: 4, left: -8 }}>
               <CartesianGrid strokeDasharray="1 4" stroke="var(--color-surface-border)" strokeOpacity={0.35} vertical={false} />
               <XAxis
                 dataKey="t"
@@ -157,24 +157,60 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
                   background: "var(--color-surface-2)",
                   border: "1px solid var(--color-surface-border)",
                   borderRadius: 2,
-                  fontSize: 11,
+                  fontSize: 12,
                 }}
                 labelFormatter={(v) => new Date(v as string).toLocaleString()}
                 formatter={(val: any) => (mode === "prob" ? `${val}%` : `${val}x`)}
               />
-              {filteredSeries.map((s, idx) => (
-                <Line
-                  key={s.key}
-                  type="monotone"
-                  dataKey={s.key}
-                  name={s.label}
-                  stroke={SERIES_COLORS[idx % SERIES_COLORS.length]}
-                  strokeWidth={1.5}
-                  dot={false}
-                  isAnimationActive={false}
-                  connectNulls
-                />
-              ))}
+              {filteredSeries.map((s, idx) => {
+                const color = SERIES_COLORS[idx % SERIES_COLORS.length];
+                const isPrimary = idx === 0;
+                return (
+                  <Line
+                    key={s.key}
+                    type="monotone"
+                    dataKey={s.key}
+                    name={s.label}
+                    stroke={color}
+                    strokeWidth={isPrimary ? 5 : 4}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    dot={(props: any) => {
+                      const { cx, cy, index } = props;
+                      const isLast = index === chartData.length - 1;
+                      if (!isLast || cx == null || cy == null) return <g key={`d-${s.key}-${index}`} />;
+                      return (
+                        <g key={`d-${s.key}-${index}`}>
+                          <circle cx={cx} cy={cy} r={7} fill="var(--color-surface)" stroke={color} strokeWidth={3} />
+                        </g>
+                      );
+                    }}
+                    activeDot={{ r: 6, strokeWidth: 2, stroke: color, fill: "var(--color-surface)" }}
+                    isAnimationActive={false}
+                    connectNulls
+                    label={(props: any) => {
+                      const { x, y, index, value } = props;
+                      if (index !== chartData.length - 1 || value == null) return <g key={`l-${s.key}-${index}`} />;
+                      const text = mode === "prob" ? `${value}%` : `${value}x`;
+                      return (
+                        <g key={`l-${s.key}-${index}`}>
+                          <text
+                            x={x + 12}
+                            y={y}
+                            dy={4}
+                            fill={color}
+                            fontSize={12}
+                            fontWeight={700}
+                            style={{ letterSpacing: "-0.01em" }}
+                          >
+                            {`${s.label} · ${text}`}
+                          </text>
+                        </g>
+                      );
+                    }}
+                  />
+                );
+              })}
             </LineChart>
           </ResponsiveContainer>
         )}
