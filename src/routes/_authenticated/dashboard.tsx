@@ -1,89 +1,61 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import type { SVGProps } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  Zap,
-  Ticket,
-  Flame,
-  Link2,
-  TrendingUp,
-  ArrowUpRight,
-  Radio,
-  Circle,
-} from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { useLandingData } from "@/components/HeroEnhancements";
+import { ArrowUpRight, ChevronRight, Trophy, Flame, Clock, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyWallet } from "@/lib/wallet.functions";
+import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
-import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
-import { FounderNote } from "@/components/trust/FounderNote";
-
-/* Subs bench drawing — same tactical-stencil style as TacticalPitch / TacticalCrown */
-function SubsBench(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 200 120"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      className="mx-auto w-full max-w-[200px] h-auto text-[var(--color-neon)] opacity-90 drop-shadow-[0_0_8px_rgba(var(--color-neon-glow-rgb),0.3)]"
-      {...props}
-    >
-      {/* Dugout roof */}
-      <path d="M 20 38 L 30 22 L 170 22 L 180 38 Z" strokeWidth="2" />
-      <line x1="20" y1="38" x2="180" y2="38" strokeWidth="2" />
-      {/* Roof ribs */}
-      <line x1="55" y1="22" x2="50" y2="38" strokeDasharray="2,2" />
-      <line x1="100" y1="22" x2="100" y2="38" strokeDasharray="2,2" />
-      <line x1="145" y1="22" x2="150" y2="38" strokeDasharray="2,2" />
-      {/* Back wall */}
-      <line x1="28" y1="38" x2="28" y2="80" />
-      <line x1="172" y1="38" x2="172" y2="80" />
-      {/* Bench seat */}
-      <rect x="28" y="72" width="144" height="10" strokeWidth="2" fill="currentColor" fillOpacity="0.08" />
-      {/* Bench legs */}
-      <line x1="40" y1="82" x2="40" y2="100" strokeWidth="2" />
-      <line x1="100" y1="82" x2="100" y2="100" strokeWidth="2" />
-      <line x1="160" y1="82" x2="160" y2="100" strokeWidth="2" />
-      {/* Three substitutes — circular heads + shoulder lines */}
-      <circle cx="60" cy="58" r="7" strokeWidth="2" />
-      <path d="M 48 72 Q 60 62 72 72" strokeWidth="2" />
-      <circle cx="100" cy="56" r="7" strokeWidth="2" />
-      <path d="M 88 72 Q 100 60 112 72" strokeWidth="2" />
-      <circle cx="140" cy="58" r="7" strokeWidth="2" />
-      <path d="M 128 72 Q 140 62 152 72" strokeWidth="2" />
-      {/* Ground line */}
-      <line x1="10" y1="100" x2="190" y2="100" strokeWidth="2" />
-      {/* Ball at the foot */}
-      <circle cx="178" cy="104" r="4" strokeWidth="1.5" />
-      <path d="M 178 100 L 180 104 L 178 108 L 176 104 Z" strokeWidth="1" />
-    </svg>
-  );
-}
-
-
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
-      { title: "Matchday — cssebets" },
-      { name: "description", content: "The whistle is about to blow. Take a side." },
+      { title: "Matchday — CSSEBets" },
+      { name: "description", content: "Today's featured football markets. Open a market and lock your prediction." },
     ],
   }),
-  component: Dashboard,
+  component: HomePage,
 });
 
-/* ------------ Country flag (mirrors /matches styling) ------------ */
-function TeamFlag({ name, large = false }: { name: string; large?: boolean }) {
-  const url = teamFlagUrl(name, large ? 320 : 160);
-  const sizeCls = large ? "h-14 w-24" : "h-10 w-16";
+type Match = {
+  id: string;
+  home_team: string;
+  away_team: string;
+  kickoff_at: string;
+  status: string;
+  home_score: number | null;
+  away_score: number | null;
+  stage: string | null;
+  reference_odds: { home: number; draw: number; away: number } | null;
+};
+
+function useTicker(ms = 30_000) {
+  const [n, setN] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setN(Date.now()), ms);
+    return () => clearInterval(id);
+  }, [ms]);
+  return n;
+}
+
+function toPct(odds: { home: number; draw: number; away: number } | null) {
+  if (!odds) return null;
+  const inv = { h: 1 / odds.home, d: 1 / odds.draw, a: 1 / odds.away };
+  const s = inv.h + inv.d + inv.a;
+  return {
+    home: Math.round((inv.h / s) * 100),
+    draw: Math.round((inv.d / s) * 100),
+    away: Math.round((inv.a / s) * 100),
+  };
+}
+
+function TeamFlag({ name, size = 56 }: { name: string; size?: number }) {
+  const url = teamFlagUrl(name, 320);
   if (!url) {
     return (
       <div
-        className={`grid ${sizeCls} place-items-center border border-border/40 bg-[var(--color-surface)] text-[10px] font-bold uppercase tracking-wider text-[var(--color-ink)] shadow-sm`}
+        className="grid place-items-center bg-[var(--surface-3)] text-[10px] font-bold uppercase tracking-wider text-[var(--ink)]"
+        style={{ width: size, height: size * 0.7 }}
       >
         {name.slice(0, 3)}
       </div>
@@ -93,567 +65,307 @@ function TeamFlag({ name, large = false }: { name: string; large?: boolean }) {
     <img
       src={url}
       alt={`${name} flag`}
-      className={`${sizeCls} shrink-0 border border-border/40 object-cover shadow-sm`}
+      className="object-cover"
+      style={{ width: size, height: size * 0.72 }}
       loading="lazy"
     />
   );
 }
 
-/* --------------------- Stencil flip digits ---------------------- */
-function DigitCell({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="flex flex-col items-center">
-      <div className="relative grid h-16 w-14 place-items-center overflow-hidden border border-[var(--color-surface-border)] bg-[#070D0A]">
-        <span className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-[var(--color-neon)]/15" />
-        <span
-          key={value}
-          className="font-display text-[34px] font-bold leading-none tabular-nums text-[var(--color-ink)]"
-        >
-          {value}
-        </span>
-      </div>
-      <span className="mt-1.5 text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-        {label}
-      </span>
-    </div>
-  );
-}
-function ColonDots() {
-  return (
-    <div className="flex flex-col items-center gap-1 pb-5">
-      <span className="h-1 w-1 rounded-full bg-[var(--color-neon)]" />
-      <span className="h-1 w-1 rounded-full bg-[var(--color-neon)]" />
-    </div>
-  );
+function statusLabel(m: Match, now: number) {
+  if (m.status === "live") return "LIVE";
+  if (m.status === "finished") return "Full time";
+  const diff = new Date(m.kickoff_at).getTime() - now;
+  if (diff <= 0) return "Starting";
+  const d = new Date(m.kickoff_at);
+  const today = new Date(now);
+  const sameDay = d.toDateString() === today.toDateString();
+  const h = d.getHours() % 12 || 12;
+  const time = `${h}:${String(d.getMinutes()).padStart(2, "0")}${d.getHours() >= 12 ? "PM" : "AM"}`;
+  return sameDay ? `Today · ${time}` : `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${time}`;
 }
 
-function Countdown({ kickoff }: { kickoff: string | null }) {
-  const target = useMemo(
-    () => (kickoff ? new Date(kickoff).getTime() : Date.now() + 6 * 60 * 60 * 1000),
-    [kickoff],
-  );
-  const [now, setNow] = useState(() => Date.now());
+function HomePage() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listMatchesForUsers);
+  const now = useTicker(30_000);
+
+  const { data } = useQuery({
+    queryKey: ["matches"],
+    queryFn: async () => (await listFn()) as Match[],
+    refetchInterval: 60_000,
+  });
+
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const ms = Math.max(0, target - now);
-  const h = Math.floor(ms / 3_600_000);
-  const m = Math.floor((ms % 3_600_000) / 60_000);
-  const s = Math.floor((ms % 60_000) / 1000);
-  const pad = (x: number) => x.toString().padStart(2, "0");
+    const ch = supabase
+      .channel("home-matches")
+      .on("postgres_changes", { event: "*", schema: "public", table: "matches" }, () =>
+        qc.invalidateQueries({ queryKey: ["matches"] }),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc]);
+
+  const { featured, trending } = useMemo(() => {
+    const arr = data ?? [];
+    const live = arr.filter((m) => m.status === "live");
+    const upcoming = arr
+      .filter((m) => m.status !== "finished" && new Date(m.kickoff_at).getTime() > now)
+      .sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime());
+    const featured = live[0] ?? upcoming[0] ?? null;
+    const trending = [
+      ...live,
+      ...upcoming.slice(0, 6),
+    ]
+      .filter((m) => m.id !== featured?.id)
+      .slice(0, 8);
+    return { featured, trending };
+  }, [data, now]);
 
   return (
-    <div className="flex items-end justify-center gap-2">
-      <DigitCell value={pad(h)} label="Hours" />
-      <ColonDots />
-      <DigitCell value={pad(m)} label="Min" />
-      <ColonDots />
-      <DigitCell value={pad(s)} label="Sec" />
+    <div className="flex flex-col gap-8 px-4 pt-5">
+      {/* Header */}
+      <header className="flex items-end justify-between">
+        <div>
+          <h1 className="font-display text-[38px] font-bold leading-none tracking-tight text-[var(--ink)]">
+            Matchday
+          </h1>
+          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+            <span className="text-[13px]">🌐</span>
+            FIFA World Cup 2026
+            <ChevronRight className="h-3 w-3" />
+          </div>
+        </div>
+        <Link
+          to="/matches"
+          className="flex items-center gap-1 rounded-full border border-[var(--color-surface-border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--ink-muted)] transition-colors hover:border-[var(--neon)]/50 hover:text-[var(--ink)]"
+        >
+          See all fixtures
+          <ChevronRight className="h-3 w-3" />
+        </Link>
+      </header>
+
+      {/* Featured match hero */}
+      {featured ? (
+        <FeaturedHero match={featured} now={now} />
+      ) : (
+        <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-10 text-center text-sm text-[var(--ink-muted)]">
+          No fixtures on the slate yet — check back closer to kickoff.
+        </div>
+      )}
+
+      {/* Live & Trending */}
+      {trending.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+                Live & Trending
+              </h2>
+              <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">Markets with the most action right now.</p>
+            </div>
+            <Link
+              to="/matches"
+              className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]"
+            >
+              View all <ChevronRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {trending.map((m) => (
+              <TrendingChip key={m.id} match={m} now={now} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Featured shortcuts */}
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-[15px] font-bold tracking-tight text-[var(--ink)]">Featured</h2>
+          <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">Explore top markets and upcoming fixtures.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2.5">
+          <ShortcutTile icon={<Trophy className="h-4 w-4" />} title="World Cup 2026" sub="All markets" to="/matches" />
+          <ShortcutTile icon={<Flame className="h-4 w-4" />} title="Popular" sub="High activity" to="/matches" />
+          <ShortcutTile icon={<Clock className="h-4 w-4" />} title="Upcoming" sub="Next 24h" to="/matches" />
+          <ShortcutTile icon={<Star className="h-4 w-4" />} title="Specials" sub="Curated picks" to="/matches" />
+        </div>
+      </section>
     </div>
   );
 }
 
-/* ------------------------ Emotional copy ------------------------ */
-function tensionLine(ms: number): { kicker: string; line: string } {
-  if (ms <= 0)
-    return { kicker: "Live now", line: "The whistle blew. Last chance to call it." };
-  const mins = ms / 60_000;
-  if (mins < 15)
-    return { kicker: "Closing in", line: "Lines lock in minutes. Don't get caught watching." };
-  if (mins < 60)
-    return { kicker: "Under one hour", line: "Conviction wins matchdays. Take a side." };
-  if (mins < 6 * 60)
-    return { kicker: "Tonight's call", line: "Everyone has a guess. You have a position." };
-  return { kicker: "On the slate", line: "Read the room. Then back yourself." };
-}
-
-/* --------------------------- Page --------------------------- */
-function Dashboard() {
-  const landing = useLandingData();
-  const next = landing?.nextMatches?.[0] ?? null;
-  const kickoff = next?.kickoffAt ?? null;
-
-  const { user } = useAuth();
-  const uid = user?.id;
-  const firstName = (user?.user_metadata?.full_name as string | undefined)?.split(" ")[0]
-    ?? user?.email?.split("@")[0]
-    ?? "Player";
-
-  const walletFn = useServerFn(getMyWallet);
-  const wallet = useQuery({
-    queryKey: ["my-wallet", uid],
-    enabled: !!uid,
-    queryFn: () => walletFn({}),
-    staleTime: 15_000,
-  });
-  const balance = Math.round(wallet.data?.balance ?? 0);
-
-  const { data: picks } = useQuery({
-    queryKey: ["dashboard-active-picks", uid],
-    enabled: !!uid,
-    refetchOnWindowFocus: true,
-    staleTime: 15_000,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("predictions")
-        .select("id, status, points, virtual_stake, potential_return")
-        .eq("user_id", uid!)
-        .eq("status", "pending");
-      if (error) throw error;
-      return (data ?? []) as Array<{
-        id: string;
-        status: string;
-        points: number;
-        virtual_stake: number;
-        potential_return: number;
-      }>;
-    },
-  });
-
-  const { data: historyCount = 0 } = useQuery({
-    queryKey: ["dashboard-history-count", uid],
-    enabled: !!uid,
-    staleTime: 30_000,
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("predictions")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", uid!)
-        .neq("status", "pending");
-      if (error) throw error;
-      return count ?? 0;
-    },
-  });
-
-  const stakeOf = (p: { points: number; virtual_stake: number }) =>
-    Number(p.virtual_stake ?? 0) || Number(p.points ?? 0);
-  const liveCount = picks?.length ?? 0;
-  const biggestStake = picks?.reduce((m, p) => Math.max(m, stakeOf(p)), 0) ?? 0;
-  const expectedPayout = picks?.reduce((s, p) => s + Number(p.potential_return ?? 0), 0) ?? 0;
-  const totalRisked = picks?.reduce((s, p) => s + stakeOf(p), 0) ?? 0;
-  const potentialWin = Math.max(0, expectedPayout - totalRisked);
-
-  const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
-
-  const msToKick = kickoff ? Math.max(0, new Date(kickoff).getTime() - Date.now()) : 6 * 3600_000;
-  const tension = tensionLine(msToKick);
-  const isLive = kickoff && msToKick === 0;
-
-  const slateCount = landing?.nextMatches?.length ?? 0;
-  const activeToday = landing?.stats?.activeToday ?? 0;
+function FeaturedHero({ match, now }: { match: Match; now: number }) {
+  const live = match.status === "live";
+  const pct = toPct(match.reference_odds);
+  const status = statusLabel(match, now);
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
-      {/* Scoreboard grain background */}
+    <Link
+      to="/matches/$matchId"
+      params={{ matchId: match.id }}
+      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] transition-colors hover:border-[var(--neon)]/40"
+    >
+      {/* Ambient stadium glow */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 opacity-[0.04]"
+        className="pointer-events-none absolute inset-0"
         style={{
-          backgroundImage:
-            "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
+          background:
+            "radial-gradient(120% 60% at 50% 0%, rgba(34,224,107,0.10), transparent 60%)",
         }}
       />
 
-      <div className="relative mx-auto flex max-w-md flex-col gap-5 px-4 py-5 md:max-w-2xl md:py-8">
-
-        {/* ---------- Editorial greeting ---------- */}
-        <section className="space-y-2">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
-            {isLive ? (
-              <>
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-neon)] opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--color-neon)]" />
-                </span>
-                Live · Matchday
-              </>
-            ) : (
-              <>
-                <Radio className="h-3 w-3" />
-                Matchday · {new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
-              </>
-            )}
-          </div>
-          <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight md:text-4xl">
-            Hello, <span className="text-[var(--color-neon)]">{firstName}</span>.
-            <br />
-            <span className="text-[var(--color-ink-muted)]">Ready to score?</span>
-          </h1>
-        </section>
-
-        {/* ---------- NEXT UP — hero fixture card ---------- */}
-        <article className="relative overflow-hidden border border-[var(--color-neon)]/25 bg-[var(--color-surface-2)]">
-          {/* corner tick marks */}
-          <Corner pos="tl" />
-          <Corner pos="tr" />
-          <Corner pos="bl" />
-          <Corner pos="br" />
-
-          {/* Stencil header band */}
-          <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-5 py-3">
-            <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-              <Zap className="h-3 w-3" />
-              Fixture №01 · Next Up
-            </span>
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-              {tension.kicker}
-            </span>
-          </div>
-
-          <div className="px-5 pb-5 pt-6">
-            {/* Teams row — flags above names, matches-page style */}
-            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-              <div className="flex flex-col items-center gap-2">
-                <TeamFlag name={next?.homeTeam ?? "TBD"} large />
-                <span className="max-w-[110px] truncate text-center text-sm font-bold uppercase tracking-wide">
-                  {next?.homeTeam ?? "TBD"}
-                </span>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <span className="font-display text-xl font-bold leading-none text-[var(--color-ink-muted)]">
-                  vs
-                </span>
-                <span className="h-8 w-px bg-[var(--color-neon)]/40" />
-              </div>
-              <div className="flex flex-col items-center gap-2">
-                <TeamFlag name={next?.awayTeam ?? "TBD"} large />
-                <span className="max-w-[110px] truncate text-center text-sm font-bold uppercase tracking-wide">
-                  {next?.awayTeam ?? "TBD"}
-                </span>
-              </div>
-            </div>
-
-            {/* Countdown */}
-            <div className="mt-6">
-              <Countdown kickoff={kickoff} />
-            </div>
-
-            {/* Odds teaser — psychological micro-commitment */}
-            {(next?.homeOdds || next?.drawOdds || next?.awayOdds) && (
-              <div className="mt-6 grid grid-cols-3 gap-2">
-                <OddsChip label={next?.homeTeam ?? "Home"} odds={next?.homeOdds} side="L" />
-                <OddsChip label="Draw" odds={next?.drawOdds} side="M" />
-                <OddsChip label={next?.awayTeam ?? "Away"} odds={next?.awayOdds} side="R" />
-              </div>
-            )}
-
-            <Link to="/bets" className="mt-5 block">
-              <button
-                type="button"
-                className="group flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-neon)] px-5 py-4 text-sm font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_32px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99]"
-              >
-                <span>Bet now</span>
-                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-              </button>
-            </Link>
-
-            {/* Tournament pulse */}
-            <div className="mt-4 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-              <span className="inline-flex items-center gap-1.5">
-                <Circle className="h-1.5 w-1.5 fill-[var(--color-neon)] text-[var(--color-neon)]" />
-                {slateCount} on the slate
+      <div className="relative flex flex-col gap-5 p-5">
+        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em]">
+          {live ? (
+            <>
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--neon)] opacity-70" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
               </span>
-              <span>{fmt(activeToday)} players live</span>
-            </div>
-          </div>
-        </article>
+              <span className="text-[var(--neon)]">LIVE</span>
+              <span className="text-[var(--ink-muted)]">·</span>
+              <span className="text-[var(--ink-muted)]">2nd Half · 68'</span>
+            </>
+          ) : (
+            <span className="text-[var(--ink-muted)]">{status}</span>
+          )}
+        </div>
 
-        {/* ---------- YOUR POSITION (Picks) ---------- */}
-        <article className="border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
-          <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-5 py-3">
-            <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-              <Ticket className="h-3 w-3" />
-              Your Position · {liveCount} in play
-            </span>
-            {liveCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">
-                <Flame className="h-3 w-3" /> Hot
-              </span>
-            )}
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+          <div className="flex flex-col items-center gap-2">
+            <TeamFlag name={match.home_team} size={80} />
+            <span className="text-[13px] font-bold tracking-tight text-center">{match.home_team}</span>
           </div>
-
-          <div className="px-5 py-5">
-            {liveCount > 0 ? (
-              <>
-                <div className="grid grid-cols-2 gap-3">
-                  <StatBlock
-                    label="Total stake"
-                    value={fmt(totalRisked)}
-                    unit="pts"
-                  />
-                  <StatBlock
-                    label="Expected payout"
-                    value={fmt(expectedPayout)}
-                    unit="pts"
-                    accent
-                    icon={<TrendingUp className="h-3 w-3" />}
-                  />
-                </div>
-                <Link to="/my-predictions" className="mt-4 block">
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] transition-colors hover:border-[var(--color-neon)] hover:text-[var(--color-neon)]"
-                  >
-                    <span>Watch your picks</span>
-                    <ArrowUpRight className="h-4 w-4" />
-                  </button>
-                </Link>
-              </>
-            ) : historyCount > 0 ? (
-              <BenchSlider historyCount={historyCount} />
+          <div className="flex flex-col items-center gap-1">
+            {live || match.status === "finished" ? (
+              <div className="font-display text-[38px] font-bold leading-none tabular-nums text-[var(--ink)]">
+                {match.home_score ?? 0} <span className="mx-0.5 text-[var(--ink-muted)]">-</span> {match.away_score ?? 0}
+              </div>
             ) : (
-              <>
-                <div className="flex justify-center pb-2">
-                  <SubsBench className="h-28 w-auto" />
-                </div>
-                <p className="text-center font-display text-xl font-bold leading-tight tracking-tight">
-                  You're on the bench.
-                </p>
-                <p className="mx-auto mt-1.5 max-w-xs text-center text-sm text-[var(--color-ink-muted)]">
-                  Get on the team sheet now.
-                </p>
-                <Link to="/bets" className="mt-4 block">
-                  <button
-                    type="button"
-                    className="flex w-full items-center justify-between rounded-md border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/5 px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--color-neon)] transition-colors hover:bg-[var(--color-neon)]/10"
-                  >
-                    <span>Get in the game</span>
-                    <ArrowUpRight className="h-4 w-4" />
-                  </button>
-                </Link>
-              </>
+              <div className="font-display text-[26px] font-bold leading-none text-[var(--ink-muted)]">vs</div>
             )}
           </div>
-        </article>
+          <div className="flex flex-col items-center gap-2">
+            <TeamFlag name={match.away_team} size={80} />
+            <span className="text-[13px] font-bold tracking-tight text-center">{match.away_team}</span>
+          </div>
+        </div>
 
-        {/* ---------- Trust & Transparency surfaces ---------- */}
-        <FounderNote />
+        {/* Probability strip */}
+        {pct && match.reference_odds && (
+          <div className="grid grid-cols-3 divide-x divide-[var(--color-surface-border)] rounded-xl border border-[var(--color-surface-border)] bg-[var(--surface-3)]/60 py-3 text-center">
+            <ProbCell label={match.home_team} pct={pct.home} mult={match.reference_odds.home} tone="home" />
+            <ProbCell label="Draw" pct={pct.draw} mult={match.reference_odds.draw} tone="draw" />
+            <ProbCell label={match.away_team} pct={pct.away} mult={match.reference_odds.away} tone="away" />
+          </div>
+        )}
 
-        <footer className="mt-6 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-          <Link to="/dashboard" className="flex items-center gap-2 hover:text-[var(--color-ink)]">
-            <CsseLogo size={16} />
-          </Link>
-          <span>© {new Date().getFullYear()} <BrandText /></span>
-        </footer>
+        <div className="mt-1 flex items-center justify-center gap-2 rounded-xl bg-[var(--neon)] py-3.5 text-[15px] font-bold tracking-tight text-[#04140A] transition-transform group-hover:translate-y-[-1px]">
+          Open Market
+          <ArrowUpRight className="h-4 w-4" />
+        </div>
       </div>
-    </div>
-  );
-}
-
-/* --------------------------- bits --------------------------- */
-function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
-  const map: Record<typeof pos, string> = {
-    tl: "top-0 left-0 border-t border-l",
-    tr: "top-0 right-0 border-t border-r",
-    bl: "bottom-0 left-0 border-b border-l",
-    br: "bottom-0 right-0 border-b border-r",
-  };
-  return (
-    <span
-      aria-hidden
-      className={`pointer-events-none absolute h-3 w-3 border-[var(--color-neon)] ${map[pos]}`}
-    />
-  );
-}
-
-function OddsChip({
-  label,
-  odds,
-  side,
-}: {
-  label: string;
-  odds: number | null | undefined;
-  side: "L" | "M" | "R";
-}) {
-  const align = side === "L" ? "items-start" : side === "R" ? "items-end" : "items-center";
-  return (
-    <Link
-      to="/bets"
-      className={`flex ${align} flex-col gap-1 border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2.5 transition-colors hover:border-[var(--color-neon)]`}
-    >
-      <span className="max-w-full truncate text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-        {label}
-      </span>
-      <span className="font-display text-lg font-bold tabular-nums text-[var(--color-ink)]">
-        {odds != null ? odds.toFixed(2) : "—"}
-      </span>
     </Link>
   );
 }
 
-function StatBlock({
+function ProbCell({
   label,
-  value,
-  unit,
-  accent,
-  icon,
+  pct,
+  mult,
+  tone,
 }: {
   label: string;
-  value: string;
-  unit: string;
-  accent?: boolean;
-  icon?: React.ReactNode;
+  pct: number;
+  mult: number;
+  tone: "home" | "draw" | "away";
+}) {
+  const color =
+    tone === "home" ? "text-rose-400" : tone === "away" ? "text-[var(--neon)]" : "text-sky-300";
+  return (
+    <div className="px-1">
+      <div className="truncate text-[11px] font-semibold text-[var(--ink)]">{label}</div>
+      <div className={`mt-0.5 text-[18px] font-bold leading-none tabular-nums ${color}`}>{pct}%</div>
+      <div className="mt-1 text-[10px] tabular-nums text-[var(--ink-muted)]">{mult.toFixed(2)}x</div>
+    </div>
+  );
+}
+
+function TrendingChip({ match, now }: { match: Match; now: number }) {
+  const live = match.status === "live";
+  const pct = toPct(match.reference_odds);
+  return (
+    <Link
+      to="/matches/$matchId"
+      params={{ matchId: match.id }}
+      className={`shrink-0 rounded-xl border bg-[var(--surface-2)] px-3 py-3 transition-colors ${
+        live ? "border-[var(--neon)]/40" : "border-[var(--color-surface-border)]"
+      } hover:border-[var(--neon)]/50`}
+      style={{ width: 148 }}
+    >
+      <div className="flex items-center gap-1.5">
+        <TeamFlag name={match.home_team} size={26} />
+        <span className="text-[10px] font-bold text-[var(--ink-muted)]">·</span>
+        <TeamFlag name={match.away_team} size={26} />
+      </div>
+      <div className="mt-2 text-[12px] font-bold tracking-tight text-[var(--ink)]">
+        {abbrev(match.home_team)} vs {abbrev(match.away_team)}
+      </div>
+      {live ? (
+        <div className="mt-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--neon)]">
+          <span className="h-1 w-1 animate-pulse rounded-full bg-[var(--neon)]" /> LIVE
+        </div>
+      ) : pct ? (
+        <div className="mt-1 flex items-center gap-1.5 text-[11px] tabular-nums">
+          <span className="text-rose-400 font-semibold">{pct.home}%</span>
+          <span className="text-[var(--ink-dim)]">·</span>
+          <span className="text-[var(--neon)] font-semibold">{pct.away}%</span>
+        </div>
+      ) : (
+        <div className="mt-1 text-[10px] text-[var(--ink-muted)]">{statusLabel(match, now)}</div>
+      )}
+    </Link>
+  );
+}
+
+function abbrev(name: string) {
+  const stops: Record<string, string> = {
+    "United States": "USA", "United Kingdom": "UK", "Bosnia & Herzegovina": "BIH",
+  };
+  if (stops[name]) return stops[name];
+  return name.length <= 4 ? name.toUpperCase() : name.slice(0, 3).toUpperCase();
+}
+
+function ShortcutTile({
+  icon,
+  title,
+  sub,
+  to,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  sub: string;
+  to: string;
 }) {
   return (
-    <div
-      className={`border bg-[#070D0A] p-4 ${accent ? "border-[var(--color-neon)]/40" : "border-[var(--color-surface-border)]"}`}
+    <Link
+      to={to}
+      className="group flex flex-col justify-between rounded-xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4 transition-colors hover:border-[var(--neon)]/40"
     >
-      <div
-        className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.22em] ${accent ? "text-[var(--color-neon)]" : "text-[var(--color-ink-muted)]"}`}
-      >
+      <div className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--surface-3)] text-[var(--neon)]">
         {icon}
-        {label}
       </div>
-      <div className="mt-2 flex items-baseline gap-1">
-        <span
-          className={`font-display text-2xl font-bold tabular-nums ${accent ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]"}`}
-        >
-          {value}
-        </span>
-        <span
-          className={`text-[10px] font-bold uppercase tracking-widest ${accent ? "text-[var(--color-neon)]/70" : "text-[var(--color-ink-muted)]"}`}
-        >
-          {unit}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/* --------- Tactical clipboard (history icon) --------- */
-function TacticalClipboard(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      viewBox="0 0 200 120"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-      className="mx-auto w-full max-w-[200px] h-auto text-[var(--color-neon)] opacity-90 drop-shadow-[0_0_8px_rgba(var(--color-neon-glow-rgb),0.3)]"
-      {...props}
-    >
-      {/* Clipboard body */}
-      <rect x="55" y="18" width="90" height="92" strokeWidth="2" fill="currentColor" fillOpacity="0.04" />
-      {/* Clip */}
-      <rect x="82" y="10" width="36" height="14" strokeWidth="2" fill="currentColor" fillOpacity="0.12" />
-      <line x1="88" y1="14" x2="112" y2="14" strokeWidth="2" />
-      {/* Header band */}
-      <line x1="55" y1="34" x2="145" y2="34" strokeDasharray="3,3" />
-      {/* Result rows (W / L / D ticks) */}
-      <line x1="64" y1="48" x2="120" y2="48" strokeWidth="1.5" />
-      <circle cx="132" cy="48" r="5" strokeWidth="2" />
-      <path d="M 129 48 L 131 50 L 135 46" strokeWidth="2" />
-
-      <line x1="64" y1="66" x2="120" y2="66" strokeWidth="1.5" />
-      <circle cx="132" cy="66" r="5" strokeWidth="2" />
-      <path d="M 129 63 L 135 69 M 135 63 L 129 69" strokeWidth="2" />
-
-      <line x1="64" y1="84" x2="120" y2="84" strokeWidth="1.5" />
-      <circle cx="132" cy="84" r="5" strokeWidth="2" />
-      <line x1="128" y1="84" x2="136" y2="84" strokeWidth="2" />
-
-      {/* Footer total */}
-      <line x1="64" y1="100" x2="136" y2="100" strokeDasharray="2,3" />
-    </svg>
-  );
-}
-
-/* ----- Bench slider: 2 slides, swipeable ----- */
-function BenchSlider({ historyCount }: { historyCount: number }) {
-  const [idx, setIdx] = useState(0);
-  const [startX, setStartX] = useState<number | null>(null);
-
-  const onTouchStart = (e: React.TouchEvent) => setStartX(e.touches[0].clientX);
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (startX == null) return;
-    const dx = e.changedTouches[0].clientX - startX;
-    if (Math.abs(dx) > 40) setIdx((i) => Math.max(0, Math.min(1, i + (dx < 0 ? 1 : -1))));
-    setStartX(null);
-  };
-
-  return (
-    <div>
-      <div className="overflow-hidden" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-        <div
-          className="flex transition-transform duration-300 ease-out"
-          style={{ transform: `translateX(-${idx * 100}%)` }}
-        >
-          {/* Slide 1 — Get in the game */}
-          <div className="w-full shrink-0 px-1">
-            <div className="flex justify-center pb-2">
-              <SubsBench className="h-28 w-auto" />
-            </div>
-            <p className="text-center font-display text-xl font-bold leading-tight tracking-tight">
-              You're on the bench.
-            </p>
-            <p className="mx-auto mt-1.5 max-w-xs text-center text-sm text-[var(--color-ink-muted)]">
-              Get on the team sheet now.
-            </p>
-            <Link to="/bets" className="mt-4 block">
-              <button
-                type="button"
-                className="flex w-full items-center justify-between rounded-md border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/5 px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--color-neon)] transition-colors hover:bg-[var(--color-neon)]/10"
-              >
-                <span>Get in the game</span>
-                <ArrowUpRight className="h-4 w-4" />
-              </button>
-            </Link>
-          </div>
-
-          {/* Slide 2 — Picks history */}
-          <div className="w-full shrink-0 px-1">
-            <div className="flex justify-center pb-2">
-              <TacticalClipboard className="h-28 w-auto" />
-            </div>
-            <p className="text-center font-display text-xl font-bold leading-tight tracking-tight">
-              Read the tape.
-            </p>
-            <p className="mx-auto mt-1.5 max-w-xs text-center text-sm text-[var(--color-ink-muted)]">
-              {historyCount.toLocaleString("en-US")} settled {historyCount === 1 ? "pick" : "picks"} on record.
-            </p>
-            <Link to="/my-predictions" className="mt-4 block">
-              <button
-                type="button"
-                className="flex w-full items-center justify-between rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] transition-colors hover:border-[var(--color-neon)] hover:text-[var(--color-neon)]"
-              >
-                <span>View picks history</span>
-                <ArrowUpRight className="h-4 w-4" />
-              </button>
-            </Link>
-          </div>
+      <div className="mt-3">
+        <div className="text-[14px] font-bold tracking-tight text-[var(--ink)]">{title}</div>
+        <div className="mt-0.5 flex items-center justify-between text-[11px] text-[var(--ink-muted)]">
+          <span>{sub}</span>
+          <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
         </div>
       </div>
-
-      {/* Dots + arrows */}
-      <div className="mt-4 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setIdx(0)}
-          aria-label="Previous"
-          className={`text-[10px] font-bold uppercase tracking-[0.22em] transition-colors ${idx === 0 ? "text-[var(--color-ink-muted)]/40" : "text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]"}`}
-        >
-          ‹ Bet
-        </button>
-        <div className="flex items-center gap-1.5">
-          {[0, 1].map((i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setIdx(i)}
-              aria-label={`Slide ${i + 1}`}
-              className={`h-1.5 transition-all ${idx === i ? "w-6 bg-[var(--color-neon)]" : "w-1.5 bg-[var(--color-surface-border)]"}`}
-            />
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={() => setIdx(1)}
-          aria-label="Next"
-          className={`text-[10px] font-bold uppercase tracking-[0.22em] transition-colors ${idx === 1 ? "text-[var(--color-ink-muted)]/40" : "text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]"}`}
-        >
-          History ›
-        </button>
-      </div>
-    </div>
+    </Link>
   );
 }

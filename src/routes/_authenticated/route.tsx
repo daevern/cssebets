@@ -12,20 +12,14 @@ import { Shield, LogOut, Loader2 } from "lucide-react";
 import { CsseMark } from "@/components/brand/CsseMark";
 import { CsseLogoAnimated } from "@/components/brand/CsseLogoAnimated";
 import {
-  IconHome,
-  IconBets,
-  IconPicks,
-  IconWallet,
-  IconPayout,
-  IconSupport,
-  IconHelp,
-  IconSettings,
   IconLogout,
 } from "@/components/brand/NavIcons";
-import { IconShield, IconBroadcast, IconChangelog } from "@/components/trust/TrustIcons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
+import { TopBar } from "@/components/nav/TopBar";
+import { BottomNav } from "@/components/nav/BottomNav";
+
 
 import { TourProvider, useTour } from "@/components/onboarding/TourProvider";
 import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
@@ -260,165 +254,32 @@ function AuthedLayout() {
   }
 
 
-  const navItems = [
-    { to: "/dashboard", label: "Home", icon: IconHome },
-    { to: "/bets", label: "Bets", icon: IconBets },
-    { to: "/my-predictions", label: "Picks", icon: IconPicks },
-    { to: "/wallet", label: "Wallet", icon: IconWallet },
-    { to: "/payout", label: "Payout", icon: IconPayout },
-    { to: "/support", label: "Support", icon: IconSupport },
-  ] as const;
 
-  const mobileNavItems = [
-    { to: "/dashboard", label: "Home", icon: IconHome },
-    { to: "/bets", label: "Bets", icon: IconBets },
-    { to: "/wallet", label: "Wallet", icon: IconWallet },
-    { to: "/payout", label: "Payout", icon: IconPayout },
-    { to: "/support", label: "Support", icon: IconSupport },
-  ];
 
 
 
 
   return (
     <TourProvider>
-    <div className="min-h-screen flex flex-col pb-20 md:pb-0">
-      <WelcomeModal />
-      {/* Top bar — stencil scoreboard */}
-      <header className="sticky top-0 z-40 border-b border-[var(--color-surface-border)] bg-[var(--color-surface)]/90 backdrop-blur supports-[backdrop-filter]:bg-[var(--color-surface)]/70">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 -bottom-px h-px"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(90deg, var(--color-neon) 0 6px, transparent 6px 12px)",
-            opacity: 0.4,
-          }}
+      <div className="relative min-h-screen bg-[var(--surface)] text-[var(--ink)]">
+        <WelcomeModal />
+        <TopBar
+          balance={showBalance ? (wallet.data?.balance ?? 0) : null}
+          loading={wallet.isLoading}
+          onSignOut={signOut}
         />
-        <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
-          <Link to="/dashboard" aria-label="CSSEBets home" className="flex items-center gap-2 group">
-            <span className="sm:hidden"><CsseMark className="h-7 w-7 text-[var(--color-ink)]" title="CSSEBets" /></span>
-            <span className="hidden sm:inline-flex">
-              <CsseLogoAnimated size={26} duration={1.6} />
-            </span>
-          </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const badge =
-                item.to === "/payout" ? payoutBadge :
-                item.to === "/support" ? supportBadge : 0;
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className="relative flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] [&.active]:text-[var(--color-neon)]"
-                  activeOptions={{ exact: item.to === "/dashboard" }}
-                >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
-                  {badge > 0 && (
-                    <span className="absolute -top-0.5 -right-1 inline-flex min-w-[16px] h-[16px] items-center justify-center bg-[var(--color-neon)] px-1 text-[9px] font-bold text-[var(--color-surface)] tabular-nums">
-                      {badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="flex items-center gap-1.5">
-            {showBalance && (
-              <Link
-                to="/wallet"
-                data-tour="wallet-balance"
-                className="relative flex items-center gap-1.5 border border-dashed border-[var(--color-neon)]/40 bg-[var(--color-surface-2)] px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] tabular-nums text-[var(--color-ink)] hover:border-[var(--color-neon)]"
-                title="Your points balance"
-              >
-                <IconWallet className="h-3.5 w-3.5 text-[var(--color-neon)]" />
-                {wallet.isLoading ? "…" : (wallet.data?.balance ?? 0).toLocaleString()}
-                <span className="text-[var(--color-ink-muted)] font-semibold">pts</span>
-              </Link>
-            )}
-            <Link to="/trust-center" title="Trust Center" className="hidden md:inline-flex p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]">
-              <IconShield className="h-4 w-4" />
-            </Link>
-            <Link to="/status" title="Platform Status" className="hidden md:inline-flex p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]">
-              <IconBroadcast className="h-4 w-4" />
-            </Link>
-            <Link to="/changelog" title="Changelog" className="hidden md:inline-flex p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]">
-              <IconChangelog className="h-4 w-4" />
-            </Link>
-            <Link to="/help" data-tour="help-link" title="Help Center" className="p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]">
-              <IconHelp className="h-4 w-4" />
-            </Link>
-            <Link to="/settings" title="Settings" className="p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]">
-              <IconSettings className="h-4 w-4" />
-            </Link>
-            <button
-              onClick={signOut}
-              title="Sign out"
-              className="p-2 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]"
-            >
-              <IconLogout className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </header>
+        <main className="mx-auto w-full max-w-md md:max-w-2xl safe-bottom">
+          <Outlet />
+        </main>
 
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6">
-        <Outlet />
-      </main>
-
-      {/* Bottom nav mobile — stencil dock */}
-      <nav className="fixed bottom-0 inset-x-0 z-40 md:hidden border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 backdrop-blur">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-px"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(90deg, var(--color-neon) 0 6px, transparent 6px 12px)",
-            opacity: 0.5,
-          }}
-        />
-        <div className="grid grid-cols-5 max-w-md mx-auto">
-          {mobileNavItems.map((item) => {
-            const active = item.to === "/dashboard" ? location.pathname === "/dashboard" : location.pathname.startsWith(item.to);
-            const Icon = item.icon;
-            const badge =
-              item.to === "/payout" ? payoutBadge :
-              item.to === "/support" ? supportBadge : 0;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={`relative flex flex-col items-center gap-1 py-2.5 text-[9px] font-bold uppercase tracking-[0.18em] ${active ? "text-[var(--color-neon)]" : "text-[var(--color-ink-muted)]"}`}
-              >
-                {active && (
-                  <span
-                    aria-hidden
-                    className="absolute top-0 left-1/2 h-[2px] w-8 -translate-x-1/2 bg-[var(--color-neon)]"
-                  />
-                )}
-                <div className="relative">
-                  <Icon className="h-5 w-5" />
-                  {badge > 0 && (
-                    <span className="absolute -top-1.5 -right-2 inline-flex min-w-[14px] h-[14px] items-center justify-center bg-[var(--color-neon)] px-1 text-[8px] font-bold text-[var(--color-surface)] tabular-nums">
-                      {badge}
-                    </span>
-                  )}
-                </div>
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
-      <FirstVisitWalkthroughs />
-    </div>
+        <BottomNav />
+        <FirstVisitWalkthroughs />
+      </div>
     </TourProvider>
   );
 }
+
 
 // Triggers one-shot walkthroughs for first-time visits to /bets and /wallet.
 function FirstVisitWalkthroughs() {

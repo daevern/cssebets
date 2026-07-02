@@ -1,24 +1,102 @@
-## Why it's pending
-Mexico beat Ecuador 2-0 (finished). All other markets on the match settled. Only `to_qualify` is stuck because the `matches.qualifier` column is NULL, and the to_qualify settler only grades bets when `qualifier` is explicitly set (HOME/AWAY). It was designed that way for knockouts that go to extra time / penalties, where an admin must set who advanced.
+## Scope
 
-But when the 90-minute score is decisive (not a draw), the qualifier is unambiguous — the winner advances. Leaving qualifier NULL in that case is a bug: the settler should auto-derive it.
+Frontend-only UI/UX redesign of CSSEBets to match the approved Kalshi-inspired premium football prediction market concept (reference images IMG_0982/0984/0985/0986). No backend, RPC, schema, wallet, settlement, admin, odds, or business-logic changes.
 
-## Fix (two parts)
+## Design system updates
 
-### 1. Backfill this match now
-- Set `matches.qualifier = 'HOME'` for Mexico vs Ecuador (`4f24352d…`).
-- Re-run `settle_match_all_markets_atomic` for that match → grades bet `f8da4ed0…` as WON (10.00 stake → 12.80 payout to druggie777) and debits the platform bankroll.
-- Sweep every other `finished` match with pending `to_qualify` bets and a decisive 90-min score, derive qualifier from the scores, and re-settle.
+**`src/styles.css`** — refresh tokens for the new premium dark-green language:
+- `--color-surface` extremely dark green/near-black, `--color-surface-2` slightly elevated
+- `--color-neon` retained as brand green but used sparingly (primary CTA, active tab, selected, live, gain)
+- Remove global scanline overlay usage in redesigned pages
+- Softer border tokens, larger radius scale, refined text-secondary
+- Utility for `.safe-bottom` padding: `calc(120px + env(safe-area-inset-bottom))`
 
-### 2. Patch the settler so this can't recur
-Update `settle_match_all_markets_atomic` (and/or the dedicated `settle_to_qualify_for_match` helper) so that, before grading to_qualify:
-- If `qualifier` is NULL AND `home_score != away_score`, derive `qualifier` from the winning side, persist it on `matches`, and grade.
-- If `qualifier` is NULL AND the match is drawn at 90, leave to_qualify pending (still needs ET/pens qualifier from admin) — same as today.
-- Add the derivation to `settleFinishedPending` catch-up path too so the picks-page trigger self-heals.
+**`src/components/ui/page-shell.tsx`** — new lightweight `PremiumShell` (or refactor existing) with:
+- clean top bar (logo + points pill + bell + profile)
+- no dashed footers on user routes
+- content area with safe-bottom padding
+- optional `title`/`subtitle` slot
 
-Also: extend the reconciliation hourly check to flag `finished` matches with pending `to_qualify` bets and a decisive score as DRIFT, so any future gap alerts instead of hiding.
+**Bottom nav** — new `src/components/nav/BottomNav.tsx`:
+- Home / Markets / Activity / Portfolio / Search
+- routes mapped: `/dashboard` → Home, `/matches` → Markets, `/my-predictions` → Activity, `/wallet` → Portfolio, `/support` → Search
+- rendered inside `_authenticated/route.tsx` (replacing current nav)
+- active state uses green accent; respects safe-area
 
-## Technical notes
-- Change is a single SQL migration modifying the settlement RPC + a one-shot backfill call.
-- No UI changes.
-- No new tables, no new secrets, no risk to already-settled bets (the grader is idempotent on non-pending rows).
+## Pages redesigned
+
+1. **Home (`_authenticated/dashboard.tsx`)** — Matchday hero
+   - Header "Matchday" + "FIFA World Cup 2026" + "See all fixtures"
+   - Featured match hero card (live/next fixture) w/ flags, score, 1X2 probability strip, big **Open Market →**
+   - "Live & Trending" horizontal scroll of small flag cards
+   - "Featured" shortcut tiles (World Cup 2026 / Popular / Upcoming / Specials)
+   - Removes bench slider clutter, keeps existing data sources (`listMatchesForUsers`, trust queries)
+
+2. **Markets (`_authenticated/matches.index.tsx`)** — fixture discovery
+   - Title "Matches" + subtitle
+   - Live/Today/Upcoming pill filter with counts
+   - Premium match cards (flags, teams stacked, two estimates with %, `Open Market →`) — no market grids
+   - Whole card tappable → market detail
+
+3. **Analytics (`_authenticated/matches.$matchId.tsx`)** — event market page
+   - Cleaner header (back / logo / points)
+   - Event context line + scoreboard with enlarged flags, score, last play
+   - Trust line (subtle)
+   - Keep `MarketAnalyticsCard` graph (data untouched, restyle container)
+   - "Top markets" preview (Full Time / Qualify / O-U 2.5 / BTTS) → tap to open prediction sheet
+   - Removes full market grid tabs (moved to prediction screen)
+
+4. **Prediction screen** — new `src/components/matches/PredictionSheet.tsx` (bottom sheet / dedicated view from market card tap)
+   - Question heading, Yes/No or 1X2 outcome tiles w/ multiplier + est. chance
+   - Trade-ticket panel: selected outcome, multiplier, points input + MAX, available, return, gain
+   - CTA `Lock Prediction`, footer note
+   - Balance-aware disable states + copy ("Add Points to Lock" / "Points exceed balance")
+   - Reuses existing `place_bet_atomic` server fn
+
+5. **Activity (`_authenticated/my-predictions.tsx`)**
+   - Rename UI text to Active/Correct/Incorrect/Voided/Returned
+   - Cleaner card grouping, less bookmaker chrome
+   - Uses existing queries
+
+6. **Portfolio (`_authenticated/wallet.tsx`)**
+   - "Points Wallet" — balance, pending returns, recent movements categorized (Prediction locked / return / Points added / Cashout / Adjustment / Reversal — mapped from existing `transaction_category`)
+   - No logic change
+
+7. **Search/Support (`_authenticated/support.tsx`)** — light refresh only, FAQ + help links.
+
+## Copy replacements (display-only)
+
+Global text swap in redesigned components: Bet→Prediction/Lock Prediction, Odds→Multiplier, Stake→Points, Payout→Return, Profit→Gain, Wager→Points where natural. Backend field names untouched.
+
+## Files touched (approx.)
+
+- `src/styles.css`
+- `src/components/ui/page-shell.tsx` (or new `PremiumShell.tsx`)
+- `src/components/nav/BottomNav.tsx` (new)
+- `src/routes/_authenticated/route.tsx`
+- `src/routes/_authenticated/dashboard.tsx`
+- `src/routes/_authenticated/matches.index.tsx`
+- `src/routes/_authenticated/matches.$matchId.tsx`
+- `src/routes/_authenticated/my-predictions.tsx`
+- `src/routes/_authenticated/wallet.tsx`
+- `src/routes/_authenticated/support.tsx`
+- `src/components/matches/MarketTabs.tsx` (restyle prediction ticket to trade-ticket)
+- `src/components/matches/MarketAnalyticsCard.tsx` (container restyle only)
+- New: `src/components/home/FeaturedMatchHero.tsx`, `LiveTrendingStrip.tsx`, `FeaturedShortcuts.tsx`
+- New: `src/components/matches/MatchDiscoveryCard.tsx`
+
+## Explicit non-changes
+
+- No migrations, no edits to `*.functions.ts` handlers, no changes to `place_bet_atomic`, settlement, wallet RPCs, admin routes, risk dashboard, correlated exposure, audit logs, maker-checker, odds generation.
+- `src/routes/management/**` untouched.
+- Auth/landing routes untouched (previously redesigned).
+
+## Verification
+
+- Typecheck via harness
+- Manual smoke: Home loads → featured hero visible → Open Market → analytics → select outcome → enter points → Lock Prediction; 0-balance disables CTA; Activity + Portfolio render.
+
+## Known trade-offs
+
+- Given scope, some legacy trust panels (PlatformPulse, BadgeGrid) will be de-emphasized on Home to keep the "one clear action" rule; they remain accessible via Trust Center route.
+- Rollout in single pass; if any page renders empty due to missing real data, a clean empty state replaces mock content (no fake demo data).
