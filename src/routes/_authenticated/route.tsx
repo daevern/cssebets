@@ -19,6 +19,7 @@ import { Card } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
 import { TopBar } from "@/components/nav/TopBar";
 import { BottomNav } from "@/components/nav/BottomNav";
+import { WinDetector } from "@/components/notifications/WinDetector";
 
 
 import { TourProvider, useTour } from "@/components/onboarding/TourProvider";
@@ -274,6 +275,7 @@ function AuthedLayout() {
         </main>
 
         <BottomNav />
+        <WinDetector />
         <FirstVisitWalkthroughs />
       </div>
     </TourProvider>

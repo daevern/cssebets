@@ -55,7 +55,7 @@ export function TopBar({
           {!isMatchDetail && (
             <>
               <Link
-                to="/support"
+                to="/notifications"
                 aria-label="Notifications"
                 className="grid h-9 w-9 place-items-center rounded-full border border-[var(--color-surface-border)]/70 text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)]"
               >
