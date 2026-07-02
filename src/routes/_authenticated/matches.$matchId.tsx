@@ -1159,32 +1159,67 @@ function InjuryList({ items, title }: { items: any[]; title: string }) {
 /* ---------- Player ratings ---------- */
 
 function RatingsTable({ rows, title }: { rows: any[]; title: string }) {
+  const sorted = [...rows].sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+  const top = sorted.find((r) => r.rating != null)?.rating ?? null;
   return (
     <div>
-      <div className="mb-2 border-b border-dashed border-[var(--color-surface-border)] pb-1 text-[11px] font-bold uppercase tracking-[0.22em]">{title}</div>
-      <ul className="space-y-1 text-xs">
-        {rows.slice(0, 14).map((r) => (
-          <li key={r.id} className="grid grid-cols-[20px_1fr_auto_auto] items-baseline gap-2">
-            <span className="text-right font-display text-[10px] font-bold tabular-nums text-[var(--color-ink-muted)]">{r.number ?? ""}</span>
-            <span className="truncate">{r.player_name}</span>
-            <span className="text-[10px] uppercase text-[var(--color-ink-muted)]">{r.position ?? ""}</span>
-            <span className={`font-display text-xs font-bold tabular-nums ${ratingTone(r.rating)}`}>
-              {r.rating != null ? Number(r.rating).toFixed(1) : "—"}
-            </span>
-          </li>
-        ))}
+      <div className="mb-3 flex items-baseline justify-between border-b border-dashed border-[var(--color-surface-border)] pb-2">
+        <span className="text-[11px] font-bold uppercase tracking-[0.22em]">{title}</span>
+        {top != null && (
+          <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+            Top <span className="font-display text-[var(--color-neon)]">{Number(top).toFixed(1)}</span>
+          </span>
+        )}
+      </div>
+      <ul className="divide-y divide-dashed divide-[var(--color-surface-border)]/60">
+        {rows.slice(0, 14).map((r) => {
+          const isTop = r.rating != null && r.rating === top;
+          return (
+            <li key={r.id} className="grid grid-cols-[24px_minmax(0,1fr)_auto_auto] items-center gap-3 py-2">
+              <span className="text-right font-display text-[10px] font-bold tabular-nums text-[var(--color-ink-muted)]">
+                {r.number ?? ""}
+              </span>
+              <span className={`truncate text-sm ${isTop ? "text-[var(--color-ink)]" : "text-[var(--color-ink)]"}`}>
+                {r.player_name}
+              </span>
+              <span className="rounded-sm border border-[var(--color-surface-border)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                {r.position ?? "–"}
+              </span>
+              <RatingPill rating={r.rating} highlight={isTop} />
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
 }
-function ratingTone(rating: number | null): string {
-  if (rating == null) return "text-[var(--color-ink-muted)]";
+
+function RatingPill({ rating, highlight = false }: { rating: number | null; highlight?: boolean }) {
+  if (rating == null) {
+    return (
+      <span className="grid h-7 w-11 place-items-center rounded-sm border border-dashed border-[var(--color-surface-border)] font-display text-xs font-bold tabular-nums text-[var(--color-ink-muted)]">
+        —
+      </span>
+    );
+  }
   const n = Number(rating);
-  if (n >= 8) return "text-[var(--color-neon)]";
-  if (n >= 7) return "text-[var(--color-ink)]";
-  if (n >= 6) return "text-[var(--color-ink-muted)]";
-  return "text-destructive";
+  const bg =
+    n >= 8 ? "var(--color-neon)" : n >= 7 ? "#3B82F6" : n >= 6 ? "#64748B" : "#E11D48";
+  const fg = n >= 8 || n >= 7 || n < 6 ? "#04110A" : "#F3F4F6";
+  return (
+    <span
+      className="grid h-7 w-11 place-items-center rounded-sm font-display text-xs font-bold tabular-nums"
+      style={{
+        background: bg,
+        color: fg,
+        boxShadow: highlight && n >= 8 ? `0 0 12px color-mix(in oklab, ${bg} 55%, transparent)` : undefined,
+      }}
+    >
+      {n.toFixed(1)}
+    </span>
+  );
 }
+
 
 /* ---------- H2H ---------- */
 
