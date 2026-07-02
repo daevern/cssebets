@@ -610,32 +610,3 @@ function abbrev(name: string) {
   return name.length <= 4 ? name.toUpperCase() : name.slice(0, 3).toUpperCase();
 }
 
-function ShortcutTile({
-  icon,
-  title,
-  sub,
-  to,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  sub: string;
-  to: string;
-}) {
-  return (
-    <Link
-      to={to}
-      className="group flex flex-col justify-between rounded-xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4 transition-colors hover:border-[var(--neon)]/40"
-    >
-      <div className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--surface-3)] text-[var(--neon)]">
-        {icon}
-      </div>
-      <div className="mt-3">
-        <div className="text-[14px] font-bold tracking-tight text-[var(--ink)]">{title}</div>
-        <div className="mt-0.5 flex items-center justify-between text-[11px] text-[var(--ink-muted)]">
-          <span>{sub}</span>
-          <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-        </div>
-      </div>
-    </Link>
-  );
-}
