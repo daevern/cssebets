@@ -24,7 +24,7 @@ type Match = {
   reference_odds: { home: number; draw: number; away: number } | null;
 };
 
-type Tab = "live" | "today" | "upcoming";
+type Tab = "live" | "today" | "upcoming" | "completed";
 
 function useTicker(ms = 30_000) {
   const [n, setN] = useState(() => Date.now());
@@ -90,24 +90,28 @@ function MatchesPage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
-  const { live, today, upcoming } = useMemo(() => {
+  const { live, today, upcoming, completed } = useMemo(() => {
     const arr = data ?? [];
     const startOfDay = new Date(now); startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(startOfDay); endOfDay.setDate(endOfDay.getDate() + 1);
-    const l: Match[] = []; const t: Match[] = []; const u: Match[] = [];
+    const l: Match[] = []; const t: Match[] = []; const u: Match[] = []; const c: Match[] = [];
     for (const m of arr) {
-      if (m.status === "finished") continue;
+      if (m.status === "finished") { c.push(m); continue; }
       if (m.status === "live") { l.push(m); continue; }
       const k = new Date(m.kickoff_at).getTime();
       if (k >= startOfDay.getTime() && k < endOfDay.getTime()) t.push(m);
       else if (k >= endOfDay.getTime()) u.push(m);
     }
     const sortAsc = (a: Match, b: Match) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime();
-    l.sort(sortAsc); t.sort(sortAsc); u.sort(sortAsc);
-    return { live: l, today: t, upcoming: u };
+    l.sort(sortAsc); t.sort(sortAsc); u.sort(sortAsc); c.sort((a, b) => new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime());
+    return { live: l, today: t, upcoming: u, completed: c };
   }, [data, now]);
 
-  const list = tab === "live" ? live : tab === "today" ? today : upcoming;
+  const list =
+    tab === "live" ? live :
+    tab === "today" ? today :
+    tab === "upcoming" ? upcoming :
+    completed;
   const auto = tab === "live" && live.length === 0 ? today : list;
 
   return (
@@ -121,10 +125,11 @@ function MatchesPage() {
       </header>
 
       {/* Segmented tabs */}
-      <div className="grid grid-cols-3 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-1">
+      <div className="grid grid-cols-4 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-1">
         <TabBtn active={tab === "live"} onClick={() => setTab("live")} label="Live" count={live.length} tone="live" />
         <TabBtn active={tab === "today"} onClick={() => setTab("today")} label="Today" count={today.length} />
         <TabBtn active={tab === "upcoming"} onClick={() => setTab("upcoming")} label="Upcoming" count={upcoming.length > 0 ? upcoming.length : undefined} />
+        <TabBtn active={tab === "completed"} onClick={() => setTab("completed")} label="Completed" count={completed.length > 0 ? completed.length : undefined} />
       </div>
 
       {isLoading ? (
