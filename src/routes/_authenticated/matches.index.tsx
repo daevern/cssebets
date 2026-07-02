@@ -90,21 +90,21 @@ function MatchesPage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
-  const { live, today, upcoming } = useMemo(() => {
+  const { live, today, upcoming, completed } = useMemo(() => {
     const arr = data ?? [];
     const startOfDay = new Date(now); startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(startOfDay); endOfDay.setDate(endOfDay.getDate() + 1);
-    const l: Match[] = []; const t: Match[] = []; const u: Match[] = [];
+    const l: Match[] = []; const t: Match[] = []; const u: Match[] = []; const c: Match[] = [];
     for (const m of arr) {
-      if (m.status === "finished") continue;
+      if (m.status === "finished") { c.push(m); continue; }
       if (m.status === "live") { l.push(m); continue; }
       const k = new Date(m.kickoff_at).getTime();
       if (k >= startOfDay.getTime() && k < endOfDay.getTime()) t.push(m);
       else if (k >= endOfDay.getTime()) u.push(m);
     }
     const sortAsc = (a: Match, b: Match) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime();
-    l.sort(sortAsc); t.sort(sortAsc); u.sort(sortAsc);
-    return { live: l, today: t, upcoming: u };
+    l.sort(sortAsc); t.sort(sortAsc); u.sort(sortAsc); c.sort((a, b) => new Date(b.kickoff_at).getTime() - new Date(a.kickoff_at).getTime());
+    return { live: l, today: t, upcoming: u, completed: c };
   }, [data, now]);
 
   const list = tab === "live" ? live : tab === "today" ? today : upcoming;
