@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { SVGProps } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, ChevronRight, Ticket, Flame, TrendingUp } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Ticket, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
