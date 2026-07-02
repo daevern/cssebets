@@ -1076,44 +1076,55 @@ function StatsCompare({ home, away, homeName: _homeName, awayName: _awayName }: 
                 {g.title}
               </div>
             )}
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               {visible.map((r) => {
                 const h = home?.[r.key];
                 const a = away?.[r.key];
                 const hv = Number(h ?? 0);
                 const av = Number(a ?? 0);
-                const total = hv + av;
-                const hPct = total > 0 ? (hv / total) * 100 : 50;
-                const aPct = total > 0 ? (av / total) * 100 : 50;
+                const max = Math.max(hv, av, 1);
+                const hPct = (hv / max) * 100;
+                const aPct = (av / max) * 100;
                 const homeLeads = hv > av;
                 const awayLeads = av > hv;
                 const fmt = (v: any) => (v == null ? "—" : `${v}${r.suffix ?? ""}`);
+                const HOME_COLOR = "var(--color-neon)";
+                const AWAY_COLOR = "#f472b6";
                 return (
                   <div key={r.key}>
                     <div className="mb-1.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-baseline gap-3">
-                      <span className={`text-left font-display text-base font-black tabular-nums ${homeLeads ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]/70"}`}>
+                      <span
+                        className="text-left font-display text-base font-black tabular-nums"
+                        style={{ color: homeLeads ? HOME_COLOR : "var(--color-ink)" }}
+                      >
                         {fmt(h)}
                       </span>
                       <span className="text-center text-[11px] font-medium tracking-tight text-[var(--color-ink-muted)]">
                         {r.label}
                       </span>
-                      <span className={`text-right font-display text-base font-black tabular-nums ${awayLeads ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]/70"}`}>
+                      <span
+                        className="text-right font-display text-base font-black tabular-nums"
+                        style={{ color: awayLeads ? AWAY_COLOR : "var(--color-ink)" }}
+                      >
                         {fmt(a)}
                       </span>
                     </div>
-                    {/* Centre-anchored bar: home extends left, away extends right */}
-                    <div className="relative h-1 bg-[var(--color-surface)]">
-                      <span aria-hidden className="absolute inset-y-[-2px] left-1/2 w-px -translate-x-1/2 bg-[var(--color-surface-border)]" />
-                      <div className="absolute inset-y-0 right-1/2 flex justify-end">
+                    {/* SofaScore-style: two independent bars, home left-anchored (fills right→left visually would be wrong, so home fills left→right toward the middle from its own side. We use two side-by-side tracks: home bar reversed to grow leftward, away grows rightward). */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="relative h-1.5 overflow-hidden rounded-sm bg-[var(--color-surface)]">
                         <div
-                          className={`h-full transition-all duration-700 ${homeLeads ? "bg-[var(--color-neon)] shadow-[0_0_6px_var(--color-neon-glow)]" : "bg-[var(--color-ink)]/35"}`}
-                          style={{ width: `${hPct}%` }}
+                          className={`absolute inset-y-0 right-0 transition-all duration-700 ${homeLeads ? "shadow-[0_0_6px_var(--color-neon-glow)]" : "opacity-70"}`}
+                          style={{ width: `${hPct}%`, background: homeLeads ? HOME_COLOR : "color-mix(in oklab, var(--color-neon) 55%, transparent)" }}
                         />
                       </div>
-                      <div className="absolute inset-y-0 left-1/2">
+                      <div className="relative h-1.5 overflow-hidden rounded-sm bg-[var(--color-surface)]">
                         <div
-                          className={`h-full transition-all duration-700 ${awayLeads ? "bg-[var(--color-neon)] shadow-[0_0_6px_var(--color-neon-glow)]" : "bg-[var(--color-ink)]/35"}`}
-                          style={{ width: `${aPct}%` }}
+                          className="absolute inset-y-0 left-0 transition-all duration-700"
+                          style={{
+                            width: `${aPct}%`,
+                            background: awayLeads ? AWAY_COLOR : "color-mix(in oklab, #f472b6 55%, transparent)",
+                            opacity: awayLeads ? 1 : 0.75,
+                          }}
                         />
                       </div>
                     </div>
