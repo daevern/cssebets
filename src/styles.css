@@ -85,22 +85,35 @@
   --sidebar-accent-foreground: oklch(0.97 0.01 250);
   --sidebar-border: oklch(0.32 0.025 255);
   --sidebar-ring: oklch(0.78 0.19 145);
-  /* Dashboard neon surface tokens */
-  --surface: #0A0F0D;
-  --surface-2: #0E1512;
-  --surface-border: #1F2A24;
+  /* Premium dark-green prediction-market surface tokens */
+  --surface: #05100B;
+  --surface-2: #0A1712;
+  --surface-3: #0F1E17;
+  --surface-border: #172922;
   --neon: #22E06B;
   --neon-glow: rgba(34, 224, 107, 0.25);
-  --ink: #E6F2EA;
-  --ink-muted: #6B7A72;
+  --neon-glow-rgb: 34, 224, 107;
+  --ink: #E9F5EE;
+  --ink-muted: #7A8A82;
+  --ink-dim: #4B5A54;
 }
 
 
 @layer base {
   * { border-color: var(--color-border); }
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--surface);
+    color: var(--ink);
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
+}
+
+@utility safe-bottom {
+  padding-bottom: calc(120px + env(safe-area-inset-bottom));
+}
+
+@utility safe-bottom-lg {
+  padding-bottom: calc(180px + env(safe-area-inset-bottom));
 }
