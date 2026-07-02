@@ -125,10 +125,11 @@ function MatchesPage() {
       </header>
 
       {/* Segmented tabs */}
-      <div className="grid grid-cols-3 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-1">
+      <div className="grid grid-cols-4 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-1">
         <TabBtn active={tab === "live"} onClick={() => setTab("live")} label="Live" count={live.length} tone="live" />
         <TabBtn active={tab === "today"} onClick={() => setTab("today")} label="Today" count={today.length} />
         <TabBtn active={tab === "upcoming"} onClick={() => setTab("upcoming")} label="Upcoming" count={upcoming.length > 0 ? upcoming.length : undefined} />
+        <TabBtn active={tab === "completed"} onClick={() => setTab("completed")} label="Completed" count={completed.length > 0 ? completed.length : undefined} />
       </div>
 
       {isLoading ? (
