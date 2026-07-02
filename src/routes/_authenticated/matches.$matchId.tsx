@@ -139,7 +139,7 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
           <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} />
         </section>
       )}
-      {locked && <BettingRibbon phase={phase} />}
+      {locked && <YourPicksSummary matchId={match.id} phase={phase} homeTeam={home} awayTeam={away} />}
 
       {/* ============ Full football analytics report — all sections inline ============ */}
 
