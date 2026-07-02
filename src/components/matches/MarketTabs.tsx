@@ -511,7 +511,9 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     getGroup("home_corners_over_under_4_5").length > 0 ||
     getGroup("away_corners_over_under_4_5").length > 0 ||
     getGroup("first_corner").length > 0;
+  const has1x2 = getGroup("1x2").length > 0;
   const hasPopular =
+    has1x2 ||
     getGroup("over_under_2_5").length > 0 || getGroup("btts").length > 0 ||
     getGroup("double_chance").length > 0 || hasToQualify;
 
@@ -739,6 +741,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       <div className="px-3 sm:px-2 md:px-0">
         {tab === "pop" && (
           <div className="space-y-4">
+            {has1x2 && <Section market="1x2" cols="grid-cols-3" note="Settled on the 90-minute regulation score. Extra time & penalties don't count." />}
             {getGroup("over_under_2_5").length > 0 && <Section market="over_under_2_5" cols="grid-cols-2" />}
             {getGroup("btts").length > 0 && <Section market="btts" cols="grid-cols-2" />}
             {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}
