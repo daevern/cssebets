@@ -1407,19 +1407,21 @@ function InjuryList({ items, title }: { items: any[]; title: string }) {
 
 /* ---------- Player ratings ---------- */
 
-function RatingsTable({ rows, title }: { rows: any[]; title: string }) {
+function RatingsTable({ rows, title, embedded = false }: { rows: any[]; title: string; embedded?: boolean }) {
   const sorted = [...rows].sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
   const top = sorted.find((r) => r.rating != null)?.rating ?? null;
   return (
     <div>
-      <div className="mb-3 flex items-baseline justify-between border-b border-dashed border-[var(--color-surface-border)] pb-2">
-        <span className="text-[11px] font-bold uppercase tracking-[0.22em]">{title}</span>
-        {top != null && (
-          <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
-            Top <span className="font-display text-[var(--color-neon)]">{Number(top).toFixed(1)}</span>
-          </span>
-        )}
-      </div>
+      {!embedded && (
+        <div className="mb-3 flex items-baseline justify-between border-b border-dashed border-[var(--color-surface-border)] pb-2">
+          <span className="text-[11px] font-bold uppercase tracking-[0.22em]">{title}</span>
+          {top != null && (
+            <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+              Top <span className="font-display text-[var(--color-neon)]">{Number(top).toFixed(1)}</span>
+            </span>
+          )}
+        </div>
+      )}
       <ul className="divide-y divide-dashed divide-[var(--color-surface-border)]/60">
         {rows.slice(0, 14).map((r) => {
           const isTop = r.rating != null && r.rating === top;
