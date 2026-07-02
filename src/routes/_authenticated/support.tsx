@@ -151,7 +151,7 @@ function SupportPage() {
   const messages = (q.data?.messages ?? []) as any[];
 
   return (
-    <PageShell kicker="DIRECT LINE · OPEN" title="SUPPORT" titleAccent="DESK" wide>
+    <PageShell kicker="DIRECT LINE · OPEN" title="Help &" titleAccent="Search" wide>
       <SupportStats />
       <StencilPanel
         accent
