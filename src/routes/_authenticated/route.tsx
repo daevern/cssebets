@@ -12,20 +12,14 @@ import { Shield, LogOut, Loader2 } from "lucide-react";
 import { CsseMark } from "@/components/brand/CsseMark";
 import { CsseLogoAnimated } from "@/components/brand/CsseLogoAnimated";
 import {
-  IconHome,
-  IconBets,
-  IconPicks,
-  IconWallet,
-  IconPayout,
-  IconSupport,
-  IconHelp,
-  IconSettings,
   IconLogout,
 } from "@/components/brand/NavIcons";
-import { IconShield, IconBroadcast, IconChangelog } from "@/components/trust/TrustIcons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState, useRef } from "react";
+import { TopBar } from "@/components/nav/TopBar";
+import { BottomNav } from "@/components/nav/BottomNav";
+
 
 import { TourProvider, useTour } from "@/components/onboarding/TourProvider";
 import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
