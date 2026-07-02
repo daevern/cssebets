@@ -125,7 +125,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
       }
     >
       {/* Chart — the soul of the page. Taller, minimal chrome, bold strokes. */}
-      <div className="h-[440px] w-full sm:h-[500px] md:h-[560px]">
+      <div className="h-[240px] w-full sm:h-[280px] md:h-[320px]">
         {chartData.length === 0 ? (
           <EmptyGraph />
         ) : (
@@ -263,9 +263,6 @@ function SectionShell({
     <section className="relative">
       <div className="mb-5 flex items-end justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
-          <span className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-            <Activity className="h-3 w-3" /> Market analytics
-          </span>
           <h2 className="font-display text-xl font-semibold tracking-tight text-[var(--color-ink)] md:text-2xl">
             Market movement
           </h2>
