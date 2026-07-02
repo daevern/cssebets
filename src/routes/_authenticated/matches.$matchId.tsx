@@ -542,26 +542,123 @@ function MatchProgress({ pct, cap = 90, markers }: { pct: number; cap?: number; 
   );
 }
 
-/* Compact betting closed/settled ribbon — replaces a full panel with a thin status bar. */
-function BettingRibbon({ phase }: { phase: AnalyticsBundle["phase"] }) {
+/* User picks summary — replaces the generic status ribbon once markets close. */
+function YourPicksSummary({ matchId, phase, homeTeam, awayTeam }: { matchId: string; phase: AnalyticsBundle["phase"]; homeTeam: string; awayTeam: string }) {
+  const { user } = useAuth();
+  const uid = user?.id;
   const finished = phase === "finished";
+  const { data } = useQuery({
+    queryKey: ["match-user-picks", matchId, uid],
+    enabled: !!uid,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("predictions")
+        .select("id, market_text, selection_label, virtual_stake, potential_payout, status, actual_payout, odds")
+        .eq("user_id", uid!)
+        .eq("match_id", matchId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const picks = data ?? [];
+  const totalStake = picks.reduce((s, p) => s + Number(p.virtual_stake || 0), 0);
+  const totalPayout = picks.reduce((s, p) => s + Number(p.actual_payout || 0), 0);
+  const wins = picks.filter((p) => p.status === "won").length;
+  const losses = picks.filter((p) => p.status === "lost").length;
+  const voids = picks.filter((p) => p.status === "void" || p.status === "cancelled" || p.status === "refunded").length;
+  const pnl = totalPayout - totalStake;
+
   return (
-    <div className="relative flex items-center justify-between border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-4 py-2.5">
+    <div className="relative border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-4">
       <Corner pos="tl" /><Corner pos="br" />
-      <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.28em]">
-        {finished ? (
-          <WhistleIcon size={12} className="text-[var(--color-ink-muted)]" />
-        ) : (
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-destructive" />
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.28em]">
+          {finished ? (
+            <WhistleIcon size={12} className="text-[var(--color-ink-muted)]" />
+          ) : (
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-destructive" />
+          )}
+          <span className={finished ? "text-[var(--color-ink-muted)]" : "text-destructive"}>
+            {finished ? "Your picks · settled" : "Your picks · in play"}
+          </span>
+        </div>
+        {picks.length > 0 && (
+          <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+            {picks.length} pick{picks.length === 1 ? "" : "s"}
+          </span>
         )}
-        <span className={finished ? "text-[var(--color-ink-muted)]" : "text-destructive"}>
-          {finished ? "Full time" : "Markets closed"}
-        </span>
-      </span>
-      <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-        {finished ? "All bets settled" : "In play · live coverage below"}
-      </span>
+      </div>
+
+      {picks.length === 0 ? (
+        <p className="text-[12px] text-[var(--color-ink-muted)]">
+          You didn't place any predictions on {homeTeam} vs {awayTeam}.
+        </p>
+      ) : (
+        <>
+          {/* Totals strip */}
+          <div className="mb-3 grid grid-cols-3 gap-2 border-b border-dashed border-[var(--color-surface-border)] pb-3">
+            <SummaryCell label="Staked" value={`${totalStake.toLocaleString()} pts`} />
+            <SummaryCell label="Returned" value={`${totalPayout.toLocaleString()} pts`} />
+            <SummaryCell
+              label="Net"
+              value={`${pnl >= 0 ? "+" : ""}${pnl.toLocaleString()} pts`}
+              tone={pnl > 0 ? "win" : pnl < 0 ? "lose" : undefined}
+            />
+          </div>
+          {finished && (
+            <div className="mb-3 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.22em]">
+              <span className="text-[var(--color-neon)]">{wins} won</span>
+              <span className="text-[var(--color-ink-muted)]">·</span>
+              <span className="text-destructive/80">{losses} lost</span>
+              {voids > 0 && (<><span className="text-[var(--color-ink-muted)]">·</span><span className="text-[var(--color-ink-muted)]">{voids} void</span></>)}
+            </div>
+          )}
+          <ul className="divide-y divide-dashed divide-[var(--color-surface-border)]/60">
+            {picks.map((p) => <PickRow key={p.id} p={p} />)}
+          </ul>
+        </>
+      )}
     </div>
+  );
+}
+
+function SummaryCell({ label, value, tone }: { label: string; value: string; tone?: "win" | "lose" }) {
+  const color = tone === "win" ? "text-[var(--color-neon)]" : tone === "lose" ? "text-destructive" : "text-[var(--color-ink)]";
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">{label}</span>
+      <span className={`font-display text-sm font-bold tabular-nums ${color}`}>{value}</span>
+    </div>
+  );
+}
+
+function PickRow({ p }: { p: any }) {
+  const stake = Number(p.virtual_stake || 0);
+  const payout = Number(p.actual_payout || 0);
+  const potential = Number(p.potential_payout || 0);
+  const status = String(p.status || "pending");
+  const statusTone =
+    status === "won" ? "text-[var(--color-neon)]" :
+    status === "lost" ? "text-destructive" :
+    "text-[var(--color-ink-muted)]";
+  const statusLabel =
+    status === "won" ? `+${(payout - stake).toLocaleString()} pts` :
+    status === "lost" ? `-${stake.toLocaleString()} pts` :
+    status === "void" || status === "cancelled" || status === "refunded" ? "refunded" :
+    `to win ${(potential - stake).toLocaleString()} pts`;
+  return (
+    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 py-2">
+      <div className="min-w-0">
+        <div className="truncate text-[12px] font-semibold text-[var(--color-ink)]">{p.selection_label ?? "—"}</div>
+        <div className="truncate text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+          {p.market_text ?? "market"} · {stake.toLocaleString()} pts @ {Number(p.odds ?? 0).toFixed(2)}x
+        </div>
+      </div>
+      <span className={`shrink-0 font-display text-[11px] font-bold tabular-nums ${statusTone}`}>{statusLabel}</span>
+    </li>
   );
 }
 
