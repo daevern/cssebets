@@ -189,25 +189,16 @@ function HomePage() {
         </Link>
       </header>
 
-      {/* Featured match hero */}
-      {featured ? (
-        <FeaturedHero match={featured} now={now} />
-      ) : (
-        <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-10 text-center text-sm text-[var(--ink-muted)]">
-          No fixtures on the slate yet — check back closer to kickoff.
-        </div>
-      )}
-
-      {/* Live & Trending */}
+      {/* Upcoming Fixtures — sits directly under the Matchday title */}
       {trending.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
-                Live & Trending
+                Upcoming Fixtures
               </h2>
-              <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">Markets with the most action right now.</p>
+              <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">Next kickoffs and live markets on the slate.</p>
             </div>
             <Link
               to="/matches"
@@ -222,6 +213,15 @@ function HomePage() {
             ))}
           </div>
         </section>
+      )}
+
+      {/* Featured match hero */}
+      {featured ? (
+        <FeaturedHero match={featured} now={now} />
+      ) : (
+        <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-10 text-center text-sm text-[var(--ink-muted)]">
+          No fixtures on the slate yet — check back closer to kickoff.
+        </div>
       )}
 
       {/* Your Position — picks */}
@@ -575,7 +575,7 @@ function TrendingChip({ match, now }: { match: Match; now: number }) {
       className={`shrink-0 rounded-xl border bg-[var(--surface-2)] px-3 py-3 transition-colors ${
         live ? "border-[var(--neon)]/40" : "border-[var(--color-surface-border)]"
       } hover:border-[var(--neon)]/50`}
-      style={{ width: 148 }}
+      style={{ width: 172 }}
     >
       <div className="flex items-center gap-1.5">
         <TeamFlag name={match.home_team} size={26} />
@@ -586,18 +586,30 @@ function TrendingChip({ match, now }: { match: Match; now: number }) {
         {abbrev(match.home_team)} vs {abbrev(match.away_team)}
       </div>
       {live ? (
-        <div className="mt-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--neon)]">
+        <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--neon)]">
           <span className="h-1 w-1 animate-pulse rounded-full bg-[var(--neon)]" /> LIVE
         </div>
-      ) : pct ? (
-        <div className="mt-1 flex items-center gap-1.5 text-[11px] tabular-nums">
-          <span className="text-rose-400 font-semibold">{pct.home}%</span>
-          <span className="text-[var(--ink-dim)]">·</span>
-          <span className="text-[var(--neon)] font-semibold">{pct.away}%</span>
-        </div>
       ) : (
-        <div className="mt-1 text-[10px] text-[var(--ink-muted)]">{statusLabel(match, now)}</div>
+        <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+          {statusLabel(match, now)}
+        </div>
       )}
+      {pct ? (
+        <div className="mt-2 grid grid-cols-3 gap-1 rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-3)]/60 p-1 text-center">
+          <div>
+            <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Home</div>
+            <div className="text-[11px] font-bold tabular-nums text-rose-400">{pct.home}%</div>
+          </div>
+          <div className="border-x border-[var(--color-surface-border)]">
+            <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Draw</div>
+            <div className="text-[11px] font-bold tabular-nums text-sky-300">{pct.draw}%</div>
+          </div>
+          <div>
+            <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Away</div>
+            <div className="text-[11px] font-bold tabular-nums text-[var(--neon)]">{pct.away}%</div>
+          </div>
+        </div>
+      ) : null}
     </Link>
   );
 }
