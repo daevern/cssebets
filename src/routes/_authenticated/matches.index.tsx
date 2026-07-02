@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
-import { ArrowUpRight, Loader2 } from "lucide-react";
+import { Clock, Loader2, Radio } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/matches/")({
@@ -30,7 +30,7 @@ type Match = {
   manual_override?: boolean | null;
 };
 
-function useTicker(intervalMs = 30_000): number {
+function useTicker(intervalMs = 1000): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), intervalMs);
@@ -39,24 +39,32 @@ function useTicker(intervalMs = 30_000): number {
   return now;
 }
 
-function formatKickoff(iso: string, now: number): string {
-  const diff = new Date(iso).getTime() - now;
+function formatCountdown(ms: number) {
+  if (ms <= 0) return "Live / starting";
+  const totalSec = Math.floor(ms / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const h = Math.floor((totalSec % 86400) / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  if (days > 0) return `${days}d ${pad(h)}:${pad(m)}:${pad(s)}`;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+function formatKickoffDate(iso: string): string {
   const d = new Date(iso);
-  const dateStr = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  if (diff <= 0) return `${dateStr} · ${timeStr}`;
-  const m = Math.floor(diff / 60_000);
-  if (m < 60) return `Kicks off in ${m}m`;
-  const h = Math.floor(m / 60);
-  const rm = m % 60;
-  if (h < 12) return rm ? `Kicks off in ${h}h ${rm}m` : `Kicks off in ${h}h`;
-  return `${dateStr} · ${timeStr}`;
+  const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, "0");
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12;
+  return `${months[d.getMonth()]} ${d.getDate()} ${hours}:${minutes}${ampm}`;
 }
 
 function MatchesPage() {
   const qc = useQueryClient();
   const listMatches = useServerFn(listMatchesForUsers);
-  const now = useTicker(30_000);
+  const now = useTicker(1000);
 
   const { data, isLoading } = useQuery({
     queryKey: ["matches"],
@@ -80,7 +88,6 @@ function MatchesPage() {
     const l: Match[] = [];
     const u: Match[] = [];
     const c: Match[] = [];
-    const oneDay = 24 * 60 * 60 * 1000;
     const threeHours = 3 * 60 * 60 * 1000;
 
     for (const m of data ?? []) {
@@ -89,7 +96,7 @@ function MatchesPage() {
         l.push(m);
       } else if (m.status === "finished") {
         c.push(m);
-      } else if (kickoff > now && kickoff <= now + oneDay * 3) {
+      } else if (kickoff > now) {
         u.push(m);
       }
     }
@@ -100,42 +107,42 @@ function MatchesPage() {
   }, [data, now]);
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
-      {/* subtle brand grid */}
+    <div className="relative min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
+      {/* Scoreboard scanline */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 opacity-[0.025]"
+        className="pointer-events-none fixed inset-0 z-0 opacity-[0.04]"
         style={{
           backgroundImage:
-            "linear-gradient(var(--color-neon) 1px, transparent 1px), linear-gradient(90deg, var(--color-neon) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
+            "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
         }}
       />
-      {/* soft top bloom */}
+      {/* Neon stadium wash */}
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-x-0 top-0 h-[280px]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[320px]"
         style={{
           background:
-            "radial-gradient(ellipse at 50% -10%, color-mix(in oklab, var(--color-neon) 8%, transparent) 0%, transparent 60%)",
+            "radial-gradient(ellipse at 50% 0%, rgba(34,224,107,0.14), transparent 60%)",
         }}
       />
 
       <div
-        className="relative mx-auto flex max-w-md flex-col gap-8 px-4 pt-8 md:max-w-2xl md:pt-12"
-        style={{ paddingBottom: "calc(200px + env(safe-area-inset-bottom))" }}
+        className="relative mx-auto flex max-w-4xl flex-col gap-8 px-4 pt-8 md:pt-12"
+        style={{ paddingBottom: "calc(160px + env(safe-area-inset-bottom))" }}
       >
-        {/* Header — quiet, confident */}
-        <header className="flex flex-col gap-1.5">
-          <div className="text-[10px] font-medium uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-            Sports · Soccer
+        {/* Header */}
+        <header className="flex flex-col items-center text-center">
+          <div className="inline-flex items-center gap-2 border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
+            <Radio className="h-3 w-3" />
+            FIFA World Cup 2026
           </div>
-          <h1 className="font-display text-[28px] font-semibold leading-[1.05] tracking-tight text-[var(--color-ink)] md:text-4xl">
-            World Cup
+          <h1 className="mt-4 font-display text-[32px] font-bold uppercase leading-[0.95] tracking-tight sm:text-[44px]">
+            Matchday <span className="text-[var(--color-neon)]">Console</span>
           </h1>
-          <div className="text-[11px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]">
-            FIFA World Cup · Round of 32
-          </div>
+          <p className="mt-2 font-display text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
+            Round of 32 · Lock in your predictions
+          </p>
         </header>
 
         {isLoading ? (
@@ -145,20 +152,20 @@ function MatchesPage() {
         ) : !data?.length ? (
           <EmptyState />
         ) : (
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-10">
             {live.length > 0 && (
               <Section title="Live" pulse>
-                {live.map((m) => <MatchCard key={m.id} match={m} tone="live" now={now} />)}
+                <FixtureGrid matches={live} tone="live" now={now} />
               </Section>
             )}
             {upcoming.length > 0 && (
               <Section title="Upcoming">
-                {upcoming.map((m) => <MatchCard key={m.id} match={m} tone="upcoming" now={now} />)}
+                <FixtureGrid matches={upcoming} tone="upcoming" now={now} />
               </Section>
             )}
             {completed.length > 0 && (
               <Section title="Completed">
-                {completed.slice(0, 8).map((m) => <MatchCard key={m.id} match={m} tone="closed" now={now} />)}
+                <FixtureGrid matches={completed.slice(0, 8)} tone="closed" now={now} />
               </Section>
             )}
             {live.length === 0 && upcoming.length === 0 && completed.length === 0 && <EmptyState />}
@@ -171,112 +178,162 @@ function MatchesPage() {
 
 function Section({ title, pulse, children }: { title: string; pulse?: boolean; children: React.ReactNode }) {
   return (
-    <section className="space-y-3">
-      <div className="flex items-center gap-2">
+    <section className="space-y-4">
+      <div className="flex items-center gap-2 border-b border-dashed border-[var(--color-surface-border)] pb-2">
         {pulse && (
           <span className="relative flex h-1.5 w-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-70" />
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-destructive" />
           </span>
         )}
-        <span className={`text-[10px] font-semibold uppercase tracking-[0.24em] ${pulse ? "text-destructive" : "text-[var(--color-ink-muted)]"}`}>
+        <span className={`font-display text-[10px] font-bold uppercase tracking-[0.32em] ${pulse ? "text-destructive" : "text-[var(--color-neon)]"}`}>
           {title}
         </span>
       </div>
-      <div className="flex flex-col gap-2.5">{children}</div>
+      {children}
     </section>
   );
 }
 
-function computeSideChances(odds: Match["reference_odds"]): { home: number; away: number } | null {
-  if (!odds || !odds.home || !odds.away || !odds.draw) return null;
-  const raw = [1 / odds.home, 1 / odds.draw, 1 / odds.away];
-  const sum = raw.reduce((a, b) => a + b, 0);
-  if (!sum) return null;
-  // Fold draw into each side (advance-style)
-  const home = (raw[0] + raw[1] / 2) / sum;
-  const away = (raw[2] + raw[1] / 2) / sum;
-  return { home: Math.round(home * 100), away: Math.round(away * 100) };
+function FixtureGrid({ matches, tone, now }: { matches: Match[]; tone: "live" | "upcoming" | "closed"; now: number }) {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {matches.map((m) => (
+        <FixtureCard key={m.id} match={m} tone={tone} now={now} />
+      ))}
+    </div>
+  );
 }
 
-function MatchCard({ match, tone, now }: { match: Match; tone: "live" | "upcoming" | "closed"; now: number }) {
-  const homeFlag = teamFlagUrl(match.home_team, 80);
-  const awayFlag = teamFlagUrl(match.away_team, 80);
-  const finished = tone === "closed";
-  const live = tone === "live";
+function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
+  const map: Record<typeof pos, string> = {
+    tl: "top-0 left-0 border-t border-l",
+    tr: "top-0 right-0 border-t border-r",
+    bl: "bottom-0 left-0 border-b border-l",
+    br: "bottom-0 right-0 border-b border-r",
+  };
+  return (
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute h-3 w-3 border-[var(--color-neon)] ${map[pos]}`}
+    />
+  );
+}
 
-  const statusLabel = live
+function TeamFlag({ name }: { name: string }) {
+  const url = teamFlagUrl(name, 160);
+  if (!url) {
+    return (
+      <span className="grid h-10 w-16 place-items-center bg-[var(--color-surface-border)]/40 text-[10px] font-bold uppercase text-[var(--color-ink-muted)]">
+        {name.slice(0, 3)}
+      </span>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={`${name} flag`}
+      className="h-10 w-16 object-cover"
+      loading="lazy"
+    />
+  );
+}
+
+function FixtureCard({ match, tone, now }: { match: Match; tone: "live" | "upcoming" | "closed"; now: number }) {
+  const live = tone === "live";
+  const finished = tone === "closed";
+  const diff = new Date(match.kickoff_at).getTime() - now;
+  const ko = live
     ? "LIVE"
     : finished
       ? "Full time"
-      : formatKickoff(match.kickoff_at, now);
+      : formatCountdown(diff);
 
-  const chances = useMemo(() => computeSideChances(match.reference_odds), [match.reference_odds]);
+  const home = match.reference_odds?.home ?? null;
+  const draw = match.reference_odds?.draw ?? null;
+  const away = match.reference_odds?.away ?? null;
+  const showScore = live || finished;
   const hScore = match.home_score;
   const aScore = match.away_score;
-  const showScore = (live && (hScore != null || aScore != null)) || finished;
 
   return (
     <Link
       to="/matches/$matchId"
       params={{ matchId: match.id }}
       aria-label={`Open market for ${match.home_team} vs ${match.away_team}`}
-      className={`group relative block overflow-hidden rounded-xl border bg-[var(--color-surface-2)]/70 backdrop-blur-sm transition-all ${
-        live
-          ? "border-destructive/30 hover:border-destructive/50"
-          : finished
-            ? "border-[var(--color-surface-border)]/50 opacity-80 hover:opacity-100"
-            : "border-[var(--color-surface-border)]/70 hover:border-[var(--color-neon)]/40"
-      }`}
+      className="group relative block overflow-hidden border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] transition-colors hover:border-[var(--color-neon)]/60"
     >
-      <div className="flex flex-col gap-3.5 px-4 py-3.5">
-        {/* status row */}
-        <div className="flex items-center justify-between">
-          <span className="truncate text-[15px] font-semibold leading-none tracking-tight text-[var(--color-ink)]">
-            {match.home_team} <span className="text-[var(--color-ink-muted)]">vs</span> {match.away_team}
-          </span>
-          <span
-            className={`shrink-0 pl-3 text-[10px] font-semibold uppercase tracking-[0.2em] ${
-              live ? "text-destructive" : finished ? "text-[var(--color-ink-muted)]" : "text-[var(--color-ink-muted)]"
-            }`}
-          >
-            {live && (
-              <span className="mr-1.5 inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-destructive align-middle" />
+      <Corner pos="tl" /><Corner pos="tr" />
+      <Corner pos="bl" /><Corner pos="br" />
+
+      {/* Stencil header band */}
+      <div className="flex items-center justify-between border-b border-dashed border-[var(--color-surface-border)] px-4 py-3">
+        <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+          {match.stage || "Round of 32"}
+        </span>
+        <span className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${live ? "text-destructive" : "text-[var(--color-ink-muted)]"}`}>
+          {live && (
+            <span className="mr-1.5 inline-flex h-1.5 w-1.5 animate-pulse rounded-full bg-destructive align-middle" />
+          )}
+          {finished ? "Full time" : formatKickoffDate(match.kickoff_at)}
+        </span>
+      </div>
+
+      <div className="space-y-4 px-4 py-5">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <div className="flex flex-col items-center gap-2">
+            <TeamFlag name={match.home_team} />
+            <span className="max-w-[110px] truncate text-center text-xs font-bold uppercase tracking-wide">
+              {match.home_team}
+            </span>
+          </div>
+          <div className="flex flex-col items-center gap-1">
+            {showScore ? (
+              <span className="font-display text-2xl font-bold leading-none tabular-nums text-[var(--color-ink)]">
+                {hScore ?? 0}<span className="mx-1 text-[var(--color-ink-muted)]">–</span>{aScore ?? 0}
+              </span>
+            ) : (
+              <span className="font-display text-lg font-bold leading-none text-[var(--color-ink-muted)]">vs</span>
             )}
-            {statusLabel}
+            <span className="h-6 w-px bg-[var(--color-neon)]/40" />
+            <span className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.2em] ${live ? "text-destructive" : "text-[var(--color-neon)]"}`}>
+              <Clock className="h-2.5 w-2.5" /> {ko}
+            </span>
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <TeamFlag name={match.away_team} />
+            <span className="max-w-[110px] truncate text-center text-xs font-bold uppercase tracking-wide">
+              {match.away_team}
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: match.home_team, price: home },
+            { label: "Draw", price: draw },
+            { label: match.away_team, price: away },
+          ].map((o, i) => (
+            <div
+              key={i}
+              className="relative flex flex-col items-center gap-1 border border-[var(--color-surface-border)] bg-[#070D0A] px-2 py-2.5 transition-colors group-hover:border-[var(--color-neon)]/60"
+            >
+              <span className="max-w-full truncate text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                {o.label}
+              </span>
+              <span className="font-display text-lg font-bold tabular-nums text-[var(--color-ink)]">
+                {o.price != null ? Number(o.price).toFixed(2) : "—"}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-3 text-[10px] font-bold uppercase tracking-[0.28em]">
+          <span className="text-[var(--color-ink-muted)]">
+            {finished ? "Result" : "Open Market"}
           </span>
-        </div>
-
-        {/* team market rows */}
-        <div className="flex flex-col gap-1.5">
-          <TeamMarketRow
-            name={match.home_team}
-            flag={homeFlag}
-            score={showScore ? hScore : null}
-            multiplier={!showScore ? match.reference_odds?.home : null}
-            chance={chances?.home}
-            emphasis={live || finished}
-          />
-          <TeamMarketRow
-            name={match.away_team}
-            flag={awayFlag}
-            score={showScore ? aScore : null}
-            multiplier={!showScore ? match.reference_odds?.away : null}
-            chance={chances?.away}
-            emphasis={live || finished}
-          />
-        </div>
-
-        {/* footer */}
-        <div className="flex items-center justify-between pt-1 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-          <span>{finished ? "Result" : "Prediction market"}</span>
-          <span
-            className={`inline-flex items-center gap-1 font-semibold ${
-              finished ? "text-[var(--color-ink-muted)] group-hover:text-[var(--color-ink)]" : "text-[var(--color-neon)]"
-            }`}
-          >
-            Open Market
-            <ArrowUpRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <span className="inline-flex items-center gap-1 text-[var(--color-neon)] transition-transform group-hover:translate-x-0.5">
+            View →
           </span>
         </div>
       </div>
@@ -284,50 +341,12 @@ function MatchCard({ match, tone, now }: { match: Match; tone: "live" | "upcomin
   );
 }
 
-function TeamMarketRow({
-  name,
-  flag,
-  score,
-  multiplier,
-  chance,
-  emphasis,
-}: {
-  name: string;
-  flag: string | null;
-  score: number | null;
-  multiplier: number | null | undefined;
-  chance: number | undefined;
-  emphasis: boolean;
-}) {
-  return (
-    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-md border border-transparent bg-[var(--color-surface)]/40 px-2.5 py-2 transition-colors hover:border-[var(--color-surface-border)]/60">
-      {flag ? (
-        <img
-          src={flag}
-          alt=""
-          className="h-5 w-7 object-cover"
-          loading="lazy"
-        />
-      ) : (
-        <span className="grid h-5 w-7 place-items-center bg-[var(--color-surface-border)]/50 text-[9px] font-semibold text-[var(--color-ink-muted)]">
-          {name.slice(0, 2).toUpperCase()}
-        </span>
-      )}
-      <span className="sr-only">{name}</span>
-      <span className={`w-10 text-right text-[12px] font-semibold tabular-nums ${emphasis ? "text-[var(--color-ink)]" : "text-[var(--color-ink-muted)]"}`}>
-        {score != null ? score : multiplier ? `${multiplier.toFixed(2)}x` : "—"}
-      </span>
-      <span className="w-11 text-right text-[12px] font-semibold tabular-nums text-[var(--color-neon)]">
-        {chance != null ? `${chance}%` : ""}
-      </span>
-    </div>
-  );
-}
-
 function EmptyState() {
   return (
-    <div className="rounded-xl border border-dashed border-[var(--color-surface-border)] px-6 py-16 text-center">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+    <div className="relative overflow-hidden border border-dashed border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/40 px-6 py-16 text-center">
+      <Corner pos="tl" /><Corner pos="tr" />
+      <Corner pos="bl" /><Corner pos="br" />
+      <p className="text-[11px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
         No fixtures on the slate
       </p>
       <p className="mt-2 text-[13px] text-[var(--color-ink-muted)]">
