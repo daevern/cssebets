@@ -60,16 +60,16 @@ function MatchAnalyticsPage() {
       />
       <div
         className="relative mx-auto flex max-w-md flex-col gap-8 px-4 pt-5 md:max-w-3xl md:gap-10 md:py-10"
-        style={{ paddingBottom: "calc(220px + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: "calc(140px + env(safe-area-inset-bottom))" }}
       >
-        <header className="flex items-center justify-between">
+        <header className="flex items-center">
           <Link
             to="/matches"
-            className="flex items-center gap-2 text-[11px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)]"
+            aria-label="Back"
+            className="grid h-9 w-9 -ml-2 place-items-center rounded-full text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)]"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to matches
+            <ArrowLeft className="h-4 w-4" />
           </Link>
-          <Link to="/dashboard"><CsseLogo size={22} /></Link>
         </header>
 
         {isLoading || !data ? (
