@@ -745,7 +745,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
             {getGroup("over_under_2_5").length > 0 && <Section market="over_under_2_5" cols="grid-cols-2" />}
             {getGroup("btts").length > 0 && <Section market="btts" cols="grid-cols-2" />}
             {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}
-            {hasToQualify && <Section market="to_qualify" cols="grid-cols-2" note="paid on who advances (incl. ET & penalties)" />}
+            {hasToQualify && <Section market="to_qualify" cols="grid-cols-2" />}
             {!hasPopular && <div className="text-[12px] text-[var(--color-ink-muted)]">No popular markets available.</div>}
           </div>
         )}
