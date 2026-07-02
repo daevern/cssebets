@@ -182,8 +182,8 @@ function HomePage() {
       </header>
 
 
-      {/* Upcoming Fixtures — sits directly under the Matchday title */}
-      {trending.length > 0 && (
+      {/* Upcoming Fixtures — same card design as /matches */}
+      {(featured || trending.length > 0) ? (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
@@ -200,17 +200,12 @@ function HomePage() {
               View all <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {trending.map((m) => (
-              <TrendingChip key={m.id} match={m} now={now} />
+          <div className="flex flex-col gap-3">
+            {[featured, ...trending].filter(Boolean).slice(0, 6).map((m) => (
+              <MarketCard key={(m as Match).id} match={m as Match} now={now} />
             ))}
           </div>
         </section>
-      )}
-
-      {/* Featured match hero */}
-      {featured ? (
-        <FeaturedHero match={featured} now={now} />
       ) : (
         <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-10 text-center text-sm text-[var(--ink-muted)]">
           No fixtures on the slate yet — check back closer to kickoff.
