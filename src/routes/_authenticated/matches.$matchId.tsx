@@ -621,7 +621,7 @@ function MomentumGraph({
   kickoffISO: string;
 }) {
   const HOME_COLOR = "var(--color-neon)";
-  const AWAY_COLOR = "#60a5fa"; // matches MarketAnalyticsCard secondary series
+  const AWAY_COLOR = "#f472b6"; // pink — away accent (blue is reserved for Draw)
   const CAP = 95;
   const SIGMA = 3.2;
 
@@ -1153,7 +1153,7 @@ function EventTimeline({ events, home, away, compact }: { events: any[]; home: s
   });
   const hasMore = !compact && ordered.length > 8;
   const HOME_COLOR = "var(--color-neon)";
-  const AWAY_COLOR = "#60a5fa";
+  const AWAY_COLOR = "#f472b6";
 
   const rows: Array<{ kind: "event"; e: any } | { kind: "divider"; label: string }> = [];
   let insertedHT = false;
