@@ -150,20 +150,14 @@ function HomePage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
-  const { featured, trending } = useMemo(() => {
+  const { featured } = useMemo(() => {
     const arr = data ?? [];
-    const live = arr.filter((m) => m.status === "live");
     const upcoming = arr
       .filter((m) => m.status !== "finished" && new Date(m.kickoff_at).getTime() > now)
       .sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime());
-    const featured = live[0] ?? upcoming[0] ?? null;
-    const trending = [
-      ...live,
-      ...upcoming.slice(0, 6),
-    ]
-      .filter((m) => m.id !== featured?.id)
-      .slice(0, 8);
-    return { featured, trending };
+    const live = arr.filter((m) => m.status === "live");
+    const featured = upcoming[0] ?? live[0] ?? null;
+    return { featured };
   }, [data, now]);
 
   const displayName =
@@ -181,41 +175,32 @@ function HomePage() {
         </h1>
       </header>
 
-
-      {/* Upcoming Fixtures — sits directly under the Matchday title */}
-      {trending.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
-                Upcoming Fixtures
-              </h2>
-              <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">Next kickoffs and live markets on the slate.</p>
-            </div>
-            <Link
-              to="/matches"
-              className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]"
-            >
-              View all <ChevronRight className="h-3 w-3" />
-            </Link>
+      {/* Next fixture — single card matching matches/markets style */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+              Next Fixture
+            </h2>
+            <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">The next kickoff on the slate.</p>
           </div>
-          <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {trending.map((m) => (
-              <TrendingChip key={m.id} match={m} now={now} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Featured match hero */}
-      {featured ? (
-        <FeaturedHero match={featured} now={now} />
-      ) : (
-        <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-10 text-center text-sm text-[var(--ink-muted)]">
-          No fixtures on the slate yet — check back closer to kickoff.
+          <Link
+            to="/matches"
+            className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]"
+          >
+            View all <ChevronRight className="h-3 w-3" />
+          </Link>
         </div>
-      )}
+        {featured ? (
+          <FeaturedMarketCard match={featured} now={now} />
+        ) : (
+          <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-10 text-center text-sm text-[var(--ink-muted)]">
+            No fixtures on the slate yet — check back closer to kickoff.
+          </div>
+        )}
+      </section>
+
 
       {/* Your Position — picks */}
       <section className="space-y-3">
