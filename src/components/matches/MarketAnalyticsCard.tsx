@@ -303,6 +303,27 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
     };
   }, [data, range, mode, now]);
 
+  // Zoomed y-domain — hug the data with padding so per-second movement looks dramatic.
+  // NOTE: must be called before any early return to preserve hook order.
+  const yDomain = useMemo<[number | string, number | string]>(() => {
+    const vals: number[] = [];
+    for (const row of chartData) {
+      for (const s of filteredSeries) {
+        const v = row[s.key];
+        if (typeof v === "number" && Number.isFinite(v)) vals.push(v);
+      }
+    }
+    if (!vals.length) return mode === "prob" ? [0, 100] : ["auto", "auto"];
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const spread = Math.max(max - min, mode === "prob" ? 1.5 : 0.04);
+    const pad = spread * 0.6;
+    if (mode === "prob") {
+      return [Math.max(0, Math.floor(min - pad)), Math.min(100, Math.ceil(max + pad))];
+    }
+    return [Math.max(1.01, min - pad), max + pad];
+  }, [chartData, filteredSeries, mode]);
+
   if (q.isLoading) {
     return (
       <SectionShell>
@@ -324,25 +345,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
   const isLiveRange = range === "LIVE";
   const isStale = isLiveRange ? false : lastSnapshotAt ? now - new Date(lastSnapshotAt).getTime() > STALE_MS : true;
 
-  // Zoomed y-domain — hug the data with padding so per-second movement looks dramatic.
-  const yDomain = useMemo<[number | string, number | string]>(() => {
-    const vals: number[] = [];
-    for (const row of chartData) {
-      for (const s of filteredSeries) {
-        const v = row[s.key];
-        if (typeof v === "number" && Number.isFinite(v)) vals.push(v);
-      }
-    }
-    if (!vals.length) return mode === "prob" ? [0, 100] : ["auto", "auto"];
-    const min = Math.min(...vals);
-    const max = Math.max(...vals);
-    const spread = Math.max(max - min, mode === "prob" ? 1.5 : 0.04);
-    const pad = spread * 0.6;
-    if (mode === "prob") {
-      return [Math.max(0, Math.floor(min - pad)), Math.min(100, Math.ceil(max + pad))];
-    }
-    return [Math.max(1.01, min - pad), max + pad];
-  }, [chartData, filteredSeries, mode]);
+
 
   return (
     <SectionShell
