@@ -100,6 +100,8 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
       away_score: awayScore,
       home_score_ht: homeScoreHt,
       away_score_ht: awayScoreHt,
+      ft_home_score: ftHome,
+      ft_away_score: ftAway,
       winner,
       qualifier,
       reference_odds: existing?.reference_odds ?? null,
