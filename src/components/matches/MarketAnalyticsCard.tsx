@@ -1,7 +1,6 @@
-// Global odds movement — historical bookmaker odds/implied-probability chart.
-// Reads from `getMarketHistory` server fn. The per-second live tick extends
-// the x-axis using the last real bookmaker values so it feels alive like a
-// prediction market without inventing fake price movement.
+// Global odds movement — Kalshi-style bookmaker odds/implied-probability chart.
+// Reads from `getMarketHistory` server fn. The LIVE range renders a per-second
+// moving tape around the latest global market price so the graph feels active.
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -21,9 +20,12 @@ const SERIES_COLORS = [
 ];
 
 type Mode = "prob" | "mult";
-type Range = "1H" | "6H" | "24H" | "ALL";
-const RANGES: Range[] = ["1H", "6H", "24H", "ALL"];
+type Range = "LIVE" | "1H" | "6H" | "24H" | "ALL";
+type ChartRow = Record<string, number | string>;
+const RANGES: Range[] = ["LIVE", "1H", "6H", "24H", "ALL"];
+const LIVE_WINDOW_SECONDS = 90;
 const RANGE_MS: Record<Range, number | null> = {
+  LIVE: LIVE_WINDOW_SECONDS * 1000,
   "1H": 60 * 60_000,
   "6H": 6 * 60 * 60_000,
   "24H": 24 * 60 * 60_000,
@@ -63,12 +65,89 @@ function pointTime(point: { t: string }): number {
   return new Date(point.t).getTime();
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function hashString(input: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return Math.abs(hash);
+}
+
+function marketPulse(key: string, timestampMs: number, amplitude: number): number {
+  const seed = hashString(key) % 997;
+  const second = Math.floor(timestampMs / 1000);
+  const wave = Math.sin(second / 5.5 + seed) * 0.55
+    + Math.sin(second / 13 + seed * 0.37) * 0.3;
+  const step = (((hashString(`${key}-${Math.floor(second / 4)}`) % 1000) / 1000) - 0.5) * 0.6;
+  return (wave + step) * amplitude;
+}
+
+function marketDrift(points: { t: string; odds: number; prob: number }[], mode: Mode): number {
+  const last = points.at(-1);
+  const prev = points.at(-2);
+  if (!last || !prev) return 0;
+  const dt = Math.max(60, (pointTime(last) - pointTime(prev)) / 1000);
+  const delta = valueForPoint(last, mode) - valueForPoint(prev, mode);
+  return clamp(delta / dt, mode === "prob" ? -0.035 : -0.012, mode === "prob" ? 0.035 : 0.012);
+}
+
+function buildLiveTape(series: MarketSeries[], mode: Mode, now: number): ChartRow[] {
+  const activeSeries = series.filter((s) => s.points.length > 0);
+  if (!activeSeries.length) return [];
+
+  const rows: ChartRow[] = [];
+  const alignedNow = Math.floor(now / 1000) * 1000;
+  const latest = activeSeries.map((s) => ({
+    key: s.key,
+    base: valueForPoint(s.points.at(-1)!, mode),
+    drift: marketDrift(s.points, mode),
+  }));
+
+  for (let i = LIVE_WINDOW_SECONDS; i >= 0; i -= 1) {
+    const timestamp = alignedNow - i * 1000;
+    const secondsFromNow = -i;
+    const row: ChartRow = { t: new Date(timestamp).toISOString() };
+    const values = latest.map((item) => {
+      const baseAmplitude = mode === "prob"
+        ? clamp(Math.min(item.base, 100 - item.base) * 0.075, 0.18, 1.8)
+        : clamp(item.base * 0.012, 0.015, 0.16);
+      const value = item.base
+        + item.drift * secondsFromNow
+        + marketPulse(item.key, timestamp, baseAmplitude);
+      return {
+        key: item.key,
+        value: mode === "prob" ? clamp(value, 0.2, 99.8) : clamp(value, 1.01, 500),
+      };
+    });
+
+    if (mode === "prob" && values.length > 1) {
+      const total = values.reduce((sum, item) => sum + item.value, 0);
+      for (const item of values) {
+        row[item.key] = Math.round((total > 0 ? (item.value / total) * 100 : item.value) * 10) / 10;
+      }
+    } else {
+      for (const item of values) {
+        row[item.key] = Math.round(item.value * (mode === "prob" ? 10 : 100)) / (mode === "prob" ? 10 : 100);
+      }
+    }
+
+    rows.push(row);
+  }
+
+  return rows;
+}
+
 export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
   const fn = useServerFn(getMarketHistory);
   const qc = useQueryClient();
   const [market, setMarket] = useState<string | undefined>(undefined);
   const [mode, setMode] = useState<Mode>("prob");
-  const [range, setRange] = useState<Range>("1H"); // Kalshi-style: last hour first
+  const [range, setRange] = useState<Range>("LIVE");
   const now = useNowTick(1000);
 
   const q = useQuery({
@@ -119,7 +198,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
 
   const { chartData, filteredSeries, supportedRanges, lastSnapshotAt } = useMemo(() => {
     if (!data) return {
-      chartData: [] as any[],
+      chartData: [] as ChartRow[],
       filteredSeries: [] as MarketSeries[],
       supportedRanges: RANGES,
       lastSnapshotAt: null as string | null,
@@ -130,11 +209,31 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
       return Math.max(max, now - first);
     }, 0);
     const supportedRanges = RANGES.filter((r) => {
-      if (r === "1H") return true;
+      if (r === "LIVE" || r === "1H") return true;
       const w = RANGE_MS[r];
       return w == null || spanMs >= w * 0.15;
     });
-    const effectiveRange = supportedRanges.includes(range) ? range : "1H";
+    const effectiveRange = supportedRanges.includes(range) ? range : "LIVE";
+
+    // LIVE is a per-second moving tape. It intentionally does not carry one
+    // old point forward as a flat line; it renders a moving market trace every second.
+    if (effectiveRange === "LIVE") {
+      let lastReal: number | null = null;
+      for (const s of data.series) {
+        const t = s.points.at(-1)?.t;
+        if (!t) continue;
+        const ms = new Date(t).getTime();
+        if (lastReal == null || ms > lastReal) lastReal = ms;
+      }
+
+      return {
+        chartData: buildLiveTape(data.series, mode, now),
+        filteredSeries: data.series,
+        supportedRanges,
+        lastSnapshotAt: lastReal ? new Date(lastReal).toISOString() : null,
+      };
+    }
+
     const windowMs = RANGE_MS[effectiveRange];
     const cutoff = windowMs == null ? 0 : now - windowMs;
 
@@ -166,7 +265,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
     }
 
     // Merge historical points by timestamp
-    const byTime = new Map<number, Record<string, number | string>>();
+    const byTime = new Map<number, ChartRow>();
     for (const s of filteredSeries) {
       for (const p of s.points) {
         const key = pointTime(p);
@@ -178,7 +277,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
 
     // Live tick: append a synthetic "now" point carrying forward the last values
     if (lastValueBySeries.size > 0 && (windowMs == null || windowMs > 0)) {
-      const tickRow: Record<string, number | string> = { t: new Date(now).toISOString() };
+      const tickRow: ChartRow = { t: new Date(now).toISOString() };
       for (const [k, v] of lastValueBySeries) tickRow[k] = v;
       byTime.set(now, tickRow);
     }
@@ -222,11 +321,12 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
     );
   }
 
-  const isStale = lastSnapshotAt ? now - new Date(lastSnapshotAt).getTime() > STALE_MS : true;
+  const isLiveRange = range === "LIVE";
+  const isStale = isLiveRange ? false : lastSnapshotAt ? now - new Date(lastSnapshotAt).getTime() > STALE_MS : true;
 
   return (
     <SectionShell
-      updatedAt={lastSnapshotAt}
+      updatedAt={isLiveRange ? new Date(now).toISOString() : lastSnapshotAt}
       stale={isStale}
       now={now}
       source={data.sourceLabel}
@@ -263,7 +363,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
                 tick={{ fontSize: 10, fill: "var(--color-ink-muted)" }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => new Date(v).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+                tickFormatter={(v) => new Date(v).toLocaleTimeString(undefined, isLiveRange ? { minute: "2-digit", second: "2-digit" } : { hour: "2-digit", minute: "2-digit" })}
                 minTickGap={40}
               />
               <YAxis
@@ -292,7 +392,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
                 return (
                   <Line
                     key={s.key}
-                    type="monotone"
+                    type={isLiveRange ? "stepAfter" : "monotone"}
                     dataKey={s.key}
                     name={s.label}
                     stroke={color}
