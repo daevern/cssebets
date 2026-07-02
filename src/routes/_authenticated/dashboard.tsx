@@ -150,14 +150,17 @@ function HomePage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
-  const { featured } = useMemo(() => {
+  const { featured, trending } = useMemo(() => {
     const arr = data ?? [];
+    const live = arr.filter((m) => m.status === "live");
     const upcoming = arr
       .filter((m) => m.status !== "finished" && new Date(m.kickoff_at).getTime() > now)
       .sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime());
-    const live = arr.filter((m) => m.status === "live");
     const featured = upcoming[0] ?? live[0] ?? null;
-    return { featured };
+    const trending = [...live, ...upcoming.slice(0, 6)]
+      .filter((m) => m.id !== featured?.id)
+      .slice(0, 8);
+    return { featured, trending };
   }, [data, now]);
 
   const displayName =
@@ -175,6 +178,32 @@ function HomePage() {
         </h1>
       </header>
 
+      {/* Upcoming Fixtures — small chip strip */}
+      {trending.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+                Upcoming Fixtures
+              </h2>
+              <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">Next kickoffs and live markets on the slate.</p>
+            </div>
+            <Link
+              to="/matches"
+              className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]"
+            >
+              View all <ChevronRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {trending.map((m) => (
+              <TrendingChip key={m.id} match={m} now={now} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Next fixture — single card matching matches/markets style */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
@@ -185,12 +214,6 @@ function HomePage() {
             </h2>
             <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">The next kickoff on the slate.</p>
           </div>
-          <Link
-            to="/matches"
-            className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]"
-          >
-            View all <ChevronRight className="h-3 w-3" />
-          </Link>
         </div>
         {featured ? (
           <FeaturedMarketCard match={featured} now={now} />
@@ -200,6 +223,7 @@ function HomePage() {
           </div>
         )}
       </section>
+
 
 
       {/* Your Position — picks */}
@@ -595,3 +619,94 @@ function TeamRow({
 }
 
 
+
+function threeWayPct(odds: { home: number; draw: number; away: number } | null) {
+  if (!odds) return null;
+  const inv = { h: 1 / odds.home, d: 1 / odds.draw, a: 1 / odds.away };
+  const s = inv.h + inv.d + inv.a;
+  return {
+    home: Math.round((inv.h / s) * 100),
+    draw: Math.round((inv.d / s) * 100),
+    away: Math.round((inv.a / s) * 100),
+  };
+}
+
+function ChipFlag({ name, size = 26 }: { name: string; size?: number }) {
+  const url = teamFlagUrl(name, 320);
+  if (!url) {
+    return (
+      <div
+        className="grid place-items-center bg-[var(--surface-3)] text-[10px] font-bold uppercase tracking-wider text-[var(--ink)]"
+        style={{ width: size, height: size * 0.7 }}
+      >
+        {name.slice(0, 3)}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={`${name} flag`}
+      className="object-cover"
+      style={{ width: size, height: size * 0.72 }}
+      loading="lazy"
+    />
+  );
+}
+
+function abbrev(name: string) {
+  const stops: Record<string, string> = {
+    "United States": "USA", "United Kingdom": "UK", "Bosnia & Herzegovina": "BIH",
+  };
+  if (stops[name]) return stops[name];
+  return name.length <= 4 ? name.toUpperCase() : name.slice(0, 3).toUpperCase();
+}
+
+function TrendingChip({ match, now }: { match: Match; now: number }) {
+  const live = match.status === "live";
+  const pct = threeWayPct(match.reference_odds);
+  return (
+    <Link
+      to="/matches/$matchId"
+      params={{ matchId: match.id }}
+      className={`shrink-0 rounded-xl border bg-[var(--surface-2)] px-3 py-3 transition-colors ${
+        live ? "border-[var(--neon)]/40" : "border-[var(--color-surface-border)]"
+      } hover:border-[var(--neon)]/50`}
+      style={{ width: 172 }}
+    >
+      <div className="flex items-center gap-1.5">
+        <ChipFlag name={match.home_team} />
+        <span className="text-[10px] font-bold text-[var(--ink-muted)]">·</span>
+        <ChipFlag name={match.away_team} />
+      </div>
+      <div className="mt-2 text-[12px] font-bold tracking-tight text-[var(--ink)]">
+        {abbrev(match.home_team)} vs {abbrev(match.away_team)}
+      </div>
+      {live ? (
+        <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--neon)]">
+          <span className="h-1 w-1 animate-pulse rounded-full bg-[var(--neon)]" /> LIVE
+        </div>
+      ) : (
+        <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+          {statusLabel(match, now)}
+        </div>
+      )}
+      {pct ? (
+        <div className="mt-2 grid grid-cols-3 gap-1 rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-3)]/60 p-1 text-center">
+          <div>
+            <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Home</div>
+            <div className="text-[11px] font-bold tabular-nums text-rose-400">{pct.home}%</div>
+          </div>
+          <div className="border-x border-[var(--color-surface-border)]">
+            <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Draw</div>
+            <div className="text-[11px] font-bold tabular-nums text-sky-300">{pct.draw}%</div>
+          </div>
+          <div>
+            <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Away</div>
+            <div className="text-[11px] font-bold tabular-nums text-[var(--neon)]">{pct.away}%</div>
+          </div>
+        </div>
+      ) : null}
+    </Link>
+  );
+}
