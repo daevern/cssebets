@@ -125,7 +125,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
       }
     >
       {/* Chart — the soul of the page. Taller, minimal chrome, bold strokes. */}
-      <div className="h-[440px] w-full sm:h-[500px] md:h-[560px]">
+      <div className="h-[240px] w-full sm:h-[280px] md:h-[320px]">
         {chartData.length === 0 ? (
           <EmptyGraph />
         ) : (
