@@ -1109,21 +1109,23 @@ function StatsCompare({ home, away, homeName: _homeName, awayName: _awayName }: 
                         {fmt(a)}
                       </span>
                     </div>
-                    {/* SofaScore-style: two independent bars, home left-anchored (fills right→left visually would be wrong, so home fills left→right toward the middle from its own side. We use two side-by-side tracks: home bar reversed to grow leftward, away grows rightward). */}
+                    {/* SofaScore-style: two independent tracks. Home fills from its outside edge (left→right); away fills from its outside edge (right→left). Both grow toward the centre. */}
                     <div className="grid grid-cols-2 gap-2">
                       <div className="relative h-1.5 overflow-hidden rounded-sm bg-[var(--color-surface)]">
                         <div
-                          className={`absolute inset-y-0 right-0 transition-all duration-700 ${homeLeads ? "shadow-[0_0_6px_var(--color-neon-glow)]" : "opacity-70"}`}
-                          style={{ width: `${hPct}%`, background: homeLeads ? HOME_COLOR : "color-mix(in oklab, var(--color-neon) 55%, transparent)" }}
+                          className={`absolute inset-y-0 left-0 transition-all duration-700 ${homeLeads ? "shadow-[0_0_6px_var(--color-neon-glow)]" : ""}`}
+                          style={{
+                            width: `${hPct}%`,
+                            background: homeLeads ? HOME_COLOR : "color-mix(in oklab, var(--color-neon) 45%, transparent)",
+                          }}
                         />
                       </div>
                       <div className="relative h-1.5 overflow-hidden rounded-sm bg-[var(--color-surface)]">
                         <div
-                          className="absolute inset-y-0 left-0 transition-all duration-700"
+                          className="absolute inset-y-0 right-0 transition-all duration-700"
                           style={{
                             width: `${aPct}%`,
-                            background: awayLeads ? AWAY_COLOR : "color-mix(in oklab, #f472b6 55%, transparent)",
-                            opacity: awayLeads ? 1 : 0.75,
+                            background: awayLeads ? AWAY_COLOR : "color-mix(in oklab, #f472b6 45%, transparent)",
                           }}
                         />
                       </div>
