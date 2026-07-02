@@ -91,12 +91,54 @@ function HomePage() {
   const qc = useQueryClient();
   const listFn = useServerFn(listMatchesForUsers);
   const now = useTicker(30_000);
+  const { user } = useAuth();
+  const uid = user?.id;
 
   const { data } = useQuery({
     queryKey: ["matches"],
     queryFn: async () => (await listFn()) as Match[],
     refetchInterval: 60_000,
   });
+
+  const { data: picks } = useQuery({
+    queryKey: ["dashboard-active-picks", uid],
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("predictions")
+        .select("id, status, points, virtual_stake, potential_return")
+        .eq("user_id", uid!)
+        .eq("status", "pending");
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        id: string; status: string; points: number; virtual_stake: number; potential_return: number;
+      }>;
+    },
+  });
+
+  const { data: historyCount = 0 } = useQuery({
+    queryKey: ["dashboard-history-count", uid],
+    enabled: !!uid,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("predictions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", uid!)
+        .neq("status", "pending");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const stakeOf = (p: { points: number; virtual_stake: number }) =>
+    Number(p.virtual_stake ?? 0) || Number(p.points ?? 0);
+  const liveCount = picks?.length ?? 0;
+  const totalRisked = picks?.reduce((s, p) => s + stakeOf(p), 0) ?? 0;
+  const expectedPayout = picks?.reduce((s, p) => s + Number(p.potential_return ?? 0), 0) ?? 0;
+  const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
 
   useEffect(() => {
     const ch = supabase
