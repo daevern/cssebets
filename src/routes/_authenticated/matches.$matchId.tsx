@@ -944,58 +944,104 @@ function PlayerDot({ x, y, number, name, color }: { x: number; y: number; number
 
 /* ---------- Stats compare ---------- */
 
-function StatsCompare({ home, away, homeName, awayName }: { home: any; away: any; homeName: string; awayName: string }) {
-  const rows: Array<{ key: string; label: string }> = [
-    { key: "possession", label: "Possession %" },
-    { key: "shots_total", label: "Shots" },
-    { key: "shots_on", label: "On target" },
-    { key: "corners", label: "Corners" },
-    { key: "fouls", label: "Fouls" },
-    { key: "yellow_cards", label: "Yellow" },
-    { key: "red_cards", label: "Red" },
-    { key: "saves", label: "Saves" },
-    { key: "passes_accurate", label: "Pass accurate" },
-    { key: "passes_pct", label: "Pass %" },
-    { key: "xg", label: "xG" },
+function StatsCompare({ home, away, homeName: _homeName, awayName: _awayName }: { home: any; away: any; homeName: string; awayName: string }) {
+  // SofaScore-style: value | label | value with a single centre-anchored bar underneath.
+  // Bars grow outward from the middle; the leading side is neon, the trailing side is muted.
+  const groups: Array<{ title?: string; rows: Array<{ key: string; label: string; suffix?: string }> }> = [
+    {
+      title: "Possession",
+      rows: [
+        { key: "possession", label: "Ball possession", suffix: "%" },
+      ],
+    },
+    {
+      title: "Shots",
+      rows: [
+        { key: "shots_total", label: "Total shots" },
+        { key: "shots_on", label: "Shots on target" },
+        { key: "xg", label: "Expected goals (xG)" },
+      ],
+    },
+    {
+      title: "Attack",
+      rows: [
+        { key: "corners", label: "Corner kicks" },
+        { key: "fouls", label: "Fouls" },
+      ],
+    },
+    {
+      title: "Passes",
+      rows: [
+        { key: "passes_accurate", label: "Accurate passes" },
+        { key: "passes_pct", label: "Pass accuracy", suffix: "%" },
+      ],
+    },
+    {
+      title: "Defending",
+      rows: [
+        { key: "saves", label: "Goalkeeper saves" },
+        { key: "yellow_cards", label: "Yellow cards" },
+        { key: "red_cards", label: "Red cards" },
+      ],
+    },
   ];
+
   return (
-    <div className="space-y-3.5">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-3 text-[10px] font-black uppercase tracking-[0.18em]">
-        <span className="min-w-0 truncate text-left text-[var(--color-neon)]">{homeName}</span>
-        <span className="shrink-0 text-center text-[var(--color-ink-muted)]">stat</span>
-        <span className="min-w-0 truncate text-right">{awayName}</span>
-      </div>
-      {rows.map((r) => {
-        const h = home?.[r.key];
-        const a = away?.[r.key];
-        if (h == null && a == null) return null;
-        const hv = Number(h ?? 0);
-        const av = Number(a ?? 0);
-        const total = hv + av || 1;
-        const hPct = (hv / total) * 100;
-        const aPct = (av / total) * 100;
-        const homeLeads = hv > av;
+    <div className="divide-y divide-dashed divide-[var(--color-surface-border)]/45">
+      {groups.map((g) => {
+        const visible = g.rows.filter((r) => home?.[r.key] != null || away?.[r.key] != null);
+        if (!visible.length) return null;
         return (
-          <div key={r.key} className="border-b border-dashed border-[var(--color-surface-border)]/55 pb-3 last:border-0 last:pb-0">
-            <div className="mb-2 grid grid-cols-[64px_1fr_64px] items-baseline gap-2">
-              <span className={`text-left font-display text-xl font-black tabular-nums ${homeLeads ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]"}`}>{h ?? "—"}</span>
-              <span className="text-center text-[10px] font-black uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">{r.label}</span>
-              <span className={`text-right font-display text-xl font-black tabular-nums ${!homeLeads && av > 0 ? "text-[var(--color-ink)]" : "text-[var(--color-ink)]/80"}`}>{a ?? "—"}</span>
-            </div>
-            {/* Mirror bars meeting in the centre */}
-            <div className="grid grid-cols-2 items-center">
-              <div className="flex h-2.5 justify-end bg-[var(--color-surface)]">
-                <div
-                  className="h-full bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon-glow)] transition-all duration-700"
-                  style={{ width: `${hPct}%` }}
-                />
+          <div key={g.title} className="py-4 first:pt-0 last:pb-0">
+            {g.title && (
+              <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+                {g.title}
               </div>
-              <div className="flex h-2.5 bg-[var(--color-surface)]">
-                <div
-                  className="h-full bg-white/70 transition-all duration-700"
-                  style={{ width: `${aPct}%` }}
-                />
-              </div>
+            )}
+            <div className="space-y-4">
+              {visible.map((r) => {
+                const h = home?.[r.key];
+                const a = away?.[r.key];
+                const hv = Number(h ?? 0);
+                const av = Number(a ?? 0);
+                const total = hv + av;
+                const hPct = total > 0 ? (hv / total) * 100 : 50;
+                const aPct = total > 0 ? (av / total) * 100 : 50;
+                const homeLeads = hv > av;
+                const awayLeads = av > hv;
+                const fmt = (v: any) => (v == null ? "—" : `${v}${r.suffix ?? ""}`);
+                return (
+                  <div key={r.key}>
+                    <div className="mb-1.5 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-baseline gap-3">
+                      <span className={`text-left font-display text-base font-black tabular-nums ${homeLeads ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]/70"}`}>
+                        {fmt(h)}
+                      </span>
+                      <span className="text-center text-[11px] font-medium tracking-tight text-[var(--color-ink-muted)]">
+                        {r.label}
+                      </span>
+                      <span className={`text-right font-display text-base font-black tabular-nums ${awayLeads ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]/70"}`}>
+                        {fmt(a)}
+                      </span>
+                    </div>
+                    {/* Centre-anchored bar: home extends left, away extends right */}
+                    <div className="relative h-1 bg-[var(--color-surface)]">
+                      <span aria-hidden className="absolute inset-y-[-2px] left-1/2 w-px -translate-x-1/2 bg-[var(--color-surface-border)]" />
+                      <div className="absolute inset-y-0 right-1/2 flex justify-end">
+                        <div
+                          className={`h-full transition-all duration-700 ${homeLeads ? "bg-[var(--color-neon)] shadow-[0_0_6px_var(--color-neon-glow)]" : "bg-[var(--color-ink)]/35"}`}
+                          style={{ width: `${hPct}%` }}
+                        />
+                      </div>
+                      <div className="absolute inset-y-0 left-1/2">
+                        <div
+                          className={`h-full transition-all duration-700 ${awayLeads ? "bg-[var(--color-neon)] shadow-[0_0_6px_var(--color-neon-glow)]" : "bg-[var(--color-ink)]/35"}`}
+                          style={{ width: `${aPct}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         );
@@ -1003,6 +1049,7 @@ function StatsCompare({ home, away, homeName, awayName }: { home: any; away: any
     </div>
   );
 }
+
 
 /* ---------- Event timeline ---------- */
 
