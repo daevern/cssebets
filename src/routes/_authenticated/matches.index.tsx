@@ -123,13 +123,13 @@ function MatchesPage() {
         <div className="grid place-items-center py-24">
           <Loader2 className="h-6 w-6 animate-spin text-[var(--neon)]" />
         </div>
-      ) : auto.length === 0 ? (
+      ) : list.length === 0 ? (
         <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-10 text-center text-sm text-[var(--ink-muted)]">
-          No fixtures in this view.
+          {tab === "live" ? "No matches are live right now." : "No fixtures in this view."}
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {auto.map((m) => (
+          {list.map((m) => (
             <MarketCard key={m.id} match={m} now={now} />
           ))}
         </div>
