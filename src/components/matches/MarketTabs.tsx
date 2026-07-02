@@ -808,7 +808,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         {tab === "sp" && (
           <div className="space-y-4">
             {hasToQualify && (
-              <Section market="to_qualify" cols="grid-cols-2" note="paid on who advances (incl. ET & penalties)" />
+              <Section market="to_qualify" cols="grid-cols-2" />
             )}
             {hasHtFt && <Section market="half_time_full_time" cols="grid-cols-3" />}
           </div>
