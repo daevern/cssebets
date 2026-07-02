@@ -64,6 +64,7 @@ export const CORNERS_LINES = [
 ] as const;
 
 export const MARKET_LABELS: Record<MarketKey, string> = {
+  "1x2": "Match Result (90 min)",
   over_under_0_5: "Over / Under 0.5 Goals",
   over_under_1_5: "Over / Under 1.5 Goals",
   over_under_2_5: "Over / Under 2.5 Goals",
@@ -135,6 +136,10 @@ export const SELECTION_LABELS: Record<string, string> = {
   AWAY_AWAY: "Away / Away",
   HOME: "Home",
   AWAY: "Away",
+  DRAW: "Draw",
+  home: "Home",
+  away: "Away",
+  draw: "Draw",
   HOME_OR_DRAW: "Home or Draw",
   HOME_OR_AWAY: "Home or Away",
   DRAW_OR_AWAY: "Draw or Away",
@@ -147,6 +152,7 @@ export function selectionLabel(sel: string): string {
 // Question-style market titles for the prediction-market UI.
 // {home} / {away} are replaced with team names at render time.
 export const MARKET_QUESTIONS: Record<MarketKey, string> = {
+  "1x2": "Who will win in 90 minutes?",
   over_under_0_5: "Will there be a goal?",
   over_under_1_5: "Will there be over 1.5 goals?",
   over_under_2_5: "Will there be over 2.5 goals?",
@@ -216,6 +222,7 @@ export const EXACT_GOALS_OPTIONS = ["GOALS_0","GOALS_1","GOALS_2","GOALS_3","GOA
 // hidden from the bet slip. Edit this set to expand/retract the live offering.
 export const ACTIVE_MARKETS: ReadonlySet<MarketKey> = new Set<MarketKey>([
   // Match result family
+  "1x2",
   "to_qualify",
   "double_chance",
   "draw_no_bet",
