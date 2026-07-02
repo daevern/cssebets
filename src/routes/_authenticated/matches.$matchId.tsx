@@ -84,7 +84,7 @@ function MatchAnalyticsPage() {
 }
 
 
-type TabKey = "summary" | "stats" | "lineups" | "events" | "h2h";
+
 
 function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
   const { match, phase, lineups, events, stats, ratings, h2h, injuries } = bundle;
