@@ -117,48 +117,75 @@ export const getMatchAnalytics = createServerFn({ method: "POST" })
     const homeInj = (injR.data ?? []).filter((r: any) => r.side === "home");
     const awayInj = (injR.data ?? []).filter((r: any) => r.side === "away");
 
-    // On-demand refresh — fire-and-forget so the response returns immediately.
-    // Cron jobs keep cached rows fresh; this is best-effort top-up only.
+    // Back-fill critical analytics synchronously when they're completely
+    // missing — otherwise the page renders without lineups/ratings/events
+    // and users see an empty analytics report on finished matches.
+    const needsLineupsBackfill = (lineupsR.data ?? []).length === 0
+      && (phase === "lineups" || phase === "live" || phase === "finished");
+    const needsRatingsBackfill = (ratingsR.data ?? []).length === 0 && phase === "finished";
+    const needsEventsBackfill = (eventsR.data ?? []).length === 0
+      && (phase === "live" || phase === "finished");
+    const needsStatsBackfill = (statsR.data ?? []).length === 0
+      && (phase === "live" || phase === "finished");
+    const needsH2HBackfill = !h2hR.data;
+    const needsInjBackfill = (injR.data ?? []).length === 0 && (phase === "pre" || phase === "lineups");
+
+    let l2 = lineupsR, e2 = eventsR, s2 = statsR, r2 = ratingsR, h2 = h2hR, inj2 = injR;
+
+    if (needsLineupsBackfill || needsRatingsBackfill || needsEventsBackfill || needsStatsBackfill || needsH2HBackfill || needsInjBackfill) {
+      try {
+        const mod = await import("@/lib/apifootball-analytics.server");
+        const tasks: Promise<any>[] = [];
+        if (needsLineupsBackfill) tasks.push(mod.syncLineups(matchId));
+        if (needsEventsBackfill) tasks.push(mod.syncEvents(matchId));
+        if (needsStatsBackfill) tasks.push(mod.syncStats(matchId));
+        if (needsRatingsBackfill) tasks.push(mod.syncPlayerRatings(matchId));
+        if (needsH2HBackfill) tasks.push(mod.syncH2H(matchId));
+        if (needsInjBackfill) tasks.push(mod.syncInjuries(matchId));
+        await Promise.allSettled(tasks);
+
+        // Reload just the backfilled tables.
+        const [nl, ne, ns, nr, nh, ni] = await Promise.all([
+          needsLineupsBackfill ? (supabaseAdmin as any).from("match_lineups").select("*").eq("match_id", matchId) : Promise.resolve(lineupsR),
+          needsEventsBackfill ? (supabaseAdmin as any).from("match_events").select("*").eq("match_id", matchId).order("minute", { ascending: true }) : Promise.resolve(eventsR),
+          needsStatsBackfill ? (supabaseAdmin as any).from("match_stats").select("*").eq("match_id", matchId) : Promise.resolve(statsR),
+          needsRatingsBackfill ? (supabaseAdmin as any).from("match_player_ratings").select("*").eq("match_id", matchId).order("rating", { ascending: false }) : Promise.resolve(ratingsR),
+          needsH2HBackfill ? (async () => {
+            const norm = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+            const na = norm(m.home_team); const nb = norm(m.away_team);
+            const key = na < nb ? `${na}__${nb}` : `${nb}__${na}`;
+            return (supabaseAdmin as any).from("match_h2h").select("*").eq("pair_key", key).maybeSingle();
+          })() : Promise.resolve(h2hR),
+          needsInjBackfill ? (supabaseAdmin as any).from("match_injuries").select("*").eq("match_id", matchId) : Promise.resolve(injR),
+        ]);
+        l2 = nl; e2 = ne; s2 = ns; r2 = nr; h2 = nh; inj2 = ni;
+      } catch {
+        // Quota / network failures must not break the page.
+      }
+    }
+
+    // Best-effort top-ups for stale data (fire-and-forget).
     void (async () => {
       try {
         const mod = await import("@/lib/apifootball-analytics.server");
         const isStale = (iso: string | null, maxMin: number) =>
           !iso || Date.now() - new Date(iso).getTime() > maxMin * 60 * 1000;
-        const lineupAge = lineupsR.data?.[0]?.fetched_at ?? null;
-        const statsAge = statsR.data?.[0]?.fetched_at ?? null;
-        const ratingsAge = ratingsR.data?.[0]?.fetched_at ?? null;
-        const h2hAge = h2hR.data?.fetched_at ?? null;
-        const injAge = injR.data?.[0]?.fetched_at ?? null;
+        const lineupAge = l2.data?.[0]?.fetched_at ?? null;
+        const statsAge = s2.data?.[0]?.fetched_at ?? null;
+        const h2hAge = (h2.data as any)?.fetched_at ?? null;
 
-        if (phase === "pre" || phase === "lineups") {
-          if (isStale(h2hAge, 24 * 60)) await mod.syncH2H(matchId);
-          if (phase === "lineups" && isStale(lineupAge, 5)) await mod.syncLineups(matchId);
-          if (isStale(injAge, 12 * 60)) await mod.syncInjuries(matchId);
-        } else if (phase === "live") {
-          if (isStale(lineupAge, 60)) await mod.syncLineups(matchId);
+        if (phase === "lineups" && isStale(lineupAge, 5)) await mod.syncLineups(matchId);
+        else if (phase === "live") {
           await mod.syncScore(matchId);
           await mod.syncEvents(matchId);
           if (isStale(statsAge, 2)) await mod.syncStats(matchId);
-        } else if (phase === "finished") {
-          // Top up penalty shootout score once if missing (AET/PEN matches)
-          if (m.penalty_home_score == null && m.penalty_away_score == null) {
-            await mod.syncScore(matchId);
-          }
-          if (isStale(ratingsAge, 60 * 24)) {
-            await mod.syncPlayerRatings(matchId);
-            await mod.syncStats(matchId);
-            await mod.syncEvents(matchId);
-          }
+        } else if (phase === "finished" && m.penalty_home_score == null && m.penalty_away_score == null) {
+          await mod.syncScore(matchId);
         }
-      } catch {
-        // Quota / network failures must not break the page.
-      }
+        if (isStale(h2hAge, 24 * 60)) await mod.syncH2H(matchId);
+      } catch { /* ignore */ }
     })();
 
-    const l2 = lineupsR;
-    const e2 = eventsR;
-    const s2 = statsR;
-    const r2 = ratingsR;
 
 
     return {
