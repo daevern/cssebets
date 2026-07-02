@@ -196,7 +196,7 @@ function MatchFixtureCard({ m, authed }: { m: NonNullable<LandingNextMatch>; aut
 
   const [resultPick, setResultPick] = useState<Pick | null>(null);
   const [resultStake, setResultStake] = useState<string>(String(MIN_STAKE));
-  const ctaTo = authed ? "/dashboard" : "/register";
+  const isDemo = m.id.startsWith("demo");
   const stakeNum = Number(resultStake);
   const stakeValid = stakeNum >= MIN_STAKE && stakeNum <= MAX_STAKE;
   const potential = stakeValid && resultPick ? (stakeNum * resultPick.odds).toFixed(2) : "0.00";
@@ -280,10 +280,17 @@ function MatchFixtureCard({ m, authed }: { m: NonNullable<LandingNextMatch>; aut
               className="flex-1 h-10 border border-[var(--color-surface-border)] bg-[#070D0A] font-display text-sm font-bold tabular-nums text-[var(--color-ink)] focus:border-[var(--color-neon)]"
             />
             <Button asChild size="sm" className="h-10 gap-1.5 rounded-full bg-[var(--color-neon)] px-5 text-[10px] font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_24px_var(--color-neon-glow)] hover:brightness-110">
-              <Link to={ctaTo}>
-                <span>Bet → {potential}</span>
-                <Zap className="h-3 w-3" />
-              </Link>
+              {isDemo ? (
+                <Link to={authed ? "/dashboard" : "/register"}>
+                  <span>Bet → {potential}</span>
+                  <Zap className="h-3 w-3" />
+                </Link>
+              ) : (
+                <Link to="/matches/$matchId" params={{ matchId: m.id }}>
+                  <span>Bet → {potential}</span>
+                  <Zap className="h-3 w-3" />
+                </Link>
+              )}
             </Button>
           </div>
         )}
