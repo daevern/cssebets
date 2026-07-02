@@ -1,6 +1,7 @@
 // Shared catalog: market keys, labels, selection lists. Safe to import on client.
 
 export type MarketKey =
+  | "1x2"
   | "over_under_0_5"
   | "over_under_1_5"
   | "over_under_2_5"
