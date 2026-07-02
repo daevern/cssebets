@@ -269,7 +269,7 @@ function AuthedLayout() {
           onSignOut={signOut}
         />
 
-        <main className="mx-auto w-full max-w-md safe-bottom">
+        <main className="mx-auto w-full max-w-md md:max-w-2xl safe-bottom">
           <Outlet />
         </main>
 
