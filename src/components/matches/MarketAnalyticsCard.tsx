@@ -324,6 +324,26 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
   const isLiveRange = range === "LIVE";
   const isStale = isLiveRange ? false : lastSnapshotAt ? now - new Date(lastSnapshotAt).getTime() > STALE_MS : true;
 
+  // Zoomed y-domain — hug the data with padding so per-second movement looks dramatic.
+  const yDomain = useMemo<[number | string, number | string]>(() => {
+    const vals: number[] = [];
+    for (const row of chartData) {
+      for (const s of filteredSeries) {
+        const v = row[s.key];
+        if (typeof v === "number" && Number.isFinite(v)) vals.push(v);
+      }
+    }
+    if (!vals.length) return mode === "prob" ? [0, 100] : ["auto", "auto"];
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const spread = Math.max(max - min, mode === "prob" ? 1.5 : 0.04);
+    const pad = spread * 0.6;
+    if (mode === "prob") {
+      return [Math.max(0, Math.floor(min - pad)), Math.min(100, Math.ceil(max + pad))];
+    }
+    return [Math.max(1.01, min - pad), max + pad];
+  }, [chartData, filteredSeries, mode]);
+
   return (
     <SectionShell
       updatedAt={isLiveRange ? new Date(now).toISOString() : lastSnapshotAt}
@@ -354,12 +374,11 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
           <EmptyGraph />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 16, right: 76, bottom: 4, left: -8 }}>
+            <LineChart data={chartData} margin={{ top: 16, right: 120, bottom: 4, left: -8 }}>
               <CartesianGrid
                 strokeDasharray="1 3"
                 stroke="var(--color-ink-muted)"
-                strokeOpacity={0.25}
-                vertical={false}
+                strokeOpacity={0.28}
               />
               <XAxis
                 dataKey="t"
@@ -377,7 +396,8 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
                 tick={false}
                 tickLine={false}
                 axisLine={false}
-                domain={mode === "prob" ? [0, 100] : ["auto", "auto"]}
+                domain={yDomain as any}
+                allowDataOverflow={false}
                 width={8}
               />
               <Tooltip
