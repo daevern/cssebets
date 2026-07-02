@@ -660,8 +660,8 @@ function MomentumGraph({
   }, [events]);
 
   const hasAny = homeSeries.some((v) => v > 0) || awaySeries.some((v) => v > 0);
-  const homeFlag = teamFlagUrl(homeName, 80);
-  const awayFlag = teamFlagUrl(awayName, 80);
+  const homeFlag = teamFlagUrl(homeName, 320);
+  const awayFlag = teamFlagUrl(awayName, 320);
 
   // Layout math
   const W = 600;
