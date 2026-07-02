@@ -206,9 +206,9 @@ function WalletPage() {
 
   return (
     <PageShell
-      kicker="Vault · Live"
+      kicker="Points Wallet"
       title="Your"
-      titleAccent="bankroll."
+      titleAccent="Portfolio"
     >
       {/* Balance hero */}
       <StencilPanel
