@@ -798,7 +798,7 @@ function MomentumGraph({
 }
 
 function TeamBlock({ name, goals = [], align = "left", accent = "home" }: { name: string; goals?: any[]; align?: "left" | "right"; accent?: "home" | "away" }) {
-  const url = teamFlagUrl(name, 160);
+  const url = teamFlagUrl(name, 320);
   const accentCls = accent === "home" ? "border-[var(--color-neon)]/50 shadow-[0_0_18px_-6px_var(--color-neon-glow)]" : "border-white/40";
   return (
     <div className="flex flex-col items-center gap-2">
