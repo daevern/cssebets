@@ -274,6 +274,7 @@ function AuthedLayout() {
         </main>
 
         <BottomNav />
+        <WinDetector />
         <FirstVisitWalkthroughs />
       </div>
     </TourProvider>
