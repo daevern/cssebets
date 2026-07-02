@@ -54,17 +54,19 @@ function QuestionHeading({
 type OddsVariant = "yes" | "no" | "home" | "draw" | "away" | "neutral";
 
 function classifySelection(selection: string): OddsVariant {
-  if (selection === "YES" || selection.startsWith("OVER_")) return "yes";
-  if (selection === "NO" || selection.startsWith("UNDER_")) return "no";
-  if (selection === "HOME") return "home";
-  if (selection === "DRAW") return "draw";
-  if (selection === "AWAY") return "away";
+  const s = selection.toUpperCase();
+  if (s === "YES" || s.startsWith("OVER_")) return "yes";
+  if (s === "NO" || s.startsWith("UNDER_")) return "no";
+  if (s === "HOME") return "home";
+  if (s === "DRAW") return "draw";
+  if (s === "AWAY") return "away";
   return "neutral";
 }
 
 function displayLabel(selection: string, fallback: string): string {
-  if (selection === "YES" || selection.startsWith("OVER_")) return "Yes";
-  if (selection === "NO" || selection.startsWith("UNDER_")) return "No";
+  const s = selection.toUpperCase();
+  if (s === "YES" || s.startsWith("OVER_")) return "Yes";
+  if (s === "NO" || s.startsWith("UNDER_")) return "No";
   return fallback;
 }
 
@@ -509,7 +511,9 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     getGroup("home_corners_over_under_4_5").length > 0 ||
     getGroup("away_corners_over_under_4_5").length > 0 ||
     getGroup("first_corner").length > 0;
+  const has1x2 = getGroup("1x2").length > 0;
   const hasPopular =
+    has1x2 ||
     getGroup("over_under_2_5").length > 0 || getGroup("btts").length > 0 ||
     getGroup("double_chance").length > 0 || hasToQualify;
 
@@ -519,7 +523,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
   const orderedSelections = (market: MarketKey, rows: OddsRow[]) => {
     let order: string[] = [];
-    if (market === "correct_score") order = CORRECT_SCORES;
+    if (market === "1x2") order = ["home", "draw", "away"];
+    else if (market === "correct_score") order = CORRECT_SCORES;
     else if (market === "half_time_full_time") order = HTFT_OPTIONS;
     else if (market === "exact_total_goals") order = EXACT_GOALS_OPTIONS;
     else if (market === "btts") order = ["YES", "NO"];
@@ -736,6 +741,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       <div className="px-3 sm:px-2 md:px-0">
         {tab === "pop" && (
           <div className="space-y-4">
+            {has1x2 && <Section market="1x2" cols="grid-cols-3" note="Settled on the 90-minute regulation score. Extra time & penalties don't count." />}
             {getGroup("over_under_2_5").length > 0 && <Section market="over_under_2_5" cols="grid-cols-2" />}
             {getGroup("btts").length > 0 && <Section market="btts" cols="grid-cols-2" />}
             {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}

@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceRateLimit } from "@/lib/rate-limit.functions";
 
 const MARKET_KEYS = [
+  "1x2",
   "over_under_0_5",
   "over_under_1_5",
   "over_under_2_5",

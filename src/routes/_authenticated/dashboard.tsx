@@ -166,27 +166,32 @@ function HomePage() {
     return { featured, trending };
   }, [data, now]);
 
+  const displayName =
+    (user?.user_metadata as any)?.full_name?.split(" ")[0] ||
+    (user?.user_metadata as any)?.username ||
+    user?.email?.split("@")[0] ||
+    "player";
+
   return (
     <div className="flex flex-col gap-8 px-4 pt-5">
-      {/* Header */}
-      <header className="flex items-end justify-between">
-        <div>
-          <h1 className="font-display text-[38px] font-bold leading-none tracking-tight text-[var(--ink)]">
-            Matchday
-          </h1>
-          <div className="mt-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-            <span className="text-[13px]">🌐</span>
-            FIFA World Cup 2026
-            <ChevronRight className="h-3 w-3" />
-          </div>
+      {/* Header — stencil greeting matching wallet/payout/picks */}
+      <header className="space-y-2">
+        <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--neon)]">
+          <span className="inline-block h-2 w-2 rounded-full bg-[var(--neon)] shadow-[0_0_8px_var(--neon)]" />
+          Welcome, {displayName}
         </div>
-        <Link
-          to="/matches"
-          className="flex items-center gap-1 rounded-full border border-[var(--color-surface-border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--ink-muted)] transition-colors hover:border-[var(--neon)]/50 hover:text-[var(--ink)]"
-        >
-          See all fixtures
-          <ChevronRight className="h-3 w-3" />
-        </Link>
+        <div className="flex items-end justify-between gap-3">
+          <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight text-[var(--ink)] md:text-4xl">
+            Ready to <span className="text-[var(--neon)]">score?</span>
+          </h1>
+          <Link
+            to="/matches"
+            className="shrink-0 flex items-center gap-1 rounded-full border border-[var(--color-surface-border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--ink-muted)] transition-colors hover:border-[var(--neon)]/50 hover:text-[var(--ink)]"
+          >
+            All fixtures
+            <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
       </header>
 
       {/* Upcoming Fixtures — sits directly under the Matchday title */}
