@@ -109,18 +109,9 @@ function MatchesPage() {
     tab === "live" ? live :
     tab === "upcoming" ? upcoming :
     completed;
-  const auto = tab === "live" && live.length === 0 ? upcoming : list;
 
   return (
     <div className="flex flex-col gap-5 px-4 pt-5">
-      {/* Title */}
-      <header>
-        <h1 className="font-display text-[38px] font-bold leading-none tracking-tight">Matches</h1>
-        <div className="mt-2 flex items-center gap-1.5 text-[12px] text-[var(--ink-muted)]">
-          🌐 FIFA World Cup 2026
-        </div>
-      </header>
-
       {/* Segmented tabs */}
       <div className="grid grid-cols-3 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-1">
         <TabBtn active={tab === "live"} onClick={() => setTab("live")} label="Live" count={live.length} tone="live" />
