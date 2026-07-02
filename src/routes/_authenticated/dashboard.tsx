@@ -40,52 +40,6 @@ function useTicker(ms = 30_000) {
   return n;
 }
 
-function toPct(odds: { home: number; draw: number; away: number } | null) {
-  if (!odds) return null;
-  const inv = { h: 1 / odds.home, d: 1 / odds.draw, a: 1 / odds.away };
-  const s = inv.h + inv.d + inv.a;
-  return {
-    home: Math.round((inv.h / s) * 100),
-    draw: Math.round((inv.d / s) * 100),
-    away: Math.round((inv.a / s) * 100),
-  };
-}
-
-function TeamFlag({ name, size = 56 }: { name: string; size?: number }) {
-  const url = teamFlagUrl(name, 320);
-  if (!url) {
-    return (
-      <div
-        className="grid place-items-center bg-[var(--surface-3)] text-[10px] font-bold uppercase tracking-wider text-[var(--ink)]"
-        style={{ width: size, height: size * 0.7 }}
-      >
-        {name.slice(0, 3)}
-      </div>
-    );
-  }
-  return (
-    <img
-      src={url}
-      alt={`${name} flag`}
-      className="object-cover"
-      style={{ width: size, height: size * 0.72 }}
-      loading="lazy"
-    />
-  );
-}
-
-function statusLabel(m: Match, now: number) {
-  if (m.status === "live") return "LIVE";
-  if (m.status === "finished") return "Full time";
-  const diff = new Date(m.kickoff_at).getTime() - now;
-  if (diff <= 0) return "Starting";
-  const d = new Date(m.kickoff_at);
-  const today = new Date(now);
-  const sameDay = d.toDateString() === today.toDateString();
-  const h = d.getHours() % 12 || 12;
-  const time = `${h}:${String(d.getMinutes()).padStart(2, "0")}${d.getHours() >= 12 ? "PM" : "AM"}`;
-  return sameDay ? `Today · ${time}` : `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${time}`;
-}
 
 function HomePage() {
   const qc = useQueryClient();
