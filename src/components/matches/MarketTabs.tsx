@@ -767,7 +767,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
           <div className="space-y-4">
             {getGroup("double_chance").length > 0 && <Section market="double_chance" cols="grid-cols-3" />}
             {getGroup("draw_no_bet").length > 0 && (
-              <Section market="draw_no_bet" cols="grid-cols-2" note="stake refunded on a draw" />
+              <Section market="draw_no_bet" cols="grid-cols-2" />
             )}
             {getGroup("clean_sheet_home").length > 0 && <Section market="clean_sheet_home" cols="grid-cols-2" />}
             {getGroup("clean_sheet_away").length > 0 && <Section market="clean_sheet_away" cols="grid-cols-2" />}
