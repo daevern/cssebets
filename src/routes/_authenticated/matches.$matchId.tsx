@@ -1132,39 +1132,103 @@ function StatsCompare({ home, away, homeName: _homeName, awayName: _awayName }: 
 /* ---------- Event timeline ---------- */
 
 function EventTimeline({ events, home, away, compact }: { events: any[]; home: string; away: string; compact?: boolean }) {
-  // Newest first
+  // Newest first, but group with HT/FT dividers based on minute
   const ordered = [...events].sort((a, b) => {
     const am = (a.minute ?? 0) + (a.extra_minute ?? 0);
     const bm = (b.minute ?? 0) + (b.extra_minute ?? 0);
     return bm - am;
   });
-  const hasMore = !compact && ordered.length > 7;
+  const hasMore = !compact && ordered.length > 8;
+  const HOME_COLOR = "var(--color-neon)";
+  const AWAY_COLOR = "#60a5fa";
+
+  const rows: Array<{ kind: "event"; e: any } | { kind: "divider"; label: string }> = [];
+  let insertedHT = false;
+  let insertedFT = false;
+  for (const e of ordered) {
+    const m = (e.minute ?? 0) + (e.extra_minute ?? 0);
+    if (!insertedFT && m >= 90) { rows.push({ kind: "divider", label: "Full time" }); insertedFT = true; }
+    if (!insertedHT && m <= 45) {
+      // insert HT before we go below 45
+      if (rows.length && rows[rows.length - 1].kind === "event") {
+        rows.push({ kind: "divider", label: "Half time" });
+        insertedHT = true;
+      }
+    }
+    rows.push({ kind: "event", e });
+  }
+
   return (
     <div className="relative">
-      <div className={compact ? "" : "md:max-h-[420px] md:overflow-y-auto md:pr-1"}>
-
-        <ul className="relative space-y-3">
-          {/* Vertical timeline rail */}
-          <span aria-hidden className="pointer-events-none absolute bottom-2 left-[48px] top-2 w-px bg-[var(--color-surface-border)]" />
-          {ordered.map((e) => {
-            const sideLabel = e.side === "home" ? home : e.side === "away" ? away : "";
+      <div className={compact ? "" : "md:max-h-[460px] md:overflow-y-auto md:pr-1"}>
+        <ul className="relative">
+          {/* Center rail */}
+          <span aria-hidden className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[var(--color-surface-border)]" />
+          {rows.map((row, idx) => {
+            if (row.kind === "divider") {
+              return (
+                <li key={`div-${idx}`} className="relative my-3 flex items-center justify-center">
+                  <span className="relative z-10 border border-[var(--color-surface-border)] bg-[var(--color-surface)] px-2 py-0.5 font-display text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+                    {row.label}
+                  </span>
+                </li>
+              );
+            }
+            const e = row.e;
             const isHome = e.side === "home";
+            const isAway = e.side === "away";
+            const sideColor = isHome ? HOME_COLOR : AWAY_COLOR;
+            const minute = `${e.minute ?? "—"}${e.extra_minute ? `+${e.extra_minute}` : ""}'`;
+            const detail = String(e.detail ?? e.type ?? "").toLowerCase();
+            const isGoal = String(e.type ?? "").toLowerCase() === "goal";
+            const sideLabel = isHome ? home : isAway ? away : "";
+
+            const Card = (
+              <div className={`flex min-w-0 items-center gap-2 py-1.5 ${isHome ? "flex-row" : "flex-row-reverse"} ${isGoal ? "text-[var(--color-ink)]" : "text-[var(--color-ink)]/90"}`}>
+                <span
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full border bg-[var(--color-surface-2)]"
+                  style={{ borderColor: sideColor }}
+                >
+                  {eventMark(e.e_type ?? e.type, e.detail, 12)}
+                </span>
+                <div className={`min-w-0 ${isHome ? "text-left" : "text-right"}`}>
+                  <div className={`truncate text-sm ${isGoal ? "font-semibold" : "font-medium"}`}>
+                    {e.player_name ?? e.detail ?? e.type}
+                  </div>
+                  {(e.assist_name || detail) && (
+                    <div className="truncate text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+                      {e.assist_name ? `assist ${e.assist_name}` : detail}
+                      {sideLabel && <span className="opacity-60"> · {sideLabel}</span>}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+
             return (
-              <li key={e.id} className="relative grid grid-cols-[40px_28px_minmax(0,1fr)] items-center gap-2.5 text-sm">
-                <span className="font-display text-xs font-black tabular-nums text-[var(--color-ink-muted)]">
-                  {e.minute ?? "—"}{e.extra_minute ? `+${e.extra_minute}` : ""}'
-                </span>
-                <span className="relative z-10 grid h-7 w-7 place-items-center border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
-                  {eventMark(e.type, e.detail, 12)}
-                </span>
-                <div className="min-w-0 border-l-2 py-1 pl-3 leading-snug" style={{ borderColor: isHome ? "var(--color-neon)" : "rgba(255,255,255,0.5)" }}>
-                  <div className="truncate">
-                    <span className="font-semibold">{e.player_name ?? e.detail ?? e.type}</span>
-                    {e.assist_name && <span className="text-[var(--color-ink-muted)]"> · assist {e.assist_name}</span>}
-                  </div>
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                    {e.detail ?? e.type}{sideLabel && ` · ${sideLabel}`}
-                  </div>
+              <li
+                key={e.id ?? `e-${idx}`}
+                className="relative grid grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] items-center border-b border-dashed border-[var(--color-surface-border)]/60 last:border-b-0"
+              >
+                {/* Left column (home) */}
+                <div className={`flex justify-end pr-2 ${isHome ? "" : "opacity-0 pointer-events-none"}`}>
+                  {isHome ? Card : null}
+                </div>
+                {/* Minute node */}
+                <div className="relative flex items-center justify-center">
+                  <span
+                    className="relative z-10 grid h-9 w-9 place-items-center rounded-full border bg-[var(--color-surface)] font-display text-[10px] font-black tabular-nums"
+                    style={{
+                      borderColor: isHome ? HOME_COLOR : isAway ? AWAY_COLOR : "var(--color-surface-border)",
+                      color: "var(--color-ink)",
+                    }}
+                  >
+                    {minute}
+                  </span>
+                </div>
+                {/* Right column (away) */}
+                <div className={`flex justify-start pl-2 ${isAway ? "" : "opacity-0 pointer-events-none"}`}>
+                  {isAway ? Card : null}
                 </div>
               </li>
             );
