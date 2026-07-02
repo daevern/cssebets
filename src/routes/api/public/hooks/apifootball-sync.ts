@@ -1,20 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 // Cron hook: pull real bookmaker odds for upcoming matches from API-Football.
-// Budgeted to stay safely under the 100-req/day free tier.
+// Budgeted by the database quota guard in `apiFootballGet`.
 //
-// Defaults: 10 matches per run, refresh anything older than 6h within next 48h.
-// Suggested cron: every 30 min during tournament; the function self-skips
+// Defaults: refresh upcoming matches every few minutes. The function self-skips
 // fresh matches and bails out cleanly on quota exhaustion.
 export const Route = createFileRoute("/api/public/hooks/apifootball-sync")({
   server: {
     handlers: {
       POST: async ({ request }) => {
         try {
+          const expectedKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+          const suppliedKey = request.headers.get("apikey");
+          if (expectedKey && suppliedKey !== expectedKey) {
+            return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), {
+              status: 401,
+              headers: { "content-type": "application/json" },
+            });
+          }
+
           const url = new URL(request.url);
-          const max = Number(url.searchParams.get("max") ?? 10);
-          const hoursAhead = Number(url.searchParams.get("hours") ?? 48);
-          const freshness = Number(url.searchParams.get("freshness") ?? 6);
+          const max = Math.max(1, Math.min(20, Number(url.searchParams.get("max") ?? 8) || 8));
+          const hoursAhead = Math.max(1, Math.min(72, Number(url.searchParams.get("hours") ?? 48) || 48));
+          const freshness = Math.max(0.01, Math.min(24, Number(url.searchParams.get("freshness") ?? 0.08) || 0.08));
 
           const { syncUpcomingMatchOdds } = await import("@/lib/apifootball-sync.server");
           const { getQuotaStatus } = await import("@/lib/apifootball.server");
