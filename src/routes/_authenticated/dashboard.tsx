@@ -619,3 +619,94 @@ function TeamRow({
 }
 
 
+
+function threeWayPct(odds: { home: number; draw: number; away: number } | null) {
+  if (!odds) return null;
+  const inv = { h: 1 / odds.home, d: 1 / odds.draw, a: 1 / odds.away };
+  const s = inv.h + inv.d + inv.a;
+  return {
+    home: Math.round((inv.h / s) * 100),
+    draw: Math.round((inv.d / s) * 100),
+    away: Math.round((inv.a / s) * 100),
+  };
+}
+
+function ChipFlag({ name, size = 26 }: { name: string; size?: number }) {
+  const url = teamFlagUrl(name, 320);
+  if (!url) {
+    return (
+      <div
+        className="grid place-items-center bg-[var(--surface-3)] text-[10px] font-bold uppercase tracking-wider text-[var(--ink)]"
+        style={{ width: size, height: size * 0.7 }}
+      >
+        {name.slice(0, 3)}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={`${name} flag`}
+      className="object-cover"
+      style={{ width: size, height: size * 0.72 }}
+      loading="lazy"
+    />
+  );
+}
+
+function abbrev(name: string) {
+  const stops: Record<string, string> = {
+    "United States": "USA", "United Kingdom": "UK", "Bosnia & Herzegovina": "BIH",
+  };
+  if (stops[name]) return stops[name];
+  return name.length <= 4 ? name.toUpperCase() : name.slice(0, 3).toUpperCase();
+}
+
+function TrendingChip({ match, now }: { match: Match; now: number }) {
+  const live = match.status === "live";
+  const pct = threeWayPct(match.reference_odds);
+  return (
+    <Link
+      to="/matches/$matchId"
+      params={{ matchId: match.id }}
+      className={`shrink-0 rounded-xl border bg-[var(--surface-2)] px-3 py-3 transition-colors ${
+        live ? "border-[var(--neon)]/40" : "border-[var(--color-surface-border)]"
+      } hover:border-[var(--neon)]/50`}
+      style={{ width: 172 }}
+    >
+      <div className="flex items-center gap-1.5">
+        <ChipFlag name={match.home_team} />
+        <span className="text-[10px] font-bold text-[var(--ink-muted)]">·</span>
+        <ChipFlag name={match.away_team} />
+      </div>
+      <div className="mt-2 text-[12px] font-bold tracking-tight text-[var(--ink)]">
+        {abbrev(match.home_team)} vs {abbrev(match.away_team)}
+      </div>
+      {live ? (
+        <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--neon)]">
+          <span className="h-1 w-1 animate-pulse rounded-full bg-[var(--neon)]" /> LIVE
+        </div>
+      ) : (
+        <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+          {statusLabel(match, now)}
+        </div>
+      )}
+      {pct ? (
+        <div className="mt-2 grid grid-cols-3 gap-1 rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-3)]/60 p-1 text-center">
+          <div>
+            <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Home</div>
+            <div className="text-[11px] font-bold tabular-nums text-rose-400">{pct.home}%</div>
+          </div>
+          <div className="border-x border-[var(--color-surface-border)]">
+            <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Draw</div>
+            <div className="text-[11px] font-bold tabular-nums text-sky-300">{pct.draw}%</div>
+          </div>
+          <div>
+            <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Away</div>
+            <div className="text-[11px] font-bold tabular-nums text-[var(--neon)]">{pct.away}%</div>
+          </div>
+        </div>
+      ) : null}
+    </Link>
+  );
+}
