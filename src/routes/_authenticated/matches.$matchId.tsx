@@ -7,6 +7,7 @@ import { teamFlagUrl } from "@/lib/country-flags";
 import { getMatchAnalytics, type AnalyticsBundle, type LineupPlayer } from "@/lib/match-analytics.functions";
 import { MarketTabs } from "@/components/matches/MarketTabs";
 import { Corner, StencilPanel } from "@/components/ui/page-shell";
+import { useAuth } from "@/hooks/use-auth";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 import { eventMark, WhistleIcon, GoalIcon, YellowCardIcon, RedCardIcon } from "@/components/matches/MatchIcons";
 import { MarketAnalyticsCard } from "@/components/matches/MarketAnalyticsCard";
