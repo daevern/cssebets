@@ -40,6 +40,28 @@ function useTicker(ms = 30_000) {
   return n;
 }
 
+function TeamFlag({ name, size = 56 }: { name: string; size?: number }) {
+  const url = teamFlagUrl(name, 320);
+  if (!url) {
+    return (
+      <div
+        className="grid place-items-center bg-[var(--surface-3)] text-[10px] font-bold uppercase tracking-wider text-[var(--ink)]"
+        style={{ width: size, height: size * 0.7 }}
+      >
+        {name.slice(0, 3)}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={`${name} flag`}
+      className="object-cover"
+      style={{ width: size, height: size * 0.72 }}
+      loading="lazy"
+    />
+  );
+}
 
 function HomePage() {
   const qc = useQueryClient();
