@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, Loader2, Activity, Users, AlertTriangle, History, Star } from "lucide-react";
+import { Loader2, Activity, Users, AlertTriangle, History, Star } from "lucide-react";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { getMatchAnalytics, type AnalyticsBundle, type LineupPlayer } from "@/lib/match-analytics.functions";
 import { MarketTabs } from "@/components/matches/MarketTabs";
@@ -62,15 +62,7 @@ function MatchAnalyticsPage() {
         className="relative mx-auto flex max-w-md flex-col gap-8 px-4 pt-5 md:max-w-3xl md:gap-10 md:py-10"
         style={{ paddingBottom: "calc(140px + env(safe-area-inset-bottom))" }}
       >
-        <header className="flex items-center">
-          <Link
-            to="/matches"
-            aria-label="Back"
-            className="grid h-9 w-9 -ml-2 place-items-center rounded-full text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)]"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </header>
+        {/* Back arrow lives in the global TopBar on this route — keep the page focused on the match. */}
 
         {isLoading || !data ? (
           <div className="grid place-items-center py-24">
