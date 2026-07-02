@@ -431,30 +431,55 @@ function MatchHero({
       </div>
 
       {/* Scoreboard */}
-      <div className="flex items-center justify-center gap-5 sm:gap-8 md:gap-12">
-        <ScoreTeam name={match.home_team} flag={homeFlag} />
-        <div className="flex flex-col items-center">
-          {showScore ? (
-            <div className="flex items-baseline gap-2 font-display leading-none tracking-tight">
-              <span className="text-4xl font-semibold tabular-nums text-[var(--color-ink)] sm:text-5xl md:text-6xl">
-                {match.home_score ?? 0}
-              </span>
-              <span className="text-2xl font-light text-[var(--color-ink-muted)]/50 sm:text-3xl">–</span>
-              <span className="text-4xl font-semibold tabular-nums text-[var(--color-ink)] sm:text-5xl md:text-6xl">
-                {match.away_score ?? 0}
-              </span>
+      {(() => {
+        const regH = match.home_score;
+        const regA = match.away_score;
+        const ftH = (match as any).ft_home_score ?? null;
+        const ftA = (match as any).ft_away_score ?? null;
+        const hasFT = ftH != null && ftA != null;
+        const wentToET = hasFT && regH != null && regA != null && (ftH !== regH || ftA !== regA);
+        const hasPens = match.penalty_home_score != null || match.penalty_away_score != null;
+        const dispH = hasFT ? ftH : (regH ?? 0);
+        const dispA = hasFT ? ftA : (regA ?? 0);
+        return (
+          <div className="flex items-center justify-center gap-5 sm:gap-8 md:gap-12">
+            <ScoreTeam name={match.home_team} flag={homeFlag} />
+            <div className="flex flex-col items-center">
+              {showScore ? (
+                <>
+                  <div className="flex items-baseline gap-2 font-display leading-none tracking-tight">
+                    <span className="text-4xl font-semibold tabular-nums text-[var(--color-ink)] sm:text-5xl md:text-6xl">
+                      {dispH}
+                    </span>
+                    <span className="text-2xl font-light text-[var(--color-ink-muted)]/50 sm:text-3xl">–</span>
+                    <span className="text-4xl font-semibold tabular-nums text-[var(--color-ink)] sm:text-5xl md:text-6xl">
+                      {dispA}
+                    </span>
+                  </div>
+                  {(wentToET || hasPens) && (
+                    <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+                      {hasPens ? "AET · Pens" : "AET"}
+                      {regH != null && regA != null && (
+                        <span className="ml-2 text-[var(--color-ink-muted)]/70">
+                          90' <span className="tabular-nums text-[var(--color-ink)]">{regH}–{regA}</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <span className="font-display text-xl font-light tracking-tight text-[var(--color-ink-muted)] sm:text-2xl">vs</span>
+              )}
+              {hasPens && (
+                <div className="mt-1 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+                  Pens <span className="tabular-nums text-[var(--color-ink)]">{match.penalty_home_score ?? 0}–{match.penalty_away_score ?? 0}</span>
+                </div>
+              )}
             </div>
-          ) : (
-            <span className="font-display text-xl font-light tracking-tight text-[var(--color-ink-muted)] sm:text-2xl">vs</span>
-          )}
-          {(match.penalty_home_score != null || match.penalty_away_score != null) && (
-            <div className="mt-2 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-              Pens <span className="tabular-nums text-[var(--color-ink)]">{match.penalty_home_score ?? 0}–{match.penalty_away_score ?? 0}</span>
-            </div>
-          )}
-        </div>
-        <ScoreTeam name={match.away_team} flag={awayFlag} />
-      </div>
+            <ScoreTeam name={match.away_team} flag={awayFlag} />
+          </div>
+        );
+      })()}
 
       {/* Last play */}
       {lastPlay && (
