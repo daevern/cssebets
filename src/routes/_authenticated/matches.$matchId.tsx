@@ -382,8 +382,8 @@ function MatchHero({
   const showScore = isFinished || match.home_score != null || isLive;
   void homeGoals; void awayGoals; void phaseLabel;
 
-  const homeFlag = teamFlagUrl(match.home_team, 160);
-  const awayFlag = teamFlagUrl(match.away_team, 160);
+  const homeFlag = teamFlagUrl(match.home_team, 320);
+  const awayFlag = teamFlagUrl(match.away_team, 320);
 
   const lastPlay = (() => {
     if (!isLive || !lastEvent) return null;
