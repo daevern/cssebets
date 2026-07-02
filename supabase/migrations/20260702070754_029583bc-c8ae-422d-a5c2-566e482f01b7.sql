@@ -1,0 +1,1 @@
+ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS ft_home_score INTEGER, ADD COLUMN IF NOT EXISTS ft_away_score INTEGER;

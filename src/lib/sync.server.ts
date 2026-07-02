@@ -69,7 +69,7 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
     // Prefer football-data's `score.winner` (HOME_TEAM/AWAY_TEAM) on finished
     // matches because it already reflects ET + penalty shootout outcomes. If
     // it reports DRAW (group stage), leave qualifier NULL.
-    const isKnockoutStage = typeof m.stage === "string" && /FINAL|SEMI|QUARTER|ROUND_OF/i.test(m.stage);
+    const isKnockoutStage = typeof m.stage === "string" && /FINAL|SEMI|QUARTER|ROUND_OF|LAST_/i.test(m.stage);
     let qualifier: "HOME" | "AWAY" | null = null;
     if (status === "finished" && isKnockoutStage) {
       const w = m.score?.winner;
@@ -100,6 +100,8 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
       away_score: awayScore,
       home_score_ht: homeScoreHt,
       away_score_ht: awayScoreHt,
+      ft_home_score: ftHome,
+      ft_away_score: ftAway,
       winner,
       qualifier,
       reference_odds: existing?.reference_odds ?? null,

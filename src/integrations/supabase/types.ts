@@ -1108,6 +1108,8 @@ export type Database = {
           external_id: string | null
           first_card_team: string | null
           first_corner_team: string | null
+          ft_away_score: number | null
+          ft_home_score: number | null
           group_name: string | null
           home_cards: number | null
           home_corners: number | null
@@ -1159,6 +1161,8 @@ export type Database = {
           external_id?: string | null
           first_card_team?: string | null
           first_corner_team?: string | null
+          ft_away_score?: number | null
+          ft_home_score?: number | null
           group_name?: string | null
           home_cards?: number | null
           home_corners?: number | null
@@ -1210,6 +1214,8 @@ export type Database = {
           external_id?: string | null
           first_card_team?: string | null
           first_corner_team?: string | null
+          ft_away_score?: number | null
+          ft_home_score?: number | null
           group_name?: string | null
           home_cards?: number | null
           home_corners?: number | null

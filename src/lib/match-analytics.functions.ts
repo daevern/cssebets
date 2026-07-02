@@ -24,6 +24,8 @@ export type AnalyticsBundle = {
     group_name: string | null;
     home_score: number | null;
     away_score: number | null;
+    ft_home_score: number | null;
+    ft_away_score: number | null;
     penalty_home_score: number | null;
     penalty_away_score: number | null;
     venue: string | null;
@@ -53,7 +55,7 @@ export const getMatchAnalytics = createServerFn({ method: "POST" })
     const { data: mRaw } = await (supabaseAdmin as any)
       .from("matches")
       .select(
-        "id, home_team, away_team, kickoff_at, status, stage, group_name, home_score, away_score, penalty_home_score, penalty_away_score, apifootball_fixture_id, live_elapsed, live_status_short",
+        "id, home_team, away_team, kickoff_at, status, stage, group_name, home_score, away_score, ft_home_score, ft_away_score, penalty_home_score, penalty_away_score, apifootball_fixture_id, live_elapsed, live_status_short",
       )
       .eq("id", matchId)
       .maybeSingle();
