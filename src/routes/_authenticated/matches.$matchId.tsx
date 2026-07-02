@@ -789,7 +789,7 @@ function TeamBlock({ name, goals = [], align = "left", accent = "home" }: { name
 }
 
 
-/* ---------- Lineups ---------- */
+/* ---------- Lineups (SofaScore-inspired) ---------- */
 
 function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "away"; teamName: string }) {
   if (!lineup) {
@@ -801,48 +801,79 @@ function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "
   }
   const starters: LineupPlayer[] = lineup.starters ?? [];
   const subs: LineupPlayer[] = lineup.substitutes ?? [];
+  const accent = side === "home" ? "var(--color-neon)" : "#F3F4F6";
   return (
     <div>
-      <div className="mb-2 flex items-baseline justify-between border-b border-dashed border-[var(--color-surface-border)] pb-1">
-        <span className="text-[11px] font-bold uppercase tracking-[0.22em]">{teamName}</span>
-        <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-          {lineup.formation ?? ""}
-        </span>
+      <div className="mb-3 flex items-baseline justify-between border-b border-dashed border-[var(--color-surface-border)] pb-2">
+        <div className="flex items-center gap-2">
+          <span
+            className="inline-block h-2 w-2 rounded-full"
+            style={{ background: accent, boxShadow: side === "home" ? `0 0 8px ${accent}` : "none" }}
+          />
+          <span className="text-[11px] font-bold uppercase tracking-[0.22em]">{teamName}</span>
+        </div>
+        {lineup.formation && (
+          <span className="font-display text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+            {lineup.formation}
+          </span>
+        )}
       </div>
-      <ul className="grid gap-y-1.5 text-sm sm:grid-cols-2 sm:gap-x-3 md:grid-cols-3">
+
+      <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+        Starting XI
+      </div>
+      <ul className="mt-2 divide-y divide-dashed divide-[var(--color-surface-border)]/60">
         {starters.map((p, i) => (
-          <li key={`s-${i}`} className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-baseline gap-2">
-            <span className="text-right font-display text-xs font-bold tabular-nums text-[var(--color-neon)]">
-              {p.number ?? ""}
-            </span>
-            <span className="truncate">{p.name}</span>
-            {p.pos && <span className="ml-auto text-[10px] uppercase text-[var(--color-ink-muted)]">{p.pos}</span>}
-          </li>
+          <PlayerRow key={`s-${i}`} player={p} accent={accent} />
         ))}
       </ul>
+
       {subs.length > 0 && (
         <>
-          <div className="mt-3 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+          <div className="mt-4 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
             Bench
           </div>
-          <ul className="mt-2 grid gap-y-1.5 text-sm sm:grid-cols-2 sm:gap-x-3 md:grid-cols-3">
+          <ul className="mt-2 divide-y divide-dashed divide-[var(--color-surface-border)]/50">
             {subs.map((p, i) => (
-              <li key={`b-${i}`} className="grid grid-cols-[28px_minmax(0,1fr)] items-baseline gap-2 text-[var(--color-ink-muted)]">
-                <span className="text-right font-display text-xs font-bold tabular-nums">{p.number ?? ""}</span>
-                <span className="truncate">{p.name}</span>
-              </li>
+              <PlayerRow key={`b-${i}`} player={p} accent={accent} dim />
             ))}
           </ul>
         </>
       )}
       {lineup.coach_name && (
-        <div className="mt-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-          Coach: <span className="text-[var(--color-ink)]">{lineup.coach_name}</span>
+        <div className="mt-4 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+          <span>Coach</span>
+          <span className="text-[var(--color-ink)]">{lineup.coach_name}</span>
         </div>
       )}
     </div>
   );
 }
+
+function PlayerRow({ player, accent, dim = false }: { player: LineupPlayer; accent: string; dim?: boolean }) {
+  return (
+    <li className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3 py-2">
+      <span
+        className="grid h-6 w-6 place-items-center rounded-full border font-display text-[10px] font-bold tabular-nums"
+        style={{
+          borderColor: dim ? "var(--color-surface-border)" : accent,
+          color: dim ? "var(--color-ink-muted)" : accent,
+        }}
+      >
+        {player.number ?? "–"}
+      </span>
+      <span className={`truncate text-sm ${dim ? "text-[var(--color-ink-muted)]" : "text-[var(--color-ink)]"}`}>
+        {player.name}
+      </span>
+      {player.pos && (
+        <span className="rounded-sm border border-[var(--color-surface-border)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+          {player.pos}
+        </span>
+      )}
+    </li>
+  );
+}
+
 
 /* SVG pitch + player dots, positioned by API-Football grid "row:col" (1-based). */
 function FormationPitch({ home, away }: { home: any; away: any }) {
@@ -1128,32 +1159,67 @@ function InjuryList({ items, title }: { items: any[]; title: string }) {
 /* ---------- Player ratings ---------- */
 
 function RatingsTable({ rows, title }: { rows: any[]; title: string }) {
+  const sorted = [...rows].sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+  const top = sorted.find((r) => r.rating != null)?.rating ?? null;
   return (
     <div>
-      <div className="mb-2 border-b border-dashed border-[var(--color-surface-border)] pb-1 text-[11px] font-bold uppercase tracking-[0.22em]">{title}</div>
-      <ul className="space-y-1 text-xs">
-        {rows.slice(0, 14).map((r) => (
-          <li key={r.id} className="grid grid-cols-[20px_1fr_auto_auto] items-baseline gap-2">
-            <span className="text-right font-display text-[10px] font-bold tabular-nums text-[var(--color-ink-muted)]">{r.number ?? ""}</span>
-            <span className="truncate">{r.player_name}</span>
-            <span className="text-[10px] uppercase text-[var(--color-ink-muted)]">{r.position ?? ""}</span>
-            <span className={`font-display text-xs font-bold tabular-nums ${ratingTone(r.rating)}`}>
-              {r.rating != null ? Number(r.rating).toFixed(1) : "—"}
-            </span>
-          </li>
-        ))}
+      <div className="mb-3 flex items-baseline justify-between border-b border-dashed border-[var(--color-surface-border)] pb-2">
+        <span className="text-[11px] font-bold uppercase tracking-[0.22em]">{title}</span>
+        {top != null && (
+          <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+            Top <span className="font-display text-[var(--color-neon)]">{Number(top).toFixed(1)}</span>
+          </span>
+        )}
+      </div>
+      <ul className="divide-y divide-dashed divide-[var(--color-surface-border)]/60">
+        {rows.slice(0, 14).map((r) => {
+          const isTop = r.rating != null && r.rating === top;
+          return (
+            <li key={r.id} className="grid grid-cols-[24px_minmax(0,1fr)_auto_auto] items-center gap-3 py-2">
+              <span className="text-right font-display text-[10px] font-bold tabular-nums text-[var(--color-ink-muted)]">
+                {r.number ?? ""}
+              </span>
+              <span className={`truncate text-sm ${isTop ? "text-[var(--color-ink)]" : "text-[var(--color-ink)]"}`}>
+                {r.player_name}
+              </span>
+              <span className="rounded-sm border border-[var(--color-surface-border)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                {r.position ?? "–"}
+              </span>
+              <RatingPill rating={r.rating} highlight={isTop} />
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
 }
-function ratingTone(rating: number | null): string {
-  if (rating == null) return "text-[var(--color-ink-muted)]";
+
+function RatingPill({ rating, highlight = false }: { rating: number | null; highlight?: boolean }) {
+  if (rating == null) {
+    return (
+      <span className="grid h-7 w-11 place-items-center rounded-sm border border-dashed border-[var(--color-surface-border)] font-display text-xs font-bold tabular-nums text-[var(--color-ink-muted)]">
+        —
+      </span>
+    );
+  }
   const n = Number(rating);
-  if (n >= 8) return "text-[var(--color-neon)]";
-  if (n >= 7) return "text-[var(--color-ink)]";
-  if (n >= 6) return "text-[var(--color-ink-muted)]";
-  return "text-destructive";
+  const bg =
+    n >= 8 ? "var(--color-neon)" : n >= 7 ? "#3B82F6" : n >= 6 ? "#64748B" : "#E11D48";
+  const fg = n >= 8 || n >= 7 || n < 6 ? "#04110A" : "#F3F4F6";
+  return (
+    <span
+      className="grid h-7 w-11 place-items-center rounded-sm font-display text-xs font-bold tabular-nums"
+      style={{
+        background: bg,
+        color: fg,
+        boxShadow: highlight && n >= 8 ? `0 0 12px color-mix(in oklab, ${bg} 55%, transparent)` : undefined,
+      }}
+    >
+      {n.toFixed(1)}
+    </span>
+  );
 }
+
 
 /* ---------- H2H ---------- */
 
