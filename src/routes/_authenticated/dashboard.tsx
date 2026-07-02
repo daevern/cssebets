@@ -150,14 +150,17 @@ function HomePage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
-  const { featured } = useMemo(() => {
+  const { featured, trending } = useMemo(() => {
     const arr = data ?? [];
+    const live = arr.filter((m) => m.status === "live");
     const upcoming = arr
       .filter((m) => m.status !== "finished" && new Date(m.kickoff_at).getTime() > now)
       .sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime());
-    const live = arr.filter((m) => m.status === "live");
     const featured = upcoming[0] ?? live[0] ?? null;
-    return { featured };
+    const trending = [...live, ...upcoming.slice(0, 6)]
+      .filter((m) => m.id !== featured?.id)
+      .slice(0, 8);
+    return { featured, trending };
   }, [data, now]);
 
   const displayName =
@@ -175,6 +178,32 @@ function HomePage() {
         </h1>
       </header>
 
+      {/* Upcoming Fixtures — small chip strip */}
+      {trending.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+                Upcoming Fixtures
+              </h2>
+              <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">Next kickoffs and live markets on the slate.</p>
+            </div>
+            <Link
+              to="/matches"
+              className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]"
+            >
+              View all <ChevronRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {trending.map((m) => (
+              <TrendingChip key={m.id} match={m} now={now} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Next fixture — single card matching matches/markets style */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
@@ -185,12 +214,6 @@ function HomePage() {
             </h2>
             <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">The next kickoff on the slate.</p>
           </div>
-          <Link
-            to="/matches"
-            className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]"
-          >
-            View all <ChevronRight className="h-3 w-3" />
-          </Link>
         </div>
         {featured ? (
           <FeaturedMarketCard match={featured} now={now} />
@@ -200,6 +223,7 @@ function HomePage() {
           </div>
         )}
       </section>
+
 
 
       {/* Your Position — picks */}
