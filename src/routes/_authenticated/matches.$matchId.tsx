@@ -936,7 +936,19 @@ function TeamBlock({ name, goals = [], align = "left", accent = "home" }: { name
 
 /* ---------- Lineups (SofaScore-inspired) ---------- */
 
-function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "away"; teamName: string }) {
+function LineupSplit({
+  lineup,
+  side,
+  teamName,
+  phase,
+  ratings,
+}: {
+  lineup: any;
+  side: "home" | "away";
+  teamName: string;
+  phase: AnalyticsBundle["phase"];
+  ratings?: any[];
+}) {
   if (!lineup) {
     return (
       <div className="text-xs text-[var(--color-ink-muted)]">
@@ -947,6 +959,11 @@ function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "
   const starters: LineupPlayer[] = lineup.starters ?? [];
   const subs: LineupPlayer[] = lineup.substitutes ?? [];
   const accent = side === "home" ? "var(--color-neon)" : "#F3F4F6";
+  // Once the match is live or finished, hide the raw Starting XI list — the
+  // Player Ratings section below carries the same names plus performance data.
+  const showStartingXi = phase === "pre" || phase === "lineups";
+  const hasRatings = Array.isArray(ratings) && ratings.length > 0;
+
   return (
     <div>
       <div className="mb-3 flex items-baseline justify-between border-b border-dashed border-[var(--color-surface-border)] pb-2">
@@ -964,23 +981,38 @@ function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "
         )}
       </div>
 
-      <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
-        Starting XI
-      </div>
-      <ul className="mt-2 divide-y divide-dashed divide-[var(--color-surface-border)]/60">
-        {starters.map((p, i) => (
-          <PlayerRow key={`s-${i}`} player={p} accent={accent} />
-        ))}
-      </ul>
+      {showStartingXi && (
+        <>
+          <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+            Starting XI
+          </div>
+          <ul className="mt-2 divide-y divide-dashed divide-[var(--color-surface-border)]/60">
+            {starters.map((p, i) => (
+              <PlayerRow key={`s-${i}`} player={p} accent={accent} />
+            ))}
+          </ul>
+        </>
+      )}
+
+      {!showStartingXi && hasRatings && (
+        <>
+          <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+            Player ratings
+          </div>
+          <div className="mt-2">
+            <RatingsTable rows={ratings!} title={teamName} embedded />
+          </div>
+        </>
+      )}
 
       {subs.length > 0 && (
         <>
           <div className="mt-4 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
             Bench
           </div>
-          <ul className="mt-2 divide-y divide-dashed divide-[var(--color-surface-border)]/50">
+          <ul className="mt-2 divide-y divide-dashed divide-[var(--color-surface-border)]/60">
             {subs.map((p, i) => (
-              <PlayerRow key={`b-${i}`} player={p} accent={accent} dim />
+              <PlayerRow key={`b-${i}`} player={p} accent={accent} />
             ))}
           </ul>
         </>
@@ -995,21 +1027,16 @@ function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "
   );
 }
 
-function PlayerRow({ player, accent, dim = false }: { player: LineupPlayer; accent: string; dim?: boolean }) {
+function PlayerRow({ player, accent }: { player: LineupPlayer; accent: string }) {
   return (
     <li className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3 py-2">
       <span
         className="grid h-6 w-6 place-items-center rounded-full border font-display text-[10px] font-bold tabular-nums"
-        style={{
-          borderColor: dim ? "var(--color-surface-border)" : accent,
-          color: dim ? "var(--color-ink-muted)" : accent,
-        }}
+        style={{ borderColor: accent, color: accent }}
       >
         {player.number ?? "–"}
       </span>
-      <span className={`truncate text-sm ${dim ? "text-[var(--color-ink-muted)]" : "text-[var(--color-ink)]"}`}>
-        {player.name}
-      </span>
+      <span className="truncate text-sm text-[var(--color-ink)]">{player.name}</span>
       {player.pos && (
         <span className="rounded-sm border border-[var(--color-surface-border)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
           {player.pos}
