@@ -178,8 +178,8 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
               {(lineups.home?.formation || lineups.away?.formation) && (
                 <FormationPitch home={lineups.home} away={lineups.away} />
               )}
-              <LineupSplit lineup={lineups.home} side="home" teamName={home} />
-              <LineupSplit lineup={lineups.away} side="away" teamName={away} />
+              <LineupSplit lineup={lineups.home} side="home" teamName={home} phase={phase} ratings={ratings.home} />
+              <LineupSplit lineup={lineups.away} side="away" teamName={away} phase={phase} ratings={ratings.away} />
             </div>
           ) : (
             <p className="text-sm text-[var(--color-ink-muted)]">
@@ -191,7 +191,7 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
         </AnalysisSection>
       )}
 
-      {hasRatings && (
+      {hasRatings && !locked && (
         <AnalysisSection kicker={<><Star className="h-3 w-3" /> Player ratings</>}>
           <div className="grid gap-5 md:grid-cols-2">
             <RatingsTable rows={ratings.home} title={home} />
