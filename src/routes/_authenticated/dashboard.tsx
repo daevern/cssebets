@@ -1,11 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import type { SVGProps } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, ChevronRight, Trophy, Flame, Clock, Star } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Ticket, Flame, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -89,12 +91,54 @@ function HomePage() {
   const qc = useQueryClient();
   const listFn = useServerFn(listMatchesForUsers);
   const now = useTicker(30_000);
+  const { user } = useAuth();
+  const uid = user?.id;
 
   const { data } = useQuery({
     queryKey: ["matches"],
     queryFn: async () => (await listFn()) as Match[],
     refetchInterval: 60_000,
   });
+
+  const { data: picks } = useQuery({
+    queryKey: ["dashboard-active-picks", uid],
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("predictions")
+        .select("id, status, points, virtual_stake, potential_return")
+        .eq("user_id", uid!)
+        .eq("status", "pending");
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        id: string; status: string; points: number; virtual_stake: number; potential_return: number;
+      }>;
+    },
+  });
+
+  const { data: historyCount = 0 } = useQuery({
+    queryKey: ["dashboard-history-count", uid],
+    enabled: !!uid,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("predictions")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", uid!)
+        .neq("status", "pending");
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
+  const stakeOf = (p: { points: number; virtual_stake: number }) =>
+    Number(p.virtual_stake ?? 0) || Number(p.points ?? 0);
+  const liveCount = picks?.length ?? 0;
+  const totalRisked = picks?.reduce((s, p) => s + stakeOf(p), 0) ?? 0;
+  const expectedPayout = picks?.reduce((s, p) => s + Number(p.potential_return ?? 0), 0) ?? 0;
+  const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
 
   useEffect(() => {
     const ch = supabase
@@ -180,19 +224,245 @@ function HomePage() {
         </section>
       )}
 
-      {/* Featured shortcuts */}
+      {/* Your Position — picks */}
       <section className="space-y-3">
-        <div>
-          <h2 className="text-[15px] font-bold tracking-tight text-[var(--ink)]">Featured</h2>
-          <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">Explore top markets and upcoming fixtures.</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+              <Ticket className="h-4 w-4 text-[var(--neon)]" />
+              Your Position
+            </h2>
+            <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">
+              {liveCount > 0 ? `${liveCount} in play` : "No live picks right now."}
+            </p>
+          </div>
+          {liveCount > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--neon)]/30 bg-[var(--neon)]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--neon)]">
+              <Flame className="h-3 w-3" /> Hot
+            </span>
+          )}
         </div>
-        <div className="grid grid-cols-2 gap-2.5">
-          <ShortcutTile icon={<Trophy className="h-4 w-4" />} title="World Cup 2026" sub="All markets" to="/matches" />
-          <ShortcutTile icon={<Flame className="h-4 w-4" />} title="Popular" sub="High activity" to="/matches" />
-          <ShortcutTile icon={<Clock className="h-4 w-4" />} title="Upcoming" sub="Next 24h" to="/matches" />
-          <ShortcutTile icon={<Star className="h-4 w-4" />} title="Specials" sub="Curated picks" to="/matches" />
-        </div>
+
+        <article className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-5">
+          {liveCount > 0 ? (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <StatBlock label="Total stake" value={fmt(totalRisked)} unit="pts" />
+                <StatBlock label="Expected payout" value={fmt(expectedPayout)} unit="pts" accent icon={<TrendingUp className="h-3 w-3" />} />
+              </div>
+              <Link to="/my-predictions" className="mt-4 block">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between rounded-xl border border-[var(--color-surface-border)] bg-[var(--surface-3)]/60 px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] transition-colors hover:border-[var(--neon)] hover:text-[var(--neon)]"
+                >
+                  <span>Watch your picks</span>
+                  <ArrowUpRight className="h-4 w-4" />
+                </button>
+              </Link>
+            </>
+          ) : historyCount > 0 ? (
+            <BenchSlider historyCount={historyCount} />
+          ) : (
+            <>
+              <div className="flex justify-center pb-2">
+                <SubsBench className="h-28 w-auto" />
+              </div>
+              <p className="text-center font-display text-xl font-bold leading-tight tracking-tight">
+                You're on the bench.
+              </p>
+              <p className="mx-auto mt-1.5 max-w-xs text-center text-sm text-[var(--ink-muted)]">
+                Get on the team sheet now.
+              </p>
+              <Link to="/bets" className="mt-4 block">
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between rounded-xl border border-[var(--neon)]/40 bg-[var(--neon)]/5 px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--neon)] transition-colors hover:bg-[var(--neon)]/10"
+                >
+                  <span>Get in the game</span>
+                  <ArrowUpRight className="h-4 w-4" />
+                </button>
+              </Link>
+            </>
+          )}
+        </article>
       </section>
+    </div>
+  );
+}
+
+/* ------------ Subs bench SVG (empty state) ------------ */
+function SubsBench(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 200 120"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="mx-auto w-full max-w-[200px] h-auto text-[var(--neon)] opacity-90"
+      {...props}
+    >
+      <path d="M 20 38 L 30 22 L 170 22 L 180 38 Z" strokeWidth="2" />
+      <line x1="20" y1="38" x2="180" y2="38" strokeWidth="2" />
+      <line x1="55" y1="22" x2="50" y2="38" strokeDasharray="2,2" />
+      <line x1="100" y1="22" x2="100" y2="38" strokeDasharray="2,2" />
+      <line x1="145" y1="22" x2="150" y2="38" strokeDasharray="2,2" />
+      <line x1="28" y1="38" x2="28" y2="80" />
+      <line x1="172" y1="38" x2="172" y2="80" />
+      <rect x="28" y="72" width="144" height="10" strokeWidth="2" fill="currentColor" fillOpacity="0.08" />
+      <line x1="40" y1="82" x2="40" y2="100" strokeWidth="2" />
+      <line x1="100" y1="82" x2="100" y2="100" strokeWidth="2" />
+      <line x1="160" y1="82" x2="160" y2="100" strokeWidth="2" />
+      <circle cx="60" cy="58" r="7" strokeWidth="2" />
+      <path d="M 48 72 Q 60 62 72 72" strokeWidth="2" />
+      <circle cx="100" cy="56" r="7" strokeWidth="2" />
+      <path d="M 88 72 Q 100 60 112 72" strokeWidth="2" />
+      <circle cx="140" cy="58" r="7" strokeWidth="2" />
+      <path d="M 128 72 Q 140 62 152 72" strokeWidth="2" />
+      <line x1="10" y1="100" x2="190" y2="100" strokeWidth="2" />
+      <circle cx="178" cy="104" r="4" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function TacticalClipboard(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 200 120"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      className="mx-auto w-full max-w-[200px] h-auto text-[var(--neon)] opacity-90"
+      {...props}
+    >
+      <rect x="55" y="18" width="90" height="92" strokeWidth="2" fill="currentColor" fillOpacity="0.04" />
+      <rect x="82" y="10" width="36" height="14" strokeWidth="2" fill="currentColor" fillOpacity="0.12" />
+      <line x1="88" y1="14" x2="112" y2="14" strokeWidth="2" />
+      <line x1="55" y1="34" x2="145" y2="34" strokeDasharray="3,3" />
+      <line x1="64" y1="48" x2="120" y2="48" strokeWidth="1.5" />
+      <circle cx="132" cy="48" r="5" strokeWidth="2" />
+      <path d="M 129 48 L 131 50 L 135 46" strokeWidth="2" />
+      <line x1="64" y1="66" x2="120" y2="66" strokeWidth="1.5" />
+      <circle cx="132" cy="66" r="5" strokeWidth="2" />
+      <path d="M 129 63 L 135 69 M 135 63 L 129 69" strokeWidth="2" />
+      <line x1="64" y1="84" x2="120" y2="84" strokeWidth="1.5" />
+      <circle cx="132" cy="84" r="5" strokeWidth="2" />
+      <line x1="128" y1="84" x2="136" y2="84" strokeWidth="2" />
+      <line x1="64" y1="100" x2="136" y2="100" strokeDasharray="2,3" />
+    </svg>
+  );
+}
+
+function StatBlock({
+  label, value, unit, accent, icon,
+}: {
+  label: string; value: string; unit: string; accent?: boolean; icon?: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`rounded-xl border p-4 ${accent ? "border-[var(--neon)]/40 bg-[var(--neon)]/[0.04]" : "border-[var(--color-surface-border)] bg-[var(--surface-3)]/40"}`}
+    >
+      <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.22em] ${accent ? "text-[var(--neon)]" : "text-[var(--ink-muted)]"}`}>
+        {icon}
+        {label}
+      </div>
+      <div className="mt-2 flex items-baseline gap-1">
+        <span className={`font-display text-2xl font-bold tabular-nums ${accent ? "text-[var(--neon)]" : "text-[var(--ink)]"}`}>{value}</span>
+        <span className={`text-[10px] font-bold uppercase tracking-widest ${accent ? "text-[var(--neon)]/70" : "text-[var(--ink-muted)]"}`}>{unit}</span>
+      </div>
+    </div>
+  );
+}
+
+function BenchSlider({ historyCount }: { historyCount: number }) {
+  const [idx, setIdx] = useState(0);
+  const [startX, setStartX] = useState<number | null>(null);
+
+  const onTouchStart = (e: React.TouchEvent) => setStartX(e.touches[0].clientX);
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (startX == null) return;
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 40) setIdx((i) => Math.max(0, Math.min(1, i + (dx < 0 ? 1 : -1))));
+    setStartX(null);
+  };
+
+  return (
+    <div>
+      <div className="overflow-hidden" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div
+          className="flex transition-transform duration-300 ease-out"
+          style={{ transform: `translateX(-${idx * 100}%)` }}
+        >
+          <div className="w-full shrink-0 px-1">
+            <div className="flex justify-center pb-2">
+              <SubsBench className="h-28 w-auto" />
+            </div>
+            <p className="text-center font-display text-xl font-bold leading-tight tracking-tight">
+              You're on the bench.
+            </p>
+            <p className="mx-auto mt-1.5 max-w-xs text-center text-sm text-[var(--ink-muted)]">
+              Get on the team sheet now.
+            </p>
+            <Link to="/bets" className="mt-4 block">
+              <button
+                type="button"
+                className="flex w-full items-center justify-between rounded-xl border border-[var(--neon)]/40 bg-[var(--neon)]/5 px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--neon)] transition-colors hover:bg-[var(--neon)]/10"
+              >
+                <span>Get in the game</span>
+                <ArrowUpRight className="h-4 w-4" />
+              </button>
+            </Link>
+          </div>
+
+          <div className="w-full shrink-0 px-1">
+            <div className="flex justify-center pb-2">
+              <TacticalClipboard className="h-28 w-auto" />
+            </div>
+            <p className="text-center font-display text-xl font-bold leading-tight tracking-tight">
+              Read the tape.
+            </p>
+            <p className="mx-auto mt-1.5 max-w-xs text-center text-sm text-[var(--ink-muted)]">
+              {historyCount.toLocaleString("en-US")} settled {historyCount === 1 ? "pick" : "picks"} on record.
+            </p>
+            <Link to="/my-predictions" className="mt-4 block">
+              <button
+                type="button"
+                className="flex w-full items-center justify-between rounded-xl border border-[var(--color-surface-border)] bg-[var(--surface-3)]/60 px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] transition-colors hover:border-[var(--neon)] hover:text-[var(--neon)]"
+              >
+                <span>View picks history</span>
+                <ArrowUpRight className="h-4 w-4" />
+              </button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => setIdx(0)}
+          className={`text-[10px] font-bold uppercase tracking-[0.22em] transition-colors ${idx === 0 ? "text-[var(--ink-muted)]/40" : "text-[var(--ink-muted)] hover:text-[var(--neon)]"}`}
+        >
+          ‹ Bet
+        </button>
+        <div className="flex items-center gap-1.5">
+          {[0, 1].map((i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setIdx(i)}
+              aria-label={`Slide ${i + 1}`}
+              className={`h-1.5 transition-all ${idx === i ? "w-6 bg-[var(--neon)]" : "w-1.5 bg-[var(--color-surface-border)]"}`}
+            />
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => setIdx(1)}
+          className={`text-[10px] font-bold uppercase tracking-[0.22em] transition-colors ${idx === 1 ? "text-[var(--ink-muted)]/40" : "text-[var(--ink-muted)] hover:text-[var(--neon)]"}`}
+        >
+          History ›
+        </button>
+      </div>
     </div>
   );
 }
@@ -340,32 +610,3 @@ function abbrev(name: string) {
   return name.length <= 4 ? name.toUpperCase() : name.slice(0, 3).toUpperCase();
 }
 
-function ShortcutTile({
-  icon,
-  title,
-  sub,
-  to,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  sub: string;
-  to: string;
-}) {
-  return (
-    <Link
-      to={to}
-      className="group flex flex-col justify-between rounded-xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4 transition-colors hover:border-[var(--neon)]/40"
-    >
-      <div className="grid h-9 w-9 place-items-center rounded-lg bg-[var(--surface-3)] text-[var(--neon)]">
-        {icon}
-      </div>
-      <div className="mt-3">
-        <div className="text-[14px] font-bold tracking-tight text-[var(--ink)]">{title}</div>
-        <div className="mt-0.5 flex items-center justify-between text-[11px] text-[var(--ink-muted)]">
-          <span>{sub}</span>
-          <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-        </div>
-      </div>
-    </Link>
-  );
-}
