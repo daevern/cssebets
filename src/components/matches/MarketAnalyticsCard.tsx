@@ -296,6 +296,7 @@ function SectionShell({
   right?: React.ReactNode;
   updatedAt?: string | null;
 }) {
+  const rel = useRelativeTime(updatedAt);
   return (
     <section className="relative">
       <div className="mb-5 flex items-end justify-between gap-3">
@@ -304,8 +305,12 @@ function SectionShell({
             Market movement
           </h2>
           {updatedAt && (
-            <span className="text-[10px] font-medium tracking-tight text-[var(--color-ink-muted)]/70">
-              Updated {new Date(updatedAt).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+            <span className="inline-flex items-center gap-1.5 text-[10px] font-medium tracking-tight text-[var(--color-ink-muted)]/70">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-neon)] opacity-70" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--color-neon)]" />
+              </span>
+              Live · updated {rel}
             </span>
           )}
         </div>
