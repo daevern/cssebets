@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { SVGProps } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, ChevronRight, Ticket, Flame, TrendingUp } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Ticket, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
@@ -229,11 +229,6 @@ function HomePage() {
               {liveCount > 0 ? `${liveCount} in play` : "No live picks right now."}
             </p>
           </div>
-          {liveCount > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full border border-[var(--neon)]/30 bg-[var(--neon)]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--neon)]">
-              <Flame className="h-3 w-3" /> Hot
-            </span>
-          )}
         </div>
 
         <article className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-5">
@@ -471,15 +466,6 @@ function FeaturedHero({ match, now }: { match: Match; now: number }) {
       params={{ matchId: match.id }}
       className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] transition-colors hover:border-[var(--neon)]/40"
     >
-      {/* Ambient stadium glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(120% 60% at 50% 0%, rgba(34,224,107,0.10), transparent 60%)",
-        }}
-      />
 
       <div className="relative flex flex-col gap-5 p-5">
         <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em]">

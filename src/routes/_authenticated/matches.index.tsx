@@ -236,21 +236,39 @@ function TeamRow({
 }) {
   const color = tone === "home" ? "text-rose-400" : "text-[var(--neon)]";
   const borderColor = tone === "home" ? "border-rose-400/40" : "border-[var(--neon)]/40";
+  const barColor = tone === "home" ? "bg-rose-400" : "bg-[var(--neon)]";
+  const barGlow = tone === "home" ? "shadow-[0_0_6px_rgba(251,113,133,0.55)]" : "shadow-[0_0_6px_rgba(34,224,107,0.55)]";
   return (
     <div className="flex items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         <TeamFlag name={name} />
         <span className="truncate text-[15px] font-bold tracking-tight text-[var(--ink)]">{name}</span>
       </div>
+      {pct != null && (
+        <div className="hidden sm:block h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-[var(--surface-3)]">
+          <div
+            className={`h-full rounded-full ${barColor} ${barGlow} transition-[width] duration-500`}
+            style={{ width: `${Math.max(4, Math.min(100, pct))}%` }}
+          />
+        </div>
+      )}
       <div className="flex items-center gap-2">
         {score != null && (
           <span className="font-display text-[20px] font-bold tabular-nums text-[var(--ink)]">{score}</span>
         )}
         {pct != null && (
           <div className="flex flex-col items-end">
-            <span className={`rounded-full border ${borderColor} px-3 py-1 text-[13px] font-bold tabular-nums ${color}`}>
-              {pct}%
-            </span>
+            <div className="flex items-center gap-2">
+              <div className="sm:hidden h-1.5 w-14 overflow-hidden rounded-full bg-[var(--surface-3)]">
+                <div
+                  className={`h-full rounded-full ${barColor} ${barGlow} transition-[width] duration-500`}
+                  style={{ width: `${Math.max(4, Math.min(100, pct))}%` }}
+                />
+              </div>
+              <span className={`rounded-full border ${borderColor} px-3 py-1 text-[13px] font-bold tabular-nums ${color}`}>
+                {pct}%
+              </span>
+            </div>
             {mult != null && (
               <span className="mt-0.5 text-[10px] tabular-nums text-[var(--ink-muted)]">{mult.toFixed(2)}x</span>
             )}

@@ -1,25 +1,23 @@
 import { Dialog, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
-import { Check, Share2, Download, X, ArrowUpRight } from "lucide-react";
-import { toast } from "sonner";
-import { useRef } from "react";
+import { CsseLogo } from "@/components/brand/CsseMark";
+import { X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { teamFlagUrl } from "@/lib/country-flags";
 
 export type WinTicketData = {
   id: string;
-  matchLabel: string;      // "England vs Congo DR"
+  matchLabel: string;
   homeTeam?: string;
   awayTeam?: string;
-  marketLabel: string;     // "Match Winner"
-  selectionLabel: string;  // "Congo DR advances"
-  odds: number;            // 5.91
-  stake: number;           // 50
-  gross: number;           // 295.5
-  profit: number;          // 245.5
-  settledAt: string;       // ISO
+  marketLabel: string;
+  selectionLabel: string;
+  odds: number;
+  stake: number;
+  gross: number;
+  profit: number;
+  settledAt: string;
 };
 
 export function WinTicketModal({
@@ -31,38 +29,12 @@ export function WinTicketModal({
   onOpenChange: (v: boolean) => void;
   data: WinTicketData | null;
 }) {
-  const ticketRef = useRef<HTMLDivElement>(null);
-
-  async function handleShare() {
-    const text = `Called it on ${BrandStr(data)}. +${Math.round((data?.profit ?? 0)).toLocaleString()} pts on ${data?.selectionLabel} at ${data?.odds.toFixed(2)}x.`;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: "CSSEBets — Winning Ticket", text });
-      } else {
-        await navigator.clipboard.writeText(text);
-        toast.success("Ticket details copied");
-      }
-    } catch {}
-  }
-
-  async function handleSaveImage() {
-    if (!ticketRef.current) return;
-    try {
-      // Dynamically import to keep bundle lean; graceful fallback if missing.
-      const mod = await import("html-to-image").catch(() => null as any);
-      if (!mod) {
-        toast.info("Screenshot the ticket to share it");
-        return;
-      }
-      const dataUrl = await mod.toPng(ticketRef.current, { pixelRatio: 3, backgroundColor: "#05100B" });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      a.download = `cssebets-win-${data?.id?.slice(0, 8) ?? "ticket"}.png`;
-      a.click();
-    } catch {
-      toast.info("Screenshot the ticket to share it");
-    }
-  }
+  const home = data?.homeTeam ?? data?.matchLabel.split(" vs ")[0] ?? "";
+  const away = data?.awayTeam ?? data?.matchLabel.split(" vs ")[1] ?? "";
+  const ticketId = data ? String(data.id).replace(/-/g, "").slice(0, 10).toUpperCase() : "";
+  const kickoffLabel = data
+    ? new Date(data.settledAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+    : "";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -72,13 +44,12 @@ export function WinTicketModal({
           {open && data && (
             <DialogPrimitive.Content asChild forceMount>
               <motion.div
-                initial={{ opacity: 0, y: 24, scale: 0.98 }}
+                initial={{ opacity: 0, y: 20, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 16, scale: 0.98 }}
-                transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                exit={{ opacity: 0, y: 12, scale: 0.98 }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                 className="fixed left-1/2 top-1/2 z-50 w-[calc(100%-24px)] max-w-[400px] -translate-x-1/2 -translate-y-1/2"
               >
-                {/* Close */}
                 <DialogPrimitive.Close
                   className="absolute -top-10 right-0 grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-black/40 text-white/80 backdrop-blur transition-colors hover:text-white"
                   aria-label="Close"
@@ -86,132 +57,102 @@ export function WinTicketModal({
                   <X className="h-4 w-4" />
                 </DialogPrimitive.Close>
 
-                {/* Ticket */}
-                <div
-                  ref={ticketRef}
-                  className="relative overflow-hidden rounded-[22px] p-[1px]"
-                  style={{
-                    background:
-                      "linear-gradient(160deg, rgba(34,224,107,0.55), rgba(34,224,107,0.05) 45%, rgba(255,255,255,0.06) 100%)",
-                  }}
-                >
-                  <div
-                    className="relative rounded-[21px] px-5 pb-5 pt-5"
-                    style={{
-                      background:
-                        "radial-gradient(120% 80% at 50% 0%, rgba(34,224,107,0.10) 0%, transparent 55%), linear-gradient(180deg, #0A1712 0%, #05100B 100%)",
-                    }}
-                  >
-                    {/* Header */}
-                    <header className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CsseLogo size={15} />
+                {/* Ticket — matches Picks/PredictionRow styling */}
+                <div className="relative overflow-hidden rounded-2xl border border-[var(--color-neon)]/60 bg-[var(--color-surface)] shadow-[0_0_0_1px_rgba(34,224,107,0.15),0_20px_60px_-20px_rgba(34,224,107,0.35)]">
+                  {/* Congrats header with logo */}
+                  <div className="flex flex-col items-center gap-2 border-b border-dashed border-[var(--color-surface-border)] bg-gradient-to-b from-[var(--color-neon)]/[0.08] to-transparent px-5 pb-4 pt-5 text-center">
+                    <CsseLogo size={22} />
+                    <DialogPrimitive.Title className="font-display text-[22px] font-bold leading-tight tracking-tight text-[var(--color-ink)]">
+                      Congratulations!
+                    </DialogPrimitive.Title>
+                    <DialogPrimitive.Description className="text-[12px] text-[var(--color-ink-muted)]">
+                      Your ticket cashed in profit.
+                    </DialogPrimitive.Description>
+                  </div>
+
+                  {/* Ticket body */}
+                  <div className="space-y-4 px-5 pb-5 pt-4">
+                    {/* Kicker row */}
+                    <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon)]" />
+                        Match Ticket
+                      </span>
+                      <span>#{ticketId}</span>
+                    </div>
+
+                    {/* Fixture */}
+                    <div>
+                      <div className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">Fixture</div>
+                      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                        <div className="flex flex-col items-center gap-1.5">
+                          <TeamFlag name={home} />
+                          <span className="max-w-[110px] truncate text-center text-[10px] font-bold uppercase tracking-wide">{home}</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="font-display text-xs font-bold leading-none text-[var(--color-ink-muted)]">vs</span>
+                          <span className="h-4 w-px bg-[var(--color-neon)]/40" />
+                        </div>
+                        <div className="flex flex-col items-center gap-1.5">
+                          <TeamFlag name={away} />
+                          <span className="max-w-[110px] truncate text-center text-[10px] font-bold uppercase tracking-wide">{away}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5 rounded-full border border-[var(--neon)]/30 bg-[var(--neon)]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--neon)]">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)] shadow-[0_0_8px_var(--neon)]" />
+                      <div className="mt-2 text-[11px] text-[var(--color-ink-muted)]">{kickoffLabel}</div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="border border-dashed border-[var(--color-surface-border)] px-2.5 py-1.5">
+                        <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">Market</div>
+                        <div className="truncate font-medium">{data.marketLabel}</div>
+                      </div>
+                      <div className="border border-dashed border-[var(--color-surface-border)] px-2.5 py-1.5">
+                        <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">Selection</div>
+                        <div className="truncate font-medium">{data.selectionLabel}</div>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-dashed border-[var(--color-surface-border)]" />
+
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">Stake</div>
+                        <div className="font-mono font-semibold tabular-nums">{data.stake.toFixed(2)}</div>
+                      </div>
+                      <div>
+                        <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">Odds</div>
+                        <div className="font-mono font-semibold tabular-nums">{data.odds.toFixed(2)}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">Payout</div>
+                        <div className="font-mono text-lg font-bold leading-tight tabular-nums text-[var(--color-neon)]">
+                          {data.gross.toFixed(2)}
+                        </div>
+                        <div className="text-[10px] tabular-nums text-[var(--color-ink-muted)]">+{data.profit.toFixed(2)} profit</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 border-t border-dashed border-[var(--color-surface-border)] pt-3">
+                      <span className="rounded-full border border-[var(--color-neon)]/60 bg-[var(--color-neon)]/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">
                         Won
-                      </div>
-                    </header>
-
-                    <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.32em] text-[var(--ink-muted)]">
-                      Winning Ticket
-                    </div>
-
-                    {/* Hero amount */}
-                    <div className="relative mt-5">
-                      <div
-                        aria-hidden
-                        className="pointer-events-none absolute inset-x-0 -inset-y-4 mx-auto max-w-[80%] rounded-full opacity-70 blur-2xl"
-                        style={{ background: "radial-gradient(50% 50% at 50% 50%, rgba(34,224,107,0.35) 0%, transparent 70%)" }}
-                      />
-                      <div className="relative text-center">
-                        <div className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--ink-muted)]">
-                          Profit
-                        </div>
-                        <div
-                          className="font-display text-[52px] font-bold leading-none tracking-tight text-[var(--neon)]"
-                          style={{ textShadow: "0 0 24px rgba(34,224,107,0.35)" }}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          to="/my-predictions"
+                          onClick={() => onOpenChange(false)}
+                          className="rounded-lg border border-[var(--color-surface-border)] px-3 py-1.5 text-[11px] font-semibold text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)]/40 hover:text-[var(--color-neon)]"
                         >
-                          +{Math.round(data.profit).toLocaleString()}
-                        </div>
-                        <div className="mt-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-[var(--ink-muted)]">
-                          Points
-                        </div>
+                          View picks
+                        </Link>
+                        <button
+                          onClick={() => onOpenChange(false)}
+                          className="rounded-lg bg-[var(--color-neon)] px-3 py-1.5 text-[11px] font-bold text-[#04140A]"
+                        >
+                          Done
+                        </button>
                       </div>
-                    </div>
-
-                    {/* Congrats copy */}
-                    <div className="mt-5 text-center">
-                      <div className="font-display text-[20px] font-bold leading-tight text-[var(--ink)]">
-                        You called it right.
-                      </div>
-                      <div className="mt-1 text-[12px] text-[var(--ink-muted)]">
-                        Your prediction settled in profit.
-                      </div>
-                    </div>
-
-                    {/* Perforation */}
-                    <div className="relative my-5">
-                      <div
-                        aria-hidden
-                        className="absolute -left-3 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full"
-                        style={{ background: "#05100B" }}
-                      />
-                      <div
-                        aria-hidden
-                        className="absolute -right-3 top-1/2 h-5 w-5 -translate-y-1/2 rounded-full"
-                        style={{ background: "#05100B" }}
-                      />
-                      <div className="mx-2 border-t border-dashed border-white/10" />
-                    </div>
-
-                    {/* Match strip */}
-                    <div className="flex items-center justify-between gap-2 rounded-xl bg-white/[0.02] px-3 py-3">
-                      <TeamCell name={data.homeTeam ?? data.matchLabel.split(" vs ")[0]} align="left" />
-                      <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--ink-muted)]">vs</span>
-                      <TeamCell name={data.awayTeam ?? data.matchLabel.split(" vs ")[1] ?? ""} align="right" />
-                    </div>
-
-                    {/* Rows */}
-                    <dl className="mt-3 grid grid-cols-1 gap-y-2.5 text-[13px]">
-                      <Row label="Market" value={data.marketLabel} />
-                      <Row label="Pick" value={data.selectionLabel} strong />
-                      <Row label="Multiplier" value={`${data.odds.toFixed(2)}x`} />
-                      <Row label="Stake" value={`${Math.round(data.stake).toLocaleString()} pts`} />
-                      <Row
-                        label="Return"
-                        value={`${Math.round(data.gross).toLocaleString()} pts`}
-                        strong
-                        accent
-                      />
-                    </dl>
-
-                    <div className="mt-4 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--ink-muted)]">
-                      <span>Ticket · {data.id.slice(0, 8).toUpperCase()}</span>
-                      <span>{new Date(data.settledAt).toLocaleString(undefined, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
                     </div>
                   </div>
-                </div>
-
-                {/* Actions */}
-                <div className="mt-4 grid grid-cols-4 gap-2">
-                  <ActionButton onClick={handleShare} icon={<Share2 className="h-4 w-4" />} label="Share" />
-                  <ActionButton onClick={handleSaveImage} icon={<Download className="h-4 w-4" />} label="Save" />
-                  <Link
-                    to="/my-predictions"
-                    onClick={() => onOpenChange(false)}
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-2.5 text-[11px] font-semibold text-[var(--ink)] transition-colors hover:bg-white/[0.06]"
-                  >
-                    <ArrowUpRight className="h-4 w-4" />
-                    View
-                  </Link>
-                  <button
-                    onClick={() => onOpenChange(false)}
-                    className="flex items-center justify-center gap-1.5 rounded-xl bg-[var(--neon)] px-2 py-2.5 text-[11px] font-bold text-[#05100B] transition-transform hover:scale-[1.02]"
-                  >
-                    <Check className="h-4 w-4" />
-                    Done
-                  </button>
                 </div>
               </motion.div>
             </DialogPrimitive.Content>
@@ -222,71 +163,21 @@ export function WinTicketModal({
   );
 }
 
-function BrandStr(data: WinTicketData | null): string {
-  if (!data) return "CSSEBets";
-  return data.matchLabel;
-}
-
-function Row({
-  label,
-  value,
-  strong,
-  accent,
-}: {
-  label: string;
-  value: string;
-  strong?: boolean;
-  accent?: boolean;
-}) {
+function TeamFlag({ name }: { name: string }) {
+  const url = teamFlagUrl(name, 160);
+  if (!url) {
+    return (
+      <div className="grid h-9 w-14 place-items-center border border-border/40 bg-[var(--color-surface)] text-[10px] font-bold uppercase tracking-wider text-[var(--color-ink)] shadow-sm">
+        {name.slice(0, 3)}
+      </div>
+    );
+  }
   return (
-    <div className="flex items-baseline justify-between gap-3 border-b border-white/[0.04] pb-2 last:border-b-0 last:pb-0">
-      <dt className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--ink-muted)]">
-        {label}
-      </dt>
-      <dd
-        className={`text-right tabular-nums ${strong ? "font-bold" : "font-medium"} ${accent ? "text-[var(--neon)]" : "text-[var(--ink)]"}`}
-      >
-        {value}
-      </dd>
-    </div>
-  );
-}
-
-function TeamCell({ name, align }: { name: string; align: "left" | "right" }) {
-  const flag = teamFlagUrl(name, 80);
-  return (
-    <div className={`flex flex-1 items-center gap-2 ${align === "right" ? "flex-row-reverse text-right" : ""}`}>
-      {flag ? (
-        <img
-          src={flag}
-          alt=""
-          className="h-6 w-9 rounded-[3px] object-cover ring-1 ring-white/10"
-          loading="lazy"
-        />
-      ) : (
-        <div className="h-6 w-9 rounded-[3px] bg-white/5 ring-1 ring-white/10" />
-      )}
-      <span className="truncate text-[13px] font-semibold text-[var(--ink)]">{name}</span>
-    </div>
-  );
-}
-
-function ActionButton({
-  onClick,
-  icon,
-  label,
-}: {
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-2 py-2.5 text-[11px] font-semibold text-[var(--ink)] transition-colors hover:bg-white/[0.06]"
-    >
-      {icon}
-      {label}
-    </button>
+    <img
+      src={url}
+      alt={`${name} flag`}
+      className="h-9 w-14 shrink-0 border border-border/40 object-cover shadow-sm"
+      loading="lazy"
+    />
   );
 }
