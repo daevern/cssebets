@@ -49,7 +49,8 @@ export function WinTicketModal({
     if (!ticketRef.current) return;
     try {
       // Dynamically import to keep bundle lean; graceful fallback if missing.
-      const mod: any = await import(/* @vite-ignore */ ("html-to-image" as any)).catch(() => null);
+      const modName = "html-to-image";
+      const mod: any = await import(/* @vite-ignore */ modName).catch(() => null);
       if (!mod) {
         toast.info("Screenshot the ticket to share it");
         return;
