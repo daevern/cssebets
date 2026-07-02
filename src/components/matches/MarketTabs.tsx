@@ -54,17 +54,19 @@ function QuestionHeading({
 type OddsVariant = "yes" | "no" | "home" | "draw" | "away" | "neutral";
 
 function classifySelection(selection: string): OddsVariant {
-  if (selection === "YES" || selection.startsWith("OVER_")) return "yes";
-  if (selection === "NO" || selection.startsWith("UNDER_")) return "no";
-  if (selection === "HOME") return "home";
-  if (selection === "DRAW") return "draw";
-  if (selection === "AWAY") return "away";
+  const s = selection.toUpperCase();
+  if (s === "YES" || s.startsWith("OVER_")) return "yes";
+  if (s === "NO" || s.startsWith("UNDER_")) return "no";
+  if (s === "HOME") return "home";
+  if (s === "DRAW") return "draw";
+  if (s === "AWAY") return "away";
   return "neutral";
 }
 
 function displayLabel(selection: string, fallback: string): string {
-  if (selection === "YES" || selection.startsWith("OVER_")) return "Yes";
-  if (selection === "NO" || selection.startsWith("UNDER_")) return "No";
+  const s = selection.toUpperCase();
+  if (s === "YES" || s.startsWith("OVER_")) return "Yes";
+  if (s === "NO" || s.startsWith("UNDER_")) return "No";
   return fallback;
 }
 
