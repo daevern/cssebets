@@ -24,7 +24,7 @@ type Match = {
   reference_odds: { home: number; draw: number; away: number } | null;
 };
 
-type Tab = "live" | "today" | "upcoming" | "completed";
+type Tab = "live" | "upcoming" | "completed";
 
 function useTicker(ms = 30_000) {
   const [n, setN] = useState(() => Date.now());
