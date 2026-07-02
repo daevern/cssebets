@@ -15,7 +15,7 @@ import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { teamFlagUrl } from "@/lib/country-flags";
 
 export const Route = createFileRoute("/_authenticated/my-predictions")({
-  head: () => ({ meta: [{ title: "Activity — CSSEBets" }] }),
+  head: () => ({ meta: [{ title: "Picks — CSSEBets" }] }),
   component: MyPredictionsPage,
 });
 
@@ -99,7 +99,7 @@ function MyPredictionsPage() {
   }, [qc, uid]);
 
   return (
-    <PageShell kicker="FIFA WORLD CUP · 2026" title="Your" titleAccent="Activity">
+    <PageShell kicker="FIFA WORLD CUP · 2026" title="Your" titleAccent="Picks">
       {isLoading ? (
         <StencilPanel>
           <div className="grid place-items-center py-12">

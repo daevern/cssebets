@@ -7,6 +7,7 @@ import { teamFlagUrl } from "@/lib/country-flags";
 import { getMatchAnalytics, type AnalyticsBundle, type LineupPlayer } from "@/lib/match-analytics.functions";
 import { MarketTabs } from "@/components/matches/MarketTabs";
 import { Corner, StencilPanel } from "@/components/ui/page-shell";
+import { useAuth } from "@/hooks/use-auth";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 import { eventMark, WhistleIcon, GoalIcon, YellowCardIcon, RedCardIcon } from "@/components/matches/MatchIcons";
 import { MarketAnalyticsCard } from "@/components/matches/MarketAnalyticsCard";
@@ -138,7 +139,7 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
           <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} />
         </section>
       )}
-      {locked && <BettingRibbon phase={phase} />}
+      {locked && <YourPicksSummary matchId={match.id} phase={phase} homeTeam={home} awayTeam={away} />}
 
       {/* ============ Full football analytics report — all sections inline ============ */}
 
@@ -177,8 +178,8 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
               {(lineups.home?.formation || lineups.away?.formation) && (
                 <FormationPitch home={lineups.home} away={lineups.away} />
               )}
-              <LineupSplit lineup={lineups.home} side="home" teamName={home} />
-              <LineupSplit lineup={lineups.away} side="away" teamName={away} />
+              <LineupSplit lineup={lineups.home} side="home" teamName={home} phase={phase} ratings={ratings.home} />
+              <LineupSplit lineup={lineups.away} side="away" teamName={away} phase={phase} ratings={ratings.away} />
             </div>
           ) : (
             <p className="text-sm text-[var(--color-ink-muted)]">
@@ -190,7 +191,7 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
         </AnalysisSection>
       )}
 
-      {hasRatings && (
+      {hasRatings && !locked && (
         <AnalysisSection kicker={<><Star className="h-3 w-3" /> Player ratings</>}>
           <div className="grid gap-5 md:grid-cols-2">
             <RatingsTable rows={ratings.home} title={home} />
@@ -381,8 +382,8 @@ function MatchHero({
   const showScore = isFinished || match.home_score != null || isLive;
   void homeGoals; void awayGoals; void phaseLabel;
 
-  const homeFlag = teamFlagUrl(match.home_team, 160);
-  const awayFlag = teamFlagUrl(match.away_team, 160);
+  const homeFlag = teamFlagUrl(match.home_team, 320);
+  const awayFlag = teamFlagUrl(match.away_team, 320);
 
   const lastPlay = (() => {
     if (!isLive || !lastEvent) return null;
@@ -541,26 +542,123 @@ function MatchProgress({ pct, cap = 90, markers }: { pct: number; cap?: number; 
   );
 }
 
-/* Compact betting closed/settled ribbon — replaces a full panel with a thin status bar. */
-function BettingRibbon({ phase }: { phase: AnalyticsBundle["phase"] }) {
+/* User picks summary — replaces the generic status ribbon once markets close. */
+function YourPicksSummary({ matchId, phase, homeTeam, awayTeam }: { matchId: string; phase: AnalyticsBundle["phase"]; homeTeam: string; awayTeam: string }) {
+  const { user } = useAuth();
+  const uid = user?.id;
   const finished = phase === "finished";
+  const { data } = useQuery({
+    queryKey: ["match-user-picks", matchId, uid],
+    enabled: !!uid,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("predictions")
+        .select("id, market_text, selection_label, virtual_stake, potential_payout, status, actual_payout, odds")
+        .eq("user_id", uid!)
+        .eq("match_id", matchId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const picks = data ?? [];
+  const totalStake = picks.reduce((s, p) => s + Number(p.virtual_stake || 0), 0);
+  const totalPayout = picks.reduce((s, p) => s + Number(p.actual_payout || 0), 0);
+  const wins = picks.filter((p) => p.status === "won").length;
+  const losses = picks.filter((p) => p.status === "lost").length;
+  const voids = picks.filter((p) => p.status === "void" || p.status === "cancelled" || p.status === "refunded").length;
+  const pnl = totalPayout - totalStake;
+
   return (
-    <div className="relative flex items-center justify-between border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-4 py-2.5">
+    <div className="relative border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-4">
       <Corner pos="tl" /><Corner pos="br" />
-      <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.28em]">
-        {finished ? (
-          <WhistleIcon size={12} className="text-[var(--color-ink-muted)]" />
-        ) : (
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-destructive" />
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.28em]">
+          {finished ? (
+            <WhistleIcon size={12} className="text-[var(--color-ink-muted)]" />
+          ) : (
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-destructive" />
+          )}
+          <span className={finished ? "text-[var(--color-ink-muted)]" : "text-destructive"}>
+            {finished ? "Your picks · settled" : "Your picks · in play"}
+          </span>
+        </div>
+        {picks.length > 0 && (
+          <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+            {picks.length} pick{picks.length === 1 ? "" : "s"}
+          </span>
         )}
-        <span className={finished ? "text-[var(--color-ink-muted)]" : "text-destructive"}>
-          {finished ? "Full time" : "Markets closed"}
-        </span>
-      </span>
-      <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-        {finished ? "All bets settled" : "In play · live coverage below"}
-      </span>
+      </div>
+
+      {picks.length === 0 ? (
+        <p className="text-[12px] text-[var(--color-ink-muted)]">
+          You didn't place any predictions on {homeTeam} vs {awayTeam}.
+        </p>
+      ) : (
+        <>
+          {/* Totals strip */}
+          <div className="mb-3 grid grid-cols-3 gap-2 border-b border-dashed border-[var(--color-surface-border)] pb-3">
+            <SummaryCell label="Staked" value={`${totalStake.toLocaleString()} pts`} />
+            <SummaryCell label="Returned" value={`${totalPayout.toLocaleString()} pts`} />
+            <SummaryCell
+              label="Net"
+              value={`${pnl >= 0 ? "+" : ""}${pnl.toLocaleString()} pts`}
+              tone={pnl > 0 ? "win" : pnl < 0 ? "lose" : undefined}
+            />
+          </div>
+          {finished && (
+            <div className="mb-3 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.22em]">
+              <span className="text-[var(--color-neon)]">{wins} won</span>
+              <span className="text-[var(--color-ink-muted)]">·</span>
+              <span className="text-destructive/80">{losses} lost</span>
+              {voids > 0 && (<><span className="text-[var(--color-ink-muted)]">·</span><span className="text-[var(--color-ink-muted)]">{voids} void</span></>)}
+            </div>
+          )}
+          <ul className="divide-y divide-dashed divide-[var(--color-surface-border)]/60">
+            {picks.map((p) => <PickRow key={p.id} p={p} />)}
+          </ul>
+        </>
+      )}
     </div>
+  );
+}
+
+function SummaryCell({ label, value, tone }: { label: string; value: string; tone?: "win" | "lose" }) {
+  const color = tone === "win" ? "text-[var(--color-neon)]" : tone === "lose" ? "text-destructive" : "text-[var(--color-ink)]";
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">{label}</span>
+      <span className={`font-display text-sm font-bold tabular-nums ${color}`}>{value}</span>
+    </div>
+  );
+}
+
+function PickRow({ p }: { p: any }) {
+  const stake = Number(p.virtual_stake || 0);
+  const payout = Number(p.actual_payout || 0);
+  const potential = Number(p.potential_payout || 0);
+  const status = String(p.status || "pending");
+  const statusTone =
+    status === "won" ? "text-[var(--color-neon)]" :
+    status === "lost" ? "text-destructive" :
+    "text-[var(--color-ink-muted)]";
+  const statusLabel =
+    status === "won" ? `+${(payout - stake).toLocaleString()} pts` :
+    status === "lost" ? `-${stake.toLocaleString()} pts` :
+    status === "void" || status === "cancelled" || status === "refunded" ? "refunded" :
+    `to win ${(potential - stake).toLocaleString()} pts`;
+  return (
+    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 py-2">
+      <div className="min-w-0">
+        <div className="truncate text-[12px] font-semibold text-[var(--color-ink)]">{p.selection_label ?? "—"}</div>
+        <div className="truncate text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+          {p.market_text ?? "market"} · {stake.toLocaleString()} pts @ {Number(p.odds ?? 0).toFixed(2)}x
+        </div>
+      </div>
+      <span className={`shrink-0 font-display text-[11px] font-bold tabular-nums ${statusTone}`}>{statusLabel}</span>
+    </li>
   );
 }
 
@@ -659,8 +757,8 @@ function MomentumGraph({
   }, [events]);
 
   const hasAny = homeSeries.some((v) => v > 0) || awaySeries.some((v) => v > 0);
-  const homeFlag = teamFlagUrl(homeName, 80);
-  const awayFlag = teamFlagUrl(awayName, 80);
+  const homeFlag = teamFlagUrl(homeName, 320);
+  const awayFlag = teamFlagUrl(awayName, 320);
 
   // Layout math
   const W = 600;
@@ -797,7 +895,7 @@ function MomentumGraph({
 }
 
 function TeamBlock({ name, goals = [], align = "left", accent = "home" }: { name: string; goals?: any[]; align?: "left" | "right"; accent?: "home" | "away" }) {
-  const url = teamFlagUrl(name, 160);
+  const url = teamFlagUrl(name, 320);
   const accentCls = accent === "home" ? "border-[var(--color-neon)]/50 shadow-[0_0_18px_-6px_var(--color-neon-glow)]" : "border-white/40";
   return (
     <div className="flex flex-col items-center gap-2">
@@ -838,7 +936,19 @@ function TeamBlock({ name, goals = [], align = "left", accent = "home" }: { name
 
 /* ---------- Lineups (SofaScore-inspired) ---------- */
 
-function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "away"; teamName: string }) {
+function LineupSplit({
+  lineup,
+  side,
+  teamName,
+  phase,
+  ratings,
+}: {
+  lineup: any;
+  side: "home" | "away";
+  teamName: string;
+  phase: AnalyticsBundle["phase"];
+  ratings?: any[];
+}) {
   if (!lineup) {
     return (
       <div className="text-xs text-[var(--color-ink-muted)]">
@@ -849,6 +959,11 @@ function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "
   const starters: LineupPlayer[] = lineup.starters ?? [];
   const subs: LineupPlayer[] = lineup.substitutes ?? [];
   const accent = side === "home" ? "var(--color-neon)" : "#F3F4F6";
+  // Once the match is live or finished, hide the raw Starting XI list — the
+  // Player Ratings section below carries the same names plus performance data.
+  const showStartingXi = phase === "pre" || phase === "lineups";
+  const hasRatings = Array.isArray(ratings) && ratings.length > 0;
+
   return (
     <div>
       <div className="mb-3 flex items-baseline justify-between border-b border-dashed border-[var(--color-surface-border)] pb-2">
@@ -866,23 +981,38 @@ function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "
         )}
       </div>
 
-      <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
-        Starting XI
-      </div>
-      <ul className="mt-2 divide-y divide-dashed divide-[var(--color-surface-border)]/60">
-        {starters.map((p, i) => (
-          <PlayerRow key={`s-${i}`} player={p} accent={accent} />
-        ))}
-      </ul>
+      {showStartingXi && (
+        <>
+          <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+            Starting XI
+          </div>
+          <ul className="mt-2 divide-y divide-dashed divide-[var(--color-surface-border)]/60">
+            {starters.map((p, i) => (
+              <PlayerRow key={`s-${i}`} player={p} accent={accent} />
+            ))}
+          </ul>
+        </>
+      )}
+
+      {!showStartingXi && hasRatings && (
+        <>
+          <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+            Player ratings
+          </div>
+          <div className="mt-2">
+            <RatingsTable rows={ratings!} title={teamName} embedded />
+          </div>
+        </>
+      )}
 
       {subs.length > 0 && (
         <>
           <div className="mt-4 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
             Bench
           </div>
-          <ul className="mt-2 divide-y divide-dashed divide-[var(--color-surface-border)]/50">
+          <ul className="mt-2 divide-y divide-dashed divide-[var(--color-surface-border)]/60">
             {subs.map((p, i) => (
-              <PlayerRow key={`b-${i}`} player={p} accent={accent} dim />
+              <PlayerRow key={`b-${i}`} player={p} accent={accent} />
             ))}
           </ul>
         </>
@@ -897,21 +1027,16 @@ function LineupSplit({ lineup, side, teamName }: { lineup: any; side: "home" | "
   );
 }
 
-function PlayerRow({ player, accent, dim = false }: { player: LineupPlayer; accent: string; dim?: boolean }) {
+function PlayerRow({ player, accent }: { player: LineupPlayer; accent: string }) {
   return (
     <li className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3 py-2">
       <span
         className="grid h-6 w-6 place-items-center rounded-full border font-display text-[10px] font-bold tabular-nums"
-        style={{
-          borderColor: dim ? "var(--color-surface-border)" : accent,
-          color: dim ? "var(--color-ink-muted)" : accent,
-        }}
+        style={{ borderColor: accent, color: accent }}
       >
         {player.number ?? "–"}
       </span>
-      <span className={`truncate text-sm ${dim ? "text-[var(--color-ink-muted)]" : "text-[var(--color-ink)]"}`}>
-        {player.name}
-      </span>
+      <span className="truncate text-sm text-[var(--color-ink)]">{player.name}</span>
       {player.pos && (
         <span className="rounded-sm border border-[var(--color-surface-border)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
           {player.pos}
@@ -1282,19 +1407,21 @@ function InjuryList({ items, title }: { items: any[]; title: string }) {
 
 /* ---------- Player ratings ---------- */
 
-function RatingsTable({ rows, title }: { rows: any[]; title: string }) {
+function RatingsTable({ rows, title, embedded = false }: { rows: any[]; title: string; embedded?: boolean }) {
   const sorted = [...rows].sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
   const top = sorted.find((r) => r.rating != null)?.rating ?? null;
   return (
     <div>
-      <div className="mb-3 flex items-baseline justify-between border-b border-dashed border-[var(--color-surface-border)] pb-2">
-        <span className="text-[11px] font-bold uppercase tracking-[0.22em]">{title}</span>
-        {top != null && (
-          <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
-            Top <span className="font-display text-[var(--color-neon)]">{Number(top).toFixed(1)}</span>
-          </span>
-        )}
-      </div>
+      {!embedded && (
+        <div className="mb-3 flex items-baseline justify-between border-b border-dashed border-[var(--color-surface-border)] pb-2">
+          <span className="text-[11px] font-bold uppercase tracking-[0.22em]">{title}</span>
+          {top != null && (
+            <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
+              Top <span className="font-display text-[var(--color-neon)]">{Number(top).toFixed(1)}</span>
+            </span>
+          )}
+        </div>
+      )}
       <ul className="divide-y divide-dashed divide-[var(--color-surface-border)]/60">
         {rows.slice(0, 14).map((r) => {
           const isTop = r.rating != null && r.rating === top;
