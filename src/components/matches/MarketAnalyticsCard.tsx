@@ -374,12 +374,11 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
           <EmptyGraph />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 16, right: 76, bottom: 4, left: -8 }}>
+            <LineChart data={chartData} margin={{ top: 16, right: 120, bottom: 4, left: -8 }}>
               <CartesianGrid
                 strokeDasharray="1 3"
                 stroke="var(--color-ink-muted)"
-                strokeOpacity={0.25}
-                vertical={false}
+                strokeOpacity={0.28}
               />
               <XAxis
                 dataKey="t"
@@ -397,7 +396,8 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
                 tick={false}
                 tickLine={false}
                 axisLine={false}
-                domain={mode === "prob" ? [0, 100] : ["auto", "auto"]}
+                domain={yDomain as any}
+                allowDataOverflow={false}
                 width={8}
               />
               <Tooltip
