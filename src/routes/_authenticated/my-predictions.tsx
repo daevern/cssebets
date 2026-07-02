@@ -15,7 +15,7 @@ import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { teamFlagUrl } from "@/lib/country-flags";
 
 export const Route = createFileRoute("/_authenticated/my-predictions")({
-  head: () => ({ meta: [{ title: "Activity — CSSEBets" }] }),
+  head: () => ({ meta: [{ title: "Picks — CSSEBets" }] }),
   component: MyPredictionsPage,
 });
 
