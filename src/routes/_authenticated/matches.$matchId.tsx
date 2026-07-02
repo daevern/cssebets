@@ -603,9 +603,10 @@ function MomentumStrip({ stats, homeName, awayName }: { stats: AnalyticsBundle["
   );
 }
 
-/* Overlaid momentum curves — derives per-side "pressure" from event timeline.
- * Each event contributes a Gaussian-decayed weight to nearby minutes.
- * Home renders as neon area; away as white area; both share the same baseline. */
+/* SofaScore-style Attack Momentum — vertical bars from a center baseline.
+ * Home bars grow upward (neon, analytics primary); away bars grow downward
+ * (analytics secondary blue). Team flags anchor the baseline on the left,
+ * event icons ride the top rail, HT splits the pitch into two halves. */
 function MomentumGraph({
   events,
   homeName,
@@ -619,16 +620,10 @@ function MomentumGraph({
   phase: AnalyticsBundle["phase"];
   kickoffISO: string;
 }) {
-  const W = 600;
-  const H = 140;
-  const PAD_L = 4;
-  const PAD_R = 4;
-  const PAD_T = 8;
-  const PAD_B = 18;
-  const innerW = W - PAD_L - PAD_R;
-  const innerH = H - PAD_T - PAD_B;
+  const HOME_COLOR = "var(--color-neon)";
+  const AWAY_COLOR = "#60a5fa"; // matches MarketAnalyticsCard secondary series
   const CAP = 95;
-  const SIGMA = 4.5; // minute spread per event
+  const SIGMA = 3.2;
 
   const liveClock = useLiveMinute(kickoffISO, phase === "finished" ? "finished" : "live");
   const liveMinute = (() => {
@@ -663,88 +658,140 @@ function MomentumGraph({
     return { homeSeries: h, awaySeries: a, maxVal: max };
   }, [events]);
 
-  const toPath = (series: number[], closed = true) => {
-    const xs = (i: number) => PAD_L + (i / CAP) * innerW;
-    const ys = (v: number) => PAD_T + innerH - (v / maxVal) * innerH;
-    let d = `M ${xs(0)} ${ys(series[0] ?? 0)}`;
-    for (let i = 1; i <= CAP; i++) d += ` L ${xs(i)} ${ys(series[i] ?? 0)}`;
-    if (closed) d += ` L ${xs(CAP)} ${PAD_T + innerH} L ${xs(0)} ${PAD_T + innerH} Z`;
-    return d;
+  const hasAny = homeSeries.some((v) => v > 0) || awaySeries.some((v) => v > 0);
+  const homeFlag = teamFlagUrl(homeName, 80);
+  const awayFlag = teamFlagUrl(awayName, 80);
+
+  // Layout math
+  const W = 600;
+  const H = 180;
+  const FLAG_COL = 34;
+  const EVENT_ROW = 22;
+  const PAD_T = EVENT_ROW;
+  const PAD_B = 14;
+  const HALF_GAP = 6;
+  const chartLeft = FLAG_COL + 6;
+  const chartRight = W - 4;
+  const innerW = chartRight - chartLeft;
+  const halfW = (innerW - HALF_GAP) / 2;
+  const innerH = H - PAD_T - PAD_B;
+  const midY = PAD_T + innerH / 2;
+
+  const xForMinute = (m: number) => {
+    if (m <= 45) return chartLeft + (m / 45) * halfW;
+    const t = Math.min(1, (m - 45) / 45);
+    return chartLeft + halfW + HALF_GAP + t * halfW;
   };
 
-  const liveX = PAD_L + (liveMinute / CAP) * innerW;
-  const htX = PAD_L + (45 / CAP) * innerW;
-  const hasAny = homeSeries.some((v) => v > 0) || awaySeries.some((v) => v > 0);
+  const barW = halfW / 45 * 0.72;
+  const halfH = innerH / 2;
+
+  const timelineEvents = events.filter((e: any) => {
+    const t = String(e?.type ?? "").toLowerCase();
+    return t === "goal" || t === "card";
+  });
 
   return (
-    <div className="relative">
-      <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.24em]">
-        <span className="flex items-center gap-1.5 text-[var(--color-neon)]">
-          <span className="h-1.5 w-3 bg-[var(--color-neon)]" /> {homeName}
-        </span>
-        <span className="text-[var(--color-ink-muted)]">Pressure index</span>
-        <span className="flex items-center gap-1.5">
-          {awayName} <span className="h-1.5 w-3 bg-white/70" />
-        </span>
+    <div className="relative rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/40 px-2 py-3">
+      <div className="mb-2 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+        <span>Attack momentum</span>
       </div>
 
       {hasAny ? (
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="none">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" preserveAspectRatio="xMidYMid meet">
           <defs>
-            <linearGradient id="mg-home" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-neon)" stopOpacity="0.7" />
-              <stop offset="100%" stopColor="var(--color-neon)" stopOpacity="0.05" />
-            </linearGradient>
-            <linearGradient id="mg-away" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.5" />
-              <stop offset="100%" stopColor="#ffffff" stopOpacity="0.04" />
-            </linearGradient>
+            <clipPath id="mg-flag-home"><circle cx={FLAG_COL / 2 + 2} cy={midY - halfH / 2} r="10" /></clipPath>
+            <clipPath id="mg-flag-away"><circle cx={FLAG_COL / 2 + 2} cy={midY + halfH / 2} r="10" /></clipPath>
           </defs>
 
-          {/* grid */}
-          {[0.25, 0.5, 0.75].map((g) => (
-            <line key={g} x1={PAD_L} x2={W - PAD_R} y1={PAD_T + innerH * g} y2={PAD_T + innerH * g}
-              stroke="var(--color-surface-border)" strokeDasharray="2 3" strokeWidth="0.5" />
-          ))}
+          {/* Half-pitch backgrounds */}
+          <rect x={chartLeft} y={PAD_T} width={halfW} height={innerH}
+            fill="var(--color-surface)" opacity="0.55" rx="2" />
+          <rect x={chartLeft + halfW + HALF_GAP} y={PAD_T} width={halfW} height={innerH}
+            fill="var(--color-surface)" opacity="0.55" rx="2" />
 
-          {/* HT marker */}
-          <line x1={htX} x2={htX} y1={PAD_T} y2={PAD_T + innerH}
-            stroke="var(--color-surface-border)" strokeDasharray="2 2" strokeWidth="0.6" />
-          <text x={htX} y={H - 4} textAnchor="middle" fontSize="8" fill="var(--color-ink-muted)" fontWeight="700">HT</text>
+          {/* Center baseline */}
+          <line x1={chartLeft} x2={chartRight} y1={midY} y2={midY}
+            stroke="var(--color-surface-border)" strokeWidth="0.8" />
 
-          {/* areas */}
-          <path d={toPath(awaySeries)} fill="url(#mg-away)" stroke="rgba(255,255,255,0.85)" strokeWidth="1" />
-          <path d={toPath(homeSeries)} fill="url(#mg-home)" stroke="var(--color-neon)" strokeWidth="1.2" />
-
-          {/* event ticks */}
-          {events.map((e: any, i: number) => {
-            const t = String(e?.type ?? "").toLowerCase();
-            if (t !== "goal") return null;
-            const min = Math.min(CAP, Math.max(0, (e.minute ?? 0) + (e.extra_minute ?? 0)));
-            const x = PAD_L + (min / CAP) * innerW;
-            const isHome = e.side === "home";
-            return (
-              <circle key={i} cx={x} cy={isHome ? PAD_T + 2 : PAD_T + innerH - 2}
-                r="2" fill={isHome ? "var(--color-neon)" : "#ffffff"} />
-            );
+          {/* Home bars (up) */}
+          {homeSeries.map((v, i) => {
+            if (v <= 0.01) return null;
+            const h = (v / maxVal) * halfH;
+            const x = xForMinute(i) - barW / 2;
+            return <rect key={`h-${i}`} x={x} y={midY - h} width={barW} height={h} fill={HOME_COLOR} opacity="0.9" />;
+          })}
+          {/* Away bars (down) */}
+          {awaySeries.map((v, i) => {
+            if (v <= 0.01) return null;
+            const h = (v / maxVal) * halfH;
+            const x = xForMinute(i) - barW / 2;
+            return <rect key={`a-${i}`} x={x} y={midY} width={barW} height={h} fill={AWAY_COLOR} opacity="0.85" />;
           })}
 
-          {/* live cursor */}
-          {phase === "live" && liveMinute > 0 && (
+          {/* Team flags */}
+          {homeFlag && (
             <>
-              <line x1={liveX} x2={liveX} y1={PAD_T} y2={PAD_T + innerH}
-                stroke="hsl(var(--destructive))" strokeWidth="1" />
-              <circle cx={liveX} cy={PAD_T} r="2.5" fill="hsl(var(--destructive))" />
+              <circle cx={FLAG_COL / 2 + 2} cy={midY - halfH / 2} r="11" fill="var(--color-surface-2)" stroke={HOME_COLOR} strokeWidth="1.2" />
+              <image href={homeFlag} x={FLAG_COL / 2 + 2 - 10} y={midY - halfH / 2 - 10} width="20" height="20" clipPath="url(#mg-flag-home)" preserveAspectRatio="xMidYMid slice" />
+            </>
+          )}
+          {awayFlag && (
+            <>
+              <circle cx={FLAG_COL / 2 + 2} cy={midY + halfH / 2} r="11" fill="var(--color-surface-2)" stroke={AWAY_COLOR} strokeWidth="1.2" />
+              <image href={awayFlag} x={FLAG_COL / 2 + 2 - 10} y={midY + halfH / 2 - 10} width="20" height="20" clipPath="url(#mg-flag-away)" preserveAspectRatio="xMidYMid slice" />
             </>
           )}
 
-          {/* axis labels */}
-          <text x={PAD_L} y={H - 4} fontSize="8" fill="var(--color-ink-muted)" fontWeight="700">0'</text>
-          <text x={W - PAD_R} y={H - 4} textAnchor="end" fontSize="8" fill="var(--color-ink-muted)" fontWeight="700">90'</text>
+          {/* Event markers on top rail */}
+          {timelineEvents.map((e: any, i: number) => {
+            const min = Math.min(CAP, Math.max(0, (e.minute ?? 0) + (e.extra_minute ?? 0)));
+            const x = xForMinute(min);
+            const t = String(e?.type ?? "").toLowerCase();
+            const d = String(e?.detail ?? "").toLowerCase();
+            const isRed = t === "card" && d.includes("red");
+            const isGoal = t === "goal";
+            const y = EVENT_ROW / 2;
+            if (isGoal) {
+              return (
+                <g key={`ev-${i}`}>
+                  <circle cx={x} cy={y} r="6.5" fill="none" stroke="var(--color-neon)" strokeWidth="1.2" />
+                  <circle cx={x} cy={y} r="2" fill="var(--color-neon)" />
+                </g>
+              );
+            }
+            if (isRed) {
+              return <rect key={`ev-${i}`} x={x - 3.5} y={y - 5} width="7" height="10" fill="#ef4444" rx="1" />;
+            }
+            return <rect key={`ev-${i}`} x={x - 3.5} y={y - 5} width="7" height="10" fill="#facc15" rx="1" />;
+          })}
+
+          {/* HT band */}
+          <line x1={chartLeft + halfW + HALF_GAP / 2} x2={chartLeft + halfW + HALF_GAP / 2}
+            y1={PAD_T} y2={PAD_T + innerH}
+            stroke="var(--color-ink)" strokeOpacity="0.6" strokeWidth="1" />
+
+          {/* Live cursor */}
+          {phase === "live" && liveMinute > 0 && (
+            <line x1={xForMinute(liveMinute)} x2={xForMinute(liveMinute)}
+              y1={PAD_T} y2={PAD_T + innerH}
+              stroke="hsl(var(--destructive))" strokeWidth="1" strokeDasharray="2 2" />
+          )}
+
+          {/* Axis labels */}
+          <text x={chartLeft} y={H - 2} fontSize="8" fill="var(--color-ink-muted)" fontWeight="700">0'</text>
+          <text x={chartLeft + halfW} y={H - 2} textAnchor="end" fontSize="8" fill="var(--color-ink-muted)" fontWeight="700">45'</text>
+          <text x={chartLeft + halfW + HALF_GAP} y={H - 2} fontSize="8" fill="var(--color-ink-muted)" fontWeight="700">46'</text>
+          <text x={chartRight} y={H - 2} textAnchor="end" fontSize="8" fill="var(--color-ink-muted)" fontWeight="700">90'</text>
         </svg>
       ) : (
         <p className="py-6 text-center text-xs text-[var(--color-ink-muted)]">Momentum builds once events roll in.</p>
       )}
+
+      <div className="mt-2 flex items-center justify-center gap-4 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm" style={{ background: HOME_COLOR }} /> {homeName}</span>
+        <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-sm" style={{ background: AWAY_COLOR }} /> {awayName}</span>
+      </div>
     </div>
   );
 }
@@ -1085,39 +1132,103 @@ function StatsCompare({ home, away, homeName: _homeName, awayName: _awayName }: 
 /* ---------- Event timeline ---------- */
 
 function EventTimeline({ events, home, away, compact }: { events: any[]; home: string; away: string; compact?: boolean }) {
-  // Newest first
+  // Newest first, but group with HT/FT dividers based on minute
   const ordered = [...events].sort((a, b) => {
     const am = (a.minute ?? 0) + (a.extra_minute ?? 0);
     const bm = (b.minute ?? 0) + (b.extra_minute ?? 0);
     return bm - am;
   });
-  const hasMore = !compact && ordered.length > 7;
+  const hasMore = !compact && ordered.length > 8;
+  const HOME_COLOR = "var(--color-neon)";
+  const AWAY_COLOR = "#60a5fa";
+
+  const rows: Array<{ kind: "event"; e: any } | { kind: "divider"; label: string }> = [];
+  let insertedHT = false;
+  let insertedFT = false;
+  for (const e of ordered) {
+    const m = (e.minute ?? 0) + (e.extra_minute ?? 0);
+    if (!insertedFT && m >= 90) { rows.push({ kind: "divider", label: "Full time" }); insertedFT = true; }
+    if (!insertedHT && m <= 45) {
+      // insert HT before we go below 45
+      if (rows.length && rows[rows.length - 1].kind === "event") {
+        rows.push({ kind: "divider", label: "Half time" });
+        insertedHT = true;
+      }
+    }
+    rows.push({ kind: "event", e });
+  }
+
   return (
     <div className="relative">
-      <div className={compact ? "" : "md:max-h-[420px] md:overflow-y-auto md:pr-1"}>
-
-        <ul className="relative space-y-3">
-          {/* Vertical timeline rail */}
-          <span aria-hidden className="pointer-events-none absolute bottom-2 left-[48px] top-2 w-px bg-[var(--color-surface-border)]" />
-          {ordered.map((e) => {
-            const sideLabel = e.side === "home" ? home : e.side === "away" ? away : "";
+      <div className={compact ? "" : "md:max-h-[460px] md:overflow-y-auto md:pr-1"}>
+        <ul className="relative">
+          {/* Center rail */}
+          <span aria-hidden className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[var(--color-surface-border)]" />
+          {rows.map((row, idx) => {
+            if (row.kind === "divider") {
+              return (
+                <li key={`div-${idx}`} className="relative my-3 flex items-center justify-center">
+                  <span className="relative z-10 border border-[var(--color-surface-border)] bg-[var(--color-surface)] px-2 py-0.5 font-display text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+                    {row.label}
+                  </span>
+                </li>
+              );
+            }
+            const e = row.e;
             const isHome = e.side === "home";
+            const isAway = e.side === "away";
+            const sideColor = isHome ? HOME_COLOR : AWAY_COLOR;
+            const minute = `${e.minute ?? "—"}${e.extra_minute ? `+${e.extra_minute}` : ""}'`;
+            const detail = String(e.detail ?? e.type ?? "").toLowerCase();
+            const isGoal = String(e.type ?? "").toLowerCase() === "goal";
+            const sideLabel = isHome ? home : isAway ? away : "";
+
+            const Card = (
+              <div className={`flex min-w-0 items-center gap-2 py-1.5 ${isHome ? "flex-row" : "flex-row-reverse"} ${isGoal ? "text-[var(--color-ink)]" : "text-[var(--color-ink)]/90"}`}>
+                <span
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full border bg-[var(--color-surface-2)]"
+                  style={{ borderColor: sideColor }}
+                >
+                  {eventMark(e.e_type ?? e.type, e.detail, 12)}
+                </span>
+                <div className={`min-w-0 ${isHome ? "text-left" : "text-right"}`}>
+                  <div className={`truncate text-sm ${isGoal ? "font-semibold" : "font-medium"}`}>
+                    {e.player_name ?? e.detail ?? e.type}
+                  </div>
+                  {(e.assist_name || detail) && (
+                    <div className="truncate text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+                      {e.assist_name ? `assist ${e.assist_name}` : detail}
+                      {sideLabel && <span className="opacity-60"> · {sideLabel}</span>}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+
             return (
-              <li key={e.id} className="relative grid grid-cols-[40px_28px_minmax(0,1fr)] items-center gap-2.5 text-sm">
-                <span className="font-display text-xs font-black tabular-nums text-[var(--color-ink-muted)]">
-                  {e.minute ?? "—"}{e.extra_minute ? `+${e.extra_minute}` : ""}'
-                </span>
-                <span className="relative z-10 grid h-7 w-7 place-items-center border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
-                  {eventMark(e.type, e.detail, 12)}
-                </span>
-                <div className="min-w-0 border-l-2 py-1 pl-3 leading-snug" style={{ borderColor: isHome ? "var(--color-neon)" : "rgba(255,255,255,0.5)" }}>
-                  <div className="truncate">
-                    <span className="font-semibold">{e.player_name ?? e.detail ?? e.type}</span>
-                    {e.assist_name && <span className="text-[var(--color-ink-muted)]"> · assist {e.assist_name}</span>}
-                  </div>
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                    {e.detail ?? e.type}{sideLabel && ` · ${sideLabel}`}
-                  </div>
+              <li
+                key={e.id ?? `e-${idx}`}
+                className="relative grid grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] items-center border-b border-dashed border-[var(--color-surface-border)]/60 last:border-b-0"
+              >
+                {/* Left column (home) */}
+                <div className={`flex justify-end pr-2 ${isHome ? "" : "opacity-0 pointer-events-none"}`}>
+                  {isHome ? Card : null}
+                </div>
+                {/* Minute node */}
+                <div className="relative flex items-center justify-center">
+                  <span
+                    className="relative z-10 grid h-9 w-9 place-items-center rounded-full border bg-[var(--color-surface)] font-display text-[10px] font-black tabular-nums"
+                    style={{
+                      borderColor: isHome ? HOME_COLOR : isAway ? AWAY_COLOR : "var(--color-surface-border)",
+                      color: "var(--color-ink)",
+                    }}
+                  >
+                    {minute}
+                  </span>
+                </div>
+                {/* Right column (away) */}
+                <div className={`flex justify-start pl-2 ${isAway ? "" : "opacity-0 pointer-events-none"}`}>
+                  {isAway ? Card : null}
                 </div>
               </li>
             );
