@@ -466,15 +466,6 @@ function FeaturedHero({ match, now }: { match: Match; now: number }) {
       params={{ matchId: match.id }}
       className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] transition-colors hover:border-[var(--neon)]/40"
     >
-      {/* Ambient stadium glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(120% 60% at 50% 0%, rgba(34,224,107,0.10), transparent 60%)",
-        }}
-      />
 
       <div className="relative flex flex-col gap-5 p-5">
         <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em]">
