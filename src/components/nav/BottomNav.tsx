@@ -1,11 +1,11 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, LineChart, Activity, Wallet, Search } from "lucide-react";
+import { Home, LineChart, Activity, Coins, Search } from "lucide-react";
 
 const items = [
   { to: "/dashboard", label: "Home", icon: Home, exact: true },
   { to: "/matches", label: "Markets", icon: LineChart, exact: false },
   { to: "/my-predictions", label: "Activity", icon: Activity, exact: false },
-  { to: "/wallet", label: "Portfolio", icon: Wallet, exact: false },
+  { to: "/payout", label: "Payout", icon: Coins, exact: false },
   { to: "/support", label: "Search", icon: Search, exact: false },
 ] as const;
 
