@@ -60,7 +60,7 @@ function MatchAnalyticsPage() {
       />
       <div
         className="relative mx-auto flex max-w-md flex-col gap-8 px-4 pt-5 md:max-w-3xl md:gap-10 md:py-10"
-        style={{ paddingBottom: "calc(220px + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: "calc(140px + env(safe-area-inset-bottom))" }}
       >
         <header className="flex items-center">
           <Link
