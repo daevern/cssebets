@@ -521,7 +521,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
   const orderedSelections = (market: MarketKey, rows: OddsRow[]) => {
     let order: string[] = [];
-    if (market === "correct_score") order = CORRECT_SCORES;
+    if (market === "1x2") order = ["home", "draw", "away"];
+    else if (market === "correct_score") order = CORRECT_SCORES;
     else if (market === "half_time_full_time") order = HTFT_OPTIONS;
     else if (market === "exact_total_goals") order = EXACT_GOALS_OPTIONS;
     else if (market === "btts") order = ["YES", "NO"];
