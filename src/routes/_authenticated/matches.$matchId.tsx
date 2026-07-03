@@ -134,6 +134,7 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
               Take a position
             </h2>
           </div>
+          <FreeBetInMatch matchId={match.id} referenceOdds={(match as any).reference_odds ?? null} />
           <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} />
         </section>
       )}
