@@ -284,6 +284,8 @@ function HomePage() {
           )}
         </article>
       </section>
+
+      <PageFooter />
     </div>
   );
 }
