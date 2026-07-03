@@ -62,7 +62,7 @@ function MatchAnalyticsPage() {
       />
       <div
         className="relative mx-auto flex max-w-md flex-col gap-8 px-4 pt-5 md:max-w-3xl md:gap-10 md:py-10"
-        style={{ paddingBottom: "calc(140px + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: "calc(88px + env(safe-area-inset-bottom))" }}
       >
         {/* Back arrow lives in the global TopBar on this route — keep the page focused on the match. */}
 

@@ -1,5 +1,5 @@
-import { Link, useLocation, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Bell, User, Wallet as WalletIcon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Bell, User, Wallet as WalletIcon } from "lucide-react";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 import { TokenChip } from "@/components/engagement/TokenVault";
 
@@ -13,39 +13,22 @@ export function TopBar({
   loading?: boolean;
   onSignOut?: () => void;
 }) {
-  const { pathname } = useLocation();
-  const router = useRouter();
-  // On the Analytics/Match detail page, strip brand chrome and show a back
-  // arrow instead — the user already knows where they are.
-  const isMatchDetail = /^\/matches\/[^/]+/.test(pathname);
-
   return (
     <header
       className="sticky top-0 z-30 overflow-hidden border-b border-[var(--color-surface-border)]/60 bg-[var(--surface)]/90 backdrop-blur-xl"
       style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
       <div className="mx-auto flex h-14 w-full min-w-0 max-w-md items-center justify-between gap-2 px-3 sm:px-4">
-        {isMatchDetail ? (
-          <button
-            type="button"
-            aria-label="Back"
-            onClick={() => router.history.back()}
-            className="grid h-9 w-9 -ml-2 shrink-0 place-items-center rounded-full text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)]"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-        ) : (
-          <Link
-            to="/dashboard"
-            aria-label="CSSEBets home"
-            className="flex shrink-0 items-center gap-2"
-          >
-            <CsseLogo size={22} />
-            <span className="hidden sm:inline text-[15px] font-bold tracking-tight leading-none">
-              <BrandText />
-            </span>
-          </Link>
-        )}
+        <Link
+          to="/dashboard"
+          aria-label="CSSEBets home"
+          className="flex shrink-0 items-center gap-2"
+        >
+          <CsseLogo size={22} />
+          <span className="hidden sm:inline text-[15px] font-bold tracking-tight leading-none">
+            <BrandText />
+          </span>
+        </Link>
 
         <div className="flex min-w-0 shrink items-center justify-end gap-1 sm:gap-2">
           {balance != null && (
@@ -58,25 +41,21 @@ export function TopBar({
               <span className="hidden sm:inline text-[10px] font-medium text-[var(--ink-muted)]">PTS</span>
             </Link>
           )}
-          {balance != null && !isMatchDetail && <TokenChip />}
-          {!isMatchDetail && (
-            <>
-              <Link
-                to="/notifications"
-                aria-label="Notifications"
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--color-surface-border)]/70 text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)] sm:h-9 sm:w-9"
-              >
-                <Bell className="h-4 w-4" />
-              </Link>
-              <Link
-                to="/settings"
-                aria-label="Profile"
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--color-surface-border)]/70 text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)] sm:h-9 sm:w-9"
-              >
-                <User className="h-4 w-4" />
-              </Link>
-            </>
-          )}
+          {balance != null && <TokenChip />}
+          <Link
+            to="/notifications"
+            aria-label="Notifications"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--color-surface-border)]/70 text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)] sm:h-9 sm:w-9"
+          >
+            <Bell className="h-4 w-4" />
+          </Link>
+          <Link
+            to="/settings"
+            aria-label="Profile"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--color-surface-border)]/70 text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)] sm:h-9 sm:w-9"
+          >
+            <User className="h-4 w-4" />
+          </Link>
         </div>
       </div>
     </header>
