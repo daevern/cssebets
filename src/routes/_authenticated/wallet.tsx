@@ -290,11 +290,6 @@ function WalletPage() {
             <Building2 className="h-3 w-3" /> Bank transfer details
           </div>
           <div className="space-y-1">
-            <div className="text-sm font-semibold leading-tight">J.P MORGAN CHASE BANK BERHAD</div>
-            <div className="text-xs leading-tight text-[var(--color-ink-muted)]">WISE PAYMENTS SDN BHD</div>
-            <CopiableValue value="312123400232368" label="Account number" />
-          </div>
-          <div className="border-t border-dashed border-[var(--color-surface-border)] pt-2 space-y-1">
             <div className="text-sm font-semibold leading-tight">CIMB</div>
             <div className="text-xs leading-tight text-[var(--color-ink-muted)]">BRICKSPLUG ENTERPRISE SD BHD</div>
             <CopiableValue value="8010575969" label="Account number" />
