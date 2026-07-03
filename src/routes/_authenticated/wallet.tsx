@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
+import { EngagementTiles } from "@/components/engagement/EngagementTiles";
 
 export const Route = createFileRoute("/_authenticated/wallet")({
   ssr: false,
