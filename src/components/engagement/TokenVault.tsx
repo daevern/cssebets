@@ -18,11 +18,14 @@ import { useAuth } from "@/hooks/use-auth";
 /* ------------------------------------------------------------------ */
 export function TokenChip() {
   const [open, setOpen] = useState(false);
+  const { user } = useAuth();
+  const uid = user?.id ?? "anon";
   const eFn = useServerFn(getMyEngagementSummary);
   const summary = useQuery({
-    queryKey: ["engagement-summary"],
+    queryKey: ["engagement-summary", uid],
     queryFn: () => eFn(),
     staleTime: 30_000,
+    enabled: !!user,
   });
   const tokens = summary.data?.tokens.balance ?? 0;
 
