@@ -38,11 +38,34 @@ function toTicket(p: any): WinTicketData | null {
  * localStorage), plus whenever /notifications?win=<id> is present.
  */
 export function WinDetector() {
+  const { user } = useAuth();
   const { data } = useLatestWin();
   const [open, setOpen] = useState(false);
   const [forced, setForced] = useState<any | null>(null);
   const location = useLocation();
   const router = useRouter();
+
+  const seenKey = user?.id ? `${SEEN_KEY_PREFIX}${user.id}` : null;
+
+  function readSeen(): Set<string> {
+    if (!seenKey || typeof window === "undefined") return new Set();
+    try {
+      const raw = window.localStorage.getItem(seenKey);
+      if (!raw) return new Set();
+      const arr = JSON.parse(raw);
+      return new Set(Array.isArray(arr) ? arr.map(String) : []);
+    } catch { return new Set(); }
+  }
+
+  function markSeen(id: string) {
+    if (!seenKey || typeof window === "undefined") return;
+    const s = readSeen();
+    if (s.has(id)) return;
+    s.add(id);
+    // Keep list bounded
+    const arr = Array.from(s).slice(-50);
+    window.localStorage.setItem(seenKey, JSON.stringify(arr));
+  }
 
   // Deep-link: /notifications?win=<id> — fetch that specific prediction.
   const winParam = useMemo(() => {
@@ -68,23 +91,23 @@ export function WinDetector() {
     return () => { cancelled = true; };
   }, [winParam]);
 
-  // Auto-pop on new win detection.
+  // Auto-pop on new win detection — but only once ever per win id.
   useEffect(() => {
-    if (!data?.id || forced) return;
-    if (typeof window === "undefined") return;
-    const seen = window.localStorage.getItem(SEEN_KEY);
-    if (seen !== data.id) {
+    if (!data?.id || forced || !seenKey) return;
+    const seen = readSeen();
+    if (!seen.has(String(data.id))) {
       setOpen(true);
+      // Mark as seen immediately on open so reloads/re-logins won't re-pop.
+      markSeen(String(data.id));
     }
-  }, [data?.id, forced]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data?.id, forced, seenKey]);
 
   function handleOpenChange(v: boolean) {
     setOpen(v);
     if (!v) {
       const activeId = forced?.id ?? data?.id;
-      if (activeId && typeof window !== "undefined") {
-        window.localStorage.setItem(SEEN_KEY, String(activeId));
-      }
+      if (activeId) markSeen(String(activeId));
       if (winParam) {
         router.navigate({ to: "/notifications", replace: true });
         setForced(null);
