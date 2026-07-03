@@ -116,6 +116,9 @@ export const placeFreeBet = createServerFn({ method: "POST" })
       const m = error.message ?? "";
       if (m.includes("FREE_BET_NOT_FOUND")) throw new Error("This free bet could not be found.");
       if (m.includes("FREE_BET_UNAVAILABLE")) throw new Error("This free bet has already been used.");
+      if (m.includes("FREE_BET_MARKET_NOT_ALLOWED") || m.includes("FREE_BET_OUTCOME_NOT_ALLOWED")) {
+        throw new Error("Free bets can only be placed on the match result (Home / Draw / Away).");
+      }
       if (m.includes("MATCH_LOCKED")) throw new Error("This match has already kicked off.");
       if (m.includes("MAX_PAYOUT_EXCEEDED")) throw new Error("Potential return exceeds platform limit.");
       if (m.includes("DUPLICATE_REQUEST")) throw new Error("Duplicate request. Please refresh and try again.");
