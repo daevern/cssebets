@@ -54,7 +54,9 @@ export function TopBar({
               <span className="text-[10px] font-medium text-[var(--ink-muted)]">PTS</span>
             </Link>
           )}
+          {balance != null && !isMatchDetail && <TokenChip />}
           {!isMatchDetail && (
+
             <>
               <Link
                 to="/notifications"
