@@ -40,11 +40,8 @@ export function ReferralPanel() {
     }
   }
 
-  function share() {
-    if (!link) return;
-    const text = `Join me on CSSEBets — predict the World Cup 2026 together. Use my referral code: ${code ?? ""}. ${link}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
-  }
+  const shareText = `Join me on CSSEBets — predict the World Cup 2026 together. Use my referral code: ${code ?? ""}. ${link}`;
+  const shareHref = link ? `https://wa.me/?text=${encodeURIComponent(shareText)}` : "#";
 
   const total = referral.data?.totalReferrals ?? 0;
   const active = referral.data?.activeReferrals ?? 0;
