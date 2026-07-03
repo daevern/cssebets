@@ -164,16 +164,19 @@ function SettingsPage() {
         <SaveBtn onClick={savePhone} disabled={savingPhone || phone === currentPhone} loading={savingPhone} label="Update phone" />
       </StencilPanel>
 
-      <StencilPanel kicker={<><KeyRound className="h-3 w-3" /> Password</>}>
-        <div className="space-y-1.5">
-          <Label htmlFor="pw1" className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">New password</Label>
-          <Input id="pw1" type="password" minLength={8} value={pw1} onChange={(e) => setPw1(e.target.value)} className="bg-[#070D0A] border-[var(--color-surface-border)]" />
-        </div>
-        <div className="mt-3 space-y-1.5">
-          <Label htmlFor="pw2" className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Confirm new password</Label>
-          <Input id="pw2" type="password" minLength={8} value={pw2} onChange={(e) => setPw2(e.target.value)} className="bg-[#070D0A] border-[var(--color-surface-border)]" />
-        </div>
-        <SaveBtn onClick={savePassword} disabled={savingPw || !pw1 || !pw2} loading={savingPw} label="Update password" />
+      <StencilPanel kicker={<><LogOut className="h-3 w-3" /> Session</>}>
+        <p className="text-sm text-[var(--color-ink-muted)]">
+          Sign out of cssebets on this device.
+        </p>
+        <button
+          type="button"
+          onClick={signOut}
+          disabled={signingOut}
+          className="mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-5 py-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--color-ink)] transition-all hover:border-[var(--color-neon)]/40 hover:text-[var(--color-neon)] active:scale-[0.99] disabled:opacity-40"
+        >
+          {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+          Sign out
+        </button>
       </StencilPanel>
       <BadgeGrid />
     </PageShell>
