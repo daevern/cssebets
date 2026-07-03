@@ -76,18 +76,17 @@ function SettingsPage() {
     finally { setSavingEmail(false); }
   }
 
-  async function savePhone() {
-    const p = phone.trim();
-    if (p && !isValidPhone(p)) { toast.error("Phone must be in international format, e.g. +60123456789"); return; }
-    if (!uid) return;
-    setSavingPhone(true);
+  async function savePassword() {
+    if (pw1.length < 8) { toast.error("Password must be at least 8 characters"); return; }
+    if (pw1 !== pw2) { toast.error("Passwords do not match"); return; }
+    setSavingPw(true);
     try {
-      const { error } = await supabase.from("profiles").update({ phone_number: p || null }).eq("id", uid);
+      const { error } = await supabase.auth.updateUser({ password: pw1 });
       if (error) throw error;
-      toast.success("Phone number updated.");
-      qc.invalidateQueries({ queryKey: ["my-profile-settings", uid] });
+      toast.success("Password updated.");
+      setPw1(""); setPw2("");
     } catch (e) { toast.error((e as Error).message); }
-    finally { setSavingPhone(false); }
+    finally { setSavingPw(false); }
   }
 
   async function signOut() {
@@ -97,6 +96,7 @@ function SettingsPage() {
     await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   }
+
 
 
   return (
