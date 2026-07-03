@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { getMyEngagementSummary } from "@/lib/engagement.functions";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
 import { listMyFreeBets } from "@/lib/freebets.functions";
+import { buildReferralLink } from "@/lib/referral-link";
 
 export function EngagementTiles() {
   const eFn = useServerFn(getMyEngagementSummary);
@@ -26,7 +27,7 @@ export function EngagementTiles() {
   const [copied, setCopied] = useState(false);
   async function copyRef() {
     if (!refCode) return;
-    const link = `${window.location.origin}/?ref=${refCode}`;
+    const link = buildReferralLink(refCode);
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);

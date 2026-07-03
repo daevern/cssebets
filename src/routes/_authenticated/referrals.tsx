@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Share2, Copy, Check, Users, Coins, Target } from "lucide-react";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
+import { buildReferralLink } from "@/lib/referral-link";
 
 export const Route = createFileRoute("/_authenticated/referrals")({
   component: ReferralsPage,
@@ -19,8 +20,7 @@ function ReferralsPage() {
   const [copied, setCopied] = useState(false);
 
   const code = q.data?.referralCode ?? "";
-  const link = typeof window !== "undefined" && code
-    ? `${window.location.origin}/?ref=${code}` : "";
+  const link = buildReferralLink(code);
 
   async function copyLink() {
     try {
