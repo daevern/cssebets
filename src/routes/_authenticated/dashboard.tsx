@@ -212,7 +212,7 @@ function HomePage() {
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
               Next Fixture
             </h2>
-            <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">The next kickoff on the slate.</p>
+            
           </div>
         </div>
         {featured ? (
