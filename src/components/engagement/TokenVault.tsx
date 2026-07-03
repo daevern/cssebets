@@ -31,18 +31,18 @@ export function TokenChip() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Open CSSE token vault"
-        className="group relative flex items-center gap-1.5 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--ink)] transition-colors hover:border-[var(--neon)]/60"
+        className="group relative flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] px-2 py-1.5 text-[12px] font-semibold text-[var(--ink)] transition-colors hover:border-[var(--neon)]/60 sm:gap-1.5 sm:px-2.5"
       >
         <span
           aria-hidden
-          className="grid h-4 w-4 place-items-center rounded-full bg-[var(--neon)]/12 ring-1 ring-inset ring-[var(--neon)]/40"
+          className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[var(--neon)]/12 ring-1 ring-inset ring-[var(--neon)]/40"
         >
           <span className="text-[9px] font-black leading-none text-[var(--neon)]">◈</span>
         </span>
         <span className="tabular-nums leading-none">
           {summary.isLoading ? "…" : formatCompact(tokens)}
         </span>
-        <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--ink-muted)] leading-none">
+        <span className="hidden sm:inline text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--ink-muted)] leading-none">
           CSSE
         </span>
       </button>
