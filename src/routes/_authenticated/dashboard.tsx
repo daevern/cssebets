@@ -286,6 +286,8 @@ function HomePage() {
         </article>
       </section>
 
+      <EngagementTiles />
+
       <PageFooter />
     </div>
   );
