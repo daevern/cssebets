@@ -33,18 +33,9 @@ function ReferralsPage() {
     } catch { toast.error("Could not copy link"); }
   }
 
-  async function share() {
-    if (typeof navigator !== "undefined" && (navigator as any).share) {
-      try {
-        await (navigator as any).share({
-          title: "Join me on CSSEBets",
-          text: `Use my referral code ${code} to join the pool.`,
-          url: link,
-        });
-      } catch { /* user cancelled */ }
-    } else {
-      copyLink();
-    }
+  function share() {
+    const text = `Join me on CSSEBets — predict the World Cup 2026 together. Use my referral code: ${code}. ${link}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -65,7 +56,7 @@ function ReferralsPage() {
             Copy Link
           </Button>
           <Button onClick={share} className="flex-1 gap-2 rounded-none bg-[var(--neon)] text-black hover:bg-[var(--neon)]/90">
-            <Share2 className="h-4 w-4" /> Share
+            <Share2 className="h-4 w-4" /> WhatsApp
           </Button>
         </div>
       </Card>
