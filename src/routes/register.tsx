@@ -105,6 +105,7 @@ function RegisterPage() {
       if (password !== confirm) throw new Error("Passwords do not match");
       const syntheticEmail = phoneToSyntheticEmail(p);
       await checkAuthRateLimit({ data: { phone: p } });
+      const refCode = getStoredReferralCode();
       const { error } = await supabase.auth.signUp({
         email: syntheticEmail,
         password,
@@ -113,10 +114,12 @@ function RegisterPage() {
           data: {
             display_name: displayName || p,
             phone_number: p,
+            ...(refCode ? { referral_code: refCode } : {}),
           },
         },
       });
       if (error) throw error;
+      clearStoredReferralCode();
       toast.success("Account created. Waiting for admin approval.");
       navigate({ to: "/dashboard" });
     } catch (err) {
