@@ -26,7 +26,7 @@ export const getMyEngagementSummary = createServerFn({ method: "GET" })
       .eq("user_id", userId).maybeSingle();
     const wallet = w ?? { balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
     const lifetime = Number(wallet.lifetime_earned ?? 0);
-    let level = LEVELS[0];
+    let level: (typeof LEVELS)[number] = LEVELS[0];
     for (const l of LEVELS) if (lifetime >= l.min) level = l;
     return {
       tokens: {

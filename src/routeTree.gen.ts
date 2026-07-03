@@ -28,8 +28,10 @@ import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedTrustCenterRouteImport } from './routes/_authenticated/trust-center'
 import { Route as AuthenticatedTournamentWinnerRouteImport } from './routes/_authenticated/tournament-winner'
 import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
+import { Route as AuthenticatedStoreRouteImport } from './routes/_authenticated/store'
 import { Route as AuthenticatedStatusRouteImport } from './routes/_authenticated/status'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedReferralsRouteImport } from './routes/_authenticated/referrals'
 import { Route as AuthenticatedPayoutRouteImport } from './routes/_authenticated/payout'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
@@ -45,12 +47,14 @@ import { Route as ManagementAdminWalletAdjustmentsRouteImport } from './routes/m
 import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
 import { Route as ManagementAdminTournamentRouteImport } from './routes/management/admin.tournament'
 import { Route as ManagementAdminSupportOpsRouteImport } from './routes/management/admin.support-ops'
+import { Route as ManagementAdminStoreRouteImport } from './routes/management/admin.store'
 import { Route as ManagementAdminStaffRouteImport } from './routes/management/admin.staff'
 import { Route as ManagementAdminSimulationRouteImport } from './routes/management/admin.simulation'
 import { Route as ManagementAdminSettlementsRouteImport } from './routes/management/admin.settlements'
 import { Route as ManagementAdminSettingsRouteImport } from './routes/management/admin.settings'
 import { Route as ManagementAdminRiskSettingsRouteImport } from './routes/management/admin.risk-settings'
 import { Route as ManagementAdminReviewRouteImport } from './routes/management/admin.review'
+import { Route as ManagementAdminReferralsRouteImport } from './routes/management/admin.referrals'
 import { Route as ManagementAdminReconciliationRouteImport } from './routes/management/admin.reconciliation'
 import { Route as ManagementAdminPricingBreakdownRouteImport } from './routes/management/admin.pricing-breakdown'
 import { Route as ManagementAdminPredictionsRouteImport } from './routes/management/admin.predictions'
@@ -71,6 +75,7 @@ import { Route as ManagementAdminAuditRouteImport } from './routes/management/ad
 import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
 import { Route as ManagementAdminAlertsRouteImport } from './routes/management/admin.alerts'
 import { Route as AuthenticatedMatchesMatchIdRouteImport } from './routes/_authenticated/matches.$matchId'
+import { Route as AuthenticatedFreeBetsPlaceRouteImport } from './routes/_authenticated/free-bets.place'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/public/hooks/sync-fixtures'
 import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
@@ -178,6 +183,11 @@ const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
   path: '/support',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedStoreRoute = AuthenticatedStoreRouteImport.update({
+  id: '/store',
+  path: '/store',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedStatusRoute = AuthenticatedStatusRouteImport.update({
   id: '/status',
   path: '/status',
@@ -186,6 +196,11 @@ const AuthenticatedStatusRoute = AuthenticatedStatusRouteImport.update({
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReferralsRoute = AuthenticatedReferralsRouteImport.update({
+  id: '/referrals',
+  path: '/referrals',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedPayoutRoute = AuthenticatedPayoutRouteImport.update({
@@ -270,6 +285,11 @@ const ManagementAdminSupportOpsRoute =
     path: '/support-ops',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminStoreRoute = ManagementAdminStoreRouteImport.update({
+  id: '/store',
+  path: '/store',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
 const ManagementAdminStaffRoute = ManagementAdminStaffRouteImport.update({
   id: '/staff',
   path: '/staff',
@@ -303,6 +323,12 @@ const ManagementAdminReviewRoute = ManagementAdminReviewRouteImport.update({
   path: '/review',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
+const ManagementAdminReferralsRoute =
+  ManagementAdminReferralsRouteImport.update({
+    id: '/referrals',
+    path: '/referrals',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminReconciliationRoute =
   ManagementAdminReconciliationRouteImport.update({
     id: '/reconciliation',
@@ -416,6 +442,12 @@ const AuthenticatedMatchesMatchIdRoute =
     path: '/$matchId',
     getParentRoute: () => AuthenticatedMatchesRoute,
   } as any)
+const AuthenticatedFreeBetsPlaceRoute =
+  AuthenticatedFreeBetsPlaceRouteImport.update({
+    id: '/free-bets/place',
+    path: '/free-bets/place',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -485,8 +517,10 @@ export interface FileRoutesByFullPath {
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/payout': typeof AuthenticatedPayoutRoute
+  '/referrals': typeof AuthenticatedReferralsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/status': typeof AuthenticatedStatusRoute
+  '/store': typeof AuthenticatedStoreRoute
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/trust-center': typeof AuthenticatedTrustCenterRoute
@@ -500,6 +534,7 @@ export interface FileRoutesByFullPath {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
@@ -520,12 +555,14 @@ export interface FileRoutesByFullPath {
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
+  '/management/admin/referrals': typeof ManagementAdminReferralsRoute
   '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
   '/management/admin/settlements': typeof ManagementAdminSettlementsRoute
   '/management/admin/simulation': typeof ManagementAdminSimulationRoute
   '/management/admin/staff': typeof ManagementAdminStaffRoute
+  '/management/admin/store': typeof ManagementAdminStoreRoute
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
@@ -556,8 +593,10 @@ export interface FileRoutesByTo {
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/payout': typeof AuthenticatedPayoutRoute
+  '/referrals': typeof AuthenticatedReferralsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/status': typeof AuthenticatedStatusRoute
+  '/store': typeof AuthenticatedStoreRoute
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/trust-center': typeof AuthenticatedTrustCenterRoute
@@ -570,6 +609,7 @@ export interface FileRoutesByTo {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
@@ -590,12 +630,14 @@ export interface FileRoutesByTo {
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
+  '/management/admin/referrals': typeof ManagementAdminReferralsRoute
   '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
   '/management/admin/settlements': typeof ManagementAdminSettlementsRoute
   '/management/admin/simulation': typeof ManagementAdminSimulationRoute
   '/management/admin/staff': typeof ManagementAdminStaffRoute
+  '/management/admin/store': typeof ManagementAdminStoreRoute
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
@@ -629,8 +671,10 @@ export interface FileRoutesById {
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/payout': typeof AuthenticatedPayoutRoute
+  '/_authenticated/referrals': typeof AuthenticatedReferralsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/status': typeof AuthenticatedStatusRoute
+  '/_authenticated/store': typeof AuthenticatedStoreRoute
   '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/_authenticated/trust-center': typeof AuthenticatedTrustCenterRoute
@@ -644,6 +688,7 @@ export interface FileRoutesById {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/_authenticated/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/_authenticated/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
@@ -664,12 +709,14 @@ export interface FileRoutesById {
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
+  '/management/admin/referrals': typeof ManagementAdminReferralsRoute
   '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
   '/management/admin/settlements': typeof ManagementAdminSettlementsRoute
   '/management/admin/simulation': typeof ManagementAdminSimulationRoute
   '/management/admin/staff': typeof ManagementAdminStaffRoute
+  '/management/admin/store': typeof ManagementAdminStoreRoute
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
@@ -703,8 +750,10 @@ export interface FileRouteTypes {
     | '/my-predictions'
     | '/notifications'
     | '/payout'
+    | '/referrals'
     | '/settings'
     | '/status'
+    | '/store'
     | '/support'
     | '/tournament-winner'
     | '/trust-center'
@@ -718,6 +767,7 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/free-bets/place'
     | '/matches/$matchId'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
@@ -738,12 +788,14 @@ export interface FileRouteTypes {
     | '/management/admin/predictions'
     | '/management/admin/pricing-breakdown'
     | '/management/admin/reconciliation'
+    | '/management/admin/referrals'
     | '/management/admin/review'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
     | '/management/admin/settlements'
     | '/management/admin/simulation'
     | '/management/admin/staff'
+    | '/management/admin/store'
     | '/management/admin/support-ops'
     | '/management/admin/tournament'
     | '/management/admin/users'
@@ -774,8 +826,10 @@ export interface FileRouteTypes {
     | '/my-predictions'
     | '/notifications'
     | '/payout'
+    | '/referrals'
     | '/settings'
     | '/status'
+    | '/store'
     | '/support'
     | '/tournament-winner'
     | '/trust-center'
@@ -788,6 +842,7 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/free-bets/place'
     | '/matches/$matchId'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
@@ -808,12 +863,14 @@ export interface FileRouteTypes {
     | '/management/admin/predictions'
     | '/management/admin/pricing-breakdown'
     | '/management/admin/reconciliation'
+    | '/management/admin/referrals'
     | '/management/admin/review'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
     | '/management/admin/settlements'
     | '/management/admin/simulation'
     | '/management/admin/staff'
+    | '/management/admin/store'
     | '/management/admin/support-ops'
     | '/management/admin/tournament'
     | '/management/admin/users'
@@ -846,8 +903,10 @@ export interface FileRouteTypes {
     | '/_authenticated/my-predictions'
     | '/_authenticated/notifications'
     | '/_authenticated/payout'
+    | '/_authenticated/referrals'
     | '/_authenticated/settings'
     | '/_authenticated/status'
+    | '/_authenticated/store'
     | '/_authenticated/support'
     | '/_authenticated/tournament-winner'
     | '/_authenticated/trust-center'
@@ -861,6 +920,7 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/_authenticated/free-bets/place'
     | '/_authenticated/matches/$matchId'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
@@ -881,12 +941,14 @@ export interface FileRouteTypes {
     | '/management/admin/predictions'
     | '/management/admin/pricing-breakdown'
     | '/management/admin/reconciliation'
+    | '/management/admin/referrals'
     | '/management/admin/review'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
     | '/management/admin/settlements'
     | '/management/admin/simulation'
     | '/management/admin/staff'
+    | '/management/admin/store'
     | '/management/admin/support-ops'
     | '/management/admin/tournament'
     | '/management/admin/users'
@@ -1058,6 +1120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSupportRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/store': {
+      id: '/_authenticated/store'
+      path: '/store'
+      fullPath: '/store'
+      preLoaderRoute: typeof AuthenticatedStoreRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/status': {
       id: '/_authenticated/status'
       path: '/status'
@@ -1070,6 +1139,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/referrals': {
+      id: '/_authenticated/referrals'
+      path: '/referrals'
+      fullPath: '/referrals'
+      preLoaderRoute: typeof AuthenticatedReferralsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/payout': {
@@ -1177,6 +1253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminSupportOpsRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/store': {
+      id: '/management/admin/store'
+      path: '/store'
+      fullPath: '/management/admin/store'
+      preLoaderRoute: typeof ManagementAdminStoreRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/staff': {
       id: '/management/admin/staff'
       path: '/staff'
@@ -1217,6 +1300,13 @@ declare module '@tanstack/react-router' {
       path: '/review'
       fullPath: '/management/admin/review'
       preLoaderRoute: typeof ManagementAdminReviewRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/referrals': {
+      id: '/management/admin/referrals'
+      path: '/referrals'
+      fullPath: '/management/admin/referrals'
+      preLoaderRoute: typeof ManagementAdminReferralsRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
     '/management/admin/reconciliation': {
@@ -1359,6 +1449,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMatchesMatchIdRouteImport
       parentRoute: typeof AuthenticatedMatchesRoute
     }
+    '/_authenticated/free-bets/place': {
+      id: '/_authenticated/free-bets/place'
+      path: '/free-bets/place'
+      fullPath: '/free-bets/place'
+      preLoaderRoute: typeof AuthenticatedFreeBetsPlaceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
@@ -1447,12 +1544,15 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedPayoutRoute: typeof AuthenticatedPayoutRoute
+  AuthenticatedReferralsRoute: typeof AuthenticatedReferralsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedStatusRoute: typeof AuthenticatedStatusRoute
+  AuthenticatedStoreRoute: typeof AuthenticatedStoreRoute
   AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTournamentWinnerRoute: typeof AuthenticatedTournamentWinnerRoute
   AuthenticatedTrustCenterRoute: typeof AuthenticatedTrustCenterRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
+  AuthenticatedFreeBetsPlaceRoute: typeof AuthenticatedFreeBetsPlaceRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1464,12 +1564,15 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedPayoutRoute: AuthenticatedPayoutRoute,
+  AuthenticatedReferralsRoute: AuthenticatedReferralsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedStatusRoute: AuthenticatedStatusRoute,
+  AuthenticatedStoreRoute: AuthenticatedStoreRoute,
   AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTournamentWinnerRoute: AuthenticatedTournamentWinnerRoute,
   AuthenticatedTrustCenterRoute: AuthenticatedTrustCenterRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRoute,
+  AuthenticatedFreeBetsPlaceRoute: AuthenticatedFreeBetsPlaceRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -1495,12 +1598,14 @@ interface ManagementAdminRouteChildren {
   ManagementAdminPredictionsRoute: typeof ManagementAdminPredictionsRoute
   ManagementAdminPricingBreakdownRoute: typeof ManagementAdminPricingBreakdownRoute
   ManagementAdminReconciliationRoute: typeof ManagementAdminReconciliationRoute
+  ManagementAdminReferralsRoute: typeof ManagementAdminReferralsRoute
   ManagementAdminReviewRoute: typeof ManagementAdminReviewRoute
   ManagementAdminRiskSettingsRoute: typeof ManagementAdminRiskSettingsRoute
   ManagementAdminSettingsRoute: typeof ManagementAdminSettingsRoute
   ManagementAdminSettlementsRoute: typeof ManagementAdminSettlementsRoute
   ManagementAdminSimulationRoute: typeof ManagementAdminSimulationRoute
   ManagementAdminStaffRoute: typeof ManagementAdminStaffRoute
+  ManagementAdminStoreRoute: typeof ManagementAdminStoreRoute
   ManagementAdminSupportOpsRoute: typeof ManagementAdminSupportOpsRoute
   ManagementAdminTournamentRoute: typeof ManagementAdminTournamentRoute
   ManagementAdminUsersRoute: typeof ManagementAdminUsersRoute
@@ -1529,12 +1634,14 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminPredictionsRoute: ManagementAdminPredictionsRoute,
   ManagementAdminPricingBreakdownRoute: ManagementAdminPricingBreakdownRoute,
   ManagementAdminReconciliationRoute: ManagementAdminReconciliationRoute,
+  ManagementAdminReferralsRoute: ManagementAdminReferralsRoute,
   ManagementAdminReviewRoute: ManagementAdminReviewRoute,
   ManagementAdminRiskSettingsRoute: ManagementAdminRiskSettingsRoute,
   ManagementAdminSettingsRoute: ManagementAdminSettingsRoute,
   ManagementAdminSettlementsRoute: ManagementAdminSettlementsRoute,
   ManagementAdminSimulationRoute: ManagementAdminSimulationRoute,
   ManagementAdminStaffRoute: ManagementAdminStaffRoute,
+  ManagementAdminStoreRoute: ManagementAdminStoreRoute,
   ManagementAdminSupportOpsRoute: ManagementAdminSupportOpsRoute,
   ManagementAdminTournamentRoute: ManagementAdminTournamentRoute,
   ManagementAdminUsersRoute: ManagementAdminUsersRoute,
