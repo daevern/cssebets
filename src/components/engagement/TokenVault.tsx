@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Sheet, SheetContent, SheetPortal, SheetOverlay } from "@/components/ui/sheet";
+import { Sheet, SheetPortal, SheetOverlay } from "@/components/ui/sheet";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import {
   Coins, Users2, Gift, ArrowUpRight, ArrowDownRight, X,
-  Sparkles, TrendingUp, ShoppingBag,
+  ShoppingBag,
 } from "lucide-react";
 import { getMyEngagementSummary, listMyTokenTransactions } from "@/lib/engagement.functions";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
@@ -53,7 +53,7 @@ export function TokenChip() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Vault sheet — bottom-anchored on mobile, side on desktop.           */
+/* Vault sheet — same visual language as the "Lock Prediction" slip.   */
 /* ------------------------------------------------------------------ */
 function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const eFn = useServerFn(getMyEngagementSummary);
@@ -69,155 +69,100 @@ function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
   const balance = summary.data?.tokens.balance ?? 0;
   const lifetimeEarned = summary.data?.tokens.lifetime_earned ?? 0;
   const lifetimeSpent = summary.data?.tokens.lifetime_spent ?? 0;
-  const level = summary.data?.level?.label ?? "Rookie";
-  const nextLevel = summary.data?.levels?.find((l) => l.min > lifetimeEarned);
   const invites = referral.data?.totalReferrals ?? 0;
-  const activeInvites = referral.data?.activeReferrals ?? 0;
   const availableFb = freeBets.data?.available?.length ?? 0;
-  const allFb = freeBets.data?.all?.length ?? 0;
-
-  const progress = nextLevel
-    ? Math.min(100, Math.round((lifetimeEarned / nextLevel.min) * 100))
-    : 100;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetPortal>
-        <SheetOverlay className="bg-black/70 backdrop-blur-sm" />
+        <SheetOverlay className="bg-black/70" />
         <SheetPrimitive.Content
-          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92vh] flex-col border-t border-[var(--neon)]/30 bg-[#050B08] text-[var(--ink)] shadow-[0_-30px_80px_-20px_rgba(34,224,107,0.35)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
+          className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92vh] max-w-2xl flex-col rounded-t-lg border border-[var(--color-surface-border)] bg-[#070D0A] text-[var(--color-ink)] shadow-[0_-8px_24px_rgba(0,0,0,0.6)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
           onOpenAutoFocus={(e) => e.preventDefault()}
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
-          {/* Drag handle */}
-          <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-[var(--color-surface-border)]/70" />
-
-          {/* Header */}
-          <div className="relative px-5 pt-3 pb-4">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 h-32"
-              style={{
-                background:
-                  "radial-gradient(ellipse at 50% 0%, rgba(34,224,107,0.20), transparent 65%)",
-              }}
-            />
-            {/* Corner brackets */}
-            <span aria-hidden className="pointer-events-none absolute top-3 left-3 h-2.5 w-2.5 border-t border-l border-[var(--neon)]/60" />
-            <span aria-hidden className="pointer-events-none absolute top-3 right-3 h-2.5 w-2.5 border-t border-r border-[var(--neon)]/60" />
-
-            <div className="relative flex items-start justify-between">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--neon)]">
-                  CSSE Token Vault
-                </div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="font-display text-[44px] font-black leading-none tabular-nums">
-                    {balance.toLocaleString()}
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--ink-muted)]">
-                    tokens
-                  </span>
-                </div>
-                <div className="mt-1.5 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-muted)]">
-                  <Sparkles className="h-3 w-3 text-[var(--neon)]" />
-                  <span className="text-[var(--neon)]">{level}</span>
-                  {nextLevel ? (
-                    <>
-                      <span className="text-[var(--ink-muted)]/60">·</span>
-                      <span>{(nextLevel.min - lifetimeEarned).toLocaleString()} to {nextLevel.label}</span>
-                    </>
-                  ) : (
-                    <span>Max tier</span>
-                  )}
-                </div>
+          {/* Header — mirrors StakeSlip "Your prediction" block */}
+          <div className="flex items-start justify-between gap-2 px-4 pt-4">
+            <div className="min-w-0 flex-1 space-y-1">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-neon)]">
+                CSSE Vault
               </div>
-              <SheetPrimitive.Close
-                className="grid h-8 w-8 place-items-center rounded-full border border-[var(--color-surface-border)] text-[var(--ink-muted)] transition-colors hover:border-[var(--neon)]/50 hover:text-[var(--ink)]"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </SheetPrimitive.Close>
+              <div className="flex items-baseline gap-2">
+                <span className="font-display text-[32px] font-bold leading-none tabular-nums text-[var(--color-ink)]">
+                  {balance.toLocaleString()}
+                </span>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+                  tokens
+                </span>
+              </div>
+              <div className="text-[11px] text-[var(--color-ink-muted)]">
+                Earned <span className="font-semibold tabular-nums text-[var(--color-ink)]">{lifetimeEarned.toLocaleString()}</span>
+                <span className="mx-1.5 text-[var(--color-ink-muted)]/60">·</span>
+                Spent <span className="font-semibold tabular-nums text-[var(--color-ink)]">{lifetimeSpent.toLocaleString()}</span>
+              </div>
             </div>
-
-            {/* Progress rail */}
-            <div className="relative mt-4 h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-border)]/50">
-              <div
-                className="h-full rounded-full bg-[var(--neon)] shadow-[0_0_12px_var(--color-neon-glow)]"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <div className="mt-1.5 flex justify-between text-[9px] font-semibold uppercase tracking-[0.22em] text-[var(--ink-muted)] tabular-nums">
-              <span>Earned {lifetimeEarned.toLocaleString()}</span>
-              <span>Spent {lifetimeSpent.toLocaleString()}</span>
-            </div>
+            <SheetPrimitive.Close
+              aria-label="Close"
+              className="shrink-0 rounded-full p-1 text-[var(--color-ink-muted)] hover:bg-white/5 hover:text-[var(--color-ink)]"
+            >
+              <X className="h-4 w-4" />
+            </SheetPrimitive.Close>
           </div>
 
-          {/* Scroll body */}
-          <div className="flex-1 overflow-y-auto px-5 pb-6">
-            {/* Stat trio */}
-            <div className="grid grid-cols-3 gap-2">
-              <StatTile
-                icon={<Users2 className="h-3.5 w-3.5" />}
-                label="Invites"
-                value={invites}
-                sub={`${activeInvites} active`}
-                to="/referrals"
-                onNav={() => onOpenChange(false)}
-              />
-              <StatTile
-                icon={<Gift className="h-3.5 w-3.5" />}
-                label="Free bets"
-                value={availableFb}
-                sub={`${allFb} total`}
-                to={availableFb > 0 ? "/free-bets/place" : "/store"}
-                onNav={() => onOpenChange(false)}
-              />
-              <StatTile
-                icon={<ShoppingBag className="h-3.5 w-3.5" />}
-                label="Store"
-                value={"→"}
-                sub="Spend"
-                to="/store"
-                onNav={() => onOpenChange(false)}
-              />
+          {/* Stat trio — matches Return/Gain tile pattern */}
+          <div className="mt-3 grid grid-cols-3 gap-2 px-4">
+            <StatTile
+              icon={<Users2 className="h-3.5 w-3.5" />}
+              label="Invites"
+              value={invites}
+              to="/referrals"
+              onNav={() => onOpenChange(false)}
+            />
+            <StatTile
+              icon={<Gift className="h-3.5 w-3.5" />}
+              label="Free bets"
+              value={availableFb}
+              to={availableFb > 0 ? "/free-bets/place" : "/store"}
+              onNav={() => onOpenChange(false)}
+            />
+            <StatTile
+              icon={<ShoppingBag className="h-3.5 w-3.5" />}
+              label="Store"
+              value="→"
+              to="/store"
+              onNav={() => onOpenChange(false)}
+            />
+          </div>
+
+          {/* Ledger */}
+          <div className="mt-4 flex flex-1 flex-col overflow-hidden px-4 pb-4">
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+                Ledger
+              </div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)] tabular-nums">
+                {ledger.data?.length ?? 0} entries
+              </div>
             </div>
 
-            {/* Ledger */}
-            <div className="mt-6">
-              <div className="flex items-end justify-between">
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--ink-muted)]">
-                    Ledger
+            <div className="mt-2 flex-1 overflow-y-auto rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 divide-y divide-[var(--color-surface-border)]/60">
+              {ledger.isLoading && (
+                <div className="py-8 text-center text-xs text-[var(--color-ink-muted)]">Loading ledger…</div>
+              )}
+              {!ledger.isLoading && (!ledger.data || ledger.data.length === 0) && (
+                <div className="py-10 text-center">
+                  <Coins className="mx-auto h-6 w-6 text-[var(--color-ink-muted)]/60" />
+                  <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+                    No token activity yet
                   </div>
-                  <div className="mt-0.5 text-[11px] text-[var(--ink-muted)]">
-                    Every token in, every token out.
+                  <div className="mt-1 text-[11px] text-[var(--color-ink-muted)]">
+                    Place bets or invite friends to start earning.
                   </div>
                 </div>
-                <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--neon)]">
-                  {ledger.data?.length ?? 0} entries
-                </div>
-              </div>
-
-              <div className="mt-3 divide-y divide-[var(--color-surface-border)]/60 border-y border-[var(--color-surface-border)]/60">
-                {ledger.isLoading && (
-                  <div className="py-8 text-center text-xs text-[var(--ink-muted)]">Loading ledger…</div>
-                )}
-                {!ledger.isLoading && (!ledger.data || ledger.data.length === 0) && (
-                  <div className="py-10 text-center">
-                    <Coins className="mx-auto h-6 w-6 text-[var(--ink-muted)]/60" />
-                    <div className="mt-2 text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--ink-muted)]">
-                      No token activity yet
-                    </div>
-                    <div className="mt-1 text-[11px] text-[var(--ink-muted)]">
-                      Place bets or invite friends to start earning.
-                    </div>
-                  </div>
-                )}
-                {(ledger.data ?? []).map((row: any) => (
-                  <LedgerRow key={row.id} row={row} />
-                ))}
-              </div>
+              )}
+              {(ledger.data ?? []).map((row: any) => (
+                <LedgerRow key={row.id} row={row} />
+              ))}
             </div>
           </div>
         </SheetPrimitive.Content>
@@ -230,12 +175,11 @@ function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
 /* Bits                                                                */
 /* ------------------------------------------------------------------ */
 function StatTile({
-  icon, label, value, sub, to, onNav,
+  icon, label, value, to, onNav,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number | string;
-  sub: string;
   to: string;
   onNav: () => void;
 }) {
@@ -243,19 +187,15 @@ function StatTile({
     <Link
       to={to}
       onClick={onNav}
-      className="group relative overflow-hidden rounded-xl border border-[var(--color-surface-border)] bg-[#070D0A] p-3 transition-colors hover:border-[var(--neon)]/60"
+      className="group flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-2 transition-colors hover:border-[var(--color-neon)]/60"
     >
-      <span aria-hidden className="pointer-events-none absolute top-1.5 right-1.5 h-1.5 w-1.5 border-t border-r border-[var(--neon)]/50" />
-      <div className="flex items-center gap-1.5 text-[var(--neon)]">
+      <div className="flex items-center gap-1.5 text-[var(--color-ink-muted)] group-hover:text-[var(--color-neon)]">
         {icon}
-        <span className="text-[9px] font-bold uppercase tracking-[0.22em]">{label}</span>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">{label}</span>
       </div>
-      <div className="mt-2 font-display text-xl font-black leading-none tabular-nums text-[var(--ink)]">
+      <span className="font-display text-sm font-bold tabular-nums text-[var(--color-ink)]">
         {value}
-      </div>
-      <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-[var(--ink-muted)]">
-        {sub}
-      </div>
+      </span>
     </Link>
   );
 }
@@ -266,27 +206,25 @@ function LedgerRow({ row }: { row: any }) {
   const label = describeLedger(row);
   const when = new Date(row.created_at);
   return (
-    <div className="flex items-center gap-3 py-3">
+    <div className="flex items-center gap-3 px-3 py-2.5">
       <div
-        className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${
+        className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border ${
           positive
-            ? "border-[var(--neon)]/40 bg-[var(--neon)]/10 text-[var(--neon)]"
+            ? "border-[var(--color-neon)]/40 bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
             : "border-destructive/40 bg-destructive/10 text-destructive"
         }`}
       >
-        {positive ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
+        {positive ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[13px] font-semibold text-[var(--ink)]">{label}</div>
-        <div className="mt-0.5 flex items-center gap-1.5 text-[10px] uppercase tracking-[0.18em] text-[var(--ink-muted)]">
-          <span>{formatDate(when)}</span>
-          <span className="text-[var(--ink-muted)]/60">·</span>
-          <span>Bal {Number(row.balance_after ?? 0).toLocaleString()}</span>
+        <div className="truncate text-[12px] font-medium text-[var(--color-ink)]">{label}</div>
+        <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[var(--color-ink-muted)] tabular-nums">
+          {formatDate(when)} · Bal {Number(row.balance_after ?? 0).toLocaleString()}
         </div>
       </div>
       <div
-        className={`font-display text-[15px] font-black tabular-nums ${
-          positive ? "text-[var(--neon)]" : "text-destructive"
+        className={`font-display text-[13px] font-bold tabular-nums ${
+          positive ? "text-[var(--color-neon)]" : "text-destructive"
         }`}
       >
         {positive ? "+" : ""}
