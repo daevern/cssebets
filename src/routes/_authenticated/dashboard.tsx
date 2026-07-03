@@ -234,9 +234,9 @@ function HomePage() {
               <Ticket className="h-4 w-4 text-[var(--neon)]" />
               Your Position
             </h2>
-            <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">
-              {liveCount > 0 ? `${liveCount} in play` : "No live picks right now."}
-            </p>
+            {liveCount > 0 && (
+              <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">{liveCount} in play</p>
+            )}
           </div>
         </div>
 
