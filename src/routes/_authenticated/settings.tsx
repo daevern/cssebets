@@ -114,6 +114,10 @@ function SettingsPage() {
         )}
       </StencilPanel>
 
+      <ReferralPanel />
+
+
+
       <StencilPanel kicker={<><Mail className="h-3 w-3" /> Email</>}>
         <div className="space-y-1.5">
           <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Email address</Label>
