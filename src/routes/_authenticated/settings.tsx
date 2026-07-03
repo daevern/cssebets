@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, User as UserIcon, Mail, Phone, KeyRound, Save } from "lucide-react";
+import { Loader2, User as UserIcon, Mail, Phone, KeyRound, Save, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { BadgeGrid } from "@/components/trust/BadgeGrid";
