@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { useAuth } from "@/hooks/use-auth";
+import { EngagementTiles } from "@/components/engagement/EngagementTiles";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
