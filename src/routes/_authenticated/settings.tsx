@@ -32,6 +32,9 @@ function SettingsPage() {
   const { user } = useAuth();
   const uid = user?.id;
   const qc = useQueryClient();
+  const navigate = useNavigate();
+
+  const [signingOut, setSigningOut] = useState(false);
 
   const profile = useQuery({
     queryKey: ["my-profile-settings", uid],
