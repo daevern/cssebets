@@ -1,6 +1,8 @@
 import { Link, useLocation, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, Bell, User, Wallet as WalletIcon } from "lucide-react";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
+import { TokenChip } from "@/components/engagement/TokenVault";
+
 
 export function TopBar({
   balance,
@@ -52,7 +54,9 @@ export function TopBar({
               <span className="text-[10px] font-medium text-[var(--ink-muted)]">PTS</span>
             </Link>
           )}
+          {balance != null && !isMatchDetail && <TokenChip />}
           {!isMatchDetail && (
+
             <>
               <Link
                 to="/notifications"
