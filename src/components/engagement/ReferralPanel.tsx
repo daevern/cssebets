@@ -109,7 +109,7 @@ export function ReferralPanel() {
             onClick={share}
             disabled={!code}
             className="grid place-items-center rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)] px-4 text-black shadow-[0_0_18px_var(--color-neon-glow)] transition-all hover:brightness-110 disabled:opacity-40 disabled:shadow-none"
-            aria-label="Share referral"
+            aria-label="Share referral on WhatsApp"
           >
             <Share2 className="h-5 w-5" />
           </button>
