@@ -187,7 +187,7 @@ function HomePage() {
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
                 Upcoming Fixtures
               </h2>
-              <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">Next kickoffs and live markets on the slate.</p>
+              
             </div>
             <Link
               to="/matches"
