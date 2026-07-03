@@ -4,6 +4,7 @@ import type { SVGProps } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowUpRight, ChevronRight, Ticket, TrendingUp } from "lucide-react";
+import { PageFooter } from "@/components/ui/page-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
@@ -187,7 +188,7 @@ function HomePage() {
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
                 Upcoming Fixtures
               </h2>
-              <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">Next kickoffs and live markets on the slate.</p>
+              
             </div>
             <Link
               to="/matches"
@@ -212,7 +213,7 @@ function HomePage() {
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
               Next Fixture
             </h2>
-            <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">The next kickoff on the slate.</p>
+            
           </div>
         </div>
         {featured ? (
@@ -234,9 +235,9 @@ function HomePage() {
               <Ticket className="h-4 w-4 text-[var(--neon)]" />
               Your Position
             </h2>
-            <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">
-              {liveCount > 0 ? `${liveCount} in play` : "No live picks right now."}
-            </p>
+            {liveCount > 0 && (
+              <p className="mt-0.5 text-[12px] text-[var(--ink-muted)]">{liveCount} in play</p>
+            )}
           </div>
         </div>
 
@@ -283,6 +284,8 @@ function HomePage() {
           )}
         </article>
       </section>
+
+      <PageFooter />
     </div>
   );
 }

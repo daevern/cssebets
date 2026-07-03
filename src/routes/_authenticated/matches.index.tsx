@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { ArrowUpRight, Loader2 } from "lucide-react";
+import { PageFooter } from "@/components/ui/page-footer";
 import { useEffect, useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/matches/")({
@@ -134,6 +135,8 @@ function MatchesPage() {
           ))}
         </div>
       )}
+
+      <PageFooter />
     </div>
   );
 }
