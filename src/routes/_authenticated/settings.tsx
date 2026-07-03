@@ -9,6 +9,8 @@ import { Loader2, User as UserIcon, Mail, Phone, KeyRound, Save } from "lucide-r
 import { toast } from "sonner";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { BadgeGrid } from "@/components/trust/BadgeGrid";
+import { ReferralPanel } from "@/components/engagement/ReferralPanel";
+
 
 export const Route = createFileRoute("/_authenticated/settings")({
   ssr: false,
