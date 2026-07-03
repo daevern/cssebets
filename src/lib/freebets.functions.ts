@@ -58,11 +58,13 @@ export const listMyFreeBets = createServerFn({ method: "GET" })
     return { all, available };
   });
 
+// Free bets are restricted to the 90-minute match result market (1X2 only).
+// Any other market is rejected server-side; the RPC enforces the same rule.
 const PlaceSchema = z.object({
   freeBetId: z.string().uuid(),
   matchId: z.string().uuid(),
-  market: z.enum(["result", "correct_score", "total_goals", "btts", "first_scorer", "tournament_winner", "group_winner"]),
-  outcome: z.string().min(1).max(80),
+  market: z.literal("result"),
+  outcome: z.enum(["HOME", "DRAW", "AWAY"]),
   referenceOdds: z.number().min(1).max(100000),
   clientRequestId: z.string().uuid().optional(),
 });
@@ -87,16 +89,11 @@ export const placeFreeBet = createServerFn({ method: "POST" })
     const refOdds = (match as any)?.reference_odds ?? null;
     if (!refOdds) throw new Error("Odds for this market are not available.");
 
-    let trustedOdds: number;
-    if (data.market === "result") {
-      const key = data.outcome === "HOME" ? "home" : data.outcome === "DRAW" ? "draw" : data.outcome === "AWAY" ? "away" : null;
-      const so = key ? Number(refOdds[key]) : null;
-      if (!so || !Number.isFinite(so) || so < 1) throw new Error("Odds for this market are not available.");
-      trustedOdds = so;
-    } else {
-      const mo = (refOdds as any)?.[data.market]?.[data.outcome];
-      if (typeof mo !== "number" || !Number.isFinite(mo) || mo < 1) throw new Error("Odds for this market are not available.");
-      trustedOdds = mo;
+    // Free bets are 1X2 only — pull 90-min result odds directly.
+    const key = data.outcome === "HOME" ? "home" : data.outcome === "DRAW" ? "draw" : "away";
+    const trustedOdds = Number(refOdds[key]);
+    if (!Number.isFinite(trustedOdds) || trustedOdds < 1) {
+      throw new Error("Odds for this market are not available.");
     }
     const drift = Math.abs(data.referenceOdds - trustedOdds) / trustedOdds;
     if (drift > 0.05) throw new Error("Odds have changed. Please refresh and try again.");
@@ -119,6 +116,9 @@ export const placeFreeBet = createServerFn({ method: "POST" })
       const m = error.message ?? "";
       if (m.includes("FREE_BET_NOT_FOUND")) throw new Error("This free bet could not be found.");
       if (m.includes("FREE_BET_UNAVAILABLE")) throw new Error("This free bet has already been used.");
+      if (m.includes("FREE_BET_MARKET_NOT_ALLOWED") || m.includes("FREE_BET_OUTCOME_NOT_ALLOWED")) {
+        throw new Error("Free bets can only be placed on the match result (Home / Draw / Away).");
+      }
       if (m.includes("MATCH_LOCKED")) throw new Error("This match has already kicked off.");
       if (m.includes("MAX_PAYOUT_EXCEEDED")) throw new Error("Potential return exceeds platform limit.");
       if (m.includes("DUPLICATE_REQUEST")) throw new Error("Duplicate request. Please refresh and try again.");

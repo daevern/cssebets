@@ -55,7 +55,7 @@ export const getMatchAnalytics = createServerFn({ method: "POST" })
     const { data: mRaw } = await (supabaseAdmin as any)
       .from("matches")
       .select(
-        "id, home_team, away_team, kickoff_at, status, stage, group_name, home_score, away_score, ft_home_score, ft_away_score, penalty_home_score, penalty_away_score, apifootball_fixture_id, live_elapsed, live_status_short",
+        "id, home_team, away_team, kickoff_at, status, stage, group_name, home_score, away_score, ft_home_score, ft_away_score, penalty_home_score, penalty_away_score, apifootball_fixture_id, live_elapsed, live_status_short, reference_odds",
       )
       .eq("id", matchId)
       .maybeSingle();
