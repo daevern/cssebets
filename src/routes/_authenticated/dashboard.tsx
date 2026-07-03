@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { useAuth } from "@/hooks/use-auth";
-import { StoreShowcase } from "@/components/engagement/StoreShowcase";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -286,7 +286,7 @@ function HomePage() {
         </article>
       </section>
 
-      <StoreShowcase />
+      
 
       <PageFooter />
     </div>
