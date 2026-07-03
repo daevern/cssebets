@@ -135,6 +135,8 @@ function MatchesPage() {
           ))}
         </div>
       )}
+
+      <PageFooter />
     </div>
   );
 }
