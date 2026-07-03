@@ -58,11 +58,13 @@ export const listMyFreeBets = createServerFn({ method: "GET" })
     return { all, available };
   });
 
+// Free bets are restricted to the 90-minute match result market (1X2 only).
+// Any other market is rejected server-side; the RPC enforces the same rule.
 const PlaceSchema = z.object({
   freeBetId: z.string().uuid(),
   matchId: z.string().uuid(),
-  market: z.enum(["result", "correct_score", "total_goals", "btts", "first_scorer", "tournament_winner", "group_winner"]),
-  outcome: z.string().min(1).max(80),
+  market: z.literal("result"),
+  outcome: z.enum(["HOME", "DRAW", "AWAY"]),
   referenceOdds: z.number().min(1).max(100000),
   clientRequestId: z.string().uuid().optional(),
 });
