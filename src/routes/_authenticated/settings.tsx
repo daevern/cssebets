@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, User as UserIcon, Mail, Phone, KeyRound, Save } from "lucide-react";
+import { Loader2, User as UserIcon, Mail, Phone, KeyRound, Save, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { BadgeGrid } from "@/components/trust/BadgeGrid";
@@ -32,6 +32,9 @@ function SettingsPage() {
   const { user } = useAuth();
   const uid = user?.id;
   const qc = useQueryClient();
+  const navigate = useNavigate();
+
+  const [signingOut, setSigningOut] = useState(false);
 
   const profile = useQuery({
     queryKey: ["my-profile-settings", uid],
@@ -86,7 +89,6 @@ function SettingsPage() {
     } catch (e) { toast.error((e as Error).message); }
     finally { setSavingPhone(false); }
   }
-
   async function savePassword() {
     if (pw1.length < 8) { toast.error("Password must be at least 8 characters"); return; }
     if (pw1 !== pw2) { toast.error("Passwords do not match"); return; }
@@ -99,6 +101,16 @@ function SettingsPage() {
     } catch (e) { toast.error((e as Error).message); }
     finally { setSavingPw(false); }
   }
+
+  async function signOut() {
+    setSigningOut(true);
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
+  }
+
+
 
   return (
     <PageShell kicker="Locker Room · Profile" title="Your" titleAccent="kit.">
@@ -152,16 +164,19 @@ function SettingsPage() {
         <SaveBtn onClick={savePhone} disabled={savingPhone || phone === currentPhone} loading={savingPhone} label="Update phone" />
       </StencilPanel>
 
-      <StencilPanel kicker={<><KeyRound className="h-3 w-3" /> Password</>}>
-        <div className="space-y-1.5">
-          <Label htmlFor="pw1" className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">New password</Label>
-          <Input id="pw1" type="password" minLength={8} value={pw1} onChange={(e) => setPw1(e.target.value)} className="bg-[#070D0A] border-[var(--color-surface-border)]" />
-        </div>
-        <div className="mt-3 space-y-1.5">
-          <Label htmlFor="pw2" className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Confirm new password</Label>
-          <Input id="pw2" type="password" minLength={8} value={pw2} onChange={(e) => setPw2(e.target.value)} className="bg-[#070D0A] border-[var(--color-surface-border)]" />
-        </div>
-        <SaveBtn onClick={savePassword} disabled={savingPw || !pw1 || !pw2} loading={savingPw} label="Update password" />
+      <StencilPanel kicker={<><LogOut className="h-3 w-3" /> Session</>}>
+        <p className="text-sm text-[var(--color-ink-muted)]">
+          Sign out of cssebets on this device.
+        </p>
+        <button
+          type="button"
+          onClick={signOut}
+          disabled={signingOut}
+          className="mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-5 py-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--color-ink)] transition-all hover:border-[var(--color-neon)]/40 hover:text-[var(--color-neon)] active:scale-[0.99] disabled:opacity-40"
+        >
+          {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+          Sign out
+        </button>
       </StencilPanel>
       <BadgeGrid />
     </PageShell>
