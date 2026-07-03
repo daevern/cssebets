@@ -132,9 +132,6 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
             <h2 className="font-display text-lg font-semibold tracking-tight text-[var(--color-ink)] md:text-xl">
               Take a position
             </h2>
-            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-              Markets
-            </span>
           </div>
           <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} />
         </section>
