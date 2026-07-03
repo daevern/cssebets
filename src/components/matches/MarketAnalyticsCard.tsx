@@ -522,13 +522,8 @@ function SectionShell({
       <div className="mb-5 flex items-end justify-between gap-3">
         <div className="flex min-w-0 flex-col gap-1">
           <h2 className="font-display text-xl font-semibold tracking-tight text-[var(--color-ink)] md:text-2xl">
-            Global odds movement
+            Market Movement
           </h2>
-          {source && (
-            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]/70">
-              {source}
-            </span>
-          )}
           {updatedAt && (
             <span className={`inline-flex items-center gap-1.5 text-[10px] font-medium tracking-tight ${textColor}`}>
               <span className="relative flex h-1.5 w-1.5">
