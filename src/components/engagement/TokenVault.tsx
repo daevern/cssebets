@@ -11,6 +11,7 @@ import {
 import { getMyEngagementSummary, listMyTokenTransactions } from "@/lib/engagement.functions";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
 import { listMyFreeBets } from "@/lib/freebets.functions";
+import { useAuth } from "@/hooks/use-auth";
 
 /* ------------------------------------------------------------------ */
 /* Chip — sits in the top nav next to the wallet PTS chip.             */
