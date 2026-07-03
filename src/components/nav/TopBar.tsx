@@ -1,5 +1,5 @@
-import { Link, useLocation, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Bell, User, Wallet as WalletIcon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Bell, User, Wallet as WalletIcon } from "lucide-react";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 import { TokenChip } from "@/components/engagement/TokenVault";
 
