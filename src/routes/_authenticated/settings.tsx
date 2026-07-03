@@ -90,18 +90,14 @@ function SettingsPage() {
     finally { setSavingPhone(false); }
   }
 
-  async function savePassword() {
-    if (pw1.length < 8) { toast.error("Password must be at least 8 characters"); return; }
-    if (pw1 !== pw2) { toast.error("Passwords do not match"); return; }
-    setSavingPw(true);
-    try {
-      const { error } = await supabase.auth.updateUser({ password: pw1 });
-      if (error) throw error;
-      toast.success("Password updated.");
-      setPw1(""); setPw2("");
-    } catch (e) { toast.error((e as Error).message); }
-    finally { setSavingPw(false); }
+  async function signOut() {
+    setSigningOut(true);
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    navigate({ to: "/auth", replace: true });
   }
+
 
   return (
     <PageShell kicker="Locker Room · Profile" title="Your" titleAccent="kit.">
