@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Copy, Check, Share2, Users2, Sparkles, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
+import { buildReferralLink } from "@/lib/referral-link";
 
 /**
  * Confident, custom referral panel for the profile page.
@@ -21,7 +22,7 @@ export function ReferralPanel() {
 
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
   const code = referral.data?.referralCode ?? null;
-  const link = code ? `${typeof window !== "undefined" ? window.location.origin : ""}/?ref=${code}` : "";
+  const link = buildReferralLink(code);
 
   async function copy(value: string, which: "code" | "link", label: string) {
     if (!value) return;
