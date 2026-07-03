@@ -111,7 +111,7 @@ export function ReferralPanel() {
             aria-label="Share referral on WhatsApp"
           >
             <Share2 className="h-5 w-5" />
-          </button>
+          </a>
         </div>
 
         {/* Full link row */}
