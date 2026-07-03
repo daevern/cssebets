@@ -89,16 +89,11 @@ export const placeFreeBet = createServerFn({ method: "POST" })
     const refOdds = (match as any)?.reference_odds ?? null;
     if (!refOdds) throw new Error("Odds for this market are not available.");
 
-    let trustedOdds: number;
-    if (data.market === "result") {
-      const key = data.outcome === "HOME" ? "home" : data.outcome === "DRAW" ? "draw" : data.outcome === "AWAY" ? "away" : null;
-      const so = key ? Number(refOdds[key]) : null;
-      if (!so || !Number.isFinite(so) || so < 1) throw new Error("Odds for this market are not available.");
-      trustedOdds = so;
-    } else {
-      const mo = (refOdds as any)?.[data.market]?.[data.outcome];
-      if (typeof mo !== "number" || !Number.isFinite(mo) || mo < 1) throw new Error("Odds for this market are not available.");
-      trustedOdds = mo;
+    // Free bets are 1X2 only — pull 90-min result odds directly.
+    const key = data.outcome === "HOME" ? "home" : data.outcome === "DRAW" ? "draw" : "away";
+    const trustedOdds = Number(refOdds[key]);
+    if (!Number.isFinite(trustedOdds) || trustedOdds < 1) {
+      throw new Error("Odds for this market are not available.");
     }
     const drift = Math.abs(data.referenceOdds - trustedOdds) / trustedOdds;
     if (drift > 0.05) throw new Error("Odds have changed. Please refresh and try again.");
