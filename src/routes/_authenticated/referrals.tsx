@@ -33,10 +33,8 @@ function ReferralsPage() {
     } catch { toast.error("Could not copy link"); }
   }
 
-  function share() {
-    const text = `Join me on CSSEBets — predict the World Cup 2026 together. Use my referral code: ${code}. ${link}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
-  }
+  const shareText = `Join me on CSSEBets — predict the World Cup 2026 together. Use my referral code: ${code}. ${link}`;
+  const shareHref = link ? `https://wa.me/?text=${encodeURIComponent(shareText)}` : "#";
 
   return (
     <div className="mx-auto max-w-md space-y-4 px-4 pb-24 pt-4 text-[var(--color-ink)]">
