@@ -3,6 +3,9 @@ import { useLatestWin } from "./useNotifications";
 import { WinTicketModal, type WinTicketData } from "./WinTicketModal";
 import { useLocation, useRouter } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+
+const SEEN_KEY_PREFIX = "notif:seenWinIds:";
 
 const SEEN_KEY = "notif:lastSeenWinId";
 
