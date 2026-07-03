@@ -71,15 +71,20 @@ function RegisterPage() {
       if (password.length < 8) throw new Error("Password must be at least 8 characters");
       if (password !== confirm) throw new Error("Passwords do not match");
       await checkAuthRateLimit({ data: { email } });
+      const refCode = getStoredReferralCode();
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: { display_name: displayName || email.split("@")[0] },
+          data: {
+            display_name: displayName || email.split("@")[0],
+            ...(refCode ? { referral_code: refCode } : {}),
+          },
         },
       });
       if (error) throw error;
+      clearStoredReferralCode();
       toast.success("Account created. Waiting for admin approval.");
       navigate({ to: "/dashboard" });
     } catch (err) {
