@@ -228,7 +228,7 @@ function WalletPage() {
         </div>
       </StencilPanel>
 
-      <EngagementTiles />
+      
 
       {isAdmin && (
         <StencilPanel
