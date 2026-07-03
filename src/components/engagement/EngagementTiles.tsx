@@ -8,15 +8,18 @@ import { getMyEngagementSummary } from "@/lib/engagement.functions";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
 import { listMyFreeBets } from "@/lib/freebets.functions";
 import { buildReferralLink } from "@/lib/referral-link";
+import { useAuth } from "@/hooks/use-auth";
 
 export function EngagementTiles() {
+  const { user } = useAuth();
+  const uid = user?.id ?? "anon";
   const eFn = useServerFn(getMyEngagementSummary);
   const rFn = useServerFn(getMyReferralOverview);
   const fbFn = useServerFn(listMyFreeBets);
 
-  const engagement = useQuery({ queryKey: ["engagement-summary"], queryFn: () => eFn(), staleTime: 30_000 });
-  const referral = useQuery({ queryKey: ["referral-overview"], queryFn: () => rFn(), staleTime: 30_000 });
-  const freeBets = useQuery({ queryKey: ["my-free-bets"], queryFn: () => fbFn(), staleTime: 30_000 });
+  const engagement = useQuery({ queryKey: ["engagement-summary", uid], queryFn: () => eFn(), staleTime: 30_000, enabled: !!user });
+  const referral = useQuery({ queryKey: ["referral-overview", uid], queryFn: () => rFn(), staleTime: 30_000, enabled: !!user });
+  const freeBets = useQuery({ queryKey: ["my-free-bets", uid], queryFn: () => fbFn(), staleTime: 30_000, enabled: !!user });
 
   const tokens = engagement.data?.tokens.balance ?? 0;
   const levelLabel = engagement.data?.level.label ?? "Rookie";
