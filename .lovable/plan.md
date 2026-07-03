@@ -1,46 +1,30 @@
-# Why you can't see them
 
-The routes `/referrals`, `/store`, and `/free-bets/place` were built and registered, but nothing in the user-facing UI links to them and no component reads your CSSE token balance on the Dashboard/Wallet. So the pages exist at those URLs, but there is no entry point — that is the whole reason it looks like nothing was implemented.
+## Problem
 
-# Fix plan (frontend only, presentation)
+On mobile (393px), the TopBar in `src/components/nav/TopBar.tsx` packs too many items into one row: brand logo + text, wallet chip (`PTS` label + number), TokenChip, Notifications button, Profile button. Combined widths exceed the viewport, causing horizontal overflow and a "side slide" (page scrolls sideways).
 
-## 1. Add a Wallet quick-actions strip
-On `src/routes/_authenticated/wallet.tsx`, add a small 3-tile row directly under the points balance:
-- **CSSE Tokens** — shows live token balance from `getMyEngagementSummary`, links to `/store`.
-- **Referrals** — shows referral code + invite count from `getMyReferralSummary`, links to `/referrals`.
-- **Free Bets** — shows count of unused free bets, links to `/store` (Redeem tab) or `/free-bets/place` when one is active.
+## Fix
 
-Uses the existing `StencilPanel` aesthetic, one server-fn query per tile via `useQuery`.
+Scope: `src/components/nav/TopBar.tsx` only (presentational).
 
-## 2. Add a Dashboard "Engagement" panel
-On `src/routes/_authenticated/dashboard.tsx`, insert a compact panel below the "Your Position" slider showing:
-- Token balance + level badge
-- Referral code with a Copy button and share link (`?ref=CODE`)
-- CTA button "Open Store"
+1. **Prevent overflow at the container level**
+   - Add `min-w-0` to the inner flex row and `overflow-hidden` on the header so nothing can push the page wider than the viewport.
+   - Ensure `max-w-md` row uses `w-full` + `min-w-0`.
 
-This makes tokens/referrals visible from the home screen without needing to hunt.
+2. **Slim the right-side cluster on mobile**
+   - Wallet chip: drop the `PTS` suffix on mobile (show only icon + number); reveal `PTS` at `sm:`. Reduce horizontal padding (`px-2.5`) and gap.
+   - TokenChip: keep, but ensure it uses `shrink-0`.
+   - Notifications + Profile buttons: shrink from `h-9 w-9` to `h-8 w-8` on mobile, promote to `h-9 w-9` at `sm:`. Add `shrink-0`.
+   - Reduce the right cluster `gap-2` to `gap-1.5` on mobile.
 
-## 3. Bottom-nav access
-`BottomNav` has 5 slots that are already full (Home, Markets, Picks, Payout, Support). Rather than dropping one, add a small **"More"** row on the Dashboard header (or a token-coin icon next to the profile avatar in the top-right of `PageShell`) that opens a sheet with links to Referrals, Store, Free Bets, Notifications, Trust Center. This keeps mobile-first density intact.
+3. **Left side (brand)**
+   - Wrap brand in `min-w-0` and add `truncate` to the brand text so it can shrink instead of forcing width.
+   - Keep the current `hidden xs:inline` behavior for the wordmark.
 
-## 4. Wire free-bet placement into the Markets flow
-On the match detail page (`matches.$matchId.tsx`), when the user has an unused free bet, show a persistent "Use free bet" chip inside `MarketTabs`' `StakeSlip`. Selecting it flips the slip into free-bet mode (stake locked to the free bet's face value, "House stakes — you keep profit" label). If no market is selected, the chip deep-links to `/free-bets/place`.
+4. **No functional/behavior changes** — same links, same balance display logic, same admin/pending badges elsewhere untouched.
 
-## 5. Register onboarding hint (one-time)
-After first login, show a single toast: "You earned your referral code — share it to earn CSSE tokens." Dismiss stored in `localStorage`. No modal, no interruption.
+## Acceptance
 
-## Technical section
-
-Files to touch:
-- `src/routes/_authenticated/wallet.tsx` — add 3-tile quick actions (uses `getMyEngagementSummary`, `getMyReferralSummary`, `listMyFreeBets`).
-- `src/routes/_authenticated/dashboard.tsx` — add `EngagementPanel` component below `BenchSlider`.
-- `src/components/engagement/EngagementPanel.tsx` — new; token balance + referral copy card.
-- `src/components/engagement/QuickActionTile.tsx` — new; shared tile primitive.
-- `src/components/ui/page-shell.tsx` (or the header inside it) — add "More" trigger opening a `Sheet` with links.
-- `src/components/nav/MoreSheet.tsx` — new; grouped links (Referrals, Store, Free Bets, Notifications, Trust Center, Changelog, Status).
-- `src/components/markets/MarketTabs.tsx` — add free-bet chip to `StakeSlip` when `listMyFreeBets` returns unused items.
-- `src/routes/__root.tsx` — one-time onboarding toast helper.
-
-Server functions used (already exist): `getMyEngagementSummary`, `getMyReferralSummary`, `listMyFreeBets`, `getStoreItems`.
-
-No backend or RLS changes needed — the routes and RPCs are already live; this is purely making them discoverable.
+- At 393px width, TopBar fits with no horizontal page scroll.
+- All existing items remain reachable (wallet, tokens, notifications, profile).
+- Desktop (`sm:` and up) visual is unchanged or nearly so.
