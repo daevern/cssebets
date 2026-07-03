@@ -228,6 +228,8 @@ function WalletPage() {
         </div>
       </StencilPanel>
 
+      <EngagementTiles />
+
       {isAdmin && (
         <StencilPanel
           kicker={<><Landmark className="h-3 w-3" /> House P/L · Bankroller</>}
