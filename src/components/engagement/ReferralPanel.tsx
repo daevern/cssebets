@@ -101,11 +101,13 @@ export function ReferralPanel() {
               </button>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={share}
-            disabled={!code}
-            className="grid place-items-center rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)] px-4 text-black shadow-[0_0_18px_var(--color-neon-glow)] transition-all hover:brightness-110 disabled:opacity-40 disabled:shadow-none"
+          <a
+            href={shareHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => { if (!code) e.preventDefault(); }}
+            aria-disabled={!code}
+            className="grid place-items-center rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)] px-4 text-black shadow-[0_0_18px_var(--color-neon-glow)] transition-all hover:brightness-110 aria-disabled:opacity-40 aria-disabled:shadow-none"
             aria-label="Share referral on WhatsApp"
           >
             <Share2 className="h-5 w-5" />
