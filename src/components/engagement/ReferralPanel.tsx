@@ -6,6 +6,7 @@ import { Copy, Check, Share2, Users2, Sparkles, ArrowUpRight } from "lucide-reac
 import { toast } from "sonner";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
 import { buildReferralLink } from "@/lib/referral-link";
+import { useAuth } from "@/hooks/use-auth";
 
 /**
  * Confident, custom referral panel for the profile page.
@@ -13,11 +14,14 @@ import { buildReferralLink } from "@/lib/referral-link";
  * through to the full referrals dashboard.
  */
 export function ReferralPanel() {
+  const { user } = useAuth();
+  const uid = user?.id ?? "anon";
   const rFn = useServerFn(getMyReferralOverview);
   const referral = useQuery({
-    queryKey: ["referral-overview"],
+    queryKey: ["referral-overview", uid],
     queryFn: () => rFn(),
     staleTime: 30_000,
+    enabled: !!user,
   });
 
   const [copied, setCopied] = useState<"code" | "link" | null>(null);

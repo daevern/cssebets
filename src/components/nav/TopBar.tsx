@@ -35,19 +35,23 @@ export function TopBar({
             <ArrowLeft className="h-5 w-5" />
           </button>
         ) : (
-          <Link to="/dashboard" aria-label="CSSEBets home" className="flex min-w-0 items-center gap-2">
+          <Link
+            to="/dashboard"
+            aria-label="CSSEBets home"
+            className="flex shrink-0 items-center gap-2"
+          >
             <CsseLogo size={22} />
-            <span className="hidden xs:inline truncate text-[15px] font-bold tracking-tight leading-none">
+            <span className="hidden sm:inline text-[15px] font-bold tracking-tight leading-none">
               <BrandText />
             </span>
           </Link>
         )}
 
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <div className="flex min-w-0 shrink items-center justify-end gap-1 sm:gap-2">
           {balance != null && (
             <Link
               to="/wallet"
-              className="flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--ink)] transition-colors hover:border-[var(--neon)]/40 sm:px-3"
+              className="flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] px-2 py-1.5 text-[12px] font-semibold text-[var(--ink)] transition-colors hover:border-[var(--neon)]/40 sm:gap-1.5 sm:px-3"
             >
               <WalletIcon className="h-3.5 w-3.5 shrink-0 text-[var(--neon)]" />
               <span className="tabular-nums">{loading ? "…" : balance.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>
@@ -56,7 +60,6 @@ export function TopBar({
           )}
           {balance != null && !isMatchDetail && <TokenChip />}
           {!isMatchDetail && (
-
             <>
               <Link
                 to="/notifications"

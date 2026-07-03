@@ -9,14 +9,17 @@ import { Badge } from "@/components/ui/badge";
 import { Share2, Copy, Check, Users, Coins, Target } from "lucide-react";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
 import { buildReferralLink } from "@/lib/referral-link";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/referrals")({
   component: ReferralsPage,
 });
 
 function ReferralsPage() {
+  const { user } = useAuth();
+  const uid = user?.id ?? "anon";
   const fn = useServerFn(getMyReferralOverview);
-  const q = useQuery({ queryKey: ["my-referrals"], queryFn: () => fn() });
+  const q = useQuery({ queryKey: ["my-referrals", uid], queryFn: () => fn(), enabled: !!user });
   const [copied, setCopied] = useState(false);
 
   const code = q.data?.referralCode ?? "";

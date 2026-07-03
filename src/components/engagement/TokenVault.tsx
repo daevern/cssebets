@@ -11,17 +11,21 @@ import {
 import { getMyEngagementSummary, listMyTokenTransactions } from "@/lib/engagement.functions";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
 import { listMyFreeBets } from "@/lib/freebets.functions";
+import { useAuth } from "@/hooks/use-auth";
 
 /* ------------------------------------------------------------------ */
 /* Chip — sits in the top nav next to the wallet PTS chip.             */
 /* ------------------------------------------------------------------ */
 export function TokenChip() {
   const [open, setOpen] = useState(false);
+  const { user } = useAuth();
+  const uid = user?.id ?? "anon";
   const eFn = useServerFn(getMyEngagementSummary);
   const summary = useQuery({
-    queryKey: ["engagement-summary"],
+    queryKey: ["engagement-summary", uid],
     queryFn: () => eFn(),
     staleTime: 30_000,
+    enabled: !!user,
   });
   const tokens = summary.data?.tokens.balance ?? 0;
 
@@ -31,18 +35,18 @@ export function TokenChip() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Open CSSE token vault"
-        className="group relative flex items-center gap-1.5 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] px-2.5 py-1.5 text-[12px] font-semibold text-[var(--ink)] transition-colors hover:border-[var(--neon)]/60"
+        className="group relative flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] px-2 py-1.5 text-[12px] font-semibold text-[var(--ink)] transition-colors hover:border-[var(--neon)]/60 sm:gap-1.5 sm:px-2.5"
       >
         <span
           aria-hidden
-          className="grid h-4 w-4 place-items-center rounded-full bg-[var(--neon)]/12 ring-1 ring-inset ring-[var(--neon)]/40"
+          className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[var(--neon)]/12 ring-1 ring-inset ring-[var(--neon)]/40"
         >
           <span className="text-[9px] font-black leading-none text-[var(--neon)]">◈</span>
         </span>
         <span className="tabular-nums leading-none">
           {summary.isLoading ? "…" : formatCompact(tokens)}
         </span>
-        <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--ink-muted)] leading-none">
+        <span className="hidden sm:inline text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--ink-muted)] leading-none">
           CSSE
         </span>
       </button>
@@ -56,15 +60,17 @@ export function TokenChip() {
 /* Vault sheet — same visual language as the "Lock Prediction" slip.   */
 /* ------------------------------------------------------------------ */
 function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const { user } = useAuth();
+  const uid = user?.id ?? "anon";
   const eFn = useServerFn(getMyEngagementSummary);
   const rFn = useServerFn(getMyReferralOverview);
   const fbFn = useServerFn(listMyFreeBets);
   const txFn = useServerFn(listMyTokenTransactions);
 
-  const summary = useQuery({ queryKey: ["engagement-summary"], queryFn: () => eFn(), enabled: open, staleTime: 30_000 });
-  const referral = useQuery({ queryKey: ["referral-overview"], queryFn: () => rFn(), enabled: open, staleTime: 30_000 });
-  const freeBets = useQuery({ queryKey: ["my-free-bets"], queryFn: () => fbFn(), enabled: open, staleTime: 30_000 });
-  const ledger = useQuery({ queryKey: ["my-token-ledger"], queryFn: () => txFn(), enabled: open, staleTime: 15_000 });
+  const summary = useQuery({ queryKey: ["engagement-summary", uid], queryFn: () => eFn(), enabled: open && !!user, staleTime: 30_000 });
+  const referral = useQuery({ queryKey: ["referral-overview", uid], queryFn: () => rFn(), enabled: open && !!user, staleTime: 30_000 });
+  const freeBets = useQuery({ queryKey: ["my-free-bets", uid], queryFn: () => fbFn(), enabled: open && !!user, staleTime: 30_000 });
+  const ledger = useQuery({ queryKey: ["my-token-ledger", uid], queryFn: () => txFn(), enabled: open && !!user, staleTime: 15_000 });
 
   const balance = summary.data?.tokens.balance ?? 0;
   const lifetimeEarned = summary.data?.tokens.lifetime_earned ?? 0;
