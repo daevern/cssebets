@@ -60,15 +60,17 @@ export function TokenChip() {
 /* Vault sheet — same visual language as the "Lock Prediction" slip.   */
 /* ------------------------------------------------------------------ */
 function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+  const { user } = useAuth();
+  const uid = user?.id ?? "anon";
   const eFn = useServerFn(getMyEngagementSummary);
   const rFn = useServerFn(getMyReferralOverview);
   const fbFn = useServerFn(listMyFreeBets);
   const txFn = useServerFn(listMyTokenTransactions);
 
-  const summary = useQuery({ queryKey: ["engagement-summary"], queryFn: () => eFn(), enabled: open, staleTime: 30_000 });
-  const referral = useQuery({ queryKey: ["referral-overview"], queryFn: () => rFn(), enabled: open, staleTime: 30_000 });
-  const freeBets = useQuery({ queryKey: ["my-free-bets"], queryFn: () => fbFn(), enabled: open, staleTime: 30_000 });
-  const ledger = useQuery({ queryKey: ["my-token-ledger"], queryFn: () => txFn(), enabled: open, staleTime: 15_000 });
+  const summary = useQuery({ queryKey: ["engagement-summary", uid], queryFn: () => eFn(), enabled: open && !!user, staleTime: 30_000 });
+  const referral = useQuery({ queryKey: ["referral-overview", uid], queryFn: () => rFn(), enabled: open && !!user, staleTime: 30_000 });
+  const freeBets = useQuery({ queryKey: ["my-free-bets", uid], queryFn: () => fbFn(), enabled: open && !!user, staleTime: 30_000 });
+  const ledger = useQuery({ queryKey: ["my-token-ledger", uid], queryFn: () => txFn(), enabled: open && !!user, staleTime: 15_000 });
 
   const balance = summary.data?.tokens.balance ?? 0;
   const lifetimeEarned = summary.data?.tokens.lifetime_earned ?? 0;
