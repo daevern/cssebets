@@ -33,10 +33,8 @@ function ReferralsPage() {
     } catch { toast.error("Could not copy link"); }
   }
 
-  function share() {
-    const text = `Join me on CSSEBets — predict the World Cup 2026 together. Use my referral code: ${code}. ${link}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
-  }
+  const shareText = `Join me on CSSEBets — predict the World Cup 2026 together. Use my referral code: ${code}. ${link}`;
+  const shareHref = link ? `https://wa.me/?text=${encodeURIComponent(shareText)}` : "#";
 
   return (
     <div className="mx-auto max-w-md space-y-4 px-4 pb-24 pt-4 text-[var(--color-ink)]">
@@ -55,9 +53,16 @@ function ReferralsPage() {
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
             Copy Link
           </Button>
-          <Button onClick={share} className="flex-1 gap-2 rounded-none bg-[var(--neon)] text-black hover:bg-[var(--neon)]/90">
+          <a
+            href={shareHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => { if (!link) e.preventDefault(); }}
+            aria-disabled={!link}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-none bg-[var(--neon)] px-4 py-2 text-sm font-medium text-black hover:bg-[var(--neon)]/90 aria-disabled:opacity-40"
+          >
             <Share2 className="h-4 w-4" /> WhatsApp
-          </Button>
+          </a>
         </div>
       </Card>
 

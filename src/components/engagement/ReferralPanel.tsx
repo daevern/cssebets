@@ -40,11 +40,8 @@ export function ReferralPanel() {
     }
   }
 
-  function share() {
-    if (!link) return;
-    const text = `Join me on CSSEBets — predict the World Cup 2026 together. Use my referral code: ${code ?? ""}. ${link}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
-  }
+  const shareText = `Join me on CSSEBets — predict the World Cup 2026 together. Use my referral code: ${code ?? ""}. ${link}`;
+  const shareHref = link ? `https://wa.me/?text=${encodeURIComponent(shareText)}` : "#";
 
   const total = referral.data?.totalReferrals ?? 0;
   const active = referral.data?.activeReferrals ?? 0;
@@ -104,15 +101,17 @@ export function ReferralPanel() {
               </button>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={share}
-            disabled={!code}
-            className="grid place-items-center rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)] px-4 text-black shadow-[0_0_18px_var(--color-neon-glow)] transition-all hover:brightness-110 disabled:opacity-40 disabled:shadow-none"
+          <a
+            href={shareHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => { if (!code) e.preventDefault(); }}
+            aria-disabled={!code}
+            className="grid place-items-center rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)] px-4 text-black shadow-[0_0_18px_var(--color-neon-glow)] transition-all hover:brightness-110 aria-disabled:opacity-40 aria-disabled:shadow-none"
             aria-label="Share referral on WhatsApp"
           >
             <Share2 className="h-5 w-5" />
-          </button>
+          </a>
         </div>
 
         {/* Full link row */}
