@@ -213,6 +213,161 @@ export type Database = {
           },
         ]
       }
+      csse_free_bets: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          prediction_id: string | null
+          settled_at: string | null
+          settled_outcome: string | null
+          source: string
+          stake_amount: number
+          status: string
+          token_cost: number
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          prediction_id?: string | null
+          settled_at?: string | null
+          settled_outcome?: string | null
+          source?: string
+          stake_amount: number
+          status?: string
+          token_cost: number
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          prediction_id?: string | null
+          settled_at?: string | null
+          settled_outcome?: string | null
+          source?: string
+          stake_amount?: number
+          status?: string
+          token_cost?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "csse_free_bets_prediction_fk"
+            columns: ["prediction_id"]
+            isOneToOne: false
+            referencedRelation: "predictions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      csse_store_items: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          item_key: string
+          kind: string
+          label: string
+          metadata: Json
+          sort_order: number
+          stake_amount: number
+          token_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          item_key: string
+          kind: string
+          label: string
+          metadata?: Json
+          sort_order?: number
+          stake_amount: number
+          token_price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          item_key?: string
+          kind?: string
+          label?: string
+          metadata?: Json
+          sort_order?: number
+          stake_amount?: number
+          token_price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      csse_token_transactions: {
+        Row: {
+          balance_after: number
+          created_at: string
+          delta: number
+          id: string
+          kind: string
+          metadata: Json
+          source: string
+          source_ref: string | null
+          user_id: string
+        }
+        Insert: {
+          balance_after: number
+          created_at?: string
+          delta: number
+          id?: string
+          kind: string
+          metadata?: Json
+          source: string
+          source_ref?: string | null
+          user_id: string
+        }
+        Update: {
+          balance_after?: number
+          created_at?: string
+          delta?: number
+          id?: string
+          kind?: string
+          metadata?: Json
+          source?: string
+          source_ref?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      csse_token_wallets: {
+        Row: {
+          balance: number
+          lifetime_earned: number
+          lifetime_spent: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          lifetime_earned?: number
+          lifetime_spent?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          lifetime_earned?: number
+          lifetime_spent?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -1706,6 +1861,7 @@ export type Database = {
           created_at: string
           flagged_for_review: boolean
           flagged_reason: string | null
+          free_bet_id: string | null
           gross_payout: number
           house_profit_loss: number
           id: string
@@ -1733,6 +1889,7 @@ export type Database = {
           created_at?: string
           flagged_for_review?: boolean
           flagged_reason?: string | null
+          free_bet_id?: string | null
           gross_payout?: number
           house_profit_loss?: number
           id?: string
@@ -1760,6 +1917,7 @@ export type Database = {
           created_at?: string
           flagged_for_review?: boolean
           flagged_reason?: string | null
+          free_bet_id?: string | null
           gross_payout?: number
           house_profit_loss?: number
           id?: string
@@ -1783,6 +1941,13 @@ export type Database = {
           virtual_stake?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "predictions_free_bet_id_fkey"
+            columns: ["free_bet_id"]
+            isOneToOne: false
+            referencedRelation: "csse_free_bets"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "predictions_match_id_fkey"
             columns: ["match_id"]
@@ -1813,6 +1978,8 @@ export type Database = {
           onboarding_skipped_at: string | null
           phone_number: string | null
           public_reference: string
+          referral_code: string
+          referred_by_code: string | null
           risk_factor: number
           risk_factor_reason: string | null
           risk_factor_updated_at: string | null
@@ -1832,6 +1999,8 @@ export type Database = {
           onboarding_skipped_at?: string | null
           phone_number?: string | null
           public_reference?: string
+          referral_code: string
+          referred_by_code?: string | null
           risk_factor?: number
           risk_factor_reason?: string | null
           risk_factor_updated_at?: string | null
@@ -1851,6 +2020,8 @@ export type Database = {
           onboarding_skipped_at?: string | null
           phone_number?: string | null
           public_reference?: string
+          referral_code?: string
+          referred_by_code?: string | null
           risk_factor?: number
           risk_factor_reason?: string | null
           risk_factor_updated_at?: string | null
@@ -1883,6 +2054,63 @@ export type Database = {
           id?: string
           scope?: string
           window_start?: string
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          cumulative_settled_wagered: number
+          flag_reason: string | null
+          flagged: boolean
+          id: string
+          referral_code: string
+          referred_user_id: string
+          referrer_user_id: string
+          stage1_completed: boolean
+          stage1_rewarded_at: string | null
+          stage2_completed: boolean
+          stage2_rewarded_at: string | null
+          stage3_completed: boolean
+          stage3_rewarded_at: string | null
+          total_tokens_awarded: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          cumulative_settled_wagered?: number
+          flag_reason?: string | null
+          flagged?: boolean
+          id?: string
+          referral_code: string
+          referred_user_id: string
+          referrer_user_id: string
+          stage1_completed?: boolean
+          stage1_rewarded_at?: string | null
+          stage2_completed?: boolean
+          stage2_rewarded_at?: string | null
+          stage3_completed?: boolean
+          stage3_rewarded_at?: string | null
+          total_tokens_awarded?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          cumulative_settled_wagered?: number
+          flag_reason?: string | null
+          flagged?: boolean
+          id?: string
+          referral_code?: string
+          referred_user_id?: string
+          referrer_user_id?: string
+          stage1_completed?: boolean
+          stage1_rewarded_at?: string | null
+          stage2_completed?: boolean
+          stage2_rewarded_at?: string | null
+          stage3_completed?: boolean
+          stage3_rewarded_at?: string | null
+          total_tokens_awarded?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2361,6 +2589,22 @@ export type Database = {
         }
         Returns: undefined
       }
+      admin_adjust_referral: {
+        Args: {
+          p_reason: string
+          p_referral_id: string
+          p_tokens_delta: number
+        }
+        Returns: undefined
+      }
+      admin_flag_referral: {
+        Args: { p_flagged: boolean; p_reason: string; p_referral_id: string }
+        Returns: undefined
+      }
+      admin_grant_tokens: {
+        Args: { p_amount: number; p_reason: string; p_user_id: string }
+        Returns: number
+      }
       admin_reset_onboarding: {
         Args: { p_user_id: string }
         Returns: undefined
@@ -2421,6 +2665,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      award_referral_milestones: {
+        Args: { p_referred_user_id: string }
+        Returns: undefined
+      }
       cancel_pending_bet: {
         Args: { p_prediction_id: string; p_user_id: string }
         Returns: string
@@ -2473,6 +2721,17 @@ export type Database = {
         }
         Returns: undefined
       }
+      csse_credit_tokens: {
+        Args: {
+          p_delta: number
+          p_kind: string
+          p_metadata?: Json
+          p_source: string
+          p_source_ref: string
+          p_user_id: string
+        }
+        Returns: number
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -2491,6 +2750,7 @@ export type Database = {
         Returns: number
       }
       generate_public_reference: { Args: never; Returns: string }
+      generate_referral_code: { Args: never; Returns: string }
       get_correlated_exposure_alerts: {
         Args: { p_status?: string }
         Returns: Json
@@ -2559,6 +2819,19 @@ export type Database = {
         }
         Returns: string
       }
+      place_free_bet_atomic: {
+        Args: {
+          p_client_request_id: string
+          p_free_bet_id: string
+          p_market: Database["public"]["Enums"]["prediction_market"]
+          p_match_id: string
+          p_odds: number
+          p_outcome: string
+          p_snapshot_id: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       place_market_bet_atomic: {
         Args: {
           p_client_request_id?: string
@@ -2613,6 +2886,15 @@ export type Database = {
       recalculate_match_scenario_exposure: {
         Args: { p_match_id: string }
         Returns: Json
+      }
+      redeem_free_bet: {
+        Args: {
+          p_stake_amount: number
+          p_store_item: string
+          p_token_cost: number
+          p_user_id: string
+        }
+        Returns: string
       }
       refresh_odds_status_for_open_matches: { Args: never; Returns: undefined }
       regenerate_match_market_odds: {

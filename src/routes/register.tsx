@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { checkAuthRateLimit } from "@/lib/rate-limit.functions";
+import { getStoredReferralCode, clearStoredReferralCode } from "@/lib/referral-code";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -70,15 +71,20 @@ function RegisterPage() {
       if (password.length < 8) throw new Error("Password must be at least 8 characters");
       if (password !== confirm) throw new Error("Passwords do not match");
       await checkAuthRateLimit({ data: { email } });
+      const refCode = getStoredReferralCode();
       const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: { display_name: displayName || email.split("@")[0] },
+          data: {
+            display_name: displayName || email.split("@")[0],
+            ...(refCode ? { referral_code: refCode } : {}),
+          },
         },
       });
       if (error) throw error;
+      clearStoredReferralCode();
       toast.success("Account created. Waiting for admin approval.");
       navigate({ to: "/dashboard" });
     } catch (err) {
@@ -99,6 +105,7 @@ function RegisterPage() {
       if (password !== confirm) throw new Error("Passwords do not match");
       const syntheticEmail = phoneToSyntheticEmail(p);
       await checkAuthRateLimit({ data: { phone: p } });
+      const refCode = getStoredReferralCode();
       const { error } = await supabase.auth.signUp({
         email: syntheticEmail,
         password,
@@ -107,10 +114,12 @@ function RegisterPage() {
           data: {
             display_name: displayName || p,
             phone_number: p,
+            ...(refCode ? { referral_code: refCode } : {}),
           },
         },
       });
       if (error) throw error;
+      clearStoredReferralCode();
       toast.success("Account created. Waiting for admin approval.");
       navigate({ to: "/dashboard" });
     } catch (err) {
