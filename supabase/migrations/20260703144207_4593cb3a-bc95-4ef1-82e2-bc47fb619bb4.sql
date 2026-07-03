@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Signed-in users can view market odds snapshots" ON public.market_odds_snapshots;
+DROP POLICY IF EXISTS "Signed-in users can view match odds snapshots" ON public.match_odds_snapshots;
