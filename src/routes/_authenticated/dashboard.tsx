@@ -286,7 +286,7 @@ function HomePage() {
         </article>
       </section>
 
-      <EngagementTiles />
+      <StoreShowcase />
 
       <PageFooter />
     </div>
