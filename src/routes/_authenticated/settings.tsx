@@ -89,6 +89,7 @@ function SettingsPage() {
     } catch (e) { toast.error((e as Error).message); }
     finally { setSavingPhone(false); }
   }
+  async function savePassword() {
     if (pw1.length < 8) { toast.error("Password must be at least 8 characters"); return; }
     if (pw1 !== pw2) { toast.error("Passwords do not match"); return; }
     setSavingPw(true);
