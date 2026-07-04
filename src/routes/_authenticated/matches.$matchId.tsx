@@ -121,6 +121,8 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
         homeGoals={homeGoals}
         awayGoals={awayGoals}
         lastEvent={lastEvent}
+        events={events}
+        ratings={ratings}
       />
 
       {/* Market Analytics — historical odds / implied probability */}
