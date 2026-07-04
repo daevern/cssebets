@@ -41,9 +41,9 @@ export function TokenChip() {
       >
         <span
           aria-hidden
-          className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[var(--neon)]/12 ring-1 ring-inset ring-[var(--neon)]/40"
+          className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[var(--neon)]/12 ring-1 ring-inset ring-[var(--neon)]/40 text-[var(--neon)]"
         >
-          <span className="text-[9px] font-black leading-none text-[var(--neon)]">◈</span>
+          <CsseMark className="h-3 w-3" />
         </span>
         <span className="tabular-nums leading-none">
           {summary.isLoading ? "…" : formatCompact(tokens)}
