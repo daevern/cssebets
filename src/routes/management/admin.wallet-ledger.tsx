@@ -19,14 +19,16 @@ const TYPES = ["", "debit", "credit"];
 function AdminWalletLedgerPage() {
   const [type, setType] = useState("");
   const [userId, setUserId] = useState("");
+  const [username, setUsername] = useState("");
   const fn = useServerFn(listWalletLedgerAdmin);
   const q = useQuery({
-    queryKey: ["admin-wallet-ledger", type, userId],
+    queryKey: ["admin-wallet-ledger", type, userId, username],
     queryFn: () =>
       fn({
         data: {
           type: type || undefined,
           userId: userId.trim().length === 36 ? userId.trim() : undefined,
+          username: username.trim().length >= 2 ? username.trim() : undefined,
         },
       }),
     refetchInterval: 30_000,
@@ -105,6 +107,12 @@ function AdminWalletLedgerPage() {
               </option>
             ))}
           </select>
+          <Input
+            placeholder="Filter by username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="md:max-w-xs"
+          />
           <Input
             placeholder="Filter by user UUID"
             value={userId}

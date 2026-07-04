@@ -806,6 +806,7 @@ export const listWalletLedgerAdmin = createServerFn({ method: "GET" })
   .inputValidator((i: unknown) =>
     z.object({
       userId: z.string().uuid().optional(),
+      username: z.string().min(2).max(60).optional(),
       type: z.string().max(40).optional(),
       from: z.string().datetime().optional(),
       to: z.string().datetime().optional(),
@@ -816,12 +817,28 @@ export const listWalletLedgerAdmin = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     await requireTier(supabase, userId, ADMIN_TIERS);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Resolve username -> user_ids first (case-insensitive contains match).
+    let usernameUserIds: string[] | null = null;
+    if (data.username) {
+      const { data: matched } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .ilike("display_name", `%${data.username}%`)
+        .limit(200);
+      usernameUserIds = (matched ?? []).map((r: any) => r.id);
+      if (!usernameUserIds.length) {
+        return { transactions: [] };
+      }
+    }
+
     let q = supabaseAdmin
       .from("wallet_transactions")
       .select("id, user_id, type, amount, balance_before, balance_after, reference_type, reference_id, note, created_at")
       .order("created_at", { ascending: false })
       .limit(data.limit);
     if (data.userId) q = q.eq("user_id", data.userId);
+    if (usernameUserIds) q = q.in("user_id", usernameUserIds);
     if (data.type) q = q.eq("type", data.type as any);
     if (data.from) q = q.gte("created_at", data.from);
     if (data.to) q = q.lte("created_at", data.to);
@@ -838,6 +855,7 @@ export const listWalletLedgerAdmin = createServerFn({ method: "GET" })
       })),
     };
   });
+
 
 // ============== ODDS SNAPSHOTS (admin) ==============
 
