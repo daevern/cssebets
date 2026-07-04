@@ -1140,21 +1140,53 @@ function LineupSplit({
   );
 }
 
-function PlayerRow({ player, accent }: { player: LineupPlayer; accent: string }) {
+function PlayerRow({ player, accent, events = [] }: { player: LineupPlayer; accent: string; events?: any[] }) {
+  const pid = player.id;
+  const pname = (player.name || "").toLowerCase();
+  const matches = (e: any) => {
+    if (pid && (e.player_id === pid || e.assist_id === pid)) return true;
+    const en = String(e.player_name || "").toLowerCase();
+    const an = String(e.assist_name || "").toLowerCase();
+    return !!pname && (en === pname || an === pname);
+  };
+  const own = (events || []).filter(matches);
+  let goals = 0, assists = 0, yellow = 0, red = 0;
+  for (const e of own) {
+    const t = String(e.type || "").toLowerCase();
+    const d = String(e.detail || "").toLowerCase();
+    if (t === "goal") {
+      if ((e.player_name || "").toLowerCase() === pname || e.player_id === pid) goals += 1;
+      if ((e.assist_name || "").toLowerCase() === pname || e.assist_id === pid) assists += 1;
+    } else if (t === "card") {
+      if (d.includes("red")) red += 1;
+      else yellow += 1;
+    }
+  }
   return (
-    <li className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3 py-2">
+    <li className="grid grid-cols-[28px_minmax(0,1fr)_auto_auto] items-center gap-2 py-2">
       <span
         className="grid h-6 w-6 place-items-center rounded-full border font-display text-[10px] font-bold tabular-nums"
         style={{ borderColor: accent, color: accent }}
       >
         {player.number ?? "–"}
       </span>
-      <span className="truncate text-sm text-[var(--color-ink)]">{player.name}</span>
+      <span className="truncate text-sm text-[var(--color-ink)]">
+        {player.name}
+        {(goals > 0 || assists > 0 || yellow > 0 || red > 0) && (
+          <span className="ml-1.5 inline-flex items-center gap-1 align-middle">
+            {Array.from({ length: goals }).map((_, i) => <GoalIcon key={`g${i}`} size={11} className="text-[var(--color-neon)]" />)}
+            {assists > 0 && <span className="grid h-3.5 w-3.5 place-items-center rounded-full bg-[var(--color-neon)]/15 text-[8px] font-black text-[var(--color-neon)]" title="Assist">A</span>}
+            {yellow > 0 && <YellowCardIcon size={11} />}
+            {red > 0 && <RedCardIcon size={11} />}
+          </span>
+        )}
+      </span>
       {player.pos && (
         <span className="rounded-sm border border-[var(--color-surface-border)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
           {player.pos}
         </span>
       )}
+      <span />
     </li>
   );
 }
