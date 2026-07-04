@@ -680,26 +680,52 @@ function PickRow({ p }: { p: any }) {
   const stake = Number(p.virtual_stake || 0);
   const payout = Number(p.actual_payout || 0);
   const potential = Number(p.potential_payout || 0);
+  const odds = Number(p.odds || 0);
   const status = String(p.status || "pending");
-  const statusTone =
+  const settled = status === "won" || status === "lost";
+  const returned = settled ? payout : potential;
+  const profit = settled ? payout - stake : potential - stake;
+  const profitTone =
     status === "won" ? "text-[var(--color-neon)]" :
     status === "lost" ? "text-destructive" :
     "text-[var(--color-ink-muted)]";
-  const statusLabel =
-    status === "won" ? `+${(payout - stake).toLocaleString()} pts` :
-    status === "lost" ? `-${stake.toLocaleString()} pts` :
-    status === "void" || status === "cancelled" || status === "refunded" ? "refunded" :
-    `to win ${(potential - stake).toLocaleString()} pts`;
+  const statusBadge =
+    status === "won" ? "WON" :
+    status === "lost" ? "LOST" :
+    status === "void" || status === "cancelled" || status === "refunded" ? "REFUNDED" :
+    "OPEN";
   return (
-    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 py-2">
-      <div className="min-w-0">
-        <div className="truncate text-[12px] font-semibold text-[var(--color-ink)]">{p.selection_label ?? "—"}</div>
-        <div className="truncate text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-          {p.market_text ?? "market"} · {stake.toLocaleString()} pts @ {Number(p.odds ?? 0).toFixed(2)}x
+    <li className="py-2.5">
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <div className="min-w-0">
+          <div className="truncate text-[12px] font-semibold text-[var(--color-ink)]">
+            {p.selection_label ?? "—"}
+          </div>
+          <div className="truncate text-[9px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+            {p.market_text ?? "market"}
+          </div>
         </div>
+        <span className={`shrink-0 rounded-sm border border-[var(--color-surface-border)] px-1.5 py-0.5 font-display text-[9px] font-black tracking-[0.18em] ${profitTone}`}>
+          {statusBadge}
+        </span>
       </div>
-      <span className={`shrink-0 font-display text-[11px] font-bold tabular-nums ${statusTone}`}>{statusLabel}</span>
+      <div className="grid grid-cols-4 gap-2 text-[10px]">
+        <PickField label="Stake" value={`${stake.toLocaleString()}`} />
+        <PickField label="Odds" value={`${odds.toFixed(2)}x`} />
+        <PickField label="Return" value={`${returned.toLocaleString()}`} />
+        <PickField label="Profit" value={`${profit >= 0 ? "+" : ""}${profit.toLocaleString()}`} tone={profit > 0 ? "win" : profit < 0 ? "lose" : undefined} />
+      </div>
     </li>
+  );
+}
+
+function PickField({ label, value, tone }: { label: string; value: string; tone?: "win" | "lose" }) {
+  const color = tone === "win" ? "text-[var(--color-neon)]" : tone === "lose" ? "text-destructive" : "text-[var(--color-ink)]";
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[8px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">{label}</span>
+      <span className={`font-display text-[12px] font-bold tabular-nums ${color}`}>{value}</span>
+    </div>
   );
 }
 
