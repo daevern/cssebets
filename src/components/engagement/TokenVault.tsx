@@ -6,7 +6,7 @@ import { Sheet, SheetPortal, SheetOverlay } from "@/components/ui/sheet";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import {
   Coins, Users2, Gift, ArrowUpRight, ArrowDownRight, X,
-  ShoppingBag,
+  ShoppingBag, MessageCircle,
 } from "lucide-react";
 import { getMyEngagementSummary, listMyTokenTransactions } from "@/lib/engagement.functions";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
