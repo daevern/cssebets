@@ -975,6 +975,76 @@ function TeamBlock({ name, goals = [], align = "left", accent = "home" }: { name
 }
 
 
+/* ---------- Hero add-ons: event summary & MOTM ---------- */
+
+function eventsBySide(events: any[], side: "home" | "away") {
+  return events.filter((e) => e.side === side);
+}
+
+function MatchEventSummary({ homeName, awayName, events }: { homeName: string; awayName: string; events: any[] }) {
+  if (!events || events.length === 0) return null;
+  const keep = events.filter((e) => {
+    const t = String(e.type || "").toLowerCase();
+    return t === "goal" || t === "card";
+  });
+  if (keep.length === 0) return null;
+  const home = eventsBySide(keep, "home");
+  const away = eventsBySide(keep, "away");
+  return (
+    <div className="grid grid-cols-2 gap-3 border-y border-dashed border-[var(--color-surface-border)]/50 py-3 text-[11px]">
+      <TeamEventList name={homeName} events={home} align="left" />
+      <TeamEventList name={awayName} events={away} align="right" />
+    </div>
+  );
+}
+
+function TeamEventList({ name, events, align }: { name: string; events: any[]; align: "left" | "right" }) {
+  return (
+    <div className={align === "right" ? "text-right" : "text-left"}>
+      <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)] truncate">{name}</div>
+      {events.length === 0 ? (
+        <div className="text-[10px] text-[var(--color-ink-muted)]/70">—</div>
+      ) : (
+        <ul className={`space-y-0.5 ${align === "right" ? "items-end" : "items-start"} flex flex-col`}>
+          {events.map((e, i) => {
+            const min = `${e.minute ?? ""}${e.extra_minute ? `+${e.extra_minute}` : ""}'`;
+            const last = (e.player_name || e.detail || e.type || "").toString().split(" ").slice(-2).join(" ");
+            return (
+              <li key={i} className={`flex items-center gap-1.5 ${align === "right" ? "flex-row-reverse" : ""}`}>
+                <span className="font-display tabular-nums text-[10px] text-[var(--color-ink-muted)]">{min}</span>
+                <span className="truncate text-[var(--color-ink)] max-w-[110px]">{last || "—"}</span>
+                <span className="shrink-0">{eventMark(e.type, e.detail, 11)}</span>
+                {e.assist_name && (
+                  <span className={`truncate text-[9px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)] max-w-[80px] ${align === "right" ? "" : ""}`}>
+                    A: {(e.assist_name || "").split(" ").slice(-1)[0]}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ManOfTheMatch({ ratings }: { ratings?: { home: any[]; away: any[] } }) {
+  if (!ratings) return null;
+  const all = [...(ratings.home ?? []), ...(ratings.away ?? [])].filter((r) => r.rating != null);
+  if (all.length === 0) return null;
+  const top = all.reduce((best, r) => (Number(r.rating) > Number(best.rating) ? r : best), all[0]);
+  if (top?.rating == null) return null;
+  return (
+    <div className="flex items-center justify-center gap-2 text-[12px]">
+      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+      <span className="font-semibold uppercase tracking-[0.18em] text-[10px] text-[var(--color-ink-muted)]">Man of the match</span>
+      <span className="font-display font-bold text-[var(--color-ink)]">{top.player_name}</span>
+      <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">{Number(top.rating).toFixed(1)}</span>
+    </div>
+  );
+}
+
+
 /* ---------- Lineups (SofaScore-inspired) ---------- */
 
 function LineupSplit({
