@@ -108,6 +108,12 @@ function AdminWalletLedgerPage() {
             ))}
           </select>
           <Input
+            placeholder="Filter by username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="md:max-w-xs"
+          />
+          <Input
             placeholder="Filter by user UUID"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
