@@ -209,6 +209,31 @@ function StatTile({
   );
 }
 
+function WhatsAppTile({ code }: { code: string | null }) {
+  const link = buildReferralLink(code);
+  const disabled = !link;
+  const onClick = () => {
+    if (!link) return;
+    const text = `Join me on CSSEBets — win real prizes from smart football predictions. Sign up with my link: ${link}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="group flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-2 transition-colors hover:border-[#25D366]/60 disabled:opacity-50"
+    >
+      <div className="flex items-center gap-1.5 text-[var(--color-ink-muted)] group-hover:text-[#25D366]">
+        <MessageCircle className="h-3.5 w-3.5" />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">WhatsApp</span>
+      </div>
+      <span className="font-display text-sm font-bold tabular-nums text-[var(--color-ink)]">↗</span>
+    </button>
+  );
+}
+
 function LedgerRow({ row }: { row: any }) {
   const delta = Number(row.delta ?? 0);
   const positive = delta >= 0;
