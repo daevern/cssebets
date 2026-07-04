@@ -486,6 +486,17 @@ function MatchHero({
         );
       })()}
 
+      {/* Compact team event summary — goals, cards, assists (Google-style) */}
+      <MatchEventSummary
+        homeName={match.home_team}
+        awayName={match.away_team}
+        events={events}
+      />
+
+      {/* Man of the Match — top rated player, if data exists */}
+      <ManOfTheMatch ratings={ratings} />
+
+
       {/* Last play */}
       {lastPlay && (
         <div className="text-[11px] tracking-[0.02em] text-[var(--color-ink-muted)]">
