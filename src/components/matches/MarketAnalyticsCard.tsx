@@ -472,27 +472,13 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
       </div>
 
       <div className="mt-5 flex items-center justify-end gap-4 text-[11px]">
-        {RANGES.map((r) => {
-          const supported = supportedRanges.includes(r);
-          const active = r === range && supported;
-          return (
-            <button
-              key={r}
-              disabled={!supported}
-              onClick={() => setRange(r)}
-              className={`relative pb-1 font-medium tracking-tight transition-colors ${
-                active
-                  ? "text-[var(--color-ink)]"
-                  : supported
-                  ? "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-                  : "cursor-not-allowed text-[var(--color-ink-muted)]/30"
-              }`}
-            >
-              {r}
-              {active && <span className="absolute inset-x-0 -bottom-px h-px bg-[var(--color-neon)]" />}
-            </button>
-          );
-        })}
+        <span className="inline-flex items-center gap-1.5 text-[var(--color-ink)]">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--color-neon)] opacity-70" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--color-neon)]" />
+          </span>
+          <span className="font-medium tracking-tight">LIVE</span>
+        </span>
       </div>
     </SectionShell>
   );
