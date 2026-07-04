@@ -117,18 +117,19 @@ function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
             </SheetPrimitive.Close>
           </div>
 
-          {/* Stat trio — matches Return/Gain tile pattern */}
-          <div className="mt-3 grid grid-cols-3 gap-2 px-4">
+          {/* Action row */}
+          <div className="mt-3 grid grid-cols-4 gap-2 px-4">
             <StatTile
               icon={<Users2 className="h-3.5 w-3.5" />}
-              label="Invites"
+              label="Invite"
               value={invites}
               to="/referrals"
               onNav={() => onOpenChange(false)}
             />
+            <WhatsAppTile code={referral.data?.referralCode ?? null} />
             <StatTile
               icon={<Gift className="h-3.5 w-3.5" />}
-              label="Free bets"
+              label="Free-bet"
               value={availableFb}
               to={availableFb > 0 ? "/free-bets/place" : "/store"}
               onNav={() => onOpenChange(false)}
