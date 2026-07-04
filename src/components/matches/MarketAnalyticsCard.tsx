@@ -147,7 +147,7 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
   const qc = useQueryClient();
   const [market, setMarket] = useState<string | undefined>(undefined);
   const [mode, setMode] = useState<Mode>("prob");
-  const [range, setRange] = useState<Range>("LIVE");
+  const range: Range = "LIVE";
   const now = useNowTick(1000);
 
   const q = useQuery({
