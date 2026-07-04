@@ -82,6 +82,7 @@ const GROUPS: NavGroup[] = [
     label: "People",
     items: [
       { to: "/management/admin/users", label: "Users", icon: Users, badgeKey: "pendingUsers" },
+      { to: "/management/admin/referred-users", label: "Referred users", icon: Users },
       { to: "/management/admin/staff", label: "Staff", icon: Shield },
       { to: "/management/admin/support-ops", label: "Support ops", icon: Activity },
       { to: "/management/admin/onboarding", label: "Onboarding", icon: BookOpen },
