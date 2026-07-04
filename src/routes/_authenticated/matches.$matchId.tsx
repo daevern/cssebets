@@ -1053,12 +1053,14 @@ function LineupSplit({
   teamName,
   phase,
   ratings,
+  events = [],
 }: {
   lineup: any;
   side: "home" | "away";
   teamName: string;
   phase: AnalyticsBundle["phase"];
   ratings?: any[];
+  events?: any[];
 }) {
   if (!lineup) {
     return (
