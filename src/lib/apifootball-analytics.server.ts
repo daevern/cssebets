@@ -191,17 +191,57 @@ export async function syncScore(matchId: string) {
   const fx = res.data?.[0];
   if (!fx) return { ok: false, reason: "no fixture" };
 
-  const homeGoals = fx?.goals?.home;
-  const awayGoals = fx?.goals?.away;
+  // SETTLEMENT-SAFE SCORE MAPPING (2026-07-04):
+  // `fx.goals.*` is the running aggregate — during / after extra time it
+  // holds the ET score, NOT the 90-minute regulation score. 90-min markets
+  // (result / double_chance / O-U / BTTS / CS) MUST settle on regulation.
+  //
+  //   matches.home_score / away_score      = regulation (score.fulltime)
+  //   matches.ft_home_score / ft_away_score = final incl. ET   (score.extratime || goals)
+  //   matches.penalty_home_score / away    = shootout          (score.penalty)
+  //
+  // Feeding aggregate ET goals into home_score is the bug that caused the
+  // Argentina/Cape Verde and Belgium/Senegal auto-reversal loops.
+  const goalsHome = fx?.goals?.home;
+  const goalsAway = fx?.goals?.away;
+  const ftHome = fx?.score?.fulltime?.home;
+  const ftAway = fx?.score?.fulltime?.away;
+  const etHome = fx?.score?.extratime?.home;
+  const etAway = fx?.score?.extratime?.away;
   const penHome = fx?.score?.penalty?.home;
   const penAway = fx?.score?.penalty?.away;
   const shortStatus = fx?.fixture?.status?.short ?? null;
   const elapsed = fx?.fixture?.status?.elapsed ?? null;
   const newStatus = mapStatus(shortStatus);
+  const wentToET = shortStatus === "AET" || shortStatus === "PEN" || shortStatus === "ET" || shortStatus === "BT" || shortStatus === "P"
+    || typeof etHome === "number" || typeof etAway === "number";
+
+  // Regulation score. Prefer score.fulltime (present once 90' is played).
+  // While live in the first 90', goals === fulltime so goals is safe.
+  // Once ET starts, goals becomes aggregate — refuse to overwrite regulation.
+  let regHome: number | null = null;
+  let regAway: number | null = null;
+  if (typeof ftHome === "number" && typeof ftAway === "number") {
+    regHome = ftHome; regAway = ftAway;
+  } else if (!wentToET && typeof goalsHome === "number" && typeof goalsAway === "number") {
+    regHome = goalsHome; regAway = goalsAway;
+  }
+
+  // Aggregate final (ET included) for record-keeping and to_qualify grading.
+  const aggHome: number | null =
+    typeof etHome === "number" ? etHome
+    : typeof goalsHome === "number" ? goalsHome
+    : regHome;
+  const aggAway: number | null =
+    typeof etAway === "number" ? etAway
+    : typeof goalsAway === "number" ? goalsAway
+    : regAway;
 
   const update: Record<string, any> = { updated_at: new Date().toISOString() };
-  if (typeof homeGoals === "number") update.home_score = homeGoals;
-  if (typeof awayGoals === "number") update.away_score = awayGoals;
+  if (regHome !== null) update.home_score = regHome;
+  if (regAway !== null) update.away_score = regAway;
+  if (aggHome !== null) update.ft_home_score = aggHome;
+  if (aggAway !== null) update.ft_away_score = aggAway;
   if (typeof penHome === "number") update.penalty_home_score = penHome;
   if (typeof penAway === "number") update.penalty_away_score = penAway;
   if (shortStatus) update.live_status_short = shortStatus;
@@ -211,10 +251,54 @@ export async function syncScore(matchId: string) {
     update.status = newStatus;
   }
 
+  // Qualifier for to_qualify market (knockout only). Prefer explicit winner,
+  // fall back to penalties, then ET aggregate.
+  if (newStatus === "finished") {
+    let qualifier: "HOME" | "AWAY" | null = null;
+    const w = fx?.teams?.home?.winner === true ? "HOME"
+      : fx?.teams?.away?.winner === true ? "AWAY" : null;
+    if (w) qualifier = w;
+    else if (typeof penHome === "number" && typeof penAway === "number" && penHome !== penAway) {
+      qualifier = penHome > penAway ? "HOME" : "AWAY";
+    } else if (aggHome !== null && aggAway !== null && aggHome !== aggAway) {
+      qualifier = aggHome > aggAway ? "HOME" : "AWAY";
+    }
+    if (qualifier) update.qualifier = qualifier;
+  }
+
   if (Object.keys(update).length > 1) {
     await (supabaseAdmin as any).from("matches").update(update).eq("id", match.id);
   }
-  return { ok: true, home: homeGoals, away: awayGoals, status: newStatus };
+
+  // Divergence alert: if the match has settled predictions AND regulation
+  // now differs from the ET aggregate, flag for human review (no wallet writes).
+  try {
+    if (regHome !== null && aggHome !== null && (regHome !== aggHome || regAway !== aggAway)) {
+      const { count } = await (supabaseAdmin as any)
+        .from("predictions")
+        .select("id", { count: "exact", head: true })
+        .eq("match_id", match.id)
+        .in("status", ["won", "lost"]);
+      if ((count ?? 0) > 0) {
+        await (supabaseAdmin as any).from("operational_alerts").insert({
+          category: "settlement",
+          severity: "high",
+          title: "Regulation vs full-time score divergence",
+          detail: `${match.home_team} vs ${match.away_team}: reg ${regHome}-${regAway}, ft ${aggHome}-${aggAway}. Settled bets exist — verify they graded on regulation.`,
+          metadata: {
+            match_id: match.id,
+            reg_home: regHome, reg_away: regAway,
+            ft_home: aggHome, ft_away: aggAway,
+            settled_predictions: count,
+          },
+        });
+      }
+    }
+  } catch (e) {
+    console.log("[syncScore] divergence alert failed", e);
+  }
+
+  return { ok: true, home: regHome, away: regAway, ft_home: aggHome, ft_away: aggAway, status: newStatus };
 }
 
 // ---------- Statistics ----------
