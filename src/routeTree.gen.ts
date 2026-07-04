@@ -55,6 +55,7 @@ import { Route as ManagementAdminSettlementsRouteImport } from './routes/managem
 import { Route as ManagementAdminSettingsRouteImport } from './routes/management/admin.settings'
 import { Route as ManagementAdminRiskSettingsRouteImport } from './routes/management/admin.risk-settings'
 import { Route as ManagementAdminReviewRouteImport } from './routes/management/admin.review'
+import { Route as ManagementAdminReferredUsersRouteImport } from './routes/management/admin.referred-users'
 import { Route as ManagementAdminReferralsRouteImport } from './routes/management/admin.referrals'
 import { Route as ManagementAdminReconciliationRouteImport } from './routes/management/admin.reconciliation'
 import { Route as ManagementAdminPricingBreakdownRouteImport } from './routes/management/admin.pricing-breakdown'
@@ -330,6 +331,12 @@ const ManagementAdminReviewRoute = ManagementAdminReviewRouteImport.update({
   path: '/review',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
+const ManagementAdminReferredUsersRoute =
+  ManagementAdminReferredUsersRouteImport.update({
+    id: '/referred-users',
+    path: '/referred-users',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminReferralsRoute =
   ManagementAdminReferralsRouteImport.update({
     id: '/referrals',
@@ -563,6 +570,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/referrals': typeof ManagementAdminReferralsRoute
+  '/management/admin/referred-users': typeof ManagementAdminReferredUsersRoute
   '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
@@ -639,6 +647,7 @@ export interface FileRoutesByTo {
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/referrals': typeof ManagementAdminReferralsRoute
+  '/management/admin/referred-users': typeof ManagementAdminReferredUsersRoute
   '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
@@ -719,6 +728,7 @@ export interface FileRoutesById {
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/referrals': typeof ManagementAdminReferralsRoute
+  '/management/admin/referred-users': typeof ManagementAdminReferredUsersRoute
   '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
@@ -799,6 +809,7 @@ export interface FileRouteTypes {
     | '/management/admin/pricing-breakdown'
     | '/management/admin/reconciliation'
     | '/management/admin/referrals'
+    | '/management/admin/referred-users'
     | '/management/admin/review'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
@@ -875,6 +886,7 @@ export interface FileRouteTypes {
     | '/management/admin/pricing-breakdown'
     | '/management/admin/reconciliation'
     | '/management/admin/referrals'
+    | '/management/admin/referred-users'
     | '/management/admin/review'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
@@ -954,6 +966,7 @@ export interface FileRouteTypes {
     | '/management/admin/pricing-breakdown'
     | '/management/admin/reconciliation'
     | '/management/admin/referrals'
+    | '/management/admin/referred-users'
     | '/management/admin/review'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
@@ -1322,6 +1335,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminReviewRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/referred-users': {
+      id: '/management/admin/referred-users'
+      path: '/referred-users'
+      fullPath: '/management/admin/referred-users'
+      preLoaderRoute: typeof ManagementAdminReferredUsersRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/referrals': {
       id: '/management/admin/referrals'
       path: '/referrals'
@@ -1619,6 +1639,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminPricingBreakdownRoute: typeof ManagementAdminPricingBreakdownRoute
   ManagementAdminReconciliationRoute: typeof ManagementAdminReconciliationRoute
   ManagementAdminReferralsRoute: typeof ManagementAdminReferralsRoute
+  ManagementAdminReferredUsersRoute: typeof ManagementAdminReferredUsersRoute
   ManagementAdminReviewRoute: typeof ManagementAdminReviewRoute
   ManagementAdminRiskSettingsRoute: typeof ManagementAdminRiskSettingsRoute
   ManagementAdminSettingsRoute: typeof ManagementAdminSettingsRoute
@@ -1656,6 +1677,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminPricingBreakdownRoute: ManagementAdminPricingBreakdownRoute,
   ManagementAdminReconciliationRoute: ManagementAdminReconciliationRoute,
   ManagementAdminReferralsRoute: ManagementAdminReferralsRoute,
+  ManagementAdminReferredUsersRoute: ManagementAdminReferredUsersRoute,
   ManagementAdminReviewRoute: ManagementAdminReviewRoute,
   ManagementAdminRiskSettingsRoute: ManagementAdminRiskSettingsRoute,
   ManagementAdminSettingsRoute: ManagementAdminSettingsRoute,
