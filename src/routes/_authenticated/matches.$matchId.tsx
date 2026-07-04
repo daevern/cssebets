@@ -179,8 +179,8 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
               {(lineups.home?.formation || lineups.away?.formation) && (
                 <FormationPitch home={lineups.home} away={lineups.away} />
               )}
-              <LineupSplit lineup={lineups.home} side="home" teamName={home} phase={phase} ratings={ratings.home} />
-              <LineupSplit lineup={lineups.away} side="away" teamName={away} phase={phase} ratings={ratings.away} />
+              <LineupSplit lineup={lineups.home} side="home" teamName={home} phase={phase} ratings={ratings.home} events={events.filter((e: any) => e.side === "home")} />
+              <LineupSplit lineup={lineups.away} side="away" teamName={away} phase={phase} ratings={ratings.away} events={events.filter((e: any) => e.side === "away")} />
             </div>
           ) : (
             <p className="text-sm text-[var(--color-ink-muted)]">
