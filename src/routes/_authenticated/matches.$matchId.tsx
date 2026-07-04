@@ -1101,7 +1101,7 @@ function LineupSplit({
           </div>
           <ul className="mt-2 divide-y divide-dashed divide-[var(--color-surface-border)]/60">
             {starters.map((p, i) => (
-              <PlayerRow key={`s-${i}`} player={p} accent={accent} />
+              <PlayerRow key={`s-${i}`} player={p} accent={accent} events={events} />
             ))}
           </ul>
         </>
