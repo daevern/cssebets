@@ -346,6 +346,8 @@ function MatchHero({
   homeGoals,
   awayGoals,
   lastEvent,
+  events = [],
+  ratings,
 }: {
   match: NonNullable<AnalyticsBundle["match"]>;
   phaseLabel: string;
@@ -353,6 +355,8 @@ function MatchHero({
   homeGoals: any[];
   awayGoals: any[];
   lastEvent?: any | null;
+  events?: any[];
+  ratings?: { home: any[]; away: any[] };
 }) {
   const kickoff = new Date(match.kickoff_at);
   const dateStr = kickoff.toLocaleDateString(undefined, { month: "short", day: "numeric" });
