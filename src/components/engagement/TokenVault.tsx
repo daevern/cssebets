@@ -85,7 +85,7 @@ function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
       <SheetPortal>
         <SheetOverlay className="bg-black/70" />
         <SheetPrimitive.Content
-          className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92vh] max-w-2xl flex-col rounded-t-lg border border-[var(--color-surface-border)] bg-[#070D0A] text-[var(--color-ink)] shadow-[0_-8px_24px_rgba(0,0,0,0.6)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
+          className="fixed inset-x-0 bottom-0 z-50 mx-auto flex h-[50vh] max-h-[50vh] max-w-2xl flex-col rounded-t-lg border border-[var(--color-surface-border)] bg-[#070D0A] text-[var(--color-ink)] shadow-[0_-8px_24px_rgba(0,0,0,0.6)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
           onOpenAutoFocus={(e) => e.preventDefault()}
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
