@@ -1,12 +1,12 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, LineChart, Activity, Coins, LifeBuoy } from "lucide-react";
+import { Home, LineChart, Activity, Coins, Headphones } from "lucide-react";
 
 const items = [
   { to: "/dashboard", label: "Home", icon: Home, exact: true },
   { to: "/matches", label: "Markets", icon: LineChart, exact: false },
   { to: "/my-predictions", label: "Picks", icon: Activity, exact: false },
   { to: "/payout", label: "Payout", icon: Coins, exact: false },
-  { to: "/support", label: "Support", icon: LifeBuoy, exact: false },
+  { to: "/support", label: "Support", icon: Headphones, exact: false },
 ] as const;
 
 export function BottomNav() {

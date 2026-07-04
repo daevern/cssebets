@@ -6,12 +6,14 @@ import { Sheet, SheetPortal, SheetOverlay } from "@/components/ui/sheet";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import {
   Coins, Users2, Gift, ArrowUpRight, ArrowDownRight, X,
-  ShoppingBag,
+  ShoppingBag, MessageCircle,
 } from "lucide-react";
 import { getMyEngagementSummary, listMyTokenTransactions } from "@/lib/engagement.functions";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
 import { listMyFreeBets } from "@/lib/freebets.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { CsseMark } from "@/components/brand/CsseMark";
+import { buildReferralLink } from "@/lib/referral-link";
 
 /* ------------------------------------------------------------------ */
 /* Chip — sits in the top nav next to the wallet PTS chip.             */
@@ -39,9 +41,9 @@ export function TokenChip() {
       >
         <span
           aria-hidden
-          className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[var(--neon)]/12 ring-1 ring-inset ring-[var(--neon)]/40"
+          className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[var(--neon)]/12 ring-1 ring-inset ring-[var(--neon)]/40 text-[var(--neon)]"
         >
-          <span className="text-[9px] font-black leading-none text-[var(--neon)]">◈</span>
+          <CsseMark className="h-3 w-3" />
         </span>
         <span className="tabular-nums leading-none">
           {summary.isLoading ? "…" : formatCompact(tokens)}
@@ -83,7 +85,7 @@ function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
       <SheetPortal>
         <SheetOverlay className="bg-black/70" />
         <SheetPrimitive.Content
-          className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92vh] max-w-2xl flex-col rounded-t-lg border border-[var(--color-surface-border)] bg-[#070D0A] text-[var(--color-ink)] shadow-[0_-8px_24px_rgba(0,0,0,0.6)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
+          className="fixed inset-x-0 bottom-0 z-50 mx-auto flex h-[50vh] max-h-[50vh] max-w-2xl flex-col rounded-t-lg border border-[var(--color-surface-border)] bg-[#070D0A] text-[var(--color-ink)] shadow-[0_-8px_24px_rgba(0,0,0,0.6)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
           onOpenAutoFocus={(e) => e.preventDefault()}
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
@@ -115,18 +117,19 @@ function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
             </SheetPrimitive.Close>
           </div>
 
-          {/* Stat trio — matches Return/Gain tile pattern */}
-          <div className="mt-3 grid grid-cols-3 gap-2 px-4">
+          {/* Action row */}
+          <div className="mt-3 grid grid-cols-4 gap-2 px-4">
             <StatTile
               icon={<Users2 className="h-3.5 w-3.5" />}
-              label="Invites"
+              label="Invite"
               value={invites}
               to="/referrals"
               onNav={() => onOpenChange(false)}
             />
+            <WhatsAppTile code={referral.data?.referralCode ?? null} />
             <StatTile
               icon={<Gift className="h-3.5 w-3.5" />}
-              label="Free bets"
+              label="Free-bet"
               value={availableFb}
               to={availableFb > 0 ? "/free-bets/place" : "/store"}
               onNav={() => onOpenChange(false)}
@@ -203,6 +206,31 @@ function StatTile({
         {value}
       </span>
     </Link>
+  );
+}
+
+function WhatsAppTile({ code }: { code: string | null }) {
+  const link = buildReferralLink(code);
+  const disabled = !link;
+  const onClick = () => {
+    if (!link) return;
+    const text = `Join me on CSSEBets — win real prizes from smart football predictions. Sign up with my link: ${link}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="group flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-2 transition-colors hover:border-[#25D366]/60 disabled:opacity-50"
+    >
+      <div className="flex items-center gap-1.5 text-[var(--color-ink-muted)] group-hover:text-[#25D366]">
+        <MessageCircle className="h-3.5 w-3.5" />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">WhatsApp</span>
+      </div>
+      <span className="font-display text-sm font-bold tabular-nums text-[var(--color-ink)]">↗</span>
+    </button>
   );
 }
 

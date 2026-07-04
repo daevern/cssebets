@@ -82,7 +82,11 @@ function StorePage() {
             Convert CSSE into stake.
           </h1>
           <p className="mt-0.5 text-[12px] text-[var(--color-ink-muted)]">
-            Stake is funded by the house. You keep profit only.
+            Stake is funded by the house. You{" "}
+            <mark className="rounded-sm bg-yellow-400/90 px-1 py-0.5 font-semibold text-black">
+              keep profit only
+            </mark>
+            .
           </p>
         </div>
         <div className="shrink-0 rounded-md border border-[var(--color-surface-border)] bg-black/40 px-3 py-2 text-right">

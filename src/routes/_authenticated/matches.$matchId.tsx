@@ -121,6 +121,8 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
         homeGoals={homeGoals}
         awayGoals={awayGoals}
         lastEvent={lastEvent}
+        events={events}
+        ratings={ratings}
       />
 
       {/* Market Analytics — historical odds / implied probability */}
@@ -177,8 +179,8 @@ function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
               {(lineups.home?.formation || lineups.away?.formation) && (
                 <FormationPitch home={lineups.home} away={lineups.away} />
               )}
-              <LineupSplit lineup={lineups.home} side="home" teamName={home} phase={phase} ratings={ratings.home} />
-              <LineupSplit lineup={lineups.away} side="away" teamName={away} phase={phase} ratings={ratings.away} />
+              <LineupSplit lineup={lineups.home} side="home" teamName={home} phase={phase} ratings={ratings.home} events={events.filter((e: any) => e.side === "home")} />
+              <LineupSplit lineup={lineups.away} side="away" teamName={away} phase={phase} ratings={ratings.away} events={events.filter((e: any) => e.side === "away")} />
             </div>
           ) : (
             <p className="text-sm text-[var(--color-ink-muted)]">
@@ -344,6 +346,8 @@ function MatchHero({
   homeGoals,
   awayGoals,
   lastEvent,
+  events = [],
+  ratings,
 }: {
   match: NonNullable<AnalyticsBundle["match"]>;
   phaseLabel: string;
@@ -351,6 +355,8 @@ function MatchHero({
   homeGoals: any[];
   awayGoals: any[];
   lastEvent?: any | null;
+  events?: any[];
+  ratings?: { home: any[]; away: any[] };
 }) {
   const kickoff = new Date(match.kickoff_at);
   const dateStr = kickoff.toLocaleDateString(undefined, { month: "short", day: "numeric" });
@@ -479,6 +485,17 @@ function MatchHero({
           </div>
         );
       })()}
+
+      {/* Compact team event summary — goals, cards, assists (Google-style) */}
+      <MatchEventSummary
+        homeName={match.home_team}
+        awayName={match.away_team}
+        events={events}
+      />
+
+      {/* Man of the Match — top rated player, if data exists */}
+      <ManOfTheMatch ratings={ratings} />
+
 
       {/* Last play */}
       {lastPlay && (
@@ -663,26 +680,52 @@ function PickRow({ p }: { p: any }) {
   const stake = Number(p.virtual_stake || 0);
   const payout = Number(p.actual_payout || 0);
   const potential = Number(p.potential_payout || 0);
+  const odds = Number(p.odds || 0);
   const status = String(p.status || "pending");
-  const statusTone =
+  const settled = status === "won" || status === "lost";
+  const returned = settled ? payout : potential;
+  const profit = settled ? payout - stake : potential - stake;
+  const profitTone =
     status === "won" ? "text-[var(--color-neon)]" :
     status === "lost" ? "text-destructive" :
     "text-[var(--color-ink-muted)]";
-  const statusLabel =
-    status === "won" ? `+${(payout - stake).toLocaleString()} pts` :
-    status === "lost" ? `-${stake.toLocaleString()} pts` :
-    status === "void" || status === "cancelled" || status === "refunded" ? "refunded" :
-    `to win ${(potential - stake).toLocaleString()} pts`;
+  const statusBadge =
+    status === "won" ? "WON" :
+    status === "lost" ? "LOST" :
+    status === "void" || status === "cancelled" || status === "refunded" ? "REFUNDED" :
+    "OPEN";
   return (
-    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 py-2">
-      <div className="min-w-0">
-        <div className="truncate text-[12px] font-semibold text-[var(--color-ink)]">{p.selection_label ?? "—"}</div>
-        <div className="truncate text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-          {p.market_text ?? "market"} · {stake.toLocaleString()} pts @ {Number(p.odds ?? 0).toFixed(2)}x
+    <li className="py-2.5">
+      <div className="mb-1 flex items-baseline justify-between gap-2">
+        <div className="min-w-0">
+          <div className="truncate text-[12px] font-semibold text-[var(--color-ink)]">
+            {p.selection_label ?? "—"}
+          </div>
+          <div className="truncate text-[9px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+            {p.market_text ?? "market"}
+          </div>
         </div>
+        <span className={`shrink-0 rounded-sm border border-[var(--color-surface-border)] px-1.5 py-0.5 font-display text-[9px] font-black tracking-[0.18em] ${profitTone}`}>
+          {statusBadge}
+        </span>
       </div>
-      <span className={`shrink-0 font-display text-[11px] font-bold tabular-nums ${statusTone}`}>{statusLabel}</span>
+      <div className="grid grid-cols-4 gap-2 text-[10px]">
+        <PickField label="Stake" value={`${stake.toLocaleString()}`} />
+        <PickField label="Odds" value={`${odds.toFixed(2)}x`} />
+        <PickField label="Return" value={`${returned.toLocaleString()}`} />
+        <PickField label="Profit" value={`${profit >= 0 ? "+" : ""}${profit.toLocaleString()}`} tone={profit > 0 ? "win" : profit < 0 ? "lose" : undefined} />
+      </div>
     </li>
+  );
+}
+
+function PickField({ label, value, tone }: { label: string; value: string; tone?: "win" | "lose" }) {
+  const color = tone === "win" ? "text-[var(--color-neon)]" : tone === "lose" ? "text-destructive" : "text-[var(--color-ink)]";
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[8px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">{label}</span>
+      <span className={`font-display text-[12px] font-bold tabular-nums ${color}`}>{value}</span>
+    </div>
   );
 }
 
@@ -958,6 +1001,76 @@ function TeamBlock({ name, goals = [], align = "left", accent = "home" }: { name
 }
 
 
+/* ---------- Hero add-ons: event summary & MOTM ---------- */
+
+function eventsBySide(events: any[], side: "home" | "away") {
+  return events.filter((e) => e.side === side);
+}
+
+function MatchEventSummary({ homeName, awayName, events }: { homeName: string; awayName: string; events: any[] }) {
+  if (!events || events.length === 0) return null;
+  const keep = events.filter((e) => {
+    const t = String(e.type || "").toLowerCase();
+    return t === "goal" || t === "card";
+  });
+  if (keep.length === 0) return null;
+  const home = eventsBySide(keep, "home");
+  const away = eventsBySide(keep, "away");
+  return (
+    <div className="grid grid-cols-2 gap-3 border-y border-dashed border-[var(--color-surface-border)]/50 py-3 text-[11px]">
+      <TeamEventList name={homeName} events={home} align="left" />
+      <TeamEventList name={awayName} events={away} align="right" />
+    </div>
+  );
+}
+
+function TeamEventList({ name, events, align }: { name: string; events: any[]; align: "left" | "right" }) {
+  return (
+    <div className={align === "right" ? "text-right" : "text-left"}>
+      <div className="mb-1 text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)] truncate">{name}</div>
+      {events.length === 0 ? (
+        <div className="text-[10px] text-[var(--color-ink-muted)]/70">—</div>
+      ) : (
+        <ul className={`space-y-0.5 ${align === "right" ? "items-end" : "items-start"} flex flex-col`}>
+          {events.map((e, i) => {
+            const min = `${e.minute ?? ""}${e.extra_minute ? `+${e.extra_minute}` : ""}'`;
+            const last = (e.player_name || e.detail || e.type || "").toString().split(" ").slice(-2).join(" ");
+            return (
+              <li key={i} className={`flex items-center gap-1.5 ${align === "right" ? "flex-row-reverse" : ""}`}>
+                <span className="font-display tabular-nums text-[10px] text-[var(--color-ink-muted)]">{min}</span>
+                <span className="truncate text-[var(--color-ink)] max-w-[110px]">{last || "—"}</span>
+                <span className="shrink-0">{eventMark(e.type, e.detail, 11)}</span>
+                {e.assist_name && (
+                  <span className={`truncate text-[9px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)] max-w-[80px] ${align === "right" ? "" : ""}`}>
+                    A: {(e.assist_name || "").split(" ").slice(-1)[0]}
+                  </span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function ManOfTheMatch({ ratings }: { ratings?: { home: any[]; away: any[] } }) {
+  if (!ratings) return null;
+  const all = [...(ratings.home ?? []), ...(ratings.away ?? [])].filter((r) => r.rating != null);
+  if (all.length === 0) return null;
+  const top = all.reduce((best, r) => (Number(r.rating) > Number(best.rating) ? r : best), all[0]);
+  if (top?.rating == null) return null;
+  return (
+    <div className="flex items-center justify-center gap-2 text-[12px]">
+      <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+      <span className="font-semibold uppercase tracking-[0.18em] text-[10px] text-[var(--color-ink-muted)]">Man of the match</span>
+      <span className="font-display font-bold text-[var(--color-ink)]">{top.player_name}</span>
+      <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">{Number(top.rating).toFixed(1)}</span>
+    </div>
+  );
+}
+
+
 /* ---------- Lineups (SofaScore-inspired) ---------- */
 
 function LineupSplit({
@@ -966,12 +1079,14 @@ function LineupSplit({
   teamName,
   phase,
   ratings,
+  events = [],
 }: {
   lineup: any;
   side: "home" | "away";
   teamName: string;
   phase: AnalyticsBundle["phase"];
   ratings?: any[];
+  events?: any[];
 }) {
   if (!lineup) {
     return (
@@ -1012,7 +1127,7 @@ function LineupSplit({
           </div>
           <ul className="mt-2 divide-y divide-dashed divide-[var(--color-surface-border)]/60">
             {starters.map((p, i) => (
-              <PlayerRow key={`s-${i}`} player={p} accent={accent} />
+              <PlayerRow key={`s-${i}`} player={p} accent={accent} events={events} />
             ))}
           </ul>
         </>
@@ -1051,21 +1166,53 @@ function LineupSplit({
   );
 }
 
-function PlayerRow({ player, accent }: { player: LineupPlayer; accent: string }) {
+function PlayerRow({ player, accent, events = [] }: { player: LineupPlayer; accent: string; events?: any[] }) {
+  const pid = player.id;
+  const pname = (player.name || "").toLowerCase();
+  const matches = (e: any) => {
+    if (pid && (e.player_id === pid || e.assist_id === pid)) return true;
+    const en = String(e.player_name || "").toLowerCase();
+    const an = String(e.assist_name || "").toLowerCase();
+    return !!pname && (en === pname || an === pname);
+  };
+  const own = (events || []).filter(matches);
+  let goals = 0, assists = 0, yellow = 0, red = 0;
+  for (const e of own) {
+    const t = String(e.type || "").toLowerCase();
+    const d = String(e.detail || "").toLowerCase();
+    if (t === "goal") {
+      if ((e.player_name || "").toLowerCase() === pname || e.player_id === pid) goals += 1;
+      if ((e.assist_name || "").toLowerCase() === pname || e.assist_id === pid) assists += 1;
+    } else if (t === "card") {
+      if (d.includes("red")) red += 1;
+      else yellow += 1;
+    }
+  }
   return (
-    <li className="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3 py-2">
+    <li className="grid grid-cols-[28px_minmax(0,1fr)_auto_auto] items-center gap-2 py-2">
       <span
         className="grid h-6 w-6 place-items-center rounded-full border font-display text-[10px] font-bold tabular-nums"
         style={{ borderColor: accent, color: accent }}
       >
         {player.number ?? "–"}
       </span>
-      <span className="truncate text-sm text-[var(--color-ink)]">{player.name}</span>
+      <span className="truncate text-sm text-[var(--color-ink)]">
+        {player.name}
+        {(goals > 0 || assists > 0 || yellow > 0 || red > 0) && (
+          <span className="ml-1.5 inline-flex items-center gap-1 align-middle">
+            {Array.from({ length: goals }).map((_, i) => <GoalIcon key={`g${i}`} size={11} className="text-[var(--color-neon)]" />)}
+            {assists > 0 && <span className="grid h-3.5 w-3.5 place-items-center rounded-full bg-[var(--color-neon)]/15 text-[8px] font-black text-[var(--color-neon)]" title="Assist">A</span>}
+            {yellow > 0 && <YellowCardIcon size={11} />}
+            {red > 0 && <RedCardIcon size={11} />}
+          </span>
+        )}
+      </span>
       {player.pos && (
         <span className="rounded-sm border border-[var(--color-surface-border)] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
           {player.pos}
         </span>
       )}
+      <span />
     </li>
   );
 }
@@ -1322,7 +1469,7 @@ function EventTimeline({ events, home, away, compact }: { events: any[]; home: s
 
   return (
     <div className="relative">
-      <div className={compact ? "" : "md:max-h-[460px] md:overflow-y-auto md:pr-1"}>
+      <div className={compact ? "" : "max-h-[70vh] overflow-y-auto pr-1"}>
         <ul className="relative">
           {/* Center rail */}
           <span aria-hidden className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[var(--color-surface-border)]" />
