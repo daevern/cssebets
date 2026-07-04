@@ -72,6 +72,7 @@ const GROUPS: NavGroup[] = [
       { to: "/management/admin/payouts", label: "Payouts", icon: Banknote, badgeKey: "pendingPayouts" },
       { to: "/management/admin/wallet-adjustments", label: "Wallet adjustments", icon: Wallet },
       { to: "/management/admin/wallet-ledger", label: "Wallet ledger", icon: Wallet },
+      { to: "/management/admin/token-ledger", label: "Token ledger", icon: Wallet },
       { to: "/management/admin/bankroll", label: "Bankroll", icon: TrendingUp },
       { to: "/management/admin/match-pools", label: "Match pools", icon: Wallet },
       { to: "/management/admin/risk-settings", label: "Risk settings", icon: ShieldAlert },
@@ -81,6 +82,7 @@ const GROUPS: NavGroup[] = [
     label: "People",
     items: [
       { to: "/management/admin/users", label: "Users", icon: Users, badgeKey: "pendingUsers" },
+      { to: "/management/admin/referred-users", label: "Referred users", icon: Users },
       { to: "/management/admin/staff", label: "Staff", icon: Shield },
       { to: "/management/admin/support-ops", label: "Support ops", icon: Activity },
       { to: "/management/admin/onboarding", label: "Onboarding", icon: BookOpen },

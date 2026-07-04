@@ -127,3 +127,119 @@ export const adminDeleteStoreItem = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const adminListTokenLedger = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({
+    kind: z.string().optional(),
+    source: z.string().optional(),
+    userId: z.string().uuid().optional(),
+    limit: z.number().int().positive().max(1000).default(500),
+  }).parse(i ?? {}))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = (supabaseAdmin as any)
+      .from("csse_token_transactions")
+      .select("id, user_id, delta, kind, source, source_ref, metadata, balance_after, created_at")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    if (data.kind) q = q.eq("kind", data.kind);
+    if (data.source) q = q.eq("source", data.source);
+    if (data.userId) q = q.eq("user_id", data.userId);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    const ids = Array.from(new Set(((rows ?? []) as any[]).map((r) => r.user_id)));
+    const { data: profs } = ids.length
+      ? await (supabaseAdmin as any).from("profiles").select("id, display_name").in("id", ids)
+      : { data: [] };
+    const names = new Map(((profs ?? []) as any[]).map((p) => [p.id, p.display_name]));
+    const totals = { credit: 0, debit: 0 };
+    for (const r of (rows ?? []) as any[]) {
+      const n = Number(r.delta ?? 0);
+      if (n >= 0) totals.credit += n; else totals.debit += -n;
+    }
+    return {
+      transactions: ((rows ?? []) as any[]).map((r) => ({
+        ...r,
+        display_name: names.get(r.user_id) ?? "—",
+      })),
+      totals,
+    };
+  });
+
+export const adminListReferredUsers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({
+    search: z.string().optional(),
+    limit: z.number().int().positive().max(1000).default(500),
+  }).parse(i ?? {}))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // New users who signed up via a referral code
+    let q = (supabaseAdmin as any)
+      .from("profiles")
+      .select("id, display_name, referred_by_code, referral_code, created_at")
+      .not("referred_by_code", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+    if (data.search) q = q.ilike("display_name", `%${data.search}%`);
+    const { data: newUsers, error } = await q;
+    if (error) throw new Error(error.message);
+
+    const codes = Array.from(new Set(((newUsers ?? []) as any[])
+      .map((u) => (u.referred_by_code || "").toUpperCase())
+      .filter(Boolean)));
+    const referrerByCode = new Map<string, { id: string; display_name: string }>();
+    if (codes.length) {
+      const { data: refs } = await (supabaseAdmin as any)
+        .from("profiles").select("id, display_name, referral_code").in("referral_code", codes);
+      for (const r of (refs ?? []) as any[]) {
+        referrerByCode.set(String(r.referral_code).toUpperCase(), { id: r.id, display_name: r.display_name });
+      }
+    }
+
+    // Bring in referrals row for milestone/tokens context
+    const newUserIds = ((newUsers ?? []) as any[]).map((u) => u.id);
+    const { data: refRows } = newUserIds.length
+      ? await (supabaseAdmin as any)
+          .from("referrals")
+          .select("referred_user_id, stage1_completed, stage2_completed, stage3_completed, total_tokens_awarded, cumulative_settled_wagered, flagged")
+          .in("referred_user_id", newUserIds)
+      : { data: [] };
+    const refByUser = new Map(((refRows ?? []) as any[]).map((r) => [r.referred_user_id, r]));
+
+    const rows = ((newUsers ?? []) as any[]).map((u) => {
+      const code = (u.referred_by_code || "").toUpperCase();
+      const referrer = referrerByCode.get(code);
+      const rr = refByUser.get(u.id);
+      return {
+        id: u.id,
+        display_name: u.display_name,
+        created_at: u.created_at,
+        referred_by_code: code,
+        referrer_id: referrer?.id ?? null,
+        referrer_name: referrer?.display_name ?? "—",
+        stage1: !!rr?.stage1_completed,
+        stage2: !!rr?.stage2_completed,
+        stage3: !!rr?.stage3_completed,
+        tokens_awarded: Number(rr?.total_tokens_awarded ?? 0),
+        wagered: Number(rr?.cumulative_settled_wagered ?? 0),
+        flagged: !!rr?.flagged,
+      };
+    });
+
+    const stats = {
+      total: rows.length,
+      uniqueReferrers: new Set(rows.map((r) => r.referrer_id).filter(Boolean)).size,
+      active: rows.filter((r) => r.stage1).length,
+      tokensAwarded: rows.reduce((a, b) => a + b.tokens_awarded, 0),
+    };
+
+    return { rows, stats };
+  });
+

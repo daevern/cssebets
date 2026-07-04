@@ -46,6 +46,7 @@ import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/manage
 import { Route as ManagementAdminWalletAdjustmentsRouteImport } from './routes/management/admin.wallet-adjustments'
 import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
 import { Route as ManagementAdminTournamentRouteImport } from './routes/management/admin.tournament'
+import { Route as ManagementAdminTokenLedgerRouteImport } from './routes/management/admin.token-ledger'
 import { Route as ManagementAdminSupportOpsRouteImport } from './routes/management/admin.support-ops'
 import { Route as ManagementAdminStoreRouteImport } from './routes/management/admin.store'
 import { Route as ManagementAdminStaffRouteImport } from './routes/management/admin.staff'
@@ -54,6 +55,7 @@ import { Route as ManagementAdminSettlementsRouteImport } from './routes/managem
 import { Route as ManagementAdminSettingsRouteImport } from './routes/management/admin.settings'
 import { Route as ManagementAdminRiskSettingsRouteImport } from './routes/management/admin.risk-settings'
 import { Route as ManagementAdminReviewRouteImport } from './routes/management/admin.review'
+import { Route as ManagementAdminReferredUsersRouteImport } from './routes/management/admin.referred-users'
 import { Route as ManagementAdminReferralsRouteImport } from './routes/management/admin.referrals'
 import { Route as ManagementAdminReconciliationRouteImport } from './routes/management/admin.reconciliation'
 import { Route as ManagementAdminPricingBreakdownRouteImport } from './routes/management/admin.pricing-breakdown'
@@ -279,6 +281,12 @@ const ManagementAdminTournamentRoute =
     path: '/tournament',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminTokenLedgerRoute =
+  ManagementAdminTokenLedgerRouteImport.update({
+    id: '/token-ledger',
+    path: '/token-ledger',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminSupportOpsRoute =
   ManagementAdminSupportOpsRouteImport.update({
     id: '/support-ops',
@@ -323,6 +331,12 @@ const ManagementAdminReviewRoute = ManagementAdminReviewRouteImport.update({
   path: '/review',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
+const ManagementAdminReferredUsersRoute =
+  ManagementAdminReferredUsersRouteImport.update({
+    id: '/referred-users',
+    path: '/referred-users',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminReferralsRoute =
   ManagementAdminReferralsRouteImport.update({
     id: '/referrals',
@@ -556,6 +570,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/referrals': typeof ManagementAdminReferralsRoute
+  '/management/admin/referred-users': typeof ManagementAdminReferredUsersRoute
   '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
@@ -564,6 +579,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/staff': typeof ManagementAdminStaffRoute
   '/management/admin/store': typeof ManagementAdminStoreRoute
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
+  '/management/admin/token-ledger': typeof ManagementAdminTokenLedgerRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
@@ -631,6 +647,7 @@ export interface FileRoutesByTo {
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/referrals': typeof ManagementAdminReferralsRoute
+  '/management/admin/referred-users': typeof ManagementAdminReferredUsersRoute
   '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
@@ -639,6 +656,7 @@ export interface FileRoutesByTo {
   '/management/admin/staff': typeof ManagementAdminStaffRoute
   '/management/admin/store': typeof ManagementAdminStoreRoute
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
+  '/management/admin/token-ledger': typeof ManagementAdminTokenLedgerRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
@@ -710,6 +728,7 @@ export interface FileRoutesById {
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/referrals': typeof ManagementAdminReferralsRoute
+  '/management/admin/referred-users': typeof ManagementAdminReferredUsersRoute
   '/management/admin/review': typeof ManagementAdminReviewRoute
   '/management/admin/risk-settings': typeof ManagementAdminRiskSettingsRoute
   '/management/admin/settings': typeof ManagementAdminSettingsRoute
@@ -718,6 +737,7 @@ export interface FileRoutesById {
   '/management/admin/staff': typeof ManagementAdminStaffRoute
   '/management/admin/store': typeof ManagementAdminStoreRoute
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
+  '/management/admin/token-ledger': typeof ManagementAdminTokenLedgerRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
@@ -789,6 +809,7 @@ export interface FileRouteTypes {
     | '/management/admin/pricing-breakdown'
     | '/management/admin/reconciliation'
     | '/management/admin/referrals'
+    | '/management/admin/referred-users'
     | '/management/admin/review'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
@@ -797,6 +818,7 @@ export interface FileRouteTypes {
     | '/management/admin/staff'
     | '/management/admin/store'
     | '/management/admin/support-ops'
+    | '/management/admin/token-ledger'
     | '/management/admin/tournament'
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
@@ -864,6 +886,7 @@ export interface FileRouteTypes {
     | '/management/admin/pricing-breakdown'
     | '/management/admin/reconciliation'
     | '/management/admin/referrals'
+    | '/management/admin/referred-users'
     | '/management/admin/review'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
@@ -872,6 +895,7 @@ export interface FileRouteTypes {
     | '/management/admin/staff'
     | '/management/admin/store'
     | '/management/admin/support-ops'
+    | '/management/admin/token-ledger'
     | '/management/admin/tournament'
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
@@ -942,6 +966,7 @@ export interface FileRouteTypes {
     | '/management/admin/pricing-breakdown'
     | '/management/admin/reconciliation'
     | '/management/admin/referrals'
+    | '/management/admin/referred-users'
     | '/management/admin/review'
     | '/management/admin/risk-settings'
     | '/management/admin/settings'
@@ -950,6 +975,7 @@ export interface FileRouteTypes {
     | '/management/admin/staff'
     | '/management/admin/store'
     | '/management/admin/support-ops'
+    | '/management/admin/token-ledger'
     | '/management/admin/tournament'
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
@@ -1246,6 +1272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminTournamentRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/token-ledger': {
+      id: '/management/admin/token-ledger'
+      path: '/token-ledger'
+      fullPath: '/management/admin/token-ledger'
+      preLoaderRoute: typeof ManagementAdminTokenLedgerRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/support-ops': {
       id: '/management/admin/support-ops'
       path: '/support-ops'
@@ -1300,6 +1333,13 @@ declare module '@tanstack/react-router' {
       path: '/review'
       fullPath: '/management/admin/review'
       preLoaderRoute: typeof ManagementAdminReviewRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/referred-users': {
+      id: '/management/admin/referred-users'
+      path: '/referred-users'
+      fullPath: '/management/admin/referred-users'
+      preLoaderRoute: typeof ManagementAdminReferredUsersRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
     '/management/admin/referrals': {
@@ -1599,6 +1639,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminPricingBreakdownRoute: typeof ManagementAdminPricingBreakdownRoute
   ManagementAdminReconciliationRoute: typeof ManagementAdminReconciliationRoute
   ManagementAdminReferralsRoute: typeof ManagementAdminReferralsRoute
+  ManagementAdminReferredUsersRoute: typeof ManagementAdminReferredUsersRoute
   ManagementAdminReviewRoute: typeof ManagementAdminReviewRoute
   ManagementAdminRiskSettingsRoute: typeof ManagementAdminRiskSettingsRoute
   ManagementAdminSettingsRoute: typeof ManagementAdminSettingsRoute
@@ -1607,6 +1648,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminStaffRoute: typeof ManagementAdminStaffRoute
   ManagementAdminStoreRoute: typeof ManagementAdminStoreRoute
   ManagementAdminSupportOpsRoute: typeof ManagementAdminSupportOpsRoute
+  ManagementAdminTokenLedgerRoute: typeof ManagementAdminTokenLedgerRoute
   ManagementAdminTournamentRoute: typeof ManagementAdminTournamentRoute
   ManagementAdminUsersRoute: typeof ManagementAdminUsersRoute
   ManagementAdminWalletAdjustmentsRoute: typeof ManagementAdminWalletAdjustmentsRoute
@@ -1635,6 +1677,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminPricingBreakdownRoute: ManagementAdminPricingBreakdownRoute,
   ManagementAdminReconciliationRoute: ManagementAdminReconciliationRoute,
   ManagementAdminReferralsRoute: ManagementAdminReferralsRoute,
+  ManagementAdminReferredUsersRoute: ManagementAdminReferredUsersRoute,
   ManagementAdminReviewRoute: ManagementAdminReviewRoute,
   ManagementAdminRiskSettingsRoute: ManagementAdminRiskSettingsRoute,
   ManagementAdminSettingsRoute: ManagementAdminSettingsRoute,
@@ -1643,6 +1686,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminStaffRoute: ManagementAdminStaffRoute,
   ManagementAdminStoreRoute: ManagementAdminStoreRoute,
   ManagementAdminSupportOpsRoute: ManagementAdminSupportOpsRoute,
+  ManagementAdminTokenLedgerRoute: ManagementAdminTokenLedgerRoute,
   ManagementAdminTournamentRoute: ManagementAdminTournamentRoute,
   ManagementAdminUsersRoute: ManagementAdminUsersRoute,
   ManagementAdminWalletAdjustmentsRoute: ManagementAdminWalletAdjustmentsRoute,
