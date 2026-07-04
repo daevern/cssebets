@@ -1322,7 +1322,7 @@ function EventTimeline({ events, home, away, compact }: { events: any[]; home: s
 
   return (
     <div className="relative">
-      <div className={compact ? "" : "md:max-h-[460px] md:overflow-y-auto md:pr-1"}>
+      <div className={compact ? "" : "max-h-[70vh] overflow-y-auto pr-1"}>
         <ul className="relative">
           {/* Center rail */}
           <span aria-hidden className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[var(--color-surface-border)]" />
