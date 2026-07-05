@@ -35,19 +35,35 @@ function BankrollPage() {
   const setHouseFn = useServerFn(setHouseUser);
   const qc = useQueryClient();
 
+  // Gate queries on an active Supabase session — otherwise the bearer attacher has
+  // nothing to send and requireSupabaseAuth rejects with "No authorization header".
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active) setHasSession(!!data.session);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setHasSession(!!s));
+    return () => { active = false; sub.subscription.unsubscribe(); };
+  }, []);
+  const enabled = hasSession === true;
+
   const overview = useQuery({
     queryKey: ["bankroll-overview"],
     queryFn: () => overviewFn(),
     refetchInterval: 10_000,
+    enabled,
   });
   const txns = useQuery({
     queryKey: ["platform-txns"],
     queryFn: () => txnsFn({ data: {} }),
     refetchInterval: 15_000,
+    enabled,
   });
   const eligibles = useQuery({
     queryKey: ["bankroll-eligible-house"],
     queryFn: () => listHouseFn(),
+    enabled,
   });
 
   const [amount, setAmount] = useState("");
