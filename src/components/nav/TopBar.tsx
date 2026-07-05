@@ -42,9 +42,6 @@ function MobileBar({ balance, loading }: { balance?: number | null; loading?: bo
         className="flex shrink-0 items-center gap-2"
       >
         <CsseLogo size={22} />
-        <span className="hidden sm:inline text-[15px] font-bold tracking-tight leading-none">
-          <BrandText />
-        </span>
       </Link>
 
       <div className="flex min-w-0 shrink items-center justify-end gap-1 sm:gap-2">
@@ -89,9 +86,6 @@ function DesktopBar({ balance, loading }: { balance?: number | null; loading?: b
         className="group flex shrink-0 items-center gap-2.5"
       >
         <CsseLogo size={26} />
-        <span className="text-[17px] font-bold tracking-tight leading-none">
-          <BrandText />
-        </span>
       </Link>
 
       {/* Divider */}
