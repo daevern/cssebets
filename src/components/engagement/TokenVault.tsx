@@ -37,18 +37,18 @@ export function TokenChip() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Open CSSE token vault"
-        className="group relative flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] px-2 py-1.5 text-[12px] font-semibold text-[var(--ink)] transition-colors hover:border-[var(--neon)]/60 sm:gap-1.5 sm:px-2.5"
+        className="group relative flex shrink-0 items-center gap-1 rounded-full border border-surface-border bg-surface-2 px-2 py-1.5 text-[12px] font-semibold text-ink transition-colors hover:border-neon/60 sm:gap-1.5 sm:px-2.5"
       >
         <span
           aria-hidden
-          className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[var(--neon)]/12 ring-1 ring-inset ring-[var(--neon)]/40 text-[var(--neon)]"
+          className="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-neon/12 ring-1 ring-inset ring-neon/40 text-neon"
         >
           <CsseMark className="h-3 w-3" />
         </span>
         <span className="tabular-nums leading-none">
           {summary.isLoading ? "…" : formatCompact(tokens)}
         </span>
-        <span className="hidden sm:inline text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--ink-muted)] leading-none">
+        <span className="hidden sm:inline text-[9px] font-bold uppercase tracking-[0.18em] text-ink-muted leading-none">
           CSSE
         </span>
       </button>
@@ -59,7 +59,7 @@ export function TokenChip() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Vault sheet — same visual language as the "Lock Prediction" slip.   */
+/* Vault sheet — modern bottom sheet tuned for mobile.                 */
 /* ------------------------------------------------------------------ */
 function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { user } = useAuth();
@@ -85,57 +85,70 @@ function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
       <SheetPortal>
         <SheetOverlay className="bg-black/70" />
         <SheetPrimitive.Content
-          className="fixed inset-x-0 bottom-0 z-50 mx-auto flex h-[50vh] max-h-[50vh] max-w-2xl flex-col rounded-t-lg border border-[var(--color-surface-border)] bg-[#070D0A] text-[var(--color-ink)] shadow-[0_-8px_24px_rgba(0,0,0,0.6)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
+          className="fixed inset-x-0 bottom-0 z-50 mx-auto flex h-[55vh] max-h-[55vh] max-w-2xl flex-col rounded-t-2xl border border-surface-border bg-surface text-ink shadow-[0_-12px_40px_rgba(0,0,0,0.5)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom"
           onOpenAutoFocus={(e) => e.preventDefault()}
           style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         >
-          {/* Header — mirrors StakeSlip "Your prediction" block */}
-          <div className="flex items-start justify-between gap-2 px-4 pt-4">
-            <div className="min-w-0 flex-1 space-y-1">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-neon)]">
-                CSSE Vault
+          {/* Drag handle */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="h-1.5 w-10 rounded-full bg-ink-muted/30" />
+          </div>
+
+          {/* Header */}
+          <div className="flex items-start justify-between gap-4 px-5 pt-2">
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-neon/12 text-ink ring-1 ring-inset ring-neon/40">
+                  <CsseMark className="h-4 w-4" />
+                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-neon">
+                  CSSE Vault
+                </span>
               </div>
               <div className="flex items-baseline gap-2">
-                <span className="font-display text-[32px] font-bold leading-none tabular-nums text-[var(--color-ink)]">
+                <span className="font-display text-4xl font-bold leading-none tracking-tight tabular-nums text-ink">
                   {balance.toLocaleString()}
                 </span>
-                <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-ink-muted">
                   tokens
                 </span>
               </div>
-              <div className="text-[11px] text-[var(--color-ink-muted)]">
-                Earned <span className="font-semibold tabular-nums text-[var(--color-ink)]">{lifetimeEarned.toLocaleString()}</span>
-                <span className="mx-1.5 text-[var(--color-ink-muted)]/60">·</span>
-                Spent <span className="font-semibold tabular-nums text-[var(--color-ink)]">{lifetimeSpent.toLocaleString()}</span>
+              <div className="flex items-center gap-3 text-xs text-ink-muted">
+                <span>
+                  Earned <span className="font-semibold tabular-nums text-ink">{lifetimeEarned.toLocaleString()}</span>
+                </span>
+                <span className="text-ink-muted/40">·</span>
+                <span>
+                  Spent <span className="font-semibold tabular-nums text-ink">{lifetimeSpent.toLocaleString()}</span>
+                </span>
               </div>
             </div>
             <SheetPrimitive.Close
               aria-label="Close"
-              className="shrink-0 rounded-full p-1 text-[var(--color-ink-muted)] hover:bg-white/5 hover:text-[var(--color-ink)]"
+              className="mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-full border border-surface-border bg-surface-2 text-ink-muted transition-colors hover:border-neon/40 hover:text-ink"
             >
               <X className="h-4 w-4" />
             </SheetPrimitive.Close>
           </div>
 
-          {/* Action row */}
-          <div className="mt-3 grid grid-cols-4 gap-2 px-4">
+          {/* Top actions — 3 equal tiles */}
+          <div className="mt-5 grid grid-cols-3 gap-3 px-5">
             <StatTile
-              icon={<Users2 className="h-3.5 w-3.5" />}
+              icon={<Users2 className="h-5 w-5" />}
               label="Invite"
               value={invites}
               to="/referrals"
               onNav={() => onOpenChange(false)}
             />
-            <WhatsAppTile code={referral.data?.referralCode ?? null} />
             <StatTile
-              icon={<Gift className="h-3.5 w-3.5" />}
+              icon={<Gift className="h-5 w-5" />}
               label="Free-bet"
               value={availableFb}
               to={availableFb > 0 ? "/free-bets/place" : "/store"}
               onNav={() => onOpenChange(false)}
             />
             <StatTile
-              icon={<ShoppingBag className="h-3.5 w-3.5" />}
+              icon={<ShoppingBag className="h-5 w-5" />}
               label="Store"
               value="→"
               to="/store"
@@ -143,28 +156,33 @@ function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
             />
           </div>
 
+          {/* Full-width bottom action */}
+          <div className="mt-3 px-5">
+            <WhatsAppTile code={referral.data?.referralCode ?? null} />
+          </div>
+
           {/* Ledger */}
-          <div className="mt-4 flex flex-1 flex-col overflow-hidden px-4 pb-4">
+          <div className="mt-5 flex flex-1 flex-col overflow-hidden px-5 pb-5">
             <div className="flex items-center justify-between">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
                 Ledger
               </div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)] tabular-nums">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted tabular-nums">
                 {ledger.data?.length ?? 0} entries
               </div>
             </div>
 
-            <div className="mt-2 flex-1 overflow-y-auto rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 divide-y divide-[var(--color-surface-border)]/60">
+            <div className="mt-2 flex-1 overflow-y-auto rounded-xl border border-surface-border bg-surface-2/60 divide-y divide-surface-border">
               {ledger.isLoading && (
-                <div className="py-8 text-center text-xs text-[var(--color-ink-muted)]">Loading ledger…</div>
+                <div className="py-8 text-center text-xs text-ink-muted">Loading ledger…</div>
               )}
               {!ledger.isLoading && (!ledger.data || ledger.data.length === 0) && (
                 <div className="py-10 text-center">
-                  <Coins className="mx-auto h-6 w-6 text-[var(--color-ink-muted)]/60" />
-                  <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+                  <Coins className="mx-auto h-7 w-7 text-ink-muted/50" />
+                  <div className="mt-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
                     No token activity yet
                   </div>
-                  <div className="mt-1 text-[11px] text-[var(--color-ink-muted)]">
+                  <div className="mt-1 text-[11px] text-ink-muted">
                     Place bets or invite friends to start earning.
                   </div>
                 </div>
@@ -196,13 +214,15 @@ function StatTile({
     <Link
       to={to}
       onClick={onNav}
-      className="group flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-2 transition-colors hover:border-[var(--color-neon)]/60"
+      className="group flex flex-col items-center justify-center gap-1.5 rounded-xl border border-surface-border bg-surface-2 px-2 py-3 transition-all hover:border-neon/40 hover:bg-surface-2/80 active:scale-[0.98]"
     >
-      <div className="flex items-center gap-1.5 text-[var(--color-ink-muted)] group-hover:text-[var(--color-neon)]">
+      <span className="text-ink-muted transition-colors group-hover:text-neon">
         {icon}
-        <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">{label}</span>
-      </div>
-      <span className="font-display text-sm font-bold tabular-nums text-[var(--color-ink)]">
+      </span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-muted transition-colors group-hover:text-ink">
+        {label}
+      </span>
+      <span className="font-display text-base font-bold tabular-nums text-ink">
         {value}
       </span>
     </Link>
@@ -223,13 +243,11 @@ function WhatsAppTile({ code }: { code: string | null }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="group flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-2 transition-colors hover:border-[#25D366]/60 disabled:opacity-50"
+      className="group flex w-full items-center justify-center gap-3 rounded-xl border border-[#25D366]/30 bg-[#25D366]/10 px-4 py-3.5 transition-all hover:bg-[#25D366]/20 hover:border-[#25D366]/50 disabled:opacity-50 active:scale-[0.98]"
     >
-      <div className="flex items-center gap-1.5 text-[var(--color-ink-muted)] group-hover:text-[#25D366]">
-        <MessageCircle className="h-3.5 w-3.5" />
-        <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">WhatsApp</span>
-      </div>
-      <span className="font-display text-sm font-bold tabular-nums text-[var(--color-ink)]">↗</span>
+      <MessageCircle className="h-5 w-5 shrink-0 text-[#25D366]" />
+      <span className="text-sm font-semibold text-[#25D366]">Share on WhatsApp</span>
+      <ArrowUpRight className="h-4 w-4 shrink-0 text-[#25D366]" />
     </button>
   );
 }
@@ -240,25 +258,25 @@ function LedgerRow({ row }: { row: any }) {
   const label = describeLedger(row);
   const when = new Date(row.created_at);
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5">
+    <div className="flex items-center gap-3 px-4 py-3">
       <div
-        className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border ${
+        className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border ${
           positive
-            ? "border-[var(--color-neon)]/40 bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
+            ? "border-neon/40 bg-neon/10 text-neon"
             : "border-destructive/40 bg-destructive/10 text-destructive"
         }`}
       >
-        {positive ? <ArrowUpRight className="h-3.5 w-3.5" /> : <ArrowDownRight className="h-3.5 w-3.5" />}
+        {positive ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[12px] font-medium text-[var(--color-ink)]">{label}</div>
-        <div className="mt-0.5 text-[10px] uppercase tracking-[0.12em] text-[var(--color-ink-muted)] tabular-nums">
+        <div className="truncate text-[13px] font-medium text-ink">{label}</div>
+        <div className="mt-0.5 text-[11px] uppercase tracking-[0.12em] text-ink-muted tabular-nums">
           {formatDate(when)} · Bal {Number(row.balance_after ?? 0).toLocaleString()}
         </div>
       </div>
       <div
-        className={`font-display text-[13px] font-bold tabular-nums ${
-          positive ? "text-[var(--color-neon)]" : "text-destructive"
+        className={`font-display text-sm font-bold tabular-nums ${
+          positive ? "text-neon" : "text-destructive"
         }`}
       >
         {positive ? "+" : ""}
