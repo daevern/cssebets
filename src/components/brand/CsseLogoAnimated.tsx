@@ -334,66 +334,281 @@ export function CsseLogoAnimated({
 /* CsseLogoLoader — fullscreen loading page using the morph sequence  */
 /* ================================================================== */
 
-export function CsseLogoLoader({
-  label = "Loading",
-  size = 96,
-}: {
-  label?: string;
-  size?: number;
-}) {
+/* ================================================================== */
+/* CsseLogoLoader — editorial fullscreen loader                        */
+/*                                                                     */
+/* Concept: the wordmark "CSSEBETS" is the graphic. Each letter enters */
+/* from behind a hard clip-mask (Kalshi/OG editorial style), holds as  */
+/* a massive display headline, then the two halves part around the    */
+/* center. The wedge draws itself into the gap, the chevron drops in,  */
+/* and the whole system snaps back together as the compact lockup.     */
+/* Pure Framer Motion + SVG stroke draw — no lottie, no template.      */
+/* ================================================================== */
+
+const LOADER_LETTERS = ["C", "S", "S", "E", "B", "E", "T", "S"] as const;
+
+export function CsseLogoLoader({ label = "Loading" }: { label?: string }) {
+  const reduce = useReducedMotion();
+
+  // Master timeline (seconds)
+  const T_REVEAL = 0.9;    // 0.00 – 0.90  letters mask-reveal from below
+  const T_HOLD = 0.35;     // 0.90 – 1.25  hold the wordmark
+  const T_PART = 0.55;     // 1.25 – 1.80  halves slide apart, middle chars dim
+  const T_MARK = 0.7;      // 1.55 – 2.25  wedge + chevron draw in the gap
+  const T_LOCK = 0.6;      // 2.25 – 2.85  compact lockup snap
+
   return (
-    <div className="fixed inset-0 z-[100] grid place-items-center overflow-hidden bg-[var(--color-surface,#0A0F0D)]">
-      {/* Subtle scanline texture — matches the brand's editorial grid */}
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-[var(--color-surface,#0A0F0D)]">
+      {/* Editorial grid — thin verticals + a single hairline horizon */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.05]"
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(0deg, var(--color-neon,#22E06B) 0 1px, transparent 1px 3px)",
+            "linear-gradient(90deg, var(--color-ink,#fff) 1px, transparent 1px)",
+          backgroundSize: "80px 100%",
         }}
       />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-0 right-0 top-1/2 h-px"
+        style={{ background: "color-mix(in oklab, var(--color-ink,#fff) 8%, transparent)" }}
+      />
 
-      {/* Soft radial glow under the mark */}
+      {/* Neon underglow */}
       <motion.div
         aria-hidden
         className="pointer-events-none absolute"
         style={{
-          width: size * 6,
-          height: size * 6,
+          width: "60vmin",
+          height: "60vmin",
           background:
-            "radial-gradient(circle, color-mix(in oklab, var(--color-neon, #22E06B) 18%, transparent) 0%, transparent 60%)",
-          filter: "blur(40px)",
+            "radial-gradient(circle, color-mix(in oklab, var(--color-neon,#22E06B) 22%, transparent) 0%, transparent 65%)",
+          filter: "blur(60px)",
         }}
-        initial={{ opacity: 0.4, scale: 0.9 }}
-        animate={{ opacity: [0.4, 0.7, 0.4], scale: [0.9, 1.05, 0.9] }}
-        transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+        initial={{ opacity: 0.35, scale: 0.85 }}
+        animate={{ opacity: [0.35, 0.7, 0.35], scale: [0.85, 1.05, 0.85] }}
+        transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className="relative flex flex-col items-center gap-8">
-        {/* The animated lockup is left-anchored within a wide track (room for
-            SSE/ets to slide). Move the track right by half its empty trailing
-            space so the final resolved mark lands in the exact center. */}
-        <div
+      {/* Top-left corner tag — editorial signature */}
+      <div className="absolute left-6 top-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.4em] text-[var(--color-ink-muted,#6B7A72)]">
+        <span className="inline-block h-1 w-1 rounded-full" style={{ background: ACCENT }} />
+        cssebets / 26
+      </div>
+      <div className="absolute right-6 top-6 text-[10px] font-bold uppercase tracking-[0.4em] text-[var(--color-ink-muted,#6B7A72)]">
+        booting matchday
+      </div>
+
+      {/* --------------- Wordmark stage --------------- */}
+      <div
+        className="relative flex items-center justify-center"
+        style={{
+          fontFamily: BRAND_FONT,
+          fontWeight: 700,
+          letterSpacing: "-0.055em",
+          lineHeight: 1,
+          // huge display type; capped by vw so it never overflows on mobile
+          fontSize: "clamp(56px, 15vw, 180px)",
+          color: "var(--color-ink,#fff)",
+          height: "1.1em",
+        }}
+      >
+        {LOADER_LETTERS.map((ch, i) => {
+          const isC = i === 0;
+          const isB = i === 4;
+          const isLeftHalf = i < 4;
+          const isEdge = isC || i === 7; // outer anchors of the two halves
+          const isMiddle = !isC && !isB && !(i === 7);
+
+          // Per-letter reveal delay
+          const revealDelay = i * (T_REVEAL / LOADER_LETTERS.length);
+
+          // Parting: left half moves further left, right half further right
+          const partX = isLeftHalf ? "-14vw" : "14vw";
+
+          // The C and B ultimately survive as the mark; everything else fades.
+          const survives = isC || isB;
+
+          if (reduce) {
+            return (
+              <span key={i} style={{ color: isLeftHalf ? undefined : ACCENT }}>
+                {ch}
+              </span>
+            );
+          }
+
+          return (
+            <span
+              key={i}
+              className="relative inline-block overflow-hidden"
+              style={{ paddingInline: "0.005em" }}
+            >
+              <motion.span
+                className="inline-block will-change-transform"
+                style={{ color: isLeftHalf ? undefined : ACCENT }}
+                initial={{ y: "110%", opacity: 0 }}
+                animate={{
+                  // reveal
+                  y: ["110%", "0%", "0%", "0%", "0%"],
+                  opacity: [0, 1, 1, survives ? 0 : 0, 0],
+                  // part + dim
+                  x: ["0vw", "0vw", "0vw", partX, partX],
+                  scale: [1, 1, 1, isMiddle ? 0.7 : 0.95, isMiddle ? 0.5 : 0.9],
+                  filter: [
+                    "blur(0px)",
+                    "blur(0px)",
+                    "blur(0px)",
+                    isMiddle ? "blur(6px)" : "blur(0px)",
+                    "blur(8px)",
+                  ],
+                }}
+                transition={{
+                  duration: T_REVEAL + T_HOLD + T_PART + T_MARK + T_LOCK,
+                  delay: revealDelay,
+                  ease: [0.83, 0, 0.17, 1],
+                  times: [
+                    0,
+                    Math.min(0.999, T_REVEAL / (T_REVEAL + T_HOLD + T_PART + T_MARK + T_LOCK)),
+                    (T_REVEAL + T_HOLD) / (T_REVEAL + T_HOLD + T_PART + T_MARK + T_LOCK),
+                    (T_REVEAL + T_HOLD + T_PART) / (T_REVEAL + T_HOLD + T_PART + T_MARK + T_LOCK),
+                    1,
+                  ],
+                  repeat: Infinity,
+                  repeatDelay: 0.4,
+                }}
+              >
+                {ch}
+              </motion.span>
+
+              {/* Sweep line — a hairline neon bar that trails the reveal */}
+              {isEdge && (
+                <motion.span
+                  aria-hidden
+                  className="absolute left-0 right-0"
+                  style={{
+                    bottom: "-0.06em",
+                    height: "2px",
+                    background: ACCENT,
+                    transformOrigin: "left center",
+                  }}
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: [0, 1, 1, 0, 0] }}
+                  transition={{
+                    duration: T_REVEAL + T_HOLD + T_PART + T_MARK + T_LOCK,
+                    delay: revealDelay + 0.05,
+                    times: [0, 0.18, 0.35, 0.55, 1],
+                    repeat: Infinity,
+                    repeatDelay: 0.4,
+                  }}
+                />
+              )}
+            </span>
+          );
+        })}
+
+        {/* --------------- The mark, drawn into the gap --------------- */}
+        <motion.svg
+          viewBox="0 0 32 32"
+          fill="none"
+          aria-hidden
+          className="absolute left-1/2 top-1/2"
           style={{
-            transform: `translateX(${(Math.round(size * 4.6) - size) / 2}px)`,
+            width: "clamp(56px, 15vw, 180px)",
+            height: "clamp(56px, 15vw, 180px)",
+            marginLeft: "calc(clamp(56px, 15vw, 180px) / -2)",
+            marginTop: "calc(clamp(56px, 15vw, 180px) / -2)",
+          }}
+          initial={{ opacity: 0, scale: 0.6 }}
+          animate={{
+            opacity: [0, 0, 0, 1, 1, 1],
+            scale: [0.6, 0.6, 0.6, 1.05, 1, 1],
+          }}
+          transition={{
+            duration: T_REVEAL + T_HOLD + T_PART + T_MARK + T_LOCK,
+            times: [0, 0.32, 0.5, 0.62, 0.78, 1],
+            ease: [0.65, 0, 0.35, 1],
+            repeat: Infinity,
+            repeatDelay: 0.4,
           }}
         >
-          <CsseLogoAnimated size={size} loop duration={2.6} />
-        </div>
+          <motion.path
+            d={WEDGE_PATH}
+            stroke="var(--color-ink,#fff)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray={WEDGE_LEN}
+            initial={{ strokeDashoffset: WEDGE_LEN }}
+            animate={{ strokeDashoffset: [WEDGE_LEN, WEDGE_LEN, WEDGE_LEN, 0, 0, 0] }}
+            transition={{
+              duration: T_REVEAL + T_HOLD + T_PART + T_MARK + T_LOCK,
+              times: [0, 0.4, 0.5, 0.72, 0.9, 1],
+              ease: [0.65, 0, 0.35, 1],
+              repeat: Infinity,
+              repeatDelay: 0.4,
+            }}
+          />
+          <motion.path
+            d={CHEVRON_PATH}
+            stroke={ACCENT}
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray={CHEVRON_LEN}
+            initial={{ strokeDashoffset: CHEVRON_LEN, y: -4 }}
+            animate={{
+              strokeDashoffset: [CHEVRON_LEN, CHEVRON_LEN, CHEVRON_LEN, CHEVRON_LEN, 0, 0],
+              y: [-4, -4, -4, -4, -1, 0],
+            }}
+            transition={{
+              duration: T_REVEAL + T_HOLD + T_PART + T_MARK + T_LOCK,
+              times: [0, 0.4, 0.55, 0.68, 0.85, 0.95],
+              ease: [0.65, 0, 0.35, 1],
+              repeat: Infinity,
+              repeatDelay: 0.4,
+            }}
+          />
+        </motion.svg>
+      </div>
 
-        {/* Tracking progress bar — the green of the chevron extended */}
-        <div className="relative h-[2px] w-[200px] overflow-hidden bg-[var(--color-surface-border,#1C2520)]">
+      {/* Tagline — appears in the final beat */}
+      <motion.div
+        className="mt-10 text-[11px] font-bold uppercase tracking-[0.48em] text-[var(--color-ink-muted,#6B7A72)]"
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: [0, 0, 0, 0.9, 0.9, 0], y: [6, 6, 6, 0, 0, 0] }}
+        transition={{
+          duration: T_REVEAL + T_HOLD + T_PART + T_MARK + T_LOCK,
+          times: [0, 0.3, 0.55, 0.75, 0.92, 1],
+          repeat: Infinity,
+          repeatDelay: 0.4,
+        }}
+      >
+        private &nbsp;/&nbsp; world cup 2026 &nbsp;/&nbsp; {label}
+      </motion.div>
+
+      {/* Bottom precision meter — the green of the chevron extended */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+        <div className="mb-2 flex items-center justify-between text-[9px] font-bold uppercase tracking-[0.42em] text-[var(--color-ink-muted,#6B7A72)]" style={{ width: "min(320px, 60vw)" }}>
+          <span>signal</span>
+          <span>locking</span>
+        </div>
+        <div
+          className="relative h-[2px] overflow-hidden"
+          style={{
+            width: "min(320px, 60vw)",
+            background: "color-mix(in oklab, var(--color-ink,#fff) 10%, transparent)",
+          }}
+        >
           <motion.div
-            className="absolute inset-y-0 left-0 w-1/3"
-            style={{ background: ACCENT }}
-            animate={{ x: ["-100%", "300%"] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute inset-y-0 left-0 w-1/4"
+            style={{
+              background: `linear-gradient(90deg, transparent, ${ACCENT}, transparent)`,
+            }}
+            animate={{ x: ["-100%", "400%"] }}
+            transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
           />
         </div>
-
-        <span className="text-[10px] font-bold uppercase tracking-[0.42em] text-[var(--color-ink-muted,#6B7A72)]">
-          {label}
-        </span>
       </div>
     </div>
   );
