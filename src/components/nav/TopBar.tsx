@@ -1,6 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { Bell, User, Wallet as WalletIcon, Home, LineChart, Activity, Coins, Headphones } from "lucide-react";
-import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
+import { CsseLogo } from "@/components/brand/CsseMark";
 import { TokenChip } from "@/components/engagement/TokenVault";
 
 const DESKTOP_NAV = [
