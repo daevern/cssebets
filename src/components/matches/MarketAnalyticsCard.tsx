@@ -336,7 +336,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                 }
               }}
               onMouseLeave={() => setActiveIndex(null)}
-              onTouchEnd={() => setActiveIndex(null)}
+
             >
               <CartesianGrid
                 strokeDasharray="2 6"
