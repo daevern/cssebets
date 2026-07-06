@@ -264,11 +264,7 @@ function LandingPage() {
           <Link to="/" className="flex items-center gap-2 hover:text-[var(--ink)]">
             <CsseLogo size={16} />
           </Link>
-          <span className="flex items-center gap-3">
-            <Link to="/about" className="hover:text-[var(--ink)]">About</Link>
-            <Link to="/faq" className="hover:text-[var(--ink)]">Help</Link>
-            <span>© {new Date().getFullYear()} <BrandText /></span>
-          </span>
+          <span>© {new Date().getFullYear()} <BrandText /></span>
         </footer>
       </main>
 
