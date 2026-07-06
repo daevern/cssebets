@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PerformanceRouteImport } from './routes/performance'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as BrandRouteImport } from './routes/brand'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -93,6 +94,11 @@ import { Route as ApiPublicHooksApifootballFulltimeRouteImport } from './routes/
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerformanceRoute = PerformanceRouteImport.update({
+  id: '/performance',
+  path: '/performance',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityRoute = CommunityRouteImport.update({
@@ -536,6 +542,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/brand': typeof BrandRoute
   '/community': typeof CommunityRoute
+  '/performance': typeof PerformanceRoute
   '/register': typeof RegisterRoute
   '/bets': typeof AuthenticatedBetsRoute
   '/changelog': typeof AuthenticatedChangelogRoute
@@ -617,6 +624,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/brand': typeof BrandRoute
   '/community': typeof CommunityRoute
+  '/performance': typeof PerformanceRoute
   '/register': typeof RegisterRoute
   '/bets': typeof AuthenticatedBetsRoute
   '/changelog': typeof AuthenticatedChangelogRoute
@@ -698,6 +706,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/brand': typeof BrandRoute
   '/community': typeof CommunityRoute
+  '/performance': typeof PerformanceRoute
   '/register': typeof RegisterRoute
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
   '/_authenticated/changelog': typeof AuthenticatedChangelogRoute
@@ -781,6 +790,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/brand'
     | '/community'
+    | '/performance'
     | '/register'
     | '/bets'
     | '/changelog'
@@ -862,6 +872,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/brand'
     | '/community'
+    | '/performance'
     | '/register'
     | '/bets'
     | '/changelog'
@@ -942,6 +953,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/brand'
     | '/community'
+    | '/performance'
     | '/register'
     | '/_authenticated/bets'
     | '/_authenticated/changelog'
@@ -1025,6 +1037,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BrandRoute: typeof BrandRoute
   CommunityRoute: typeof CommunityRoute
+  PerformanceRoute: typeof PerformanceRoute
   RegisterRoute: typeof RegisterRoute
   ApiPublicHooksApifootballFulltimeRoute: typeof ApiPublicHooksApifootballFulltimeRoute
   ApiPublicHooksApifootballLineupsRoute: typeof ApiPublicHooksApifootballLineupsRoute
@@ -1044,6 +1057,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/performance': {
+      id: '/performance'
+      path: '/performance'
+      fullPath: '/performance'
+      preLoaderRoute: typeof PerformanceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community': {
@@ -1774,6 +1794,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BrandRoute: BrandRoute,
   CommunityRoute: CommunityRoute,
+  PerformanceRoute: PerformanceRoute,
   RegisterRoute: RegisterRoute,
   ApiPublicHooksApifootballFulltimeRoute:
     ApiPublicHooksApifootballFulltimeRoute,
