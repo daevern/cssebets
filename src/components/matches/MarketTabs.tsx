@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getMatchMarkets, placeMarketBet } from "@/lib/markets.functions";
+import { Link } from "@tanstack/react-router";
+import { getMatchMarkets, getMatchMarketsPublic, placeMarketBet } from "@/lib/markets.functions";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { Loader2, ArrowUpRight, X } from "lucide-react";
 import { toast } from "sonner";
