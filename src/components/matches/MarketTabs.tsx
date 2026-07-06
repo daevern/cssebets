@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getMatchMarkets, placeMarketBet } from "@/lib/markets.functions";
+import { Link } from "@tanstack/react-router";
+import { getMatchMarkets, getMatchMarketsPublic, placeMarketBet } from "@/lib/markets.functions";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { Loader2, ArrowUpRight, X } from "lucide-react";
 import { toast } from "sonner";
@@ -352,19 +353,20 @@ const TAB_DEFS = [
 ] as const;
 type TabId = (typeof TAB_DEFS)[number]["id"];
 
-export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedMarkets = [], homeTeam, awayTeam }: { matchId: string; locked: boolean; bettingBlocked?: boolean; suspendedMarkets?: string[]; homeTeam?: string; awayTeam?: string }) {
+export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedMarkets = [], homeTeam, awayTeam, publicMode = false }: { matchId: string; locked: boolean; bettingBlocked?: boolean; suspendedMarkets?: string[]; homeTeam?: string; awayTeam?: string; publicMode?: boolean }) {
   const isMarketSuspended = (m: string) =>
     bettingBlocked || suspendedMarkets.includes("ALL") || suspendedMarkets.includes(m);
-  const fn = useServerFn(getMatchMarkets);
+  const fn = useServerFn(publicMode ? getMatchMarketsPublic : getMatchMarkets);
   const place = useServerFn(placeMarketBet);
   const walletFn = useServerFn(getMyWallet);
   const qc = useQueryClient();
   const { user } = useAuth();
   const [tab, setTab] = useState<TabId>("pop");
   const [showAllScores, setShowAllScores] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["match-markets", matchId],
+    queryKey: [publicMode ? "match-markets-public" : "match-markets", matchId],
     queryFn: () => fn({ data: { matchId } }),
     enabled: !locked,
   });
@@ -372,14 +374,15 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   const wallet = useQuery({
     queryKey: ["my-wallet", user?.id],
     queryFn: () => walletFn({}),
-    enabled: !!user?.id && !locked,
+    enabled: !!user?.id && !locked && !publicMode,
     staleTime: 15000,
   });
-  const balance = Number(wallet.data?.balance ?? 0);
+  // Visitors get a generous demo balance so the slip UI is fully explorable.
+  const balance = publicMode ? 1000 : Number(wallet.data?.balance ?? 0);
 
   const myBets = useQuery({
     queryKey: ["my-match-pending-bets", matchId, user?.id],
-    enabled: !!user && !locked,
+    enabled: !!user && !locked && !publicMode,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("predictions")
@@ -434,6 +437,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
   const mut = useMutation({
     mutationFn: async (market: MarketKey) => {
+      if (publicMode) { setSignInOpen(true); return null as any; }
       const pick = picks[market];
       if (!pick) throw new Error("Select an option");
       const stakeVal = stakes[market] ?? String(MIN_STAKE);
@@ -446,7 +450,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         data: { matchId, market, selection: pick.selection, stake: n, clientRequestId: slipId },
       });
     },
-    onSuccess: (_, market) => {
+    onSuccess: (result, market) => {
+      if (publicMode || result == null) return;
       toast.success("Bet placed");
       clearSlipId(`single:${market}`);
       setPicks((prev) => ({ ...prev, [market]: null }));
@@ -459,6 +464,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
   const csMut = useMutation({
     mutationFn: async (selection: string) => {
+      if (publicMode) { setSignInOpen(true); return null as any; }
       const odds = csPicks[selection];
       if (!odds) throw new Error("Selection missing");
       const stakeVal = csStakes[selection] ?? String(MIN_STAKE);
@@ -471,7 +477,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         data: { matchId, market: "correct_score", selection, stake: n, clientRequestId: slipId },
       });
     },
-    onSuccess: (_, selection) => {
+    onSuccess: (result, selection) => {
+      if (publicMode || result == null) return;
       toast.success(`Bet placed on ${selectionLabel(selection)}`);
       clearSlipId(`cs:${selection}`);
       setCsPicks((prev) => { const { [selection]: _o, ...rest } = prev; return rest; });
@@ -815,6 +822,55 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
           </div>
         )}
       </div>
+      {signInOpen && (
+        <div
+          className="fixed inset-0 z-[100] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setSignInOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-[var(--color-neon)]/30 bg-[var(--color-surface-2)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-neon)]">
+                  Sign in required
+                </div>
+                <h3 className="mt-1 text-[16px] font-bold tracking-tight text-[var(--color-ink)]">
+                  Sign in to lock this prediction
+                </h3>
+                <p className="mt-1 text-[12px] leading-relaxed text-[var(--color-ink-muted)]">
+                  You're exploring in visitor mode. Create a free account or sign in to place your bet with prediction points.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => setSignInOpen(false)}
+                className="shrink-0 rounded-full p-1 text-[var(--color-ink-muted)] hover:bg-white/5 hover:text-[var(--color-ink)]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Link
+                to="/auth"
+                className="rounded-full border border-[var(--color-surface-border)] px-3 py-2 text-center text-[12px] font-semibold text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)]/60 hover:text-[var(--color-neon)]"
+              >
+                Log in
+              </Link>
+              <Link
+                to="/register"
+                className="rounded-full bg-[var(--color-neon)] px-3 py-2 text-center text-[12px] font-bold text-[#04140A] transition-all hover:shadow-[0_0_18px_var(--color-neon-glow)]"
+              >
+                Register
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

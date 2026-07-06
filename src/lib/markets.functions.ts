@@ -53,58 +53,62 @@ type MarketOdds = {
   source: string;
 };
 
+async function loadMatchMarkets(matchId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const { data: match } = await supabaseAdmin
+    .from("matches")
+    .select("id, status, kickoff_at, is_simulation, home_score_ht, away_score_ht")
+    .eq("id", matchId)
+    .maybeSingle();
+  if (!match) throw new Error("Match not found");
+
+  let { data: odds } = await supabaseAdmin
+    .from("match_market_odds")
+    .select("id, match_id, market, selection, odds, active, source")
+    .eq("match_id", matchId)
+    .eq("active", true);
+
+  if (
+    (!odds || odds.length === 0) &&
+    (match as any).status === "scheduled" &&
+    (match as any).is_simulation === true
+  ) {
+    await (supabaseAdmin as any).rpc("seed_match_market_odds", { p_match_id: matchId });
+    const r = await supabaseAdmin
+      .from("match_market_odds")
+      .select("id, match_id, market, selection, odds, active, source")
+      .eq("match_id", matchId)
+      .eq("active", true);
+    odds = r.data ?? [];
+  }
+
+  const hasHtSupport =
+    (match as any).is_simulation === true ||
+    (match as any).home_score_ht !== null;
+  const filtered = (odds ?? []).filter(
+    (o: MarketOdds) =>
+      MARKET_KEYS.includes(o.market as any) &&
+      (o.market !== "half_time_full_time" || hasHtSupport),
+  );
+
+  return { odds: filtered as MarketOdds[], hasHtSupport };
+}
+
 // Fetch all market odds for a match. Auto-seeds if empty.
 export const getMatchMarkets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { matchId: string }) =>
     z.object({ matchId: z.string().uuid() }).parse(input),
   )
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  .handler(async ({ data }) => loadMatchMarkets(data.matchId));
 
-    const { data: match } = await supabaseAdmin
-      .from("matches")
-      .select("id, status, kickoff_at, is_simulation, home_score_ht, away_score_ht")
-      .eq("id", data.matchId)
-      .maybeSingle();
-    if (!match) throw new Error("Match not found");
-
-    let { data: odds } = await supabaseAdmin
-      .from("match_market_odds")
-      .select("id, match_id, market, selection, odds, active, source")
-      .eq("match_id", data.matchId)
-      .eq("active", true);
-
-    // On-demand seeding is restricted to simulation matches. Live production
-    // matches must have odds derived from a real reference_odds sync; if the
-    // seeder has not yet been triggered server-side after a sync, callers
-    // must wait (bet placement is independently gated by odds_status).
-    if (
-      (!odds || odds.length === 0) &&
-      (match as any).status === "scheduled" &&
-      (match as any).is_simulation === true
-    ) {
-      await (supabaseAdmin as any).rpc("seed_match_market_odds", { p_match_id: data.matchId });
-      const r = await supabaseAdmin
-        .from("match_market_odds")
-        .select("id, match_id, market, selection, odds, active, source")
-        .eq("match_id", data.matchId)
-        .eq("active", true);
-      odds = r.data ?? [];
-    }
-
-    // Hide HT/FT for real matches that have no HT score support yet.
-    const hasHtSupport =
-      (match as any).is_simulation === true ||
-      (match as any).home_score_ht !== null;
-    const filtered = (odds ?? []).filter(
-      (o: MarketOdds) =>
-        MARKET_KEYS.includes(o.market as any) &&
-        (o.market !== "half_time_full_time" || hasHtSupport),
-    );
-
-    return { odds: filtered as MarketOdds[], hasHtSupport };
-  });
+// Public variant — same odds data, no auth. Reads-only; bet placement stays auth-only.
+export const getMatchMarketsPublic = createServerFn({ method: "POST" })
+  .inputValidator((input: { matchId: string }) =>
+    z.object({ matchId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data }) => loadMatchMarkets(data.matchId));
 
 // Place a bet on one of the new markets.
 const PlaceSchema = z.object({
