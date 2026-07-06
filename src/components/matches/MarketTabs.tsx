@@ -353,19 +353,20 @@ const TAB_DEFS = [
 ] as const;
 type TabId = (typeof TAB_DEFS)[number]["id"];
 
-export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedMarkets = [], homeTeam, awayTeam }: { matchId: string; locked: boolean; bettingBlocked?: boolean; suspendedMarkets?: string[]; homeTeam?: string; awayTeam?: string }) {
+export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedMarkets = [], homeTeam, awayTeam, publicMode = false }: { matchId: string; locked: boolean; bettingBlocked?: boolean; suspendedMarkets?: string[]; homeTeam?: string; awayTeam?: string; publicMode?: boolean }) {
   const isMarketSuspended = (m: string) =>
     bettingBlocked || suspendedMarkets.includes("ALL") || suspendedMarkets.includes(m);
-  const fn = useServerFn(getMatchMarkets);
+  const fn = useServerFn(publicMode ? getMatchMarketsPublic : getMatchMarkets);
   const place = useServerFn(placeMarketBet);
   const walletFn = useServerFn(getMyWallet);
   const qc = useQueryClient();
   const { user } = useAuth();
   const [tab, setTab] = useState<TabId>("pop");
   const [showAllScores, setShowAllScores] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["match-markets", matchId],
+    queryKey: [publicMode ? "match-markets-public" : "match-markets", matchId],
     queryFn: () => fn({ data: { matchId } }),
     enabled: !locked,
   });
@@ -373,10 +374,11 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   const wallet = useQuery({
     queryKey: ["my-wallet", user?.id],
     queryFn: () => walletFn({}),
-    enabled: !!user?.id && !locked,
+    enabled: !!user?.id && !locked && !publicMode,
     staleTime: 15000,
   });
-  const balance = Number(wallet.data?.balance ?? 0);
+  // Visitors get a generous demo balance so the slip UI is fully explorable.
+  const balance = publicMode ? 1000 : Number(wallet.data?.balance ?? 0);
 
   const myBets = useQuery({
     queryKey: ["my-match-pending-bets", matchId, user?.id],
