@@ -496,9 +496,6 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
 
       {publicMode && (
         <>
-          {/* Divider above the range selector and betting surface */}
-          <div className="mt-6 h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
-
           {/* Range selector — borderless, spans the x-axis length */}
           <div className="mt-2 w-full pl-0 pr-[84px]">
             <div className="flex items-center justify-between">
@@ -523,6 +520,9 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
               })}
             </div>
           </div>
+
+          {/* Divider above the betting surface */}
+          <div className="mt-5 h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
         </>
       )}
     </section>
