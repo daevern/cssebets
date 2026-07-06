@@ -167,6 +167,19 @@ function PredictionRow({ p }: { p: any }) {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const flagMut = useMutation({
+    mutationFn: async () => flagFn({ data: { predictionId: p.id, reason: flagReason.trim() } }),
+    onSuccess: () => {
+      toast.success("Bet flagged for admin review");
+      setFlagOpen(false);
+      setFlagReason("");
+      qc.invalidateQueries({ queryKey: ["my-predictions"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+
+
   const stakeNum = Number(stake);
   const stakeInvalid = !Number.isFinite(stakeNum) || stakeNum < MIN_STAKE || stakeNum > MAX_STAKE;
   const stakeUnchanged = stakeNum === Number(p.virtual_stake);
