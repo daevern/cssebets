@@ -1261,6 +1261,7 @@ export type Database = {
           exposure_is_stale: boolean
           exposure_last_calculated_at: string | null
           external_id: string | null
+          finished_at: string | null
           first_card_team: string | null
           first_corner_team: string | null
           ft_away_score: number | null
@@ -1314,6 +1315,7 @@ export type Database = {
           exposure_is_stale?: boolean
           exposure_last_calculated_at?: string | null
           external_id?: string | null
+          finished_at?: string | null
           first_card_team?: string | null
           first_corner_team?: string | null
           ft_away_score?: number | null
@@ -1367,6 +1369,7 @@ export type Database = {
           exposure_is_stale?: boolean
           exposure_last_calculated_at?: string | null
           external_id?: string | null
+          finished_at?: string | null
           first_card_team?: string | null
           first_corner_team?: string | null
           ft_away_score?: number | null
@@ -2749,6 +2752,10 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      flag_prediction_for_review: {
+        Args: { p_prediction_id: string; p_reason: string }
+        Returns: Json
+      }
       generate_public_reference: { Args: never; Returns: string }
       generate_referral_code: { Args: never; Returns: string }
       get_correlated_exposure_alerts: {
@@ -2910,6 +2917,15 @@ export type Database = {
           prediction_id: string
         }[]
       }
+      regrade_prediction_manual: {
+        Args: {
+          p_actor_id: string
+          p_new_status: string
+          p_prediction_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
       reject_wallet_adjustment: {
         Args: { p_rejection_reason: string; p_request_id: string }
         Returns: Json
@@ -2949,6 +2965,10 @@ export type Database = {
       set_house_user: {
         Args: { p_admin_id: string; p_house_user_id: string }
         Returns: string
+      }
+      settle_cards_corners_after_delay: {
+        Args: { p_match_id: string; p_min_delay?: string }
+        Returns: number
       }
       settle_cards_corners_for_match: {
         Args: { p_match_id: string }
