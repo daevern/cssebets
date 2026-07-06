@@ -464,6 +464,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
   const csMut = useMutation({
     mutationFn: async (selection: string) => {
+      if (publicMode) { setSignInOpen(true); return null as any; }
       const odds = csPicks[selection];
       if (!odds) throw new Error("Selection missing");
       const stakeVal = csStakes[selection] ?? String(MIN_STAKE);
@@ -476,7 +477,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         data: { matchId, market: "correct_score", selection, stake: n, clientRequestId: slipId },
       });
     },
-    onSuccess: (_, selection) => {
+    onSuccess: (result, selection) => {
+      if (publicMode || result == null) return;
       toast.success(`Bet placed on ${selectionLabel(selection)}`);
       clearSlipId(`cs:${selection}`);
       setCsPicks((prev) => { const { [selection]: _o, ...rest } = prev; return rest; });
