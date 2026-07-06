@@ -68,12 +68,13 @@ async function buildMarketHistory(
   const matchId = data.matchId;
   const { data: match } = await supabaseAdmin
     .from("matches")
-    .select("home_team, away_team")
+    .select("home_team, away_team, kickoff_at")
     .eq("id", matchId)
     .maybeSingle();
 
   const homeTeam = match?.home_team ?? "Home";
   const awayTeam = match?.away_team ?? "Away";
+  const kickoffAt = match?.kickoff_at ?? null;
 
   const [{ count: mrCount }, { data: mkRows }] = await Promise.all([
     supabaseAdmin
