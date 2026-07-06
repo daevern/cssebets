@@ -147,6 +147,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
   const [market, setMarket] = useState<string | undefined>(undefined);
   const [range, setRange] = useState<Range>("LIVE");
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const now = useNowTick(1000);
 
   const q = useQuery({
