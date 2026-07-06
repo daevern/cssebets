@@ -2,9 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Loader2, Activity, Users, AlertTriangle, History, Star } from "lucide-react";
+import { Loader2, Activity, Users, AlertTriangle, History, Star, ArrowUpRight } from "lucide-react";
 import { teamFlagUrl } from "@/lib/country-flags";
-import { getMatchAnalytics, type AnalyticsBundle, type LineupPlayer } from "@/lib/match-analytics.functions";
+import { getMatchAnalytics, getMatchAnalyticsPublic, type AnalyticsBundle, type LineupPlayer } from "@/lib/match-analytics.functions";
 import { MarketTabs } from "@/components/matches/MarketTabs";
 import { Corner, StencilPanel } from "@/components/ui/page-shell";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,11 +22,30 @@ export const Route = createFileRoute("/_authenticated/matches/$matchId")({
 
 function MatchAnalyticsPage() {
   const { matchId } = Route.useParams();
-  const fn = useServerFn(getMatchAnalytics);
+  return <MatchAnalyticsScreen matchId={matchId} />;
+}
+
+/**
+ * Reusable analytics screen. Renders the full match analytics report and,
+ * when the viewer is authenticated (default), the betting surfaces.
+ *
+ * `publicMode` — safe to render on public routes:
+ *   - fetches via the public server fn (no auth middleware)
+ *   - skips realtime subscription
+ *   - swaps `FreeBetInMatch` + `MarketTabs` for a "Register to play" CTA
+ */
+export function MatchAnalyticsScreen({
+  matchId,
+  publicMode = false,
+}: {
+  matchId: string;
+  publicMode?: boolean;
+}) {
+  const fn = useServerFn(publicMode ? getMatchAnalyticsPublic : getMatchAnalytics);
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["match-analytics", matchId],
+    queryKey: [publicMode ? "match-analytics-public" : "match-analytics", matchId],
     queryFn: () => fn({ data: { matchId } }) as Promise<AnalyticsBundle>,
     refetchInterval: (q) => {
       const phase = (q.state.data as AnalyticsBundle | undefined)?.phase;
@@ -36,8 +55,9 @@ function MatchAnalyticsPage() {
     },
   });
 
-  // Realtime: refresh on score updates from the matches table
+  // Realtime: only wire up on the authenticated route (realtime requires a session).
   useEffect(() => {
+    if (publicMode) return;
     const ch = supabase
       .channel(`match-analytics-${matchId}`)
       .on(
@@ -47,25 +67,14 @@ function MatchAnalyticsPage() {
       )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [matchId, qc]);
+  }, [matchId, qc, publicMode]);
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
-      {/* Deep atmospheric background — soft radial bloom, no grid */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0"
-        style={{
-          background:
-            "radial-gradient(1200px 600px at 50% -10%, color-mix(in oklab, var(--color-neon) 6%, transparent), transparent 60%), radial-gradient(900px 500px at 100% 100%, color-mix(in oklab, var(--color-neon) 3%, transparent), transparent 70%)",
-        }}
-      />
       <div
         className="relative mx-auto flex max-w-md flex-col gap-8 px-4 pt-5 md:max-w-3xl md:gap-10 md:py-10"
-        style={{ paddingBottom: "calc(88px + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: publicMode ? undefined : "calc(88px + env(safe-area-inset-bottom))" }}
       >
-        {/* Back arrow lives in the global TopBar on this route — keep the page focused on the match. */}
-
         {isLoading || !data ? (
           <div className="grid place-items-center py-24">
             <Loader2 className="h-6 w-6 animate-spin text-[var(--color-neon)]" />
@@ -73,17 +82,20 @@ function MatchAnalyticsPage() {
         ) : !data.match ? (
           <div className="py-16 text-center text-sm text-[var(--color-ink-muted)]">Match not found.</div>
         ) : (
-          <Analytics bundle={data} />
+          <Analytics bundle={data} publicMode={publicMode} />
         )}
 
-        <footer className="mt-6 flex items-center justify-between border-t border-[var(--color-surface-border)]/40 pt-6 text-[10px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]">
-          <Link to="/dashboard" className="flex items-center gap-2 hover:text-[var(--color-ink)]"><CsseLogo size={16} /></Link>
-          <span>© {new Date().getFullYear()} <BrandText /></span>
-        </footer>
+        {!publicMode && (
+          <footer className="mt-6 flex items-center justify-between border-t border-[var(--color-surface-border)]/40 pt-6 text-[10px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]">
+            <Link to="/dashboard" className="flex items-center gap-2 hover:text-[var(--color-ink)]"><CsseLogo size={16} /></Link>
+            <span>© {new Date().getFullYear()} <BrandText /></span>
+          </footer>
+        )}
       </div>
     </div>
   );
 }
+
 
 
 
