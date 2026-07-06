@@ -822,6 +822,55 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
           </div>
         )}
       </div>
+      {signInOpen && (
+        <div
+          className="fixed inset-0 z-[100] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setSignInOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-[var(--color-neon)]/30 bg-[var(--color-surface-2)] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.6)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-neon)]">
+                  Sign in required
+                </div>
+                <h3 className="mt-1 text-[16px] font-bold tracking-tight text-[var(--color-ink)]">
+                  Sign in to lock this prediction
+                </h3>
+                <p className="mt-1 text-[12px] leading-relaxed text-[var(--color-ink-muted)]">
+                  You're exploring in visitor mode. Create a free account or sign in to place your bet with prediction points.
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => setSignInOpen(false)}
+                className="shrink-0 rounded-full p-1 text-[var(--color-ink-muted)] hover:bg-white/5 hover:text-[var(--color-ink)]"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <Link
+                to="/auth"
+                className="rounded-full border border-[var(--color-surface-border)] px-3 py-2 text-center text-[12px] font-semibold text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)]/60 hover:text-[var(--color-neon)]"
+              >
+                Log in
+              </Link>
+              <Link
+                to="/register"
+                className="rounded-full bg-[var(--color-neon)] px-3 py-2 text-center text-[12px] font-bold text-[#04140A] transition-all hover:shadow-[0_0_18px_var(--color-neon-glow)]"
+              >
+                Register
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
