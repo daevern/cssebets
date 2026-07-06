@@ -112,7 +112,7 @@ function MatchesPage() {
     completed;
 
   return (
-    <div className="flex flex-col gap-5 px-4 pt-5">
+    <div className="flex w-full min-w-0 max-w-full flex-col gap-5 overflow-x-hidden bg-[var(--surface)] px-4 pt-5">
       {/* Segmented tabs */}
       <div className="grid grid-cols-3 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-1">
         <TabBtn active={tab === "live"} onClick={() => setTab("live")} label="Live" count={live.length} tone="live" />
