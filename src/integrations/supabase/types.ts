@@ -1652,6 +1652,7 @@ export type Database = {
           allow_single_admin_self_approval: boolean
           apply_margin_to_real: boolean
           bets_paused: boolean
+          cards_corners_void_after_hours: number
           correct_score_disabled: boolean
           correlation_groups: Json
           critical_alert_email_enabled: boolean
@@ -1684,6 +1685,7 @@ export type Database = {
           allow_single_admin_self_approval?: boolean
           apply_margin_to_real?: boolean
           bets_paused?: boolean
+          cards_corners_void_after_hours?: number
           correct_score_disabled?: boolean
           correlation_groups?: Json
           critical_alert_email_enabled?: boolean
@@ -1716,6 +1718,7 @@ export type Database = {
           allow_single_admin_self_approval?: boolean
           apply_margin_to_real?: boolean
           bets_paused?: boolean
+          cards_corners_void_after_hours?: number
           correct_score_disabled?: boolean
           correlation_groups?: Json
           critical_alert_email_enabled?: boolean
@@ -3057,6 +3060,7 @@ export type Database = {
               allow_single_admin_self_approval: boolean
               apply_margin_to_real: boolean
               bets_paused: boolean
+              cards_corners_void_after_hours: number
               correct_score_disabled: boolean
               correlation_groups: Json
               critical_alert_email_enabled: boolean
@@ -3111,6 +3115,7 @@ export type Database = {
               allow_single_admin_self_approval: boolean
               apply_margin_to_real: boolean
               bets_paused: boolean
+              cards_corners_void_after_hours: number
               correct_score_disabled: boolean
               correlation_groups: Json
               critical_alert_email_enabled: boolean
