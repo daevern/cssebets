@@ -8,7 +8,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
-import { getMarketHistory, type MarketHistoryPayload, type MarketSeries } from "@/lib/market-history.functions";
+import { getMarketHistory, getMarketHistoryPublic, type MarketHistoryPayload, type MarketSeries } from "@/lib/market-history.functions";
 
 const SERIES_COLORS = [
   "var(--color-neon)",
