@@ -127,6 +127,24 @@ function AdminMatchesPage() {
                   qc.invalidateQueries({ queryKey: ["admin-matches-full"] });
                 } catch (e) { toast.error((e as Error).message); }
               }}
+              onResyncCC={async () => {
+                try {
+                  const r: any = await resyncFn({ data: { matchId: m.id } });
+                  toast.success(`Resynced stats — settled ${r.settled} bet(s)`);
+                  qc.invalidateQueries({ queryKey: ["admin-matches-full"] });
+                } catch (e) { toast.error((e as Error).message); }
+              }}
+              onManualCC={async (hc, ac, hCards, aCards) => {
+                try {
+                  const r: any = await manualFn({ data: {
+                    matchId: m.id,
+                    homeCorners: hc, awayCorners: ac,
+                    homeCards: hCards, awayCards: aCards,
+                  } });
+                  toast.success(`Settled ${r.settled} card/corner bet(s)`);
+                  qc.invalidateQueries({ queryKey: ["admin-matches-full"] });
+                } catch (e) { toast.error((e as Error).message); }
+              }}
             />
           ))}
           {!matches.data?.length && (
