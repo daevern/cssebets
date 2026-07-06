@@ -362,17 +362,16 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
           <EmptyGraph />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={chartData}
-              margin={{ top: 12, right: 84, bottom: 8, left: 0 }}
-              onMouseMove={(state: any) => {
-                if (state && typeof state.activeTooltipIndex === "number") {
-                  setActiveIndex(state.activeTooltipIndex);
-                }
-              }}
-              onMouseLeave={() => setActiveIndex(null)}
-
-            >
+              <LineChart
+                data={splitData}
+                margin={{ top: 12, right: 84, bottom: 8, left: 0 }}
+                onMouseMove={(state: any) => {
+                  if (state && typeof state.activeTooltipIndex === "number") {
+                    setActiveIndex(state.activeTooltipIndex);
+                  }
+                }}
+                onMouseLeave={() => setActiveIndex(null)}
+              >
               <CartesianGrid
                 strokeDasharray="2 6"
                 stroke="#ffffff"
