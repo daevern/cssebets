@@ -100,7 +100,7 @@ export function MatchAnalyticsScreen({
 
 
 
-function Analytics({ bundle }: { bundle: AnalyticsBundle }) {
+function Analytics({ bundle, publicMode = false }: { bundle: AnalyticsBundle; publicMode?: boolean }) {
   const { match, phase, lineups, events, stats, ratings, h2h, injuries } = bundle;
   if (!match) return null;
   const home = match.home_team;
