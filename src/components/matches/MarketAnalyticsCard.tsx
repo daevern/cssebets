@@ -147,6 +147,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
   const [market, setMarket] = useState<string | undefined>(undefined);
   const [range, setRange] = useState<Range>("LIVE");
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const now = useNowTick(1000);
 
   const q = useQuery({
@@ -269,17 +270,11 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
 
   const homeTeam = data?.homeTeam ?? "Home";
   const awayTeam = data?.awayTeam ?? "Away";
-  const kickoffLabel = useMemo(() => {
-    if (!data?.kickoffAt) return null;
-    const diff = new Date(data.kickoffAt).getTime() - now;
-    if (diff <= 0) return "In progress";
-    const totalMin = Math.floor(diff / 60_000);
-    const d = Math.floor(totalMin / (60 * 24));
-    const h = Math.floor((totalMin % (60 * 24)) / 60);
-    const m = totalMin % 60;
-    if (d > 0) return `Begins in ${d}d ${h}h`;
-    return `Begins in ${h}h ${m}m`;
-  }, [data?.kickoffAt, now]);
+
+  const visibleSeries = useMemo(
+    () => filteredSeries.filter((s) => !hidden[s.key]),
+    [filteredSeries, hidden],
+  );
 
   return (
     <section
@@ -287,20 +282,6 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     >
       {/* Header — padded */}
       <div className="px-4 pt-5 md:px-6 md:pt-6">
-        <div className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">
-          Sports <span className="mx-1.5 text-white/25">›</span>
-          World Cup 2026 <span className="mx-1.5 text-white/25">›</span>
-          <span className="text-white/60">{homeTeam} vs {awayTeam}</span>
-        </div>
-
-        <div className="mt-2">
-          <div className="font-display text-[18px] font-semibold tracking-tight text-white md:text-[20px]">
-            {homeTeam} vs {awayTeam}
-          </div>
-          {kickoffLabel && (
-            <div className="mt-0.5 text-[11px] text-white/50">{kickoffLabel}</div>
-          )}
-        </div>
 
         <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
           <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
@@ -335,18 +316,34 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
         </div>
 
         {/* Legend */}
-        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px]">
+        <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-[12px]">
           {filteredSeries.map((s, idx) => {
             const color = colorForSeries(s.key, idx);
             const v = latestByKey.get(s.key);
+            const off = !!hidden[s.key];
             return (
-              <span key={s.key} className="inline-flex items-center gap-1.5 text-white/80">
-                <span className="h-2 w-2 rounded-full" style={{ background: color }} />
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setHidden((h) => ({ ...h, [s.key]: !h[s.key] }))}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition-colors ${
+                  off
+                    ? "border-white/10 bg-transparent text-white/35"
+                    : "border-white/10 bg-white/[0.04] text-white/85 hover:bg-white/[0.08]"
+                }`}
+                aria-pressed={!off}
+              >
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: color, opacity: off ? 0.35 : 1 }}
+                />
                 <span className="font-medium tracking-tight">{s.label}</span>
                 {typeof v === "number" && (
-                  <span className="font-mono text-white/60">{Math.round(v)}%</span>
+                  <span className={`font-mono ${off ? "text-white/30" : "text-white/60"}`}>
+                    {Math.round(v)}%
+                  </span>
                 )}
-              </span>
+              </button>
             );
           })}
         </div>
@@ -373,9 +370,9 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                 onMouseLeave={() => setActiveIndex(null)}
               >
               <CartesianGrid
-                strokeDasharray="2 6"
+                strokeDasharray="3 6"
                 stroke="#ffffff"
-                strokeOpacity={0.08}
+                strokeOpacity={0.28}
                 vertical={false}
               />
               <XAxis
@@ -402,7 +399,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                 content={() => null}
                 cursor={{ stroke: "rgba(255,255,255,0.28)", strokeWidth: 1, strokeDasharray: "3 4" }}
               />
-              {filteredSeries.map((s, idx) => {
+              {visibleSeries.map((s, idx) => {
                 const color = colorForSeries(s.key, idx);
                 return (
                   <Line
@@ -421,7 +418,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                   />
                 );
               })}
-              {filteredSeries.map((s, idx) => {
+              {visibleSeries.map((s, idx) => {
                 const color = colorForSeries(s.key, idx);
                 return (
                   <Line
@@ -452,7 +449,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                   const rightX = offset.left + offset.width;
                   return (
                     <g>
-                      {filteredSeries.map((s, i) => {
+                      {visibleSeries.map((s, i) => {
                         const raw = row[s.key];
                         const v = typeof raw === "number" ? raw : Number(raw);
                         if (!Number.isFinite(v)) return null;
