@@ -282,9 +282,43 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     >
       {/* Header — padded */}
       <div className="px-4 pt-5 md:px-6 md:pt-6">
-        <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
-          {data?.market === "match_result" || !data ? "Who will win?" : data.marketLabel}
-        </h2>
+        {publicMode ? (
+          <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
+            {data?.market === "match_result" || !data ? "Who will win?" : data.marketLabel}
+          </h2>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+            <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
+              {data?.market === "match_result" || !data ? "Who will win?" : data.marketLabel}
+            </h2>
+
+            {/* Range pills */}
+            <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.02] p-1">
+              {RANGES.map((r) => {
+                const active = r === range;
+                return (
+                  <button
+                    key={r}
+                    onClick={() => setRange(r)}
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight transition-colors ${
+                      active
+                        ? "bg-emerald-500/15 text-emerald-400"
+                        : "text-white/50 hover:text-white/80"
+                    }`}
+                  >
+                    {r === "LIVE" && (
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-70" />
+                        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      </span>
+                    )}
+                    {r}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Legend — minimal */}
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
