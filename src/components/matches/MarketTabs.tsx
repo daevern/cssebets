@@ -437,6 +437,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
   const mut = useMutation({
     mutationFn: async (market: MarketKey) => {
+      if (publicMode) { setSignInOpen(true); return null as any; }
       const pick = picks[market];
       if (!pick) throw new Error("Select an option");
       const stakeVal = stakes[market] ?? String(MIN_STAKE);
@@ -449,7 +450,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         data: { matchId, market, selection: pick.selection, stake: n, clientRequestId: slipId },
       });
     },
-    onSuccess: (_, market) => {
+    onSuccess: (result, market) => {
+      if (publicMode || result == null) return;
       toast.success("Bet placed");
       clearSlipId(`single:${market}`);
       setPicks((prev) => ({ ...prev, [market]: null }));
