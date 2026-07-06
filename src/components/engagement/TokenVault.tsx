@@ -131,7 +131,7 @@ function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
             </SheetPrimitive.Close>
           </div>
 
-          {/* Top actions — 3 equal tiles */}
+          {/* Top actions — 2 nav tiles + 1 read-only free-bet count */}
           <div className="mt-5 grid grid-cols-3 gap-3 px-5">
             <StatTile
               icon={<Users2 className="h-5 w-5" />}
@@ -140,13 +140,7 @@ function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: 
               to="/referrals"
               onNav={() => onOpenChange(false)}
             />
-            <StatTile
-              icon={<Gift className="h-5 w-5" />}
-              label="Free-bet"
-              value={availableFb}
-              to={availableFb > 0 ? "/free-bets/place" : "/store"}
-              onNav={() => onOpenChange(false)}
-            />
+            <FreeBetTile count={availableFb} />
             <StatTile
               icon={<ShoppingBag className="h-5 w-5" />}
               label="Store"
