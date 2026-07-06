@@ -1,17 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, LineChart, Users, Activity, HelpCircle } from "lucide-react";
+import { ArrowUpRight, TrendingUp, TrendingDown, Info, Users, LineChart, LifeBuoy } from "lucide-react";
 import { CsseLogo } from "@/components/brand/CsseMark";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { getLandingData, type LandingNextMatch } from "@/lib/landing.functions";
 import { recordHomeView } from "@/lib/trust-public.functions";
-import {
-  CommunityGrowthSection,
-  RecentPlatformActivity,
-  PayoutPerformanceSection,
-  BuildingLongRun,
-} from "@/components/landing/TrustSections";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -21,13 +15,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Live odds, community activity and payout performance for the CSSEBets FIFA World Cup 2026 prediction market.",
+          "Try live prediction markets on FIFA World Cup 2026 fixtures. Pick an outcome, set your stake and see your potential payout — no signup needed to explore.",
       },
       { property: "og:title", content: "CSSEBets — Prediction Markets for the World Cup" },
       {
         property: "og:description",
         content:
-          "Track live odds, community activity and payout performance in real time.",
+          "Try prediction markets on FIFA World Cup 2026 fixtures — pick, stake, and see your potential payout.",
       },
     ],
   }),
@@ -67,6 +61,7 @@ function toPct(h: number | null, d: number | null, a: number | null) {
   const s = inv.h + inv.d + inv.a;
   return {
     home: Math.round((inv.h / s) * 100),
+    draw: Math.round((inv.d / s) * 100),
     away: Math.round((inv.a / s) * 100),
   };
 }
@@ -121,9 +116,6 @@ function LandingPage() {
   const trackView = useServerFn(recordHomeView);
   useEffect(() => { trackView({}).catch(() => {}); }, [trackView]);
 
-  // Fixtures we display in the navigator. Includes live (isLive flag on the client
-  // is inferred by kickoff being in the past + not finished — we don't get status
-  // from getLandingData, so treat past-kickoff items as live).
   const fixtures = useMemo(() => {
     const list = (landing?.nextMatches ?? []).filter(Boolean) as NonNullable<LandingNextMatch>[];
     return list;
@@ -164,7 +156,7 @@ function LandingPage() {
       </header>
 
       <main className="mx-auto w-full min-w-0 max-w-3xl overflow-x-hidden px-4 pb-28 pt-5 md:pb-14">
-        {/* Fixtures navigator — country A vs country B */}
+        {/* Fixtures navigator */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
@@ -190,10 +182,9 @@ function LandingPage() {
             )}
           </div>
 
-          {/* Horizontal strip of all fixtures (live + upcoming) */}
           {fixtures.length > 0 && (
             <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {fixtures.map((f, i) => {
+              {fixtures.map((f) => {
                 const live = new Date(f.kickoffAt).getTime() <= now;
                 const active = !live && upcoming[idx]?.id === f.id;
                 return (
@@ -207,7 +198,7 @@ function LandingPage() {
                       live
                         ? "border-rose-500/50"
                         : active
-                          ? "border-[#F5C042]/60"
+                          ? "border-[var(--neon)]/60"
                           : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/50"
                     }`}
                     style={{ width: 168 }}
@@ -236,155 +227,261 @@ function LandingPage() {
           )}
         </section>
 
-        {/* Next fixture — featured Kalshi-style card (gold corners) */}
+        {/* Interactive Market Demo — replaces the old "Next Fixture" section */}
         <section className="mt-6 space-y-3">
-          <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#F5C042]" />
-            Next Fixture
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+              Try the Market
+            </h2>
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+              <Info className="h-3 w-3" /> Demo mode
+            </span>
+          </div>
           {featured ? (
-            <NextFixtureCard match={featured} now={now} />
+            <MarketDemoCard match={featured} now={now} />
           ) : (
             <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-10 text-center text-sm text-[var(--ink-muted)]">
               No fixtures on the slate right now — check back closer to kickoff.
             </div>
           )}
         </section>
-
-        {/* Analytics sections — reuse existing trust surfaces */}
-        <div id="community" className="mt-10 scroll-mt-24">
-          <CommunityGrowthSection />
-        </div>
-        <div className="mt-2">
-          <RecentPlatformActivity />
-        </div>
-        <div id="performance" className="scroll-mt-24">
-          <PayoutPerformanceSection />
-        </div>
-        <div id="about" className="scroll-mt-24">
-          <BuildingLongRun />
-        </div>
-        <div id="help" className="mt-6 rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-6 text-center scroll-mt-24">
-          <h3 className="text-base font-bold text-[var(--ink)]">Need help?</h3>
-          <p className="mt-1 text-sm text-[var(--ink-muted)]">Reach the CSSEBets team any time.</p>
-          <a
-            href="mailto:support@cssebets.com"
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-[var(--neon)] px-4 py-2 text-[13px] font-bold text-[#04140A] transition-all hover:shadow-[0_0_18px_rgba(34,224,107,0.45)]"
-          >
-            Contact support <ArrowUpRight className="h-4 w-4" />
-          </a>
-        </div>
       </main>
 
-      {/* Bottom nav — landing only. 4 anchor links. */}
+      {/* Bottom nav — landing only. Links to existing routes. */}
       <LandingBottomNav />
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Next fixture card — gold corners, matches "Next Fixture" on home    */
+/* Interactive Market Demo                                             */
 /* ------------------------------------------------------------------ */
-function GoldCorner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
-  const map: Record<typeof pos, string> = {
-    tl: "top-0 left-0 border-t-2 border-l-2",
-    tr: "top-0 right-0 border-t-2 border-r-2",
-    bl: "bottom-0 left-0 border-b-2 border-l-2",
-    br: "bottom-0 right-0 border-b-2 border-r-2",
-  };
+
+type Outcome = "home" | "draw" | "away";
+
+// Deterministic pseudo-movement based on match id + minute — no randomness across renders.
+function movementSeries(seed: string, base: number, points = 24) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  const out: number[] = [];
+  let v = base;
+  for (let i = 0; i < points; i++) {
+    h = (h * 1103515245 + 12345) >>> 0;
+    const wobble = ((h & 0xffff) / 0xffff - 0.5) * (base * 0.08);
+    v = Math.max(1.05, base + wobble * Math.sin(i / 3));
+    out.push(v);
+  }
+  out[out.length - 1] = base;
+  return out;
+}
+
+function Sparkline({ values, tone }: { values: number[]; tone: "home" | "draw" | "away" }) {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = Math.max(0.001, max - min);
+  const w = 100, h = 28;
+  const pts = values
+    .map((v, i) => {
+      const x = (i / (values.length - 1)) * w;
+      const y = h - ((v - min) / range) * h;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  const stroke =
+    tone === "home" ? "var(--neon)" :
+    tone === "draw" ? "#F5C042" :
+    "rgb(244,63,94)";
+  const first = values[0], last = values[values.length - 1];
+  const dir = last < first ? "down" : "up"; // odds falling = more favored
   return (
-    <span
-      aria-hidden
-      className={`pointer-events-none absolute h-5 w-5 border-[#F5C042] ${map[pos]}`}
-      style={{ filter: "drop-shadow(0 0 6px rgba(245,192,66,0.45))" }}
-    />
+    <div className="flex items-center gap-1.5">
+      <svg viewBox={`0 0 ${w} ${h}`} className="h-5 w-16" preserveAspectRatio="none">
+        <polyline points={pts} fill="none" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      {dir === "down"
+        ? <TrendingDown className="h-3 w-3" style={{ color: stroke }} />
+        : <TrendingUp className="h-3 w-3" style={{ color: stroke }} />}
+    </div>
   );
 }
 
-function NextFixtureCard({ match, now }: { match: NonNullable<LandingNextMatch>; now: number }) {
+function MarketDemoCard({ match, now }: { match: NonNullable<LandingNextMatch>; now: number }) {
   const pct = toPct(match.homeOdds, match.drawOdds, match.awayOdds);
+  const [outcome, setOutcome] = useState<Outcome>("home");
+  const [stake, setStake] = useState<number>(100);
+
+  useEffect(() => { setOutcome("home"); setStake(100); }, [match.id]);
+
+  const oddsFor = (o: Outcome) =>
+    o === "home" ? match.homeOdds : o === "draw" ? match.drawOdds : match.awayOdds;
+  const pctFor = (o: Outcome) =>
+    !pct ? null : o === "home" ? pct.home : o === "draw" ? pct.draw : pct.away;
+
+  const selectedOdds = oddsFor(outcome);
+  const payout = selectedOdds != null ? Math.round(stake * selectedOdds) : null;
+  const profit = payout != null ? payout - stake : null;
+
+  const outcomes: { key: Outcome; label: string; sub: string; tone: "home" | "draw" | "away" }[] = [
+    { key: "home", label: abbrev(match.homeTeam), sub: match.homeTeam, tone: "home" },
+    { key: "draw", label: "DRAW", sub: "Level after 90'", tone: "draw" },
+    { key: "away", label: abbrev(match.awayTeam), sub: match.awayTeam, tone: "away" },
+  ];
+
   return (
-    <Link
-      to="/auth"
-      className="group relative block overflow-hidden rounded-2xl border border-[#F5C042]/40 bg-[var(--surface-2)] transition-colors hover:border-[#F5C042]/70"
-    >
+    <div className="relative overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)]">
+      {/* atmospheric glow */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(120% 60% at 0% 0%, rgba(245,192,66,0.10), transparent 55%), radial-gradient(120% 60% at 100% 100%, rgba(245,192,66,0.08), transparent 55%)",
+            "radial-gradient(120% 60% at 0% 0%, rgba(34,224,107,0.08), transparent 55%), radial-gradient(120% 60% at 100% 100%, rgba(245,192,66,0.06), transparent 55%)",
         }}
       />
-      <GoldCorner pos="tl" />
-      <GoldCorner pos="br" />
+
       <div className="relative p-4">
+        {/* header */}
         <div className="flex items-center justify-between text-[11px] font-semibold">
           <span className="text-[var(--ink-muted)]">{timeChip(match.kickoffAt, now)}</span>
-          <span className="text-[var(--ink-muted)]">FIFA World Cup 2026</span>
+          <span className="text-[var(--ink-muted)]">Match Winner · 90'</span>
         </div>
 
-        <div className="mt-3 flex flex-col gap-2.5">
-          <TeamOddsRow name={match.homeTeam} pct={pct?.home ?? null} mult={match.homeOdds} tone="home" />
-          <TeamOddsRow name={match.awayTeam} pct={pct?.away ?? null} mult={match.awayOdds} tone="away" />
-        </div>
-
-        <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[#F5C042]/50 py-3 text-[14px] font-bold tracking-tight text-[#F5C042] transition-colors group-hover:border-[#F5C042]">
-          Open Market <ArrowUpRight className="h-4 w-4" />
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function TeamOddsRow({
-  name, pct, mult, tone,
-}: {
-  name: string; pct: number | null; mult: number | null; tone: "home" | "away";
-}) {
-  const color = tone === "home" ? "text-rose-400" : "text-[var(--neon)]";
-  const borderColor = tone === "home" ? "border-rose-400/40" : "border-[var(--neon)]/40";
-  const barColor = tone === "home" ? "bg-rose-400" : "bg-[var(--neon)]";
-  return (
-    <div className="flex min-w-0 items-center justify-between gap-3">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <TeamFlag name={name} w={56} />
-        <span className="truncate text-[15px] font-bold tracking-tight text-[var(--ink)]">{name}</span>
-      </div>
-      {pct != null && (
-        <div className="flex shrink-0 items-center gap-2">
-          <div className="h-1.5 w-14 overflow-hidden rounded-full bg-[var(--surface-3)] sm:w-24">
-            <div className={`h-full rounded-full ${barColor} transition-[width] duration-500`} style={{ width: `${Math.max(4, Math.min(100, pct))}%` }} />
+        {/* teams strip */}
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-[var(--color-surface-border)] bg-[var(--surface)]/60 px-3 py-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <TeamFlag name={match.homeTeam} w={40} />
+            <span className="truncate text-[13px] font-bold tracking-tight">{match.homeTeam}</span>
           </div>
-          <div className="flex flex-col items-end">
-            <span className={`rounded-full border ${borderColor} px-2.5 py-0.5 text-[12px] font-bold tabular-nums ${color}`}>
-              {pct}%
-            </span>
-            {mult != null && (
-              <span className="mt-0.5 text-[10px] tabular-nums text-[var(--ink-muted)]">{mult.toFixed(2)}x</span>
+          <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--ink-muted)]">vs</span>
+          <div className="flex min-w-0 items-center justify-end gap-2 text-right">
+            <span className="truncate text-[13px] font-bold tracking-tight">{match.awayTeam}</span>
+            <TeamFlag name={match.awayTeam} w={40} />
+          </div>
+        </div>
+
+        {/* outcome selector — three cards with sparkline "market movement" */}
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {outcomes.map((o) => {
+            const odds = oddsFor(o.key);
+            const p = pctFor(o.key);
+            const active = outcome === o.key;
+            const series = movementSeries(`${match.id}-${o.key}`, odds ?? 2, 24);
+            const toneRing =
+              o.tone === "home" ? "border-[var(--neon)]/60 shadow-[0_0_18px_rgba(34,224,107,0.25)]" :
+              o.tone === "draw" ? "border-[#F5C042]/70 shadow-[0_0_18px_rgba(245,192,66,0.25)]" :
+              "border-rose-400/60 shadow-[0_0_18px_rgba(244,63,94,0.25)]";
+            return (
+              <button
+                key={o.key}
+                onClick={() => setOutcome(o.key)}
+                className={`group relative rounded-xl border bg-[var(--surface)]/70 p-2.5 text-left transition-all ${
+                  active ? toneRing : "border-[var(--color-surface-border)] hover:border-[var(--ink-muted)]/40"
+                }`}
+              >
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+                  {o.key === "draw" ? "Draw" : o.key === "home" ? "Home" : "Away"}
+                </div>
+                <div className="mt-0.5 truncate text-[13px] font-bold tracking-tight text-[var(--ink)]">
+                  {o.label}
+                </div>
+                <div className="mt-2 flex items-baseline justify-between">
+                  <span className="text-[18px] font-black tabular-nums leading-none text-[var(--ink)]">
+                    {odds != null ? odds.toFixed(2) : "—"}
+                  </span>
+                  {p != null && (
+                    <span className="text-[10px] tabular-nums text-[var(--ink-muted)]">{p}%</span>
+                  )}
+                </div>
+                <div className="mt-1.5">
+                  <Sparkline values={series} tone={o.tone} />
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* stake + payout */}
+        <div className="mt-4 rounded-xl border border-[var(--color-surface-border)] bg-[var(--surface)]/60 p-3">
+          <div className="flex items-center justify-between text-[11px] font-semibold text-[var(--ink-muted)]">
+            <span>Your stake</span>
+            <span className="tabular-nums">{stake} pts</span>
+          </div>
+          <input
+            type="range"
+            min={10}
+            max={1000}
+            step={10}
+            value={stake}
+            onChange={(e) => setStake(Number(e.target.value))}
+            className="mt-2 w-full accent-[var(--neon)]"
+            aria-label="Stake"
+          />
+          <div className="mt-2 grid grid-cols-4 gap-1.5">
+            {[50, 100, 250, 500].map((v) => (
+              <button
+                key={v}
+                onClick={() => setStake(v)}
+                className={`rounded-md border px-2 py-1 text-[11px] font-semibold tabular-nums transition-colors ${
+                  stake === v
+                    ? "border-[var(--neon)]/70 text-[var(--neon)]"
+                    : "border-[var(--color-surface-border)] text-[var(--ink-muted)] hover:text-[var(--ink)]"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-3 flex items-end justify-between gap-3 border-t border-[var(--color-surface-border)] pt-3">
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+                Potential payout
+              </div>
+              <div className="mt-0.5 text-[24px] font-black tabular-nums leading-none text-[var(--neon)]">
+                {payout != null ? `${payout.toLocaleString()}` : "—"}
+                <span className="ml-1 text-[11px] font-semibold text-[var(--ink-muted)]">pts</span>
+              </div>
+            </div>
+            {profit != null && (
+              <div className="text-right">
+                <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+                  Profit
+                </div>
+                <div className="mt-0.5 text-[14px] font-bold tabular-nums text-[var(--ink)]">
+                  +{profit.toLocaleString()}
+                </div>
+              </div>
             )}
           </div>
         </div>
-      )}
+
+        {/* CTA */}
+        <Link
+          to="/register"
+          className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-[var(--neon)] py-3 text-[14px] font-bold tracking-tight text-[#04140A] transition-all hover:shadow-[0_0_22px_rgba(34,224,107,0.5)]"
+        >
+          Register to place this bet <ArrowUpRight className="h-4 w-4" />
+        </Link>
+        <p className="mt-2 text-center text-[10px] text-[var(--ink-muted)]">
+          Demo only — sign up to play with real prediction points.
+        </p>
+      </div>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Landing bottom nav                                                  */
+/* Landing bottom nav — reuses existing routes                         */
 /* ------------------------------------------------------------------ */
 const LANDING_NAV = [
-  { id: "about", label: "About", Icon: HelpCircle },
-  { id: "community", label: "Community", Icon: Users },
-  { id: "performance", label: "Performance", Icon: LineChart },
-  { id: "help", label: "Help", Icon: Activity },
+  { to: "/trust-center", label: "About", Icon: Info },
+  { to: "/trust-center", label: "Community", Icon: Users },
+  { to: "/status", label: "Performance", Icon: LineChart },
+  { to: "/support", label: "Help", Icon: LifeBuoy },
 ] as const;
 
 function LandingBottomNav() {
-  const jump = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
   return (
     <nav
       aria-label="Landing sections"
@@ -392,15 +489,15 @@ function LandingBottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <div className="mx-auto grid max-w-md grid-cols-4">
-        {LANDING_NAV.map(({ id, label, Icon }) => (
-          <button
-            key={id}
-            onClick={() => jump(id)}
+        {LANDING_NAV.map(({ to, label, Icon }) => (
+          <Link
+            key={label}
+            to={to}
             className="relative flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-semibold tracking-tight text-[var(--ink-muted)] transition-colors hover:text-[var(--neon)]"
           >
             <Icon className="h-[22px] w-[22px]" />
             <span>{label}</span>
-          </button>
+          </Link>
         ))}
       </div>
     </nav>
