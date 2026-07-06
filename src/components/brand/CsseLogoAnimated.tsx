@@ -548,20 +548,6 @@ export function CsseLogoLoader({ label = "Loading" }: { label?: string }) {
         </motion.svg>
       </div>
 
-      {/* Tagline — appears in the final beat */}
-      <motion.div
-        className="mt-10 text-[11px] font-bold uppercase tracking-[0.48em] text-[var(--color-ink-muted,#6B7A72)]"
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: [0, 0, 0, 0.9, 0.9, 0], y: [6, 6, 6, 0, 0, 0] }}
-        transition={{
-          duration: T_REVEAL + T_HOLD + T_PART + T_MARK + T_LOCK,
-          times: [0, 0.3, 0.55, 0.75, 0.92, 1],
-          repeat: Infinity,
-          repeatDelay: 0.4,
-        }}
-      >
-        private &nbsp;/&nbsp; world cup 2026 &nbsp;/&nbsp; {label}
-      </motion.div>
 
       {/* Bottom precision meter — the green of the chevron extended */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
