@@ -343,7 +343,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
       </div>
 
       {/* Chart — full width, starts at left edge */}
-      <div className="mt-3 h-[280px] w-full sm:h-[320px] md:h-[360px]">
+      <div className="mt-3 h-[340px] w-full sm:h-[380px] md:h-[420px]">
         {q.isLoading ? (
           <div className="grid h-full place-items-center text-[10px] font-bold uppercase tracking-[0.28em] text-white/40">
             Loading market history…

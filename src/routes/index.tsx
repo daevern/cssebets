@@ -250,13 +250,6 @@ function LandingPage() {
 
         {/* Full match analytics — lifted from /matches/:id, visitor-safe */}
         <section className="mt-6">
-          {featured && (
-            <div className="mb-2 px-1 text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">
-              Sports <span className="mx-1.5 text-white/25">›</span>
-              World Cup 2026 <span className="mx-1.5 text-white/25">›</span>
-              <span className="text-white/60">{featured.homeTeam} vs {featured.awayTeam}</span>
-            </div>
-          )}
           <MatchAnalyticsScreen key={analyticsMatchId} matchId={analyticsMatchId} publicMode />
         </section>
 

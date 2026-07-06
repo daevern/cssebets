@@ -130,6 +130,7 @@ function Analytics({ bundle, publicMode = false }: { bundle: AnalyticsBundle; pu
         <span>Sports</span>
         <span className="mx-1.5 text-white/25">›</span>
         <span>World Cup 2026</span>
+        <span className="mx-1.5 text-white/25">›</span>
       </nav>
       <MatchHero
         match={match}
