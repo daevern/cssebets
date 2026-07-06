@@ -235,8 +235,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
 
   return (
     <section
-      className="relative -mx-4 md:mx-0"
-      style={{ background: "#060909" }}
+      className="relative -mx-4 bg-[var(--surface)] md:mx-0"
     >
       {/* Header — padded */}
       <div className="px-4 pt-5 md:px-6 md:pt-6">
