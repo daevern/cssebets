@@ -709,8 +709,8 @@ function TrendingChip({ match, now }: { match: Match; now: number }) {
       to="/matches/$matchId"
       params={{ matchId: match.id }}
       className={`shrink-0 rounded-xl border bg-[var(--surface-2)] px-3 py-3 transition-colors ${
-        live ? "border-[var(--neon)]/40" : "border-[var(--color-surface-border)]"
-      } hover:border-[var(--neon)]/50`}
+        live ? "border-rose-500/50 hover:border-rose-500/70" : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/50"
+      }`}
       style={{ width: 172 }}
     >
       <div className="flex items-center gap-1.5">
@@ -722,8 +722,8 @@ function TrendingChip({ match, now }: { match: Match; now: number }) {
         {abbrev(match.home_team)} vs {abbrev(match.away_team)}
       </div>
       {live ? (
-        <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--neon)]">
-          <span className="h-1 w-1 animate-pulse rounded-full bg-[var(--neon)]" /> LIVE
+        <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-rose-400">
+          <span className="h-1 w-1 animate-pulse rounded-full bg-rose-500" /> LIVE
         </div>
       ) : (
         <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
