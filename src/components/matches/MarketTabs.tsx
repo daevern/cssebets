@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { getMatchMarkets, getMatchMarketsPublic, placeMarketBet } from "@/lib/markets.functions";
+import { submitPrediction } from "@/lib/predictions.functions";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { Loader2, ArrowUpRight, X } from "lucide-react";
 import { toast } from "sonner";
@@ -29,6 +30,14 @@ const MIN_STAKE = 10;
 const MAX_STAKE = 50000;
 
 const POPULAR_SCORES = ["0-0", "1-0", "0-1", "1-1", "2-0", "0-2", "2-1", "1-2", "OTHER"];
+
+function resultOutcomeFromSelection(selection: string): "HOME" | "DRAW" | "AWAY" {
+  const normalized = selection.toUpperCase();
+  if (normalized === "HOME") return "HOME";
+  if (normalized === "DRAW") return "DRAW";
+  if (normalized === "AWAY") return "AWAY";
+  throw new Error("Selection missing");
+}
 
 /* ---------- Primitives ---------- */
 
@@ -358,6 +367,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     bettingBlocked || suspendedMarkets.includes("ALL") || suspendedMarkets.includes(m);
   const fn = useServerFn(publicMode ? getMatchMarketsPublic : getMatchMarkets);
   const place = useServerFn(placeMarketBet);
+  const submitResult = useServerFn(submitPrediction);
   const walletFn = useServerFn(getMyWallet);
   const qc = useQueryClient();
   const { user } = useAuth();
@@ -446,6 +456,18 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       if (err) throw new Error(err);
       if (n > balance) throw new Error("Insufficient points");
       const slipId = getSlipId(`single:${market}`, `${pick.selection}:${pick.odds}:${n}`);
+      if (market === "1x2") {
+        return submitResult({
+          data: {
+            matchId,
+            market: "result",
+            outcome: resultOutcomeFromSelection(pick.selection),
+            referenceOdds: pick.odds,
+            virtualStake: n,
+            clientRequestId: slipId,
+          },
+        });
+      }
       return place({
         data: { matchId, market, selection: pick.selection, stake: n, clientRequestId: slipId },
       });

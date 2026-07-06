@@ -149,7 +149,7 @@ export const placeMarketBet = createServerFn({ method: "POST" })
     if (error) {
       const msg = error.message ?? "";
       if (msg.includes("BETTING_PAUSED")) throw new Error("Bet placement is temporarily paused.");
-      if (msg.includes("MARKET_DISABLED")) throw new Error("This market is currently disabled.");
+      if (msg.includes("MARKET_DISABLED")) throw new Error("This selection isn't accepting bets right now. Refresh to see updated markets.");
       if (msg.includes("HIGH_ODDS_DISABLED")) throw new Error("High-odds markets are temporarily disabled.");
       if (msg.includes("MAX_BETS_PER_MATCH")) throw new Error("You have reached the maximum bets allowed on this match.");
       if (msg.includes("MAX_PAYOUT_NOT_CONFIGURED")) throw new Error("Bet placement is disabled: platform payout limit is not configured. Please contact an admin.");
