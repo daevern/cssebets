@@ -406,9 +406,28 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                 const color = colorForSeries(s.key, idx);
                 return (
                   <Line
-                    key={s.key}
+                    key={`${s.key}-dim`}
                     type="linear"
-                    dataKey={s.key}
+                    dataKey={`${s.key}__d`}
+                    stroke={color}
+                    strokeOpacity={0.22}
+                    strokeWidth={1.75}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    dot={false}
+                    activeDot={false}
+                    isAnimationActive={false}
+                    connectNulls
+                  />
+                );
+              })}
+              {filteredSeries.map((s, idx) => {
+                const color = colorForSeries(s.key, idx);
+                return (
+                  <Line
+                    key={`${s.key}-active`}
+                    type="linear"
+                    dataKey={`${s.key}__a`}
                     name={s.label}
                     stroke={color}
                     strokeWidth={1.75}
@@ -439,7 +458,6 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                         if (!Number.isFinite(v)) return null;
                         const y = yScale(v);
                         const color = colorForSeries(s.key, i);
-                        // Endpoint dot at scrubbed position
                         const xAxis = Object.values(cprops.xAxisMap ?? {})[0] as any;
                         const xScale = xAxis?.scale;
                         const cx = xScale ? xScale(row.t) : rightX;
@@ -449,14 +467,23 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                             <circle cx={cx} cy={y} r={9} fill={color} opacity={0.18} />
                             <text
                               x={rightX + 6}
-                              y={y}
-                              dy={5}
+                              y={y - 4}
+                              fill={color}
+                              fontSize={13}
+                              fontWeight={800}
+                              style={{ letterSpacing: "0.02em" }}
+                            >
+                              {abbrevLabel(s.label)}
+                            </text>
+                            <text
+                              x={rightX + 6}
+                              y={y + 12}
                               fill={color}
                               fontSize={15}
                               fontWeight={800}
                               style={{ letterSpacing: "-0.01em" }}
                             >
-                              {`${abbrevLabel(s.label)} ${Math.round(v)}%`}
+                              {`${Math.round(v)}%`}
                             </text>
                           </g>
                         );
@@ -465,6 +492,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                   );
                 }}
               />
+
             </LineChart>
           </ResponsiveContainer>
 
