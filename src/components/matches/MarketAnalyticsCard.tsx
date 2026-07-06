@@ -370,9 +370,9 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                 onMouseLeave={() => setActiveIndex(null)}
               >
               <CartesianGrid
-                strokeDasharray="2 6"
+                strokeDasharray="3 6"
                 stroke="#ffffff"
-                strokeOpacity={0.08}
+                strokeOpacity={0.28}
                 vertical={false}
               />
               <XAxis
