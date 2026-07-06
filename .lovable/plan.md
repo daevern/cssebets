@@ -1,47 +1,56 @@
-## Goal
+## What's happening
 
-1. Stop the settlement bug that credited/debited wallets against extra-time aggregate scores instead of regulation, and stop the reversal thrash that repeatedly credited then debited the same amount.
-2. Add a **username filter** to the admin Wallet Ledger.
+The match `Brazil 1–2 Norway` is `finished`, and the standard score-based markets (`over_under_2_5`, `double_chance`) settled correctly. Only cards/corners markets on that match are still pending:
 
-**Wallet balances are not touched.** No `wallet_transactions`, `predictions`, or bankroll changes. The fix is forward-only.
+- `cards_over_under_3_5` OVER_3_5 — 150
+- `corners_over_under_9_5` OVER_9_5 — 150
+- `corners_over_under_10_5` OVER_10_5 — 100
 
-## Root cause (short)
+## Root cause
 
-`src/lib/apifootball-analytics.server.ts → syncScore` writes API-Football's `fx.goals.home/away` straight into `matches.home_score/away_score`. `goals.*` is the running aggregate — during and after extra time it holds the ET score (e.g. Argentina/Cape Verde 3-2), not the 90-minute regulation score (1-1). Every score change triggers `matches_score_change_guard`, which reverses the prior settlement and re-settles against the wrong score. When the live endpoint returned inconsistent aggregate values, the same bet was reversed and re-credited every ~2 minutes (14 credits / 13 debits on bet `d748becd` in druggie777's ledger).
+`settle_cards_corners_for_match` gates every prediction behind a "stats freshness" check:
 
-The football-data path already reads `score.regularTime` correctly. Only the API-Football path is broken.
+```
+v_home_stats_fresh := status='finished' AND
+  (matches.home_corners IS NOT NULL
+   OR match_stats.fetched_at >= matches.updated_at - interval '2 minutes')
+```
 
-## Changes
+For this match:
+- `matches.home_corners` / `away_corners` / `home_cards` / `away_cards` are all `NULL` (sync never backfills them onto `matches`).
+- `match_stats.fetched_at = 2026-07-05 21:37:04` (last live sync during the game).
+- `matches.updated_at = 2026-07-06 03:38:03` (later admin/sync touch on the match row).
 
-### 1. `src/lib/apifootball-analytics.server.ts` — `syncScore`
+Stats are ~6 hours older than `updated_at`, so `v_stats_fresh` is false and the settler `CONTINUE`s past every corners/cards prediction, leaving them pending forever. This is a systemic bug — any finished match whose row is touched after the last stats sync hits the same trap.
 
-- Derive regulation from `fx.score.fulltime.home/away` for `home_score/away_score`.
-- Keep `fx.goals.home/away` (the aggregate) in `ft_home_score/ft_away_score` — this is the correct "final incl. ET" field already used elsewhere.
-- Never overwrite `home_score/away_score` once the match is `finished` unless the new regulation value comes from `score.fulltime` AND differs by something other than an ET/live flap: if `score.fulltime` is null on a finished payload, skip the score update entirely (previous value stays).
-- Continue writing `penalty_home_score/away_score` from `score.penalty`.
-- Also set `qualifier` from `score.winner`/penalties when the match finishes in a knockout stage, mirroring the football-data path — this keeps the `to_qualify` market graded on who actually advanced.
+## Data check on what SHOULD happen
 
-### 2. `src/lib/settlement.server.ts` — defensive guard
+- Corners in `match_stats`: home 3 + away 4 = **7**.
+  - OVER_9_5 needs ≥10 → **LOST**
+  - OVER_10_5 needs ≥11 → **LOST**
+- Cards: `yellow_cards`/`red_cards` are `NULL` in `match_stats` (never populated for this match). Under current rules the settler would **VOID** the cards prediction, refunding stake.
 
-Add a pre-flight in `settlePredictionsForMatch`: read `matches.ft_home_score/ft_away_score` and, when both `home_score` and `ft_home_score` are set and they differ, ensure the caller is passing the regulation score (`home_score`, not `ft_home_score`). If a caller ever passes the ET aggregate for a match that went to ET, throw and log — this catches regressions before any wallet write. No behaviour change today because all current callers already pass `matches.home_score`.
+## Plan
 
-### 3. Operational alert on divergence
+### 1. Fix the settler's freshness gate (migration)
 
-Add an `operational_alerts` insert (severity `high`, category `settlement`) whenever a live/finished sync detects `home_score IS DISTINCT FROM ft_home_score` on a match that already has settled predictions — flags human-review-worthy data drift without touching wallets.
+Rewrite the freshness condition so it no longer depends on `matches.updated_at`. New rule: stats are considered fresh for a finished match if `match_stats` rows exist for both sides AND their `fetched_at` is on/after the match's `kickoff_at` (or `matches.home_corners`/`home_cards` are populated). This retains the guard against pre-match empty stats while removing the false negative caused by later touches to the match row.
 
-### 4. Admin Wallet Ledger — username filter
+Same change applies to `v_events_present` (currently also compares to `updated_at`): switch to "any event row for this match with `created_at >= kickoff_at`".
 
-- `src/lib/admin-dashboard.functions.ts → listWalletLedgerAdmin`: accept an optional `username` (string, min 2). Resolve it to a set of `user_id`s by `ilike '%username%'` on `profiles.display_name` (server-side, admin client), then apply `.in('user_id', ids)` to the ledger query. Keeps the existing `userId` UUID filter working.
-- `src/routes/management/admin.wallet-ledger.tsx`: add a "Filter by username" `Input` next to the existing UUID input, wired into the query key. Empty input = no filter. CSV export continues to reflect the currently filtered rows.
+### 2. Re-run settlement for the affected match
 
-## Out of scope (explicit)
+After the migration, call `settle_cards_corners_for_match('2a2e429d-…')`. Expected result:
+- Both corners predictions → `lost`.
+- Cards prediction → `void` (cards stats missing), stake refunded to wallet.
 
-- No changes to `wallet_transactions`, `wallets.balance`, `predictions`, `platform_bankroll`, or any user's numbers.
-- No changes to `matches_score_change_guard` or `reverse_settled_predictions_for_match` — with the source fixed, the guard behaves correctly (flips only on genuine regulation-score corrections).
-- The settlement thrash on already-affected bets stays in the ledger as historical record.
+I'll verify by re-selecting the three predictions and confirming `status` moved off `pending` and wallets reconcile.
 
-## Verification
+### 3. Sweep other affected matches
 
-- Manually invoke `syncScore` for a known ET match (Argentina/Cape Verde, Belgium/Senegal) via the admin control and confirm `matches.home_score` = 1/2 and `ft_home_score` = 3/3 after the run.
-- Open Admin → Wallet Ledger, type "druggie" in the new username field, confirm only druggie777's rows appear.
-- Confirm no new `wallet_transactions` rows are written by any of these changes (they are read-only for wallets).
+Run the same settler across any other `finished` matches that still have pending cards/corners predictions, so this backlog clears in one pass.
+
+### Out of scope
+
+- Backfilling actual card counts from `match_events` for matches where `match_stats.yellow_cards` is NULL — separate follow-up if you want cards markets to grade on results instead of voiding.
+- Changing the sync to also mirror corners/cards onto the `matches` table (would also fix this, but is a bigger change than the settler patch).
