@@ -1,11 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, TrendingUp, TrendingDown, Info, Users, LineChart, LifeBuoy } from "lucide-react";
+import { Info, Users, LineChart, LifeBuoy } from "lucide-react";
 import { CsseLogo } from "@/components/brand/CsseMark";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { getLandingData, type LandingNextMatch } from "@/lib/landing.functions";
 import { recordHomeView } from "@/lib/trust-public.functions";
+import { MatchAnalyticsScreen } from "@/routes/_authenticated/matches.$matchId";
+
+const FALLBACK_MATCH_ID = "daeb90a9-359a-4aef-bf40-fdc969672448";
 
 export const Route = createFileRoute("/")({
   ssr: false,
