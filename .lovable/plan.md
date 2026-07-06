@@ -1,56 +1,107 @@
-## What's happening
 
-The match `Brazil 1–2 Norway` is `finished`, and the standard score-based markets (`over_under_2_5`, `double_chance`) settled correctly. Only cards/corners markets on that match are still pending:
+# CSSEBets — Full System Documentation
 
-- `cards_over_under_3_5` OVER_3_5 — 150
-- `corners_over_under_9_5` OVER_9_5 — 150
-- `corners_over_under_10_5` OVER_10_5 — 100
+I'll produce a single comprehensive documentation file capturing everything the app does: user-facing features, admin/staff systems, backend logic, risk math, and data flows. This will be sourced by reading the actual code (server functions, migrations, route files, settlement/odds/risk servers) so the docs match reality — not a generic overview.
 
-## Root cause
+## Deliverable
 
-`settle_cards_corners_for_match` gates every prediction behind a "stats freshness" check:
+One long-form markdown document: `docs/SYSTEM_OVERVIEW.md` (created new; existing `docs/RUNBOOK.md` and `docs/BACKUP_RECOVERY.md` stay untouched and are cross-referenced).
 
-```
-v_home_stats_fresh := status='finished' AND
-  (matches.home_corners IS NOT NULL
-   OR match_stats.fetched_at >= matches.updated_at - interval '2 minutes')
-```
+## Structure
 
-For this match:
-- `matches.home_corners` / `away_corners` / `home_cards` / `away_cards` are all `NULL` (sync never backfills them onto `matches`).
-- `match_stats.fetched_at = 2026-07-05 21:37:04` (last live sync during the game).
-- `matches.updated_at = 2026-07-06 03:38:03` (later admin/sync touch on the match row).
+1. **Product Overview**
+   - What CSSEBets is, points-based betting model, real vs simulation flows, mobile-first design.
 
-Stats are ~6 hours older than `updated_at`, so `v_stats_fresh` is false and the settler `CONTINUE`s past every corners/cards prediction, leaving them pending forever. This is a systemic bug — any finished match whose row is touched after the last stats sync hits the same trap.
+2. **User-Facing Features**
+   - Landing page (public market history, live/upcoming fixtures, footer, public info routes: about/community/performance/faq).
+   - Auth (email/password + Google, register, invite/referral codes).
+   - Dashboard, Matches list, Match detail (markets, analytics, take-a-position modal, sign-in gate for visitors).
+   - Bets, My Predictions, Wallet, Payout requests, Free bets, Store (tokens), Referrals, Tournament winner, Notifications, Support, Trust Center, Status, Changelog, Help.
+   - Onboarding tour, Welcome modal, engagement tiles, token vault.
 
-## Data check on what SHOULD happen
+3. **Markets & Odds**
+   - Full market catalog (1X2, O/U 2.5, BTTS, correct score, HT/FT, exact totals, cards O/U 3.5, corners O/U 9.5 / 10.5, tournament outrights).
+   - Odds pipeline: API-Football sync → `apifootball_odds_raw` → median aggregation → margin application (`odds-margin.server.ts`) → `match_market_odds` + `market_odds_snapshots`.
+   - House margin math (target overround, per-market redistribution).
+   - Snapshots and market movement history (public + authenticated).
 
-- Corners in `match_stats`: home 3 + away 4 = **7**.
-  - OVER_9_5 needs ≥10 → **LOST**
-  - OVER_10_5 needs ≥11 → **LOST**
-- Cards: `yellow_cards`/`red_cards` are `NULL` in `match_stats` (never populated for this match). Under current rules the settler would **VOID** the cards prediction, refunding stake.
+4. **Bet Placement & Wallets**
+   - Wallet ledger model (`wallets`, `wallet_transactions`).
+   - Placement flow, validation (paused, disabled markets, high-odds threshold, max stake, max potential payout, per-user per-match cap).
+   - Free bets application and store item redemption.
+   - Rate limiting (`rate_limits`) and audit logging.
 
-## Plan
+5. **Settlement Engine**
+   - Match lifecycle (scheduled → live → finished / postponed / cancelled).
+   - Per-market settlement functions (1X2, O/U, BTTS, correct score, HT/FT, exact totals, cards/corners).
+   - Freshness gate fix (kickoff_at anchor) documented from recent migration.
+   - Void/refund conditions, payout writes to wallets, `predictions.status` transitions.
+   - Catch-up settlement (`settle-catchup.functions.ts`).
 
-### 1. Fix the settler's freshness gate (migration)
+6. **Risk Management (Admin)**
+   - Emergency controls: pause all bets, disable correct-score, disable high-odds, per-market kill switches, per-user per-match cap.
+   - House parameters: margin %, exposure cap fraction of bankroll, max stake, max potential payout, apply-margin-to-real toggle.
+   - Correlated exposure alerts (`correlated_exposure_alerts`), match exposure scenarios, stake pools.
+   - Bankroll tracking (`platform_bankroll`, `platform_transactions`).
+   - Reconciliation runs and drift detection (audit_log actions).
+   - High-payout block + rate-limit audit trail visible on risk-settings page.
 
-Rewrite the freshness condition so it no longer depends on `matches.updated_at`. New rule: stats are considered fresh for a finished match if `match_stats` rows exist for both sides AND their `fetched_at` is on/after the match's `kickoff_at` (or `matches.home_corners`/`home_cards` are populated). This retains the guard against pre-match empty stats while removing the false negative caused by later touches to the match row.
+7. **User Management (Staff)**
+   - Roles: `user`, `moderator`, `admin`, `super_admin` (via `user_roles` + `has_role`).
+   - Staff portal (`/management/*`): support queue, users, chat, admin dashboards, super-admin, settings, forced password change flow, access-denied handling.
+   - Point requests, wallet adjustment requests, payout approvals, referral overview, referred users, staff audit logs.
 
-Same change applies to `v_events_present` (currently also compares to `updated_at`): switch to "any event row for this match with `created_at >= kickoff_at`".
+8. **Support & Communications**
+   - Support conversations/messages, unread counts, staff audit logs.
+   - Email pipeline: unsubscribe tokens, suppressed emails, send state/log, queue processing route.
+   - Notifications system, WinDetector + WinTicketModal.
 
-### 2. Re-run settlement for the affected match
+9. **Referrals, Engagement, Tokens**
+   - Referral code generation, referral tracking, rewards.
+   - CSSE tokens (`csse_token_wallets`, `csse_token_transactions`, `csse_store_items`, `csse_free_bets`).
+   - Engagement tiles + tour config.
 
-After the migration, call `settle_cards_corners_for_match('2a2e429d-…')`. Expected result:
-- Both corners predictions → `lost`.
-- Cards prediction → `void` (cards stats missing), stake refunded to wallet.
+10. **Simulation Mode**
+    - World Cup simulator (`sim-worldcup.server.ts`, `simulator.ts`, `simulation.functions.ts`), isolation from real bankroll/risk.
 
-I'll verify by re-selecting the three predictions and confirming `status` moved off `pending` and wallets reconcile.
+11. **Operations & Health**
+    - Health check runs, incidents, operational alerts, admin operations page.
+    - Sync jobs (fixtures, prematch, live, fulltime, lineups) via `/api/public/hooks/*` and pg_cron.
+    - Slow queries, DB linter, backup/recovery reference.
 
-### 3. Sweep other affected matches
+12. **Backend Architecture**
+    - TanStack Start, `createServerFn` for app logic, server routes only for public hooks/webhooks.
+    - Supabase clients: browser, server publishable, `requireSupabaseAuth`, `supabaseAdmin` (privileged-only).
+    - Auth gating: `_authenticated` layout (ssr:false), management gate, bearer attacher in `src/start.ts`.
+    - RLS + GRANT model; `has_role` security-definer pattern.
 
-Run the same settler across any other `finished` matches that still have pending cards/corners predictions, so this backlog clears in one pass.
+13. **Database Schema Reference**
+    - Table-by-table summary (all ~50 public tables): purpose, key columns, RLS shape, links.
 
-### Out of scope
+14. **Key Calculations Cheat Sheet**
+    - Overround / margin application formulas.
+    - Potential payout = stake × decimal_odds; cap = min(max_potential_payout, bankroll × exposure_cap_pct).
+    - Free-bet redemption math.
+    - Referral reward computation.
+    - Settlement decision tables per market.
 
-- Backfilling actual card counts from `match_events` for matches where `match_stats.yellow_cards` is NULL — separate follow-up if you want cards markets to grade on results instead of voiding.
-- Changing the sync to also mirror corners/cards onto the `matches` table (would also fix this, but is a bigger change than the settler patch).
+15. **Runtime Constraints & Gotchas**
+    - Cloudflare Worker runtime limits, Node-only packages avoided.
+    - Public route loaders can't call `requireSupabaseAuth`.
+    - `supabaseAdmin` only inside handlers of `.functions.ts`.
+
+16. **Cross-references** to `docs/RUNBOOK.md`, `docs/BACKUP_RECOVERY.md`, and `.lovable/plan.md`.
+
+## Method
+
+- Read source in parallel batches: server files in `src/lib/*.server.ts` and `*.functions.ts`, all `src/routes/management/admin.*`, migrations under `supabase/migrations/`, and key components.
+- Extract exact formulas from `odds-margin.server.ts`, `settlement.server.ts`, `risk.functions.ts`, `bankroll.functions.ts`.
+- Query DB schema via `supabase--read_query` for column-level accuracy where needed.
+
+## Out of Scope
+
+- No code changes to app behavior.
+- No secret values, no Supabase dashboard URLs.
+- Not editing existing docs — only adding `docs/SYSTEM_OVERVIEW.md`.
+
+Estimated length: ~1,500–2,500 lines of markdown. If you'd prefer it split into multiple files under `docs/` (e.g. `docs/architecture.md`, `docs/risk.md`, `docs/settlement.md`), say so before I start.
