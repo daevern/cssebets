@@ -397,7 +397,7 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
     for (let from = 0; ; from += ADMIN_PAGE_SIZE) {
       let q = supabaseAdmin
         .from("predictions")
-        .select("id, user_id, match_id, market, outcome, virtual_stake, reference_odds, potential_return, points, status, created_at, settled_at")
+        .select("id, user_id, match_id, market, outcome, virtual_stake, reference_odds, potential_return, points, status, created_at, settled_at, flagged_for_review, flagged_reason")
         .order("created_at", { ascending: false })
         .range(from, from + ADMIN_PAGE_SIZE - 1);
       if (data.userId) q = q.eq("user_id", data.userId);
