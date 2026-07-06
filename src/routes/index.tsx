@@ -238,7 +238,7 @@ const LANDING_NAV = [
   { to: "/about", label: "About", Icon: Info },
   { to: "/community", label: "Community", Icon: Users },
   { to: "/performance", label: "Performance", Icon: LineChart },
-  { to: "/help", label: "Help", Icon: LifeBuoy },
+  { to: "/faq", label: "Help", Icon: LifeBuoy },
 ] as const;
 
 function LandingBottomNav() {
