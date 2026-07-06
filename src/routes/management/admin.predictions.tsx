@@ -26,8 +26,10 @@ function AdminPredictionsPage() {
   const [market, setMarket] = useState("");
   const [status, setStatus] = useState("");
   const [reason, setReason] = useState("");
+  const [flaggedOnly, setFlaggedOnly] = useState(false);
   const listFn = useServerFn(listPredictionsAdmin);
   const voidFn = useServerFn(voidPredictionAdmin);
+  const regradeFn = useServerFn(regradePredictionAdmin);
 
   const q = useQuery({
     queryKey: ["admin-predictions", market, status],
@@ -39,6 +41,18 @@ function AdminPredictionsPage() {
     onSuccess: () => { toast.success("Voided & refunded"); qc.invalidateQueries({ queryKey: ["admin-predictions"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const regradeMut = useMutation({
+    mutationFn: (v: { id: string; newStatus: string }) =>
+      regradeFn({ data: { predictionId: v.id, newStatus: v.newStatus as any, reason } }),
+    onSuccess: (r: any) => {
+      const delta = Number(r?.delta ?? 0);
+      toast.success(`Regraded · wallet delta ${delta >= 0 ? "+" : ""}${delta.toFixed(2)}`);
+      qc.invalidateQueries({ queryKey: ["admin-predictions"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   return (
     <div className="space-y-4">
