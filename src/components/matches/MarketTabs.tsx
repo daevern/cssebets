@@ -382,7 +382,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
   const myBets = useQuery({
     queryKey: ["my-match-pending-bets", matchId, user?.id],
-    enabled: !!user && !locked,
+    enabled: !!user && !locked && !publicMode,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("predictions")
