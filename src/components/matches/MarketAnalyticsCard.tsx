@@ -252,8 +252,34 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     return [Math.max(0, Math.floor(min - pad)), Math.min(100, Math.ceil(max + pad))];
   }, [chartData, filteredSeries]);
 
+  const scrubIdx = activeIndex != null ? activeIndex : Math.max(0, chartData.length - 1);
+  const splitData = useMemo(() => {
+    return chartData.map((row, i) => {
+      const out: ChartRow = { t: row.t as string };
+      for (const s of filteredSeries) {
+        const v = row[s.key];
+        if (typeof v === "number") {
+          if (i <= scrubIdx) out[`${s.key}__a`] = v;
+          if (i >= scrubIdx) out[`${s.key}__d`] = v;
+        }
+      }
+      return out;
+    });
+  }, [chartData, filteredSeries, scrubIdx]);
+
   const homeTeam = data?.homeTeam ?? "Home";
   const awayTeam = data?.awayTeam ?? "Away";
+  const kickoffLabel = useMemo(() => {
+    if (!data?.kickoffAt) return null;
+    const diff = new Date(data.kickoffAt).getTime() - now;
+    if (diff <= 0) return "In progress";
+    const totalMin = Math.floor(diff / 60_000);
+    const d = Math.floor(totalMin / (60 * 24));
+    const h = Math.floor((totalMin % (60 * 24)) / 60);
+    const m = totalMin % 60;
+    if (d > 0) return `Begins in ${d}d ${h}h`;
+    return `Begins in ${h}h ${m}m`;
+  }, [data?.kickoffAt, now]);
 
   return (
     <section
@@ -265,6 +291,15 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
           Sports <span className="mx-1.5 text-white/25">›</span>
           World Cup 2026 <span className="mx-1.5 text-white/25">›</span>
           <span className="text-white/60">{homeTeam} vs {awayTeam}</span>
+        </div>
+
+        <div className="mt-2">
+          <div className="font-display text-[18px] font-semibold tracking-tight text-white md:text-[20px]">
+            {homeTeam} vs {awayTeam}
+          </div>
+          {kickoffLabel && (
+            <div className="mt-0.5 text-[11px] text-white/50">{kickoffLabel}</div>
+          )}
         </div>
 
         <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
