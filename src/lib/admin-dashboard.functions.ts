@@ -397,7 +397,7 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
     for (let from = 0; ; from += ADMIN_PAGE_SIZE) {
       let q = supabaseAdmin
         .from("predictions")
-        .select("id, user_id, match_id, market, outcome, virtual_stake, reference_odds, potential_return, points, status, created_at, settled_at")
+        .select("id, user_id, match_id, market, outcome, virtual_stake, reference_odds, potential_return, points, status, created_at, settled_at, flagged_for_review, flagged_reason")
         .order("created_at", { ascending: false })
         .range(from, from + ADMIN_PAGE_SIZE - 1);
       if (data.userId) q = q.eq("user_id", data.userId);
@@ -723,6 +723,33 @@ export const voidPredictionAdmin = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+export const regradePredictionAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      predictionId: z.string().uuid(),
+      newStatus: z.enum(["won", "lost", "void", "pending"]),
+      reason: ReasonField,
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireTier(supabase, userId, WRITE_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await requireFreshReauth(supabaseAdmin, userId);
+
+    const { data: result, error } = await (supabaseAdmin as any).rpc("regrade_prediction_manual", {
+      p_prediction_id: data.predictionId,
+      p_new_status: data.newStatus,
+      p_reason: data.reason,
+      p_actor_id: userId,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true, ...(result as any) };
+  });
+
+
 
 export const setMatchStatusManual = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
