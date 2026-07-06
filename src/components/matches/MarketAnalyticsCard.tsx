@@ -235,8 +235,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
 
   return (
     <section
-      className="relative -mx-4 md:mx-0"
-      style={{ background: "#060909" }}
+      className="relative -mx-4 bg-[var(--surface)] md:mx-0"
     >
       {/* Header — padded */}
       <div className="px-4 pt-5 md:px-6 md:pt-6">
@@ -297,7 +296,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
       </div>
 
       {/* Chart — full width, starts at left edge */}
-      <div className="mt-4 h-[520px] w-full sm:h-[560px] md:h-[600px]">
+      <div className="mt-3 h-[300px] w-full sm:h-[340px] md:h-[380px]">
         {q.isLoading ? (
           <div className="grid h-full place-items-center text-[10px] font-bold uppercase tracking-[0.28em] text-white/40">
             Loading market history…
@@ -306,7 +305,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
           <EmptyGraph />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 8, right: 64, bottom: 8, left: 0 }}>
+            <LineChart data={chartData} margin={{ top: 8, right: 56, bottom: 8, left: 0 }}>
               <CartesianGrid
                 strokeDasharray="2 6"
                 stroke="#ffffff"
@@ -332,7 +331,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                 }}
                 minTickGap={48}
               />
-              <YAxis hide domain={yDomain} width={0} />
+              <YAxis hide domain={yDomain} width={0} padding={{ top: 0, bottom: 0 }} />
               <Tooltip
                 contentStyle={{
                   background: "#0b0f0f",
