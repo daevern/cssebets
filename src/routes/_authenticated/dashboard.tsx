@@ -536,18 +536,14 @@ function FeaturedMarketCard({ match, now }: { match: Match; now: number }) {
         />
       )}
       {showGoldCorners && (
-        <>
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(120% 60% at 0% 0%, rgba(245,192,66,0.10), transparent 55%), radial-gradient(120% 60% at 100% 100%, rgba(245,192,66,0.08), transparent 55%)",
-            }}
-          />
-          <GoldCorner pos="tl" />
-          <GoldCorner pos="br" />
-        </>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(120% 60% at 0% 0%, rgba(245,192,66,0.10), transparent 55%), radial-gradient(120% 60% at 100% 100%, rgba(245,192,66,0.08), transparent 55%)",
+          }}
+        />
       )}
 
       <div className="relative p-4">
