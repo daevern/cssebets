@@ -2901,6 +2901,15 @@ export type Database = {
         Args: { p_match_id: string }
         Returns: undefined
       }
+      regrade_cards_corners_for_match: {
+        Args: { p_match_id: string }
+        Returns: {
+          delta: number
+          new_status: string
+          old_status: string
+          prediction_id: string
+        }[]
+      }
       reject_wallet_adjustment: {
         Args: { p_rejection_reason: string; p_request_id: string }
         Returns: Json
