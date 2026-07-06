@@ -493,37 +493,70 @@ function timeChip(m: Match, now: number) {
     : `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${t}`;
 }
 
+function GoldCorner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
+  const map: Record<typeof pos, string> = {
+    tl: "top-0 left-0 border-t-2 border-l-2",
+    tr: "top-0 right-0 border-t-2 border-r-2",
+    bl: "bottom-0 left-0 border-b-2 border-l-2",
+    br: "bottom-0 right-0 border-b-2 border-r-2",
+  };
+  return (
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute h-5 w-5 border-[#F5C042] ${map[pos]}`}
+      style={{ filter: "drop-shadow(0 0 6px rgba(245,192,66,0.45))" }}
+    />
+  );
+}
+
 function FeaturedMarketCard({ match, now }: { match: Match; now: number }) {
   const live = match.status === "live";
   const pct = twoWayPct(match.reference_odds);
-  const isTop = live;
+  // Kalshi-style gold corners appear for the upcoming "next fixture" card.
+  const showGoldCorners = !live;
 
   return (
     <Link
       to="/matches/$matchId"
       params={{ matchId: match.id }}
       className={`group relative block overflow-hidden rounded-2xl border bg-[var(--surface-2)] transition-colors ${
-        isTop ? "border-[var(--neon)]/40" : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/30"
+        live
+          ? "border-rose-500/50 hover:border-rose-500/70"
+          : "border-[#F5C042]/40 hover:border-[#F5C042]/70"
       }`}
     >
-      {isTop && (
+      {live && (
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(100% 60% at 50% 0%, rgba(34,224,107,0.08), transparent 60%)",
+              "radial-gradient(100% 60% at 50% 0%, rgba(244,63,94,0.10), transparent 60%)",
           }}
         />
+      )}
+      {showGoldCorners && (
+        <>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(120% 60% at 0% 0%, rgba(245,192,66,0.10), transparent 55%), radial-gradient(120% 60% at 100% 100%, rgba(245,192,66,0.08), transparent 55%)",
+            }}
+          />
+          <GoldCorner pos="tl" />
+          <GoldCorner pos="br" />
+        </>
       )}
 
       <div className="relative p-4">
         <div className="flex items-center justify-between text-[11px] font-semibold">
-          <span className={live ? "flex items-center gap-1.5 text-[var(--neon)]" : "text-[var(--ink-muted)]"}>
+          <span className={live ? "flex items-center gap-1.5 text-rose-400" : "text-[var(--ink-muted)]"}>
             {live && (
               <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--neon)] opacity-70" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-70" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
               </span>
             )}
             {timeChip(match, now)}
@@ -550,9 +583,9 @@ function FeaturedMarketCard({ match, now }: { match: Match; now: number }) {
 
         <div
           className={`mt-4 flex items-center justify-center gap-2 rounded-xl py-3 text-[14px] font-bold tracking-tight transition-transform ${
-            isTop
-              ? "bg-[var(--neon)] text-[#04140A] group-hover:translate-y-[-1px]"
-              : "border border-[var(--color-surface-border)] text-[var(--neon)] group-hover:border-[var(--neon)]/40"
+            live
+              ? "bg-rose-500 text-[#160406] group-hover:translate-y-[-1px]"
+              : "border border-[#F5C042]/50 text-[#F5C042] group-hover:border-[#F5C042]"
           }`}
         >
           Open Market <ArrowUpRight className="h-4 w-4" />
