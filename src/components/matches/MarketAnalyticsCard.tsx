@@ -315,8 +315,8 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-[12px]">
+        {/* Legend — minimal */}
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
           {filteredSeries.map((s, idx) => {
             const color = colorForSeries(s.key, idx);
             const v = latestByKey.get(s.key);
@@ -326,22 +326,15 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                 key={s.key}
                 type="button"
                 onClick={() => setHidden((h) => ({ ...h, [s.key]: !h[s.key] }))}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition-colors ${
-                  off
-                    ? "border-white/10 bg-transparent text-white/35"
-                    : "border-white/10 bg-white/[0.04] text-white/85 hover:bg-white/[0.08]"
+                className={`inline-flex items-center gap-1.5 bg-transparent p-0 transition-opacity ${
+                  off ? "opacity-40" : "opacity-100 hover:opacity-80"
                 }`}
                 aria-pressed={!off}
               >
-                <span
-                  className="h-2 w-2 rounded-full"
-                  style={{ background: color, opacity: off ? 0.35 : 1 }}
-                />
-                <span className="font-medium tracking-tight">{s.label}</span>
+                <span className="h-2 w-2 rounded-full" style={{ background: color }} />
+                <span className="font-medium tracking-tight text-white/85">{s.label}</span>
                 {typeof v === "number" && (
-                  <span className={`font-mono ${off ? "text-white/30" : "text-white/60"}`}>
-                    {Math.round(v)}%
-                  </span>
+                  <span className="font-mono text-white/60">{Math.round(v)}%</span>
                 )}
               </button>
             );
@@ -350,7 +343,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
       </div>
 
       {/* Chart — full width, starts at left edge */}
-      <div className="mt-3 h-[300px] w-full sm:h-[340px] md:h-[380px]">
+      <div className="mt-3 h-[480px] w-full sm:h-[520px] md:h-[560px]">
         {q.isLoading ? (
           <div className="grid h-full place-items-center text-[10px] font-bold uppercase tracking-[0.28em] text-white/40">
             Loading market history…
@@ -408,7 +401,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                     dataKey={`${s.key}__d`}
                     stroke={color}
                     strokeOpacity={0.22}
-                    strokeWidth={1.75}
+                    strokeWidth={2.25}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     dot={false}
@@ -427,7 +420,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                     dataKey={`${s.key}__a`}
                     name={s.label}
                     stroke={color}
-                    strokeWidth={1.75}
+                    strokeWidth={2.25}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     dot={false}
