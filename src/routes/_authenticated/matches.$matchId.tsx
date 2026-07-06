@@ -126,12 +126,10 @@ function Analytics({ bundle, publicMode = false }: { bundle: AnalyticsBundle; pu
 
   return (
     <>
-      <nav className="text-[11px] font-medium tracking-tight text-[var(--color-ink-muted)]">
+      <nav className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">
         <span>Sports</span>
-        <span className="mx-1.5 opacity-60">›</span>
+        <span className="mx-1.5 text-white/25">›</span>
         <span>World Cup 2026</span>
-        <span className="mx-1.5 opacity-60">›</span>
-        <span className="text-[var(--color-ink)]">{home} vs {away}</span>
       </nav>
       <MatchHero
         match={match}
