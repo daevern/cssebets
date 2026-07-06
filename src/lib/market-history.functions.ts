@@ -168,6 +168,7 @@ async function buildMarketHistory(
   return {
     homeTeam,
     awayTeam,
+    kickoffAt,
     market: chosen,
     marketLabel: marketLabel(chosen),
     sourceLabel: chosen === "match_result" ? "Global 90-min market" : "Global bookmaker market",
