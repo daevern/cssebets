@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PublicShell } from "@/routes/about";
 import { BrandText } from "@/components/brand/CsseMark";
 
-export const Route = createFileRoute("/help")({
+export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
       { title: "Help — CSSEBets" },

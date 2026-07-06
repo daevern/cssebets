@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PerformanceRouteImport } from './routes/performance'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as BrandRouteImport } from './routes/brand'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -99,6 +100,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const PerformanceRoute = PerformanceRouteImport.update({
   id: '/performance',
   path: '/performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CommunityRoute = CommunityRouteImport.update({
@@ -542,6 +548,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/brand': typeof BrandRoute
   '/community': typeof CommunityRoute
+  '/faq': typeof FaqRoute
   '/performance': typeof PerformanceRoute
   '/register': typeof RegisterRoute
   '/bets': typeof AuthenticatedBetsRoute
@@ -624,6 +631,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/brand': typeof BrandRoute
   '/community': typeof CommunityRoute
+  '/faq': typeof FaqRoute
   '/performance': typeof PerformanceRoute
   '/register': typeof RegisterRoute
   '/bets': typeof AuthenticatedBetsRoute
@@ -706,6 +714,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/brand': typeof BrandRoute
   '/community': typeof CommunityRoute
+  '/faq': typeof FaqRoute
   '/performance': typeof PerformanceRoute
   '/register': typeof RegisterRoute
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
@@ -790,6 +799,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/brand'
     | '/community'
+    | '/faq'
     | '/performance'
     | '/register'
     | '/bets'
@@ -872,6 +882,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/brand'
     | '/community'
+    | '/faq'
     | '/performance'
     | '/register'
     | '/bets'
@@ -953,6 +964,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/brand'
     | '/community'
+    | '/faq'
     | '/performance'
     | '/register'
     | '/_authenticated/bets'
@@ -1037,6 +1049,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BrandRoute: typeof BrandRoute
   CommunityRoute: typeof CommunityRoute
+  FaqRoute: typeof FaqRoute
   PerformanceRoute: typeof PerformanceRoute
   RegisterRoute: typeof RegisterRoute
   ApiPublicHooksApifootballFulltimeRoute: typeof ApiPublicHooksApifootballFulltimeRoute
@@ -1064,6 +1077,13 @@ declare module '@tanstack/react-router' {
       path: '/performance'
       fullPath: '/performance'
       preLoaderRoute: typeof PerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/community': {
@@ -1794,6 +1814,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BrandRoute: BrandRoute,
   CommunityRoute: CommunityRoute,
+  FaqRoute: FaqRoute,
   PerformanceRoute: PerformanceRoute,
   RegisterRoute: RegisterRoute,
   ApiPublicHooksApifootballFulltimeRoute:
