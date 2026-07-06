@@ -494,30 +494,32 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
         )}
       </div>
 
-      {/* Range selector — borderless, spans the x-axis length */}
-      <div className="mt-2 w-full px-4 pr-[84px] md:px-6 md:pr-[84px]">
-        <div className="flex items-center justify-between">
-          {RANGES.map((r) => {
-            const active = r === range;
-            return (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRange(r)}
-                aria-pressed={active}
-                className={`inline-flex items-center gap-1.5 text-[12px] font-medium tracking-tight transition-colors ${
-                  active ? "text-white" : "text-white/50 hover:text-white/80"
-                }`}
-              >
-                {r === "LIVE" && (
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                )}
-                {r}
-              </button>
-            );
-          })}
+      {publicMode && (
+        /* Range selector — borderless, spans the x-axis length */
+        <div className="mt-2 w-full px-4 pr-[84px] md:px-6 md:pr-[84px]">
+          <div className="flex items-center justify-between">
+            {RANGES.map((r) => {
+              const active = r === range;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRange(r)}
+                  aria-pressed={active}
+                  className={`inline-flex items-center gap-1.5 text-[12px] font-medium tracking-tight transition-colors ${
+                    active ? "text-white" : "text-white/50 hover:text-white/80"
+                  }`}
+                >
+                  {r === "LIVE" && (
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  )}
+                  {r}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
