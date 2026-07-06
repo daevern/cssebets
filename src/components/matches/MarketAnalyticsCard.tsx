@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Customized,
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -27,6 +27,27 @@ function colorForSeries(key: string, idx: number): string {
   if (k === "DRAW" || k === "X") return COLOR_DRAW;
   if (k === "AWAY" || k.startsWith("AWAY_") || k === "NO" || k === "UNDER" || k.startsWith("UNDER_")) return COLOR_AWAY;
   return COLOR_FALLBACK[idx % COLOR_FALLBACK.length];
+}
+
+const ABBREV_OVERRIDES: Record<string, string> = {
+  "United States": "USA",
+  "United Kingdom": "GBR",
+  "South Korea": "KOR",
+  "North Korea": "PRK",
+  "Bosnia & Herzegovina": "BIH",
+  "Ivory Coast": "CIV",
+  "Czech Republic": "CZE",
+  "Draw": "DRW",
+  "Home": "HOM",
+  "Away": "AWY",
+};
+function abbrevLabel(label: string): string {
+  if (ABBREV_OVERRIDES[label]) return ABBREV_OVERRIDES[label];
+  const parts = label.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0] + (parts[2]?.[0] ?? parts[1][1] ?? "")).toUpperCase().slice(0, 3);
+  }
+  return label.slice(0, 3).toUpperCase();
 }
 
 /* ------------------------------------------------------------------ */
@@ -125,6 +146,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
   const qc = useQueryClient();
   const [market, setMarket] = useState<string | undefined>(undefined);
   const [range, setRange] = useState<Range>("LIVE");
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const now = useNowTick(1000);
 
   const q = useQuery({
@@ -305,7 +327,17 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
           <EmptyGraph />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 8, right: 56, bottom: 8, left: 0 }}>
+            <LineChart
+              data={chartData}
+              margin={{ top: 12, right: 84, bottom: 8, left: 0 }}
+              onMouseMove={(state: any) => {
+                if (state && typeof state.activeTooltipIndex === "number") {
+                  setActiveIndex(state.activeTooltipIndex);
+                }
+              }}
+              onMouseLeave={() => setActiveIndex(null)}
+
+            >
               <CartesianGrid
                 strokeDasharray="2 6"
                 stroke="#ffffff"
@@ -333,16 +365,8 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
               />
               <YAxis hide domain={yDomain} width={0} padding={{ top: 0, bottom: 0 }} />
               <Tooltip
-                contentStyle={{
-                  background: "#0b0f0f",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: 6,
-                  fontSize: 12,
-                  color: "#fff",
-                }}
-                labelStyle={{ color: "rgba(255,255,255,0.5)" }}
-                labelFormatter={(v) => new Date(v as string).toLocaleString()}
-                formatter={(val: any) => `${Math.round(Number(val))}%`}
+                content={() => null}
+                cursor={{ stroke: "rgba(255,255,255,0.28)", strokeWidth: 1, strokeDasharray: "3 4" }}
               />
               {filteredSeries.map((s, idx) => {
                 const color = colorForSeries(s.key, idx);
@@ -356,45 +380,60 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                     strokeWidth={1.75}
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    dot={(props: any) => {
-                      const { cx, cy, index } = props;
-                      const isLast = index === chartData.length - 1;
-                      if (!isLast || cx == null || cy == null) return <g key={`d-${s.key}-${index}`} />;
-                      return (
-                        <g key={`d-${s.key}-${index}`}>
-                          <circle cx={cx} cy={cy} r={3.5} fill={color} />
-                        </g>
-                      );
-                    }}
-                    activeDot={{ r: 4, strokeWidth: 0, fill: color }}
+                    dot={false}
+                    activeDot={false}
                     isAnimationActive={false}
                     connectNulls
-                    label={(props: any) => {
-                      const { x, y, index, value } = props;
-                      if (index !== chartData.length - 1 || value == null) {
-                        return <g key={`l-${s.key}-${index}`} />;
-                      }
-                      return (
-                        <g key={`l-${s.key}-${index}`}>
-                          <text
-                            x={x + 8}
-                            y={y}
-                            dy={4}
-                            fill={color}
-                            fontSize={11}
-                            fontWeight={700}
-                            style={{ letterSpacing: "-0.01em" }}
-                          >
-                            {`${Math.round(Number(value))}%`}
-                          </text>
-                        </g>
-                      );
-                    }}
                   />
                 );
               })}
+              <Customized
+                component={(cprops: any) => {
+                  const yAxis = Object.values(cprops.yAxisMap ?? {})[0] as any;
+                  const yScale = yAxis?.scale;
+                  const offset = cprops.offset ?? { left: 0, top: 0, width: 0, height: 0 };
+                  if (!yScale || !chartData.length) return null;
+                  const idx = activeIndex != null ? activeIndex : chartData.length - 1;
+                  const row = chartData[idx];
+                  if (!row) return null;
+                  const rightX = offset.left + offset.width;
+                  return (
+                    <g>
+                      {filteredSeries.map((s, i) => {
+                        const raw = row[s.key];
+                        const v = typeof raw === "number" ? raw : Number(raw);
+                        if (!Number.isFinite(v)) return null;
+                        const y = yScale(v);
+                        const color = colorForSeries(s.key, i);
+                        // Endpoint dot at scrubbed position
+                        const xAxis = Object.values(cprops.xAxisMap ?? {})[0] as any;
+                        const xScale = xAxis?.scale;
+                        const cx = xScale ? xScale(row.t) : rightX;
+                        return (
+                          <g key={`ep-${s.key}`}>
+                            <circle cx={cx} cy={y} r={4.5} fill={color} />
+                            <circle cx={cx} cy={y} r={9} fill={color} opacity={0.18} />
+                            <text
+                              x={rightX + 6}
+                              y={y}
+                              dy={5}
+                              fill={color}
+                              fontSize={15}
+                              fontWeight={800}
+                              style={{ letterSpacing: "-0.01em" }}
+                            >
+                              {`${abbrevLabel(s.label)} ${Math.round(v)}%`}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </g>
+                  );
+                }}
+              />
             </LineChart>
           </ResponsiveContainer>
+
         )}
       </div>
     </section>
