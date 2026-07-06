@@ -29,6 +29,27 @@ function colorForSeries(key: string, idx: number): string {
   return COLOR_FALLBACK[idx % COLOR_FALLBACK.length];
 }
 
+const ABBREV_OVERRIDES: Record<string, string> = {
+  "United States": "USA",
+  "United Kingdom": "GBR",
+  "South Korea": "KOR",
+  "North Korea": "PRK",
+  "Bosnia & Herzegovina": "BIH",
+  "Ivory Coast": "CIV",
+  "Czech Republic": "CZE",
+  "Draw": "DRW",
+  "Home": "HOM",
+  "Away": "AWY",
+};
+function abbrevLabel(label: string): string {
+  if (ABBREV_OVERRIDES[label]) return ABBREV_OVERRIDES[label];
+  const parts = label.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0] + (parts[2]?.[0] ?? parts[1][1] ?? "")).toUpperCase().slice(0, 3);
+  }
+  return label.slice(0, 3).toUpperCase();
+}
+
 /* ------------------------------------------------------------------ */
 /* Ranges                                                              */
 /* ------------------------------------------------------------------ */
