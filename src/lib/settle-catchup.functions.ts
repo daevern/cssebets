@@ -32,7 +32,7 @@ async function mirrorStatsOntoMatch(supabaseAdmin: any, matchId: string) {
     }
   }
   if (!Object.keys(patch).length) return;
-  await supabaseAdmin.from("matches").update(patch).eq("id", matchId);
+  await (supabaseAdmin as any).from("matches").update(patch).eq("id", matchId);
 }
 
 export const settleFinishedPending = createServerFn({ method: "POST" })
