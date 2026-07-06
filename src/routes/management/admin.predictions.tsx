@@ -78,15 +78,20 @@ function AdminPredictionsPage() {
             {STATUSES.map((s) => <option key={s} value={s}>{s || "All statuses"}</option>)}
           </select>
           <Input
-            placeholder="Reason (required to void)"
+            placeholder="Reason (required to void / regrade)"
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             className="md:max-w-sm"
           />
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <input type="checkbox" checked={flaggedOnly} onChange={(e) => setFlaggedOnly(e.target.checked)} />
+            Flagged only
+          </label>
         </div>
         <div className="text-xs text-muted-foreground">
-          Showing {(q.data?.predictions?.length ?? 0).toLocaleString()} predictions from all time.
+          Showing {((q.data?.predictions ?? []).filter((p: any) => !flaggedOnly || p.flagged_for_review).length).toLocaleString()} predictions.
         </div>
+
         {q.isLoading ? (
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         ) : (
