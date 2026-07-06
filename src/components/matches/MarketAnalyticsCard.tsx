@@ -317,7 +317,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
 
         {/* Legend */}
         <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-[12px]">
-          {visibleSeries.map((s, idx) => {
+          {filteredSeries.map((s, idx) => {
             const color = colorForSeries(s.key, idx);
             const v = latestByKey.get(s.key);
             const off = !!hidden[s.key];
