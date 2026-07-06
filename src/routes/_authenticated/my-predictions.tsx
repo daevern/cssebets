@@ -132,8 +132,11 @@ function PredictionRow({ p }: { p: any }) {
   const qc = useQueryClient();
   const editFn = useServerFn(editPendingBetStake);
   const cancelFn = useServerFn(cancelPendingBet);
+  const flagFn = useServerFn(flagPredictionForReview);
   const [editing, setEditing] = useState(false);
   const [stake, setStake] = useState(String(p.virtual_stake));
+  const [flagOpen, setFlagOpen] = useState(false);
+  const [flagReason, setFlagReason] = useState("");
 
   const kickoff = p.matches?.kickoff_at ? new Date(p.matches.kickoff_at).getTime() : null;
   const matchLocked = kickoff !== null
