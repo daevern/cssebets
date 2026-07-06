@@ -724,6 +724,33 @@ export const voidPredictionAdmin = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const regradePredictionAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      predictionId: z.string().uuid(),
+      newStatus: z.enum(["won", "lost", "void", "pending"]),
+      reason: ReasonField,
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await requireTier(supabase, userId, WRITE_TIERS);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await requireFreshReauth(supabaseAdmin, userId);
+
+    const { data: result, error } = await (supabaseAdmin as any).rpc("regrade_prediction_manual", {
+      p_prediction_id: data.predictionId,
+      p_new_status: data.newStatus,
+      p_reason: data.reason,
+      p_actor_id: userId,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true, ...(result as any) };
+  });
+
+
+
 export const setMatchStatusManual = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) =>
