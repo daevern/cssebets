@@ -138,7 +138,7 @@ function Analytics({ bundle, publicMode = false }: { bundle: AnalyticsBundle; pu
       />
 
       {/* Market Analytics — historical odds / implied probability */}
-      <MarketAnalyticsCard matchId={match.id} />
+      <MarketAnalyticsCard matchId={match.id} publicMode={publicMode} />
 
       {/* Markets — only show pre-kickoff. */}
       {!locked && (
