@@ -30,6 +30,8 @@ function AdminMatchesPage() {
   const refreshFn = useServerFn(refreshMatchScore);
   const listFn = useServerFn(listMatchesAdmin);
   const marginFn = useServerFn(setMatchMarginDisabled);
+  const resyncFn = useServerFn(resyncStatsAndSettle);
+  const manualFn = useServerFn(manualSettleCardsCorners);
 
   const matches = useQuery({
     queryKey: ["admin-matches-full"],
