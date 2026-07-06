@@ -108,17 +108,29 @@ function AdminPredictionsPage() {
                   <TableHead className="text-right">Payout</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Placed</TableHead>
+                  <TableHead>Regrade</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {(q.data?.predictions ?? []).map((p: any) => {
+                {(q.data?.predictions ?? []).filter((p: any) => !flaggedOnly || p.flagged_for_review).map((p: any) => {
                   const stake = Number(p.virtual_stake);
                   const odds = Number(p.reference_odds);
                   const payout = stake * odds;
+                  const flagged = !!p.flagged_for_review;
                   return (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium text-sm">{p.display_name}</TableCell>
+                  <TableRow key={p.id} className={flagged ? "bg-yellow-500/5" : undefined}>
+                    <TableCell className="font-medium text-sm">
+                      <div className="flex items-center gap-1.5">
+                        {flagged && <Flag className="h-3 w-3 text-yellow-500 shrink-0" aria-label="Flagged" />}
+                        {p.display_name}
+                      </div>
+                      {flagged && p.flagged_reason && (
+                        <div className="text-[10px] text-yellow-600 mt-0.5 max-w-[200px]" title={p.flagged_reason}>
+                          {p.flagged_reason}
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs">{p.match}</TableCell>
                     <TableCell className="text-xs">{p.market}</TableCell>
                     <TableCell className="text-xs">{p.outcome}</TableCell>
@@ -127,6 +139,28 @@ function AdminPredictionsPage() {
                     <TableCell className="text-right text-xs font-semibold text-primary tabular-nums">{payout.toLocaleString(undefined, { maximumFractionDigits: 2 })}</TableCell>
                     <TableCell><Badge variant="outline" className="uppercase text-[10px]">{p.status}</Badge></TableCell>
                     <TableCell className="text-[10px] text-muted-foreground">{new Date(p.created_at).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <select
+                        className="h-7 rounded border bg-background px-1 text-[11px]"
+                        disabled={isViewer || !reason || regradeMut.isPending}
+                        defaultValue=""
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (!v) return;
+                          if (v === p.status) { toast.error("Already that status"); e.currentTarget.value = ""; return; }
+                          if (!window.confirm(`Regrade this bet ${p.status} → ${v}? Wallet will be adjusted atomically.`)) {
+                            e.currentTarget.value = ""; return;
+                          }
+                          regradeMut.mutate({ id: p.id, newStatus: v });
+                          e.currentTarget.value = "";
+                        }}
+                      >
+                        <option value="">→ …</option>
+                        {REGRADE_TARGETS.filter((t) => t !== p.status).map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button
                         size="sm" variant="outline"
@@ -140,12 +174,13 @@ function AdminPredictionsPage() {
                   );
                 })}
                 {!q.data?.predictions?.length && (
-                  <TableRow><TableCell colSpan={10} className="text-center text-muted-foreground">No predictions.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={11} className="text-center text-muted-foreground">No predictions.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
           </div>
         )}
+
       </Card>
     </div>
   );
