@@ -235,10 +235,10 @@ function LandingPage() {
 /* Landing bottom nav — reuses existing routes                         */
 /* ------------------------------------------------------------------ */
 const LANDING_NAV = [
-  { to: "/trust-center", label: "About", Icon: Info },
-  { to: "/trust-center", label: "Community", Icon: Users },
-  { to: "/status", label: "Performance", Icon: LineChart },
-  { to: "/support", label: "Help", Icon: LifeBuoy },
+  { to: "/about", label: "About", Icon: Info },
+  { to: "/community", label: "Community", Icon: Users },
+  { to: "/performance", label: "Performance", Icon: LineChart },
+  { to: "/help", label: "Help", Icon: LifeBuoy },
 ] as const;
 
 function LandingBottomNav() {
