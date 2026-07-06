@@ -359,22 +359,6 @@ export function CsseLogoLoader({ label = "Loading" }: { label?: string }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-[var(--color-surface,#0A0F0D)]">
-      {/* Editorial grid — thin verticals + a single hairline horizon */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "linear-gradient(90deg, var(--color-ink,#fff) 1px, transparent 1px)",
-          backgroundSize: "80px 100%",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-0 right-0 top-1/2 h-px"
-        style={{ background: "color-mix(in oklab, var(--color-ink,#fff) 8%, transparent)" }}
-      />
-
       {/* Neon underglow */}
       <motion.div
         aria-hidden
@@ -391,14 +375,6 @@ export function CsseLogoLoader({ label = "Loading" }: { label?: string }) {
         transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* Top-left corner tag — editorial signature */}
-      <div className="absolute left-6 top-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.4em] text-[var(--color-ink-muted,#6B7A72)]">
-        <span className="inline-block h-1 w-1 rounded-full" style={{ background: ACCENT }} />
-        cssebets / 26
-      </div>
-      <div className="absolute right-6 top-6 text-[10px] font-bold uppercase tracking-[0.4em] text-[var(--color-ink-muted,#6B7A72)]">
-        booting matchday
-      </div>
 
       {/* --------------- Wordmark stage --------------- */}
       <div
