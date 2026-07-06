@@ -179,6 +179,7 @@ function LandingPage() {
               {fixtures.map((f) => {
                 const live = new Date(f.kickoffAt).getTime() <= now;
                 const active = !live && upcoming[idx]?.id === f.id;
+                const pct = threeWayPctFromOdds(f.homeOdds, f.drawOdds, f.awayOdds);
                 return (
                   <button
                     key={f.id}
@@ -193,7 +194,7 @@ function LandingPage() {
                           ? "border-[var(--neon)]/60"
                           : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/50"
                     }`}
-                    style={{ width: 168 }}
+                    style={{ width: 172 }}
                   >
                     <div className="flex items-center gap-1.5">
                       <TeamFlag name={f.homeTeam} w={26} />
@@ -212,6 +213,22 @@ function LandingPage() {
                         {timeChip(f.kickoffAt, now)}
                       </div>
                     )}
+                    {pct ? (
+                      <div className="mt-2 grid grid-cols-3 gap-1 rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-3)]/60 p-1 text-center">
+                        <div>
+                          <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Home</div>
+                          <div className="text-[11px] font-bold tabular-nums text-rose-400">{pct.home}%</div>
+                        </div>
+                        <div className="border-x border-[var(--color-surface-border)]">
+                          <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Draw</div>
+                          <div className="text-[11px] font-bold tabular-nums text-sky-300">{pct.draw}%</div>
+                        </div>
+                        <div>
+                          <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Away</div>
+                          <div className="text-[11px] font-bold tabular-nums text-[var(--neon)]">{pct.away}%</div>
+                        </div>
+                      </div>
+                    ) : null}
                   </button>
                 );
               })}
