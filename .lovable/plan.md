@@ -1,51 +1,131 @@
-## Why users see "This market is currently disabled"
+## Cause
 
-The banner is thrown by the DB whenever a bet-placement RPC (`place_bet_atomic`, `place_market_bet_atomic`, `place_new_market_bet_atomic`, `place_cards_corners_bet_atomic`) raises `MARKET_DISABLED`. The frontend maps that error to the single string users see. There is no other code path that produces this exact message.
+The error is caused by a **market-key mismatch between the UI and the DB bet-placement function**.
 
-There are **four independent reasons** the DB raises `MARKET_DISABLED`. On your project I checked live settings and only reason 4 is currently firing.
+On the match page, the market UI loads odds from `match_market_odds` and includes a market called:
 
-### 1. Global admin kill-switch (not active today)
-`platform_settings.disabled_markets` is a text array (Admin → Risk Settings). If the market key is in that array, every bet on it is refused.
-- Current value: `[]` — nothing globally disabled.
-
-### 2. Correct Score kill-switch (not active today)
-`platform_settings.correct_score_disabled = true` blocks only the `correct_score` market.
-- Current value: `false`.
-
-### 3. Market not in the RPC's hardcoded allow-list
-Each atomic RPC only accepts a fixed set of `market` strings. If the client sends a market key the specific RPC wasn't written to handle, it raises `MARKET_DISABLED`. Examples:
-- `place_market_bet_atomic` accepts only: `over_under_2_5`, `btts`, `correct_score`, `half_time_full_time`, `exact_total_goals`, `to_qualify`.
-- `place_new_market_bet_atomic` accepts a different set (clean sheet / win to nil / etc.).
-- `place_cards_corners_bet_atomic` accepts only cards / corners / first_corner keys.
-Symptom: bets on the "right" tab work; bets on a specific sub-market fail because the client routed them to the wrong RPC.
-
-### 4. Per-market disable in `market_rules.is_active = false` (this is what your users are hitting)
-Any market row with `is_active = false` in `market_rules` is treated as disabled. Currently OFF on your DB:
-
+```text
+1x2
 ```
+
+That is the normal "Who will win in 90 minutes?" / Home-Draw-Away market shown in your screenshot.
+
+But when the user taps it, the UI calls `placeMarketBet`, which calls the DB function:
+
+```text
+place_market_bet_atomic(..., p_market = '1x2', ...)
+```
+
+The live DB function explicitly allows many market keys, but **does not include `1x2` in its allow-list**. So it raises:
+
+```text
+MARKET_DISABLED
+```
+
+Then the frontend maps that backend error to:
+
+```text
+This market is currently disabled.
+```
+
+Your global settings are not causing it right now:
+
+```text
+bets_paused = false
+correct_score_disabled = false
+disabled_markets = {}
+```
+
+So the visible error is misleading: the market is not globally disabled; the UI is sending a market key that this placement function rejects.
+
+## Secondary issue
+
+There are also 15 markets currently marked inactive in `market_rules`, including cards/corners/exact-goals variants. Those can still appear if odds exist, because odds visibility is independent from bet availability. That can lead to similar confusion, even if it is not the main `1x2` error in the screenshot.
+
+Inactive today:
+
+```text
 over_under_0_5, over_under_4_5, over_under_5_5, over_under_6_5,
 exact_total_goals,
 win_to_nil_home, win_to_nil_away,
 cards_over_under_2_5, cards_over_under_5_5,
-home_cards_over_under_1_5, away_cards_over_under_1_5, first_card,
-corners_over_under_8_5, corners_over_under_11_5, first_corner
+home_cards_over_under_1_5, away_cards_over_under_1_5,
+first_card,
+corners_over_under_8_5, corners_over_under_11_5,
+first_corner
 ```
 
-So a user who taps any Goals/Cards/Corners selection tied to those keys, or a specials selection using those keys, will see the banner even though the odds render on screen (odds come from `match_market_odds` / provider snapshots, which are independent of `market_rules.is_active`). That mismatch — odds visible but rule inactive — is why it feels random and match-specific: whichever match happens to expose a card/corner/exact-goals selection triggers it.
+## Fix
 
-Your screenshot (in-play, "Cards / Corners / Specials" tabs visible, banner on top) matches this exactly.
+### 1. Route `1x2` bets through the existing result-market placement flow
 
-### How to confirm per report
-Ask the user which tab + selection they tapped, then run:
-```sql
-SELECT market_key, is_active
-FROM market_rules
-WHERE market_key = '<the market key>';
+Change the match-market UI so when a user selects `1x2`, it does **not** call `place_market_bet_atomic` with `p_market = '1x2'`.
+
+Instead, map it to the existing prediction market:
+
+```text
+1x2 UI market -> result DB market
+home/draw/away -> HOME/DRAW/AWAY
 ```
-If `is_active = false`, that's reason 4. If the key isn't listed at all, it's reason 3 (client sending an unsupported key).
 
-### Nothing to build
-This plan is diagnostic only — no code/DB changes are proposed. Pick one of the follow-ups if you want a fix:
-- Flip specific `market_rules.is_active` to `true` for the markets you want live.
-- Hide any selection whose `market_rules.is_active = false` from the UI so users never see the banner.
-- Split the error message per reason (global pause vs per-market rule vs unsupported key) so users get a clearer explanation.
+Use `submitPrediction` / `place_bet_atomic`, which already supports `result` bets and validates the match odds server-side.
+
+This is the correct fix because `1x2` is just the UI/provider name for the existing `result` market.
+
+### 2. Keep non-result markets on `placeMarketBet`
+
+All other supported market keys should continue using `placeMarketBet`:
+
+```text
+over_under_*, btts, correct_score, double_chance, cards, corners, etc.
+```
+
+### 3. Prevent unsupported/inactive markets from being clickable
+
+Add a small availability gate before rendering/tapping selections:
+
+- If a market key is not placeable by the correct RPC, grey it out.
+- If `market_rules.is_active = false`, grey it out or hide the tab if the whole tab is unavailable.
+- Keep the odds visible only if you want users to see market movement, but do not let them open a stake slip.
+
+### 4. Improve the fallback message
+
+Replace the generic message:
+
+```text
+This market is currently disabled.
+```
+
+with:
+
+```text
+This selection isn't accepting bets right now. Refresh to see updated markets.
+```
+
+That way if a rule changes between page load and submission, the message is less misleading.
+
+## Files to change
+
+- `src/components/matches/MarketTabs.tsx`
+  - Detect `market === '1x2'` in submit logic.
+  - Route it through `submitPrediction` with `market: 'result'`.
+  - Preserve the same UI and stake slip behavior.
+
+- `src/lib/markets.functions.ts`
+  - Keep `placeMarketBet` for non-result markets.
+  - Improve the `MARKET_DISABLED` user-facing error string.
+
+- `src/lib/predictions.functions.ts`
+  - Improve the same fallback error string for consistency.
+
+Optionally, after that works:
+
+- Add active-market filtering so inactive cards/corners/exact-goals selections are greyed out before users tap them.
+
+## Verification
+
+- Open a match page.
+- Tap the Home/Draw/Away `1x2` selection.
+- Enter stake and lock prediction.
+- Expected: bet places successfully, wallet updates, no `This market is currently disabled` banner.
+- Then test one non-result market like BTTS or Over/Under 2.5 to confirm the existing flow still works.
