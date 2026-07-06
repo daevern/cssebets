@@ -157,17 +157,36 @@ function AdminMatchesPage() {
 }
 
 function MatchRow({
-  match, canWrite, onRefresh, onStatus, onSettle, onToggleMargin,
+  match, canWrite, onRefresh, onStatus, onSettle, onToggleMargin, onResyncCC, onManualCC,
 }: {
   match: any; canWrite: boolean;
   onRefresh: () => void;
   onStatus: (s: typeof STATUSES[number]) => void;
   onSettle: (h: number, a: number) => void;
   onToggleMargin: (d: boolean) => void;
+  onResyncCC: () => void;
+  onManualCC: (hc: number | null, ac: number | null, hCards: number | null, aCards: number | null) => void;
 }) {
   const [h, setH] = useState(String(match.home_score ?? ""));
   const [a, setA] = useState(String(match.away_score ?? ""));
   const marginOff = Boolean(match.margin_disabled);
+  const [ccOpen, setCcOpen] = useState(false);
+  const [hc, setHc] = useState(String(match.home_corners ?? ""));
+  const [ac, setAc] = useState(String(match.away_corners ?? ""));
+  const [hCards, setHCards] = useState(String(match.home_cards ?? ""));
+  const [aCards, setACards] = useState(String(match.away_cards ?? ""));
+
+  const parse = (v: string): number | null => {
+    if (v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.max(0, Math.round(n)) : null;
+  };
+
+  const isFinished = match.status === "finished";
+  const ccMissing = isFinished && (
+    match.home_corners == null || match.away_corners == null ||
+    match.home_cards == null || match.away_cards == null
+  );
 
   return (
     <Card className="p-3 space-y-2">
@@ -176,6 +195,7 @@ function MatchRow({
         <div className="flex items-center gap-2 text-xs">
           <Badge variant="outline" className="uppercase">{match.status}</Badge>
           {marginOff && <Badge variant="destructive" className="uppercase">Margin OFF</Badge>}
+          {ccMissing && <Badge variant="destructive" className="uppercase">Stats missing</Badge>}
           <span className="text-muted-foreground">{new Date(match.kickoff_at).toLocaleString()}</span>
         </div>
       </div>
@@ -183,7 +203,7 @@ function MatchRow({
         <Input className="w-14" value={h} onChange={(e) => setH(e.target.value)} placeholder="H" />
         <Input className="w-14" value={a} onChange={(e) => setA(e.target.value)} placeholder="A" />
         <Button size="sm" disabled={!canWrite || h === "" || a === ""} onClick={() => onSettle(Number(h), Number(a))}>
-          {match.status === "finished" ? "Re-settle" : "Settle"}
+          {isFinished ? "Re-settle" : "Settle"}
         </Button>
         <Button size="sm" variant="outline" disabled={!canWrite} onClick={onRefresh}>
           <RefreshCw className="h-3.5 w-3.5 mr-1" /> Refresh
@@ -205,7 +225,54 @@ function MatchRow({
         >
           {marginOff ? "Re-enable margin" : "Disable margin"}
         </Button>
+        {isFinished && (
+          <Button size="sm" variant="outline" disabled={!canWrite} onClick={() => setCcOpen((v) => !v)}>
+            Cards/Corners
+          </Button>
+        )}
       </div>
+      {ccOpen && isFinished && (
+        <div className="border-t pt-2 space-y-2">
+          <div className="text-xs font-semibold">Cards / Corners settlement</div>
+          <div className="text-[11px] text-muted-foreground">
+            Try "Resync stats" first (pulls from API-Football). If the provider has no data,
+            enter the final totals manually below and click "Save & settle".
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="outline" disabled={!canWrite} onClick={onResyncCC}>
+              <RefreshCw className="h-3.5 w-3.5 mr-1" /> Resync stats & settle
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <label className="text-[11px] space-y-1">
+              <span className="text-muted-foreground">Home corners</span>
+              <Input value={hc} onChange={(e) => setHc(e.target.value)} placeholder="—" />
+            </label>
+            <label className="text-[11px] space-y-1">
+              <span className="text-muted-foreground">Away corners</span>
+              <Input value={ac} onChange={(e) => setAc(e.target.value)} placeholder="—" />
+            </label>
+            <label className="text-[11px] space-y-1">
+              <span className="text-muted-foreground">Home cards (Y+R)</span>
+              <Input value={hCards} onChange={(e) => setHCards(e.target.value)} placeholder="—" />
+            </label>
+            <label className="text-[11px] space-y-1">
+              <span className="text-muted-foreground">Away cards (Y+R)</span>
+              <Input value={aCards} onChange={(e) => setACards(e.target.value)} placeholder="—" />
+            </label>
+          </div>
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              disabled={!canWrite}
+              onClick={() => onManualCC(parse(hc), parse(ac), parse(hCards), parse(aCards))}
+            >
+              Save & settle
+            </Button>
+          </div>
+        </div>
+      )}
     </Card>
   );
+}
 }
