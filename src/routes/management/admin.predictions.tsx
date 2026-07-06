@@ -2,13 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { listPredictionsAdmin, voidPredictionAdmin } from "@/lib/admin-dashboard.functions";
+import { listPredictionsAdmin, voidPredictionAdmin, regradePredictionAdmin } from "@/lib/admin-dashboard.functions";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2 } from "lucide-react";
+import { Loader2, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -18,6 +18,7 @@ export const Route = createFileRoute("/management/admin/predictions")({
 
 const MARKETS = ["", "result", "correct_score", "total_goals", "btts", "first_scorer", "group_winner", "tournament_winner"];
 const STATUSES = ["", "pending", "won", "lost", "void"];
+const REGRADE_TARGETS = ["won", "lost", "void", "pending"] as const;
 
 function AdminPredictionsPage() {
   const qc = useQueryClient();
