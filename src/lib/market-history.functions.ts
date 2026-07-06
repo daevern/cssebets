@@ -13,6 +13,7 @@ export type MarketOption = { key: string; label: string; count: number };
 export type MarketHistoryPayload = {
   homeTeam: string;
   awayTeam: string;
+  kickoffAt: string | null;
   market: string;
   marketLabel: string;
   sourceLabel: string;
