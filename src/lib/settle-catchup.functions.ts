@@ -141,7 +141,7 @@ export const manualSettleCardsCorners = createServerFn({ method: "POST" })
     if (data.homeCards != null) patch.home_cards = data.homeCards;
     if (data.awayCards != null) patch.away_cards = data.awayCards;
     if (Object.keys(patch).length) {
-      const { error: upErr } = await supabaseAdmin
+      const { error: upErr } = await (supabaseAdmin as any)
         .from("matches").update(patch).eq("id", data.matchId);
       if (upErr) throw new Error(upErr.message);
     }
