@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Info, Users, LineChart, LifeBuoy } from "lucide-react";
-import { CsseLogo } from "@/components/brand/CsseMark";
+import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { getLandingData, type LandingNextMatch } from "@/lib/landing.functions";
 import { recordHomeView } from "@/lib/trust-public.functions";
@@ -223,7 +223,19 @@ function LandingPage() {
         <section className="mt-6">
           <MatchAnalyticsScreen key={analyticsMatchId} matchId={analyticsMatchId} publicMode />
         </section>
+
+        <footer className="mt-10 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+          <Link to="/" className="flex items-center gap-2 hover:text-[var(--ink)]">
+            <CsseLogo size={16} />
+          </Link>
+          <span className="flex items-center gap-3">
+            <Link to="/about" className="hover:text-[var(--ink)]">About</Link>
+            <Link to="/faq" className="hover:text-[var(--ink)]">Help</Link>
+            <span>© {new Date().getFullYear()} <BrandText /></span>
+          </span>
+        </footer>
       </main>
+
 
       {/* Bottom nav — landing only. Links to existing routes. */}
       <LandingBottomNav />
@@ -235,10 +247,10 @@ function LandingPage() {
 /* Landing bottom nav — reuses existing routes                         */
 /* ------------------------------------------------------------------ */
 const LANDING_NAV = [
-  { to: "/trust-center", label: "About", Icon: Info },
-  { to: "/trust-center", label: "Community", Icon: Users },
-  { to: "/status", label: "Performance", Icon: LineChart },
-  { to: "/support", label: "Help", Icon: LifeBuoy },
+  { to: "/about", label: "About", Icon: Info },
+  { to: "/community", label: "Community", Icon: Users },
+  { to: "/performance", label: "Performance", Icon: LineChart },
+  { to: "/faq", label: "Help", Icon: LifeBuoy },
 ] as const;
 
 function LandingBottomNav() {

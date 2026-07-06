@@ -10,8 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PerformanceRouteImport } from './routes/performance'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as CommunityRouteImport } from './routes/community'
 import { Route as BrandRouteImport } from './routes/brand'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as ManagementRouteRouteImport } from './routes/management/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -93,6 +97,21 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PerformanceRoute = PerformanceRouteImport.update({
+  id: '/performance',
+  path: '/performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BrandRoute = BrandRouteImport.update({
   id: '/brand',
   path: '/brand',
@@ -101,6 +120,11 @@ const BrandRoute = BrandRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ManagementRouteRoute = ManagementRouteRouteImport.update({
@@ -520,8 +544,12 @@ const ApiPublicHooksApifootballFulltimeRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/management': typeof ManagementRouteRouteWithChildren
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/brand': typeof BrandRoute
+  '/community': typeof CommunityRoute
+  '/faq': typeof FaqRoute
+  '/performance': typeof PerformanceRoute
   '/register': typeof RegisterRoute
   '/bets': typeof AuthenticatedBetsRoute
   '/changelog': typeof AuthenticatedChangelogRoute
@@ -599,8 +627,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/management': typeof ManagementRouteRouteWithChildren
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/brand': typeof BrandRoute
+  '/community': typeof CommunityRoute
+  '/faq': typeof FaqRoute
+  '/performance': typeof PerformanceRoute
   '/register': typeof RegisterRoute
   '/bets': typeof AuthenticatedBetsRoute
   '/changelog': typeof AuthenticatedChangelogRoute
@@ -678,8 +710,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/management': typeof ManagementRouteRouteWithChildren
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/brand': typeof BrandRoute
+  '/community': typeof CommunityRoute
+  '/faq': typeof FaqRoute
+  '/performance': typeof PerformanceRoute
   '/register': typeof RegisterRoute
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
   '/_authenticated/changelog': typeof AuthenticatedChangelogRoute
@@ -759,8 +795,12 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/management'
+    | '/about'
     | '/auth'
     | '/brand'
+    | '/community'
+    | '/faq'
+    | '/performance'
     | '/register'
     | '/bets'
     | '/changelog'
@@ -838,8 +878,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/management'
+    | '/about'
     | '/auth'
     | '/brand'
+    | '/community'
+    | '/faq'
+    | '/performance'
     | '/register'
     | '/bets'
     | '/changelog'
@@ -916,8 +960,12 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/management'
+    | '/about'
     | '/auth'
     | '/brand'
+    | '/community'
+    | '/faq'
+    | '/performance'
     | '/register'
     | '/_authenticated/bets'
     | '/_authenticated/changelog'
@@ -997,8 +1045,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   ManagementRouteRoute: typeof ManagementRouteRouteWithChildren
+  AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   BrandRoute: typeof BrandRoute
+  CommunityRoute: typeof CommunityRoute
+  FaqRoute: typeof FaqRoute
+  PerformanceRoute: typeof PerformanceRoute
   RegisterRoute: typeof RegisterRoute
   ApiPublicHooksApifootballFulltimeRoute: typeof ApiPublicHooksApifootballFulltimeRoute
   ApiPublicHooksApifootballLineupsRoute: typeof ApiPublicHooksApifootballLineupsRoute
@@ -1020,6 +1072,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/performance': {
+      id: '/performance'
+      path: '/performance'
+      fullPath: '/performance'
+      preLoaderRoute: typeof PerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/brand': {
       id: '/brand'
       path: '/brand'
@@ -1032,6 +1105,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/management': {
@@ -1730,8 +1810,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   ManagementRouteRoute: ManagementRouteRouteWithChildren,
+  AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   BrandRoute: BrandRoute,
+  CommunityRoute: CommunityRoute,
+  FaqRoute: FaqRoute,
+  PerformanceRoute: PerformanceRoute,
   RegisterRoute: RegisterRoute,
   ApiPublicHooksApifootballFulltimeRoute:
     ApiPublicHooksApifootballFulltimeRoute,

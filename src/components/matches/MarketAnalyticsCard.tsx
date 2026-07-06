@@ -8,7 +8,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
-import { getMarketHistory, type MarketHistoryPayload, type MarketSeries } from "@/lib/market-history.functions";
+import { getMarketHistory, getMarketHistoryPublic, type MarketHistoryPayload, type MarketSeries } from "@/lib/market-history.functions";
 
 const SERIES_COLORS = [
   "var(--color-neon)",
@@ -142,8 +142,8 @@ function buildLiveTape(series: MarketSeries[], mode: Mode, now: number): ChartRo
   return rows;
 }
 
-export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
-  const fn = useServerFn(getMarketHistory);
+export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: string; publicMode?: boolean }) {
+  const fn = useServerFn(publicMode ? getMarketHistoryPublic : getMarketHistory);
   const qc = useQueryClient();
   const [market, setMarket] = useState<string | undefined>(undefined);
   const [mode, setMode] = useState<Mode>("prob");
@@ -151,14 +151,16 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
   const now = useNowTick(1000);
 
   const q = useQuery({
-    queryKey: ["market-history", matchId, market ?? "default"],
+    queryKey: ["market-history", matchId, market ?? "default", publicMode ? "pub" : "auth"],
     queryFn: () => fn({ data: { matchId, market } }) as Promise<MarketHistoryPayload>,
     refetchInterval: 5_000,
     staleTime: 2_000,
   });
 
   // Live realtime — invalidate as soon as new odds snapshots land.
+  // Skipped in publicMode because realtime requires an authenticated session.
   useEffect(() => {
+    if (publicMode) return;
     const ch = supabase
       .channel(`market-history-${matchId}`)
       .on(
@@ -173,7 +175,8 @@ export function MarketAnalyticsCard({ matchId }: { matchId: string }) {
       )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [matchId, qc]);
+  }, [matchId, qc, publicMode]);
+
 
   const data = q.data;
 

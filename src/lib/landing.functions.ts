@@ -22,23 +22,34 @@ export const getLandingData = createServerFn({ method: "GET" }).handler(
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const liveWindowIso = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
 
-    const [nextMatchesRes, profilesRes, activeRes, settledRes, paidRes] = await Promise.all([
+    const [scheduledRes, liveRes, profilesRes, activeRes, settledRes, paidRes] = await Promise.all([
       supabaseAdmin
         .from("matches")
         .select("id, home_team, away_team, kickoff_at, reference_odds, status")
         .gte("kickoff_at", nowIso)
         .in("status", ["scheduled"])
         .order("kickoff_at", { ascending: true })
-        .limit(12),
+        .limit(16),
+      supabaseAdmin
+        .from("matches")
+        .select("id, home_team, away_team, kickoff_at, reference_odds, status")
+        .in("status", ["live"])
+        .gte("kickoff_at", liveWindowIso)
+        .order("kickoff_at", { ascending: true }),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("predictions").select("user_id").gte("created_at", dayAgo),
       supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).neq("status", "pending"),
       supabaseAdmin.from("predictions").select("points").eq("status", "won"),
     ]);
 
-    const matchesList = nextMatchesRes.data || [];
-    const nextMatches: LandingNextMatch[] = matchesList.map((m) => {
+    const isTbd = (s: string | null | undefined) =>
+      !s || String(s).trim().toUpperCase() === "TBD";
+    const matchesList = [...(liveRes.data || []), ...(scheduledRes.data || [])].filter(
+      (m) => !(isTbd(m.home_team) && isTbd(m.away_team)),
+    );
+    const nextMatches: LandingNextMatch[] = matchesList.slice(0, 12).map((m) => {
       const refOdds: any = (m as any)?.reference_odds ?? {};
       return {
         id: m.id,
@@ -50,6 +61,7 @@ export const getLandingData = createServerFn({ method: "GET" }).handler(
         awayOdds: refOdds.away != null ? Number(refOdds.away) : null,
       };
     });
+
 
     const activeToday = new Set((activeRes.data ?? []).map((r: any) => r.user_id)).size;
     const pointsPaidOut = (paidRes.data ?? []).reduce(
