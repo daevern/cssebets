@@ -182,7 +182,9 @@ function MarketCard({ match, now }: { match: Match; now: number }) {
       to="/matches/$matchId"
       params={{ matchId: match.id }}
       className={`group relative block overflow-hidden rounded-2xl border bg-[var(--surface-2)] transition-colors ${
-        isTop ? "border-[var(--neon)]/40" : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/30"
+        isTop
+          ? "border-rose-500/50 hover:border-rose-500/70"
+          : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/30"
       }`}
     >
       {isTop && (
@@ -191,7 +193,7 @@ function MarketCard({ match, now }: { match: Match; now: number }) {
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(100% 60% at 50% 0%, rgba(34,224,107,0.08), transparent 60%)",
+              "radial-gradient(100% 60% at 50% 0%, rgba(244,63,94,0.10), transparent 60%)",
           }}
         />
       )}
@@ -199,11 +201,11 @@ function MarketCard({ match, now }: { match: Match; now: number }) {
       <div className="relative p-4">
         {/* Meta row */}
         <div className="flex items-center justify-between text-[11px] font-semibold">
-          <span className={live ? "flex items-center gap-1.5 text-[var(--neon)]" : "text-[var(--ink-muted)]"}>
+          <span className={live ? "flex items-center gap-1.5 text-rose-400" : "text-[var(--ink-muted)]"}>
             {live && (
               <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--neon)] opacity-70" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-70" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
               </span>
             )}
             {timeChip(match, now)}
@@ -221,7 +223,7 @@ function MarketCard({ match, now }: { match: Match; now: number }) {
         <div
           className={`mt-4 flex items-center justify-center gap-2 rounded-xl py-3 text-[14px] font-bold tracking-tight transition-transform ${
             isTop
-              ? "bg-[var(--neon)] text-[#04140A] group-hover:translate-y-[-1px]"
+              ? "bg-rose-500 text-[#160406] group-hover:translate-y-[-1px]"
               : "border border-[var(--color-surface-border)] text-[var(--neon)] group-hover:border-[var(--neon)]/40"
           }`}
         >
