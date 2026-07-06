@@ -317,7 +317,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
 
         {/* Legend */}
         <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-[12px]">
-          {filteredSeries.map((s, idx) => {
+          {visibleSeries.map((s, idx) => {
             const color = colorForSeries(s.key, idx);
             const v = latestByKey.get(s.key);
             const off = !!hidden[s.key];
@@ -399,7 +399,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                 content={() => null}
                 cursor={{ stroke: "rgba(255,255,255,0.28)", strokeWidth: 1, strokeDasharray: "3 4" }}
               />
-              {filteredSeries.map((s, idx) => {
+              {visibleSeries.map((s, idx) => {
                 const color = colorForSeries(s.key, idx);
                 return (
                   <Line
@@ -418,7 +418,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                   />
                 );
               })}
-              {filteredSeries.map((s, idx) => {
+              {visibleSeries.map((s, idx) => {
                 const color = colorForSeries(s.key, idx);
                 return (
                   <Line
@@ -449,7 +449,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                   const rightX = offset.left + offset.width;
                   return (
                     <g>
-                      {filteredSeries.map((s, i) => {
+                      {visibleSeries.map((s, i) => {
                         const raw = row[s.key];
                         const v = typeof raw === "number" ? raw : Number(raw);
                         if (!Number.isFinite(v)) return null;
