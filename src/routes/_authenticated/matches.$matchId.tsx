@@ -141,7 +141,7 @@ function Analytics({ bundle, publicMode = false }: { bundle: AnalyticsBundle; pu
       <MarketAnalyticsCard matchId={match.id} />
 
       {/* Markets — only show pre-kickoff. */}
-      {!locked && (
+      {!locked && !publicMode && (
         <section className="space-y-4">
           <div className="flex items-baseline justify-between">
             <h2 className="font-display text-lg font-semibold tracking-tight text-[var(--color-ink)] md:text-xl">
@@ -152,7 +152,36 @@ function Analytics({ bundle, publicMode = false }: { bundle: AnalyticsBundle; pu
           <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} />
         </section>
       )}
-      {locked && <YourPicksSummary matchId={match.id} phase={phase} homeTeam={home} awayTeam={away} />}
+      {!locked && publicMode && (
+        <section className="space-y-3">
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-display text-lg font-semibold tracking-tight text-[var(--color-ink)] md:text-xl">
+              Take a position
+            </h2>
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+              Visitor mode
+            </span>
+          </div>
+          <Link
+            to="/register"
+            className="group flex items-center justify-between gap-3 rounded-2xl border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)] p-4 transition-colors hover:border-[var(--color-neon)]"
+          >
+            <div className="min-w-0">
+              <div className="text-[13px] font-bold text-[var(--color-ink)]">
+                Register to place a bet on this market
+              </div>
+              <div className="mt-0.5 text-[11px] text-[var(--color-ink-muted)]">
+                Free to join. Play with prediction points — no real money.
+              </div>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[var(--color-neon)] px-3 py-1.5 text-[11px] font-bold text-[#04140A] transition-all group-hover:shadow-[0_0_18px_var(--color-neon-glow)]">
+              Register <ArrowUpRight className="h-3.5 w-3.5" />
+            </span>
+          </Link>
+        </section>
+      )}
+      {locked && !publicMode && <YourPicksSummary matchId={match.id} phase={phase} homeTeam={home} awayTeam={away} />}
+
 
       {/* ============ Full football analytics report — all sections inline ============ */}
 
