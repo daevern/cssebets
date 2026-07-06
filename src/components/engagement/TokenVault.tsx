@@ -223,6 +223,30 @@ function StatTile({
   );
 }
 
+function FreeBetTile({ count }: { count: number }) {
+  const active = count > 0;
+  return (
+    <div
+      className={`flex flex-col items-center justify-center gap-1.5 rounded-xl border px-2 py-3 ${
+        active
+          ? "border-neon/40 bg-neon/[0.06]"
+          : "border-surface-border bg-surface-2"
+      }`}
+      aria-label={`${count} free bets available`}
+    >
+      <span className={active ? "text-neon" : "text-ink-muted"}>
+        <Gift className="h-5 w-5" />
+      </span>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+        Free-bet
+      </span>
+      <span className={`font-display text-base font-bold tabular-nums ${active ? "text-neon" : "text-ink"}`}>
+        {count}
+      </span>
+    </div>
+  );
+}
+
 function WhatsAppTile({ code }: { code: string | null }) {
   const link = buildReferralLink(code);
   const disabled = !link;
