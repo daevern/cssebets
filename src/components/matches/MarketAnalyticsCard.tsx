@@ -316,18 +316,34 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
         </div>
 
         {/* Legend */}
-        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px]">
+        <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-[12px]">
           {filteredSeries.map((s, idx) => {
             const color = colorForSeries(s.key, idx);
             const v = latestByKey.get(s.key);
+            const off = !!hidden[s.key];
             return (
-              <span key={s.key} className="inline-flex items-center gap-1.5 text-white/80">
-                <span className="h-2 w-2 rounded-full" style={{ background: color }} />
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setHidden((h) => ({ ...h, [s.key]: !h[s.key] }))}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition-colors ${
+                  off
+                    ? "border-white/10 bg-transparent text-white/35"
+                    : "border-white/10 bg-white/[0.04] text-white/85 hover:bg-white/[0.08]"
+                }`}
+                aria-pressed={!off}
+              >
+                <span
+                  className="h-2 w-2 rounded-full"
+                  style={{ background: color, opacity: off ? 0.35 : 1 }}
+                />
                 <span className="font-medium tracking-tight">{s.label}</span>
                 {typeof v === "number" && (
-                  <span className="font-mono text-white/60">{Math.round(v)}%</span>
+                  <span className={`font-mono ${off ? "text-white/30" : "text-white/60"}`}>
+                    {Math.round(v)}%
+                  </span>
                 )}
-              </span>
+              </button>
             );
           })}
         </div>
