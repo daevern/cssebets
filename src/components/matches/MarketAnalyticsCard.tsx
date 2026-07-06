@@ -305,7 +305,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
           <EmptyGraph />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 8, right: 64, bottom: 8, left: 0 }}>
+            <LineChart data={chartData} margin={{ top: 8, right: 56, bottom: 8, left: 0 }}>
               <CartesianGrid
                 strokeDasharray="2 6"
                 stroke="#ffffff"
