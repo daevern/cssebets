@@ -75,6 +75,18 @@ function abbrev(name: string) {
   return name.length <= 4 ? name.toUpperCase() : name.slice(0, 3).toUpperCase();
 }
 
+function threeWayPctFromOdds(h: number | null, d: number | null, a: number | null) {
+  if (h == null || d == null || a == null || !(h > 0) || !(d > 0) || !(a > 0)) return null;
+  const inv = { h: 1 / h, d: 1 / d, a: 1 / a };
+  const s = inv.h + inv.d + inv.a;
+  if (!(s > 0)) return null;
+  return {
+    home: Math.round((inv.h / s) * 100),
+    draw: Math.round((inv.d / s) * 100),
+    away: Math.round((inv.a / s) * 100),
+  };
+}
+
 function TeamFlag({ name, w = 56 }: { name: string; w?: number }) {
   const url = teamFlagUrl(name, 320);
   if (!url) {
