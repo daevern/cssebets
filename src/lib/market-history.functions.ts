@@ -13,6 +13,7 @@ export type MarketOption = { key: string; label: string; count: number };
 export type MarketHistoryPayload = {
   homeTeam: string;
   awayTeam: string;
+  kickoffAt: string | null;
   market: string;
   marketLabel: string;
   sourceLabel: string;
@@ -67,12 +68,13 @@ async function buildMarketHistory(
   const matchId = data.matchId;
   const { data: match } = await supabaseAdmin
     .from("matches")
-    .select("home_team, away_team")
+    .select("home_team, away_team, kickoff_at")
     .eq("id", matchId)
     .maybeSingle();
 
   const homeTeam = match?.home_team ?? "Home";
   const awayTeam = match?.away_team ?? "Away";
+  const kickoffAt = match?.kickoff_at ?? null;
 
   const [{ count: mrCount }, { data: mkRows }] = await Promise.all([
     supabaseAdmin
@@ -166,6 +168,7 @@ async function buildMarketHistory(
   return {
     homeTeam,
     awayTeam,
+    kickoffAt,
     market: chosen,
     marketLabel: marketLabel(chosen),
     sourceLabel: chosen === "match_result" ? "Global 90-min market" : "Global bookmaker market",
