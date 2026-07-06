@@ -329,11 +329,58 @@ function PredictionRow({ p }: { p: any }) {
               Locked · kicked off
             </div>
           ) : (
-            <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--color-ink-muted)]">
-              Settled
+            <div className="flex items-center gap-2">
+              {p.flagged_for_review ? (
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-yellow-500">
+                  Flagged · under review
+                </span>
+              ) : (
+                <>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--color-ink-muted)]">
+                    Settled
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 px-2 text-[10px]"
+                    onClick={() => setFlagOpen((v) => !v)}
+                    title="Flag this bet for admin review"
+                  >
+                    <Flag className="h-3 w-3 mr-1" /> Flag
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </div>
+        {flagOpen && !p.flagged_for_review && (
+          <div className="border-t border-dashed border-[var(--color-surface-border)] pt-3 space-y-2">
+            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+              Why does this settlement look wrong?
+            </div>
+            <Input
+              value={flagReason}
+              onChange={(e) => setFlagReason(e.target.value)}
+              placeholder="e.g. official stats show 5 corners for each team"
+              className="h-8 text-xs"
+              maxLength={500}
+            />
+            <div className="flex gap-2 justify-end">
+              <Button size="sm" variant="ghost" className="h-8" onClick={() => { setFlagOpen(false); setFlagReason(""); }}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className="h-8"
+                disabled={flagMut.isPending || flagReason.trim().length < 3}
+                onClick={() => flagMut.mutate()}
+              >
+                Submit flag
+              </Button>
+            </div>
+          </div>
+        )}
+
       </div>
     </StencilPanel>
   );
