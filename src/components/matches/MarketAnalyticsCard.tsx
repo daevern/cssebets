@@ -496,7 +496,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
 
       {publicMode && (
         /* Range selector — borderless, spans the x-axis length */
-        <div className="mt-2 w-full px-4 pr-[84px] md:px-6 md:pr-[84px]">
+        <div className="mt-2 w-full pl-0 pr-[84px]">
           <div className="flex items-center justify-between">
             {RANGES.map((r) => {
               const active = r === range;
