@@ -331,7 +331,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                 }}
                 minTickGap={48}
               />
-              <YAxis hide domain={yDomain} width={0} />
+              <YAxis hide domain={yDomain} width={0} padding={{ top: 0, bottom: 0 }} />
               <Tooltip
                 contentStyle={{
                   background: "#0b0f0f",
