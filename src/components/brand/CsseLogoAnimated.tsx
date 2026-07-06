@@ -359,22 +359,6 @@ export function CsseLogoLoader({ label = "Loading" }: { label?: string }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden bg-[var(--color-surface,#0A0F0D)]">
-      {/* Editorial grid — thin verticals + a single hairline horizon */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage:
-            "linear-gradient(90deg, var(--color-ink,#fff) 1px, transparent 1px)",
-          backgroundSize: "80px 100%",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-0 right-0 top-1/2 h-px"
-        style={{ background: "color-mix(in oklab, var(--color-ink,#fff) 8%, transparent)" }}
-      />
-
       {/* Neon underglow */}
       <motion.div
         aria-hidden
@@ -391,14 +375,6 @@ export function CsseLogoLoader({ label = "Loading" }: { label?: string }) {
         transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* Top-left corner tag — editorial signature */}
-      <div className="absolute left-6 top-6 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.4em] text-[var(--color-ink-muted,#6B7A72)]">
-        <span className="inline-block h-1 w-1 rounded-full" style={{ background: ACCENT }} />
-        cssebets / 26
-      </div>
-      <div className="absolute right-6 top-6 text-[10px] font-bold uppercase tracking-[0.4em] text-[var(--color-ink-muted,#6B7A72)]">
-        booting matchday
-      </div>
 
       {/* --------------- Wordmark stage --------------- */}
       <div
@@ -572,20 +548,6 @@ export function CsseLogoLoader({ label = "Loading" }: { label?: string }) {
         </motion.svg>
       </div>
 
-      {/* Tagline — appears in the final beat */}
-      <motion.div
-        className="mt-10 text-[11px] font-bold uppercase tracking-[0.48em] text-[var(--color-ink-muted,#6B7A72)]"
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: [0, 0, 0, 0.9, 0.9, 0], y: [6, 6, 6, 0, 0, 0] }}
-        transition={{
-          duration: T_REVEAL + T_HOLD + T_PART + T_MARK + T_LOCK,
-          times: [0, 0.3, 0.55, 0.75, 0.92, 1],
-          repeat: Infinity,
-          repeatDelay: 0.4,
-        }}
-      >
-        private &nbsp;/&nbsp; world cup 2026 &nbsp;/&nbsp; {label}
-      </motion.div>
 
       {/* Bottom precision meter — the green of the chevron extended */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2">

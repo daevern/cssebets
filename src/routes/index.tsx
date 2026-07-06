@@ -1,497 +1,408 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  FeaturedMatches,
-  useLandingData,
-} from "@/components/HeroEnhancements";
+import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowUpRight, LineChart, Users, Activity, HelpCircle } from "lucide-react";
+import { CsseLogo } from "@/components/brand/CsseMark";
+import { teamFlagUrl } from "@/lib/country-flags";
+import { getLandingData, type LandingNextMatch } from "@/lib/landing.functions";
+import { recordHomeView } from "@/lib/trust-public.functions";
 import {
   CommunityGrowthSection,
   RecentPlatformActivity,
   PayoutPerformanceSection,
   BuildingLongRun,
 } from "@/components/landing/TrustSections";
-import { recordHomeView } from "@/lib/trust-public.functions";
-import { useServerFn } from "@tanstack/react-start";
-const HowItWorks = lazy(() =>
-  import("@/components/HowItWorks").then((m) => ({ default: m.HowItWorks })),
-);
-
-import { Mail, MessageCircle, ArrowRight, Radio, Lock } from "lucide-react";
-import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "cssebets — Predict, Bet & Cash Out on FIFA World Cup" },
+      { title: "CSSEBets — FIFA World Cup 2026 Prediction Markets" },
       {
         name: "description",
         content:
-          "Predict World Cup matches, place bets using points, track results, and cash out your winnings on cssebets.",
+          "Live odds, community activity and payout performance for the CSSEBets FIFA World Cup 2026 prediction market.",
       },
-      { property: "og:title", content: "cssebets — Competitive Strategy Starts Everywhere" },
+      { property: "og:title", content: "CSSEBets — Prediction Markets for the World Cup" },
       {
         property: "og:description",
         content:
-          "Convert cash for points and start placing bets on FIFA World Cup matches.",
+          "Track live odds, community activity and payout performance in real time.",
       },
     ],
   }),
   component: LandingPage,
 });
 
-function scrollToId(id: string) {
-  const el = document.getElementById(id);
-  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+/* ------------------------------------------------------------------ */
+/* Data / helpers                                                      */
+/* ------------------------------------------------------------------ */
+
+function useLanding() {
+  const fn = useServerFn(getLandingData);
+  const [data, setData] = useState<{
+    nextMatches: LandingNextMatch[];
+    stats: { registeredPlayers: number; activeToday: number; betsSettled: number; pointsPaidOut: number };
+  } | null>(null);
+  useEffect(() => {
+    let m = true;
+    fn().then((d) => m && setData(d)).catch(() => m && setData({ nextMatches: [], stats: { registeredPlayers: 0, activeToday: 0, betsSettled: 0, pointsPaidOut: 0 } }));
+    return () => { m = false; };
+  }, [fn]);
+  return data;
 }
 
-/* Tick-mark corners — same as dashboard fixture card. */
-function Corner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
-  const map: Record<typeof pos, string> = {
-    tl: "top-0 left-0 border-t border-l",
-    tr: "top-0 right-0 border-t border-r",
-    bl: "bottom-0 left-0 border-b border-l",
-    br: "bottom-0 right-0 border-b border-r",
+function useTicker(ms = 30_000) {
+  const [n, setN] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setN(Date.now()), ms);
+    return () => clearInterval(id);
+  }, [ms]);
+  return n;
+}
+
+function toPct(h: number | null, d: number | null, a: number | null) {
+  if (h == null || d == null || a == null) return null;
+  const inv = { h: 1 / h, d: 1 / d, a: 1 / a };
+  const s = inv.h + inv.d + inv.a;
+  return {
+    home: Math.round((inv.h / s) * 100),
+    away: Math.round((inv.a / s) * 100),
   };
+}
+
+function timeChip(iso: string, now: number) {
+  const d = new Date(iso);
+  const today = new Date(now);
+  const sameDay = d.toDateString() === today.toDateString();
+  const h = d.getHours() % 12 || 12;
+  const t = `${h}:${String(d.getMinutes()).padStart(2, "0")} ${d.getHours() >= 12 ? "PM" : "AM"}`;
+  return sameDay ? `Today · ${t}` : `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${t}`;
+}
+
+function abbrev(name: string) {
+  const stops: Record<string, string> = {
+    "United States": "USA", "United Kingdom": "UK", "Bosnia & Herzegovina": "BIH",
+  };
+  if (stops[name]) return stops[name];
+  return name.length <= 4 ? name.toUpperCase() : name.slice(0, 3).toUpperCase();
+}
+
+function TeamFlag({ name, w = 56 }: { name: string; w?: number }) {
+  const url = teamFlagUrl(name, 320);
+  if (!url) {
+    return (
+      <div
+        className="grid place-items-center bg-[var(--surface-3)] text-[10px] font-bold uppercase text-[var(--ink)]"
+        style={{ width: w, height: Math.round(w * 0.7) }}
+      >
+        {name.slice(0, 3)}
+      </div>
+    );
+  }
   return (
-    <span
-      aria-hidden
-      className={`pointer-events-none absolute h-3 w-3 border-[var(--color-neon)] ${map[pos]}`}
+    <img
+      src={url}
+      alt={`${name} flag`}
+      className="object-cover"
+      style={{ width: w, height: Math.round(w * 0.72) }}
+      loading="lazy"
     />
   );
 }
 
-/* Stencil digit cell — mirrors dashboard countdown chrome. */
-function DigitCell({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="flex flex-col items-center">
-      <div className="relative grid h-12 w-10 place-items-center overflow-hidden border border-[var(--color-surface-border)] bg-[#070D0A] sm:h-14 sm:w-12">
-        <span className="pointer-events-none absolute inset-x-0 top-1/2 h-px bg-[var(--color-neon)]/15" />
-        <span className="font-display text-[24px] font-bold leading-none tabular-nums text-[var(--color-ink)] sm:text-[28px]">
-          {value}
-        </span>
-      </div>
-      <span className="mt-1 text-[8px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-        {label}
-      </span>
-    </div>
-  );
-}
-
-function LockdownClock({ kickoff }: { kickoff: string | null }) {
-  const target = useMemo(() => {
-    if (kickoff) return new Date(kickoff).getTime();
-    return Date.now() + 6 * 60 * 60 * 1000;
-  }, [kickoff]);
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const ms = Math.max(0, target - now);
-  const h = Math.floor(ms / 3_600_000);
-  const m = Math.floor((ms % 3_600_000) / 60_000);
-  const s = Math.floor((ms % 60_000) / 1000);
-  const pad = (x: number) => x.toString().padStart(2, "0");
-  return (
-    <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
-      {pad(h)}:{pad(m)}:{pad(s)}
-    </span>
-  );
-}
-
-function LockdownClockBig({ kickoff }: { kickoff: string | null }) {
-  const target = useMemo(() => {
-    if (kickoff) return new Date(kickoff).getTime();
-    return Date.now() + 6 * 60 * 60 * 1000;
-  }, [kickoff]);
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const ms = Math.max(0, target - now);
-  const h = Math.floor(ms / 3_600_000);
-  const m = Math.floor((ms % 3_600_000) / 60_000);
-  const s = Math.floor((ms % 60_000) / 1000);
-  const pad = (x: number) => x.toString().padStart(2, "0");
-  return (
-    <div className="flex items-end justify-center gap-1.5">
-      <DigitCell value={pad(h)} label="Hours" />
-      <span className="pb-5 font-display text-xl font-bold text-[var(--color-neon)]">:</span>
-      <DigitCell value={pad(m)} label="Min" />
-      <span className="pb-5 font-display text-xl font-bold text-[var(--color-neon)]">:</span>
-      <DigitCell value={pad(s)} label="Sec" />
-    </div>
-  );
-}
-
-/* CSSE primary CTA — neon, sharp, stencil. */
-function NeonButton({
-  to,
-  children,
-  href,
-}: {
-  to?: string;
-  href?: string;
-  children: React.ReactNode;
-}) {
-  const cls =
-    "group inline-flex items-center justify-center gap-2 border border-[var(--color-neon)] bg-[var(--color-neon)] px-5 py-3 font-display text-sm font-bold uppercase tracking-[0.28em] text-[#04140A] transition-all hover:shadow-[0_0_24px_rgba(34,224,107,0.45)]";
-  if (href)
-    return (
-      <a href={href} className={cls}>
-        {children}
-      </a>
-    );
-  return (
-    <Link to={to!} className={cls}>
-      {children}
-    </Link>
-  );
-}
-
-function GhostButton({ to, children }: { to: string; children: React.ReactNode }) {
-  return (
-    <Link
-      to={to}
-      className="inline-flex items-center justify-center gap-2 border border-[var(--color-surface-border)] bg-transparent px-5 py-3 font-display text-sm font-bold uppercase tracking-[0.28em] text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)] hover:text-[var(--color-neon)]"
-    >
-      {children}
-    </Link>
-  );
-}
+/* ------------------------------------------------------------------ */
+/* Page                                                                */
+/* ------------------------------------------------------------------ */
 
 function LandingPage() {
-  const [authed, setAuthed] = useState<boolean | null>(null);
-  const landing = useLandingData();
+  const landing = useLanding();
+  const now = useTicker(30_000);
   const trackView = useServerFn(recordHomeView);
+  useEffect(() => { trackView({}).catch(() => {}); }, [trackView]);
 
-  useEffect(() => {
-    let mounted = true;
-    supabase.auth.getUser().then(({ data }) => {
-      if (mounted) setAuthed(!!data.user);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setAuthed(!!session?.user);
-    });
-    trackView({}).catch(() => {});
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [trackView]);
+  // Fixtures we display in the navigator. Includes live (isLive flag on the client
+  // is inferred by kickoff being in the past + not finished — we don't get status
+  // from getLandingData, so treat past-kickoff items as live).
+  const fixtures = useMemo(() => {
+    const list = (landing?.nextMatches ?? []).filter(Boolean) as NonNullable<LandingNextMatch>[];
+    return list;
+  }, [landing]);
 
-  const primaryCta = authed
-    ? { to: "/dashboard", label: "Go to Dashboard" }
-    : { to: "/auth", label: "Sign In / Register" };
+  const upcoming = useMemo(
+    () => fixtures.filter((f) => new Date(f.kickoffAt).getTime() > now),
+    [fixtures, now],
+  );
 
-  const kickoff = landing?.nextMatches?.[0]?.kickoffAt ?? null;
+  const [idx, setIdx] = useState(0);
+  useEffect(() => { setIdx(0); }, [upcoming.length]);
+  const featured = upcoming[idx] ?? upcoming[0] ?? null;
 
   return (
-    <div className="relative min-h-screen scroll-smooth bg-[var(--color-surface)] text-[var(--color-ink)]">
-      {/* Scoreboard scanline — same as dashboard */}
-      <div
-        aria-hidden
-        className="pointer-events-none fixed inset-0 z-0 opacity-[0.04]"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(0deg, var(--color-neon) 0 1px, transparent 1px 3px)",
-        }}
-      />
-
-      {/* Matchday status bar — stencil */}
-      <div className="sticky top-0 z-50 border-b border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.28em]">
-          <div className="flex min-w-0 items-center gap-2 truncate text-[var(--color-ink-muted)]">
-            <Lock className="h-3 w-3 shrink-0 text-[var(--color-neon)]" />
-            <span className="truncate">
-              Lines lock in <LockdownClock kickoff={kickoff} />
-            </span>
-          </div>
-          <div className="hidden items-center gap-2 sm:flex">
-            <Radio className="h-3 w-3 text-[var(--color-neon)]" />
-            <span className="text-[var(--color-neon)]">Matchday · Live</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Top nav — sharp, stencil */}
-      <header className="sticky top-[28px] z-40 border-b border-[var(--color-surface-border)] bg-[var(--color-surface)]/85 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link to="/" aria-label="CSSEBets home">
-            <CsseLogo size={18} />
+    <div className="relative min-h-screen bg-[var(--surface)] text-[var(--ink)]">
+      {/* Minimal top nav — logo + login + register only */}
+      <header className="sticky top-0 z-40 border-b border-[var(--color-surface-border)] bg-[var(--surface)]/95 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 md:h-16 md:px-8">
+          <Link to="/" aria-label="CSSEBets home" className="shrink-0">
+            <CsseLogo size={22} />
           </Link>
-
-          <nav className="hidden items-center gap-1 md:flex">
-            <button
-              onClick={() => scrollToId("how")}
-              className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-neon)]"
-            >
-              How It Works
-            </button>
-            <button
-              onClick={() => scrollToId("support")}
-              className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-neon)]"
-            >
-              Support
-            </button>
-          </nav>
-
-          {authed ? (
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
-              to="/dashboard"
-              className="border border-[var(--color-neon)] bg-[var(--color-neon)] px-3 py-1.5 font-display text-[10px] font-bold uppercase tracking-[0.28em] text-[#04140A] transition-all hover:shadow-[0_0_18px_rgba(34,224,107,0.45)]"
+              to="/auth"
+              className="rounded-full border border-[var(--color-surface-border)] px-3 py-1.5 text-[12px] font-semibold text-[var(--ink)] transition-colors hover:border-[var(--neon)]/50 hover:text-[var(--neon)] sm:px-4 sm:py-2 sm:text-[13px]"
             >
-              Dashboard
+              Log in
             </Link>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link
-                to="/auth"
-                className="hidden border border-[var(--color-surface-border)] px-3 py-1.5 font-display text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)] hover:text-[var(--color-neon)] sm:inline-flex"
-              >
-                Log in
-              </Link>
-              <Link
-                to="/register"
-                className="border border-[var(--color-neon)] bg-[var(--color-neon)] px-3 py-1.5 font-display text-[10px] font-bold uppercase tracking-[0.28em] text-[#04140A] transition-all hover:shadow-[0_0_18px_rgba(34,224,107,0.45)]"
-              >
-                Register
-              </Link>
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* HERO */}
-      <section className="relative overflow-hidden">
-        {/* Neon stadium wash */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(ellipse at 50% 0%, rgba(34,224,107,0.16), transparent 60%), repeating-linear-gradient(90deg, transparent 0 60px, rgba(34,224,107,0.04) 60px 61px)",
-          }}
-        />
-
-        {/* Live odds ticker — stencil */}
-        {(landing?.nextMatches?.length ?? 0) > 0 && (
-          <div className="relative border-b border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/80 backdrop-blur">
-            <div className="mx-auto flex max-w-6xl items-center gap-3 overflow-hidden px-4 py-2">
-              <span className="inline-flex items-center gap-1.5 border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--color-neon)]" />
-                Live Odds
-              </span>
-              <div className="flex flex-1 gap-6 overflow-x-clip whitespace-nowrap text-[11px] text-[var(--color-ink-muted)] [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
-                <div className="flex animate-[ticker_40s_linear_infinite] gap-6 hover:[animation-play-state:paused]">
-                  {[...(landing?.nextMatches ?? []), ...(landing?.nextMatches ?? [])].map((m, i) => {
-                    if (!m) return null;
-                    const fmt = (n: number | null) => (n != null ? n.toFixed(2) : "—");
-                    return (
-                      <span key={`${m.id}-${i}`} className="inline-flex items-center gap-2">
-                        <span className="font-display font-bold uppercase tracking-[0.2em] text-[var(--color-ink)]/85">
-                          {m.homeTeam} vs {m.awayTeam}
-                        </span>
-                        {[m.homeOdds, m.drawOdds, m.awayOdds].map((o, idx) => (
-                          <span
-                            key={idx}
-                            className="border border-[var(--color-surface-border)] bg-[#070D0A] px-1.5 py-0.5 font-display tabular-nums text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)] hover:text-[var(--color-neon)]"
-                          >
-                            {fmt(o)}
-                          </span>
-                        ))}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="relative mx-auto flex max-w-4xl flex-col items-center px-4 py-12 text-center sm:py-16">
-          <div className="inline-flex items-center gap-2 border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
-            <Radio className="h-3 w-3" />
-            FIFA World Cup 2026
-          </div>
-
-          <h1 className="mt-6 font-display text-[40px] font-bold leading-[0.95] tracking-tight sm:text-[64px]">
-            Be the <span className="text-[var(--color-neon)]">12th man.</span>
-            <br />
-            <span className="text-[var(--color-ink-muted)]">Predict like the manager.</span>
-          </h1>
-
-          <p className="mt-4 max-w-xl font-display text-[11px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)] sm:text-xs">
-            Competitive Strategy Starts Everywhere
-          </p>
-
-          {/* Stencil countdown — kickoff pressure */}
-          <div className="relative mt-7 inline-block border border-[var(--color-neon)]/25 bg-[var(--color-surface-2)] px-5 py-4">
-            <Corner pos="tl" />
-            <Corner pos="tr" />
-            <Corner pos="bl" />
-            <Corner pos="br" />
-            <div className="mb-2 flex items-center justify-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
-              <Lock className="h-3 w-3 text-[var(--color-neon)]" />
-              Next kickoff locks in
-            </div>
-            <LockdownClockBig kickoff={kickoff} />
-          </div>
-
-          {/* Featured matches */}
-          <div className="mt-8 w-full max-w-4xl">
-            <FeaturedMatches matches={landing?.nextMatches ?? []} authed={authed} />
-          </div>
-
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            {authed ? (
-              <NeonButton to="/dashboard">
-                Place your bet
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </NeonButton>
-            ) : (
-              <>
-                <NeonButton to="/register">
-                  Join before kickoff
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </NeonButton>
-                <GhostButton to="/auth">Log in</GhostButton>
-              </>
-            )}
-          </div>
-        </div>
-
-        <style>{`
-          @keyframes ticker {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-          }
-        `}</style>
-      </section>
-
-      {/* dashed seam — matchday paper */}
-      <div className="relative border-y border-dashed border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/40 py-2">
-        <div className="mx-auto max-w-6xl px-4 text-center text-[9px] font-bold uppercase tracking-[0.4em] text-[var(--color-ink-muted)]">
-          ⎯⎯ Matchday Console ⎯⎯
-        </div>
-      </div>
-
-      {/* TRUST SECTIONS */}
-      <CommunityGrowthSection />
-      <RecentPlatformActivity />
-      <PayoutPerformanceSection />
-
-      <Suspense fallback={<div className="h-[600px]" />}>
-        <HowItWorks />
-      </Suspense>
-
-      <BuildingLongRun />
-
-
-      {/* SUPPORT — stencil cards */}
-      <section id="support" className="border-t border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/40">
-        <div className="mx-auto max-w-5xl px-4 py-14">
-          <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr] lg:items-center">
-            <div>
-              <div className="mb-3 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-neon)]" />
-                Support · 24/7
-              </div>
-              <h2 className="font-display text-[28px] font-bold uppercase leading-[1] tracking-tight sm:text-[40px]">
-                Need <span className="text-[var(--color-neon)]">help?</span>
-              </h2>
-              <p className="mt-3 text-sm text-[var(--color-ink-muted)]">
-                For account access, point requests, or wallet questions — contact <BrandText /> support.
-              </p>
-              <div className="mt-5">
-                <NeonButton href="mailto:support@cssebets.com">
-                  <Mail className="h-4 w-4" />
-                  Contact support
-                </NeonButton>
-              </div>
-            </div>
-
-            <div className="grid gap-3">
-              <a
-                href="https://wa.me/601114211004"
-                className="relative flex items-center gap-3 border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-4 transition-colors hover:border-[var(--color-neon)]"
-              >
-                <Corner pos="tl" />
-                <Corner pos="br" />
-                <MessageCircle className="h-5 w-5 text-[var(--color-neon)]" />
-                <div>
-                  <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-                    WhatsApp
-                  </div>
-                  <div className="font-display text-sm font-bold tabular-nums text-[var(--color-ink)]">
-                    +60 11 142 11004
-                  </div>
-                </div>
-              </a>
-              <a
-                href="mailto:support@cssebets.com"
-                className="relative flex items-center gap-3 border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-4 transition-colors hover:border-[var(--color-neon)]"
-              >
-                <Corner pos="tl" />
-                <Corner pos="br" />
-                <Mail className="h-5 w-5 text-[var(--color-neon)]" />
-                <div>
-                  <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-                    Email
-                  </div>
-                  <div className="font-display text-sm font-bold text-[var(--color-ink)]">
-                    support@cssebets.com
-                  </div>
-                </div>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="border-t border-[var(--color-surface-border)] bg-[var(--color-surface)] pb-20 sm:pb-8">
-        <div className="mx-auto max-w-5xl px-4 py-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <CsseLogo size={18} />
-            <Link
-              to={primaryCta.to}
-              className="text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-neon)]"
-            >
-              {primaryCta.label}
-            </Link>
-          </div>
-          <p className="mt-5 text-xs text-[var(--color-ink-muted)]">
-            Convert cash for points and start placing bets. Withdrawals or cashout are processed on this platform.
-          </p>
-          <p className="mt-2 text-xs text-[var(--color-ink-muted)]">
-            © {new Date().getFullYear()} <BrandText />. All rights reserved.
-          </p>
-        </div>
-      </footer>
-
-      {/* Mobile sticky CTA — stencil */}
-      {!authed && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-neon)]/30 bg-[var(--color-surface)]/95 px-3 py-2.5 backdrop-blur-md sm:hidden">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0 text-[10px] leading-tight">
-              <div className="font-display font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-                Bets close in
-              </div>
-              <LockdownClock kickoff={kickoff} />
-            </div>
             <Link
               to="/register"
-              className="shrink-0 border border-[var(--color-neon)] bg-[var(--color-neon)] px-3 py-2 font-display text-[10px] font-bold uppercase tracking-[0.28em] text-[#04140A] transition-all hover:shadow-[0_0_18px_rgba(34,224,107,0.45)]"
+              className="rounded-full bg-[var(--neon)] px-3 py-1.5 text-[12px] font-bold text-[#04140A] transition-all hover:shadow-[0_0_18px_rgba(34,224,107,0.45)] sm:px-4 sm:py-2 sm:text-[13px]"
             >
               Register
             </Link>
           </div>
         </div>
+      </header>
+
+      <main className="mx-auto w-full min-w-0 max-w-3xl overflow-x-hidden px-4 pb-28 pt-5 md:pb-14">
+        {/* Fixtures navigator — country A vs country B */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+              Upcoming Fixtures
+            </h2>
+            {upcoming.length > 1 && (
+              <div className="flex items-center gap-1.5 text-[11px] tabular-nums text-[var(--ink-muted)]">
+                <button
+                  onClick={() => setIdx((i) => Math.max(0, i - 1))}
+                  disabled={idx === 0}
+                  className="grid h-7 w-7 place-items-center rounded-full border border-[var(--color-surface-border)] transition-colors hover:border-[var(--neon)]/50 disabled:opacity-40"
+                  aria-label="Previous fixture"
+                >‹</button>
+                <span>{idx + 1} / {upcoming.length}</span>
+                <button
+                  onClick={() => setIdx((i) => Math.min(upcoming.length - 1, i + 1))}
+                  disabled={idx >= upcoming.length - 1}
+                  className="grid h-7 w-7 place-items-center rounded-full border border-[var(--color-surface-border)] transition-colors hover:border-[var(--neon)]/50 disabled:opacity-40"
+                  aria-label="Next fixture"
+                >›</button>
+              </div>
+            )}
+          </div>
+
+          {/* Horizontal strip of all fixtures (live + upcoming) */}
+          {fixtures.length > 0 && (
+            <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {fixtures.map((f, i) => {
+                const live = new Date(f.kickoffAt).getTime() <= now;
+                const active = !live && upcoming[idx]?.id === f.id;
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => {
+                      const upIdx = upcoming.findIndex((u) => u.id === f.id);
+                      if (upIdx >= 0) setIdx(upIdx);
+                    }}
+                    className={`shrink-0 rounded-xl border bg-[var(--surface-2)] px-3 py-3 text-left transition-colors ${
+                      live
+                        ? "border-rose-500/50"
+                        : active
+                          ? "border-[#F5C042]/60"
+                          : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/50"
+                    }`}
+                    style={{ width: 168 }}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <TeamFlag name={f.homeTeam} w={26} />
+                      <span className="text-[10px] font-bold text-[var(--ink-muted)]">·</span>
+                      <TeamFlag name={f.awayTeam} w={26} />
+                    </div>
+                    <div className="mt-2 text-[12px] font-bold tracking-tight text-[var(--ink)]">
+                      {abbrev(f.homeTeam)} vs {abbrev(f.awayTeam)}
+                    </div>
+                    {live ? (
+                      <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-rose-400">
+                        <span className="h-1 w-1 animate-pulse rounded-full bg-rose-500" /> LIVE
+                      </div>
+                    ) : (
+                      <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+                        {timeChip(f.kickoffAt, now)}
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Next fixture — featured Kalshi-style card (gold corners) */}
+        <section className="mt-6 space-y-3">
+          <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#F5C042]" />
+            Next Fixture
+          </h2>
+          {featured ? (
+            <NextFixtureCard match={featured} now={now} />
+          ) : (
+            <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-10 text-center text-sm text-[var(--ink-muted)]">
+              No fixtures on the slate right now — check back closer to kickoff.
+            </div>
+          )}
+        </section>
+
+        {/* Analytics sections — reuse existing trust surfaces */}
+        <div id="community" className="mt-10 scroll-mt-24">
+          <CommunityGrowthSection />
+        </div>
+        <div className="mt-2">
+          <RecentPlatformActivity />
+        </div>
+        <div id="performance" className="scroll-mt-24">
+          <PayoutPerformanceSection />
+        </div>
+        <div id="about" className="scroll-mt-24">
+          <BuildingLongRun />
+        </div>
+        <div id="help" className="mt-6 rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-6 text-center scroll-mt-24">
+          <h3 className="text-base font-bold text-[var(--ink)]">Need help?</h3>
+          <p className="mt-1 text-sm text-[var(--ink-muted)]">Reach the CSSEBets team any time.</p>
+          <a
+            href="mailto:support@cssebets.com"
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-[var(--neon)] px-4 py-2 text-[13px] font-bold text-[#04140A] transition-all hover:shadow-[0_0_18px_rgba(34,224,107,0.45)]"
+          >
+            Contact support <ArrowUpRight className="h-4 w-4" />
+          </a>
+        </div>
+      </main>
+
+      {/* Bottom nav — landing only. 4 anchor links. */}
+      <LandingBottomNav />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Next fixture card — gold corners, matches "Next Fixture" on home    */
+/* ------------------------------------------------------------------ */
+function GoldCorner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
+  const map: Record<typeof pos, string> = {
+    tl: "top-0 left-0 border-t-2 border-l-2",
+    tr: "top-0 right-0 border-t-2 border-r-2",
+    bl: "bottom-0 left-0 border-b-2 border-l-2",
+    br: "bottom-0 right-0 border-b-2 border-r-2",
+  };
+  return (
+    <span
+      aria-hidden
+      className={`pointer-events-none absolute h-5 w-5 border-[#F5C042] ${map[pos]}`}
+      style={{ filter: "drop-shadow(0 0 6px rgba(245,192,66,0.45))" }}
+    />
+  );
+}
+
+function NextFixtureCard({ match, now }: { match: NonNullable<LandingNextMatch>; now: number }) {
+  const pct = toPct(match.homeOdds, match.drawOdds, match.awayOdds);
+  return (
+    <Link
+      to="/auth"
+      className="group relative block overflow-hidden rounded-2xl border border-[#F5C042]/40 bg-[var(--surface-2)] transition-colors hover:border-[#F5C042]/70"
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(120% 60% at 0% 0%, rgba(245,192,66,0.10), transparent 55%), radial-gradient(120% 60% at 100% 100%, rgba(245,192,66,0.08), transparent 55%)",
+        }}
+      />
+      <GoldCorner pos="tl" />
+      <GoldCorner pos="br" />
+      <div className="relative p-4">
+        <div className="flex items-center justify-between text-[11px] font-semibold">
+          <span className="text-[var(--ink-muted)]">{timeChip(match.kickoffAt, now)}</span>
+          <span className="text-[var(--ink-muted)]">FIFA World Cup 2026</span>
+        </div>
+
+        <div className="mt-3 flex flex-col gap-2.5">
+          <TeamOddsRow name={match.homeTeam} pct={pct?.home ?? null} mult={match.homeOdds} tone="home" />
+          <TeamOddsRow name={match.awayTeam} pct={pct?.away ?? null} mult={match.awayOdds} tone="away" />
+        </div>
+
+        <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[#F5C042]/50 py-3 text-[14px] font-bold tracking-tight text-[#F5C042] transition-colors group-hover:border-[#F5C042]">
+          Open Market <ArrowUpRight className="h-4 w-4" />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function TeamOddsRow({
+  name, pct, mult, tone,
+}: {
+  name: string; pct: number | null; mult: number | null; tone: "home" | "away";
+}) {
+  const color = tone === "home" ? "text-rose-400" : "text-[var(--neon)]";
+  const borderColor = tone === "home" ? "border-rose-400/40" : "border-[var(--neon)]/40";
+  const barColor = tone === "home" ? "bg-rose-400" : "bg-[var(--neon)]";
+  return (
+    <div className="flex min-w-0 items-center justify-between gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <TeamFlag name={name} w={56} />
+        <span className="truncate text-[15px] font-bold tracking-tight text-[var(--ink)]">{name}</span>
+      </div>
+      {pct != null && (
+        <div className="flex shrink-0 items-center gap-2">
+          <div className="h-1.5 w-14 overflow-hidden rounded-full bg-[var(--surface-3)] sm:w-24">
+            <div className={`h-full rounded-full ${barColor} transition-[width] duration-500`} style={{ width: `${Math.max(4, Math.min(100, pct))}%` }} />
+          </div>
+          <div className="flex flex-col items-end">
+            <span className={`rounded-full border ${borderColor} px-2.5 py-0.5 text-[12px] font-bold tabular-nums ${color}`}>
+              {pct}%
+            </span>
+            {mult != null && (
+              <span className="mt-0.5 text-[10px] tabular-nums text-[var(--ink-muted)]">{mult.toFixed(2)}x</span>
+            )}
+          </div>
+        </div>
       )}
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Landing bottom nav                                                  */
+/* ------------------------------------------------------------------ */
+const LANDING_NAV = [
+  { id: "about", label: "About", Icon: HelpCircle },
+  { id: "community", label: "Community", Icon: Users },
+  { id: "performance", label: "Performance", Icon: LineChart },
+  { id: "help", label: "Help", Icon: Activity },
+] as const;
+
+function LandingBottomNav() {
+  const jump = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  return (
+    <nav
+      aria-label="Landing sections"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-surface-border)]/70 bg-[var(--surface)]/95 backdrop-blur-xl md:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <div className="mx-auto grid max-w-md grid-cols-4">
+        {LANDING_NAV.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            onClick={() => jump(id)}
+            className="relative flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-semibold tracking-tight text-[var(--ink-muted)] transition-colors hover:text-[var(--neon)]"
+          >
+            <Icon className="h-[22px] w-[22px]" />
+            <span>{label}</span>
+          </button>
+        ))}
+      </div>
+    </nav>
   );
 }
