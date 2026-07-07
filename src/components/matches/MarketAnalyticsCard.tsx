@@ -389,14 +389,19 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
 
       {/* Chart — full width, starts at left edge */}
       <div className="relative mt-3 h-[340px] w-full sm:h-[380px] md:h-[420px]">
-        {!isFinished && data && chartData.length > 0 && (
+        {!isFinished && (tq.data?.trades?.length ?? 0) > 0 && (
           <LiveTradeTape
-            trades={(tq.data?.trades ?? [])
-              .filter((t) => t.market === data.market)
-              .map((t) => ({
-                amount: t.amount,
-                outcome: t.outcome === "HOME" ? "home" : t.outcome === "AWAY" ? "away" : t.outcome === "DRAW" ? "draw" : t.outcome.toLowerCase(),
-              }))}
+            trades={(tq.data?.trades ?? []).map((t) => ({
+              amount: t.amount,
+              outcome:
+                t.outcome === "HOME" || t.outcome?.startsWith("HOME") || t.outcome === "OVER" || t.outcome?.startsWith("OVER") || t.outcome === "YES"
+                  ? "home"
+                  : t.outcome === "AWAY" || t.outcome?.startsWith("AWAY") || t.outcome === "UNDER" || t.outcome?.startsWith("UNDER") || t.outcome === "NO"
+                  ? "away"
+                  : t.outcome === "DRAW" || t.outcome === "X"
+                  ? "draw"
+                  : "home",
+            }))}
           />
         )}
         {q.isLoading ? (
