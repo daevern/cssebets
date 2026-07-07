@@ -1,7 +1,7 @@
 // Minimal dark prediction-market movement chart.
 // Full-width, edge-to-edge on mobile. No card, no y-axis, dashed horizontal grid only.
 // Preserves the app's outcome color meaning: HOME=green, DRAW=blue, AWAY=pink.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
