@@ -120,3 +120,28 @@
 @utility safe-bottom-lg {
   padding-bottom: calc(180px + env(safe-area-inset-bottom));
 }
+
+@utility fixture-active-corner {
+  position: relative;
+  isolation: isolate;
+}
+
+@utility fixture-active-corner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background:
+    conic-gradient(from 0deg at 0 0, var(--neon) 0deg, transparent 120deg);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.65;
+  filter: drop-shadow(0 0 10px var(--neon-glow)) drop-shadow(0 0 24px rgba(34, 224, 107, 0.12));
+}
+
