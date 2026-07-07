@@ -370,8 +370,7 @@ export const requestWalletAdjustment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: res, error } = await (supabaseAdmin as any).rpc("request_wallet_adjustment", {
+    const { data: res, error } = await (supabase as any).rpc("request_wallet_adjustment", {
       p_target_user_id: data.targetUserId,
       p_amount: data.amount,
       p_adjustment_type: data.adjustmentType,
@@ -392,8 +391,7 @@ export const approveWalletAdjustment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: res, error } = await (supabaseAdmin as any).rpc("approve_wallet_adjustment", {
+    const { data: res, error } = await (supabase as any).rpc("approve_wallet_adjustment", {
       p_request_id: data.requestId,
       p_checker_note: data.checkerNote ?? null,
     });
@@ -422,8 +420,7 @@ export const rejectWalletAdjustment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: res, error } = await (supabaseAdmin as any).rpc("reject_wallet_adjustment", {
+    const { data: res, error } = await (supabase as any).rpc("reject_wallet_adjustment", {
       p_request_id: data.requestId,
       p_rejection_reason: data.rejectionReason,
     });
@@ -437,8 +434,7 @@ export const cancelWalletAdjustment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: res, error } = await (supabaseAdmin as any).rpc("cancel_wallet_adjustment", {
+    const { data: res, error } = await (supabase as any).rpc("cancel_wallet_adjustment", {
       p_request_id: data.requestId,
     });
     if (error) throw new Error(error.message);
