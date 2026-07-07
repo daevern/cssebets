@@ -387,7 +387,15 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
       </div>
 
       {/* Chart — full width, starts at left edge */}
-      <div className="mt-3 h-[340px] w-full sm:h-[380px] md:h-[420px]">
+      <div className="relative mt-3 h-[340px] w-full sm:h-[380px] md:h-[420px]">
+        {!isFinished && data && chartData.length > 0 && (
+          <TradePrintsOverlay
+            trades={tq.data?.trades ?? []}
+            colorForKey={(k, i) => colorForSeries(k, i)}
+            seriesKeys={visibleSeries.map((s) => s.key)}
+            marketKey={data.market}
+          />
+        )}
         {q.isLoading ? (
           <div className="grid h-full place-items-center text-[10px] font-bold uppercase tracking-[0.28em] text-white/40">
             Loading market history…
