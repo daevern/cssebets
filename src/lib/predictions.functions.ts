@@ -46,35 +46,40 @@ export const submitPrediction = createServerFn({ method: "POST" })
         .maybeSingle();
 
       const refOdds = (match as any)?.reference_odds as Record<string, any> | null;
-      if (!refOdds) throw new Error("Odds for this market are not available.");
-
-      if (data.market === "result") {
-        const key = data.outcome === "HOME" ? "home" : data.outcome === "DRAW" ? "draw" : data.outcome === "AWAY" ? "away" : null;
-        const serverOdds = key ? Number(refOdds[key]) : null;
-        if (!serverOdds || !Number.isFinite(serverOdds) || serverOdds < 1) {
-          throw new Error("Odds for this market are not available.");
-        }
-        const drift = Math.abs(data.referenceOdds - serverOdds) / serverOdds;
-        if (drift > 0.05) throw new Error("Odds have changed. Please refresh and try again.");
-        trustedOdds = serverOdds;
-      } else {
-        const marketOdds = typeof refOdds === "object" ? (refOdds as any)[data.market]?.[data.outcome] : null;
-        if (typeof marketOdds !== "number" || !Number.isFinite(marketOdds) || marketOdds < 1) {
-          throw new Error("Odds for this market are not available.");
-        }
-        const drift = Math.abs(data.referenceOdds - marketOdds) / marketOdds;
-        if (drift > 0.05) throw new Error("Odds have changed. Please refresh and try again.");
-        trustedOdds = marketOdds;
-      }
 
       const { data: snap } = await supabaseAdmin
         .from("match_odds_snapshots")
-        .select("id")
+        .select("id,home_odds,draw_odds,away_odds")
         .eq("match_id", data.matchId)
         .order("sampled_at", { ascending: false })
         .limit(1)
         .maybeSingle();
       snapshotId = (snap as any)?.id ?? null;
+
+      const withinTolerance = (a: number, b: number) =>
+        Number.isFinite(a) && Number.isFinite(b) && a >= 1 && b >= 1 && Math.abs(a - b) / b <= 0.15;
+
+      if (data.market === "result") {
+        const key = data.outcome === "HOME" ? "home" : data.outcome === "DRAW" ? "draw" : data.outcome === "AWAY" ? "away" : null;
+        const refVal = key && refOdds ? Number(refOdds[key]) : NaN;
+        const snapVal = key && snap ? Number((snap as any)[`${key}_odds`]) : NaN;
+        const candidates = [refVal, snapVal].filter((v) => Number.isFinite(v) && v >= 1);
+        if (candidates.length === 0) throw new Error("Odds for this market are not available.");
+        const best = candidates.find((v) => withinTolerance(data.referenceOdds, v));
+        if (!best) throw new Error("Odds have changed. Please refresh and try again.");
+        trustedOdds = best;
+      } else {
+        if (!refOdds) throw new Error("Odds for this market are not available.");
+        const marketOdds = typeof refOdds === "object" ? (refOdds as any)[data.market]?.[data.outcome] : null;
+        if (typeof marketOdds !== "number" || !Number.isFinite(marketOdds) || marketOdds < 1) {
+          throw new Error("Odds for this market are not available.");
+        }
+        if (!withinTolerance(data.referenceOdds, marketOdds)) {
+          throw new Error("Odds have changed. Please refresh and try again.");
+        }
+        trustedOdds = marketOdds;
+      }
+
     } else if (data.market === "tournament_winner") {
       // No match attached; validate against tournament_outrights for the open tournament.
       const { data: t } = await supabaseAdmin
