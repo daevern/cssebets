@@ -512,8 +512,7 @@ function GoldCorner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
 function FeaturedMarketCard({ match, now }: { match: Match; now: number }) {
   const live = match.status === "live";
   const pct = twoWayPct(match.reference_odds);
-  // Kalshi-style gold corners appear for the upcoming "next fixture" card.
-  const showGoldCorners = !live;
+  const showCornerAccent = !live;
 
   return (
     <Link
@@ -522,8 +521,8 @@ function FeaturedMarketCard({ match, now }: { match: Match; now: number }) {
       className={`group relative block overflow-hidden rounded-2xl border bg-[var(--surface-2)] transition-colors ${
         live
           ? "border-rose-500/50 hover:border-rose-500/70"
-          : "border-[#F5C042]/40 hover:border-[#F5C042]/70"
-      }`}
+          : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/40"
+      } ${showCornerAccent ? "next-fixture-corner" : ""}`}
     >
       {live && (
         <div
@@ -535,16 +534,7 @@ function FeaturedMarketCard({ match, now }: { match: Match; now: number }) {
           }}
         />
       )}
-      {showGoldCorners && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(120% 60% at 0% 0%, rgba(245,192,66,0.10), transparent 55%), radial-gradient(120% 60% at 100% 100%, rgba(245,192,66,0.08), transparent 55%)",
-          }}
-        />
-      )}
+
 
       <div className="relative p-4">
         <div className="flex items-center justify-between text-[11px] font-semibold">
