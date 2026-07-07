@@ -2587,6 +2587,10 @@ export type Database = {
       _exposure_norm: { Args: { txt: string }; Returns: string }
       _is_admin_maker_checker: { Args: { _uid: string }; Returns: boolean }
       _live_bankroll: { Args: never; Returns: number }
+      _resolve_wallet_adjustment_admin: {
+        Args: { p_admin_id?: string }
+        Returns: string
+      }
       adjust_correct_score_odds: {
         Args: {
           p_match_id: string
@@ -2637,7 +2641,11 @@ export type Database = {
         }[]
       }
       approve_wallet_adjustment: {
-        Args: { p_checker_note?: string; p_request_id: string }
+        Args: {
+          p_admin_id?: string
+          p_checker_note?: string
+          p_request_id: string
+        }
         Returns: Json
       }
       assert_bet_within_liability_caps: {
@@ -2680,7 +2688,7 @@ export type Database = {
         Returns: string
       }
       cancel_wallet_adjustment: {
-        Args: { p_request_id: string }
+        Args: { p_admin_id?: string; p_request_id: string }
         Returns: Json
       }
       check_match_market_betting: {
@@ -2930,7 +2938,11 @@ export type Database = {
         Returns: Json
       }
       reject_wallet_adjustment: {
-        Args: { p_rejection_reason: string; p_request_id: string }
+        Args: {
+          p_admin_id?: string
+          p_rejection_reason: string
+          p_request_id: string
+        }
         Returns: Json
       }
       reprice_match_market_odds: {
@@ -2945,6 +2957,7 @@ export type Database = {
       request_wallet_adjustment: {
         Args: {
           p_adjustment_type: string
+          p_admin_id?: string
           p_amount: number
           p_reason: string
           p_target_user_id: string

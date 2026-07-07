@@ -375,6 +375,7 @@ export const requestWalletAdjustment = createServerFn({ method: "POST" })
       p_amount: data.amount,
       p_adjustment_type: data.adjustmentType,
       p_reason: data.reason,
+      p_admin_id: userId,
     });
     if (error) throw new Error(error.message);
     return res as { ok: boolean; request_id: string };
@@ -394,6 +395,7 @@ export const approveWalletAdjustment = createServerFn({ method: "POST" })
     const { data: res, error } = await (supabase as any).rpc("approve_wallet_adjustment", {
       p_request_id: data.requestId,
       p_checker_note: data.checkerNote ?? null,
+      p_admin_id: userId,
     });
     if (error) {
       const m = error.message || "";
@@ -423,6 +425,7 @@ export const rejectWalletAdjustment = createServerFn({ method: "POST" })
     const { data: res, error } = await (supabase as any).rpc("reject_wallet_adjustment", {
       p_request_id: data.requestId,
       p_rejection_reason: data.rejectionReason,
+      p_admin_id: userId,
     });
     if (error) throw new Error(error.message);
     return res as { ok: boolean };
@@ -436,6 +439,7 @@ export const cancelWalletAdjustment = createServerFn({ method: "POST" })
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
     const { data: res, error } = await (supabase as any).rpc("cancel_wallet_adjustment", {
       p_request_id: data.requestId,
+      p_admin_id: userId,
     });
     if (error) throw new Error(error.message);
     return res as { ok: boolean };
