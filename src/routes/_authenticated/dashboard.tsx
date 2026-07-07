@@ -522,7 +522,7 @@ function FeaturedMarketCard({ match, now }: { match: Match; now: number }) {
         live
           ? "border-rose-500/50 hover:border-rose-500/70"
           : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/40"
-      } ${showCornerAccent ? "next-fixture-corner" : ""}`}
+      }`}
     >
       {live && (
         <div
@@ -534,6 +534,9 @@ function FeaturedMarketCard({ match, now }: { match: Match; now: number }) {
           }}
         />
       )}
+      {showCornerAccent && <NextFixtureCornerAccent />}
+
+
 
 
       <div className="relative p-4">
