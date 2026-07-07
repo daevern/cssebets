@@ -549,11 +549,10 @@ export function CsseLogoLoader({ label = "Loading" }: { label?: string }) {
       </div>
 
 
-      {/* Bottom precision meter — the green of the chevron extended */}
+      {/* Bottom loading label */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-        <div className="mb-2 flex items-center justify-between text-[9px] font-bold uppercase tracking-[0.42em] text-[var(--color-ink-muted,#6B7A72)]" style={{ width: "min(320px, 60vw)" }}>
-          <span>signal</span>
-          <span>locking</span>
+        <div className="mb-2 flex items-center justify-center text-[9px] font-bold uppercase tracking-[0.42em] text-[var(--color-ink-muted,#6B7A72)]" style={{ width: "min(320px, 60vw)" }}>
+          <span>Loading Markets</span>
         </div>
         <div
           className="relative h-[2px] overflow-hidden"
