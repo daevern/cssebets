@@ -145,6 +145,7 @@ function OddsButton({
   alreadyPlaced,
   disabled,
   title,
+  variant: variantOverride,
   onClick,
 }: {
   selection: string;
@@ -154,9 +155,10 @@ function OddsButton({
   alreadyPlaced: boolean;
   disabled: boolean;
   title?: string;
+  variant?: OddsVariant;
   onClick: () => void;
 }) {
-  const variant = classifySelection(selection);
+  const variant = variantOverride ?? classifySelection(selection);
   const styles = VARIANT_STYLES[variant];
   const shown = displayLabel(selection, label);
   return (
