@@ -420,8 +420,7 @@ export const rejectWalletAdjustment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: res, error } = await (supabaseAdmin as any).rpc("reject_wallet_adjustment", {
+    const { data: res, error } = await (supabase as any).rpc("reject_wallet_adjustment", {
       p_request_id: data.requestId,
       p_rejection_reason: data.rejectionReason,
     });
@@ -435,8 +434,7 @@ export const cancelWalletAdjustment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: res, error } = await (supabaseAdmin as any).rpc("cancel_wallet_adjustment", {
+    const { data: res, error } = await (supabase as any).rpc("cancel_wallet_adjustment", {
       p_request_id: data.requestId,
     });
     if (error) throw new Error(error.message);
