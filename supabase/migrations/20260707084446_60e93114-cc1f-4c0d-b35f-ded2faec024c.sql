@@ -1,0 +1,1 @@
+UPDATE public.platform_settings SET max_single_outcome_liability = 50000, max_correct_score_other_liability = 25000, max_match_worst_case_liability = 100000;
