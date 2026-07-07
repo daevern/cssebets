@@ -568,15 +568,15 @@ function EmptyGraph() {
 
 function VolumeBadge({ label, isFinished }: { label: string; isFinished: boolean }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-emerald-300">
+    <span className="inline-flex items-center gap-1.5 text-[12px] font-medium tracking-tight text-white/60">
       {!isFinished && (
         <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/60 opacity-70" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white/70" />
         </span>
       )}
-      <span className="font-mono tabular-nums">{label}</span>
-      <span className="text-emerald-300/70">pts traded</span>
+      <span className="font-mono tabular-nums text-white/80">{label}</span>
+      <span>pts traded</span>
     </span>
   );
 }
