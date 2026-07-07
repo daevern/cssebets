@@ -509,10 +509,65 @@ function GoldCorner({ pos }: { pos: "tl" | "tr" | "bl" | "br" }) {
   );
 }
 
+function NextFixtureCornerAccent() {
+  // Top-left L-accent: opaque neon at the corner, fading out along the
+  // top edge and down the left edge. Uses SVG so the arc reliably
+  // connects the top and left strokes. The parent Link owns `.group`,
+  // so we lean on `group-hover` to make the accent thicker/longer.
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      className="pointer-events-none absolute left-0 top-0 z-10 h-[55%] w-[55%] overflow-visible transition-all duration-300 group-hover:h-[72%] group-hover:w-[72%]"
+      style={{ filter: "drop-shadow(0 0 6px rgba(34,224,107,0.45))" }}
+    >
+      <defs>
+        <linearGradient id="nfc-h" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#22E06B" stopOpacity="1" />
+          <stop offset="100%" stopColor="#22E06B" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="nfc-v" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#22E06B" stopOpacity="1" />
+          <stop offset="100%" stopColor="#22E06B" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {/* Top edge — from corner outward to the right, fading */}
+      <path
+        d="M 20 1.5 L 100 1.5"
+        stroke="url(#nfc-h)"
+        strokeWidth="1.8"
+        fill="none"
+        vectorEffect="non-scaling-stroke"
+        className="transition-all duration-300 group-hover:[stroke-width:2.8]"
+      />
+      {/* Left edge — from corner downward, fading */}
+      <path
+        d="M 1.5 20 L 1.5 100"
+        stroke="url(#nfc-v)"
+        strokeWidth="1.8"
+        fill="none"
+        vectorEffect="non-scaling-stroke"
+        className="transition-all duration-300 group-hover:[stroke-width:2.8]"
+      />
+      {/* Corner arc connecting the two strokes at full opacity */}
+      <path
+        d="M 20 1.5 A 18.5 18.5 0 0 0 1.5 20"
+        stroke="#22E06B"
+        strokeWidth="1.8"
+        fill="none"
+        vectorEffect="non-scaling-stroke"
+        className="transition-all duration-300 group-hover:[stroke-width:2.8]"
+      />
+    </svg>
+  );
+}
+
 function FeaturedMarketCard({ match, now }: { match: Match; now: number }) {
   const live = match.status === "live";
   const pct = twoWayPct(match.reference_odds);
   const showCornerAccent = !live;
+
 
   return (
     <Link
@@ -522,7 +577,7 @@ function FeaturedMarketCard({ match, now }: { match: Match; now: number }) {
         live
           ? "border-rose-500/50 hover:border-rose-500/70"
           : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/40"
-      } ${showCornerAccent ? "next-fixture-corner" : ""}`}
+      }`}
     >
       {live && (
         <div
@@ -534,6 +589,9 @@ function FeaturedMarketCard({ match, now }: { match: Match; now: number }) {
           }}
         />
       )}
+      {showCornerAccent && <NextFixtureCornerAccent />}
+
+
 
 
       <div className="relative p-4">

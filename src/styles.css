@@ -121,54 +121,10 @@
   padding-bottom: calc(180px + env(safe-area-inset-bottom));
 }
 
-@layer components {
-  .next-fixture-corner {
-    position: relative;
-  }
-  /* L-shaped top-left accent that follows the card's rounded corner
-     and fades outward along both edges. */
-  .next-fixture-corner::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 55%;
-    height: 55%;
-    pointer-events: none;
-    border-top: 1.5px solid rgba(var(--neon-glow-rgb), 0.95);
-    border-left: 1.5px solid rgba(var(--neon-glow-rgb), 0.95);
-    border-top-left-radius: 1rem; /* matches rounded-2xl */
-    filter: drop-shadow(0 0 5px rgba(var(--neon-glow-rgb), 0.35));
-    -webkit-mask-image: radial-gradient(
-      circle at top left,
-      #000 0%,
-      #000 30%,
-      transparent 85%
-    );
-    mask-image: radial-gradient(
-      circle at top left,
-      #000 0%,
-      #000 30%,
-      transparent 85%
-    );
-    transition:
-      width 0.25s ease,
-      height 0.25s ease,
-      border-color 0.25s ease,
-      border-width 0.25s ease,
-      filter 0.25s ease;
-  }
-  .next-fixture-corner:hover::before,
-  .next-fixture-corner:focus-visible::before {
-    width: 70%;
-    height: 70%;
-    border-top-width: 2.5px;
-    border-left-width: 2.5px;
-    border-top-color: rgba(var(--neon-glow-rgb), 1);
-    border-left-color: rgba(var(--neon-glow-rgb), 1);
-    filter: drop-shadow(0 0 10px rgba(var(--neon-glow-rgb), 0.6));
-  }
-}
+/* Top-left neon corner accent for the dashboard "Next Fixture" card is
+   rendered as an inline SVG in dashboard.tsx (NextFixtureCornerAccent). */
+
+
 
 
 
