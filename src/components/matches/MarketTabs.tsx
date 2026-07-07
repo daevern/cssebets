@@ -61,7 +61,7 @@ function QuestionHeading({
 }
 
 
-type OddsVariant = "yes" | "no" | "home" | "draw" | "away" | "neutral" | "correctScore";
+type OddsVariant = "yes" | "no" | "home" | "draw" | "away" | "neutral";
 
 function classifySelection(selection: string): OddsVariant {
   const s = selection.toUpperCase();
@@ -73,6 +73,15 @@ function classifySelection(selection: string): OddsVariant {
   return "neutral";
 }
 
+function classifyCorrectScore(selection: string): OddsVariant {
+  if (selection.toUpperCase() === "OTHER") return "neutral";
+  const [home, away] = selection.split("-").map((n) => parseInt(n, 10));
+  if (!Number.isFinite(home) || !Number.isFinite(away)) return "neutral";
+  if (home > away) return "home";
+  if (away > home) return "away";
+  return "draw";
+}
+
 function displayLabel(selection: string, fallback: string): string {
   const s = selection.toUpperCase();
   if (s === "YES" || s.startsWith("OVER_")) return "Yes";
@@ -82,8 +91,6 @@ function displayLabel(selection: string, fallback: string): string {
 
 const NEUTRAL_BASE =
   "bg-black border border-[var(--color-neon)]/15";
-
-const CORRECT_SCORE_PURPLE = "#4c1d95";
 
 const VARIANT_STYLES: Record<OddsVariant, { base: string; selected: string; priceColor: string; badgeBg: string; badgeText: string }> = {
   yes: {
@@ -127,13 +134,6 @@ const VARIANT_STYLES: Record<OddsVariant, { base: string; selected: string; pric
     priceColor: "text-[var(--color-neon)]",
     badgeBg: "bg-[var(--color-neon)]",
     badgeText: "text-black",
-  },
-  correctScore: {
-    base: `${NEUTRAL_BASE} hover:border-[${CORRECT_SCORE_PURPLE}]/70`,
-    selected: `border-2 border-[${CORRECT_SCORE_PURPLE}] bg-black shadow-[0_0_0_1px_${CORRECT_SCORE_PURPLE}]`,
-    priceColor: "text-[var(--color-neon)]",
-    badgeBg: `bg-[${CORRECT_SCORE_PURPLE}]`,
-    badgeText: "text-white",
   },
 };
 
@@ -678,7 +678,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
                 selected={isPicked}
                 alreadyPlaced={alreadyPlaced}
                 disabled={alreadyPlaced || csSuspended}
-                variant="correctScore"
+                variant={classifyCorrectScore(o.selection)}
                 title={csSuspended ? "Market suspended" : alreadyPlaced ? "You already placed a bet on this score" : undefined}
                 onClick={() => {
                   if (isPicked) {
