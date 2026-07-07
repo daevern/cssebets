@@ -370,8 +370,7 @@ export const requestWalletAdjustment = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     if (!(await isAdmin(supabase, userId))) throw new Error("Admin only");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: res, error } = await (supabaseAdmin as any).rpc("request_wallet_adjustment", {
+    const { data: res, error } = await (supabase as any).rpc("request_wallet_adjustment", {
       p_target_user_id: data.targetUserId,
       p_amount: data.amount,
       p_adjustment_type: data.adjustmentType,
