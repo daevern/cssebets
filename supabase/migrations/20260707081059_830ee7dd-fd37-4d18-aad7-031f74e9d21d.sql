@@ -1,0 +1,1 @@
+UPDATE public.platform_settings SET max_single_bet_payout = 25000 WHERE id = 1;
