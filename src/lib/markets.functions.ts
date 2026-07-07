@@ -65,15 +65,15 @@ async function loadMatchMarkets(matchId: string) {
 
   const isSim = (match as any).is_simulation === true;
 
-  // For real (non-simulation) matches, never surface platform-generated /
-  // derived-Poisson odds — users must only see real bookmaker-sourced prices.
+  // For real (non-simulation) matches, never surface platform-generated,
+  // derived, or placeholder odds — users must only see provider-sourced prices.
   // Simulation matches legitimately use seeded generated books.
   let oddsQuery = supabaseAdmin
     .from("match_market_odds")
     .select("id, match_id, market, selection, odds, active, source")
     .eq("match_id", matchId)
     .eq("active", true);
-  if (!isSim) oddsQuery = oddsQuery.eq("generated", false);
+  if (!isSim) oddsQuery = oddsQuery.eq("generated", false).eq("source", "api-football");
   let { data: odds } = await oddsQuery;
 
   if ((!odds || odds.length === 0) && (match as any).status === "scheduled" && isSim) {
