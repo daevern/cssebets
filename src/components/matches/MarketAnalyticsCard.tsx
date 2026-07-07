@@ -10,7 +10,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import {
   getMarketHistory, getMarketHistoryPublic,
-  type MarketHistoryPayload, type MarketSeries,
+  getRecentTrades, getRecentTradesPublic,
+  type MarketHistoryPayload, type MarketSeries, type RecentTradesPayload,
 } from "@/lib/market-history.functions";
 
 /* ------------------------------------------------------------------ */
