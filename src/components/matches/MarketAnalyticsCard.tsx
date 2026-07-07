@@ -319,51 +319,11 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     <section
       className="relative -mx-4 bg-[var(--surface)] md:mx-0"
     >
-      {/* Header — padded */}
+      {/* Header — title only */}
       <div className="px-4 pt-5 md:px-6 md:pt-6">
-        {publicMode ? (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
-              {data?.market === "match_result" || !data ? "Who will win?" : data.marketLabel}
-            </h2>
-            <VolumeBadge label={volumeLabel} isFinished={isFinished} />
-          </div>
-        ) : (
-          <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
-                {data?.market === "match_result" || !data ? "Who will win?" : data.marketLabel}
-              </h2>
-              <VolumeBadge label={volumeLabel} isFinished={isFinished} />
-            </div>
-
-            {/* Range pills */}
-            <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.02] p-1">
-              {RANGES.map((r) => {
-                const active = r === range;
-                return (
-                  <button
-                    key={r}
-                    onClick={() => setRange(r)}
-                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight transition-colors ${
-                      active
-                        ? "bg-emerald-500/15 text-emerald-400"
-                        : "text-white/50 hover:text-white/80"
-                    }`}
-                  >
-                    {r === "LIVE" && (
-                      <span className="relative flex h-1.5 w-1.5">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-70" />
-                        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      </span>
-                    )}
-                    {r}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
+          {data?.market === "match_result" || !data ? "Who will win?" : data.marketLabel}
+        </h2>
 
         {/* Legend — minimal */}
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
@@ -554,37 +514,39 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
         )}
       </div>
 
-      {publicMode && (
-        <>
-          {/* Range selector — borderless, spans the x-axis length */}
-          <div className="mt-2 w-full pl-0 pr-[84px]">
-            <div className="flex items-center justify-between">
-              {RANGES.map((r) => {
-                const active = r === range;
-                return (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setRange(r)}
-                    aria-pressed={active}
-                    className={`inline-flex items-center gap-1.5 text-[12px] font-medium tracking-tight transition-colors ${
-                      active ? "text-white" : "text-white/50 hover:text-white/80"
-                    }`}
-                  >
-                    {r === "LIVE" && (
-                      <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                    )}
-                    {r}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+      {/* Range selector + volume — borderless, spans the x-axis length */}
+      <div className="mt-2 w-full pl-0 pr-[84px]">
+        <div className="flex items-center justify-between">
+          {RANGES.map((r) => {
+            const active = r === range;
+            return (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRange(r)}
+                aria-pressed={active}
+                className={`inline-flex items-center gap-1.5 text-[12px] font-medium tracking-tight transition-colors ${
+                  active ? "text-white" : "text-white/50 hover:text-white/80"
+                }`}
+              >
+                {r === "LIVE" && (
+                  <span className={`h-2 w-2 rounded-full ${isFinished ? "bg-white/30" : "bg-emerald-500"}`} />
+                )}
+                {r}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-          {/* Divider above the betting surface */}
-          <div className="mt-5 h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
-        </>
-      )}
+      {/* Volume badge below the graph */}
+      <div className="px-4 pb-2 pt-3 md:px-6">
+        <VolumeBadge label={volumeLabel} isFinished={isFinished} />
+      </div>
+
+      {/* Divider above the betting surface */}
+      <div className="mt-3 h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
+
     </section>
   );
 }
@@ -606,15 +568,15 @@ function EmptyGraph() {
 
 function VolumeBadge({ label, isFinished }: { label: string; isFinished: boolean }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-emerald-300">
+    <span className="inline-flex items-center gap-1.5 text-[12px] font-medium tracking-tight text-white/60">
       {!isFinished && (
         <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
-          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white/60 opacity-70" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white/70" />
         </span>
       )}
-      <span className="font-mono tabular-nums">{label}</span>
-      <span className="text-emerald-300/70">pts traded</span>
+      <span className="font-mono tabular-nums text-white/80">{label}</span>
+      <span>pts traded</span>
     </span>
   );
 }
