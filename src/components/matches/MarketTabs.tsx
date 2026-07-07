@@ -678,6 +678,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
                 selected={isPicked}
                 alreadyPlaced={alreadyPlaced}
                 disabled={alreadyPlaced || csSuspended}
+                variant="correctScore"
                 title={csSuspended ? "Market suspended" : alreadyPlaced ? "You already placed a bet on this score" : undefined}
                 onClick={() => {
                   if (isPicked) {
