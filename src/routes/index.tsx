@@ -203,7 +203,7 @@ function LandingPage() {
                       live
                         ? "border-rose-500/50"
                         : active
-                          ? "border-[var(--neon)]/60"
+                          ? "fixture-active-corner border-[var(--color-surface-border)]"
                           : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/50"
                     }`}
                     style={{ width: 172 }}
