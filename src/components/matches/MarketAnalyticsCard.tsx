@@ -158,6 +158,16 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     staleTime: 2_000,
   });
 
+  const tradesFn = useServerFn(publicMode ? getRecentTradesPublic : getRecentTrades);
+  const tq = useQuery({
+    queryKey: ["market-trades", matchId, publicMode ? "pub" : "auth"],
+    queryFn: () => tradesFn({ data: { matchId } }) as Promise<RecentTradesPayload>,
+    refetchInterval: 5_000,
+    staleTime: 2_000,
+  });
+  const isFinished = !!tq.data?.matchStatus && ["finished", "FT", "AET", "PEN"].includes(tq.data.matchStatus);
+  const winningOutcome = tq.data?.winningOutcome ?? null;
+
   useEffect(() => {
     if (publicMode) return;
     const ch = supabase
