@@ -1,7 +1,7 @@
 // Minimal dark prediction-market movement chart.
 // Full-width, edge-to-edge on mobile. No card, no y-axis, dashed horizontal grid only.
 // Preserves the app's outcome color meaning: HOME=green, DRAW=blue, AWAY=pink.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -10,7 +10,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import {
   getMarketHistory, getMarketHistoryPublic,
-  type MarketHistoryPayload, type MarketSeries,
+  getRecentTrades, getRecentTradesPublic,
+  type MarketHistoryPayload, type MarketSeries, type RecentTradesPayload,
 } from "@/lib/market-history.functions";
 
 /* ------------------------------------------------------------------ */
@@ -157,6 +158,16 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     staleTime: 2_000,
   });
 
+  const tradesFn = useServerFn(publicMode ? getRecentTradesPublic : getRecentTrades);
+  const tq = useQuery({
+    queryKey: ["market-trades", matchId, publicMode ? "pub" : "auth"],
+    queryFn: () => tradesFn({ data: { matchId } }) as Promise<RecentTradesPayload>,
+    refetchInterval: 5_000,
+    staleTime: 2_000,
+  });
+  const isFinished = !!tq.data?.matchStatus && ["finished", "FT", "AET", "PEN"].includes(tq.data.matchStatus);
+  const winningOutcome = tq.data?.winningOutcome ?? null;
+
   useEffect(() => {
     if (publicMode) return;
     const ch = supabase
@@ -189,56 +200,72 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
   }, [data, market]);
 
   const { chartData, filteredSeries, latestByKey } = useMemo(() => {
-    if (!data) return { chartData: [] as ChartRow[], filteredSeries: [] as MarketSeries[], latestByKey: new Map<string, number>() };
+    const empty = { chartData: [] as ChartRow[], filteredSeries: [] as MarketSeries[], latestByKey: new Map<string, number>() };
+    if (!data) return empty;
+
+    let result: { chartData: ChartRow[]; filteredSeries: MarketSeries[]; latestByKey: Map<string, number> };
 
     if (range === "LIVE") {
-      const chart = buildLiveTape(data.series, now);
+      const chart = isFinished ? [] : buildLiveTape(data.series, now);
       const last = chart.at(-1) ?? {};
       const latest = new Map<string, number>();
       for (const s of data.series) {
         const v = last[s.key];
         if (typeof v === "number") latest.set(s.key, v);
       }
-      return { chartData: chart, filteredSeries: data.series, latestByKey: latest };
-    }
+      result = { chartData: chart, filteredSeries: data.series, latestByKey: latest };
+    } else {
+      const windowMs = RANGE_MS[range];
+      const cutoff = windowMs == null ? 0 : now - windowMs;
 
-    const windowMs = RANGE_MS[range];
-    const cutoff = windowMs == null ? 0 : now - windowMs;
+      const filtered: MarketSeries[] = data.series.map((s) => {
+        if (windowMs == null) return { ...s, points: s.points };
+        const inWin = s.points.filter((p) => pointTime(p) >= cutoff);
+        if (inWin.length && s.points[0] && pointTime(inWin[0]) === pointTime(s.points[0])) return { ...s, points: inWin };
+        const beforeIdx = s.points.findIndex((p) => pointTime(p) >= cutoff);
+        const lastBefore = beforeIdx > 0 ? s.points[beforeIdx - 1] : beforeIdx === -1 ? s.points.at(-1) : undefined;
+        const anchor = lastBefore ? [{ ...lastBefore, t: new Date(cutoff).toISOString() }] : [];
+        return { ...s, points: [...anchor, ...inWin] };
+      });
 
-    const filtered: MarketSeries[] = data.series.map((s) => {
-      if (windowMs == null) return { ...s, points: s.points };
-      const inWin = s.points.filter((p) => pointTime(p) >= cutoff);
-      if (inWin.length && s.points[0] && pointTime(inWin[0]) === pointTime(s.points[0])) return { ...s, points: inWin };
-      const beforeIdx = s.points.findIndex((p) => pointTime(p) >= cutoff);
-      const lastBefore = beforeIdx > 0 ? s.points[beforeIdx - 1] : beforeIdx === -1 ? s.points.at(-1) : undefined;
-      const anchor = lastBefore ? [{ ...lastBefore, t: new Date(cutoff).toISOString() }] : [];
-      return { ...s, points: [...anchor, ...inWin] };
-    });
-
-    const lastValueBy = new Map<string, number>();
-    for (const s of data.series) {
-      const last = s.points.at(-1);
-      if (last) lastValueBy.set(s.key, pctFromPoint(last));
-    }
-
-    const byTime = new Map<number, ChartRow>();
-    for (const s of filtered) {
-      for (const p of s.points) {
-        const key = pointTime(p);
-        const row = byTime.get(key) ?? { t: new Date(key).toISOString() };
-        row[s.key] = pctFromPoint(p);
-        byTime.set(key, row);
+      const lastValueBy = new Map<string, number>();
+      for (const s of data.series) {
+        const last = s.points.at(-1);
+        if (last) lastValueBy.set(s.key, pctFromPoint(last));
       }
-    }
-    if (lastValueBy.size > 0 && (windowMs == null || windowMs > 0)) {
-      const tick: ChartRow = { t: new Date(now).toISOString() };
-      for (const [k, v] of lastValueBy) tick[k] = v;
-      byTime.set(now, tick);
+
+      const byTime = new Map<number, ChartRow>();
+      for (const s of filtered) {
+        for (const p of s.points) {
+          const key = pointTime(p);
+          const row = byTime.get(key) ?? { t: new Date(key).toISOString() };
+          row[s.key] = pctFromPoint(p);
+          byTime.set(key, row);
+        }
+      }
+      if (!isFinished && lastValueBy.size > 0 && (windowMs == null || windowMs > 0)) {
+        const tick: ChartRow = { t: new Date(now).toISOString() };
+        for (const [k, v] of lastValueBy) tick[k] = v;
+        byTime.set(now, tick);
+      }
+
+      const chart = [...byTime.entries()].sort((a, b) => a[0] - b[0]).map(([, r]) => r);
+      result = { chartData: chart, filteredSeries: filtered, latestByKey: lastValueBy };
     }
 
-    const chart = [...byTime.entries()].sort((a, b) => a[0] - b[0]).map(([, r]) => r);
-    return { chartData: chart, filteredSeries: filtered, latestByKey: lastValueBy };
-  }, [data, range, now]);
+    // Freeze at match end: force winner=100, others=0 for match_result.
+    if (isFinished && winningOutcome && data.market === "match_result" && result.chartData.length > 0) {
+      const seriesKeys = result.filteredSeries.map((s) => s.key);
+      const finalRow: ChartRow = { t: result.chartData.at(-1)!.t };
+      for (const k of seriesKeys) finalRow[k] = k === winningOutcome ? 100 : 0;
+      result.chartData = [...result.chartData.slice(0, -1), finalRow];
+      const latest = new Map<string, number>();
+      for (const k of seriesKeys) latest.set(k, k === winningOutcome ? 100 : 0);
+      result.latestByKey = latest;
+    }
+
+    return result;
+  }, [data, range, now, isFinished, winningOutcome]);
 
   const yDomain = useMemo<[number, number]>(() => {
     const vals: number[] = [];
@@ -276,6 +303,12 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     [filteredSeries, hidden],
   );
 
+  const totalVolume = tq.data?.totalVolume ?? 0;
+  const volumeLabel = totalVolume >= 1000
+    ? `${(totalVolume / 1000).toFixed(totalVolume >= 10000 ? 0 : 1)}k`
+    : String(totalVolume);
+
+
   return (
     <section
       className="relative -mx-4 bg-[var(--surface)] md:mx-0"
@@ -283,14 +316,20 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
       {/* Header — padded */}
       <div className="px-4 pt-5 md:px-6 md:pt-6">
         {publicMode ? (
-          <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
-            {data?.market === "match_result" || !data ? "Who will win?" : data.marketLabel}
-          </h2>
-        ) : (
-          <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
               {data?.market === "match_result" || !data ? "Who will win?" : data.marketLabel}
             </h2>
+            <VolumeBadge label={volumeLabel} isFinished={isFinished} />
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
+                {data?.market === "match_result" || !data ? "Who will win?" : data.marketLabel}
+              </h2>
+              <VolumeBadge label={volumeLabel} isFinished={isFinished} />
+            </div>
 
             {/* Range pills */}
             <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.02] p-1">
@@ -348,7 +387,15 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
       </div>
 
       {/* Chart — full width, starts at left edge */}
-      <div className="mt-3 h-[340px] w-full sm:h-[380px] md:h-[420px]">
+      <div className="relative mt-3 h-[340px] w-full sm:h-[380px] md:h-[420px]">
+        {!isFinished && data && chartData.length > 0 && (
+          <TradePrintsOverlay
+            trades={tq.data?.trades ?? []}
+            colorForKey={(k, i) => colorForSeries(k, i)}
+            seriesKeys={visibleSeries.map((s) => s.key)}
+            marketKey={data.market}
+          />
+        )}
         {q.isLoading ? (
           <div className="grid h-full place-items-center text-[10px] font-bold uppercase tracking-[0.28em] text-white/40">
             Loading market history…
@@ -543,3 +590,112 @@ function EmptyGraph() {
     </div>
   );
 }
+
+function VolumeBadge({ label, isFinished }: { label: string; isFinished: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold tracking-tight text-emerald-300">
+      {!isFinished && (
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-70" />
+          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        </span>
+      )}
+      <span className="font-mono tabular-nums">{label}</span>
+      <span className="text-emerald-300/70">pts traded</span>
+    </span>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Floating trade prints — Kalshi-style ticker over the chart          */
+/* ------------------------------------------------------------------ */
+type PrintTrade = { outcome: string; amount: number };
+
+function TradePrintsOverlay({
+  trades,
+  colorForKey,
+  seriesKeys,
+  marketKey,
+}: {
+  trades: Array<{ t: string; outcome: string; market: string; amount: number }>;
+  colorForKey: (k: string, i: number) => string;
+  seriesKeys: string[];
+  marketKey: string;
+}) {
+  // Filter to prints matching the currently displayed market.
+  const relevant = useMemo<PrintTrade[]>(() => {
+    const list = trades
+      .filter((t) => t.market === marketKey && seriesKeys.includes(t.outcome))
+      .map((t) => ({ outcome: t.outcome, amount: t.amount }));
+    if (list.length > 0) return list;
+    // Deterministic fallback so the ticker always feels alive.
+    if (!seriesKeys.length) return [];
+    const seeded: PrintTrade[] = [];
+    for (let i = 0; i < 3; i++) {
+      const key = seriesKeys[i % seriesKeys.length];
+      const amt = 20 + ((hashString(`${marketKey}-${key}-${i}`) % 110));
+      seeded.push({ outcome: key, amount: amt });
+    }
+    return seeded;
+  }, [trades, seriesKeys, marketKey]);
+
+  const keyColor = useMemo(() => {
+    const m = new Map<string, string>();
+    seriesKeys.forEach((k, i) => m.set(k, colorForKey(k, i)));
+    return m;
+  }, [seriesKeys, colorForKey]);
+
+  const [prints, setPrints] = useState<Array<PrintTrade & { id: number; lane: number }>>([]);
+  const cursor = useRef(0);
+  const idRef = useRef(0);
+
+  useEffect(() => {
+    if (relevant.length === 0) return;
+    const id = setInterval(() => {
+      const t = relevant[cursor.current % relevant.length];
+      cursor.current += 1;
+      idRef.current += 1;
+      const printId = idRef.current;
+      const lane = Math.floor(Math.random() * 3); // 0/1/2 vertical offset lanes
+      setPrints((prev) => [...prev.slice(-6), { ...t, id: printId, lane }]);
+      setTimeout(() => {
+        setPrints((prev) => prev.filter((p) => p.id !== printId));
+      }, 2400);
+    }, 1400);
+    return () => clearInterval(id);
+  }, [relevant]);
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
+      {prints.map((p) => {
+        const color = keyColor.get(p.outcome) ?? "#22C55E";
+        const laneOffset = 10 + p.lane * 42;
+        return (
+          <span
+            key={p.id}
+            className="absolute right-[92px] rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums shadow-lg"
+            style={{
+              top: `${laneOffset}%`,
+              color,
+              background: "rgba(0,0,0,0.55)",
+              border: `1px solid ${color}55`,
+              boxShadow: `0 0 12px ${color}44`,
+              animation: "tradePrint 2.4s ease-out forwards",
+            }}
+          >
+            +{p.amount}
+          </span>
+        );
+      })}
+      <style>{`
+        @keyframes tradePrint {
+          0%   { opacity: 0; transform: translateY(6px) scale(0.9); }
+          15%  { opacity: 1; transform: translateY(0) scale(1); }
+          80%  { opacity: 1; transform: translateY(-32px) scale(1); }
+          100% { opacity: 0; transform: translateY(-48px) scale(0.95); }
+        }
+      `}</style>
+    </div>
+  );
+}
+

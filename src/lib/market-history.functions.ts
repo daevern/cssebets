@@ -195,3 +195,87 @@ export const getMarketHistoryPublic = createServerFn({ method: "POST" })
     return buildMarketHistory(supabaseAdmin, data);
   });
 
+/* ------------------------------------------------------------------ */
+/* Recent trades ticker + total volume + freeze-at-end data           */
+/* ------------------------------------------------------------------ */
+export type RecentTrade = { t: string; outcome: string; market: string; amount: number };
+export type RecentTradesPayload = {
+  trades: RecentTrade[];
+  totalVolume: number;
+  matchStatus: string | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  winningOutcome: "HOME" | "DRAW" | "AWAY" | null;
+};
+
+async function buildRecentTrades(
+  supabaseAdmin: any,
+  matchId: string,
+): Promise<RecentTradesPayload> {
+  const [{ data: match }, { data: recent }, { data: allStakes }] = await Promise.all([
+    supabaseAdmin
+      .from("matches")
+      .select("status, home_score, away_score")
+      .eq("id", matchId)
+      .maybeSingle(),
+    supabaseAdmin
+      .from("predictions")
+      .select("outcome, market, virtual_stake, created_at")
+      .eq("match_id", matchId)
+      .eq("is_simulation", false)
+      .order("created_at", { ascending: false })
+      .limit(30),
+    supabaseAdmin
+      .from("predictions")
+      .select("virtual_stake")
+      .eq("match_id", matchId)
+      .eq("is_simulation", false),
+  ]);
+
+  const trades: RecentTrade[] = ((recent ?? []) as any[]).map((r) => ({
+    t: r.created_at,
+    outcome: String(r.outcome ?? ""),
+    market: String(r.market ?? ""),
+    amount: Math.max(0, Math.round(Number(r.virtual_stake ?? 0))),
+  })).filter((t) => t.amount > 0);
+
+  const totalVolume = ((allStakes ?? []) as any[]).reduce(
+    (s, r) => s + Math.max(0, Number(r.virtual_stake ?? 0)),
+    0,
+  );
+
+  const status = (match?.status ?? null) as string | null;
+  const hs = match?.home_score == null ? null : Number(match.home_score);
+  const as = match?.away_score == null ? null : Number(match.away_score);
+  let winningOutcome: "HOME" | "DRAW" | "AWAY" | null = null;
+  const finished = status && ["finished", "FT", "AET", "PEN"].includes(status);
+  if (finished && hs != null && as != null) {
+    winningOutcome = hs > as ? "HOME" : as > hs ? "AWAY" : "DRAW";
+  }
+
+  return {
+    trades,
+    totalVolume: Math.round(totalVolume),
+    matchStatus: status,
+    homeScore: hs,
+    awayScore: as,
+    winningOutcome,
+  };
+}
+
+export const getRecentTrades = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { matchId: string }) => input)
+  .handler(async ({ data }): Promise<RecentTradesPayload> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return buildRecentTrades(supabaseAdmin, data.matchId);
+  });
+
+export const getRecentTradesPublic = createServerFn({ method: "POST" })
+  .inputValidator((input: { matchId: string }) => input)
+  .handler(async ({ data }): Promise<RecentTradesPayload> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return buildRecentTrades(supabaseAdmin, data.matchId);
+  });
+
+
