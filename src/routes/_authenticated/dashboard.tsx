@@ -571,7 +571,7 @@ function FeaturedMarketCard({ match, now }: { match: Match; now: number }) {
           className={`mt-4 flex items-center justify-center gap-2 rounded-xl py-3 text-[14px] font-bold tracking-tight transition-transform ${
             live
               ? "bg-rose-500 text-[#160406] group-hover:translate-y-[-1px]"
-              : "border border-[#F5C042]/50 text-[#F5C042] group-hover:border-[#F5C042]"
+              : "border border-[var(--neon)]/50 bg-[var(--neon)]/5 text-[var(--neon)] group-hover:translate-y-[-1px] group-hover:bg-[var(--neon)]/10"
           }`}
         >
           Open Market <ArrowUpRight className="h-4 w-4" />
