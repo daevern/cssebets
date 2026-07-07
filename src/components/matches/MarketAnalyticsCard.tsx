@@ -316,14 +316,20 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
       {/* Header — padded */}
       <div className="px-4 pt-5 md:px-6 md:pt-6">
         {publicMode ? (
-          <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
-            {data?.market === "match_result" || !data ? "Who will win?" : data.marketLabel}
-          </h2>
-        ) : (
-          <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
               {data?.market === "match_result" || !data ? "Who will win?" : data.marketLabel}
             </h2>
+            <VolumeBadge label={volumeLabel} isFinished={isFinished} />
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
+                {data?.market === "match_result" || !data ? "Who will win?" : data.marketLabel}
+              </h2>
+              <VolumeBadge label={volumeLabel} isFinished={isFinished} />
+            </div>
 
             {/* Range pills */}
             <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.02] p-1">
