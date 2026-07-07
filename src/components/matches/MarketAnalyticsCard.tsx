@@ -303,6 +303,12 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     [filteredSeries, hidden],
   );
 
+  const totalVolume = tq.data?.totalVolume ?? 0;
+  const volumeLabel = totalVolume >= 1000
+    ? `${(totalVolume / 1000).toFixed(totalVolume >= 10000 ? 0 : 1)}k`
+    : String(totalVolume);
+
+
   return (
     <section
       className="relative -mx-4 bg-[var(--surface)] md:mx-0"
