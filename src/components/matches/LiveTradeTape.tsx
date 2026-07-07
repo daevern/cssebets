@@ -83,7 +83,7 @@ export function LiveTradeTape({ trades, outcomeType, className }: LiveTradeTapeP
         {loop.map((t, idx) => (
           <span
             key={idx}
-            className="text-[11px] font-semibold leading-none tracking-tight tabular-nums"
+            className="text-[13px] font-bold leading-none tabular-nums"
             style={{ color: t.color, textShadow: "0 1px 2px rgba(0,0,0,0.6)" }}
           >
             + ${formatAmount(t.amount)}
