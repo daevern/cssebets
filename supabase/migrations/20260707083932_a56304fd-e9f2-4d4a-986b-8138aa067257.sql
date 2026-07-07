@@ -1,0 +1,1 @@
+UPDATE public.platform_settings SET max_high_odds_stake = 250;
