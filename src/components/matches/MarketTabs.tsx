@@ -83,8 +83,6 @@ function displayLabel(selection: string, fallback: string): string {
 const NEUTRAL_BASE =
   "bg-black border border-[var(--color-neon)]/15";
 
-const CORRECT_SCORE_PURPLE = "#4c1d95";
-
 const VARIANT_STYLES: Record<OddsVariant, { base: string; selected: string; priceColor: string; badgeBg: string; badgeText: string }> = {
   yes: {
     base: `${NEUTRAL_BASE} hover:border-[#60a5fa]/70`,
@@ -127,13 +125,6 @@ const VARIANT_STYLES: Record<OddsVariant, { base: string; selected: string; pric
     priceColor: "text-[var(--color-neon)]",
     badgeBg: "bg-[var(--color-neon)]",
     badgeText: "text-black",
-  },
-  correctScore: {
-    base: `${NEUTRAL_BASE} hover:border-[${CORRECT_SCORE_PURPLE}]/70`,
-    selected: `border-2 border-[${CORRECT_SCORE_PURPLE}] bg-black shadow-[0_0_0_1px_${CORRECT_SCORE_PURPLE}]`,
-    priceColor: "text-[var(--color-neon)]",
-    badgeBg: `bg-[${CORRECT_SCORE_PURPLE}]`,
-    badgeText: "text-white",
   },
 };
 
