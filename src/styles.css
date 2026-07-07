@@ -57,19 +57,19 @@
 /* Dark sports dashboard theme — used as the default for everyone */
 :root {
   --radius: 0.875rem;
-  --background: oklch(0.16 0.02 250);
+  --background: oklch(0.11 0.015 250);
   --foreground: oklch(0.97 0.01 250);
-  --card: oklch(0.21 0.025 255);
+  --card: oklch(0.15 0.02 255);
   --card-foreground: oklch(0.97 0.01 250);
-  --popover: oklch(0.21 0.025 255);
+  --popover: oklch(0.15 0.02 255);
   --popover-foreground: oklch(0.97 0.01 250);
   --primary: oklch(0.78 0.19 145);            /* pitch green */
   --primary-foreground: oklch(0.16 0.02 250);
-  --secondary: oklch(0.28 0.03 255);
+  --secondary: oklch(0.22 0.025 255);
   --secondary-foreground: oklch(0.97 0.01 250);
-  --muted: oklch(0.26 0.025 255);
+  --muted: oklch(0.20 0.02 255);
   --muted-foreground: oklch(0.72 0.02 250);
-  --accent: oklch(0.32 0.05 200);
+  --accent: oklch(0.26 0.045 200);
   --accent-foreground: oklch(0.97 0.01 250);
   --destructive: oklch(0.65 0.23 25);
   --destructive-foreground: oklch(0.98 0.01 0);
@@ -77,22 +77,22 @@
   --success-foreground: oklch(0.16 0.02 250);
   --warning: oklch(0.83 0.17 85);
   --warning-foreground: oklch(0.16 0.02 250);
-  --border: oklch(0.32 0.025 255);
-  --input: oklch(0.28 0.025 255);
+  --border: oklch(0.26 0.02 255);
+  --input: oklch(0.22 0.02 255);
   --ring: oklch(0.78 0.19 145);
-  --sidebar: oklch(0.18 0.02 250);
+  --sidebar: oklch(0.13 0.015 250);
   --sidebar-foreground: oklch(0.97 0.01 250);
   --sidebar-primary: oklch(0.78 0.19 145);
   --sidebar-primary-foreground: oklch(0.16 0.02 250);
-  --sidebar-accent: oklch(0.26 0.025 255);
+  --sidebar-accent: oklch(0.20 0.02 255);
   --sidebar-accent-foreground: oklch(0.97 0.01 250);
-  --sidebar-border: oklch(0.32 0.025 255);
+  --sidebar-border: oklch(0.26 0.02 255);
   --sidebar-ring: oklch(0.78 0.19 145);
   /* Premium dark-green prediction-market surface tokens */
-  --surface: #05100B;
-  --surface-2: #0A1712;
-  --surface-3: #0F1E17;
-  --surface-border: #172922;
+  --surface: #020806;
+  --surface-2: #050E0A;
+  --surface-3: #0A1611;
+  --surface-border: #0F1F18;
   --neon: #22E06B;
   --neon-glow: rgba(34, 224, 107, 0.25);
   --neon-glow-rgb: 34, 224, 107;
