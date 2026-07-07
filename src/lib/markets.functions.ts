@@ -63,17 +63,20 @@ async function loadMatchMarkets(matchId: string) {
     .maybeSingle();
   if (!match) throw new Error("Match not found");
 
-  let { data: odds } = await supabaseAdmin
+  const isSim = (match as any).is_simulation === true;
+
+  // For real (non-simulation) matches, never surface platform-generated /
+  // derived-Poisson odds — users must only see real bookmaker-sourced prices.
+  // Simulation matches legitimately use seeded generated books.
+  let oddsQuery = supabaseAdmin
     .from("match_market_odds")
     .select("id, match_id, market, selection, odds, active, source")
     .eq("match_id", matchId)
     .eq("active", true);
+  if (!isSim) oddsQuery = oddsQuery.eq("generated", false);
+  let { data: odds } = await oddsQuery;
 
-  if (
-    (!odds || odds.length === 0) &&
-    (match as any).status === "scheduled" &&
-    (match as any).is_simulation === true
-  ) {
+  if ((!odds || odds.length === 0) && (match as any).status === "scheduled" && isSim) {
     await (supabaseAdmin as any).rpc("seed_match_market_odds", { p_match_id: matchId });
     const r = await supabaseAdmin
       .from("match_market_odds")
@@ -83,9 +86,8 @@ async function loadMatchMarkets(matchId: string) {
     odds = r.data ?? [];
   }
 
-  const hasHtSupport =
-    (match as any).is_simulation === true ||
-    (match as any).home_score_ht !== null;
+  const hasHtSupport = isSim || (match as any).home_score_ht !== null;
+
   const filtered = (odds ?? []).filter(
     (o: MarketOdds) =>
       MARKET_KEYS.includes(o.market as any) &&
