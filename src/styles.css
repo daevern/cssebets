@@ -120,3 +120,17 @@
 @utility safe-bottom-lg {
   padding-bottom: calc(180px + env(safe-area-inset-bottom));
 }
+
+@layer components {
+  .fixture-active-corner {
+    position: relative;
+    box-shadow:
+      inset 10px 10px 32px -10px rgba(34, 224, 107, 0.70),
+      inset 0 0 0 1px rgba(34, 224, 107, 0.16),
+      0 0 28px -6px rgba(34, 224, 107, 0.28);
+  }
+}
+
+
+
+
