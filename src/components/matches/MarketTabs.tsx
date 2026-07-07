@@ -61,7 +61,7 @@ function QuestionHeading({
 }
 
 
-type OddsVariant = "yes" | "no" | "home" | "draw" | "away" | "neutral" | "correctScore";
+type OddsVariant = "yes" | "no" | "home" | "draw" | "away" | "neutral";
 
 function classifySelection(selection: string): OddsVariant {
   const s = selection.toUpperCase();
@@ -71,6 +71,15 @@ function classifySelection(selection: string): OddsVariant {
   if (s === "DRAW") return "draw";
   if (s === "AWAY") return "away";
   return "neutral";
+}
+
+function classifyCorrectScore(selection: string): OddsVariant {
+  if (selection.toUpperCase() === "OTHER") return "neutral";
+  const [home, away] = selection.split("-").map((n) => parseInt(n, 10));
+  if (!Number.isFinite(home) || !Number.isFinite(away)) return "neutral";
+  if (home > away) return "home";
+  if (away > home) return "away";
+  return "draw";
 }
 
 function displayLabel(selection: string, fallback: string): string {
