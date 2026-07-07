@@ -2933,6 +2933,15 @@ export type Database = {
         Args: { p_rejection_reason: string; p_request_id: string }
         Returns: Json
       }
+      reprice_match_market_odds: {
+        Args: { p_match_id: string }
+        Returns: number
+      }
+      reprice_match_reference_odds: {
+        Args: { p_match_id: string }
+        Returns: boolean
+      }
+      reprice_open_match_market_odds: { Args: never; Returns: number }
       request_wallet_adjustment: {
         Args: {
           p_adjustment_type: string

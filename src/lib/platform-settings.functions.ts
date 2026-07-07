@@ -78,3 +78,24 @@ export const updatePlatformSettings = createServerFn({ method: "POST" })
     });
     return row as PlatformSettings;
   });
+
+export const repriceOpenMatchOdds = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
+    const isAdmin = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "super_admin");
+    if (!isAdmin) throw new Error("Admin only");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await (supabaseAdmin as any).rpc("reprice_open_match_market_odds");
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("audit_log").insert({
+      user_id: userId,
+      action: "odds.reprice_open_matches",
+      entity: "match_market_odds",
+      entity_id: null,
+      metadata: { updatedRows: data ?? 0 },
+    });
+    return { updatedRows: Number(data ?? 0) };
+  });

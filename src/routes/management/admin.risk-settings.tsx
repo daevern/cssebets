@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck, AlertTriangle } from "lucide-react";
-import { getPlatformSettings, updatePlatformSettings } from "@/lib/platform-settings.functions";
+import { getPlatformSettings, repriceOpenMatchOdds, updatePlatformSettings } from "@/lib/platform-settings.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/management/admin/risk-settings")({
@@ -27,6 +27,7 @@ const MARKET_KEYS = [
 function RiskSettingsPage() {
   const getFn = useServerFn(getPlatformSettings);
   const updFn = useServerFn(updatePlatformSettings);
+  const repriceFn = useServerFn(repriceOpenMatchOdds);
   const qc = useQueryClient();
 
   const [hasSession, setHasSession] = useState<boolean | null>(null);
@@ -100,8 +101,8 @@ function RiskSettingsPage() {
   });
 
   const mut = useMutation({
-    mutationFn: () =>
-      updFn({
+    mutationFn: async () => {
+      await updFn({
         data: {
           marginPct: Number(marginPct),
           exposureCapPct: Number(exposureCapPct),
@@ -115,9 +116,11 @@ function RiskSettingsPage() {
           disabledMarkets,
           maxBetsPerUserPerMatch: Number(maxBetsPerMatch),
         },
-      }),
-    onSuccess: () => {
-      toast.success("Risk settings updated.");
+      });
+      return repriceFn();
+    },
+    onSuccess: (result: any) => {
+      toast.success(`Risk settings updated. Repriced ${Number(result?.updatedRows ?? 0).toLocaleString()} open-market odds.`);
       qc.invalidateQueries({ queryKey: ["platform-settings"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Failed to update"),
