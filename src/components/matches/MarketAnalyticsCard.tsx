@@ -169,6 +169,11 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
   const isFinished = !!tq.data?.matchStatus && ["finished", "FT", "AET", "PEN"].includes(tq.data.matchStatus);
   const winningOutcome = tq.data?.winningOutcome ?? null;
 
+  // Finished matches have no LIVE tape — snap the range to ALL so the frozen final chart is visible.
+  useEffect(() => {
+    if (isFinished && range === "LIVE") setRange("ALL");
+  }, [isFinished, range]);
+
   useEffect(() => {
     if (publicMode) return;
     const ch = supabase
