@@ -214,22 +214,18 @@ function WalletPage() {
       title="Your"
       titleAccent="Portfolio"
     >
-      {/* Balance hero */}
-      <StencilPanel
-        kicker={<><WalletIcon className="h-3 w-3" /> Balance №01</>}
-        meta="LIVE"
-        accent
-      >
-        <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-          Current balance
-        </div>
-        <div className="mt-2 flex items-baseline gap-2">
-          <span className="font-display text-5xl font-bold tabular-nums text-[var(--color-ink)]">
-            {wallet.isLoading ? "…" : (wallet.data?.balance ?? 0).toLocaleString()}
-          </span>
-          <span className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">pts</span>
-        </div>
-      </StencilPanel>
+      {/* Balance hero — Member card */}
+      <div className="flex justify-center py-2">
+        <WalletCreditCard
+          displayName={myProfile.data?.displayName ?? (user?.email?.split("@")[0] ?? null)}
+          userId={uid}
+          createdAt={user?.created_at ?? null}
+          balance={wallet.data?.balance ?? 0}
+          reference={myProfile.data?.reference ?? wallet.data?.publicReference ?? null}
+        />
+      </div>
+
+
 
       
 
