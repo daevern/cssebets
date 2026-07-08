@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Sheet, SheetPortal, SheetOverlay } from "@/components/ui/sheet";

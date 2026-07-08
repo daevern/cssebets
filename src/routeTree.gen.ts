@@ -80,6 +80,7 @@ import { Route as ManagementAdminBankrollRouteImport } from './routes/management
 import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
 import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
 import { Route as ManagementAdminAlertsRouteImport } from './routes/management/admin.alerts'
+import { Route as AuthenticatedWalletTransactionListRouteImport } from './routes/_authenticated/wallet.transaction-list'
 import { Route as AuthenticatedWalletTopUpRouteImport } from './routes/_authenticated/wallet.top-up'
 import { Route as AuthenticatedMatchesMatchIdRouteImport } from './routes/_authenticated/matches.$matchId'
 import { Route as AuthenticatedFreeBetsPlaceRouteImport } from './routes/_authenticated/free-bets.place'
@@ -475,6 +476,12 @@ const ManagementAdminAlertsRoute = ManagementAdminAlertsRouteImport.update({
   path: '/alerts',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
+const AuthenticatedWalletTransactionListRoute =
+  AuthenticatedWalletTransactionListRouteImport.update({
+    id: '/transaction-list',
+    path: '/transaction-list',
+    getParentRoute: () => AuthenticatedWalletRoute,
+  } as any)
 const AuthenticatedWalletTopUpRoute =
   AuthenticatedWalletTopUpRouteImport.update({
     id: '/top-up',
@@ -586,6 +593,7 @@ export interface FileRoutesByFullPath {
   '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/wallet/top-up': typeof AuthenticatedWalletTopUpRoute
+  '/wallet/transaction-list': typeof AuthenticatedWalletTransactionListRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
@@ -668,6 +676,7 @@ export interface FileRoutesByTo {
   '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/wallet/top-up': typeof AuthenticatedWalletTopUpRoute
+  '/wallet/transaction-list': typeof AuthenticatedWalletTransactionListRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
@@ -754,6 +763,7 @@ export interface FileRoutesById {
   '/_authenticated/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/_authenticated/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/_authenticated/wallet/top-up': typeof AuthenticatedWalletTopUpRoute
+  '/_authenticated/wallet/transaction-list': typeof AuthenticatedWalletTransactionListRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
@@ -840,6 +850,7 @@ export interface FileRouteTypes {
     | '/free-bets/place'
     | '/matches/$matchId'
     | '/wallet/top-up'
+    | '/wallet/transaction-list'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
     | '/management/admin/audit'
@@ -922,6 +933,7 @@ export interface FileRouteTypes {
     | '/free-bets/place'
     | '/matches/$matchId'
     | '/wallet/top-up'
+    | '/wallet/transaction-list'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
     | '/management/admin/audit'
@@ -1007,6 +1019,7 @@ export interface FileRouteTypes {
     | '/_authenticated/free-bets/place'
     | '/_authenticated/matches/$matchId'
     | '/_authenticated/wallet/top-up'
+    | '/_authenticated/wallet/transaction-list'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
     | '/management/admin/audit'
@@ -1575,6 +1588,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminAlertsRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/_authenticated/wallet/transaction-list': {
+      id: '/_authenticated/wallet/transaction-list'
+      path: '/transaction-list'
+      fullPath: '/wallet/transaction-list'
+      preLoaderRoute: typeof AuthenticatedWalletTransactionListRouteImport
+      parentRoute: typeof AuthenticatedWalletRoute
+    }
     '/_authenticated/wallet/top-up': {
       id: '/_authenticated/wallet/top-up'
       path: '/top-up'
@@ -1677,10 +1697,13 @@ const AuthenticatedMatchesRouteWithChildren =
 
 interface AuthenticatedWalletRouteChildren {
   AuthenticatedWalletTopUpRoute: typeof AuthenticatedWalletTopUpRoute
+  AuthenticatedWalletTransactionListRoute: typeof AuthenticatedWalletTransactionListRoute
 }
 
 const AuthenticatedWalletRouteChildren: AuthenticatedWalletRouteChildren = {
   AuthenticatedWalletTopUpRoute: AuthenticatedWalletTopUpRoute,
+  AuthenticatedWalletTransactionListRoute:
+    AuthenticatedWalletTransactionListRoute,
 }
 
 const AuthenticatedWalletRouteWithChildren =
