@@ -299,7 +299,7 @@ function WalletPage() {
           </div>
           <div data-tour="reference-id" className="border-t border-dashed border-[var(--color-surface-border)] pt-2 space-y-1.5">
             <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">Reference ID</div>
-            <ReferenceIdRow reference={myProfile.data ?? wallet.data?.publicReference ?? ""} />
+            <ReferenceIdRow reference={myProfile.data?.reference ?? wallet.data?.publicReference ?? ""} />
             <p className="text-[11px] text-[var(--color-ink-muted)] leading-snug">
               Include this Reference ID with your transfer proof so admins can match your request.
             </p>
