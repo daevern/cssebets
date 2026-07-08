@@ -92,7 +92,8 @@ export const getPublicCommunityGrowth = createServerFn({ method: "GET" }).handle
 );
 
 export const recordHomeView = createServerFn({ method: "POST" }).handler(async () => {
-  const { error } = await (publicClient().from("page_views" as any) as any).insert({ path: "/" });
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await (supabaseAdmin.from("page_views" as any) as any).insert({ path: "/" });
   if (error) return { ok: false };
   return { ok: true };
 });
