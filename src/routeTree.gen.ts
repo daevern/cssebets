@@ -80,6 +80,7 @@ import { Route as ManagementAdminBankrollRouteImport } from './routes/management
 import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
 import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
 import { Route as ManagementAdminAlertsRouteImport } from './routes/management/admin.alerts'
+import { Route as AuthenticatedWalletTopUpRouteImport } from './routes/_authenticated/wallet.top-up'
 import { Route as AuthenticatedMatchesMatchIdRouteImport } from './routes/_authenticated/matches.$matchId'
 import { Route as AuthenticatedFreeBetsPlaceRouteImport } from './routes/_authenticated/free-bets.place'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -474,6 +475,12 @@ const ManagementAdminAlertsRoute = ManagementAdminAlertsRouteImport.update({
   path: '/alerts',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
+const AuthenticatedWalletTopUpRoute =
+  AuthenticatedWalletTopUpRouteImport.update({
+    id: '/top-up',
+    path: '/top-up',
+    getParentRoute: () => AuthenticatedWalletRoute,
+  } as any)
 const AuthenticatedMatchesMatchIdRoute =
   AuthenticatedMatchesMatchIdRouteImport.update({
     id: '/$matchId',
@@ -566,7 +573,7 @@ export interface FileRoutesByFullPath {
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/trust-center': typeof AuthenticatedTrustCenterRoute
-  '/wallet': typeof AuthenticatedWalletRoute
+  '/wallet': typeof AuthenticatedWalletRouteWithChildren
   '/management/access-denied': typeof ManagementAccessDeniedRoute
   '/management/admin': typeof ManagementAdminRouteWithChildren
   '/management/change-password': typeof ManagementChangePasswordRoute
@@ -578,6 +585,7 @@ export interface FileRoutesByFullPath {
   '/management/users': typeof ManagementUsersRoute
   '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
+  '/wallet/top-up': typeof AuthenticatedWalletTopUpRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
@@ -648,7 +656,7 @@ export interface FileRoutesByTo {
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/trust-center': typeof AuthenticatedTrustCenterRoute
-  '/wallet': typeof AuthenticatedWalletRoute
+  '/wallet': typeof AuthenticatedWalletRouteWithChildren
   '/management/access-denied': typeof ManagementAccessDeniedRoute
   '/management/change-password': typeof ManagementChangePasswordRoute
   '/management/chat': typeof ManagementChatRoute
@@ -659,6 +667,7 @@ export interface FileRoutesByTo {
   '/management/users': typeof ManagementUsersRoute
   '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
+  '/wallet/top-up': typeof AuthenticatedWalletTopUpRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
@@ -732,7 +741,7 @@ export interface FileRoutesById {
   '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/_authenticated/trust-center': typeof AuthenticatedTrustCenterRoute
-  '/_authenticated/wallet': typeof AuthenticatedWalletRoute
+  '/_authenticated/wallet': typeof AuthenticatedWalletRouteWithChildren
   '/management/access-denied': typeof ManagementAccessDeniedRoute
   '/management/admin': typeof ManagementAdminRouteWithChildren
   '/management/change-password': typeof ManagementChangePasswordRoute
@@ -744,6 +753,7 @@ export interface FileRoutesById {
   '/management/users': typeof ManagementUsersRoute
   '/_authenticated/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/_authenticated/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
+  '/_authenticated/wallet/top-up': typeof AuthenticatedWalletTopUpRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
@@ -829,6 +839,7 @@ export interface FileRouteTypes {
     | '/management/users'
     | '/free-bets/place'
     | '/matches/$matchId'
+    | '/wallet/top-up'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
     | '/management/admin/audit'
@@ -910,6 +921,7 @@ export interface FileRouteTypes {
     | '/management/users'
     | '/free-bets/place'
     | '/matches/$matchId'
+    | '/wallet/top-up'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
     | '/management/admin/audit'
@@ -994,6 +1006,7 @@ export interface FileRouteTypes {
     | '/management/users'
     | '/_authenticated/free-bets/place'
     | '/_authenticated/matches/$matchId'
+    | '/_authenticated/wallet/top-up'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
     | '/management/admin/audit'
@@ -1562,6 +1575,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminAlertsRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/_authenticated/wallet/top-up': {
+      id: '/_authenticated/wallet/top-up'
+      path: '/top-up'
+      fullPath: '/wallet/top-up'
+      preLoaderRoute: typeof AuthenticatedWalletTopUpRouteImport
+      parentRoute: typeof AuthenticatedWalletRoute
+    }
     '/_authenticated/matches/$matchId': {
       id: '/_authenticated/matches/$matchId'
       path: '/$matchId'
@@ -1655,6 +1675,17 @@ const AuthenticatedMatchesRouteChildren: AuthenticatedMatchesRouteChildren = {
 const AuthenticatedMatchesRouteWithChildren =
   AuthenticatedMatchesRoute._addFileChildren(AuthenticatedMatchesRouteChildren)
 
+interface AuthenticatedWalletRouteChildren {
+  AuthenticatedWalletTopUpRoute: typeof AuthenticatedWalletTopUpRoute
+}
+
+const AuthenticatedWalletRouteChildren: AuthenticatedWalletRouteChildren = {
+  AuthenticatedWalletTopUpRoute: AuthenticatedWalletTopUpRoute,
+}
+
+const AuthenticatedWalletRouteWithChildren =
+  AuthenticatedWalletRoute._addFileChildren(AuthenticatedWalletRouteChildren)
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBetsRoute: typeof AuthenticatedBetsRoute
   AuthenticatedChangelogRoute: typeof AuthenticatedChangelogRoute
@@ -1671,7 +1702,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTournamentWinnerRoute: typeof AuthenticatedTournamentWinnerRoute
   AuthenticatedTrustCenterRoute: typeof AuthenticatedTrustCenterRoute
-  AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
+  AuthenticatedWalletRoute: typeof AuthenticatedWalletRouteWithChildren
   AuthenticatedFreeBetsPlaceRoute: typeof AuthenticatedFreeBetsPlaceRoute
 }
 
@@ -1691,7 +1722,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTournamentWinnerRoute: AuthenticatedTournamentWinnerRoute,
   AuthenticatedTrustCenterRoute: AuthenticatedTrustCenterRoute,
-  AuthenticatedWalletRoute: AuthenticatedWalletRoute,
+  AuthenticatedWalletRoute: AuthenticatedWalletRouteWithChildren,
   AuthenticatedFreeBetsPlaceRoute: AuthenticatedFreeBetsPlaceRoute,
 }
 
