@@ -46,16 +46,7 @@ function MobileBar({ balance, loading }: { balance?: number | null; loading?: bo
       </Link>
 
       <div className="flex min-w-0 shrink items-center justify-end gap-1 sm:gap-2">
-        {balance != null && (
-          <Link
-            to="/wallet"
-            className="flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] px-2 py-1.5 text-[12px] font-semibold text-[var(--ink)] transition-colors hover:border-[var(--neon)]/40 sm:gap-1.5 sm:px-3"
-          >
-            <WalletIcon className="h-3.5 w-3.5 shrink-0 text-[var(--neon)]" />
-            <span className="tabular-nums">{loading ? "…" : balance.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>
-            <span className="hidden sm:inline text-[10px] font-medium text-[var(--ink-muted)]">PTS</span>
-          </Link>
-        )}
+        {balance != null && <WalletChip balance={balance} loading={loading} />}
         {balance != null && <TokenChip />}
         <Link
           to="/notifications"
