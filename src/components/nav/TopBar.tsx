@@ -1,7 +1,8 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Bell, User, Wallet as WalletIcon, Home, LineChart, Activity, Coins, Headphones } from "lucide-react";
+import { Bell, User, Home, LineChart, Activity, Coins, Headphones } from "lucide-react";
 import { CsseLogo } from "@/components/brand/CsseMark";
 import { TokenChip } from "@/components/engagement/TokenVault";
+import { WalletChip } from "@/components/wallet/WalletCard";
 
 const DESKTOP_NAV = [
   { to: "/dashboard", label: "Home", icon: Home, exact: true },
