@@ -248,10 +248,17 @@ export function WalletCardSheet({ open, onOpenChange }: { open: boolean; onOpenC
   });
 
   const profile = useQuery({
-    queryKey: ["my-profile-name", uid],
+    queryKey: ["my-profile-card", uid],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("display_name").eq("id", uid!).maybeSingle();
-      return (data as any)?.display_name ?? null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, public_reference")
+        .eq("id", uid!)
+        .maybeSingle();
+      return {
+        displayName: (data as any)?.display_name ?? null,
+        reference: (data as any)?.public_reference ?? null,
+      };
     },
     enabled: !!uid && open,
     staleTime: 60_000,
@@ -271,12 +278,9 @@ export function WalletCardSheet({ open, onOpenChange }: { open: boolean; onOpenC
           </div>
 
           <div className="flex items-center justify-between px-5 pt-1">
-            <div className="flex items-center gap-2">
-              <CsseLogo size={20} />
-              <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--neon)]">
-                My wallet
-              </span>
-            </div>
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--neon)]/12 ring-1 ring-inset ring-[var(--neon)]/40 text-[var(--neon)]">
+              <CsseMark className="h-5 w-5" />
+            </span>
             <SheetPrimitive.Close
               aria-label="Close"
               className="grid h-8 w-8 place-items-center rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] text-[var(--ink-muted)] transition-colors hover:border-[var(--neon)]/40 hover:text-[var(--ink)]"
@@ -287,10 +291,11 @@ export function WalletCardSheet({ open, onOpenChange }: { open: boolean; onOpenC
 
           <div className="flex flex-col items-center gap-4 overflow-y-auto px-5 pb-6 pt-4">
             <WalletCreditCard
-              displayName={profile.data ?? (user?.email?.split("@")[0] ?? null)}
+              displayName={profile.data?.displayName ?? (user?.email?.split("@")[0] ?? null)}
               userId={uid}
               createdAt={user?.created_at ?? null}
               balance={wallet.data?.balance ?? 0}
+              reference={profile.data?.reference ?? wallet.data?.publicReference ?? null}
             />
             <WalletActions onNavigate={() => onOpenChange(false)} />
           </div>
