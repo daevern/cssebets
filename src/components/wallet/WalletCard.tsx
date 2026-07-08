@@ -68,110 +68,217 @@ export function WalletCreditCard({
 
   return (
     <div
-      className="relative aspect-[1.586/1] w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 p-5 text-white shadow-[0_25px_70px_-20px_rgba(0,0,0,0.75)]"
+      className="relative aspect-[1.586/1] w-full max-w-sm select-none overflow-hidden rounded-2xl text-white shadow-[0_30px_80px_-24px_rgba(0,0,0,0.85),0_2px_0_0_rgba(255,255,255,0.06)_inset]"
       style={{
         background:
-          // AMEX-esque metallic emerald gradient using CSSE brand green
-          "linear-gradient(135deg, #0a2a1f 0%, #0f4030 30%, #114a37 55%, #0a2418 100%)",
+          // Deep emerald metallic — CSSE aesthetic
+          "radial-gradient(120% 90% at 0% 0%, #14503a 0%, #0c3626 35%, #061c14 75%, #030d09 100%)",
       }}
     >
-      {/* Metallic sheen */}
+      {/* Outer bevel / border */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-70"
+        className="pointer-events-none absolute inset-0 rounded-2xl"
         style={{
-          background:
-            "radial-gradient(140% 60% at 15% 0%, rgba(255,255,255,0.14), transparent 55%), radial-gradient(120% 60% at 100% 100%, rgba(0,255,163,0.10), transparent 60%), linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.06) 50%, transparent 60%)",
-        }}
-      />
-      {/* Guilloché pattern (subtle) */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-overlay"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(45deg, #fff 0 1px, transparent 1px 6px), repeating-linear-gradient(-45deg, #fff 0 1px, transparent 1px 6px)",
+          boxShadow:
+            "inset 0 0 0 1px rgba(255,255,255,0.10), inset 0 0 0 2px rgba(0,0,0,0.35)",
         }}
       />
 
-      <div className="relative flex h-full flex-col justify-between">
-        {/* Top row: brand wordmark + chip */}
+      {/* Diagonal metallic sheen */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.10) 46%, rgba(255,255,255,0.02) 54%, transparent 70%)",
+        }}
+      />
+
+      {/* Neon corner glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-24 -right-16 h-64 w-64 rounded-full opacity-40 blur-3xl"
+        style={{ background: "radial-gradient(closest-side, var(--neon), transparent 70%)" }}
+      />
+
+      {/* Guilloché — fine engraved lines */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.09] mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(38deg, #ffffff 0 1px, transparent 1px 5px), repeating-linear-gradient(-38deg, #ffffff 0 1px, transparent 1px 5px)",
+        }}
+      />
+
+      {/* Circuit-trace pattern (CSSE nod) */}
+      <svg
+        aria-hidden
+        className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.10] mix-blend-screen"
+        viewBox="0 0 400 250"
+        preserveAspectRatio="xMidYMid slice"
+      >
+        <g fill="none" stroke="currentColor" strokeWidth="0.6" className="text-[var(--neon)]">
+          <path d="M0 40 L120 40 L140 60 L240 60 L260 40 L400 40" />
+          <path d="M0 120 L60 120 L80 140 L200 140 L220 120 L400 120" />
+          <path d="M0 210 L140 210 L160 190 L400 190" />
+          <circle cx="140" cy="60" r="2" />
+          <circle cx="240" cy="60" r="2" />
+          <circle cx="200" cy="140" r="2" />
+          <circle cx="160" cy="190" r="2" />
+        </g>
+      </svg>
+
+      {/* Faint giant CSSE mark watermark */}
+      <div className="pointer-events-none absolute -right-8 -bottom-10 opacity-[0.07]">
+        <CsseMark className="h-48 w-48 text-white" />
+      </div>
+
+      <div className="relative flex h-full flex-col justify-between p-4 sm:p-5">
+        {/* Row 1 — brand + chip + NFC */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[8px] font-bold uppercase tracking-[0.32em] text-[var(--neon)]/90">
+            <div className="text-[7px] font-bold uppercase tracking-[0.36em] text-[var(--neon)]/90">
               Member Points
             </div>
-            <div className="mt-1">
+            <div className="mt-1.5">
               <CsseWordmark size={18} />
             </div>
           </div>
-          {/* EMV-style chip */}
-          <div
-            aria-hidden
-            className="grid h-8 w-11 place-items-center rounded-[6px] shadow-inner shadow-black/40"
-            style={{
-              background:
-                "linear-gradient(135deg, #d4c37a 0%, #f4e6a1 40%, #b8a55d 100%)",
-            }}
-          >
-            <div className="grid h-full w-full grid-cols-3 grid-rows-3 gap-[1px] p-[3px]">
-              {Array.from({ length: 9 }).map((_, i) => (
-                <span key={i} className="rounded-[1px] bg-black/25" />
-              ))}
+
+          <div className="flex items-center gap-2">
+            {/* Contactless / NFC */}
+            <svg
+              aria-hidden
+              viewBox="0 0 24 24"
+              className="h-5 w-5 -rotate-90 text-white/70"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+            >
+              <path d="M5 8c3 2 3 6 0 8" />
+              <path d="M9 5c5 3 5 11 0 14" />
+              <path d="M13 2c7 4 7 16 0 20" />
+            </svg>
+
+            {/* EMV chip — detailed */}
+            <div
+              aria-hidden
+              className="relative h-8 w-11 overflow-hidden rounded-[6px] shadow-[inset_0_0_0_1px_rgba(0,0,0,0.4),0_1px_0_rgba(255,255,255,0.15)]"
+              style={{
+                background:
+                  "linear-gradient(135deg, #b7994a 0%, #f4e3a1 35%, #d6b95c 55%, #8c6f2a 100%)",
+              }}
+            >
+              <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <span
+                    key={i}
+                    className="border border-black/30"
+                    style={{ boxShadow: "inset 0 0 3px rgba(0,0,0,0.35)" }}
+                  />
+                ))}
+              </div>
+              <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-black/30" />
+              <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-black/30" />
             </div>
           </div>
         </div>
 
-        {/* Card number — embossed */}
+        {/* Row 2 — card number, embossed */}
         <div
-          className="font-mono text-[16px] sm:text-[18px] font-bold tabular-nums tracking-[0.14em] text-white"
-          style={{ textShadow: "0 1px 0 rgba(255,255,255,0.25), 0 2px 3px rgba(0,0,0,0.55)" }}
+          className="font-mono text-[15px] sm:text-[17px] font-bold tabular-nums tracking-[0.16em] text-white"
+          style={{
+            textShadow:
+              "0 1px 0 rgba(255,255,255,0.28), 0 2px 4px rgba(0,0,0,0.6)",
+          }}
         >
           {formatCardNumber(number)}
         </div>
 
-        {/* Member since / Valid thru row */}
-        <div className="flex items-end justify-between gap-3 text-white">
+        {/* Row 3 — dates */}
+        <div className="flex items-end justify-between gap-4">
           <div className="flex gap-5">
             <div>
-              <div className="text-[7px] font-bold uppercase tracking-[0.3em] text-white/60">Member Since</div>
-              <div className="font-mono text-[11px] font-semibold tabular-nums leading-tight">{memberSince}</div>
+              <div className="text-[6.5px] font-bold uppercase tracking-[0.32em] text-white/55">
+                Member Since
+              </div>
+              <div className="font-mono text-[11px] font-semibold tabular-nums leading-tight">
+                {memberSince}
+              </div>
             </div>
             <div>
-              <div className="text-[7px] font-bold uppercase tracking-[0.3em] text-white/60">Valid Thru</div>
-              <div className="font-mono text-[11px] font-semibold tabular-nums leading-tight">{validThru}</div>
+              <div className="text-[6.5px] font-bold uppercase tracking-[0.32em] text-white/55">
+                Valid Thru
+              </div>
+              <div className="font-mono text-[11px] font-semibold tabular-nums leading-tight">
+                {validThru}
+              </div>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-[7px] font-bold uppercase tracking-[0.3em] text-white/60">Balance</div>
+            <div className="text-[6.5px] font-bold uppercase tracking-[0.32em] text-white/55">
+              Balance
+            </div>
             <div className="font-display text-base font-bold tabular-nums leading-tight text-[var(--neon)]">
               {balance.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-              <span className="ml-1 text-[8px] font-bold uppercase tracking-widest text-white/70">pts</span>
+              <span className="ml-1 text-[8px] font-bold uppercase tracking-widest text-white/70">
+                pts
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Cardholder + Member ID */}
+        {/* Row 4 — cardholder + holo seal + member ID */}
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div
-              className="truncate text-sm font-bold uppercase tracking-[0.16em]"
-              style={{ textShadow: "0 1px 0 rgba(255,255,255,0.2), 0 2px 3px rgba(0,0,0,0.55)" }}
+              className="truncate text-sm font-bold uppercase tracking-[0.18em]"
+              style={{
+                textShadow:
+                  "0 1px 0 rgba(255,255,255,0.22), 0 2px 3px rgba(0,0,0,0.6)",
+              }}
             >
               {cardholder}
             </div>
-            <div className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.3em] text-white/50">Cardholder</div>
+            <div className="mt-0.5 text-[7px] font-bold uppercase tracking-[0.34em] text-white/45">
+              Cardholder
+            </div>
           </div>
+
+          {/* Holographic seal */}
+          <div
+            aria-hidden
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full ring-1 ring-white/25"
+            style={{
+              background:
+                "conic-gradient(from 210deg, #7ef0c1, #35a37a, #0d3a2b, #7ef0c1, #35a37a, #7ef0c1)",
+              boxShadow:
+                "inset 0 0 6px rgba(255,255,255,0.35), 0 1px 3px rgba(0,0,0,0.5)",
+            }}
+          >
+            <CsseMark className="h-4 w-4 text-black/70" />
+          </div>
+
           <div className="text-right">
-            <div className="font-mono text-[11px] font-semibold tabular-nums text-white/90">{memberRef}</div>
-            <div className="text-[7px] font-bold uppercase tracking-[0.3em] text-white/50">Member ID</div>
+            <div className="font-mono text-[11px] font-semibold tabular-nums text-white/95">
+              {memberRef}
+            </div>
+            <div className="text-[7px] font-bold uppercase tracking-[0.34em] text-white/45">
+              Member ID
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Corner mark accent */}
-      <div className="pointer-events-none absolute -right-4 -bottom-4 opacity-[0.08]">
-        <CsseMark className="h-28 w-28 text-white" />
+      {/* Micro-print border along bottom */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-3 bottom-1 truncate text-[5px] font-semibold uppercase tracking-[0.4em] text-white/25"
+      >
+        cssebets · member points card · non-transferable · secured by csse · cssebets · member points
       </div>
     </div>
   );
