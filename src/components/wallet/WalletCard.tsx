@@ -385,9 +385,14 @@ export function WalletCardSheet({ open, onOpenChange }: { open: boolean; onOpenC
           </div>
 
           <div className="flex items-center justify-between px-5 pt-1">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--neon)]/12 ring-1 ring-inset ring-[var(--neon)]/40 text-[var(--neon)]">
-              <CsseMark className="h-5 w-5" />
-            </span>
+            <div className="flex items-center gap-2.5">
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--neon)]/12 ring-1 ring-inset ring-[var(--neon)]/40 text-[var(--neon)]">
+                <CsseMark className="h-5 w-5" />
+              </span>
+              <SheetPrimitive.Title className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--ink)]">
+                My Wallet
+              </SheetPrimitive.Title>
+            </div>
             <SheetPrimitive.Close
               aria-label="Close"
               className="grid h-8 w-8 place-items-center rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] text-[var(--ink-muted)] transition-colors hover:border-[var(--neon)]/40 hover:text-[var(--ink)]"
