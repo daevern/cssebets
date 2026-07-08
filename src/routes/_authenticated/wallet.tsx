@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
+import { WalletCreditCard } from "@/components/wallet/WalletCard";
 
 
 export const Route = createFileRoute("/_authenticated/wallet")({
@@ -77,11 +78,14 @@ function WalletPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("public_reference")
+        .select("public_reference, display_name")
         .eq("id", uid!)
         .maybeSingle();
       if (error) throw error;
-      return (data as any)?.public_reference ?? null;
+      return {
+        reference: (data as any)?.public_reference ?? null,
+        displayName: (data as any)?.display_name ?? null,
+      };
     },
     enabled: !!uid,
     staleTime: 60_000,
@@ -211,22 +215,18 @@ function WalletPage() {
       title="Your"
       titleAccent="Portfolio"
     >
-      {/* Balance hero */}
-      <StencilPanel
-        kicker={<><WalletIcon className="h-3 w-3" /> Balance №01</>}
-        meta="LIVE"
-        accent
-      >
-        <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-          Current balance
-        </div>
-        <div className="mt-2 flex items-baseline gap-2">
-          <span className="font-display text-5xl font-bold tabular-nums text-[var(--color-ink)]">
-            {wallet.isLoading ? "…" : (wallet.data?.balance ?? 0).toLocaleString()}
-          </span>
-          <span className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">pts</span>
-        </div>
-      </StencilPanel>
+      {/* Balance hero — Member card */}
+      <div className="flex justify-center py-2">
+        <WalletCreditCard
+          displayName={myProfile.data?.displayName ?? (user?.email?.split("@")[0] ?? null)}
+          userId={uid}
+          createdAt={user?.created_at ?? null}
+          balance={wallet.data?.balance ?? 0}
+          reference={myProfile.data?.reference ?? wallet.data?.publicReference ?? null}
+        />
+      </div>
+
+
 
       
 
@@ -296,7 +296,7 @@ function WalletPage() {
           </div>
           <div data-tour="reference-id" className="border-t border-dashed border-[var(--color-surface-border)] pt-2 space-y-1.5">
             <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">Reference ID</div>
-            <ReferenceIdRow reference={myProfile.data ?? wallet.data?.publicReference ?? ""} />
+            <ReferenceIdRow reference={myProfile.data?.reference ?? wallet.data?.publicReference ?? ""} />
             <p className="text-[11px] text-[var(--color-ink-muted)] leading-snug">
               Include this Reference ID with your transfer proof so admins can match your request.
             </p>
