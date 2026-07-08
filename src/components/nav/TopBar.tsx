@@ -115,18 +115,7 @@ function DesktopBar({ balance, loading }: { balance?: number | null; loading?: b
 
       {/* Actions */}
       <div className="flex shrink-0 items-center gap-3">
-        {balance != null && (
-          <Link
-            to="/wallet"
-            className="flex items-center gap-2 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] px-3.5 py-2 text-[13px] font-semibold text-[var(--ink)] transition-colors hover:border-[var(--neon)]/50"
-          >
-            <WalletIcon className="h-4 w-4 text-[var(--neon)]" />
-            <span className="tabular-nums">
-              {loading ? "…" : balance.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-            </span>
-            <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--ink-muted)]">PTS</span>
-          </Link>
-        )}
+        {balance != null && <WalletChip balance={balance} loading={loading} />}
         {balance != null && <TokenChip />}
 
         <span aria-hidden className="h-6 w-px bg-[var(--color-surface-border)]/70" />
