@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Sheet, SheetPortal, SheetOverlay } from "@/components/ui/sheet";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { Wallet as WalletIcon, ArrowDownToLine, ArrowUpFromLine, ListOrdered, X } from "lucide-react";
-import { CsseLogo, CsseMark } from "@/components/brand/CsseMark";
+import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyWallet } from "@/lib/wallet.functions";
