@@ -291,7 +291,7 @@ export function WalletActions({ onNavigate }: { onNavigate?: () => void }) {
     <div className="w-full max-w-sm space-y-2">
       <div className="grid grid-cols-2 gap-2">
         <Link
-          to="/wallet/top-up"
+          to="/wallet"
           onClick={onNavigate}
           className="group flex items-center justify-center gap-2 rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)]/10 px-4 py-3 text-xs font-bold uppercase tracking-[0.18em] text-[var(--neon)] transition-all hover:bg-[var(--neon)]/15 active:scale-[0.98]"
         >
