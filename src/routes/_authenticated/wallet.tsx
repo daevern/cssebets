@@ -77,11 +77,14 @@ function WalletPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("public_reference")
+        .select("public_reference, display_name")
         .eq("id", uid!)
         .maybeSingle();
       if (error) throw error;
-      return (data as any)?.public_reference ?? null;
+      return {
+        reference: (data as any)?.public_reference ?? null,
+        displayName: (data as any)?.display_name ?? null,
+      };
     },
     enabled: !!uid,
     staleTime: 60_000,
