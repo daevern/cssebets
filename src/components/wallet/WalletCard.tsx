@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Sheet, SheetPortal, SheetOverlay } from "@/components/ui/sheet";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { Wallet as WalletIcon, ArrowDownToLine, ArrowUpFromLine, ListOrdered, X } from "lucide-react";
-import { CsseLogo, CsseMark } from "@/components/brand/CsseMark";
+import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyWallet } from "@/lib/wallet.functions";
@@ -26,7 +26,8 @@ export function deriveWalletNumber(createdAt: string | undefined | null, userId:
 }
 
 export function formatCardNumber(n: string): string {
-  return (n.match(/.{1,4}/g) ?? [n]).join(" ");
+  // AMEX-style 4-6-6 grouping (16 digits total)
+  return `${n.slice(0, 4)} ${n.slice(4, 10)} ${n.slice(10, 16)}`;
 }
 
 /** Valid thru = created + 5 years, formatted MM/YY */
@@ -37,6 +38,13 @@ export function deriveValidThru(createdAt: string | undefined | null): string {
   return `${pad(exp.getMonth() + 1, 2)}/${String(exp.getFullYear()).slice(-2)}`;
 }
 
+/** "Member since" — MM/YY of account creation */
+export function deriveMemberSince(createdAt: string | undefined | null): string {
+  if (!createdAt) return "--/--";
+  const d = new Date(createdAt);
+  return `${pad(d.getMonth() + 1, 2)}/${String(d.getFullYear()).slice(-2)}`;
+}
+
 /* ---------------- Card (visual) ---------------- */
 
 export function WalletCreditCard({
@@ -44,73 +52,126 @@ export function WalletCreditCard({
   userId,
   createdAt,
   balance,
+  reference,
 }: {
   displayName: string | null;
   userId: string | null | undefined;
   createdAt: string | null | undefined;
   balance: number;
+  reference?: string | null;
 }) {
   const number = deriveWalletNumber(createdAt, userId);
   const validThru = deriveValidThru(createdAt);
+  const memberSince = deriveMemberSince(createdAt);
+  const cardholder = (displayName || "Player").toUpperCase();
+  const memberRef = reference || `CSSE${(userId ?? "").replace(/-/g, "").slice(0, 6).toUpperCase()}`;
 
   return (
-    <div className="relative aspect-[1.586/1] w-full max-w-sm overflow-hidden rounded-2xl border border-[var(--color-surface-border)] p-5 text-white shadow-[0_20px_60px_-20px_rgba(0,0,0,0.6)]"
+    <div
+      className="relative aspect-[1.586/1] w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 p-5 text-white shadow-[0_25px_70px_-20px_rgba(0,0,0,0.75)]"
       style={{
         background:
-          "linear-gradient(135deg, #0a1512 0%, #0f2a20 45%, #071a13 100%)",
+          // AMEX-esque metallic emerald gradient using CSSE brand green
+          "linear-gradient(135deg, #0a2a1f 0%, #0f4030 30%, #114a37 55%, #0a2418 100%)",
       }}
     >
-      {/* Neon shine */}
+      {/* Metallic sheen */}
       <div
         aria-hidden
-        className="absolute -inset-1 opacity-40"
+        className="pointer-events-none absolute inset-0 opacity-70"
         style={{
           background:
-            "radial-gradient(120% 60% at 0% 0%, rgba(0,255,163,0.18), transparent 60%), radial-gradient(120% 60% at 100% 100%, rgba(0,255,163,0.12), transparent 60%)",
+            "radial-gradient(140% 60% at 15% 0%, rgba(255,255,255,0.14), transparent 55%), radial-gradient(120% 60% at 100% 100%, rgba(0,255,163,0.10), transparent 60%), linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.06) 50%, transparent 60%)",
         }}
       />
+      {/* Guilloché pattern (subtle) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.06] mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(45deg, #fff 0 1px, transparent 1px 6px), repeating-linear-gradient(-45deg, #fff 0 1px, transparent 1px 6px)",
+        }}
+      />
+
       <div className="relative flex h-full flex-col justify-between">
-        {/* Top row: brand + balance chip */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--neon)]/15 ring-1 ring-inset ring-[var(--neon)]/40 text-[var(--neon)]">
-              <CsseMark className="h-5 w-5" />
-            </span>
-            <div className="leading-tight">
-              <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--neon)]">CSSEBets</div>
-              <div className="text-[9px] uppercase tracking-[0.18em] text-white/60">Points Wallet</div>
+        {/* Top row: brand wordmark + chip */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[8px] font-bold uppercase tracking-[0.32em] text-[var(--neon)]/90">
+              Member Points
+            </div>
+            <div className="mt-1">
+              <CsseWordmark size={18} />
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-white/60">Balance</div>
-            <div className="font-display text-xl font-bold tabular-nums leading-tight">
-              {balance.toLocaleString(undefined, { maximumFractionDigits: 1 })}
-              <span className="ml-1 text-[10px] font-bold uppercase tracking-widest text-[var(--neon)]">pts</span>
+          {/* EMV-style chip */}
+          <div
+            aria-hidden
+            className="grid h-8 w-11 place-items-center rounded-[6px] shadow-inner shadow-black/40"
+            style={{
+              background:
+                "linear-gradient(135deg, #d4c37a 0%, #f4e6a1 40%, #b8a55d 100%)",
+            }}
+          >
+            <div className="grid h-full w-full grid-cols-3 grid-rows-3 gap-[1px] p-[3px]">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <span key={i} className="rounded-[1px] bg-black/25" />
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Card number */}
-        <div className="font-mono text-[15px] sm:text-lg font-semibold tabular-nums tracking-[0.15em] text-white/95">
+        {/* Card number — embossed */}
+        <div
+          className="font-mono text-[16px] sm:text-[18px] font-bold tabular-nums tracking-[0.14em] text-white"
+          style={{ textShadow: "0 1px 0 rgba(255,255,255,0.25), 0 2px 3px rgba(0,0,0,0.55)" }}
+        >
           {formatCardNumber(number)}
         </div>
 
-        {/* Bottom row: name + valid thru + user id */}
-        <div className="flex items-end justify-between gap-3">
-          <div className="min-w-0">
-            <div className="text-[8px] font-bold uppercase tracking-[0.22em] text-white/50">Cardholder</div>
-            <div className="truncate text-sm font-semibold uppercase tracking-wider">
-              {displayName || "Player"}
+        {/* Member since / Valid thru row */}
+        <div className="flex items-end justify-between gap-3 text-white">
+          <div className="flex gap-5">
+            <div>
+              <div className="text-[7px] font-bold uppercase tracking-[0.3em] text-white/60">Member Since</div>
+              <div className="font-mono text-[11px] font-semibold tabular-nums leading-tight">{memberSince}</div>
             </div>
-            <div className="mt-1 text-[9px] uppercase tracking-[0.2em] text-white/40 font-mono">
-              ID {(userId ?? "").slice(0, 8).toUpperCase()}
+            <div>
+              <div className="text-[7px] font-bold uppercase tracking-[0.3em] text-white/60">Valid Thru</div>
+              <div className="font-mono text-[11px] font-semibold tabular-nums leading-tight">{validThru}</div>
             </div>
           </div>
           <div className="text-right">
-            <div className="text-[8px] font-bold uppercase tracking-[0.22em] text-white/50">Valid thru</div>
-            <div className="font-mono text-sm font-semibold tabular-nums">{validThru}</div>
+            <div className="text-[7px] font-bold uppercase tracking-[0.3em] text-white/60">Balance</div>
+            <div className="font-display text-base font-bold tabular-nums leading-tight text-[var(--neon)]">
+              {balance.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+              <span className="ml-1 text-[8px] font-bold uppercase tracking-widest text-white/70">pts</span>
+            </div>
           </div>
         </div>
+
+        {/* Cardholder + Member ID */}
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div
+              className="truncate text-sm font-bold uppercase tracking-[0.16em]"
+              style={{ textShadow: "0 1px 0 rgba(255,255,255,0.2), 0 2px 3px rgba(0,0,0,0.55)" }}
+            >
+              {cardholder}
+            </div>
+            <div className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.3em] text-white/50">Cardholder</div>
+          </div>
+          <div className="text-right">
+            <div className="font-mono text-[11px] font-semibold tabular-nums text-white/90">{memberRef}</div>
+            <div className="text-[7px] font-bold uppercase tracking-[0.3em] text-white/50">Member ID</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Corner mark accent */}
+      <div className="pointer-events-none absolute -right-4 -bottom-4 opacity-[0.08]">
+        <CsseMark className="h-28 w-28 text-white" />
       </div>
     </div>
   );
@@ -187,10 +248,17 @@ export function WalletCardSheet({ open, onOpenChange }: { open: boolean; onOpenC
   });
 
   const profile = useQuery({
-    queryKey: ["my-profile-name", uid],
+    queryKey: ["my-profile-card", uid],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("display_name").eq("id", uid!).maybeSingle();
-      return (data as any)?.display_name ?? null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, public_reference")
+        .eq("id", uid!)
+        .maybeSingle();
+      return {
+        displayName: (data as any)?.display_name ?? null,
+        reference: (data as any)?.public_reference ?? null,
+      };
     },
     enabled: !!uid && open,
     staleTime: 60_000,
@@ -210,12 +278,9 @@ export function WalletCardSheet({ open, onOpenChange }: { open: boolean; onOpenC
           </div>
 
           <div className="flex items-center justify-between px-5 pt-1">
-            <div className="flex items-center gap-2">
-              <CsseLogo size={20} />
-              <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--neon)]">
-                My wallet
-              </span>
-            </div>
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--neon)]/12 ring-1 ring-inset ring-[var(--neon)]/40 text-[var(--neon)]">
+              <CsseMark className="h-5 w-5" />
+            </span>
             <SheetPrimitive.Close
               aria-label="Close"
               className="grid h-8 w-8 place-items-center rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] text-[var(--ink-muted)] transition-colors hover:border-[var(--neon)]/40 hover:text-[var(--ink)]"
@@ -226,10 +291,11 @@ export function WalletCardSheet({ open, onOpenChange }: { open: boolean; onOpenC
 
           <div className="flex flex-col items-center gap-4 overflow-y-auto px-5 pb-6 pt-4">
             <WalletCreditCard
-              displayName={profile.data ?? (user?.email?.split("@")[0] ?? null)}
+              displayName={profile.data?.displayName ?? (user?.email?.split("@")[0] ?? null)}
               userId={uid}
               createdAt={user?.created_at ?? null}
               balance={wallet.data?.balance ?? 0}
+              reference={profile.data?.reference ?? wallet.data?.publicReference ?? null}
             />
             <WalletActions onNavigate={() => onOpenChange(false)} />
           </div>
