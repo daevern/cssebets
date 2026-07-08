@@ -41,10 +41,17 @@ function WalletPage() {
   });
 
   const profile = useQuery({
-    queryKey: ["my-profile-name", uid],
+    queryKey: ["my-profile-card", uid],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("display_name").eq("id", uid!).maybeSingle();
-      return (data as any)?.display_name ?? null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, public_reference")
+        .eq("id", uid!)
+        .maybeSingle();
+      return {
+        displayName: (data as any)?.display_name ?? null,
+        reference: (data as any)?.public_reference ?? null,
+      };
     },
     enabled: !!uid,
     staleTime: 60_000,
@@ -61,10 +68,11 @@ function WalletPage() {
     <PageShell kicker="Points Wallet" title="Your" titleAccent="Portfolio">
       <div className="flex flex-col items-center gap-5 py-2">
         <WalletCreditCard
-          displayName={profile.data ?? (user?.email?.split("@")[0] ?? null)}
+          displayName={profile.data?.displayName ?? (user?.email?.split("@")[0] ?? null)}
           userId={uid}
           createdAt={user?.created_at ?? null}
           balance={wallet.data?.balance ?? 0}
+          reference={profile.data?.reference ?? wallet.data?.publicReference ?? null}
         />
         <WalletActions />
       </div>
