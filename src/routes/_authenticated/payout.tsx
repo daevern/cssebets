@@ -3,12 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   getMyPayouts,
-  createPayoutRequest,
+  getMySavedBankAccounts,
+  addSavedBankAccount,
+  deleteSavedBankAccount,
   userConfirmPayoutProof,
   userRejectPayoutProof,
   getPayoutProofSignedUrl,
 } from "@/lib/payout.functions";
-import { getMyWallet } from "@/lib/wallet.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -18,15 +19,16 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
-import { Banknote, Loader2, Clock, Eye, CheckCircle2, XCircle, ArrowUpRight, History } from "lucide-react";
+import {
+  Banknote, Loader2, Clock, Eye, CheckCircle2, XCircle, History, Plus, Trash2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 
-
 export const Route = createFileRoute("/_authenticated/payout")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Payout — cssebets" }] }),
+  head: () => ({ meta: [{ title: "Bank Accounts — cssebets" }] }),
   component: PayoutPage,
 });
 
@@ -36,17 +38,17 @@ function PayoutPage() {
   const qc = useQueryClient();
 
   const payFn = useServerFn(getMyPayouts);
-  const wFn = useServerFn(getMyWallet);
-  const createFn = useServerFn(createPayoutRequest);
+  const banksFn = useServerFn(getMySavedBankAccounts);
+  const addFn = useServerFn(addSavedBankAccount);
+  const delFn = useServerFn(deleteSavedBankAccount);
   const confirmFn = useServerFn(userConfirmPayoutProof);
   const rejectFn = useServerFn(userRejectPayoutProof);
   const proofFn = useServerFn(getPayoutProofSignedUrl);
 
-  const wallet = useQuery({
-    queryKey: ["my-wallet", uid],
-    queryFn: () => wFn({}),
+  const banks = useQuery({
+    queryKey: ["my-saved-banks", uid],
+    queryFn: () => banksFn({}),
     enabled: !!uid,
-    refetchOnMount: "always",
     staleTime: 0,
   });
   const payouts = useQuery({
@@ -69,25 +71,39 @@ function PayoutPage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc, uid]);
 
+  const [addOpen, setAddOpen] = useState(false);
   const [bankName, setBankName] = useState("");
   const [accNo, setAccNo] = useState("");
-  const [amount, setAmount] = useState("");
+  const [holder, setHolder] = useState("");
   const [proof, setProof] = useState<{ url: string; type: string; name: string } | null>(null);
   const [decision, setDecision] = useState<null | "approve" | "reject">(null);
   const [rejectReason, setRejectReason] = useState("");
 
   const active = payouts.data?.active ?? null;
-  const balance = wallet.data?.balance ?? 0;
 
-  const create = useMutation({
+  const addAcc = useMutation({
     mutationFn: () =>
-      createFn({
-        data: { bankName: bankName.trim(), bankAccountNumber: accNo.trim(), amount: Number(amount) },
+      addFn({
+        data: {
+          bankName: bankName.trim(),
+          accountNumber: accNo.trim(),
+          accountHolderName: holder.trim() || undefined,
+        },
       }),
     onSuccess: () => {
-      toast.success("Payout request submitted.");
-      setBankName(""); setAccNo(""); setAmount("");
-      qc.invalidateQueries({ queryKey: ["my-payouts", uid] });
+      toast.success("Bank account saved.");
+      setAddOpen(false);
+      setBankName(""); setAccNo(""); setHolder("");
+      qc.invalidateQueries({ queryKey: ["my-saved-banks", uid] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const removeAcc = useMutation({
+    mutationFn: (id: string) => delFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Bank account removed.");
+      qc.invalidateQueries({ queryKey: ["my-saved-banks", uid] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -120,33 +136,13 @@ function PayoutPage() {
     } catch (e) { toast.error((e as Error).message); }
   }
 
-  const amt = Number(amount);
-  const amountValid = amt >= 50;
-  const canRequest =
-    !active &&
-    bankName.trim().length >= 2 &&
-    accNo.trim().length >= 4 &&
-    amountValid &&
-    amt <= balance;
+  const canAdd = bankName.trim().length >= 2 && accNo.trim().length >= 4 && !addAcc.isPending;
+  const accounts = banks.data?.accounts ?? [];
 
   return (
-    <PageShell kicker="Cashout · Final whistle" title="Take the" titleAccent="payout.">
+    <PageShell kicker="Payout · Bank details" title="Manage your" titleAccent="bank accounts.">
 
-      {/* Balance */}
-      <StencilPanel
-        kicker={<><Banknote className="h-3 w-3" /> Available balance</>}
-        meta="LIVE"
-        accent
-      >
-        <div className="flex items-baseline gap-2">
-          <span className="font-display text-5xl font-bold tabular-nums">
-            {wallet.isLoading ? "…" : balance.toLocaleString()}
-          </span>
-          <span className="text-xs font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">pts</span>
-        </div>
-      </StencilPanel>
-
-      {/* Active banners */}
+      {/* Active banners (proof review still lives here) */}
       {active && active.status === "approved" && (
         <StencilPanel kicker={<><Clock className="h-3 w-3" /> Cashout in progress</>}>
           <div className="font-display text-lg font-bold">Pending cashout to bank</div>
@@ -160,11 +156,10 @@ function PayoutPage() {
         <StencilPanel kicker={<><Clock className="h-3 w-3" /> Awaiting admin</>}>
           <div className="font-display text-lg font-bold">Payout request pending</div>
           <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
-            An admin will review your request shortly. New payout requests are disabled until this one is resolved.
+            An admin will review your request shortly.
           </p>
         </StencilPanel>
       )}
-
       {active && active.status === "proof_uploaded" && (
         <StencilPanel kicker={<><Eye className="h-3 w-3" /> Action required · Review proof</>} accent>
           <div className="font-display text-lg font-bold">Proof of payment uploaded</div>
@@ -189,40 +184,54 @@ function PayoutPage() {
         </StencilPanel>
       )}
 
-      {/* Request form */}
-      <StencilPanel kicker={<><Banknote className="h-3 w-3" /> Request a cashout</>}>
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Bank name</label>
-          <Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. Maybank" disabled={!!active} className="bg-[#070D0A] border-[var(--color-surface-border)]" />
+      {/* Saved bank accounts */}
+      <StencilPanel kicker={<><Banknote className="h-3 w-3" /> Saved bank accounts</>}>
+        <p className="text-sm text-[var(--color-ink-muted)]">
+          Add the bank accounts you want to cash out to. Saved accounts will appear in the Cash Out popup on your wallet.
+        </p>
+
+        <div className="mt-4 space-y-2">
+          {banks.isLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin text-[var(--color-ink-muted)]" />
+          ) : accounts.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-6 text-center text-sm text-[var(--color-ink-muted)]">
+              No bank accounts saved yet.
+            </div>
+          ) : (
+            accounts.map((a) => (
+              <div
+                key={a.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2.5"
+              >
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-[var(--color-ink)]">{a.bankName}</div>
+                  <div className="text-[11px] text-[var(--color-ink-muted)]">
+                    Acc {a.accountNumber}{a.accountHolderName ? ` · ${a.accountHolderName}` : ""}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (confirm.isPending) return;
+                    if (window.confirm(`Remove ${a.masked}?`)) removeAcc.mutate(a.id);
+                  }}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))
+          )}
         </div>
-        <div className="mt-3 space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Bank account number</label>
-          <Input value={accNo} onChange={(e) => setAccNo(e.target.value)} placeholder="Account number" disabled={!!active} className="bg-[#070D0A] border-[var(--color-surface-border)]" />
-        </div>
-        <div className="mt-3 space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Points to withdraw</label>
-          <Input type="number" min={50} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" disabled={!!active} className="bg-[#070D0A] border-[var(--color-surface-border)]" />
-          {amount !== "" && amt < 50 && <p className="text-xs text-destructive">Minimum payout amount is 50 pts.</p>}
-          {amt > balance && <p className="text-xs text-destructive">Amount exceeds your balance.</p>}
-        </div>
+
         <button
           type="button"
-          disabled={!canRequest || create.isPending}
-          onClick={() => create.mutate()}
-          className="group mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-neon)] px-5 py-3.5 text-xs font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
+          onClick={() => setAddOpen(true)}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-neon)] px-5 py-3 text-xs font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_20px_var(--color-neon-glow)] hover:brightness-110"
         >
-          {create.isPending ? "Submitting…" : (
-            <>
-              <span>Request payout</span>
-              <ArrowUpRight className="h-4 w-4" />
-            </>
-          )}
+          <Plus className="h-4 w-4" /> Add bank account
         </button>
-        {active && (
-          <p className="mt-2 text-[11px] text-[var(--color-ink-muted)]">
-            You have an active payout request. New requests are disabled until it's resolved.
-          </p>
-        )}
       </StencilPanel>
 
       {/* History */}
@@ -236,7 +245,10 @@ function PayoutPage() {
             {payouts.data.payouts.map((p: any) => (
               <div key={p.id} className="flex items-start justify-between gap-3 border border-[var(--color-surface-border)] bg-[#070D0A] p-3 text-sm">
                 <div className="min-w-0">
-                  <div className="font-bold tabular-nums">{Number(p.amount).toLocaleString()} <span className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)]">pts</span> → {p.bank_name}</div>
+                  <div className="font-bold tabular-nums">
+                    {Number(p.amount).toLocaleString()}{" "}
+                    <span className="text-[10px] uppercase tracking-widest text-[var(--color-ink-muted)]">pts</span> → {p.bank_name}
+                  </div>
                   <div className="text-[11px] text-[var(--color-ink-muted)]">
                     Acc {p.bank_account_number} · {new Date(p.created_at).toLocaleString()}
                   </div>
@@ -258,6 +270,45 @@ function PayoutPage() {
           </div>
         )}
       </StencilPanel>
+
+      {/* Add bank dialog */}
+      <Dialog open={addOpen} onOpenChange={(o) => !o && setAddOpen(false)}>
+        <DialogContent className="max-w-sm bg-[var(--surface-1,#0B1512)] border-[var(--color-surface-border)]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Banknote className="h-5 w-5 text-[var(--color-neon)]" />
+              Add bank account
+            </DialogTitle>
+            <DialogDescription>
+              Saved accounts appear in the Cash Out popup so you can withdraw quickly.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Bank name</label>
+              <Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. Maybank" className="bg-[#070D0A] border-[var(--color-surface-border)]" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Account number</label>
+              <Input value={accNo} onChange={(e) => setAccNo(e.target.value)} placeholder="Account number" className="bg-[#070D0A] border-[var(--color-surface-border)]" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Account holder name (optional)</label>
+              <Input value={holder} onChange={(e) => setHolder(e.target.value)} placeholder="Name on the account" className="bg-[#070D0A] border-[var(--color-surface-border)]" />
+            </div>
+          </div>
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button variant="outline" onClick={() => setAddOpen(false)} disabled={addAcc.isPending}>Cancel</Button>
+            <Button
+              onClick={() => addAcc.mutate()}
+              disabled={!canAdd}
+              className="bg-[var(--color-neon)] text-black hover:brightness-110 disabled:opacity-40"
+            >
+              {addAcc.isPending ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving…</>) : "Save account"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Proof viewer */}
       <Dialog open={!!proof && !decision} onOpenChange={(o) => !o && setProof(null)}>

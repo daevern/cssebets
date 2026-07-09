@@ -2120,6 +2120,36 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_bank_accounts: {
+        Row: {
+          account_holder_name: string | null
+          account_number: string
+          bank_name: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_holder_name?: string | null
+          account_number: string
+          bank_name: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_holder_name?: string | null
+          account_number?: string
+          bank_name?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       support_audit_logs: {
         Row: {
           action_type: string
