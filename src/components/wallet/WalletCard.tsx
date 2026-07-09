@@ -9,6 +9,7 @@ import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyWallet } from "@/lib/wallet.functions";
+import { CashoutSheet } from "@/components/wallet/CashoutSheet";
 
 /* ---------------- helpers ---------------- */
 
@@ -287,6 +288,7 @@ export function WalletCreditCard({
 /* ---------------- Actions ---------------- */
 
 export function WalletActions({ onNavigate }: { onNavigate?: () => void }) {
+  const [cashoutOpen, setCashoutOpen] = useState(false);
   return (
     <div className="w-full max-w-sm space-y-2">
       <div className="grid grid-cols-2 gap-2">
@@ -298,14 +300,14 @@ export function WalletActions({ onNavigate }: { onNavigate?: () => void }) {
           <ArrowDownToLine className="h-4 w-4" />
           Top-up
         </Link>
-        <Link
-          to="/payout"
-          onClick={onNavigate}
+        <button
+          type="button"
+          onClick={() => setCashoutOpen(true)}
           className="group flex items-center justify-center gap-2 rounded-xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] px-4 py-3 text-xs font-bold uppercase tracking-[0.18em] text-[var(--ink)] transition-all hover:border-[var(--neon)]/40 active:scale-[0.98]"
         >
           <ArrowUpFromLine className="h-4 w-4" />
           Cashout
-        </Link>
+        </button>
       </div>
       <Link
         to="/wallet/transaction-list"
@@ -315,6 +317,11 @@ export function WalletActions({ onNavigate }: { onNavigate?: () => void }) {
         <ListOrdered className="h-4 w-4" />
         Transaction list
       </Link>
+      <CashoutSheet
+        open={cashoutOpen}
+        onOpenChange={setCashoutOpen}
+        onNavigateAway={onNavigate}
+      />
     </div>
   );
 }
