@@ -156,55 +156,49 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     const empty = { chartData: [] as ChartRow[], filteredSeries: [] as MarketSeries[], latestByKey: new Map<string, number>() };
     if (!data) return empty;
 
-    let result: { chartData: ChartRow[]; filteredSeries: MarketSeries[]; latestByKey: Map<string, number> };
+    // Unified time-series build for every range — LIVE just uses a 90s window.
+    // Real snapshots come from match_odds_snapshots (written by the live-odds
+    // cron every ~15s during in-play matches). No synthetic points.
+    const windowMs = RANGE_MS[range];
+    const cutoff = windowMs == null ? 0 : now - windowMs;
 
-    if (range === "LIVE") {
-      const chart = isFinished ? [] : buildLiveTape(data.series, now);
-      const last = chart.at(-1) ?? {};
-      const latest = new Map<string, number>();
-      for (const s of data.series) {
-        const v = last[s.key];
-        if (typeof v === "number") latest.set(s.key, v);
-      }
-      result = { chartData: chart, filteredSeries: data.series, latestByKey: latest };
-    } else {
-      const windowMs = RANGE_MS[range];
-      const cutoff = windowMs == null ? 0 : now - windowMs;
+    const filtered: MarketSeries[] = data.series.map((s) => {
+      if (windowMs == null) return { ...s, points: s.points };
+      const inWin = s.points.filter((p) => pointTime(p) >= cutoff);
+      if (inWin.length && s.points[0] && pointTime(inWin[0]) === pointTime(s.points[0])) return { ...s, points: inWin };
+      const beforeIdx = s.points.findIndex((p) => pointTime(p) >= cutoff);
+      const lastBefore = beforeIdx > 0 ? s.points[beforeIdx - 1] : beforeIdx === -1 ? s.points.at(-1) : undefined;
+      const anchor = lastBefore ? [{ ...lastBefore, t: new Date(cutoff).toISOString() }] : [];
+      return { ...s, points: [...anchor, ...inWin] };
+    });
 
-      const filtered: MarketSeries[] = data.series.map((s) => {
-        if (windowMs == null) return { ...s, points: s.points };
-        const inWin = s.points.filter((p) => pointTime(p) >= cutoff);
-        if (inWin.length && s.points[0] && pointTime(inWin[0]) === pointTime(s.points[0])) return { ...s, points: inWin };
-        const beforeIdx = s.points.findIndex((p) => pointTime(p) >= cutoff);
-        const lastBefore = beforeIdx > 0 ? s.points[beforeIdx - 1] : beforeIdx === -1 ? s.points.at(-1) : undefined;
-        const anchor = lastBefore ? [{ ...lastBefore, t: new Date(cutoff).toISOString() }] : [];
-        return { ...s, points: [...anchor, ...inWin] };
-      });
-
-      const lastValueBy = new Map<string, number>();
-      for (const s of data.series) {
-        const last = s.points.at(-1);
-        if (last) lastValueBy.set(s.key, pctFromPoint(last));
-      }
-
-      const byTime = new Map<number, ChartRow>();
-      for (const s of filtered) {
-        for (const p of s.points) {
-          const key = pointTime(p);
-          const row = byTime.get(key) ?? { t: new Date(key).toISOString() };
-          row[s.key] = pctFromPoint(p);
-          byTime.set(key, row);
-        }
-      }
-      if (!isFinished && lastValueBy.size > 0 && (windowMs == null || windowMs > 0)) {
-        const tick: ChartRow = { t: new Date(now).toISOString() };
-        for (const [k, v] of lastValueBy) tick[k] = v;
-        byTime.set(now, tick);
-      }
-
-      const chart = [...byTime.entries()].sort((a, b) => a[0] - b[0]).map(([, r]) => r);
-      result = { chartData: chart, filteredSeries: filtered, latestByKey: lastValueBy };
+    const lastValueBy = new Map<string, number>();
+    for (const s of data.series) {
+      const last = s.points.at(-1);
+      if (last) lastValueBy.set(s.key, pctFromPoint(last));
     }
+
+    const byTime = new Map<number, ChartRow>();
+    for (const s of filtered) {
+      for (const p of s.points) {
+        const key = pointTime(p);
+        const row = byTime.get(key) ?? { t: new Date(key).toISOString() };
+        row[s.key] = pctFromPoint(p);
+        byTime.set(key, row);
+      }
+    }
+    if (!isFinished && lastValueBy.size > 0 && (windowMs == null || windowMs > 0)) {
+      const tick: ChartRow = { t: new Date(now).toISOString() };
+      for (const [k, v] of lastValueBy) tick[k] = v;
+      byTime.set(now, tick);
+    }
+
+    const chart = [...byTime.entries()].sort((a, b) => a[0] - b[0]).map(([, r]) => r);
+    let result: { chartData: ChartRow[]; filteredSeries: MarketSeries[]; latestByKey: Map<string, number> } = {
+      chartData: chart,
+      filteredSeries: filtered,
+      latestByKey: lastValueBy,
+    };
 
     // Freeze at match end: force winner=100, others=0 for match_result.
     if (isFinished && winningOutcome && data.market === "match_result" && result.chartData.length > 0) {
@@ -219,6 +213,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
 
     return result;
   }, [data, range, now, isFinished, winningOutcome]);
+
 
   const yDomain = useMemo<[number, number]>(() => {
     const vals: number[] = [];
