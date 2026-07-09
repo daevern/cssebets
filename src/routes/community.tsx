@@ -20,30 +20,31 @@ export const Route = createFileRoute("/community")({
 
 function CommunityPage() {
   return (
-    <>
-      <PublicShell title="Community" kicker="Play with friends">
-        <p>
-          <BrandText /> is built around friends playing together. Every player gets a
-          referral link — invite friends, share picks, and climb the leaderboards.
-        </p>
-        <h3>Leagues</h3>
-        <p>
-          Create a private league with your friends or join a public one. Leagues track
-          weekly points, streaks, and best picks so bragging rights are always on the line.
-        </p>
-        <h3>Referrals</h3>
-        <p>
-          When someone joins with your link and starts playing, both of you earn bonus
-          points. The more active your referrals, the bigger your rewards.
-        </p>
-        <h3>Support</h3>
-        <p>
-          Every ticket is answered by a real person, usually within a few hours. Reach the
-          team any time from the Help page inside the app.
-        </p>
-      </PublicShell>
-      <CommunityGrowthSection />
-      <RecentPlatformActivity />
-    </>
+    <PublicShell title="Community" kicker="Play with friends">
+      <p>
+        <BrandText /> is built around friends playing together. Every player gets a
+        referral link — invite friends, share picks, and climb the leaderboards.
+      </p>
+      <h3>Leagues</h3>
+      <p>
+        Create a private league with your friends or join a public one. Leagues track
+        weekly points, streaks, and best picks so bragging rights are always on the line.
+      </p>
+      <h3>Referrals</h3>
+      <p>
+        When someone joins with your link and starts playing, both of you earn bonus
+        points. The more active your referrals, the bigger your rewards.
+      </p>
+      <h3>Support</h3>
+      <p>
+        Every ticket is answered by a real person, usually within a few hours. Reach the
+        team any time from the Help page inside the app.
+      </p>
+      <div className="not-prose -mx-4 mt-8">
+        <CommunityGrowthSection />
+        <RecentPlatformActivity />
+      </div>
+    </PublicShell>
   );
 }
+
