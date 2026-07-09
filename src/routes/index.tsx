@@ -7,12 +7,6 @@ import { teamFlagUrl } from "@/lib/country-flags";
 import { getLandingData, type LandingNextMatch } from "@/lib/landing.functions";
 import { recordHomeView } from "@/lib/trust-public.functions";
 import { MatchAnalyticsScreen } from "@/routes/_authenticated/matches.$matchId";
-import {
-  CommunityGrowthSection,
-  RecentPlatformActivity,
-  PayoutPerformanceSection,
-  BuildingLongRun,
-} from "@/components/landing/TrustSections";
 
 const FALLBACK_MATCH_ID = "daeb90a9-359a-4aef-bf40-fdc969672448";
 
