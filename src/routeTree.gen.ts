@@ -86,6 +86,7 @@ import { Route as AuthenticatedFreeBetsPlaceRouteImport } from './routes/_authen
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/public/hooks/sync-fixtures'
 import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
+import { Route as ApiPublicHooksOddsLiveRouteImport } from './routes/api/public/hooks/odds-live'
 import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
 import { Route as ApiPublicHooksApifootballSyncRouteImport } from './routes/api/public/hooks/apifootball-sync'
 import { Route as ApiPublicHooksApifootballPrematchRouteImport } from './routes/api/public/hooks/apifootball-prematch'
@@ -511,6 +512,11 @@ const ApiPublicHooksReconciliationRoute =
     path: '/api/public/hooks/reconciliation',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksOddsLiveRoute = ApiPublicHooksOddsLiveRouteImport.update({
+  id: '/api/public/hooks/odds-live',
+  path: '/api/public/hooks/odds-live',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksHealthCheckRoute =
   ApiPublicHooksHealthCheckRouteImport.update({
     id: '/api/public/hooks/health-check',
@@ -628,6 +634,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
+  '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -710,6 +717,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
+  '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -796,6 +804,7 @@ export interface FileRoutesById {
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
+  '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -882,6 +891,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/health-check'
+    | '/api/public/hooks/odds-live'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
     | '/lovable/email/queue/process'
@@ -964,6 +974,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/health-check'
+    | '/api/public/hooks/odds-live'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
     | '/lovable/email/queue/process'
@@ -1049,6 +1060,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/health-check'
+    | '/api/public/hooks/odds-live'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
     | '/lovable/email/queue/process'
@@ -1071,6 +1083,7 @@ export interface RootRouteChildren {
   ApiPublicHooksApifootballPrematchRoute: typeof ApiPublicHooksApifootballPrematchRoute
   ApiPublicHooksApifootballSyncRoute: typeof ApiPublicHooksApifootballSyncRoute
   ApiPublicHooksHealthCheckRoute: typeof ApiPublicHooksHealthCheckRoute
+  ApiPublicHooksOddsLiveRoute: typeof ApiPublicHooksOddsLiveRoute
   ApiPublicHooksReconciliationRoute: typeof ApiPublicHooksReconciliationRoute
   ApiPublicHooksSyncFixturesRoute: typeof ApiPublicHooksSyncFixturesRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -1617,6 +1630,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksReconciliationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/odds-live': {
+      id: '/api/public/hooks/odds-live'
+      path: '/api/public/hooks/odds-live'
+      fullPath: '/api/public/hooks/odds-live'
+      preLoaderRoute: typeof ApiPublicHooksOddsLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/health-check': {
       id: '/api/public/hooks/health-check'
       path: '/api/public/hooks/health-check'
@@ -1857,6 +1877,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksApifootballPrematchRoute,
   ApiPublicHooksApifootballSyncRoute: ApiPublicHooksApifootballSyncRoute,
   ApiPublicHooksHealthCheckRoute: ApiPublicHooksHealthCheckRoute,
+  ApiPublicHooksOddsLiveRoute: ApiPublicHooksOddsLiveRoute,
   ApiPublicHooksReconciliationRoute: ApiPublicHooksReconciliationRoute,
   ApiPublicHooksSyncFixturesRoute: ApiPublicHooksSyncFixturesRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
@@ -1864,13 +1885,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
