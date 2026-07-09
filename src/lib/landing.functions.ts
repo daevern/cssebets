@@ -27,15 +27,17 @@ export const getLandingData = createServerFn({ method: "GET" }).handler(
     const [scheduledRes, liveRes, profilesRes, activeRes, settledRes, paidRes] = await Promise.all([
       supabaseAdmin
         .from("matches")
-        .select("id, home_team, away_team, kickoff_at, reference_odds, status")
+        .select("id, home_team, away_team, kickoff_at, reference_odds, status, stage")
         .gte("kickoff_at", nowIso)
         .in("status", ["scheduled"])
+        .ilike("stage", "%World Cup%")
         .order("kickoff_at", { ascending: true })
         .limit(16),
       supabaseAdmin
         .from("matches")
-        .select("id, home_team, away_team, kickoff_at, reference_odds, status")
+        .select("id, home_team, away_team, kickoff_at, reference_odds, status, stage")
         .in("status", ["live"])
+        .ilike("stage", "%World Cup%")
         .gte("kickoff_at", liveWindowIso)
         .order("kickoff_at", { ascending: true }),
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
