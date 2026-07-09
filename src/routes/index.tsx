@@ -253,12 +253,6 @@ function LandingPage() {
           <MatchAnalyticsScreen key={analyticsMatchId} matchId={analyticsMatchId} publicMode />
         </section>
 
-        <div className="mt-8 -mx-4">
-          <CommunityGrowthSection />
-          <RecentPlatformActivity />
-          <PayoutPerformanceSection />
-          <BuildingLongRun />
-        </div>
 
         <footer className="mt-10 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
           <Link to="/" className="flex items-center gap-2 hover:text-[var(--ink)]">
