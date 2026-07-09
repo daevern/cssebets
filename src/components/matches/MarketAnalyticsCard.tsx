@@ -84,61 +84,8 @@ function useNowTick(intervalMs = 1000): number {
 function pctFromPoint(p: { odds: number; prob: number }): number {
   return Math.round(p.prob * 100);
 }
-function pctFromPointFine(p: { odds: number; prob: number }): number {
-  return Math.round(p.prob * 1000) / 10;
-}
 function pointTime(p: { t: string }): number { return new Date(p.t).getTime(); }
-function clamp(v: number, min: number, max: number) { return Math.min(max, Math.max(min, v)); }
 
-function hashString(s: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
-  return Math.abs(h);
-}
-function marketPulse(key: string, ts: number, amp: number): number {
-  const seed = hashString(key) % 997;
-  const sec = Math.floor(ts / 1000);
-  const wave = Math.sin(sec / 5.5 + seed) * 0.55 + Math.sin(sec / 13 + seed * 0.37) * 0.3;
-  const step = (((hashString(`${key}-${Math.floor(sec / 4)}`) % 1000) / 1000) - 0.5) * 0.6;
-  return (wave + step) * amp;
-}
-function marketDrift(points: { t: string; odds: number; prob: number }[]): number {
-  const last = points.at(-1); const prev = points.at(-2);
-  if (!last || !prev) return 0;
-  const dt = Math.max(60, (pointTime(last) - pointTime(prev)) / 1000);
-  const delta = pctFromPointFine(last) - pctFromPointFine(prev);
-  return clamp(delta / dt, -0.035, 0.035);
-}
-
-function buildLiveTape(series: MarketSeries[], now: number): ChartRow[] {
-  const active = series.filter((s) => s.points.length > 0);
-  if (!active.length) return [];
-  const rows: ChartRow[] = [];
-  const alignedNow = Math.floor(now / 1000) * 1000;
-  const latest = active.map((s) => ({
-    key: s.key,
-    base: pctFromPointFine(s.points.at(-1)!),
-    drift: marketDrift(s.points),
-  }));
-  for (let i = LIVE_WINDOW_SECONDS; i >= 0; i -= 1) {
-    const ts = alignedNow - i * 1000;
-    const secondsFromNow = -i;
-    const row: ChartRow = { t: new Date(ts).toISOString() };
-    const values = latest.map((it) => {
-      const amp = clamp(Math.min(it.base, 100 - it.base) * 0.075, 0.18, 1.8);
-      const v = it.base + it.drift * secondsFromNow + marketPulse(it.key, ts, amp);
-      return { key: it.key, value: clamp(v, 0.2, 99.8) };
-    });
-    if (values.length > 1) {
-      const total = values.reduce((s, x) => s + x.value, 0);
-      for (const v of values) row[v.key] = Math.round((total > 0 ? (v.value / total) * 100 : v.value));
-    } else {
-      for (const v of values) row[v.key] = Math.round(v.value);
-    }
-    rows.push(row);
-  }
-  return rows;
-}
 
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
