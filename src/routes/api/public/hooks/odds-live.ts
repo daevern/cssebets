@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/public/hooks/odds-live")({
         try {
           const { runLiveOddsSync } = await import("@/lib/odds-live.server");
           const result = await runLiveOddsSync();
-          return new Response(JSON.stringify({ ok: true, ...result }), {
+          return new Response(JSON.stringify(result), {
             headers: { "content-type": "application/json" },
           });
         } catch (e) {
