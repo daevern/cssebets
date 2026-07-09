@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PublicShell } from "@/routes/about";
 import { BrandText } from "@/components/brand/CsseMark";
+import { RecentPlatformActivity } from "@/components/landing/TrustSections";
 
 export const Route = createFileRoute("/faq")({
   head: () => ({
