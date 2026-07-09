@@ -9,6 +9,7 @@ import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyWallet } from "@/lib/wallet.functions";
+import { CashoutSheet } from "@/components/wallet/CashoutSheet";
 
 /* ---------------- helpers ---------------- */
 
