@@ -11,6 +11,37 @@ async function isAdmin(supabase: any, userId: string) {
 
 // ---------------- USER ----------------
 
+export const getMySavedBankAccounts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("payout_requests")
+      .select("bank_name, bank_account_number, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    const seen = new Set<string>();
+    const accounts: Array<{ id: string; bankName: string; accountNumber: string; masked: string }> = [];
+    for (const r of data ?? []) {
+      const bank = (r as any).bank_name?.trim();
+      const num = (r as any).bank_account_number?.trim();
+      if (!bank || !num) continue;
+      const key = `${bank}::${num}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const last4 = num.slice(-4);
+      accounts.push({
+        id: key,
+        bankName: bank,
+        accountNumber: num,
+        masked: `${bank} ****${last4}`,
+      });
+    }
+    return { accounts };
+  });
+
 export const getMyPayouts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
