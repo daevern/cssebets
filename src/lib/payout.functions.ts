@@ -16,31 +16,69 @@ export const getMySavedBankAccounts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const { data, error } = await supabase
-      .from("payout_requests")
-      .select("bank_name, bank_account_number, created_at")
+      .from("saved_bank_accounts" as any)
+      .select("id, bank_name, account_number, account_holder_name, created_at")
       .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(50);
+      .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    const seen = new Set<string>();
-    const accounts: Array<{ id: string; bankName: string; accountNumber: string; masked: string }> = [];
-    for (const r of data ?? []) {
-      const bank = (r as any).bank_name?.trim();
-      const num = (r as any).bank_account_number?.trim();
-      if (!bank || !num) continue;
-      const key = `${bank}::${num}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
+    const accounts = (data ?? []).map((r: any) => {
+      const num = String(r.account_number ?? "");
       const last4 = num.slice(-4);
-      accounts.push({
-        id: key,
-        bankName: bank,
+      return {
+        id: r.id as string,
+        bankName: r.bank_name as string,
         accountNumber: num,
-        masked: `${bank} ****${last4}`,
-      });
-    }
+        accountHolderName: (r.account_holder_name ?? null) as string | null,
+        masked: `${r.bank_name} ****${last4}`,
+      };
+    });
     return { accounts };
   });
+
+export const addSavedBankAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      bankName: z.string().trim().min(2).max(100),
+      accountNumber: z.string().trim().min(4).max(40),
+      accountHolderName: z.string().trim().max(120).optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: row, error } = await supabase
+      .from("saved_bank_accounts" as any)
+      .insert({
+        user_id: userId,
+        bank_name: data.bankName,
+        account_number: data.accountNumber,
+        account_holder_name: data.accountHolderName ?? null,
+      })
+      .select("id")
+      .single();
+    if (error) {
+      if ((error as any).code === "23505") {
+        throw new Error("You've already saved that bank account.");
+      }
+      throw new Error(error.message);
+    }
+    return { id: (row as any).id as string };
+  });
+
+export const deleteSavedBankAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("saved_bank_accounts" as any)
+      .delete()
+      .eq("id", data.id)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 
 export const getMyPayouts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
