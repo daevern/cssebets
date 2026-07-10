@@ -34,7 +34,7 @@ export function StencilDialogContent({
     <DialogContent
       onEscapeKeyDown={onEscapeKeyDown}
       onPointerDownOutside={onPointerDownOutside}
-      className={`${max} next-fixture-corner gap-0 overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-0 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.85)] data-[state=open]:animate-scale-in`}
+      className={`${max} next-fixture-corner grid max-h-[92dvh] grid-rows-[auto_1fr_auto] gap-0 overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-0 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.85)] data-[state=open]:animate-scale-in`}
     >
       {/* hairline neon top edge */}
       <div
@@ -53,7 +53,7 @@ export function StencilDialogContent({
         }}
       />
 
-      <DialogHeader className="relative space-y-2 px-6 pt-7 pb-2 text-left">
+      <DialogHeader className="relative shrink-0 space-y-2 px-5 pt-5 pb-2 text-left sm:px-6 sm:pt-6">
         {kicker !== undefined ? (
           <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--color-neon)]/90">
             <span className="inline-block h-1 w-1 rounded-full bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon-glow)]" />
@@ -70,10 +70,14 @@ export function StencilDialogContent({
         )}
       </DialogHeader>
 
-      {children && <div className="relative px-6 pt-4 pb-2">{children}</div>}
+      {children && (
+        <div className="relative min-h-0 overflow-y-auto px-5 pt-4 pb-2 sm:px-6">
+          {children}
+        </div>
+      )}
 
       {footer && (
-        <div className="relative flex flex-col-reverse gap-2 border-t border-[var(--color-surface-border)]/70 bg-[var(--color-surface)]/40 px-6 py-4 sm:flex-row sm:justify-end">
+        <div className="relative shrink-0 flex flex-col-reverse gap-2 border-t border-[var(--color-surface-border)]/70 bg-[var(--color-surface)]/40 px-5 py-3 sm:flex-row sm:justify-end sm:px-6 sm:py-4">
           {footer}
         </div>
       )}
