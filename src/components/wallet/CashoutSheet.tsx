@@ -183,7 +183,8 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <StencilDialogContent
-          title="Cashout submitted"
+          kicker="Cashout · Submitted"
+          title="Request received"
           description={
             selectedAcc
               ? `Sending to ${selectedAcc.bankName} · ${selectedAcc.masked}.`
@@ -192,7 +193,7 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
           footer={
             <>
               <GhostBtn onClick={() => onOpenChange(false)}>Close</GhostBtn>
-              <NeonBtn onClick={goToPayoutPage}>
+              <NeonBtn onClick={() => goToPayoutPage()}>
                 Track status <ArrowRight className="h-3.5 w-3.5" />
               </NeonBtn>
             </>
