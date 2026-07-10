@@ -339,6 +339,13 @@ export const adminApprovePayout = createServerFn({ method: "POST" })
         self_approval_allowed: false,
       },
     });
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "cashout_approved",
+      recipientUserId: pr?.user_id ?? undefined,
+      relatedRecordType: "payout_request",
+      relatedRecordId: data.payoutId,
+    });
     return { ok: true };
   });
 
