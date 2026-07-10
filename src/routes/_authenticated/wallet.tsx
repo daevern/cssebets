@@ -27,10 +27,6 @@ function WalletPage() {
   const wFn = useServerFn(getMyWallet);
   const tFn = useServerFn(listMyTransactions);
   const rFn = useServerFn(listMyRequests);
-  const draftFn = useServerFn(createDraftPointRequest);
-  const attachFn = useServerFn(attachProofToRequest);
-  const submitFn = useServerFn(submitPointRequest);
-  const cancelFn = useServerFn(cancelDraftPointRequest);
   const qc = useQueryClient();
   const { user } = useAuth();
   const uid = user?.id;
