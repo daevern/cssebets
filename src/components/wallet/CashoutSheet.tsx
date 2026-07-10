@@ -257,11 +257,6 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
       <StencilDialogContent
         kicker="Cashout · Withdraw to bank"
         title="Cash out"
-        description={
-          !loading
-            ? `${balance.toLocaleString()} pts available`
-            : undefined
-        }
         footer={
           <>
             <GhostBtn onClick={() => onOpenChange(false)} disabled={submit.isPending}>
