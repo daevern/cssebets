@@ -23,8 +23,8 @@ export function TopBar({
 }) {
   return (
     <header
-      className="sticky top-0 z-30 overflow-hidden border-b border-[var(--color-surface-border)]/60 bg-[var(--surface)]/90 backdrop-blur-xl"
-      style={{ paddingTop: "env(safe-area-inset-top)" }}
+      className="sticky top-0 z-30 overflow-hidden border-b border-[var(--color-surface-border)]/60 bg-[#0b1220]"
+      style={{ paddingTop: "env(safe-area-inset-top)", backgroundColor: "#0b1220" }}
     >
       {/* Mobile layout — unchanged */}
       <MobileBar balance={balance} loading={loading} />
