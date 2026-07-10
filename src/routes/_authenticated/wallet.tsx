@@ -27,6 +27,11 @@ import { WalletCreditCard } from "@/components/wallet/WalletCard";
 export const Route = createFileRoute("/_authenticated/wallet")({
   ssr: false,
   head: () => ({ meta: [{ title: "My Wallet — cssebets" }] }),
+  validateSearch: (s: Record<string, unknown>) => {
+    const raw = s.amount;
+    const n = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : NaN;
+    return { amount: Number.isFinite(n) && n > 0 ? n : undefined };
+  },
   component: WalletPage,
 });
 
