@@ -82,7 +82,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "cssebets — Private World Cup Predictions" },
       { name: "description", content: "cssebets: private World Cup 2026 prediction pool for friends." },
       { property: "og:title", content: "cssebets — Private World Cup Predictions" },
@@ -93,10 +93,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "cssebets: private World Cup 2026 prediction pool for friends." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9c868361-deda-4fd6-ae97-260286bf8f25/id-preview-00ec4b3a--9a7d8431-a21b-4be7-aa5c-77435c44e420.lovable.app-1780916547939.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9c868361-deda-4fd6-ae97-260286bf8f25/id-preview-00ec4b3a--9a7d8431-a21b-4be7-aa5c-77435c44e420.lovable.app-1780916547939.png" },
-      { name: "theme-color", content: "#22e08a" },
+      { name: "theme-color", content: "#0b1220" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
-      { name: "apple-mobile-web-app-title", content: "CSSE" },
+      { name: "apple-mobile-web-app-title", content: "cssebets" },
     ],
     links: [
       {
