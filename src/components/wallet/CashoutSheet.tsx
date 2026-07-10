@@ -166,6 +166,33 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     if (balance) setAmount(String(Math.floor(balance)));
   }
 
+  /* ---------- Active payout in progress ---------- */
+  if (open && !loading && activePayout && !success) {
+    const statusLabel =
+      activePayout.status === "pending"
+        ? "Awaiting admin review"
+        : activePayout.status === "approved"
+          ? "Approved · processing transfer"
+          : "Proof uploaded · action required";
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <StencilDialogContent
+          kicker="Cashout · In progress"
+          title="You have an active payout"
+          description={`${Number(activePayout.amount).toLocaleString()} pts → ${activePayout.bank_name}. ${statusLabel}. You can request another once this one settles.`}
+          footer={
+            <>
+              <GhostBtn onClick={() => onOpenChange(false)}>Close</GhostBtn>
+              <NeonBtn onClick={() => goToPayoutPage()}>
+                Track status <ArrowRight className="h-3.5 w-3.5" />
+              </NeonBtn>
+            </>
+          }
+        />
+      </Dialog>
+    );
+  }
+
   /* ---------- No saved bank ---------- */
   if (open && !loading && !hasBank && !success) {
     return (
