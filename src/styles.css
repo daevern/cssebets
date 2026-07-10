@@ -105,7 +105,7 @@
 @layer base {
   * { border-color: var(--color-border); }
   html {
-    background-color: #0b1220;
+    background-color: var(--surface);
   }
   body {
     background-color: var(--surface);
