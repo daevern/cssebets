@@ -25,6 +25,13 @@ type EventOdds = OddsEvent & {
   }>;
 };
 
+type SavedFight = {
+  id: string;
+  fighter_a: string;
+  fighter_b: string;
+  scheduled_rounds: 3 | 5;
+};
+
 const median = (nums: number[]) => {
   if (!nums.length) return 0;
   const s = [...nums].sort((a, b) => a - b);
@@ -41,6 +48,51 @@ async function apply2WayMargin(a: number, b: number): Promise<{ a: number; b: nu
     a: priced.find((p) => p.team === "a")!.odds,
     b: priced.find((p) => p.team === "b")!.odds,
   };
+}
+
+function normalizeFighterName(name: string) {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+async function saveFight(input: {
+  eventId: string;
+  oddsApiEventId: string;
+  fighterA: string;
+  fighterB: string;
+  commenceTime: string;
+  cardPosition: "main" | "co_main" | "other";
+  scheduledRounds: 3 | 5;
+}): Promise<SavedFight> {
+  const selection = "id, fighter_a, fighter_b, scheduled_rounds";
+  const payload = {
+    event_id: input.eventId,
+    odds_api_event_id: input.oddsApiEventId,
+    fighter_a: input.fighterA,
+    fighter_b: input.fighterB,
+    commence_time: input.commenceTime,
+    card_position: input.cardPosition,
+    scheduled_rounds: input.scheduledRounds,
+  };
+
+  const { data: existing, error: lookupError } = await (supabaseAdmin as any)
+    .from("ufc_fights")
+    .select("id")
+    .eq("odds_api_event_id", input.oddsApiEventId)
+    .maybeSingle();
+  if (lookupError) throw new Error(`fight lookup failed: ${lookupError.message}`);
+
+  const query = existing?.id
+    ? (supabaseAdmin as any).from("ufc_fights").update(payload).eq("id", existing.id)
+    : (supabaseAdmin as any).from("ufc_fights").insert(payload);
+
+  const { data, error } = await query.select(selection).maybeSingle();
+  if (error) throw new Error(`fight save failed: ${error.message}`);
+  if (!data) throw new Error("fight save failed: no row returned");
+  return data as SavedFight;
 }
 
 export type UfcSyncResult = {
@@ -123,25 +175,15 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
     const position = isMain ? "main" : isCoMain ? "co_main" : "other";
     const scheduledRounds = isMain ? 5 : 3;
 
-    // Upsert fight row
-    const { data: fightRow } = await (supabaseAdmin as any)
-      .from("ufc_fights")
-      .upsert(
-        {
-          event_id: event.id,
-          odds_api_event_id: ev.id,
-          fighter_a: ev.home_team,
-          fighter_b: ev.away_team,
-          commence_time: ev.commence_time,
-          card_position: position,
-          scheduled_rounds: scheduledRounds,
-        },
-        { onConflict: "odds_api_event_id" },
-      )
-      .select("id, fighter_a, fighter_b, scheduled_rounds")
-      .maybeSingle();
-
-    if (!fightRow) continue;
+    const fightRow = await saveFight({
+      eventId: event.id,
+      oddsApiEventId: ev.id,
+      fighterA: ev.home_team,
+      fighterB: ev.away_team,
+      commenceTime: ev.commence_time,
+      cardPosition: position,
+      scheduledRounds,
+    });
 
     // Fetch odds. The Odds API for MMA only supports h2h (moneyline);
     // method-of-victory and round-betting are NOT offered by this feed. We
@@ -157,11 +199,9 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
     const h2hA: number[] = [];
     const h2hB: number[] = [];
 
-    const normFighter = (name: string) =>
-      name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
-    const fA = normFighter(fightRow.fighter_a);
-    const fB = normFighter(fightRow.fighter_b);
-    const side = (n: string) => (normFighter(n) === fA ? "a" : normFighter(n) === fB ? "b" : null);
+    const fA = normalizeFighterName(fightRow.fighter_a);
+    const fB = normalizeFighterName(fightRow.fighter_b);
+    const side = (n: string) => (normalizeFighterName(n) === fA ? "a" : normalizeFighterName(n) === fB ? "b" : null);
 
     for (const bm of eventOdds.bookmakers ?? []) {
       for (const mkt of bm.markets ?? []) {
@@ -260,10 +300,12 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
 
 
     if (upserts.length) {
-      await (supabaseAdmin as any)
+      const { error: marketsError } = await (supabaseAdmin as any)
         .from("ufc_fight_markets")
         .upsert(upserts, { onConflict: "fight_id,market_type,selection_key" });
-      await (supabaseAdmin as any).from("ufc_market_snapshots").insert(snapshots);
+      if (marketsError) throw new Error(`market save failed: ${marketsError.message}`);
+      const { error: snapshotsError } = await (supabaseAdmin as any).from("ufc_market_snapshots").insert(snapshots);
+      if (snapshotsError) throw new Error(`snapshot save failed: ${snapshotsError.message}`);
       totalMarkets += upserts.length;
     }
   }
