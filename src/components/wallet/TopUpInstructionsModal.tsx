@@ -109,7 +109,7 @@ function CopyRow({
     <button
       type="button"
       onClick={copy}
-      className="group flex w-full items-center justify-between gap-3 rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2 text-left transition-colors hover:border-[var(--color-ink-muted)]/40"
+      className="group flex w-full items-center justify-between gap-3 rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2 text-left transition-colors hover:border-[var(--color-ink-muted)]/40 sm:py-2.5"
     >
       <div className="min-w-0">
         <div className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
@@ -323,7 +323,7 @@ export function TopUpInstructionsModal({
           </>
         }
         title="Send bank transfer"
-        size="md"
+        size="sm"
         footer={
           <>
             <GhostBtn
@@ -347,14 +347,14 @@ export function TopUpInstructionsModal({
           </>
         }
       >
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           {/* Amount hero */}
           <div className="text-center">
             <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
               Transfer this amount
             </div>
             <div className="mt-1 flex items-baseline justify-center gap-1.5">
-              <span className="font-display text-5xl font-semibold tabular-nums tracking-tight text-[var(--color-ink)]">
+              <span className="font-display text-4xl font-semibold tabular-nums tracking-tight text-[var(--color-ink)] sm:text-5xl">
                 {amount.toLocaleString()}
               </span>
               <span className="text-xs font-medium text-[var(--color-ink-muted)]">
@@ -403,7 +403,7 @@ export function TopUpInstructionsModal({
             </div>
             {!draftId ? (
               <label
-                className={`flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed px-3 py-4 text-[12px] font-medium transition-colors ${
+                className={`flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed px-3 py-3 text-[12px] font-medium transition-colors sm:py-4 ${
                   uploading
                     ? "border-[var(--color-surface-border)] text-[var(--color-ink-muted)]"
                     : "border-[var(--color-surface-border)] text-[var(--color-ink-muted)] hover:border-[var(--color-neon)]/40 hover:text-[var(--color-ink)]"
@@ -429,7 +429,7 @@ export function TopUpInstructionsModal({
                 />
               </label>
             ) : (
-              <div className="flex items-center justify-between gap-2 rounded-md border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/[0.06] px-3 py-2.5">
+              <div className="flex items-center justify-between gap-2 rounded-md border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/[0.06] px-3 py-2">
                 <div className="flex min-w-0 items-center gap-2">
                   <FileCheck className="h-4 w-4 shrink-0 text-[var(--color-neon)]" />
                   <span className="truncate text-[12px] font-medium text-[var(--color-ink)]">
@@ -439,7 +439,7 @@ export function TopUpInstructionsModal({
                 <button
                   type="button"
                   onClick={removeProof}
-                  className="inline-flex items-center gap-1 text-[11px] font-medium text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)]"
+                  className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)]"
                 >
                   <X className="h-3.5 w-3.5" /> Remove
                 </button>
