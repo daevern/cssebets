@@ -69,6 +69,15 @@ export const approveUser = createServerFn({ method: "POST" })
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId, action: "user.approve", entity: "user", entity_id: data.targetUserId, metadata: {},
     });
+
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "account_approved",
+      recipientUserId: data.targetUserId,
+      relatedRecordType: "user",
+      relatedRecordId: data.targetUserId,
+    });
+
     return { ok: true };
   });
 
