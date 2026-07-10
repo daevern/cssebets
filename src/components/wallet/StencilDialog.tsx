@@ -2,24 +2,25 @@ import type { ReactNode } from "react";
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 type Props = {
-  /** kept for backwards compat — no longer rendered by default */
   kicker?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
   children?: ReactNode;
   footer?: ReactNode;
-  /** kept for backwards compat; ignored in the minimal shell */
-  accent?: boolean;
   size?: "sm" | "md" | "lg";
   onEscapeKeyDown?: (e: KeyboardEvent) => void;
   onPointerDownOutside?: (e: any) => void;
 };
 
 /**
- * Minimal, Kalshi-inspired dialog shell for the cashout / payout flows.
- * Thin border, generous whitespace, one clear hierarchy, subtle scale-in.
+ * CSSE-branded dialog shell.
+ * - Deep pitch-dark surface with hairline neon top border
+ * - Stencil L-corner accent (top-left) matching the fixture card language
+ * - Uppercase tracked kicker in place of a heavy title chrome
+ * - Minimal, generous whitespace, one clear hierarchy
  */
 export function StencilDialogContent({
+  kicker,
   title,
   description,
   children,
@@ -33,23 +34,46 @@ export function StencilDialogContent({
     <DialogContent
       onEscapeKeyDown={onEscapeKeyDown}
       onPointerDownOutside={onPointerDownOutside}
-      className={`${max} gap-0 rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-0 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] data-[state=open]:animate-scale-in`}
+      className={`${max} next-fixture-corner gap-0 overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-0 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.85)] data-[state=open]:animate-scale-in`}
     >
-      <DialogHeader className="space-y-1.5 px-6 pt-6 pb-2 text-left">
-        <DialogTitle className="font-display text-[19px] font-semibold leading-tight tracking-tight text-[var(--color-ink)]">
+      {/* hairline neon top edge */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent 0%, rgba(var(--neon-glow-rgb),0.55) 25%, rgba(var(--neon-glow-rgb),0.55) 75%, transparent 100%)",
+        }}
+      />
+      {/* faint radial glow behind header */}
+      <div
+        className="pointer-events-none absolute -top-24 left-1/2 h-48 w-64 -translate-x-1/2 opacity-40 blur-2xl"
+        style={{
+          background:
+            "radial-gradient(closest-side, rgba(var(--neon-glow-rgb),0.18), transparent 70%)",
+        }}
+      />
+
+      <DialogHeader className="relative space-y-2 px-6 pt-7 pb-2 text-left">
+        {kicker !== undefined ? (
+          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--color-neon)]/90">
+            <span className="inline-block h-1 w-1 rounded-full bg-[var(--color-neon)] shadow-[0_0_8px_var(--color-neon-glow)]" />
+            {kicker}
+          </div>
+        ) : null}
+        <DialogTitle className="font-display text-[20px] font-semibold leading-tight tracking-tight text-[var(--color-ink)]">
           {title}
         </DialogTitle>
         {description && (
-          <DialogDescription className="text-[13px] leading-relaxed text-[var(--color-ink-muted)]">
+          <DialogDescription className="text-[12.5px] leading-relaxed text-[var(--color-ink-muted)]">
             {description}
           </DialogDescription>
         )}
       </DialogHeader>
 
-      {children && <div className="px-6 pt-4 pb-2">{children}</div>}
+      {children && <div className="relative px-6 pt-4 pb-2">{children}</div>}
 
       {footer && (
-        <div className="flex flex-col-reverse gap-2 px-6 pt-4 pb-6 sm:flex-row sm:justify-end">
+        <div className="relative flex flex-col-reverse gap-2 border-t border-[var(--color-surface-border)]/70 bg-[var(--color-surface)]/40 px-6 py-4 sm:flex-row sm:justify-end">
           {footer}
         </div>
       )}
