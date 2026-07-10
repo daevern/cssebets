@@ -302,9 +302,18 @@ export const adminApproveRequest = createServerFn({ method: "POST" })
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
       action: "wallet.approve_request",
+      user_id: userId,
+      action: "wallet.approve_request",
       entity: "point_request",
       entity_id: data.requestId,
       metadata: { new_balance: result },
+    });
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "topup_approved",
+      recipientUserId: (row as any)?.user_id ?? undefined,
+      relatedRecordType: "point_request",
+      relatedRecordId: data.requestId,
     });
     return { ok: true, newBalance: Number(result) };
   });
