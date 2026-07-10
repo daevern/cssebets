@@ -360,6 +360,17 @@ function WalletPage() {
           )}
         </div>
 
+        {/* Pre-submit checklist */}
+        <div className="mt-4 border border-dashed border-[var(--color-surface-border)] bg-[#070D0A] p-3">
+          <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Before submitting</div>
+          <ul className="mt-2 space-y-1 text-[11px] leading-snug text-[var(--color-ink-muted)]">
+            <li>• Transfer amount matches your top-up request</li>
+            <li>• Reference ID is included in the bank transfer reference</li>
+            <li>• Receipt shows a successful transfer</li>
+            <li>• Receipt date/time is clearly visible</li>
+          </ul>
+        </div>
+
         <button
           data-tour="submit-request"
           type="button"
@@ -378,12 +389,15 @@ function WalletPage() {
           ) : (
             <>
               <Upload className="h-4 w-4" />
-              <span>Request Points</span>
+              <span>Submit Top-Up Request</span>
             </>
           )}
         </button>
-        <p className="mt-2 text-[11px] text-[var(--color-ink-muted)]">An admin will review your request.</p>
+        <p className="mt-2 text-[11px] text-[var(--color-ink-muted)]">Points are credited only after admin verifies your payment.</p>
       </StencilPanel>
+      </div>
+
+
 
       {/* Point requests */}
       <StencilPanel kicker={<><Receipt className="h-3 w-3" /> My point requests</>}>
