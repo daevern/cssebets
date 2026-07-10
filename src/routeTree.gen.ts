@@ -28,6 +28,7 @@ import { Route as ManagementChatRouteImport } from './routes/management/chat'
 import { Route as ManagementChangePasswordRouteImport } from './routes/management/change-password'
 import { Route as ManagementAdminRouteImport } from './routes/management/admin'
 import { Route as ManagementAccessDeniedRouteImport } from './routes/management/access-denied'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
 import { Route as AuthenticatedTrustCenterRouteImport } from './routes/_authenticated/trust-center'
 import { Route as AuthenticatedTournamentWinnerRouteImport } from './routes/_authenticated/tournament-winner'
@@ -80,9 +81,12 @@ import { Route as ManagementAdminBankrollRouteImport } from './routes/management
 import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
 import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
 import { Route as ManagementAdminAlertsRouteImport } from './routes/management/admin.alerts'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedWalletTransactionListRouteImport } from './routes/_authenticated/wallet.transaction-list'
 import { Route as AuthenticatedMatchesMatchIdRouteImport } from './routes/_authenticated/matches.$matchId'
 import { Route as AuthenticatedFreeBetsPlaceRouteImport } from './routes/_authenticated/free-bets.place'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/public/hooks/sync-fixtures'
 import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
@@ -188,6 +192,11 @@ const ManagementAccessDeniedRoute = ManagementAccessDeniedRouteImport.update({
   id: '/access-denied',
   path: '/access-denied',
   getParentRoute: () => ManagementRouteRoute,
+} as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
   id: '/wallet',
@@ -476,6 +485,11 @@ const ManagementAdminAlertsRoute = ManagementAdminAlertsRouteImport.update({
   path: '/alerts',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedWalletTransactionListRoute =
   AuthenticatedWalletTransactionListRouteImport.update({
     id: '/transaction-list',
@@ -493,6 +507,18 @@ const AuthenticatedFreeBetsPlaceRoute =
     id: '/free-bets/place',
     path: '/free-bets/place',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
@@ -580,6 +606,7 @@ export interface FileRoutesByFullPath {
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/trust-center': typeof AuthenticatedTrustCenterRoute
   '/wallet': typeof AuthenticatedWalletRouteWithChildren
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
   '/management/admin': typeof ManagementAdminRouteWithChildren
   '/management/change-password': typeof ManagementChangePasswordRoute
@@ -592,6 +619,7 @@ export interface FileRoutesByFullPath {
   '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/wallet/transaction-list': typeof AuthenticatedWalletTransactionListRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
@@ -638,6 +666,8 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -664,6 +694,7 @@ export interface FileRoutesByTo {
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/trust-center': typeof AuthenticatedTrustCenterRoute
   '/wallet': typeof AuthenticatedWalletRouteWithChildren
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
   '/management/change-password': typeof ManagementChangePasswordRoute
   '/management/chat': typeof ManagementChatRoute
@@ -675,6 +706,7 @@ export interface FileRoutesByTo {
   '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/wallet/transaction-list': typeof AuthenticatedWalletTransactionListRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
@@ -721,6 +753,8 @@ export interface FileRoutesByTo {
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -750,6 +784,7 @@ export interface FileRoutesById {
   '/_authenticated/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/_authenticated/trust-center': typeof AuthenticatedTrustCenterRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRouteWithChildren
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
   '/management/admin': typeof ManagementAdminRouteWithChildren
   '/management/change-password': typeof ManagementChangePasswordRoute
@@ -762,6 +797,7 @@ export interface FileRoutesById {
   '/_authenticated/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/_authenticated/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/_authenticated/wallet/transaction-list': typeof AuthenticatedWalletTransactionListRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
@@ -808,6 +844,8 @@ export interface FileRoutesById {
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -837,6 +875,7 @@ export interface FileRouteTypes {
     | '/tournament-winner'
     | '/trust-center'
     | '/wallet'
+    | '/email/unsubscribe'
     | '/management/access-denied'
     | '/management/admin'
     | '/management/change-password'
@@ -849,6 +888,7 @@ export interface FileRouteTypes {
     | '/free-bets/place'
     | '/matches/$matchId'
     | '/wallet/transaction-list'
+    | '/lovable/email/suppression'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
     | '/management/admin/audit'
@@ -895,6 +935,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -921,6 +963,7 @@ export interface FileRouteTypes {
     | '/tournament-winner'
     | '/trust-center'
     | '/wallet'
+    | '/email/unsubscribe'
     | '/management/access-denied'
     | '/management/change-password'
     | '/management/chat'
@@ -932,6 +975,7 @@ export interface FileRouteTypes {
     | '/free-bets/place'
     | '/matches/$matchId'
     | '/wallet/transaction-list'
+    | '/lovable/email/suppression'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
     | '/management/admin/audit'
@@ -978,6 +1022,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   id:
     | '__root__'
     | '/'
@@ -1006,6 +1052,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tournament-winner'
     | '/_authenticated/trust-center'
     | '/_authenticated/wallet'
+    | '/email/unsubscribe'
     | '/management/access-denied'
     | '/management/admin'
     | '/management/change-password'
@@ -1018,6 +1065,7 @@ export interface FileRouteTypes {
     | '/_authenticated/free-bets/place'
     | '/_authenticated/matches/$matchId'
     | '/_authenticated/wallet/transaction-list'
+    | '/lovable/email/suppression'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
     | '/management/admin/audit'
@@ -1064,6 +1112,8 @@ export interface FileRouteTypes {
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1077,6 +1127,8 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   PerformanceRoute: typeof PerformanceRoute
   RegisterRoute: typeof RegisterRoute
+  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksApifootballFulltimeRoute: typeof ApiPublicHooksApifootballFulltimeRoute
   ApiPublicHooksApifootballLineupsRoute: typeof ApiPublicHooksApifootballLineupsRoute
   ApiPublicHooksApifootballLiveRoute: typeof ApiPublicHooksApifootballLiveRoute
@@ -1087,6 +1139,8 @@ export interface RootRouteChildren {
   ApiPublicHooksReconciliationRoute: typeof ApiPublicHooksReconciliationRoute
   ApiPublicHooksSyncFixturesRoute: typeof ApiPublicHooksSyncFixturesRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1223,6 +1277,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/management/access-denied'
       preLoaderRoute: typeof ManagementAccessDeniedRouteImport
       parentRoute: typeof ManagementRouteRoute
+    }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/wallet': {
       id: '/_authenticated/wallet'
@@ -1588,6 +1649,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminAlertsRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/wallet/transaction-list': {
       id: '/_authenticated/wallet/transaction-list'
       path: '/transaction-list'
@@ -1608,6 +1676,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/free-bets/place'
       preLoaderRoute: typeof AuthenticatedFreeBetsPlaceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -1869,6 +1951,8 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   PerformanceRoute: PerformanceRoute,
   RegisterRoute: RegisterRoute,
+  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksApifootballFulltimeRoute:
     ApiPublicHooksApifootballFulltimeRoute,
   ApiPublicHooksApifootballLineupsRoute: ApiPublicHooksApifootballLineupsRoute,
@@ -1881,6 +1965,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksReconciliationRoute: ApiPublicHooksReconciliationRoute,
   ApiPublicHooksSyncFixturesRoute: ApiPublicHooksSyncFixturesRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

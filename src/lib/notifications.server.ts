@@ -1,7 +1,11 @@
 // Server-only notification dispatch. Fans out to Web Push + Email.
 // Called from other server functions AFTER a successful DB transaction.
 import webpush from "web-push";
+import * as React from "react";
+import { render } from "@react-email/render";
 import { createHash, randomUUID } from "crypto";
+import { TEMPLATES } from "@/lib/email-templates/registry";
+
 
 type EventType =
   // user-facing
@@ -160,30 +164,105 @@ function emailWrap(preheader: string, heading: string, message: string, ctaLabel
   </body></html>`;
 }
 
-async function sendOneEmail(supabaseAdmin: any, to: string, subject: string, html: string, idempotencyKey: string) {
-  const senderDomain = process.env.EMAIL_SENDER_DOMAIN || "notify.cssebets.com";
-  const from = process.env.EMAIL_FROM_ADDRESS || `CSSEBets <noreply@${senderDomain}>`;
-  const messageId = `${idempotencyKey}@${senderDomain}`;
-  const payload = {
-    to,
-    from,
-    sender_domain: senderDomain,
+async function sendOneEmail(
+  supabaseAdmin: any,
+  to: string,
+  subject: string,
+  copy: { title: string; body: string; url: string; emailHtml: string },
+  idempotencyKey: string,
+) {
+  const senderDomain = "notify.cssebets.com";
+  const fromDomain = "notify.cssebets.com";
+  const siteName = "cssebets";
+  const messageId = randomUUID();
+  const normalizedEmail = to.toLowerCase();
+
+  // Suppression check — respect unsubscribes and bounces.
+  const { data: suppressed } = await supabaseAdmin
+    .from("suppressed_emails")
+    .select("id")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+  if (suppressed) {
+    await supabaseAdmin.from("email_send_log").insert({
+      message_id: messageId,
+      template_name: "app-notification",
+      recipient_email: to,
+      status: "suppressed",
+    });
+    return { skipped: "suppressed" };
+  }
+
+  // Get or create unsubscribe token (one per email address).
+  let unsubscribeToken: string | null = null;
+  const { data: existingToken } = await supabaseAdmin
+    .from("email_unsubscribe_tokens")
+    .select("token, used_at")
+    .eq("email", normalizedEmail)
+    .maybeSingle();
+  if (existingToken && !existingToken.used_at) {
+    unsubscribeToken = existingToken.token;
+  } else if (!existingToken) {
+    const bytes = new Uint8Array(32);
+    crypto.getRandomValues(bytes);
+    const newToken = Array.from(bytes)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    await supabaseAdmin
+      .from("email_unsubscribe_tokens")
+      .upsert({ token: newToken, email: normalizedEmail }, { onConflict: "email", ignoreDuplicates: true });
+    const { data: stored } = await supabaseAdmin
+      .from("email_unsubscribe_tokens")
+      .select("token")
+      .eq("email", normalizedEmail)
+      .maybeSingle();
+    unsubscribeToken = stored?.token ?? newToken;
+  }
+
+  // Render the registered React Email template.
+  const entry = TEMPLATES["app-notification"];
+  if (!entry) throw new Error("app-notification template not registered");
+  const templateData = {
+    title: copy.title,
+    message: copy.emailHtml,
+    ctaLabel: "Open CSSEBets",
+    ctaUrl: baseUrl() + copy.url,
+    preheader: copy.body,
     subject,
-    html,
-    text: subject,
-    purpose: "transactional",
-    label: "notification",
-    idempotency_key: idempotencyKey,
-    message_id: messageId,
-    run_id: randomUUID(),
-    queued_at: new Date().toISOString(),
   };
+  const element = React.createElement(entry.component, templateData);
+  const html = await render(element);
+  const text = await render(element, { plainText: true });
+
+  // Log pending BEFORE enqueue so we always have a record.
+  await supabaseAdmin.from("email_send_log").insert({
+    message_id: messageId,
+    template_name: "app-notification",
+    recipient_email: to,
+    status: "pending",
+  });
+
   const { error } = await supabaseAdmin.rpc("enqueue_email", {
     queue_name: "transactional_emails",
-    payload,
+    payload: {
+      message_id: messageId,
+      to,
+      from: `${siteName} <noreply@${fromDomain}>`,
+      sender_domain: senderDomain,
+      subject,
+      html,
+      text,
+      purpose: "transactional",
+      label: "app-notification",
+      idempotency_key: idempotencyKey,
+      unsubscribe_token: unsubscribeToken,
+      queued_at: new Date().toISOString(),
+    },
   });
   if (error) throw new Error(`enqueue_email: ${error.message}`);
+  return { ok: true };
 }
+
 
 async function sendOnePush(supabaseAdmin: any, sub: any, payload: any) {
   const subject = process.env.VAPID_SUBJECT || "mailto:admin@cssebets.com";
@@ -320,12 +399,12 @@ export async function dispatchNotification(input: DispatchInput): Promise<void> 
           const email = user?.user?.email;
           const isSynthetic = !!email && email.endsWith("@phone.cssebets.local");
           if (email && !isSynthetic) {
-            const html = emailWrap(copy.body, copy.title, copy.emailHtml, "Open CSSEBets", deepLink);
-            await sendOneEmail(supabaseAdmin, email, copy.subject, html, `${idem}:${eventId}`);
-            results.email = { ok: true, to: email };
+            const emailRes = await sendOneEmail(supabaseAdmin, email, copy.subject, copy, `${idem}:${eventId}`);
+            results.email = emailRes.ok ? { ok: true, to: email } : { skipped: emailRes.skipped, to: email };
           } else {
             results.email = { skipped: "no_email" };
           }
+
         } catch (e: any) {
           results.email = { ok: false, error: String(e?.message || e) };
         }
