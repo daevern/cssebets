@@ -1411,6 +1411,72 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_events: {
+        Row: {
+          channel_results: Json
+          created_at: string
+          error_message: string | null
+          event_type: string
+          failed_at: string | null
+          id: string
+          payload: Json
+          recipient_user_id: string | null
+          related_record_id: string | null
+          related_record_type: string | null
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          channel_results?: Json
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          failed_at?: string | null
+          id?: string
+          payload?: Json
+          recipient_user_id?: string | null
+          related_record_id?: string | null
+          related_record_type?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          channel_results?: Json
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          failed_at?: string | null
+          id?: string
+          payload?: Json
+          recipient_user_id?: string | null
+          related_record_id?: string | null
+          related_record_type?: string | null
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      notification_preferences: {
+        Row: {
+          email_enabled: boolean
+          push_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          email_enabled?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          email_enabled?: boolean
+          push_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       onboarding_events: {
         Row: {
           created_at: string
@@ -2033,6 +2099,42 @@ export type Database = {
           risk_factor_updated_at?: string | null
           suspended?: boolean
           tour_progress?: Json
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          last_seen_at: string
+          p256dh: string
+          revoked_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          last_seen_at?: string
+          p256dh: string
+          revoked_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          last_seen_at?: string
+          p256dh?: string
+          revoked_at?: string | null
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
