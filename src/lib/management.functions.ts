@@ -587,6 +587,20 @@ export const staffSendMessage = createServerFn({ method: "POST" })
     await audit(context.userId, role, "support_message_sent", {
       target_type: "support_conversation", target_id: data.conversationId,
     });
+    const { data: convOwner } = await supabaseAdmin
+      .from("support_conversations")
+      .select("user_id")
+      .eq("id", data.conversationId)
+      .maybeSingle();
+    if (convOwner?.user_id) {
+      const { dispatchNotification } = await import("@/lib/notifications.server");
+      await dispatchNotification({
+        eventType: "support_reply",
+        recipientUserId: convOwner.user_id,
+        relatedRecordType: "support_message",
+        relatedRecordId: `${data.conversationId}:${now}`,
+      });
+    }
     return { ok: true };
   });
 
