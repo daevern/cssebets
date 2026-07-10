@@ -282,11 +282,11 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
           <div className="space-y-6">
             {/* Amount — the hero */}
             <div>
-              <div className="mb-1 text-center">
-                <span className="text-sm font-semibold text-[var(--color-ink)]">
+              <div className="mb-2 text-center">
+                <span className="text-base font-semibold text-[var(--color-ink)]">
                   {balance.toLocaleString()} pts
                 </span>
-                <span className="ml-1 text-sm font-medium text-[var(--color-ink-muted)]">available</span>
+                <span className="ml-1 text-base font-medium text-[var(--color-ink-muted)]">available</span>
               </div>
               <div
                 className={`group relative flex items-baseline justify-center gap-2 border-b py-4 transition-colors ${
