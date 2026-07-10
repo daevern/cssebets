@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { CashoutSheet } from "@/components/wallet/CashoutSheet";
 import { TopUpAmountModal } from "@/components/wallet/TopUpAmountModal";
+import { TopUpInstructionsModal } from "@/components/wallet/TopUpInstructionsModal";
 
 /* ---------------- helpers ---------------- */
 
@@ -291,6 +292,8 @@ export function WalletCreditCard({
 export function WalletActions({ onNavigate }: { onNavigate?: () => void }) {
   const [cashoutOpen, setCashoutOpen] = useState(false);
   const [topupOpen, setTopupOpen] = useState(false);
+  const [instructionsOpen, setInstructionsOpen] = useState(false);
+  const [topupAmount, setTopupAmount] = useState(0);
   return (
     <div className="w-full max-w-sm space-y-2">
       <div className="grid grid-cols-2 gap-2">
@@ -327,7 +330,15 @@ export function WalletActions({ onNavigate }: { onNavigate?: () => void }) {
       <TopUpAmountModal
         open={topupOpen}
         onOpenChange={setTopupOpen}
-        onNavigateAway={onNavigate}
+        onContinue={(amt) => {
+          setTopupAmount(amt);
+          setInstructionsOpen(true);
+        }}
+      />
+      <TopUpInstructionsModal
+        open={instructionsOpen}
+        amount={topupAmount}
+        onOpenChange={setInstructionsOpen}
       />
     </div>
   );
