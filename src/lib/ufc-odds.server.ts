@@ -76,23 +76,41 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
   if (!evRes.ok) return { ok: false, error: `events ${evRes.status}` };
   const allEvents = (await evRes.json()) as OddsEvent[];
 
-  // Filter to events matching this event name (e.g. sport_title contains "UFC 329")
-  const nameLower = event.name.toLowerCase();
-  const eventFights = allEvents
-    .filter((e) => (e.sport_title || "").toLowerCase().includes(nameLower))
+  // The Odds API tags every MMA fight as sport_title "MMA" — no UFC event name.
+  // Strategy: cluster all upcoming fights by their commence date (in UTC), pick
+  // the cluster nearest to event.starts_at (or the next upcoming one if that's
+  // too far off), then take the last 2 fights of that cluster = co-main + main.
+  const sorted = [...allEvents]
+    .filter((e) => !Number.isNaN(new Date(e.commence_time).getTime()))
     .sort((a, b) => new Date(a.commence_time).getTime() - new Date(b.commence_time).getTime());
 
-  // Fallback: if sport_title doesn't include the event name, take everything within ±12h of event.starts_at
-  const target =
-    eventFights.length > 0
-      ? eventFights
-      : allEvents
-          .filter((e) => Math.abs(new Date(e.commence_time).getTime() - startsAt) < 12 * 60 * 60 * 1000)
-          .sort((a, b) => new Date(a.commence_time).getTime() - new Date(b.commence_time).getTime());
+  if (!sorted.length) return { ok: true, skipped: "no upcoming MMA events on odds board" };
 
+  // Group by UTC date (YYYY-MM-DD) — a UFC card runs across a single evening/night.
+  const clusters = new Map<string, OddsEvent[]>();
+  for (const e of sorted) {
+    const key = e.commence_time.slice(0, 10);
+    if (!clusters.has(key)) clusters.set(key, []);
+    clusters.get(key)!.push(e);
+  }
+
+  // Pick the cluster closest to our configured starts_at; if none within 30 days,
+  // fall back to the next upcoming cluster (>= now).
+  const clusterEntries = Array.from(clusters.entries()).map(([date, fights]) => {
+    const clusterTs = new Date(fights[0].commence_time).getTime();
+    return { date, fights, ts: clusterTs, delta: Math.abs(clusterTs - startsAt) };
+  });
+
+  let chosen = clusterEntries.reduce((best, c) => (c.delta < best.delta ? c : best));
+  if (chosen.delta > 30 * 24 * 60 * 60 * 1000) {
+    const upcoming = clusterEntries.filter((c) => c.ts >= now).sort((a, b) => a.ts - b.ts);
+    if (upcoming.length) chosen = upcoming[0];
+  }
+
+  const target = chosen.fights;
   if (!target.length) return { ok: true, skipped: "no fights found for event" };
 
-  // Last two = co-main + main (main is last).
+  // Last two by commence_time = co-main + main (main is last).
   const lastTwo = target.slice(-2);
   const [coMain, main] = lastTwo.length === 2 ? lastTwo : [null, lastTwo[0]];
 
