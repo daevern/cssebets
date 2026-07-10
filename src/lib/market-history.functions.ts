@@ -107,15 +107,18 @@ async function buildMarketHistory(
   let updatedAt: string | null = null;
 
   if (chosen === "match_result") {
+    // Fetch most recent snapshots first (covers the in-play 90-min window even
+    // when pre-match snapshots run into the thousands), then reverse to
+    // ascending order for the chart.
     const { data: snaps } = await supabaseAdmin
       .from("match_odds_snapshots")
       .select("home_odds, draw_odds, away_odds, sampled_at")
       .eq("match_id", matchId)
-      .order("sampled_at", { ascending: true })
-      .limit(500);
-    const rows = (snaps ?? []) as Array<{
+      .order("sampled_at", { ascending: false })
+      .limit(1000);
+    const rows = ((snaps ?? []) as Array<{
       home_odds: number; draw_odds: number; away_odds: number; sampled_at: string;
-    }>;
+    }>).slice().reverse();
     const bySel: Record<"HOME" | "DRAW" | "AWAY", SeriesPoint[]> = { HOME: [], DRAW: [], AWAY: [] };
     for (const r of rows) {
       const h = Number(r.home_odds), d = Number(r.draw_odds), a = Number(r.away_odds);
@@ -136,9 +139,10 @@ async function buildMarketHistory(
       .select("selection, odds, snapshot_at")
       .eq("match_id", matchId)
       .eq("market", chosen)
-      .order("snapshot_at", { ascending: true })
-      .limit(2000);
-    const rows = (snaps ?? []) as Array<{ selection: string; odds: number; snapshot_at: string }>;
+      .order("snapshot_at", { ascending: false })
+      .limit(3000);
+    const rows = (((snaps ?? []) as Array<{ selection: string; odds: number; snapshot_at: string }>)).slice().reverse();
+
     const byTime = new Map<string, Array<{ sel: string; odds: number }>>();
     for (const r of rows) {
       const arr = byTime.get(r.snapshot_at) ?? [];
