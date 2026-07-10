@@ -79,6 +79,7 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
   const walletFn = useServerFn(getMyWallet);
   const banksFn = useServerFn(getMySavedBankAccounts);
   const createFn = useServerFn(createPayoutRequest);
+  const payoutsFn = useServerFn(getMyPayouts);
 
   const wallet = useQuery({
     queryKey: ["my-wallet", uid],
@@ -89,6 +90,12 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
   const banks = useQuery({
     queryKey: ["my-saved-banks", uid],
     queryFn: () => banksFn({}),
+    enabled: !!uid && open,
+    staleTime: 0,
+  });
+  const payouts = useQuery({
+    queryKey: ["my-payouts", uid],
+    queryFn: () => payoutsFn({}),
     enabled: !!uid && open,
     staleTime: 0,
   });
