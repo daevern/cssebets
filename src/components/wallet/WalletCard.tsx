@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { CashoutSheet } from "@/components/wallet/CashoutSheet";
+import { TopUpAmountModal } from "@/components/wallet/TopUpAmountModal";
 
 /* ---------------- helpers ---------------- */
 
