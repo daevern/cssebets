@@ -30,6 +30,7 @@ import { Route as ManagementAdminRouteImport } from './routes/management/admin'
 import { Route as ManagementAccessDeniedRouteImport } from './routes/management/access-denied'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
+import { Route as AuthenticatedUfcRouteImport } from './routes/_authenticated/ufc'
 import { Route as AuthenticatedTrustCenterRouteImport } from './routes/_authenticated/trust-center'
 import { Route as AuthenticatedTournamentWinnerRouteImport } from './routes/_authenticated/tournament-winner'
 import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
@@ -50,6 +51,7 @@ import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authent
 import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
 import { Route as ManagementAdminWalletAdjustmentsRouteImport } from './routes/management/admin.wallet-adjustments'
 import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
+import { Route as ManagementAdminUfcRouteImport } from './routes/management/admin.ufc'
 import { Route as ManagementAdminTournamentRouteImport } from './routes/management/admin.tournament'
 import { Route as ManagementAdminTokenLedgerRouteImport } from './routes/management/admin.token-ledger'
 import { Route as ManagementAdminSupportOpsRouteImport } from './routes/management/admin.support-ops'
@@ -88,6 +90,7 @@ import { Route as AuthenticatedFreeBetsPlaceRouteImport } from './routes/_authen
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicHooksUfcOddsLiveRouteImport } from './routes/api/public/hooks/ufc-odds-live'
 import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/public/hooks/sync-fixtures'
 import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
 import { Route as ApiPublicHooksOddsLiveRouteImport } from './routes/api/public/hooks/odds-live'
@@ -203,6 +206,11 @@ const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedUfcRoute = AuthenticatedUfcRouteImport.update({
+  id: '/ufc',
+  path: '/ufc',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTrustCenterRoute =
   AuthenticatedTrustCenterRouteImport.update({
     id: '/trust-center',
@@ -308,6 +316,11 @@ const ManagementAdminWalletAdjustmentsRoute =
 const ManagementAdminUsersRoute = ManagementAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminUfcRoute = ManagementAdminUfcRouteImport.update({
+  id: '/ufc',
+  path: '/ufc',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
 const ManagementAdminTournamentRoute =
@@ -526,6 +539,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksUfcOddsLiveRoute =
+  ApiPublicHooksUfcOddsLiveRouteImport.update({
+    id: '/api/public/hooks/ufc-odds-live',
+    path: '/api/public/hooks/ufc-odds-live',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksSyncFixturesRoute =
   ApiPublicHooksSyncFixturesRouteImport.update({
     id: '/api/public/hooks/sync-fixtures',
@@ -605,6 +624,7 @@ export interface FileRoutesByFullPath {
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/trust-center': typeof AuthenticatedTrustCenterRoute
+  '/ufc': typeof AuthenticatedUfcRoute
   '/wallet': typeof AuthenticatedWalletRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
@@ -651,6 +671,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
   '/management/admin/token-ledger': typeof ManagementAdminTokenLedgerRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
+  '/management/admin/ufc': typeof ManagementAdminUfcRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
@@ -665,6 +686,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
+  '/api/public/hooks/ufc-odds-live': typeof ApiPublicHooksUfcOddsLiveRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -693,6 +715,7 @@ export interface FileRoutesByTo {
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/trust-center': typeof AuthenticatedTrustCenterRoute
+  '/ufc': typeof AuthenticatedUfcRoute
   '/wallet': typeof AuthenticatedWalletRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
@@ -738,6 +761,7 @@ export interface FileRoutesByTo {
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
   '/management/admin/token-ledger': typeof ManagementAdminTokenLedgerRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
+  '/management/admin/ufc': typeof ManagementAdminUfcRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
@@ -752,6 +776,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
+  '/api/public/hooks/ufc-odds-live': typeof ApiPublicHooksUfcOddsLiveRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -783,6 +808,7 @@ export interface FileRoutesById {
   '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/_authenticated/trust-center': typeof AuthenticatedTrustCenterRoute
+  '/_authenticated/ufc': typeof AuthenticatedUfcRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
@@ -829,6 +855,7 @@ export interface FileRoutesById {
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
   '/management/admin/token-ledger': typeof ManagementAdminTokenLedgerRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
+  '/management/admin/ufc': typeof ManagementAdminUfcRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
@@ -843,6 +870,7 @@ export interface FileRoutesById {
   '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
+  '/api/public/hooks/ufc-odds-live': typeof ApiPublicHooksUfcOddsLiveRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -874,6 +902,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/tournament-winner'
     | '/trust-center'
+    | '/ufc'
     | '/wallet'
     | '/email/unsubscribe'
     | '/management/access-denied'
@@ -920,6 +949,7 @@ export interface FileRouteTypes {
     | '/management/admin/support-ops'
     | '/management/admin/token-ledger'
     | '/management/admin/tournament'
+    | '/management/admin/ufc'
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
@@ -934,6 +964,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/odds-live'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
+    | '/api/public/hooks/ufc-odds-live'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -962,6 +993,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/tournament-winner'
     | '/trust-center'
+    | '/ufc'
     | '/wallet'
     | '/email/unsubscribe'
     | '/management/access-denied'
@@ -1007,6 +1039,7 @@ export interface FileRouteTypes {
     | '/management/admin/support-ops'
     | '/management/admin/token-ledger'
     | '/management/admin/tournament'
+    | '/management/admin/ufc'
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
@@ -1021,6 +1054,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/odds-live'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
+    | '/api/public/hooks/ufc-odds-live'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -1051,6 +1085,7 @@ export interface FileRouteTypes {
     | '/_authenticated/support'
     | '/_authenticated/tournament-winner'
     | '/_authenticated/trust-center'
+    | '/_authenticated/ufc'
     | '/_authenticated/wallet'
     | '/email/unsubscribe'
     | '/management/access-denied'
@@ -1097,6 +1132,7 @@ export interface FileRouteTypes {
     | '/management/admin/support-ops'
     | '/management/admin/token-ledger'
     | '/management/admin/tournament'
+    | '/management/admin/ufc'
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
@@ -1111,6 +1147,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/odds-live'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
+    | '/api/public/hooks/ufc-odds-live'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -1138,6 +1175,7 @@ export interface RootRouteChildren {
   ApiPublicHooksOddsLiveRoute: typeof ApiPublicHooksOddsLiveRoute
   ApiPublicHooksReconciliationRoute: typeof ApiPublicHooksReconciliationRoute
   ApiPublicHooksSyncFixturesRoute: typeof ApiPublicHooksSyncFixturesRoute
+  ApiPublicHooksUfcOddsLiveRoute: typeof ApiPublicHooksUfcOddsLiveRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
@@ -1292,6 +1330,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWalletRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/ufc': {
+      id: '/_authenticated/ufc'
+      path: '/ufc'
+      fullPath: '/ufc'
+      preLoaderRoute: typeof AuthenticatedUfcRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/trust-center': {
       id: '/_authenticated/trust-center'
       path: '/trust-center'
@@ -1430,6 +1475,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/management/admin/users'
       preLoaderRoute: typeof ManagementAdminUsersRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/ufc': {
+      id: '/management/admin/ufc'
+      path: '/ufc'
+      fullPath: '/management/admin/ufc'
+      preLoaderRoute: typeof ManagementAdminUfcRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
     '/management/admin/tournament': {
@@ -1698,6 +1750,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/ufc-odds-live': {
+      id: '/api/public/hooks/ufc-odds-live'
+      path: '/api/public/hooks/ufc-odds-live'
+      fullPath: '/api/public/hooks/ufc-odds-live'
+      preLoaderRoute: typeof ApiPublicHooksUfcOddsLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/sync-fixtures': {
       id: '/api/public/hooks/sync-fixtures'
       path: '/api/public/hooks/sync-fixtures'
@@ -1805,6 +1864,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTournamentWinnerRoute: typeof AuthenticatedTournamentWinnerRoute
   AuthenticatedTrustCenterRoute: typeof AuthenticatedTrustCenterRoute
+  AuthenticatedUfcRoute: typeof AuthenticatedUfcRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRouteWithChildren
   AuthenticatedFreeBetsPlaceRoute: typeof AuthenticatedFreeBetsPlaceRoute
 }
@@ -1825,6 +1885,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTournamentWinnerRoute: AuthenticatedTournamentWinnerRoute,
   AuthenticatedTrustCenterRoute: AuthenticatedTrustCenterRoute,
+  AuthenticatedUfcRoute: AuthenticatedUfcRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRouteWithChildren,
   AuthenticatedFreeBetsPlaceRoute: AuthenticatedFreeBetsPlaceRoute,
 }
@@ -1864,6 +1925,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminSupportOpsRoute: typeof ManagementAdminSupportOpsRoute
   ManagementAdminTokenLedgerRoute: typeof ManagementAdminTokenLedgerRoute
   ManagementAdminTournamentRoute: typeof ManagementAdminTournamentRoute
+  ManagementAdminUfcRoute: typeof ManagementAdminUfcRoute
   ManagementAdminUsersRoute: typeof ManagementAdminUsersRoute
   ManagementAdminWalletAdjustmentsRoute: typeof ManagementAdminWalletAdjustmentsRoute
   ManagementAdminWalletLedgerRoute: typeof ManagementAdminWalletLedgerRoute
@@ -1902,6 +1964,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminSupportOpsRoute: ManagementAdminSupportOpsRoute,
   ManagementAdminTokenLedgerRoute: ManagementAdminTokenLedgerRoute,
   ManagementAdminTournamentRoute: ManagementAdminTournamentRoute,
+  ManagementAdminUfcRoute: ManagementAdminUfcRoute,
   ManagementAdminUsersRoute: ManagementAdminUsersRoute,
   ManagementAdminWalletAdjustmentsRoute: ManagementAdminWalletAdjustmentsRoute,
   ManagementAdminWalletLedgerRoute: ManagementAdminWalletLedgerRoute,
@@ -1964,6 +2027,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksOddsLiveRoute: ApiPublicHooksOddsLiveRoute,
   ApiPublicHooksReconciliationRoute: ApiPublicHooksReconciliationRoute,
   ApiPublicHooksSyncFixturesRoute: ApiPublicHooksSyncFixturesRoute,
+  ApiPublicHooksUfcOddsLiveRoute: ApiPublicHooksUfcOddsLiveRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
@@ -1971,13 +2035,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
