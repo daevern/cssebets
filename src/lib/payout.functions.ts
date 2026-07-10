@@ -483,6 +483,13 @@ export const adminConfirmPayoutProof = createServerFn({ method: "POST" })
         bank_reference_no: data.bankReferenceNo ?? null,
       },
     });
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "cashout_completed",
+      recipientUserId: (row as any)?.user_id ?? undefined,
+      relatedRecordType: "payout_request",
+      relatedRecordId: data.payoutId,
+    });
     return { ok: true, selfApproval: !!isSelf };
   });
 
