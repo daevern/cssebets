@@ -73,7 +73,7 @@ function RegisterPage() {
       if (password !== confirm) throw new Error("Passwords do not match");
       await checkAuthRateLimit({ data: { email } });
       const refCode = getStoredReferralCode();
-      const { error } = await supabase.auth.signUp({
+      const { data: signUp, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -86,6 +86,9 @@ function RegisterPage() {
       });
       if (error) throw error;
       clearStoredReferralCode();
+      if (signUp?.user?.id) {
+        try { await notifyAdminsOfRegistration({ data: { newUserId: signUp.user.id } }); } catch {}
+      }
       toast.success("Account created. Waiting for admin approval.");
       navigate({ to: "/dashboard" });
     } catch (err) {
