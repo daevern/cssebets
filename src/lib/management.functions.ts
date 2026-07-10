@@ -176,7 +176,7 @@ export const staffRejectUser = createServerFn({ method: "POST" })
       recipientUserId: data.targetUserId,
       relatedRecordType: "user",
       relatedRecordId: data.targetUserId,
-      payload: { reason: data.reason },
+
     });
 
     return { ok: true };
