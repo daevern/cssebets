@@ -153,6 +153,12 @@ export const createPayoutRequest = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "admin_new_cashout",
+      relatedRecordType: "payout_request",
+      relatedRecordId: inserted.id,
+    });
     return { id: inserted.id };
   });
 
@@ -333,6 +339,13 @@ export const adminApprovePayout = createServerFn({ method: "POST" })
         self_approval_allowed: false,
       },
     });
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "cashout_approved",
+      recipientUserId: pr?.user_id ?? undefined,
+      relatedRecordType: "payout_request",
+      relatedRecordId: data.payoutId,
+    });
     return { ok: true };
   });
 
@@ -381,6 +394,13 @@ export const adminRejectPayout = createServerFn({ method: "POST" })
         rejected_by: userId,
         reason: data.reason,
       },
+    });
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "cashout_rejected",
+      recipientUserId: (row as any)?.user_id ?? undefined,
+      relatedRecordType: "payout_request",
+      relatedRecordId: data.payoutId,
     });
     return { ok: true };
   });
@@ -462,6 +482,13 @@ export const adminConfirmPayoutProof = createServerFn({ method: "POST" })
         self_approval_allowed: !!allowSelf,
         bank_reference_no: data.bankReferenceNo ?? null,
       },
+    });
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "cashout_completed",
+      recipientUserId: (row as any)?.user_id ?? undefined,
+      relatedRecordType: "payout_request",
+      relatedRecordId: data.payoutId,
     });
     return { ok: true, selfApproval: !!isSelf };
   });

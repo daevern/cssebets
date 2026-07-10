@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { BadgeGrid } from "@/components/trust/BadgeGrid";
 import { ReferralPanel } from "@/components/engagement/ReferralPanel";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
 
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -163,6 +164,10 @@ function SettingsPage() {
         </div>
         <SaveBtn onClick={savePhone} disabled={savingPhone || phone === currentPhone} loading={savingPhone} label="Update phone" />
       </StencilPanel>
+
+      <NotificationSettings />
+
+
 
       <StencilPanel kicker={<><LogOut className="h-3 w-3" /> Session</>}>
         <p className="text-sm text-[var(--color-ink-muted)]">

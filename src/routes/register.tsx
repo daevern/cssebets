@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { checkAuthRateLimit } from "@/lib/rate-limit.functions";
+import { notifyAdminsOfRegistration } from "@/lib/notifications.functions";
 import { getStoredReferralCode, clearStoredReferralCode } from "@/lib/referral-code";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,7 +73,7 @@ function RegisterPage() {
       if (password !== confirm) throw new Error("Passwords do not match");
       await checkAuthRateLimit({ data: { email } });
       const refCode = getStoredReferralCode();
-      const { error } = await supabase.auth.signUp({
+      const { data: signUp, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -85,6 +86,9 @@ function RegisterPage() {
       });
       if (error) throw error;
       clearStoredReferralCode();
+      if (signUp?.user?.id) {
+        try { await notifyAdminsOfRegistration({ data: { newUserId: signUp.user.id } }); } catch {}
+      }
       toast.success("Account created. Waiting for admin approval.");
       navigate({ to: "/dashboard" });
     } catch (err) {
@@ -106,7 +110,7 @@ function RegisterPage() {
       const syntheticEmail = phoneToSyntheticEmail(p);
       await checkAuthRateLimit({ data: { phone: p } });
       const refCode = getStoredReferralCode();
-      const { error } = await supabase.auth.signUp({
+      const { data: signUp, error } = await supabase.auth.signUp({
         email: syntheticEmail,
         password,
         options: {
@@ -120,6 +124,9 @@ function RegisterPage() {
       });
       if (error) throw error;
       clearStoredReferralCode();
+      if (signUp?.user?.id) {
+        try { await notifyAdminsOfRegistration({ data: { newUserId: signUp.user.id } }); } catch {}
+      }
       toast.success("Account created. Waiting for admin approval.");
       navigate({ to: "/dashboard" });
     } catch (err) {

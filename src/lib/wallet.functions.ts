@@ -142,6 +142,12 @@ export const submitPointRequest = createServerFn({ method: "POST" })
       })
       .eq("id", data.requestId);
     if (error) throw new Error(error.message);
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "admin_new_topup",
+      relatedRecordType: "point_request",
+      relatedRecordId: data.requestId,
+    });
     return { ok: true };
   });
 
@@ -300,6 +306,13 @@ export const adminApproveRequest = createServerFn({ method: "POST" })
       entity_id: data.requestId,
       metadata: { new_balance: result },
     });
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "topup_approved",
+      recipientUserId: (row as any)?.user_id ?? undefined,
+      relatedRecordType: "point_request",
+      relatedRecordId: data.requestId,
+    });
     return { ok: true, newBalance: Number(result) };
   });
 
@@ -334,6 +347,13 @@ export const adminRejectRequest = createServerFn({ method: "POST" })
       entity: "point_request",
       entity_id: data.requestId,
       metadata: { rejection_reason: data.rejectionReason },
+    });
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "topup_rejected",
+      recipientUserId: (row as any)?.user_id ?? undefined,
+      relatedRecordType: "point_request",
+      relatedRecordId: data.requestId,
     });
     return { ok: true };
   });
