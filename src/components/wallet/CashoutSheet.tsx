@@ -3,17 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Dialog } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import {
-  Loader2,
-  Banknote,
-  CheckCircle2,
-  ShieldAlert,
-  ArrowUpFromLine,
-  Landmark,
-  Sparkles,
-  ArrowRight,
-} from "lucide-react";
+import { Loader2, CheckCircle2, ArrowRight, Check } from "lucide-react";
 import { toast } from "sonner";
 import { getMyWallet } from "@/lib/wallet.functions";
 import {
@@ -26,11 +16,10 @@ import { StencilDialogContent } from "@/components/wallet/StencilDialog";
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  /** Called when the user is being redirected to /payout (parent can close its own sheet). */
   onNavigateAway?: () => void;
 };
 
-/* ---------- shared visual primitives ---------- */
+/* ---------- buttons ---------- */
 
 function GhostBtn({
   children,
@@ -46,7 +35,7 @@ function GhostBtn({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center justify-center gap-1.5 rounded-none border border-[var(--color-surface-border)] bg-[#050E0A] px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)] transition-colors hover:border-[var(--color-neon)]/40 hover:text-[var(--color-ink)] disabled:opacity-40"
+      className="inline-flex items-center justify-center rounded-md px-4 py-2.5 text-[13px] font-medium text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)] disabled:opacity-40"
     >
       {children}
     </button>
@@ -67,69 +56,15 @@ function NeonBtn({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center justify-center gap-1.5 rounded-none bg-[var(--color-neon)] px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.24em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 disabled:opacity-40 disabled:shadow-none"
+      className="group inline-flex items-center justify-center gap-1.5 rounded-md bg-[var(--color-neon)] px-5 py-2.5 text-[13px] font-semibold text-black transition-all hover:brightness-110 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
     >
       {children}
     </button>
   );
 }
 
-/* ---------- account row ---------- */
-
 function bankInitial(name: string) {
-  const s = (name || "?").trim();
-  return s.slice(0, 1).toUpperCase();
-}
-
-function AccountRow({
-  bankName,
-  masked,
-  active,
-  onClick,
-}: {
-  bankName: string;
-  masked: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`group relative flex w-full items-center gap-3 border px-3 py-3 text-left transition-all ${
-        active
-          ? "border-[var(--color-neon)]/60 bg-[var(--color-neon)]/[0.06] shadow-[0_0_0_1px_var(--color-neon-glow)_inset]"
-          : "border-[var(--color-surface-border)] bg-[#050E0A] hover:border-[var(--color-neon)]/30"
-      }`}
-    >
-      <div
-        className={`flex h-10 w-10 shrink-0 items-center justify-center border font-display text-sm font-bold tabular-nums ${
-          active
-            ? "border-[var(--color-neon)]/60 bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
-            : "border-[var(--color-surface-border)] bg-[#020806] text-[var(--color-ink-muted)]"
-        }`}
-      >
-        {bankInitial(bankName)}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-          {bankName}
-        </div>
-        <div className="mt-0.5 font-mono text-sm tabular-nums text-[var(--color-ink)]">
-          {masked}
-        </div>
-      </div>
-      <div
-        className={`flex h-5 w-5 items-center justify-center border ${
-          active
-            ? "border-[var(--color-neon)] bg-[var(--color-neon)] text-black"
-            : "border-[var(--color-surface-border)] bg-transparent"
-        }`}
-      >
-        {active && <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={3} />}
-      </div>
-    </button>
-  );
+  return (name || "?").trim().slice(0, 1).toUpperCase();
 }
 
 /* ---------- main sheet ---------- */
@@ -218,9 +153,8 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     navigate({ to: "/payout" });
   }
 
-  function setPct(pct: number) {
-    if (!balance) return;
-    setAmount(String(Math.floor(balance * pct)));
+  function setMax() {
+    if (balance) setAmount(String(Math.floor(balance)));
   }
 
   /* ---------- No saved bank ---------- */
@@ -228,32 +162,17 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <StencilDialogContent
-          accent
-          kicker={<><ShieldAlert className="h-3 w-3" /> Setup required</>}
-          title="Add a bank account to cash out"
-          description="Your points are ready to withdraw. Save your payout bank details once — they'll appear here every time you cash out."
+          title="Add a bank account"
+          description="Save your payout details once. They'll be ready for every cashout."
           footer={
             <>
               <GhostBtn onClick={() => onOpenChange(false)}>Cancel</GhostBtn>
               <NeonBtn onClick={goToPayoutPage}>
-                Add bank account <ArrowRight className="h-3.5 w-3.5" />
+                Add account <ArrowRight className="h-3.5 w-3.5" />
               </NeonBtn>
             </>
           }
-        >
-          <div className="flex items-start gap-3 border border-dashed border-[var(--color-surface-border)] bg-[#050E0A] p-4">
-            <Landmark className="h-5 w-5 shrink-0 text-[var(--color-neon)]" />
-            <div className="space-y-1">
-              <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">
-                One-time setup
-              </div>
-              <p className="text-sm text-[var(--color-ink-muted)]">
-                We keep bank details encrypted and only visible to you. You can add
-                multiple accounts and pick one at cashout.
-              </p>
-            </div>
-          </div>
-        </StencilDialogContent>
+        />
       </Dialog>
     );
   }
@@ -263,10 +182,12 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <StencilDialogContent
-          accent
-          kicker={<><Sparkles className="h-3 w-3" /> Request submitted</>}
-          title="Cashout submitted for review"
-          description="An admin will process your request shortly. You'll be notified when funds are on the way."
+          title="Cashout submitted"
+          description={
+            selectedAcc
+              ? `Sending to ${selectedAcc.bankName} · ${selectedAcc.masked}.`
+              : "We'll process your request shortly."
+          }
           footer={
             <>
               <GhostBtn onClick={() => onOpenChange(false)}>Close</GhostBtn>
@@ -276,44 +197,15 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
             </>
           }
         >
-          <div className="space-y-3">
-            {/* Receipt block */}
-            <div className="border border-[var(--color-surface-border)] bg-[#020806] p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
-                  Withdrawing
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-neon)]">
-                  Pending
-                </span>
-              </div>
-              <div className="mt-2 flex items-baseline gap-2">
-                <span className="font-display text-3xl font-bold tabular-nums text-[var(--color-ink)]">
-                  {(submittedAmount ?? 0).toLocaleString()}
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-neon)]">
-                  pts
-                </span>
-              </div>
-              {selectedAcc && (
-                <div className="mt-3 flex items-center gap-2 border-t border-dashed border-[var(--color-surface-border)] pt-3">
-                  <div className="flex h-6 w-6 items-center justify-center border border-[var(--color-surface-border)] bg-[#050E0A] text-[10px] font-bold text-[var(--color-ink-muted)]">
-                    {bankInitial(selectedAcc.bankName)}
-                  </div>
-                  <span className="text-[11px] font-medium text-[var(--color-ink-muted)]">
-                    {selectedAcc.bankName} · <span className="font-mono">{selectedAcc.masked}</span>
-                  </span>
-                </div>
-              )}
+          <div className="flex flex-col items-center py-6 animate-fade-in">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-neon)]/10 ring-1 ring-[var(--color-neon)]/30">
+              <Check className="h-5 w-5 text-[var(--color-neon)]" strokeWidth={3} />
             </div>
-
-            <div className="border border-dashed border-[var(--color-surface-border)] bg-[#050E0A] p-3 text-[11px] leading-relaxed text-[var(--color-ink-muted)]">
-              <span className="font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">
-                ETA
-              </span>{" "}
-              — Cashouts are typically processed within 30 minutes to 6 hours,
-              subject to admin review and bank availability. Contact support if
-              yours takes longer than expected.
+            <div className="mt-4 flex items-baseline gap-1.5">
+              <span className="font-display text-4xl font-semibold tabular-nums text-[var(--color-ink)]">
+                {(submittedAmount ?? 0).toLocaleString()}
+              </span>
+              <span className="text-xs font-medium text-[var(--color-ink-muted)]">pts</span>
             </div>
           </div>
         </StencilDialogContent>
@@ -325,9 +217,12 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <StencilDialogContent
-        kicker={<><ArrowUpFromLine className="h-3 w-3" /> Cash out · Withdraw points</>}
-        title="Send points to your bank"
-        description="Select a saved account and enter the amount you want to withdraw."
+        title="Cash out"
+        description={
+          !loading
+            ? `${balance.toLocaleString()} pts available`
+            : undefined
+        }
         footer={
           <>
             <GhostBtn onClick={() => onOpenChange(false)} disabled={submit.isPending}>
@@ -336,111 +231,30 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
             <NeonBtn onClick={() => submit.mutate()} disabled={!canSubmit}>
               {submit.isPending ? (
                 <>
-                  <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> Submitting…
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Sending
                 </>
               ) : (
-                <>
-                  Confirm cashout <ArrowRight className="h-3.5 w-3.5" />
-                </>
+                <>Confirm</>
               )}
             </NeonBtn>
           </>
         }
       >
         {loading ? (
-          <div className="flex items-center justify-center py-10">
-            <Loader2 className="h-5 w-5 animate-spin text-[var(--color-ink-muted)]" />
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-4 w-4 animate-spin text-[var(--color-ink-muted)]" />
           </div>
         ) : (
-          <div className="space-y-5">
-            {/* Balance strip */}
-            <div className="relative overflow-hidden border border-[var(--color-surface-border)] bg-[#020806] p-4">
+          <div className="space-y-6">
+            {/* Amount — the hero */}
+            <div>
               <div
-                aria-hidden
-                className="pointer-events-none absolute inset-0 opacity-[0.08]"
-                style={{
-                  backgroundImage:
-                    "repeating-linear-gradient(90deg, var(--color-neon) 0 1px, transparent 1px 6px)",
-                }}
-              />
-              <div className="relative flex items-end justify-between">
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-                    Available balance
-                  </div>
-                  <div className="mt-1 flex items-baseline gap-1.5">
-                    <span className="font-display text-3xl font-bold tabular-nums text-[var(--color-ink)]">
-                      {balance.toLocaleString()}
-                    </span>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-neon)]">
-                      pts
-                    </span>
-                  </div>
-                </div>
-                <Banknote className="h-8 w-8 text-[var(--color-neon)]/40" />
-              </div>
-            </div>
-
-            {/* Bank selector */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-                  Destination account
-                </label>
-                <button
-                  type="button"
-                  onClick={goToPayoutPage}
-                  className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)] hover:underline"
-                >
-                  Manage →
-                </button>
-              </div>
-              <div className="space-y-1.5">
-                {accounts.map((a) => (
-                  <AccountRow
-                    key={a.id}
-                    bankName={a.bankName}
-                    masked={a.masked}
-                    active={selectedId === a.id}
-                    onClick={() => setSelectedId(a.id)}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Amount */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-                  Withdraw amount
-                </label>
-                <div className="flex items-center gap-1">
-                  {[
-                    { label: "25%", pct: 0.25 },
-                    { label: "50%", pct: 0.5 },
-                    { label: "75%", pct: 0.75 },
-                    { label: "MAX", pct: 1 },
-                  ].map((c) => (
-                    <button
-                      key={c.label}
-                      type="button"
-                      onClick={() => setPct(c.pct)}
-                      disabled={!balance}
-                      className="border border-[var(--color-surface-border)] bg-[#050E0A] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)] transition-colors hover:border-[var(--color-neon)]/40 hover:text-[var(--color-neon)] disabled:opacity-40"
-                    >
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div
-                className={`flex items-center border bg-[#020806] px-4 py-3 transition-colors ${
+                className={`group relative flex items-baseline justify-center gap-2 border-b py-4 transition-colors ${
                   amt > balance
                     ? "border-destructive/60"
                     : amountValid
-                      ? "border-[var(--color-neon)]/40"
-                      : "border-[var(--color-surface-border)]"
+                      ? "border-[var(--color-neon)]/60"
+                      : "border-[var(--color-surface-border)] focus-within:border-[var(--color-ink-muted)]/50"
                 }`}
               >
                 <input
@@ -451,23 +265,81 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0"
-                  className="w-full bg-transparent font-display text-2xl font-bold tabular-nums text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-muted)]/50 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  className="w-full bg-transparent text-center font-display text-5xl font-semibold tabular-nums tracking-tight text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-muted)]/30 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 />
-                <span className="ml-2 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-neon)]">
+                <span className="absolute right-0 top-1/2 -translate-y-1/2 text-xs font-medium text-[var(--color-ink-muted)]">
                   pts
                 </span>
               </div>
+              <div className="mt-2 flex items-center justify-between">
+                <span className="text-[11px] text-[var(--color-ink-muted)]">
+                  {amt > balance
+                    ? "Exceeds balance"
+                    : amountValid
+                      ? `${(balance - amt).toLocaleString()} left after`
+                      : "Enter amount"}
+                </span>
+                <button
+                  type="button"
+                  onClick={setMax}
+                  disabled={!balance}
+                  className="text-[11px] font-semibold text-[var(--color-neon)] transition-opacity hover:opacity-80 disabled:opacity-40"
+                >
+                  Max
+                </button>
+              </div>
+            </div>
 
-              {amount !== "" && amt <= 0 && (
-                <p className="text-[11px] text-destructive">
-                  Amount must be greater than 0.
-                </p>
-              )}
-              {amt > balance && (
-                <p className="text-[11px] text-destructive">
-                  Amount exceeds your available balance.
-                </p>
-              )}
+            {/* Destination — single-line list */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-medium text-[var(--color-ink-muted)]">To</span>
+                <button
+                  type="button"
+                  onClick={goToPayoutPage}
+                  className="text-[11px] font-medium text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-neon)]"
+                >
+                  Manage
+                </button>
+              </div>
+              <div className="space-y-1">
+                {accounts.map((a) => {
+                  const active = selectedId === a.id;
+                  return (
+                    <button
+                      key={a.id}
+                      type="button"
+                      onClick={() => setSelectedId(a.id)}
+                      className={`group flex w-full items-center gap-3 rounded-md border px-3 py-2.5 text-left transition-all ${
+                        active
+                          ? "border-[var(--color-neon)]/50 bg-[var(--color-neon)]/[0.04]"
+                          : "border-[var(--color-surface-border)] hover:border-[var(--color-ink-muted)]/40"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded text-[11px] font-semibold transition-colors ${
+                          active
+                            ? "bg-[var(--color-neon)] text-black"
+                            : "bg-[#050E0A] text-[var(--color-ink-muted)]"
+                        }`}
+                      >
+                        {bankInitial(a.bankName)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[13px] font-medium text-[var(--color-ink)]">
+                          {a.bankName}
+                        </div>
+                        <div className="truncate font-mono text-[11px] text-[var(--color-ink-muted)]">
+                          {a.masked}
+                        </div>
+                      </div>
+                      {active && (
+                        <CheckCircle2 className="h-4 w-4 text-[var(--color-neon)] animate-scale-in" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}

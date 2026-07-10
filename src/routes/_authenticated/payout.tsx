@@ -296,16 +296,15 @@ function PayoutPage() {
       {/* Add bank dialog */}
       <Dialog open={addOpen} onOpenChange={(o) => !o && setAddOpen(false)}>
         <StencilDialogContent
-          kicker={<><Landmark className="h-3 w-3" /> New payout destination</>}
           title="Add bank account"
-          description="Saved accounts appear in the Cash Out popup so you can withdraw with a single tap."
+          description="Saved accounts appear in the Cash Out popup."
           footer={
             <>
               <button
                 type="button"
                 onClick={() => setAddOpen(false)}
                 disabled={addAcc.isPending}
-                className="inline-flex items-center justify-center gap-1.5 rounded-none border border-[var(--color-surface-border)] bg-[#050E0A] px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)] transition-colors hover:border-[var(--color-neon)]/40 hover:text-[var(--color-ink)] disabled:opacity-40"
+                className="inline-flex items-center justify-center rounded-md px-4 py-2.5 text-[13px] font-medium text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)] disabled:opacity-40"
               >
                 Cancel
               </button>
@@ -313,25 +312,25 @@ function PayoutPage() {
                 type="button"
                 onClick={() => addAcc.mutate()}
                 disabled={!canAdd}
-                className="inline-flex items-center justify-center gap-1.5 rounded-none bg-[var(--color-neon)] px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.24em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 disabled:opacity-40 disabled:shadow-none"
+                className="inline-flex items-center justify-center gap-1.5 rounded-md bg-[var(--color-neon)] px-5 py-2.5 text-[13px] font-semibold text-black transition-all hover:brightness-110 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
               >
-                {addAcc.isPending ? (<><Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> Saving…</>) : "Save account"}
+                {addAcc.isPending ? (<><Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving</>) : "Save"}
               </button>
             </>
           }
         >
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">Bank name</label>
-              <Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. Maybank" className="rounded-none bg-[#020806] border-[var(--color-surface-border)] font-mono focus-visible:border-[var(--color-neon)]/40 focus-visible:ring-0" />
+              <label className="text-[11px] font-medium text-[var(--color-ink-muted)]">Bank name</label>
+              <Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. Maybank" className="rounded-md bg-transparent border-[var(--color-surface-border)] focus-visible:border-[var(--color-neon)]/50 focus-visible:ring-0" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">Account number</label>
-              <Input value={accNo} onChange={(e) => setAccNo(e.target.value)} placeholder="0000 0000 0000" className="rounded-none bg-[#020806] border-[var(--color-surface-border)] font-mono tabular-nums focus-visible:border-[var(--color-neon)]/40 focus-visible:ring-0" />
+              <label className="text-[11px] font-medium text-[var(--color-ink-muted)]">Account number</label>
+              <Input value={accNo} onChange={(e) => setAccNo(e.target.value)} placeholder="0000 0000 0000" className="rounded-md bg-transparent border-[var(--color-surface-border)] font-mono tabular-nums focus-visible:border-[var(--color-neon)]/50 focus-visible:ring-0" />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">Account holder <span className="text-[var(--color-ink-muted)]/60 normal-case">(optional)</span></label>
-              <Input value={holder} onChange={(e) => setHolder(e.target.value)} placeholder="Name as printed on the account" className="rounded-none bg-[#020806] border-[var(--color-surface-border)] focus-visible:border-[var(--color-neon)]/40 focus-visible:ring-0" />
+              <label className="text-[11px] font-medium text-[var(--color-ink-muted)]">Account holder <span className="text-[var(--color-ink-muted)]/60">(optional)</span></label>
+              <Input value={holder} onChange={(e) => setHolder(e.target.value)} placeholder="Name on account" className="rounded-md bg-transparent border-[var(--color-surface-border)] focus-visible:border-[var(--color-neon)]/50 focus-visible:ring-0" />
             </div>
           </div>
         </StencilDialogContent>
@@ -341,15 +340,14 @@ function PayoutPage() {
       <Dialog open={!!proof && !decision} onOpenChange={(o) => !o && setProof(null)}>
         <StencilDialogContent
           size="lg"
-          kicker={<><FileCheck2 className="h-3 w-3" /> Bank transfer proof</>}
-          title="Review uploaded proof"
+          title="Bank transfer proof"
           description={proof?.name}
         >
           {proof && (
             proof.type.startsWith("image/") ? (
-              <img src={proof.url} alt={proof.name} className="max-h-[70vh] w-full border border-[var(--color-surface-border)] bg-[#020806] object-contain" />
+              <img src={proof.url} alt={proof.name} className="max-h-[70vh] w-full rounded-md border border-[var(--color-surface-border)] bg-[#020806] object-contain" />
             ) : proof.type === "application/pdf" ? (
-              <iframe src={proof.url} title={proof.name} className="h-[70vh] w-full border border-[var(--color-surface-border)]" />
+              <iframe src={proof.url} title={proof.name} className="h-[70vh] w-full rounded-md border border-[var(--color-surface-border)]" />
             ) : (
               <a href={proof.url} target="_blank" rel="noreferrer" className="text-[var(--color-neon)] underline">Open file</a>
             )
@@ -360,16 +358,14 @@ function PayoutPage() {
       {/* Approve */}
       <Dialog open={decision === "approve"} onOpenChange={(o) => !o && setDecision(null)}>
         <StencilDialogContent
-          accent
-          kicker={<><CheckCircle2 className="h-3 w-3" /> Confirm receipt</>}
           title="Confirm payout received"
-          description="By confirming, you acknowledge that the bank transfer has been received. This action cannot be undone."
+          description="You acknowledge the bank transfer was received. This can't be undone."
           footer={
             <>
               <button
                 type="button"
                 onClick={() => setDecision(null)}
-                className="inline-flex items-center justify-center rounded-none border border-[var(--color-surface-border)] bg-[#050E0A] px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)] hover:border-[var(--color-neon)]/40 hover:text-[var(--color-ink)]"
+                className="inline-flex items-center justify-center rounded-md px-4 py-2.5 text-[13px] font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
               >
                 Cancel
               </button>
@@ -377,9 +373,9 @@ function PayoutPage() {
                 type="button"
                 disabled={!active || confirm.isPending}
                 onClick={() => active && confirm.mutate(active.id)}
-                className="inline-flex items-center justify-center gap-1.5 rounded-none bg-[var(--color-neon)] px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.24em] text-black shadow-[0_0_24px_var(--color-neon-glow)] hover:brightness-110 disabled:opacity-40"
+                className="inline-flex items-center justify-center gap-1.5 rounded-md bg-[var(--color-neon)] px-5 py-2.5 text-[13px] font-semibold text-black transition-all hover:brightness-110 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
               >
-                {confirm.isPending ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Confirming…</> : "Confirm receipt"}
+                {confirm.isPending ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Confirming</> : "Confirm"}
               </button>
             </>
           }
@@ -389,9 +385,8 @@ function PayoutPage() {
       {/* Reject */}
       <Dialog open={decision === "reject"} onOpenChange={() => { /* prevent close via overlay/esc */ }}>
         <StencilDialogContent
-          kicker={<><XCircle className="h-3 w-3" /> Reject proof</>}
           title="Reject proof of payment"
-          description="Provide a reason so an admin can investigate. Your points will be refunded to your wallet."
+          description="Tell us why. Your points will be refunded."
           onPointerDownOutside={(e: any) => e.preventDefault()}
           onEscapeKeyDown={(e: any) => e.preventDefault()}
           footer={
@@ -399,7 +394,7 @@ function PayoutPage() {
               <button
                 type="button"
                 onClick={() => { setDecision(null); setRejectReason(""); }}
-                className="inline-flex items-center justify-center rounded-none border border-[var(--color-surface-border)] bg-[#050E0A] px-4 py-2.5 text-[11px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)] hover:border-[var(--color-neon)]/40 hover:text-[var(--color-ink)]"
+                className="inline-flex items-center justify-center rounded-md px-4 py-2.5 text-[13px] font-medium text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
               >
                 Cancel
               </button>
@@ -407,9 +402,9 @@ function PayoutPage() {
                 type="button"
                 disabled={rejectReason.trim().length < 3 || reject.isPending || !active}
                 onClick={() => active && reject.mutate({ id: active.id, reason: rejectReason.trim() })}
-                className="inline-flex items-center justify-center gap-1.5 rounded-none bg-destructive px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.24em] text-destructive-foreground hover:brightness-110 disabled:opacity-40"
+                className="inline-flex items-center justify-center gap-1.5 rounded-md bg-destructive px-5 py-2.5 text-[13px] font-semibold text-destructive-foreground transition-all hover:brightness-110 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40"
               >
-                {reject.isPending ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Rejecting…</> : "Confirm reject"}
+                {reject.isPending ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Rejecting</> : "Reject"}
               </button>
             </>
           }
@@ -417,12 +412,13 @@ function PayoutPage() {
           <Textarea
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
-            placeholder="e.g. Amount received does not match…"
+            placeholder="e.g. Amount received doesn't match…"
             rows={4}
-            className="rounded-none bg-[#020806] border-[var(--color-surface-border)] focus-visible:border-[var(--color-neon)]/40 focus-visible:ring-0"
+            className="rounded-md bg-transparent border-[var(--color-surface-border)] focus-visible:border-[var(--color-neon)]/50 focus-visible:ring-0"
           />
         </StencilDialogContent>
       </Dialog>
     </PageShell>
   );
 }
+
