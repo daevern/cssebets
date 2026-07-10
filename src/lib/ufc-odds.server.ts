@@ -143,19 +143,19 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
 
     if (!fightRow) continue;
 
-    // Fetch odds for this event with all three markets
+    // Fetch odds. The Odds API for MMA only supports h2h (moneyline);
+    // method-of-victory and round-betting are NOT offered by this feed. We
+    // pull h2h and derive method/round prices from the moneyline using
+    // standard MMA priors (see below).
     const oddsUrl =
       `${BASE}/${SPORT}/events/${ev.id}/odds` +
-      `?apiKey=${apiKey}&regions=us,eu&markets=h2h,h2h_method,rounds&oddsFormat=decimal`;
+      `?apiKey=${apiKey}&regions=us,eu&markets=h2h&oddsFormat=decimal`;
     const oddsRes = await fetch(oddsUrl);
     if (!oddsRes.ok) continue;
     const eventOdds = (await oddsRes.json()) as EventOdds;
 
-    // Aggregate per market
     const h2hA: number[] = [];
     const h2hB: number[] = [];
-    const methodBuckets = new Map<string, number[]>(); // key: a_ko | a_sub | a_dec | b_ko | b_sub | b_dec
-    const roundBuckets = new Map<string, number[]>(); // r1..rN | distance
 
     const normFighter = (name: string) =>
       name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
@@ -165,43 +165,17 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
 
     for (const bm of eventOdds.bookmakers ?? []) {
       for (const mkt of bm.markets ?? []) {
-        if (mkt.key === "h2h") {
-          for (const o of mkt.outcomes) {
-            const s = side(o.name);
-            if (s === "a" && Number.isFinite(o.price)) h2hA.push(o.price);
-            else if (s === "b" && Number.isFinite(o.price)) h2hB.push(o.price);
-          }
-        } else if (mkt.key === "h2h_method" || mkt.key === "method_of_victory") {
-          for (const o of mkt.outcomes) {
-            // Odds API for h2h_method: outcome.name = fighter, description = method (KO/TKO | Submission | Decision)
-            const s = side(o.name);
-            if (!s) continue;
-            const desc = (o.description || "").toLowerCase();
-            let methodKey: string | null = null;
-            if (desc.includes("ko") || desc.includes("tko")) methodKey = "ko_tko";
-            else if (desc.includes("sub")) methodKey = "submission";
-            else if (desc.includes("dec") || desc.includes("points")) methodKey = "decision";
-            if (!methodKey) continue;
-            const key = `${s}_${methodKey}`;
-            if (!methodBuckets.has(key)) methodBuckets.set(key, []);
-            methodBuckets.get(key)!.push(o.price);
-          }
-        } else if (mkt.key === "rounds" || mkt.key === "round_betting") {
-          for (const o of mkt.outcomes) {
-            const label = (o.description || o.name || "").toLowerCase();
-            let key: string | null = null;
-            const rMatch = label.match(/round\s*(\d)/);
-            if (rMatch) key = `r${rMatch[1]}`;
-            else if (label.includes("distance") || label.includes("go the distance")) key = "distance";
-            if (!key) continue;
-            if (!roundBuckets.has(key)) roundBuckets.set(key, []);
-            roundBuckets.get(key)!.push(o.price);
-          }
+        if (mkt.key !== "h2h") continue;
+        for (const o of mkt.outcomes) {
+          const s = side(o.name);
+          if (s === "a" && Number.isFinite(o.price)) h2hA.push(o.price);
+          else if (s === "b" && Number.isFinite(o.price)) h2hB.push(o.price);
         }
       }
     }
 
-    // Compute + persist moneyline
+    if (!h2hA.length || !h2hB.length) continue;
+
     const upserts: Array<{
       fight_id: string;
       market_type: string;
@@ -218,42 +192,72 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
       odds: number;
     }> = [];
 
-    if (h2hA.length && h2hB.length) {
-      const priced = await apply2WayMargin(median(h2hA), median(h2hB));
-      upserts.push(
-        { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", label: fightRow.fighter_a, odds: priced.a, is_active: true, updated_at: nowIso },
-        { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", label: fightRow.fighter_b, odds: priced.b, is_active: true, updated_at: nowIso },
-      );
-      snapshots.push(
-        { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", odds: priced.a },
-        { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", odds: priced.b },
-      );
-    }
+    const priced = await apply2WayMargin(median(h2hA), median(h2hB));
+    upserts.push(
+      { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", label: fightRow.fighter_a, odds: priced.a, is_active: true, updated_at: nowIso },
+      { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", label: fightRow.fighter_b, odds: priced.b, is_active: true, updated_at: nowIso },
+    );
+    snapshots.push(
+      { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", odds: priced.a },
+      { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", odds: priced.b },
+    );
 
-    // Method market — priced as an outright across all selections we saw
-    if (methodBuckets.size >= 2) {
-      const entries = Array.from(methodBuckets.entries()).map(([k, arr]) => ({ team: k, odds: median(arr) }));
-      const priced = await applyOutrightMargin(entries);
-      for (const p of priced) {
-        const [s, m] = p.team.split("_");
-        const fighter = s === "a" ? fightRow.fighter_a : fightRow.fighter_b;
-        const methodLabel = m === "ko_tko" ? "KO/TKO" : m === "submission" ? "Submission" : "Decision";
-        const label = `${fighter} by ${methodLabel}`;
-        upserts.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
-        snapshots.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, odds: p.odds });
+    // ---------- Derived Method-of-Victory ----------
+    // Implied win probabilities from moneyline (fair, post-margin removal
+    // done inside apply2WayMargin — we re-derive from the priced numbers).
+    const invA = 1 / priced.a;
+    const invB = 1 / priced.b;
+    const norm = invA + invB;
+    const pA = invA / norm;
+    const pB = invB / norm;
+
+    // Priors per fighter: split win prob across KO/TKO, Submission, Decision.
+    // 5-round main events go the distance more often; 3-rounders less so.
+    const methodPriors = scheduledRounds === 5
+      ? { ko_tko: 0.42, submission: 0.16, decision: 0.42 }
+      : { ko_tko: 0.38, submission: 0.15, decision: 0.47 };
+
+    const methodEntries: Array<{ team: string; odds: number }> = [];
+    for (const s of ["a", "b"] as const) {
+      const pWin = s === "a" ? pA : pB;
+      for (const [m, prior] of Object.entries(methodPriors)) {
+        const p = Math.max(pWin * prior, 0.005);
+        methodEntries.push({ team: `${s}_${m}`, odds: 1 / p });
       }
     }
-
-    // Round market — priced as an outright
-    if (roundBuckets.size >= 2) {
-      const entries = Array.from(roundBuckets.entries()).map(([k, arr]) => ({ team: k, odds: median(arr) }));
-      const priced = await applyOutrightMargin(entries);
-      for (const p of priced) {
-        const label = p.team === "distance" ? "Goes the distance" : `Round ${p.team.slice(1)}`;
-        upserts.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
-        snapshots.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, odds: p.odds });
-      }
+    const methodPriced = await applyOutrightMargin(methodEntries);
+    for (const p of methodPriced) {
+      const [s, ...rest] = p.team.split("_");
+      const m = rest.join("_");
+      const fighter = s === "a" ? fightRow.fighter_a : fightRow.fighter_b;
+      const methodLabel = m === "ko_tko" ? "KO/TKO" : m === "submission" ? "Submission" : "Decision";
+      const label = `${fighter} by ${methodLabel}`;
+      upserts.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
+      snapshots.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, odds: p.odds });
     }
+
+    // ---------- Derived Round Betting ----------
+    // Non-decision probability = 1 - decisionProb (both fighters combined).
+    // Distribute finishes across rounds with decreasing weight; "distance"
+    // captures decisions.
+    const decisionProb = (pA + pB) * methodPriors.decision;
+    const finishProb = Math.max(1 - decisionProb, 0.05);
+    const roundWeights = scheduledRounds === 5
+      ? [0.34, 0.24, 0.18, 0.14, 0.10]
+      : [0.45, 0.32, 0.23];
+    const roundEntries: Array<{ team: string; odds: number }> = [];
+    for (let i = 0; i < scheduledRounds; i++) {
+      const p = Math.max(finishProb * roundWeights[i], 0.005);
+      roundEntries.push({ team: `r${i + 1}`, odds: 1 / p });
+    }
+    roundEntries.push({ team: "distance", odds: 1 / Math.max(decisionProb, 0.005) });
+    const roundPriced = await applyOutrightMargin(roundEntries);
+    for (const p of roundPriced) {
+      const label = p.team === "distance" ? "Goes the distance" : `Round ${p.team.slice(1)}`;
+      upserts.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
+      snapshots.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, odds: p.odds });
+    }
+
 
     if (upserts.length) {
       await (supabaseAdmin as any)
