@@ -348,6 +348,13 @@ export const adminRejectRequest = createServerFn({ method: "POST" })
       entity_id: data.requestId,
       metadata: { rejection_reason: data.rejectionReason },
     });
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "topup_rejected",
+      recipientUserId: (row as any)?.user_id ?? undefined,
+      relatedRecordType: "point_request",
+      relatedRecordId: data.requestId,
+    });
     return { ok: true };
   });
 
