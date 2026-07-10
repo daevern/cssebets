@@ -51,6 +51,7 @@ import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authent
 import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
 import { Route as ManagementAdminWalletAdjustmentsRouteImport } from './routes/management/admin.wallet-adjustments'
 import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
+import { Route as ManagementAdminUfcRouteImport } from './routes/management/admin.ufc'
 import { Route as ManagementAdminTournamentRouteImport } from './routes/management/admin.tournament'
 import { Route as ManagementAdminTokenLedgerRouteImport } from './routes/management/admin.token-ledger'
 import { Route as ManagementAdminSupportOpsRouteImport } from './routes/management/admin.support-ops'
@@ -315,6 +316,11 @@ const ManagementAdminWalletAdjustmentsRoute =
 const ManagementAdminUsersRoute = ManagementAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminUfcRoute = ManagementAdminUfcRouteImport.update({
+  id: '/ufc',
+  path: '/ufc',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
 const ManagementAdminTournamentRoute =
@@ -665,6 +671,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
   '/management/admin/token-ledger': typeof ManagementAdminTokenLedgerRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
+  '/management/admin/ufc': typeof ManagementAdminUfcRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
@@ -754,6 +761,7 @@ export interface FileRoutesByTo {
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
   '/management/admin/token-ledger': typeof ManagementAdminTokenLedgerRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
+  '/management/admin/ufc': typeof ManagementAdminUfcRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
@@ -847,6 +855,7 @@ export interface FileRoutesById {
   '/management/admin/support-ops': typeof ManagementAdminSupportOpsRoute
   '/management/admin/token-ledger': typeof ManagementAdminTokenLedgerRoute
   '/management/admin/tournament': typeof ManagementAdminTournamentRoute
+  '/management/admin/ufc': typeof ManagementAdminUfcRoute
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
@@ -940,6 +949,7 @@ export interface FileRouteTypes {
     | '/management/admin/support-ops'
     | '/management/admin/token-ledger'
     | '/management/admin/tournament'
+    | '/management/admin/ufc'
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
@@ -1029,6 +1039,7 @@ export interface FileRouteTypes {
     | '/management/admin/support-ops'
     | '/management/admin/token-ledger'
     | '/management/admin/tournament'
+    | '/management/admin/ufc'
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
@@ -1121,6 +1132,7 @@ export interface FileRouteTypes {
     | '/management/admin/support-ops'
     | '/management/admin/token-ledger'
     | '/management/admin/tournament'
+    | '/management/admin/ufc'
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
@@ -1463,6 +1475,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/management/admin/users'
       preLoaderRoute: typeof ManagementAdminUsersRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/ufc': {
+      id: '/management/admin/ufc'
+      path: '/ufc'
+      fullPath: '/management/admin/ufc'
+      preLoaderRoute: typeof ManagementAdminUfcRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
     '/management/admin/tournament': {
@@ -1906,6 +1925,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminSupportOpsRoute: typeof ManagementAdminSupportOpsRoute
   ManagementAdminTokenLedgerRoute: typeof ManagementAdminTokenLedgerRoute
   ManagementAdminTournamentRoute: typeof ManagementAdminTournamentRoute
+  ManagementAdminUfcRoute: typeof ManagementAdminUfcRoute
   ManagementAdminUsersRoute: typeof ManagementAdminUsersRoute
   ManagementAdminWalletAdjustmentsRoute: typeof ManagementAdminWalletAdjustmentsRoute
   ManagementAdminWalletLedgerRoute: typeof ManagementAdminWalletLedgerRoute
@@ -1944,6 +1964,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminSupportOpsRoute: ManagementAdminSupportOpsRoute,
   ManagementAdminTokenLedgerRoute: ManagementAdminTokenLedgerRoute,
   ManagementAdminTournamentRoute: ManagementAdminTournamentRoute,
+  ManagementAdminUfcRoute: ManagementAdminUfcRoute,
   ManagementAdminUsersRoute: ManagementAdminUsersRoute,
   ManagementAdminWalletAdjustmentsRoute: ManagementAdminWalletAdjustmentsRoute,
   ManagementAdminWalletLedgerRoute: ManagementAdminWalletLedgerRoute,
