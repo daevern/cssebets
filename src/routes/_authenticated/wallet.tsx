@@ -1,23 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   getMyWallet,
   listMyTransactions,
   listMyRequests,
-  createDraftPointRequest,
-  attachProofToRequest,
-  submitPointRequest,
-  cancelDraftPointRequest,
 } from "@/lib/wallet.functions";
 import { getHouseBankrollSummary } from "@/lib/bankroll.functions";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Upload, X, FileCheck, Landmark, Copy, Check, Wallet as WalletIcon, ArrowUpRight, Receipt, Building2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { Loader2, Landmark, ArrowUpRight, Receipt } from "lucide-react";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
@@ -27,11 +19,6 @@ import { WalletCreditCard } from "@/components/wallet/WalletCard";
 export const Route = createFileRoute("/_authenticated/wallet")({
   ssr: false,
   head: () => ({ meta: [{ title: "My Wallet — cssebets" }] }),
-  validateSearch: (s: Record<string, unknown>) => {
-    const raw = s.amount;
-    const n = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : NaN;
-    return { amount: Number.isFinite(n) && n > 0 ? n : undefined };
-  },
   component: WalletPage,
 });
 
