@@ -33,6 +33,9 @@ function bankInitial(name: string) {
 export const Route = createFileRoute("/_authenticated/payout")({
   ssr: false,
   head: () => ({ meta: [{ title: "Bank Accounts — cssebets" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    add: s.add === 1 || s.add === "1" ? 1 : undefined,
+  }),
   component: PayoutPage,
 });
 
