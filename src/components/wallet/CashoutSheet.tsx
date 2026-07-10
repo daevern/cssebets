@@ -9,6 +9,7 @@ import { getMyWallet } from "@/lib/wallet.functions";
 import {
   getMySavedBankAccounts,
   createPayoutRequest,
+  getMyPayouts,
 } from "@/lib/payout.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { StencilDialogContent } from "@/components/wallet/StencilDialog";
@@ -78,6 +79,7 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
   const walletFn = useServerFn(getMyWallet);
   const banksFn = useServerFn(getMySavedBankAccounts);
   const createFn = useServerFn(createPayoutRequest);
+  const payoutsFn = useServerFn(getMyPayouts);
 
   const wallet = useQuery({
     queryKey: ["my-wallet", uid],
@@ -88,6 +90,12 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
   const banks = useQuery({
     queryKey: ["my-saved-banks", uid],
     queryFn: () => banksFn({}),
+    enabled: !!uid && open,
+    staleTime: 0,
+  });
+  const payouts = useQuery({
+    queryKey: ["my-payouts", uid],
+    queryFn: () => payoutsFn({}),
     enabled: !!uid && open,
     staleTime: 0,
   });
@@ -113,8 +121,9 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
 
   const balance = Number(wallet.data?.balance ?? 0);
   const accounts = banks.data?.accounts ?? [];
-  const loading = wallet.isLoading || banks.isLoading;
+  const loading = wallet.isLoading || banks.isLoading || payouts.isLoading;
   const hasBank = accounts.length > 0;
+  const activePayout = payouts.data?.active ?? null;
 
   const submit = useMutation({
     mutationFn: async () => {
@@ -155,6 +164,33 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
 
   function setMax() {
     if (balance) setAmount(String(Math.floor(balance)));
+  }
+
+  /* ---------- Active payout in progress ---------- */
+  if (open && !loading && activePayout && !success) {
+    const statusLabel =
+      activePayout.status === "pending"
+        ? "Awaiting admin review"
+        : activePayout.status === "approved"
+          ? "Approved · processing transfer"
+          : "Proof uploaded · action required";
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <StencilDialogContent
+          kicker="Cashout · In progress"
+          title="You have an active payout"
+          description={`${Number(activePayout.amount).toLocaleString()} pts → ${activePayout.bank_name}. ${statusLabel}. You can request another once this one settles.`}
+          footer={
+            <>
+              <GhostBtn onClick={() => onOpenChange(false)}>Close</GhostBtn>
+              <NeonBtn onClick={() => goToPayoutPage()}>
+                Track status <ArrowRight className="h-3.5 w-3.5" />
+              </NeonBtn>
+            </>
+          }
+        />
+      </Dialog>
+    );
   }
 
   /* ---------- No saved bank ---------- */
