@@ -111,108 +111,11 @@ function WalletPage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc, uid]);
 
-  const search = Route.useSearch();
-  const initialAmount = search.amount ? String(search.amount) : "100";
-  const [amount, setAmount] = useState(initialAmount);
-  const [reason, setReason] = useState("");
-  const [draftId, setDraftId] = useState<string | null>(null);
-  const [proofName, setProofName] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const fileRef = useRef<HTMLInputElement | null>(null);
-  const topupRef = useRef<HTMLDivElement | null>(null);
-
-  // Pre-fill from `?amount=` and scroll to top-up section
-  useEffect(() => {
-    if (search.amount) {
-      setAmount(String(search.amount));
-      requestAnimationFrame(() => {
-        topupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search.amount]);
-
-  async function handleFile(file: File | null) {
-    if (!file || !uid) return;
-    if (!ACCEPTED.includes(file.type)) {
-      toast.error("Unsupported file type. Allowed: PDF, JPG, PNG, WEBP.");
-      return;
-    }
-    if (file.size > MAX_SIZE) {
-      toast.error("File too large (max 10MB).");
-      return;
-    }
-    const amt = Number(amount);
-    if (!amt || amt < 50) {
-      toast.error("Enter a points amount of at least 50 first.");
-      return;
-    }
-    setUploading(true);
-    try {
-      const { id }: any = await draftFn({ data: { amount: amt, reason: reason || null } });
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const path = `point-requests/${uid}/${id}/${Date.now()}_${safeName}`;
-      const { error: upErr } = await supabase.storage.from(PROOF_BUCKET).upload(path, file, {
-        contentType: file.type,
-        upsert: false,
-      });
-      if (upErr) throw new Error(upErr.message);
-      await attachFn({
-        data: {
-          requestId: id,
-          filePath: path,
-          fileName: file.name,
-          fileType: file.type,
-          fileSize: file.size,
-        },
-      });
-      setDraftId(id);
-      setProofName(file.name);
-      toast.success("Proof uploaded.");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setUploading(false);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  }
-
-  async function removeProof() {
-    if (!draftId) return;
-    try {
-      await cancelFn({ data: { requestId: draftId } });
-    } catch (e) {
-      toast.error((e as Error).message);
-      return;
-    }
-    setDraftId(null);
-    setProofName(null);
-  }
-
-  const submit = useMutation({
-    mutationFn: async () => {
-      if (!draftId) throw new Error("Please upload proof before requesting points.");
-      return submitFn({ data: { requestId: draftId, amount: Number(amount), reason: reason || null } });
-    },
-    onSuccess: () => {
-      toast.success("Point request submitted for admin approval.");
-      setAmount("100");
-      setReason("");
-      setDraftId(null);
-      setProofName(null);
-      qc.invalidateQueries({ queryKey: ["my-point-requests", uid] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const amountValid = Number(amount) >= 50;
-  const canSubmit = amountValid && !!draftId && !uploading;
-
   return (
     <PageShell
       kicker="Points Wallet"
       title="Your"
-      titleAccent="Portfolio"
+      titleAccent="Transactions"
     >
       {/* Balance hero — Member card */}
       <div className="flex justify-center py-2">
