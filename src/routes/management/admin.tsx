@@ -63,6 +63,7 @@ const GROUPS: NavGroup[] = [
       { to: "/management/admin/odds-history", label: "Odds history", icon: TrendingUp },
       { to: "/management/admin/odds-provider", label: "Odds provider", icon: Database },
       { to: "/management/admin/pricing-breakdown", label: "Pricing", icon: ShieldAlert },
+      { to: "/management/admin/ufc", label: "UFC", icon: Shield },
     ],
   },
   {
