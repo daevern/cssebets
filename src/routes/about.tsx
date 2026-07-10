@@ -47,7 +47,10 @@ export function PublicShell({
 }) {
   return (
     <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
-      <header className="sticky top-0 z-40 border-b border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 backdrop-blur-md">
+      <header
+        className="sticky top-0 z-40 border-b border-[var(--color-surface-border)] bg-[#0b1220]"
+        style={{ paddingTop: "env(safe-area-inset-top)", backgroundColor: "#0b1220" }}
+      >
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-3 px-4 md:h-16">
           <Link to="/" aria-label="CSSEBets home" className="shrink-0">
             <CsseLogo size={22} />
