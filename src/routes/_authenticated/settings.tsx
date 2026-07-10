@@ -165,6 +165,10 @@ function SettingsPage() {
         <SaveBtn onClick={savePhone} disabled={savingPhone || phone === currentPhone} loading={savingPhone} label="Update phone" />
       </StencilPanel>
 
+      <NotificationSettings />
+
+
+
       <StencilPanel kicker={<><LogOut className="h-3 w-3" /> Session</>}>
         <p className="text-sm text-[var(--color-ink-muted)]">
           Sign out of cssebets on this device.
