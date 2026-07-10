@@ -15,6 +15,8 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { captureReferralFromUrl } from "@/lib/referral-code";
 import { Toaster } from "sonner";
+import { InstallPrompt } from "@/components/pwa/InstallPrompt";
+import { useAuth } from "@/hooks/use-auth";
 
 function NotFoundComponent() {
   return (
