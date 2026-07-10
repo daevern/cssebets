@@ -147,10 +147,10 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     [accounts, selectedId],
   );
 
-  function goToPayoutPage() {
+  function goToPayoutPage(opts?: { add?: boolean }) {
     onOpenChange(false);
     onNavigateAway?.();
-    navigate({ to: "/payout" });
+    navigate({ to: "/payout", search: opts?.add ? { add: 1 } : undefined } as any);
   }
 
   function setMax() {
@@ -162,12 +162,13 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <StencilDialogContent
-          title="Add a bank account"
-          description="Save your payout details once. They'll be ready for every cashout."
+          kicker="Cashout · Setup"
+          title="Link a bank account"
+          description="Save your payout details once. They'll be ready for every cashout to come."
           footer={
             <>
               <GhostBtn onClick={() => onOpenChange(false)}>Cancel</GhostBtn>
-              <NeonBtn onClick={goToPayoutPage}>
+              <NeonBtn onClick={() => goToPayoutPage({ add: true })}>
                 Add account <ArrowRight className="h-3.5 w-3.5" />
               </NeonBtn>
             </>
