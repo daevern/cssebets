@@ -1,13 +1,14 @@
 import type { ReactNode } from "react";
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Corner } from "@/components/ui/page-shell";
 
 type Props = {
-  kicker: ReactNode;
+  /** kept for backwards compat — no longer rendered by default */
+  kicker?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
   children?: ReactNode;
   footer?: ReactNode;
+  /** kept for backwards compat; ignored in the minimal shell */
   accent?: boolean;
   size?: "sm" | "md" | "lg";
   onEscapeKeyDown?: (e: KeyboardEvent) => void;
@@ -15,55 +16,40 @@ type Props = {
 };
 
 /**
- * Stencil-styled dialog content matching cssebets design language:
- * corner accents, neon uppercase kicker, dashed divider, display serif title.
+ * Minimal, Kalshi-inspired dialog shell for the cashout / payout flows.
+ * Thin border, generous whitespace, one clear hierarchy, subtle scale-in.
  */
 export function StencilDialogContent({
-  kicker,
   title,
   description,
   children,
   footer,
-  accent = false,
   size = "sm",
   onEscapeKeyDown,
   onPointerDownOutside,
 }: Props) {
-  const max = size === "lg" ? "max-w-3xl" : size === "md" ? "max-w-md" : "max-w-sm";
+  const max = size === "lg" ? "max-w-2xl" : size === "md" ? "max-w-md" : "max-w-[380px]";
   return (
     <DialogContent
       onEscapeKeyDown={onEscapeKeyDown}
       onPointerDownOutside={onPointerDownOutside}
-      className={`${max} gap-0 rounded-none border p-0 shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)] bg-[var(--color-surface-2)] ${
-        accent ? "border-[var(--color-neon)]/40" : "border-[var(--color-surface-border)]"
-      }`}
+      className={`${max} gap-0 rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-0 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] data-[state=open]:animate-scale-in`}
     >
-      <Corner pos="tl" />
-      <Corner pos="tr" />
-      <Corner pos="bl" />
-      <Corner pos="br" />
-
-      <div className="border-b border-dashed border-[var(--color-surface-border)] px-5 py-3">
-        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
-          {kicker}
-        </span>
-      </div>
-
-      <DialogHeader className="space-y-1.5 px-5 pt-5">
-        <DialogTitle className="font-display text-xl font-bold leading-tight tracking-tight text-[var(--color-ink)]">
+      <DialogHeader className="space-y-1.5 px-6 pt-6 pb-2 text-left">
+        <DialogTitle className="font-display text-[19px] font-semibold leading-tight tracking-tight text-[var(--color-ink)]">
           {title}
         </DialogTitle>
         {description && (
-          <DialogDescription className="text-sm text-[var(--color-ink-muted)]">
+          <DialogDescription className="text-[13px] leading-relaxed text-[var(--color-ink-muted)]">
             {description}
           </DialogDescription>
         )}
       </DialogHeader>
 
-      {children && <div className="px-5 py-5">{children}</div>}
+      {children && <div className="px-6 pt-4 pb-2">{children}</div>}
 
       {footer && (
-        <div className="flex flex-col-reverse gap-2 border-t border-dashed border-[var(--color-surface-border)] px-5 py-4 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-2 px-6 pt-4 pb-6 sm:flex-row sm:justify-end">
           {footer}
         </div>
       )}
