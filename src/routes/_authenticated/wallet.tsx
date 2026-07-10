@@ -27,6 +27,11 @@ import { WalletCreditCard } from "@/components/wallet/WalletCard";
 export const Route = createFileRoute("/_authenticated/wallet")({
   ssr: false,
   head: () => ({ meta: [{ title: "My Wallet — cssebets" }] }),
+  validateSearch: (s: Record<string, unknown>) => {
+    const raw = s.amount;
+    const n = typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : NaN;
+    return { amount: Number.isFinite(n) && n > 0 ? n : undefined };
+  },
   component: WalletPage,
 });
 
@@ -126,12 +131,26 @@ function WalletPage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc, uid]);
 
-  const [amount, setAmount] = useState("100");
+  const search = Route.useSearch();
+  const initialAmount = search.amount ? String(search.amount) : "100";
+  const [amount, setAmount] = useState(initialAmount);
   const [reason, setReason] = useState("");
   const [draftId, setDraftId] = useState<string | null>(null);
   const [proofName, setProofName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const topupRef = useRef<HTMLDivElement | null>(null);
+
+  // Pre-fill from `?amount=` and scroll to top-up section
+  useEffect(() => {
+    if (search.amount) {
+      setAmount(String(search.amount));
+      requestAnimationFrame(() => {
+        topupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.amount]);
 
   async function handleFile(file: File | null) {
     if (!file || !uid) return;
@@ -264,20 +283,21 @@ function WalletPage() {
       )}
 
       {/* Request points */}
+      <div ref={topupRef} className="scroll-mt-24">
       <StencilPanel
         tour="request-points"
-        kicker={<><Plus className="h-3 w-3" /> Top up · Request points</>}
+        kicker={<><Plus className="h-3 w-3" /> Top up · Payment instructions</>}
       >
 
         <div className="mt-4 space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Amount</label>
+          <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Requested amount</label>
           <Input
             type="number"
             min={50}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Amount"
-            className="bg-[#070D0A] border-[var(--color-surface-border)]"
+            className="bg-[#070D0A] border-[var(--color-surface-border)] font-mono text-lg font-bold tabular-nums"
           />
           {amount !== "" && Number(amount) < 50 && (
             <p className="text-xs text-destructive">Minimum request amount is 50 pts.</p>
@@ -289,19 +309,24 @@ function WalletPage() {
           <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">
             <Building2 className="h-3 w-3" /> Bank transfer details
           </div>
-          <div className="space-y-1">
-            <div className="text-sm font-semibold leading-tight">CIMB</div>
-            <div className="text-xs leading-tight text-[var(--color-ink-muted)]">BRICKSPLUG ENTERPRISE SD BHD</div>
-            <CopiableValue value="8010575969" label="Account number" />
+          <div className="space-y-2">
+            <CopiableLabelValue label="Bank" value="CIMB" />
+            <CopiableLabelValue label="Account name" value="BRICKSPLUG ENTERPRISE SD BHD" />
+            <CopiableLabelValue label="Account number" value="8010575969" mono />
           </div>
           <div data-tour="reference-id" className="border-t border-dashed border-[var(--color-surface-border)] pt-2 space-y-1.5">
-            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">Reference ID</div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">Payment Reference ID</div>
             <ReferenceIdRow reference={myProfile.data?.reference ?? wallet.data?.publicReference ?? ""} />
             <p className="text-[11px] text-[var(--color-ink-muted)] leading-snug">
-              Include this Reference ID with your transfer proof so admins can match your request.
+              Please use this Reference ID in your bank transfer reference/recipient reference.
             </p>
           </div>
+          <CopyFullDetailsButton
+            amount={Number(amount) || 0}
+            reference={myProfile.data?.reference ?? wallet.data?.publicReference ?? ""}
+          />
         </div>
+
 
         <div data-tour="proof-upload" className="mt-4 space-y-2">
           <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Upload proof file</label>
@@ -335,6 +360,17 @@ function WalletPage() {
           )}
         </div>
 
+        {/* Pre-submit checklist */}
+        <div className="mt-4 border border-dashed border-[var(--color-surface-border)] bg-[#070D0A] p-3">
+          <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Before submitting</div>
+          <ul className="mt-2 space-y-1 text-[11px] leading-snug text-[var(--color-ink-muted)]">
+            <li>• Transfer amount matches your top-up request</li>
+            <li>• Reference ID is included in the bank transfer reference</li>
+            <li>• Receipt shows a successful transfer</li>
+            <li>• Receipt date/time is clearly visible</li>
+          </ul>
+        </div>
+
         <button
           data-tour="submit-request"
           type="button"
@@ -353,12 +389,15 @@ function WalletPage() {
           ) : (
             <>
               <Upload className="h-4 w-4" />
-              <span>Request Points</span>
+              <span>Submit Top-Up Request</span>
             </>
           )}
         </button>
-        <p className="mt-2 text-[11px] text-[var(--color-ink-muted)]">An admin will review your request.</p>
+        <p className="mt-2 text-[11px] text-[var(--color-ink-muted)]">Points are credited only after admin verifies your payment.</p>
       </StencilPanel>
+      </div>
+
+
 
       {/* Point requests */}
       <StencilPanel kicker={<><Receipt className="h-3 w-3" /> My point requests</>}>
@@ -489,3 +528,71 @@ function CopiableValue({ value, label }: { value: string; label?: string }) {
     </div>
   );
 }
+
+function CopiableLabelValue({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      toast.success(`${label} copied`);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Could not copy");
+    }
+  }
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <div className="min-w-0">
+        <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">{label}</div>
+        <div className={`truncate text-sm font-semibold leading-tight text-[var(--color-ink)] select-all ${mono ? "font-mono tabular-nums" : ""}`}>
+          {value}
+        </div>
+      </div>
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        className="h-7 w-7 shrink-0 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]"
+        onClick={copy}
+      >
+        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      </Button>
+    </div>
+  );
+}
+
+function CopyFullDetailsButton({ amount, reference }: { amount: number; reference: string }) {
+  const [copied, setCopied] = useState(false);
+  const text = [
+    `Bank Name: CIMB`,
+    `Account Name: BRICKSPLUG ENTERPRISE SD BHD`,
+    `Account Number: 8010575969`,
+    `Amount: RM${amount.toLocaleString()}`,
+    `Reference ID: ${reference || "—"}`,
+    ``,
+    `Please include the Reference ID in your bank transfer reference so your top-up can be verified faster.`,
+  ].join("\n");
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success("Full payment details copied");
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      toast.error("Could not copy");
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      disabled={!reference}
+      className="mt-1 flex w-full items-center justify-center gap-2 rounded-md border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)] transition-all hover:bg-[var(--color-neon)]/15 disabled:opacity-40"
+    >
+      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? "Copied" : "Copy Full Payment Details"}
+    </button>
+  );
+}
+

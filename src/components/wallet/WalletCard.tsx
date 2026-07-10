@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { CashoutSheet } from "@/components/wallet/CashoutSheet";
+import { TopUpAmountModal } from "@/components/wallet/TopUpAmountModal";
 
 /* ---------------- helpers ---------------- */
 
@@ -289,17 +290,18 @@ export function WalletCreditCard({
 
 export function WalletActions({ onNavigate }: { onNavigate?: () => void }) {
   const [cashoutOpen, setCashoutOpen] = useState(false);
+  const [topupOpen, setTopupOpen] = useState(false);
   return (
     <div className="w-full max-w-sm space-y-2">
       <div className="grid grid-cols-2 gap-2">
-        <Link
-          to="/wallet"
-          onClick={onNavigate}
+        <button
+          type="button"
+          onClick={() => setTopupOpen(true)}
           className="group flex items-center justify-center gap-2 rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)]/10 px-4 py-3 text-xs font-bold uppercase tracking-[0.18em] text-[var(--neon)] transition-all hover:bg-[var(--neon)]/15 active:scale-[0.98]"
         >
           <ArrowDownToLine className="h-4 w-4" />
           Top-up
-        </Link>
+        </button>
         <button
           type="button"
           onClick={() => setCashoutOpen(true)}
@@ -320,6 +322,11 @@ export function WalletActions({ onNavigate }: { onNavigate?: () => void }) {
       <CashoutSheet
         open={cashoutOpen}
         onOpenChange={setCashoutOpen}
+        onNavigateAway={onNavigate}
+      />
+      <TopUpAmountModal
+        open={topupOpen}
+        onOpenChange={setTopupOpen}
         onNavigateAway={onNavigate}
       />
     </div>
