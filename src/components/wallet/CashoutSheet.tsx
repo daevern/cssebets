@@ -219,6 +219,7 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <StencilDialogContent
+        kicker="Cashout · Withdraw to bank"
         title="Cash out"
         description={
           !loading
