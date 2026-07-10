@@ -121,8 +121,9 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
 
   const balance = Number(wallet.data?.balance ?? 0);
   const accounts = banks.data?.accounts ?? [];
-  const loading = wallet.isLoading || banks.isLoading;
+  const loading = wallet.isLoading || banks.isLoading || payouts.isLoading;
   const hasBank = accounts.length > 0;
+  const activePayout = payouts.data?.active ?? null;
 
   const submit = useMutation({
     mutationFn: async () => {
