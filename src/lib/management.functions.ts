@@ -169,8 +169,19 @@ export const staffRejectUser = createServerFn({ method: "POST" })
       target_type: "user", target_user_id: data.targetUserId, target_id: data.targetUserId,
       reason: data.reason,
     });
+
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "account_rejected",
+      recipientUserId: data.targetUserId,
+      relatedRecordType: "user",
+      relatedRecordId: data.targetUserId,
+      payload: { reason: data.reason },
+    });
+
     return { ok: true };
   });
+
 
 // ============= POINT REQUESTS =============
 
