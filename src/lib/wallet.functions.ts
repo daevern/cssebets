@@ -142,6 +142,12 @@ export const submitPointRequest = createServerFn({ method: "POST" })
       })
       .eq("id", data.requestId);
     if (error) throw new Error(error.message);
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "admin_new_topup",
+      relatedRecordType: "point_request",
+      relatedRecordId: data.requestId,
+    });
     return { ok: true };
   });
 
