@@ -22,9 +22,6 @@ export const Route = createFileRoute("/_authenticated/wallet")({
   component: WalletPage,
 });
 
-const ACCEPTED = ["application/pdf", "image/jpeg", "image/jpg", "image/png", "image/webp"];
-const MAX_SIZE = 10 * 1024 * 1024;
-const PROOF_BUCKET = "point-request-proofs";
 
 function WalletPage() {
   const wFn = useServerFn(getMyWallet);
