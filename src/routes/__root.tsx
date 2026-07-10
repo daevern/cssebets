@@ -162,9 +162,16 @@ function RootComponent() {
           <Outlet />
         </Suspense>
       </InitialLoadGate>
+      <InstallPromptGate />
       <Toaster richColors position="top-center" theme="dark" />
     </QueryClientProvider>
   );
+}
+
+function InstallPromptGate() {
+  const { user } = useAuth();
+  if (!user) return null;
+  return <InstallPrompt />;
 }
 
 function InitialLoadGate({ children }: { children: ReactNode }) {
