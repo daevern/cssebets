@@ -137,7 +137,10 @@ function LandingPage() {
   return (
     <div className="relative min-h-screen bg-[var(--surface)] text-[var(--ink)]">
       {/* Minimal top nav — logo + login + register only */}
-      <header className="sticky top-0 z-40 border-b border-[var(--color-surface-border)] bg-[var(--surface)]/95 backdrop-blur-md">
+      <header
+        className="sticky top-0 z-40 border-b border-[var(--color-surface-border)] bg-[#0b1220]"
+        style={{ paddingTop: "env(safe-area-inset-top)", backgroundColor: "#0b1220" }}
+      >
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 md:h-16 md:px-8">
           <Link to="/" aria-label="CSSEBets home" className="shrink-0">
             <CsseLogo size={22} />
