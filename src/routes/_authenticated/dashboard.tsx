@@ -152,8 +152,16 @@ function HomePage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
+  const isTbd = (s: string | null | undefined) =>
+    !s || String(s).trim().toUpperCase() === "TBD";
+
   const { featured, trending } = useMemo(() => {
-    const arr = data ?? [];
+    const arr = (data ?? []).filter(
+      (m) =>
+        !isTbd(m.home_team) &&
+        !isTbd(m.away_team) &&
+        (m.stage ?? "").toLowerCase().includes("world cup"),
+    );
     const live = arr.filter((m) => m.status === "live");
     const upcoming = arr
       .filter((m) => m.status !== "finished" && new Date(m.kickoff_at).getTime() > now)
