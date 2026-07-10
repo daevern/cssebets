@@ -113,6 +113,18 @@ function MatchesPage() {
 
   return (
     <div className="flex w-full min-w-0 max-w-full flex-col gap-5 overflow-x-hidden bg-[var(--surface)] px-4 pt-5">
+      {/* UFC 329 pill */}
+      <Link
+        to="/ufc"
+        className="flex items-center justify-between rounded-full border border-[var(--color-surface-border)] bg-gradient-to-r from-red-900/40 to-black px-4 py-2 text-xs font-bold text-white transition hover:border-red-500"
+      >
+        <span className="flex items-center gap-2">
+          <span className="rounded bg-red-600 px-2 py-0.5 text-[10px]">NEW</span>
+          UFC 329 · Main & Co-Main markets
+        </span>
+        <ArrowUpRight className="h-4 w-4" />
+      </Link>
+
       {/* Segmented tabs */}
       <div className="grid grid-cols-3 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-1">
         <TabBtn active={tab === "live"} onClick={() => setTab("live")} label="Live" count={live.length} tone="live" />
