@@ -131,12 +131,26 @@ function WalletPage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc, uid]);
 
-  const [amount, setAmount] = useState("100");
+  const search = Route.useSearch();
+  const initialAmount = search.amount ? String(search.amount) : "100";
+  const [amount, setAmount] = useState(initialAmount);
   const [reason, setReason] = useState("");
   const [draftId, setDraftId] = useState<string | null>(null);
   const [proofName, setProofName] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const topupRef = useRef<HTMLDivElement | null>(null);
+
+  // Pre-fill from `?amount=` and scroll to top-up section
+  useEffect(() => {
+    if (search.amount) {
+      setAmount(String(search.amount));
+      requestAnimationFrame(() => {
+        topupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.amount]);
 
   async function handleFile(file: File | null) {
     if (!file || !uid) return;
