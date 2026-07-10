@@ -283,20 +283,21 @@ function WalletPage() {
       )}
 
       {/* Request points */}
+      <div ref={topupRef} className="scroll-mt-24">
       <StencilPanel
         tour="request-points"
-        kicker={<><Plus className="h-3 w-3" /> Top up · Request points</>}
+        kicker={<><Plus className="h-3 w-3" /> Top up · Payment instructions</>}
       >
 
         <div className="mt-4 space-y-1.5">
-          <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Amount</label>
+          <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Requested amount</label>
           <Input
             type="number"
             min={50}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Amount"
-            className="bg-[#070D0A] border-[var(--color-surface-border)]"
+            className="bg-[#070D0A] border-[var(--color-surface-border)] font-mono text-lg font-bold tabular-nums"
           />
           {amount !== "" && Number(amount) < 50 && (
             <p className="text-xs text-destructive">Minimum request amount is 50 pts.</p>
@@ -308,19 +309,24 @@ function WalletPage() {
           <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">
             <Building2 className="h-3 w-3" /> Bank transfer details
           </div>
-          <div className="space-y-1">
-            <div className="text-sm font-semibold leading-tight">CIMB</div>
-            <div className="text-xs leading-tight text-[var(--color-ink-muted)]">BRICKSPLUG ENTERPRISE SD BHD</div>
-            <CopiableValue value="8010575969" label="Account number" />
+          <div className="space-y-2">
+            <CopiableLabelValue label="Bank" value="CIMB" />
+            <CopiableLabelValue label="Account name" value="BRICKSPLUG ENTERPRISE SD BHD" />
+            <CopiableLabelValue label="Account number" value="8010575969" mono />
           </div>
           <div data-tour="reference-id" className="border-t border-dashed border-[var(--color-surface-border)] pt-2 space-y-1.5">
-            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">Reference ID</div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">Payment Reference ID</div>
             <ReferenceIdRow reference={myProfile.data?.reference ?? wallet.data?.publicReference ?? ""} />
             <p className="text-[11px] text-[var(--color-ink-muted)] leading-snug">
-              Include this Reference ID with your transfer proof so admins can match your request.
+              Please use this Reference ID in your bank transfer reference/recipient reference.
             </p>
           </div>
+          <CopyFullDetailsButton
+            amount={Number(amount) || 0}
+            reference={myProfile.data?.reference ?? wallet.data?.publicReference ?? ""}
+          />
         </div>
+
 
         <div data-tour="proof-upload" className="mt-4 space-y-2">
           <label className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Upload proof file</label>
