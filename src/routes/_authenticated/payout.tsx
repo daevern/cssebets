@@ -198,34 +198,52 @@ function PayoutPage() {
 
         <div className="mt-4 space-y-2">
           {banks.isLoading ? (
-            <Loader2 className="h-5 w-5 animate-spin text-[var(--color-ink-muted)]" />
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-[var(--color-ink-muted)]" />
+            </div>
           ) : accounts.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-6 text-center text-sm text-[var(--color-ink-muted)]">
-              No bank accounts saved yet.
+            <div className="flex flex-col items-center gap-2 border border-dashed border-[var(--color-surface-border)] bg-[#050E0A] px-3 py-8 text-center">
+              <Landmark className="h-6 w-6 text-[var(--color-neon)]/50" />
+              <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+                No accounts on file
+              </div>
+              <p className="text-xs text-[var(--color-ink-muted)]/80">
+                Add one below to enable cashouts from your wallet.
+              </p>
             </div>
           ) : (
             accounts.map((a) => (
               <div
                 key={a.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2.5"
+                className="group flex items-center gap-3 border border-[var(--color-surface-border)] bg-[#050E0A] px-3 py-3 transition-colors hover:border-[var(--color-neon)]/30"
               >
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-[var(--color-ink)]">{a.bankName}</div>
-                  <div className="text-[11px] text-[var(--color-ink-muted)]">
-                    Acc {a.accountNumber}{a.accountHolderName ? ` · ${a.accountHolderName}` : ""}
-                  </div>
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center border border-[var(--color-surface-border)] bg-[#020806] font-display text-sm font-bold text-[var(--color-neon)]">
+                  {bankInitial(a.bankName)}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+                    {a.bankName}
+                  </div>
+                  <div className="mt-0.5 font-mono text-sm tabular-nums text-[var(--color-ink)]">
+                    {a.accountNumber}
+                  </div>
+                  {a.accountHolderName && (
+                    <div className="text-[10px] text-[var(--color-ink-muted)]/80">
+                      {a.accountHolderName}
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
                   onClick={() => {
                     if (confirm.isPending) return;
                     if (window.confirm(`Remove ${a.masked}?`)) removeAcc.mutate(a.id);
                   }}
-                  className="text-destructive hover:text-destructive"
+                  className="flex h-8 w-8 items-center justify-center border border-[var(--color-surface-border)] bg-transparent text-[var(--color-ink-muted)] transition-colors hover:border-destructive/50 hover:text-destructive"
+                  aria-label="Remove account"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               </div>
             ))
           )}
@@ -234,9 +252,9 @@ function PayoutPage() {
         <button
           type="button"
           onClick={() => setAddOpen(true)}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-neon)] px-5 py-3 text-xs font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_20px_var(--color-neon-glow)] hover:brightness-110"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-none bg-[var(--color-neon)] px-5 py-3 text-[11px] font-bold uppercase tracking-[0.28em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110"
         >
-          <Plus className="h-4 w-4" /> Add bank account
+          <Plus className="h-3.5 w-3.5" /> Add bank account
         </button>
       </StencilPanel>
 
