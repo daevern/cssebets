@@ -14,17 +14,17 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "CSSEBets — Prediction Markets for the FIFA World Cup 2026" },
+      { title: "CSSEBets – The FIFA World Cup 2026 Prediction Market" },
       {
         name: "description",
         content:
-          "The prediction market for the FIFA World Cup 2026. Trade live markets on match outcomes, momentum and lineups with community-driven odds — like Kalshi, built for football.",
+          "Trade live markets on every match, goal, lineup, and key moment with dynamic, community-driven pricing.",
       },
-      { property: "og:title", content: "CSSEBets — Prediction Markets for the FIFA World Cup 2026" },
+      { property: "og:title", content: "CSSEBets – The FIFA World Cup 2026 Prediction Market" },
       {
         property: "og:description",
         content:
-          "The prediction market for the FIFA World Cup 2026. Trade live markets on match outcomes, momentum and lineups with community-driven odds — like Kalshi, built for football.",
+          "Trade live markets on every match, goal, lineup, and key moment with dynamic, community-driven pricing.",
       },
       { property: "og:url", content: "https://cssebets.com/" },
       { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
