@@ -109,7 +109,7 @@ function CopyRow({
     <button
       type="button"
       onClick={copy}
-      className="group flex w-full items-center justify-between gap-3 rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2 text-left transition-colors hover:border-[var(--color-ink-muted)]/40"
+      className="group flex w-full items-center justify-between gap-3 rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] px-3 py-2 text-left transition-colors hover:border-[var(--color-ink-muted)]/40 sm:py-2.5"
     >
       <div className="min-w-0">
         <div className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
