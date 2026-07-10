@@ -399,12 +399,12 @@ export async function dispatchNotification(input: DispatchInput): Promise<void> 
           const email = user?.user?.email;
           const isSynthetic = !!email && email.endsWith("@phone.cssebets.local");
           if (email && !isSynthetic) {
-            const html = emailWrap(copy.body, copy.title, copy.emailHtml, "Open CSSEBets", deepLink);
-            await sendOneEmail(supabaseAdmin, email, copy.subject, html, `${idem}:${eventId}`);
-            results.email = { ok: true, to: email };
+            const emailRes = await sendOneEmail(supabaseAdmin, email, copy.subject, copy, `${idem}:${eventId}`);
+            results.email = emailRes.ok ? { ok: true, to: email } : { skipped: emailRes.skipped, to: email };
           } else {
             results.email = { skipped: "no_email" };
           }
+
         } catch (e: any) {
           results.email = { ok: false, error: String(e?.message || e) };
         }
