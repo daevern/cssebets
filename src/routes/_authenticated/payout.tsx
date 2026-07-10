@@ -79,7 +79,6 @@ function PayoutPage() {
   }, [qc, uid]);
 
   const [addOpen, setAddOpen] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
   const search = Route.useSearch();
   useEffect(() => {
     if (search.add === 1) setAddOpen(true);
