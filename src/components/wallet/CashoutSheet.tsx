@@ -257,11 +257,6 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
       <StencilDialogContent
         kicker="Cashout · Withdraw to bank"
         title="Cash out"
-        description={
-          !loading
-            ? `${balance.toLocaleString()} pts available`
-            : undefined
-        }
         footer={
           <>
             <GhostBtn onClick={() => onOpenChange(false)} disabled={submit.isPending}>
@@ -287,6 +282,12 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
           <div className="space-y-6">
             {/* Amount — the hero */}
             <div>
+              <div className="mb-2 text-center">
+                <span className="text-base font-semibold text-[var(--color-ink)]">
+                  {balance.toLocaleString()} pts
+                </span>
+                <span className="ml-1 text-base font-medium text-[var(--color-ink-muted)]">available</span>
+              </div>
               <div
                 className={`group relative flex items-baseline justify-center gap-2 border-b py-4 transition-colors ${
                   amt > balance
@@ -311,11 +312,11 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
                 </span>
               </div>
               <div className="mt-2 flex items-center justify-between">
-                <span className="text-[11px] text-[var(--color-ink-muted)]">
+                <span className="text-[13px] font-medium text-[var(--color-ink)]">
                   {amt > balance
                     ? "Exceeds balance"
                     : amountValid
-                      ? `${(balance - amt).toLocaleString()} left after`
+                      ? `${(balance - amt).toLocaleString()} pts left after`
                       : "Enter amount"}
                 </span>
                 <button
@@ -336,7 +337,7 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
                 <button
                   type="button"
                   onClick={() => goToPayoutPage({ add: accounts.length === 0 })}
-                  className="text-[11px] font-medium text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-neon)]"
+                  className="text-[11px] font-semibold text-[var(--color-neon)] transition-colors hover:brightness-110"
                 >
                   Manage account
                 </button>
