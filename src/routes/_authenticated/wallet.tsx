@@ -528,3 +528,71 @@ function CopiableValue({ value, label }: { value: string; label?: string }) {
     </div>
   );
 }
+
+function CopiableLabelValue({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      toast.success(`${label} copied`);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Could not copy");
+    }
+  }
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <div className="min-w-0">
+        <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">{label}</div>
+        <div className={`truncate text-sm font-semibold leading-tight text-[var(--color-ink)] select-all ${mono ? "font-mono tabular-nums" : ""}`}>
+          {value}
+        </div>
+      </div>
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        className="h-7 w-7 shrink-0 text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]"
+        onClick={copy}
+      >
+        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      </Button>
+    </div>
+  );
+}
+
+function CopyFullDetailsButton({ amount, reference }: { amount: number; reference: string }) {
+  const [copied, setCopied] = useState(false);
+  const text = [
+    `Bank Name: CIMB`,
+    `Account Name: BRICKSPLUG ENTERPRISE SD BHD`,
+    `Account Number: 8010575969`,
+    `Amount: RM${amount.toLocaleString()}`,
+    `Reference ID: ${reference || "—"}`,
+    ``,
+    `Please include the Reference ID in your bank transfer reference so your top-up can be verified faster.`,
+  ].join("\n");
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast.success("Full payment details copied");
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      toast.error("Could not copy");
+    }
+  }
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      disabled={!reference}
+      className="mt-1 flex w-full items-center justify-center gap-2 rounded-md border border-[var(--color-neon)]/40 bg-[var(--color-neon)]/10 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)] transition-all hover:bg-[var(--color-neon)]/15 disabled:opacity-40"
+    >
+      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? "Copied" : "Copy Full Payment Details"}
+    </button>
+  );
+}
+
