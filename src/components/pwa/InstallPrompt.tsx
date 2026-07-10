@@ -82,7 +82,7 @@ export function InstallPrompt() {
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-[60] px-3 pb-[max(env(safe-area-inset-bottom),12px)] sm:px-4 sm:pb-4">
-      <div className="mx-auto max-w-md rounded-2xl border border-[var(--color-surface-border)] bg-[#0b1220]/95 backdrop-blur p-4 shadow-2xl">
+      <div className="mx-auto max-w-md rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface)]/95 backdrop-blur p-4 shadow-2xl">
         <div className="flex items-start gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-neon)]/15 text-[var(--color-neon)]">
             <Bell className="h-5 w-5" />

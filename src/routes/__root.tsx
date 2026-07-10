@@ -93,7 +93,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "cssebets: private World Cup 2026 prediction pool for friends." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9c868361-deda-4fd6-ae97-260286bf8f25/id-preview-00ec4b3a--9a7d8431-a21b-4be7-aa5c-77435c44e420.lovable.app-1780916547939.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9c868361-deda-4fd6-ae97-260286bf8f25/id-preview-00ec4b3a--9a7d8431-a21b-4be7-aa5c-77435c44e420.lovable.app-1780916547939.png" },
-      { name: "theme-color", content: "#0b1220" },
+      { name: "theme-color", content: "#020806" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
@@ -116,7 +116,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href:
           "data:image/svg+xml;utf8," +
           encodeURIComponent(
-            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0b1220"/><path d="M24 7 L11 7 L4 16 L11 25 L24 25" fill="none" stroke="#ffffff" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 21 L21 14 L27 21" fill="none" stroke="#22e08a" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#020806"/><path d="M24 7 L11 7 L4 16 L11 25 L24 25" fill="none" stroke="#ffffff" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 21 L21 14 L27 21" fill="none" stroke="#22e08a" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
           ),
       },
       {
@@ -124,7 +124,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href:
           "data:image/svg+xml;utf8," +
           encodeURIComponent(
-            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0b1220"/><path d="M24 7 L11 7 L4 16 L11 25 L24 25" fill="none" stroke="#ffffff" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 21 L21 14 L27 21" fill="none" stroke="#22e08a" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#020806"/><path d="M24 7 L11 7 L4 16 L11 25 L24 25" fill="none" stroke="#ffffff" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 21 L21 14 L27 21" fill="none" stroke="#22e08a" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
           ),
       },
       { rel: "manifest", href: "/manifest.webmanifest" },
