@@ -82,7 +82,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "cssebets — Private World Cup Predictions" },
       { name: "description", content: "cssebets: private World Cup 2026 prediction pool for friends." },
       { property: "og:title", content: "cssebets — Private World Cup Predictions" },
