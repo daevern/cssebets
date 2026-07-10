@@ -33,6 +33,9 @@ function bankInitial(name: string) {
 export const Route = createFileRoute("/_authenticated/payout")({
   ssr: false,
   head: () => ({ meta: [{ title: "Bank Accounts — cssebets" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    add: s.add === 1 || s.add === "1" ? 1 : undefined,
+  }),
   component: PayoutPage,
 });
 
@@ -76,6 +79,10 @@ function PayoutPage() {
   }, [qc, uid]);
 
   const [addOpen, setAddOpen] = useState(false);
+  const search = Route.useSearch();
+  useEffect(() => {
+    if (search.add === 1) setAddOpen(true);
+  }, [search.add]);
   const [bankName, setBankName] = useState("");
   const [accNo, setAccNo] = useState("");
   const [holder, setHolder] = useState("");

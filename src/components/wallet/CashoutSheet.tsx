@@ -147,10 +147,10 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     [accounts, selectedId],
   );
 
-  function goToPayoutPage() {
+  function goToPayoutPage(opts?: { add?: boolean }) {
     onOpenChange(false);
     onNavigateAway?.();
-    navigate({ to: "/payout" });
+    navigate({ to: "/payout", search: opts?.add ? { add: 1 } : undefined } as any);
   }
 
   function setMax() {
@@ -162,12 +162,13 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <StencilDialogContent
-          title="Add a bank account"
-          description="Save your payout details once. They'll be ready for every cashout."
+          kicker="Cashout · Setup"
+          title="Link a bank account"
+          description="Save your payout details once. They'll be ready for every cashout to come."
           footer={
             <>
               <GhostBtn onClick={() => onOpenChange(false)}>Cancel</GhostBtn>
-              <NeonBtn onClick={goToPayoutPage}>
+              <NeonBtn onClick={() => goToPayoutPage({ add: true })}>
                 Add account <ArrowRight className="h-3.5 w-3.5" />
               </NeonBtn>
             </>
@@ -182,7 +183,8 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <StencilDialogContent
-          title="Cashout submitted"
+          kicker="Cashout · Submitted"
+          title="Request received"
           description={
             selectedAcc
               ? `Sending to ${selectedAcc.bankName} · ${selectedAcc.masked}.`
@@ -191,7 +193,7 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
           footer={
             <>
               <GhostBtn onClick={() => onOpenChange(false)}>Close</GhostBtn>
-              <NeonBtn onClick={goToPayoutPage}>
+              <NeonBtn onClick={() => goToPayoutPage()}>
                 Track status <ArrowRight className="h-3.5 w-3.5" />
               </NeonBtn>
             </>
@@ -217,6 +219,7 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <StencilDialogContent
+        kicker="Cashout · Withdraw to bank"
         title="Cash out"
         description={
           !loading
@@ -296,10 +299,10 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
                 <span className="text-[11px] font-medium text-[var(--color-ink-muted)]">To</span>
                 <button
                   type="button"
-                  onClick={goToPayoutPage}
+                  onClick={() => goToPayoutPage({ add: accounts.length === 0 })}
                   className="text-[11px] font-medium text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-neon)]"
                 >
-                  Manage
+                  Manage account
                 </button>
               </div>
               <div className="space-y-1">
