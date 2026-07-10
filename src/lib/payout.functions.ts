@@ -395,6 +395,13 @@ export const adminRejectPayout = createServerFn({ method: "POST" })
         reason: data.reason,
       },
     });
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "cashout_rejected",
+      recipientUserId: (row as any)?.user_id ?? undefined,
+      relatedRecordType: "payout_request",
+      relatedRecordId: data.payoutId,
+    });
     return { ok: true };
   });
 
