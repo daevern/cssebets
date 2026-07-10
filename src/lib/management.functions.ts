@@ -129,8 +129,18 @@ export const staffApproveUser = createServerFn({ method: "POST" })
     await audit(context.userId, role, "approve_registration", {
       target_type: "user", target_user_id: data.targetUserId, target_id: data.targetUserId,
     });
+
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "account_approved",
+      recipientUserId: data.targetUserId,
+      relatedRecordType: "user",
+      relatedRecordId: data.targetUserId,
+    });
+
     return { ok: true };
   });
+
 
 export const staffRejectUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
