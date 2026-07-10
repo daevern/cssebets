@@ -1,7 +1,11 @@
 // Server-only notification dispatch. Fans out to Web Push + Email.
 // Called from other server functions AFTER a successful DB transaction.
 import webpush from "web-push";
+import * as React from "react";
+import { render } from "@react-email/render";
 import { createHash, randomUUID } from "crypto";
+import { TEMPLATES } from "@/lib/email-templates/app-notification-registry-loader";
+
 
 type EventType =
   // user-facing
