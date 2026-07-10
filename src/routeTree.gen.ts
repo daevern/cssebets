@@ -30,6 +30,7 @@ import { Route as ManagementAdminRouteImport } from './routes/management/admin'
 import { Route as ManagementAccessDeniedRouteImport } from './routes/management/access-denied'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
+import { Route as AuthenticatedUfcRouteImport } from './routes/_authenticated/ufc'
 import { Route as AuthenticatedTrustCenterRouteImport } from './routes/_authenticated/trust-center'
 import { Route as AuthenticatedTournamentWinnerRouteImport } from './routes/_authenticated/tournament-winner'
 import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
@@ -202,6 +203,11 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
 const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedUfcRoute = AuthenticatedUfcRouteImport.update({
+  id: '/ufc',
+  path: '/ufc',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTrustCenterRoute =
@@ -612,6 +618,7 @@ export interface FileRoutesByFullPath {
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/trust-center': typeof AuthenticatedTrustCenterRoute
+  '/ufc': typeof AuthenticatedUfcRoute
   '/wallet': typeof AuthenticatedWalletRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
@@ -701,6 +708,7 @@ export interface FileRoutesByTo {
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/trust-center': typeof AuthenticatedTrustCenterRoute
+  '/ufc': typeof AuthenticatedUfcRoute
   '/wallet': typeof AuthenticatedWalletRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
@@ -792,6 +800,7 @@ export interface FileRoutesById {
   '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/_authenticated/trust-center': typeof AuthenticatedTrustCenterRoute
+  '/_authenticated/ufc': typeof AuthenticatedUfcRoute
   '/_authenticated/wallet': typeof AuthenticatedWalletRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
@@ -884,6 +893,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/tournament-winner'
     | '/trust-center'
+    | '/ufc'
     | '/wallet'
     | '/email/unsubscribe'
     | '/management/access-denied'
@@ -973,6 +983,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/tournament-winner'
     | '/trust-center'
+    | '/ufc'
     | '/wallet'
     | '/email/unsubscribe'
     | '/management/access-denied'
@@ -1063,6 +1074,7 @@ export interface FileRouteTypes {
     | '/_authenticated/support'
     | '/_authenticated/tournament-winner'
     | '/_authenticated/trust-center'
+    | '/_authenticated/ufc'
     | '/_authenticated/wallet'
     | '/email/unsubscribe'
     | '/management/access-denied'
@@ -1304,6 +1316,13 @@ declare module '@tanstack/react-router' {
       path: '/wallet'
       fullPath: '/wallet'
       preLoaderRoute: typeof AuthenticatedWalletRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ufc': {
+      id: '/_authenticated/ufc'
+      path: '/ufc'
+      fullPath: '/ufc'
+      preLoaderRoute: typeof AuthenticatedUfcRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/trust-center': {
@@ -1826,6 +1845,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTournamentWinnerRoute: typeof AuthenticatedTournamentWinnerRoute
   AuthenticatedTrustCenterRoute: typeof AuthenticatedTrustCenterRoute
+  AuthenticatedUfcRoute: typeof AuthenticatedUfcRoute
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRouteWithChildren
   AuthenticatedFreeBetsPlaceRoute: typeof AuthenticatedFreeBetsPlaceRoute
 }
@@ -1846,6 +1866,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTournamentWinnerRoute: AuthenticatedTournamentWinnerRoute,
   AuthenticatedTrustCenterRoute: AuthenticatedTrustCenterRoute,
+  AuthenticatedUfcRoute: AuthenticatedUfcRoute,
   AuthenticatedWalletRoute: AuthenticatedWalletRouteWithChildren,
   AuthenticatedFreeBetsPlaceRoute: AuthenticatedFreeBetsPlaceRoute,
 }
