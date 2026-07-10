@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { BadgeGrid } from "@/components/trust/BadgeGrid";
 import { ReferralPanel } from "@/components/engagement/ReferralPanel";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
 
 
 export const Route = createFileRoute("/_authenticated/settings")({
