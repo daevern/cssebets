@@ -120,6 +120,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
             `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#0b1220"/><path d="M24 7 L11 7 L4 16 L11 25 L24 25" fill="none" stroke="#ffffff" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 21 L21 14 L27 21" fill="none" stroke="#22e08a" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
           ),
       },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+    ],
+    meta: [
+      { name: "theme-color", content: "#22e08a" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "CSSE" },
     ],
 
 
