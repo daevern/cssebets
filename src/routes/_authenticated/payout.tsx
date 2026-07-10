@@ -20,11 +20,17 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Banknote, Loader2, Clock, Eye, CheckCircle2, XCircle, History, Plus, Trash2,
+  Banknote, Loader2, Clock, Eye, CheckCircle2, XCircle, History, Plus, Trash2, Landmark, FileCheck2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
+import { StencilDialogContent } from "@/components/wallet/StencilDialog";
+
+function bankInitial(name: string) {
+  const s = (name || "?").trim();
+  return s.slice(0, 1).toUpperCase();
+}
 
 export const Route = createFileRoute("/_authenticated/payout")({
   ssr: false,
