@@ -89,6 +89,12 @@ export const sendMyMessage = createServerFn({ method: "POST" })
       last_user_message_at: now,
       status: "open",
     }).eq("id", conv.id);
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "admin_new_support_message",
+      relatedRecordType: "support_conversation",
+      relatedRecordId: conv.id,
+    });
     return { ok: true };
   });
 
