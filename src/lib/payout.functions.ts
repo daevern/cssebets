@@ -153,6 +153,12 @@ export const createPayoutRequest = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+    const { dispatchNotification } = await import("@/lib/notifications.server");
+    await dispatchNotification({
+      eventType: "admin_new_cashout",
+      relatedRecordType: "payout_request",
+      relatedRecordId: inserted.id,
+    });
     return { id: inserted.id };
   });
 
