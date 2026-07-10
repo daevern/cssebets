@@ -2511,6 +2511,230 @@ export type Database = {
         }
         Relationships: []
       }
+      ufc_bets: {
+        Row: {
+          fight_id: string
+          id: string
+          market_type: string
+          odds_locked: number
+          payout: number | null
+          placed_at: string
+          potential_payout: number
+          selection_key: string
+          selection_label: string
+          settled_at: string | null
+          stake: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          fight_id: string
+          id?: string
+          market_type: string
+          odds_locked: number
+          payout?: number | null
+          placed_at?: string
+          potential_payout: number
+          selection_key: string
+          selection_label: string
+          settled_at?: string | null
+          stake: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          fight_id?: string
+          id?: string
+          market_type?: string
+          odds_locked?: number
+          payout?: number | null
+          placed_at?: string
+          potential_payout?: number
+          selection_key?: string
+          selection_label?: string
+          settled_at?: string | null
+          stake?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ufc_bets_fight_id_fkey"
+            columns: ["fight_id"]
+            isOneToOne: false
+            referencedRelation: "ufc_fights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ufc_events: {
+        Row: {
+          created_at: string
+          event_key: string
+          id: string
+          is_active: boolean
+          name: string
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_key: string
+          id?: string
+          is_active?: boolean
+          name: string
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_key?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ufc_fight_markets: {
+        Row: {
+          fight_id: string
+          id: string
+          is_active: boolean
+          label: string
+          market_type: string
+          odds: number
+          selection_key: string
+          updated_at: string
+        }
+        Insert: {
+          fight_id: string
+          id?: string
+          is_active?: boolean
+          label: string
+          market_type: string
+          odds: number
+          selection_key: string
+          updated_at?: string
+        }
+        Update: {
+          fight_id?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          market_type?: string
+          odds?: number
+          selection_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ufc_fight_markets_fight_id_fkey"
+            columns: ["fight_id"]
+            isOneToOne: false
+            referencedRelation: "ufc_fights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ufc_fights: {
+        Row: {
+          card_position: string
+          commence_time: string
+          created_at: string
+          event_id: string
+          fighter_a: string
+          fighter_b: string
+          id: string
+          odds_api_event_id: string | null
+          result_method: string | null
+          result_round: number | null
+          scheduled_rounds: number
+          settled_at: string | null
+          status: string
+          updated_at: string
+          winner: string | null
+        }
+        Insert: {
+          card_position?: string
+          commence_time: string
+          created_at?: string
+          event_id: string
+          fighter_a: string
+          fighter_b: string
+          id?: string
+          odds_api_event_id?: string | null
+          result_method?: string | null
+          result_round?: number | null
+          scheduled_rounds?: number
+          settled_at?: string | null
+          status?: string
+          updated_at?: string
+          winner?: string | null
+        }
+        Update: {
+          card_position?: string
+          commence_time?: string
+          created_at?: string
+          event_id?: string
+          fighter_a?: string
+          fighter_b?: string
+          id?: string
+          odds_api_event_id?: string | null
+          result_method?: string | null
+          result_round?: number | null
+          scheduled_rounds?: number
+          settled_at?: string | null
+          status?: string
+          updated_at?: string
+          winner?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ufc_fights_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "ufc_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ufc_market_snapshots: {
+        Row: {
+          fight_id: string
+          id: number
+          market_type: string
+          odds: number
+          sampled_at: string
+          selection_key: string
+        }
+        Insert: {
+          fight_id: string
+          id?: number
+          market_type: string
+          odds: number
+          sampled_at?: string
+          selection_key: string
+        }
+        Update: {
+          fight_id?: string
+          id?: number
+          market_type?: string
+          odds?: number
+          sampled_at?: string
+          selection_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ufc_market_snapshots_fight_id_fkey"
+            columns: ["fight_id"]
+            isOneToOne: false
+            referencedRelation: "ufc_fights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2993,6 +3217,18 @@ export type Database = {
         }
         Returns: string
       }
+      place_ufc_bet_atomic: {
+        Args: {
+          p_fight_id: string
+          p_market_type: string
+          p_odds: number
+          p_selection_key: string
+          p_selection_label: string
+          p_stake: number
+          p_user_id: string
+        }
+        Returns: string
+      }
       platform_apply_change: {
         Args: {
           p_amount: number
@@ -3164,6 +3400,15 @@ export type Database = {
         Args: { p_tournament_key: string; p_winner_team: string }
         Returns: number
       }
+      settle_ufc_fight_atomic: {
+        Args: {
+          p_fight_id: string
+          p_method: string
+          p_round: number
+          p_winner: string
+        }
+        Returns: number
+      }
       staff_approve_point_request: {
         Args: { p_note?: string; p_request_id: string; p_staff_id: string }
         Returns: number
@@ -3304,6 +3549,10 @@ export type Database = {
             }
           }
       void_match_atomic: { Args: { p_match_id: string }; Returns: number }
+      void_ufc_fight_atomic: {
+        Args: { p_fight_id: string; p_reason: string }
+        Returns: number
+      }
       wallet_apply_change: {
         Args: {
           p_amount: number
