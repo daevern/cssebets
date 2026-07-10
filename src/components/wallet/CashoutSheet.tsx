@@ -299,10 +299,10 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
                 <span className="text-[11px] font-medium text-[var(--color-ink-muted)]">To</span>
                 <button
                   type="button"
-                  onClick={goToPayoutPage}
+                  onClick={() => goToPayoutPage({ add: accounts.length === 0 })}
                   className="text-[11px] font-medium text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-neon)]"
                 >
-                  Manage
+                  Manage account
                 </button>
               </div>
               <div className="space-y-1">
