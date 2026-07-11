@@ -1,40 +1,47 @@
-## Why the Method tab isn't showing
+## Goal
 
-The Method tab is coded and would render as soon as any `market_type = 'method'` rows exist for the fight. For this fight there are **zero** method rows in the DB:
+Bring back Method of Victory as a synthetic market, but keep it tightly anchored to the real bookmaker odds we already ingest, and freeze the market 30 minutes before the fight starts so we never settle on stale/late-moving prices.
 
-```
-three_way    3     moneyline    2
-handicap     2     total_rounds 8
-distance     2     round        5
-```
+## How it works
 
-Reason: API-Sports MMA for this event doesn't expose the per-fighter method bet IDs (13–20) or a name-based "Method of Victory" market from any bookmaker in the feed, so the parser has nothing to store. The Method tab is then hidden because `availableTypes` doesn't include it.
+**1. Re-enable synthesis in `src/lib/ufc-odds.server.ts`**
 
-Bonus problem visible in the same query: `three_way` and `handicap` rows are still active even though we agreed to retire them.
+Restore the 6-selection method block (`a_ko_tko`, `a_submission`, `a_decision`, `b_ko_tko`, `b_submission`, `b_decision`) with the same math as before, but recomputed on every odds sync so it tracks the live moneyline + distance market:
 
-## Fix
+- Read fair win probs `pA`, `pB` from the current moneyline rows we just upserted.
+- Read fair distance prob `pDistance` from the current total_rounds/distance rows.
+- Finish share = `1 - pDistance`, split per fighter by win prob.
+- KO vs Submission split per fighter from `ufc_fighters.ko_w` / `sub_w` (default 70/30).
+- Apply the platform outright margin, persist to `ufc_fight_markets` as `method`, snapshot to `ufc_market_snapshots`.
 
-1. **Synthesize a Method of Victory market when the feed doesn't provide one** (`src/lib/ufc-odds.server.ts`)
-   - Compute fair win probability `pA`, `pB` from moneyline (already done for margin).
-   - Compute `pDistance` from the derived `distance` market (already computed for total_rounds).
-   - Finish share `pFinish = 1 - pDistance`. Split per fighter proportional to their win prob: `pA_finish = pFinish * pA`, `pB_finish = pFinish * pB`. Decision share: `pA_dec = pDistance * pA`, `pB_dec = pDistance * pB`.
-   - Split each fighter's finish into KO/TKO vs Submission using their career finish mix from `ufc_fighters` (`ko_w`, `sub_w`; default 70/30 if unknown).
-   - Convert the 6 probabilities to fair odds, apply `applyOutrightMargin` with the platform's method margin (reuse the outright margin setting), and persist as 6 `method` rows: `a_ko_tko`, `a_submission`, `a_decision`, `b_ko_tko`, `b_submission`, `b_decision`.
-   - Only synthesize when moneyline + distance are both priced. If the real feed later provides explicit method prices, those win (parsed prices are kept as-is, synthesis skipped).
-   - Snapshot the synthesized prices to `ufc_market_snapshots` so movement charting works.
+Because the sync runs every 30s during the event window, the synthetic prices always reflect the latest real moneyline/distance state — never more than one sync cycle behind reality.
 
-2. **Actually deactivate retired markets**
-   - After the upsert block, run the deactivation for `three_way` and `handicap` unconditionally (the previous change wasn't taking effect for existing rows — confirmed by the DB count above). Also deactivate any `total_rounds` rows whose selection isn't in the kept set.
+**2. Freeze the market 30 minutes before walk-out**
 
-3. **Label + Draw handling in UI** (`src/routes/_authenticated/ufc.$fightId.tsx`)
-   - Method tab already renders these 6 keys. Add a small selection-label map so tiles read as "Holloway by KO/TKO", "McGregor by Decision", etc., using the fight's fighter names.
-   - Draw as a 7th selection is skipped for now — API-Sports doesn't quote a method-draw price and the synthesis has no defensible way to price it. Draws in MMA are ~0.5% and are handled as void/refund by settlement.
+- In `runUfcOddsSync`, when `commence_time - now <= 30 min`, stop recomputing method rows for that fight and mark existing method rows `is_active = false` (or add a `locked_at` timestamp).
+- In `src/lib/ufc.functions.ts` (bet placement), reject any method bet where `now >= commence_time - 30 min`. Same cutoff enforced server-side so the UI can't be bypassed.
+- In `src/routes/_authenticated/ufc.$fightId.tsx`, hide method tiles (or show them disabled with "Market closed") once inside the 30-min window.
 
-4. **Settlement (`settle_ufc_fight_atomic`)** — already resolves `method` rows by matching winning slot + finish bucket, and refunds on draw/NC. No change required.
+The same 30-min freeze can optionally apply to all synthetic-derived markets; the plan applies it to `method` only unless you want it broader.
 
-## What the user sees after this
+**3. Transparency (small UI note)**
 
-- The Method tab appears on every fight that has moneyline + distance priced (i.e. essentially every card), with 6 selectable tiles.
-- The stale "Who wins the fight result?" (three-way) and "Who covers the handicap?" tabs disappear from the current fight and stay gone.
+Add a subtle "Model-derived from live market" label on the Method tab so the market is clearly distinguished from raw bookmaker markets. No visual redesign.
+
+**4. Settlement**
+
+No change needed — `settle_ufc_fight_atomic` already resolves method rows by winning slot + finish bucket and refunds on draw/NC.
+
+## What the user sees
+
+- Method of Victory tab returns with 6 tiles on every fight that has moneyline + distance priced.
+- Odds move continuously with the real market up until T-30 min, then lock.
+- After T-30 the tab shows "Market closed" and no new method bets can be placed; existing bets settle normally after the fight.
+
+## Files touched
+
+- `src/lib/ufc-odds.server.ts` — restore synthesis; add 30-min freeze/deactivate.
+- `src/lib/ufc.functions.ts` — server-side cutoff on method bet placement.
+- `src/routes/_authenticated/ufc.$fightId.tsx` — Method tab visibility + "model-derived" label + closed state.
 
 Ready to implement on approval.
