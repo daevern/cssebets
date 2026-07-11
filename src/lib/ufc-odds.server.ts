@@ -701,37 +701,21 @@ async function syncOddsForFight(fightRow: {
   }
 
 
-  // ---- Persist Distance (Yes/No) ----
-  const yes = median(distancePrices.yes);
-  const no = median(distancePrices.no);
-  if (yes > 1 && no > 1) {
-    const priced = await apply2WayMargin(yes, no);
-    upserts.push(
-      { fight_id: fightRow.id, market_type: "distance", selection_key: "yes", label: "Goes the distance", odds: priced.a, is_active: true, updated_at: nowIso },
-      { fight_id: fightRow.id, market_type: "distance", selection_key: "no", label: "Ends inside distance", odds: priced.b, is_active: true, updated_at: nowIso },
-    );
-    snapshots.push(
-      { fight_id: fightRow.id, market_type: "distance", selection_key: "yes", odds: priced.a },
-      { fight_id: fightRow.id, market_type: "distance", selection_key: "no", odds: priced.b },
-    );
-  } else if (yes > 1 && !no) {
-    // Only "Yes" side available — derive "No" from the same fair prob 1 - pYes/(pYes+pNo≈1).
-    // Fall back to publishing Yes-only as display.
-    upserts.push(
-      { fight_id: fightRow.id, market_type: "distance", selection_key: "yes", label: "Goes the distance", odds: yes, is_active: true, updated_at: nowIso },
-    );
-    snapshots.push({ fight_id: fightRow.id, market_type: "distance", selection_key: "yes", odds: yes });
-  }
+  // ---- Distance market retired (product decision).
+  // distancePrices are still aggregated above and used internally to derive
+  // Method-of-Victory synthesis; we just don't publish it as a user market.
 
 
 
-  // Deactivate any previously-persisted three_way / handicap rows so the
-  // client hides them (product removed these market types from the UI).
+
+  // Deactivate any previously-persisted three_way / handicap / distance rows
+  // so the client hides them (product removed these market types from the UI).
   await (supabaseAdmin as any)
     .from("ufc_fight_markets")
     .update({ is_active: false })
     .eq("fight_id", fightRow.id)
-    .in("market_type", ["three_way", "handicap"]);
+    .in("market_type", ["three_way", "handicap", "distance"]);
+
 
   // Also deactivate any total_rounds lines we no longer surface (only 2.5
   // for 3-round fights; 2.5 and 4.5 for 5-round fights).
