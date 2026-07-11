@@ -113,9 +113,14 @@ function MyPredictionsPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "predictions", filter: `user_id=eq.${uid}` }, () => {
         qc.invalidateQueries({ queryKey: ["my-predictions", uid] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "ufc_bets", filter: `user_id=eq.${uid}` }, () => {
+        qc.invalidateQueries({ queryKey: ["my-ufc-bets", uid] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [qc, uid]);
+
+  const hasAny = (data?.length ?? 0) + (ufcBets?.length ?? 0) > 0;
 
   return (
     <PageShell kicker="FIFA WORLD CUP · 2026" title="Your" titleAccent="Picks">
@@ -125,7 +130,7 @@ function MyPredictionsPage() {
             <Loader2 className="h-6 w-6 animate-spin text-[var(--color-neon)]" />
           </div>
         </StencilPanel>
-      ) : !data?.length ? (
+      ) : !hasAny ? (
         <StencilPanel accent>
           <div className="flex flex-col items-center gap-4 py-6 text-center">
             <TicketIcon />
@@ -139,10 +144,12 @@ function MyPredictionsPage() {
         </StencilPanel>
       ) : (
         <div className="space-y-3">
-          {data.map((p) => <PredictionRow key={p.id} p={p} />)}
+          {(ufcBets ?? []).map((b) => <UfcBetRow key={b.id} b={b} />)}
+          {(data ?? []).map((p) => <PredictionRow key={p.id} p={p} />)}
         </div>
       )}
     </PageShell>
+
   );
 }
 
