@@ -169,27 +169,24 @@ function AnalysisSection({ kicker, meta, children }: { kicker?: ReactNode; meta?
 
 /* ---------- Hero — mirrors football MatchHero article layout ---------- */
 
-function FighterHeadshot({ url, name, size = 96 }: { url?: string | null; name: string; size?: number }) {
+function FighterHeadshot({ url, name }: { url?: string | null; name: string; size?: number }) {
   if (url) {
     return (
       <img
         src={url}
         alt={name}
-        className="h-full w-full object-cover"
-        style={{ width: size, height: size }}
+        className="h-full w-full object-cover object-top"
       />
     );
   }
   const initials = name.split(" ").map((s) => s[0]).slice(0, 2).join("");
   return (
-    <div
-      className="grid place-items-center bg-[var(--surface-3)] font-display text-lg font-semibold text-[var(--color-ink-muted)]"
-      style={{ width: size, height: size }}
-    >
+    <div className="grid h-full w-full place-items-center bg-[var(--surface-3)] font-display text-sm font-semibold text-[var(--color-ink-muted)]">
       {initials}
     </div>
   );
 }
+
 
 function useCountdown(iso: string) {
   const [txt, setTxt] = useState("");
