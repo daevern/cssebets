@@ -132,33 +132,48 @@ function pickMainAndCoMain(card: ApiMmaFight[]) {
 }
 
 async function upsertFighter(apimmaId: number, name: string, logo?: string) {
-  // Try to enrich with /fighters details, but tolerate failure (rate-limits).
+  // Read existing row FIRST so a failed/empty detail lookup never overwrites
+  // known-good tale-of-the-tape fields with nulls.
+  const { data: existing } = await (supabaseAdmin as any)
+    .from("ufc_fighters")
+    .select("*")
+    .eq("apimma_id", apimmaId)
+    .maybeSingle();
+
+  // Try /fighters?id=; on failure or empty response, fall back to name search.
   let detail: Awaited<ReturnType<typeof fetchFighter>> | null = null;
   try {
     detail = await fetchFighter(apimmaId);
   } catch (e) {
     console.warn("fetchFighter failed", apimmaId, (e as Error).message);
   }
+  if (!detail || (!detail.record && !detail.reach && !detail.height)) {
+    try {
+      const found = await searchFighter(name);
+      if (found) detail = { ...(detail ?? {} as any), ...found };
+    } catch (e) {
+      console.warn("searchFighter failed", name, (e as Error).message);
+    }
+  }
+
+  const coalesce = <T,>(next: T | null | undefined, prev: T | null | undefined): T | null =>
+    (next ?? prev ?? null) as T | null;
+
   const payload = {
     apimma_id: apimmaId,
-    name: cleanDisplayText(detail?.name || name),
-    nickname: detail?.nickname ?? null,
-    record_w: detail?.record?.wins ?? null,
-    record_l: detail?.record?.losses ?? null,
-    record_d: detail?.record?.draws ?? null,
-    reach_cm: parseCm(detail?.reach ?? null),
-    height_cm: parseCm(detail?.height ?? null),
-    stance: detail?.stance ?? null,
-    dob: detail?.birth_date ?? null,
-    weight_class: cleanDisplayText(detail?.category ?? null),
-    country: detail?.country ?? null,
-    photo_url: detail?.photo ?? logo ?? null,
+    name: cleanDisplayText(detail?.name || existing?.name || name),
+    nickname: coalesce(detail?.nickname, existing?.nickname),
+    record_w: coalesce(detail?.record?.wins, existing?.record_w),
+    record_l: coalesce(detail?.record?.losses, existing?.record_l),
+    record_d: coalesce(detail?.record?.draws, existing?.record_d),
+    reach_cm: coalesce(parseCm(detail?.reach ?? null), existing?.reach_cm),
+    height_cm: coalesce(parseCm(detail?.height ?? null), existing?.height_cm),
+    stance: coalesce(detail?.stance, existing?.stance),
+    dob: coalesce(detail?.birth_date, existing?.dob),
+    weight_class: cleanDisplayText(coalesce(detail?.category, existing?.weight_class)),
+    country: coalesce(detail?.country, existing?.country),
+    photo_url: coalesce(detail?.photo ?? logo ?? null, existing?.photo_url),
   };
-  const { data: existing } = await (supabaseAdmin as any)
-    .from("ufc_fighters")
-    .select("id")
-    .eq("apimma_id", apimmaId)
-    .maybeSingle();
   if (existing?.id) {
     await (supabaseAdmin as any).from("ufc_fighters").update(payload).eq("id", existing.id);
     return existing.id as string;
@@ -170,6 +185,7 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
     .maybeSingle();
   return data?.id as string;
 }
+
 
 async function saveFight(input: {
   eventId: string;
