@@ -776,3 +776,98 @@ function LiveStatsCompare({ stats, homeName, awayName }: { stats: any[]; homeNam
     </div>
   );
 }
+
+/* ---------- H2H + Recent Form ---------- */
+
+function H2HSection({ h2h, fight }: { h2h: any[]; fight: any }) {
+  const direct = h2h.filter((h) => (h.record_type ?? "direct") === "direct");
+  const formA = h2h.filter((h) => h.record_type === "form_a").slice(0, 6);
+  const formB = h2h.filter((h) => h.record_type === "form_b").slice(0, 6);
+
+  return (
+    <>
+      <AnalysisSection
+        kicker={<><History className="h-3 w-3" /> Head to head</>}
+        meta={direct.length > 0 ? `${direct.length} prior` : "First meeting"}
+      >
+        {direct.length === 0 ? (
+          <p className="text-sm text-[var(--color-ink-muted)]">These fighters haven't met before.</p>
+        ) : (
+          <ul className="space-y-2">
+            {direct.map((h: any) => (
+              <li
+                key={h.id}
+                className="flex items-center justify-between border border-[var(--color-surface-border)]/70 bg-[var(--color-surface)]/45 px-3 py-2 text-xs"
+              >
+                <span className="text-[var(--color-ink-muted)]">{h.date}</span>
+                <span className="font-bold text-[var(--color-ink)]">
+                  {h.winner_slot === "a" ? fight.fighter_a : h.winner_slot === "b" ? fight.fighter_b : "Draw"}
+                </span>
+                <span className="max-w-[45%] truncate text-right text-[var(--color-ink-muted)]">{h.event_name ?? ""}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </AnalysisSection>
+
+      {(formA.length > 0 || formB.length > 0) && (
+        <AnalysisSection kicker={<><Activity className="h-3 w-3" /> Recent form</>}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <FormColumn name={fight.fighter_a} rows={formA} accent="text-[var(--color-neon)]" />
+            <FormColumn name={fight.fighter_b} rows={formB} accent="text-[#fb7185]" />
+          </div>
+        </AnalysisSection>
+      )}
+    </>
+  );
+}
+
+function FormColumn({ name, rows, accent }: { name: string; rows: any[]; accent: string }) {
+  const wins = rows.filter((r) => r.is_win === true).length;
+  const losses = rows.filter((r) => r.is_win === false).length;
+  return (
+    <div className="border border-[var(--color-surface-border)]/70 bg-[var(--color-surface)]/45">
+      <div className="flex items-center justify-between border-b border-[var(--color-surface-border)]/60 px-3 py-2">
+        <span className={`min-w-0 truncate font-display text-sm font-bold ${accent}`}>{name}</span>
+        <div className="flex items-center gap-1">
+          {rows.slice(0, 6).map((r) => (
+            <span
+              key={r.id}
+              title={`${r.date} vs ${r.opponent_name ?? ""}`}
+              className={`grid h-5 w-5 place-items-center rounded-sm text-[10px] font-black ${
+                r.is_win === true
+                  ? "bg-[var(--color-neon)]/20 text-[var(--color-neon)]"
+                  : r.is_win === false
+                    ? "bg-[#fb7185]/20 text-[#fb7185]"
+                    : "bg-white/10 text-white/70"
+              }`}
+            >
+              {r.is_win === true ? "W" : r.is_win === false ? "L" : "D"}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+        {wins}W · {losses}L {rows.length > 0 ? `· last ${rows.length}` : ""}
+      </div>
+      <ul className="divide-y divide-[var(--color-surface-border)]/60">
+        {rows.length === 0 && (
+          <li className="px-3 py-2 text-xs text-[var(--color-ink-muted)]">No recent form data.</li>
+        )}
+        {rows.map((r) => (
+          <li key={r.id} className="flex items-center justify-between gap-2 px-3 py-2 text-[11px]">
+            <span className="w-16 shrink-0 text-[var(--color-ink-muted)]">{r.date}</span>
+            <span className={`w-5 shrink-0 text-center font-black ${r.is_win === true ? "text-[var(--color-neon)]" : r.is_win === false ? "text-[#fb7185]" : "text-white/60"}`}>
+              {r.is_win === true ? "W" : r.is_win === false ? "L" : "D"}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-right text-[var(--color-ink)]">
+              vs {r.opponent_name ?? "—"}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+}
