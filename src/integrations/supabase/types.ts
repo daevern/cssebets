@@ -2758,12 +2758,17 @@ export type Database = {
       }
       ufc_fighters: {
         Row: {
+          age_years: number | null
           apimma_id: number | null
+          birth_place: string | null
           country: string | null
           created_at: string
           dob: string | null
+          gender: string | null
           height_cm: number | null
           id: string
+          ko_l: number | null
+          ko_w: number | null
           name: string
           nickname: string | null
           photo_url: string | null
@@ -2772,16 +2777,25 @@ export type Database = {
           record_l: number | null
           record_w: number | null
           stance: string | null
+          sub_l: number | null
+          sub_w: number | null
+          team_name: string | null
           updated_at: string
           weight_class: string | null
+          weight_lbs: number | null
         }
         Insert: {
+          age_years?: number | null
           apimma_id?: number | null
+          birth_place?: string | null
           country?: string | null
           created_at?: string
           dob?: string | null
+          gender?: string | null
           height_cm?: number | null
           id?: string
+          ko_l?: number | null
+          ko_w?: number | null
           name: string
           nickname?: string | null
           photo_url?: string | null
@@ -2790,16 +2804,25 @@ export type Database = {
           record_l?: number | null
           record_w?: number | null
           stance?: string | null
+          sub_l?: number | null
+          sub_w?: number | null
+          team_name?: string | null
           updated_at?: string
           weight_class?: string | null
+          weight_lbs?: number | null
         }
         Update: {
+          age_years?: number | null
           apimma_id?: number | null
+          birth_place?: string | null
           country?: string | null
           created_at?: string
           dob?: string | null
+          gender?: string | null
           height_cm?: number | null
           id?: string
+          ko_l?: number | null
+          ko_w?: number | null
           name?: string
           nickname?: string | null
           photo_url?: string | null
@@ -2808,8 +2831,12 @@ export type Database = {
           record_l?: number | null
           record_w?: number | null
           stance?: string | null
+          sub_l?: number | null
+          sub_w?: number | null
+          team_name?: string | null
           updated_at?: string
           weight_class?: string | null
+          weight_lbs?: number | null
         }
         Relationships: []
       }
