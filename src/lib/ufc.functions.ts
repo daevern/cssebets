@@ -126,7 +126,7 @@ export const placeUfcBet = createServerFn({ method: "POST" })
     z
       .object({
         fightId: z.string().uuid(),
-        marketType: z.enum(["moneyline", "method", "round"]),
+        marketType: z.enum(["moneyline", "method", "round", "total_rounds", "distance"]),
         selectionKey: z.string().min(1).max(32),
         stake: z.number().positive().max(10000),
       })
