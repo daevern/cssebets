@@ -509,6 +509,49 @@ async function syncOddsForFight(fightRow: {
     }
   }
 
+  // ---- Persist Total Rounds (Over/Under per line, aggregated across bookmakers) ----
+  for (let k = 1; k <= 4; k++) {
+    const over = median(ouOverPrices[k]);
+    const under = median(ouUnderPrices[k]);
+    if (over > 1 && under > 1) {
+      const priced = await apply2WayMargin(over, under);
+      const line = `${k}_5`; // "1_5" → 1.5 rounds
+      const lineLabel = `${k}.5`;
+      upserts.push(
+        { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `over_${line}`, label: `Over ${lineLabel} rounds`, odds: priced.a, is_active: true, updated_at: nowIso },
+        { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `under_${line}`, label: `Under ${lineLabel} rounds`, odds: priced.b, is_active: true, updated_at: nowIso },
+      );
+      snapshots.push(
+        { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `over_${line}`, odds: priced.a },
+        { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `under_${line}`, odds: priced.b },
+      );
+    }
+  }
+
+  // ---- Persist Distance (Yes/No) ----
+  const yes = median(distancePrices.yes);
+  const no = median(distancePrices.no);
+  if (yes > 1 && no > 1) {
+    const priced = await apply2WayMargin(yes, no);
+    upserts.push(
+      { fight_id: fightRow.id, market_type: "distance", selection_key: "yes", label: "Goes the distance", odds: priced.a, is_active: true, updated_at: nowIso },
+      { fight_id: fightRow.id, market_type: "distance", selection_key: "no", label: "Ends inside distance", odds: priced.b, is_active: true, updated_at: nowIso },
+    );
+    snapshots.push(
+      { fight_id: fightRow.id, market_type: "distance", selection_key: "yes", odds: priced.a },
+      { fight_id: fightRow.id, market_type: "distance", selection_key: "no", odds: priced.b },
+    );
+  } else if (yes > 1 && !no) {
+    // Only "Yes" side available — derive "No" from the same fair prob 1 - pYes/(pYes+pNo≈1).
+    // Fall back to publishing Yes-only as display.
+    upserts.push(
+      { fight_id: fightRow.id, market_type: "distance", selection_key: "yes", label: "Goes the distance", odds: yes, is_active: true, updated_at: nowIso },
+    );
+    snapshots.push({ fight_id: fightRow.id, market_type: "distance", selection_key: "yes", odds: yes });
+  }
+
+
+
   if (!upserts.length) return 0;
   const { error: mErr } = await (supabaseAdmin as any)
     .from("ufc_fight_markets")
