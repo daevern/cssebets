@@ -9,6 +9,7 @@ import { Loader2, Pencil, Trash2, Check, X, Flag } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import { editPendingBetStake, cancelPendingBet } from "@/lib/bet-edit.functions";
+import { editPendingUfcBetStake, cancelPendingUfcBet } from "@/lib/ufc-bet-edit.functions";
 import { settleFinishedPending } from "@/lib/settle-catchup.functions";
 import { flagPredictionForReview } from "@/lib/predictions-flag.functions";
 import { toast } from "sonner";
