@@ -3269,6 +3269,10 @@ export type Database = {
         Args: { p_prediction_id: string; p_user_id: string }
         Returns: string
       }
+      cancel_ufc_bet: {
+        Args: { p_bet_id: string; p_user_id: string }
+        Returns: string
+      }
       cancel_wallet_adjustment: {
         Args: { p_admin_id?: string; p_request_id: string }
         Returns: Json
@@ -3338,6 +3342,10 @@ export type Database = {
           p_prediction_id: string
           p_user_id: string
         }
+        Returns: number
+      }
+      edit_ufc_bet_stake: {
+        Args: { p_bet_id: string; p_new_stake: number; p_user_id: string }
         Returns: number
       }
       email_queue_dispatch: { Args: never; Returns: undefined }
