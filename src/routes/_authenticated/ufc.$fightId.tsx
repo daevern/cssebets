@@ -567,13 +567,15 @@ function abbrevUfcLabel(label: string): string {
 }
 
 function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snapshots: any[] }) {
-  const availableTypes = new Set(markets.filter((m) => m.is_active).map((m) => m.market_type));
-  const visibleTabs = MARKET_TABS.filter((t) => availableTypes.has(t.id));
-  const firstAvailable = visibleTabs[0]?.id ?? "moneyline";
-  const [tab, setTab] = useState<MarketType>(firstAvailable);
-  useEffect(() => {
-    if (visibleTabs.length && !visibleTabs.some((t) => t.id === tab)) setTab(visibleTabs[0].id);
-  }, [visibleTabs.map((t) => t.id).join(","), tab]);
+  // Market movement chart is moneyline-only (mirrors football MarketAnalyticsCard).
+  const tab: MarketType = "moneyline";
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  const filtered = snapshots.filter((s) => s.market_type === tab);
+  const keys = Array.from(new Set(filtered.map((s) => s.selection_key)));
+  const labelFor = (k: string) => markets.find((m) => m.market_type === tab && m.selection_key === k)?.label ?? k;
+
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
