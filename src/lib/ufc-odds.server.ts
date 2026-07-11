@@ -264,6 +264,11 @@ async function syncOddsForFight(fightRow: {
     b_ko_tko: [], b_submission: [], b_decision: [],
   };
   const roundPrices: Record<string, number[]> = {};
+  // Over/Under total-rounds prices per boundary (1.5, 2.5, 3.5, 4.5) →
+  // used to derive per-round finish odds when the API has no explicit
+  // "Round Betting" market (which is the norm for API-Sports MMA).
+  const ouOverPrices: Record<number, number[]> = { 1: [], 2: [], 3: [], 4: [] };
+  const ouUnderPrices: Record<number, number[]> = { 1: [], 2: [], 3: [], 4: [] };
   const pushRoundValue = (rawValue: string, price: number) => {
     if (!Number.isFinite(price) || price <= 1) return;
     const val = rawValue.toLowerCase();
@@ -357,7 +362,7 @@ async function syncOddsForFight(fightRow: {
       }
     }
 
-    // ---- Round Betting ----
+    // ---- Round Betting (explicit — rare on api-sports MMA) ----
     const roundBetById = bm.bets.find((b: any) => b.id === 6);
     if (roundBetById) {
       for (const v of roundBetById.values) pushRoundValue(v.value, Number(v.odd));
@@ -365,8 +370,24 @@ async function syncOddsForFight(fightRow: {
     for (const bet of bm.bets) {
       const nm = (bet.name ?? "").toLowerCase();
       if (bet.id === 6) continue;
-      if (!/round|distance/.test(nm)) continue;
+      if (!/round|distance/.test(nm) || /over|under|total/.test(nm)) continue;
       for (const v of bet.values) pushRoundValue(v.value, Number(v.odd));
+    }
+
+    // ---- Over/Under total rounds (used to derive per-round finish odds) ----
+    const ouBet = bm.bets.find((b: any) => b.id === 4)
+      ?? bm.bets.find((b: any) => /over.?under|total\s*rounds/i.test(b.name ?? ""));
+    if (ouBet) {
+      for (const v of ouBet.values) {
+        const price = Number(v.odd);
+        if (!Number.isFinite(price) || price <= 1) continue;
+        const m = String(v.value).toLowerCase().match(/(over|under)\s*(\d+(?:\.\d+)?)/);
+        if (!m) continue;
+        const dir = m[1] as "over" | "under";
+        const line = Math.floor(Number(m[2])); // 1.5 → 1, 2.5 → 2 ...
+        if (!(line >= 1 && line <= 4)) continue;
+        (dir === "over" ? ouOverPrices : ouUnderPrices)[line].push(price);
+      }
     }
 
     // ---- "Fight to go the distance" (Yes → distance) ----
@@ -382,6 +403,44 @@ async function syncOddsForFight(fightRow: {
           roundPrices["distance"].push(price);
         }
       }
+    }
+  }
+
+  // ---- Derive round-finish odds from Over/Under totals ----
+  // Fair prob at each boundary: pUnder_k = (1/oddU_k) / (1/oddU_k + 1/oddO_k)
+  //   r1 = pU_1
+  //   r2 = pU_2 - pU_1
+  //   r3 = pU_3 - pU_2
+  //   r4 = pU_4 - pU_3         (5-round fights only)
+  //   distance = 1 - pU_{last}
+  const scheduledRounds = fightRow.scheduled_rounds ?? 3;
+  const maxLine = scheduledRounds === 5 ? 4 : 2;
+  const fairUnder: Record<number, number> = {};
+  for (let k = 1; k <= maxLine; k++) {
+    const u = median(ouUnderPrices[k]);
+    const o = median(ouOverPrices[k]);
+    if (u > 1 && o > 1) {
+      const invU = 1 / u, invO = 1 / o;
+      fairUnder[k] = invU / (invU + invO);
+    }
+  }
+  const availableLines = Object.keys(fairUnder).map(Number).sort((a, b) => a - b);
+  if (availableLines.length >= 1 && Object.keys(roundPrices).length === 0) {
+    const roundProbs: Record<string, number> = {};
+    let prev = 0;
+    for (const k of availableLines) {
+      const cur = fairUnder[k];
+      const p = Math.max(0.001, cur - prev);
+      roundProbs[`r${k}`] = p;
+      prev = cur;
+    }
+    const lastLine = availableLines[availableLines.length - 1];
+    // "distance" = fight goes past the last measured boundary. For 3-round =
+    // Over 2.5, for 5-round = Over 4.5.
+    const distanceProb = Math.max(0.001, 1 - fairUnder[lastLine]);
+    roundProbs["distance"] = distanceProb;
+    for (const [key, p] of Object.entries(roundProbs)) {
+      roundPrices[key] = [1 / p];
     }
   }
 

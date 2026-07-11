@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getUfcFightDetail, getUfcMarketHistory, placeUfcBet } from "@/lib/ufc.functions";
 import { Loader2, ArrowUpRight, X, Activity, Users, History } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Customized } from "recharts";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/ufc/$fightId")({
@@ -301,8 +301,8 @@ function ScoreFighter({ name, logo, record }: { name: string; logo?: string | nu
 
 const MARKET_TABS: Array<{ id: "moneyline" | "method" | "round"; label: string }> = [
   { id: "moneyline", label: "Moneyline" },
-  { id: "method", label: "Method" },
   { id: "round", label: "Round" },
+  { id: "method", label: "Method" },
 ];
 
 function classifyUfc(selection: string): "home" | "away" | "neutral" {
@@ -366,7 +366,13 @@ function OddsButton({
 }
 
 function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
-  const [tab, setTab] = useState<"moneyline" | "method" | "round">("moneyline");
+  const availableTypes = new Set(markets.filter((m) => m.is_active).map((m) => m.market_type));
+  const visibleTabs = MARKET_TABS.filter((t) => availableTypes.has(t.id));
+  const firstAvailable = visibleTabs[0]?.id ?? "moneyline";
+  const [tab, setTab] = useState<"moneyline" | "method" | "round">(firstAvailable);
+  useEffect(() => {
+    if (visibleTabs.length && !visibleTabs.some((t) => t.id === tab)) setTab(visibleTabs[0].id);
+  }, [visibleTabs.map((t) => t.id).join(","), tab]);
   const [pick, setPick] = useState<Market | null>(null);
   const [stake, setStake] = useState("10");
 
@@ -397,11 +403,19 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
   const potentialReturn = pick ? stakeNum * Number(pick.odds) : 0;
   const potentialGain = potentialReturn - stakeNum;
 
+  if (visibleTabs.length === 0) {
+    return (
+      <div className="rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-2)] py-6 text-center text-xs text-[var(--color-ink-muted)]">
+        No markets available yet — walkouts approaching.
+      </div>
+    );
+  }
+
   return (
     <div className="pt-4 space-y-4 -mx-3 sm:-mx-2 md:mx-0">
       {/* Segmented tab bar — identical to football MarketTabs */}
       <div className="flex overflow-x-auto rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {MARKET_TABS.map((t) => {
+        {visibleTabs.map((t) => {
           const active = tab === t.id;
           return (
             <button
@@ -419,6 +433,7 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
           );
         })}
       </div>
+
 
       <div className="px-3 sm:px-2 md:px-0 space-y-3">
         {/* Question heading (mirrors QuestionHeading) */}
@@ -538,18 +553,32 @@ function colorForUfcKey(key: string, idx: number): string {
   return MOVEMENT_COLORS[idx % MOVEMENT_COLORS.length];
 }
 
+function abbrevUfcLabel(label: string): string {
+  const t = label.trim();
+  const parts = t.split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0] + (parts[2]?.[0] ?? parts[1][1] ?? "")).toUpperCase().slice(0, 3);
+  return t.slice(0, 3).toUpperCase();
+}
+
 function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snapshots: any[] }) {
-  const [tab, setTab] = useState<"moneyline" | "method" | "round">("moneyline");
+  const availableTypes = new Set(markets.filter((m) => m.is_active).map((m) => m.market_type));
+  const visibleTabs = MARKET_TABS.filter((t) => availableTypes.has(t.id));
+  const firstAvailable = visibleTabs[0]?.id ?? "moneyline";
+  const [tab, setTab] = useState<"moneyline" | "method" | "round">(firstAvailable);
+  useEffect(() => {
+    if (visibleTabs.length && !visibleTabs.some((t) => t.id === tab)) setTab(visibleTabs[0].id);
+  }, [visibleTabs.map((t) => t.id).join(","), tab]);
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const filtered = snapshots.filter((s) => s.market_type === tab);
   const keys = Array.from(new Set(filtered.map((s) => s.selection_key)));
   const labelFor = (k: string) => markets.find((m) => m.market_type === tab && m.selection_key === k)?.label ?? k;
 
   // Build implied-probability series so the chart matches football (0–100%).
+  // If only a single snapshot exists we still want a visible flat line, so
+  // synthesize a second point at "now" from the current market prices.
   const rows = (() => {
-    const buckets = new Map<number, any>();
-    // Group snapshots per timestamp bucket per market
     const grouped = new Map<number, Record<string, number>>();
     for (const s of filtered) {
       const t = Math.round(new Date(s.sampled_at).getTime() / 30000) * 30000;
@@ -557,6 +586,7 @@ function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snap
       g[s.selection_key] = Number(s.odds);
       grouped.set(t, g);
     }
+    const out: any[] = [];
     for (const [t, g] of grouped) {
       const invSum = Object.values(g).reduce((a, o) => a + (o > 1 ? 1 / o : 0), 0);
       const row: any = { t };
@@ -564,16 +594,39 @@ function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snap
         const inv = g[k] > 1 ? 1 / g[k] : 0;
         row[k] = invSum > 0 ? Math.round((inv / invSum) * 100) : 0;
       }
-      buckets.set(t, row);
+      out.push(row);
     }
-    return Array.from(buckets.values()).sort((a, b) => a.t - b.t);
+    out.sort((a, b) => a.t - b.t);
+
+    // Anchor a synthetic point at "now" using latest market prices so a
+    // flat line renders even with only one snapshot in history.
+    const currentMarkets = markets.filter((m) => m.market_type === tab && m.is_active);
+    if (currentMarkets.length) {
+      const invSum = currentMarkets.reduce((a, m) => a + (m.odds > 1 ? 1 / Number(m.odds) : 0), 0);
+      const now = Date.now();
+      const nowRow: any = { t: now };
+      for (const m of currentMarkets) {
+        const inv = m.odds > 1 ? 1 / Number(m.odds) : 0;
+        nowRow[m.selection_key] = invSum > 0 ? Math.round((inv / invSum) * 100) : 0;
+      }
+      if (out.length === 0) {
+        // Backdate a duplicate 30 min back so the chart shows a horizontal line.
+        out.push({ ...nowRow, t: now - 30 * 60_000 });
+        out.push(nowRow);
+      } else if (out[out.length - 1].t < now - 30_000) {
+        out.push(nowRow);
+      }
+    }
+    return out;
   })();
 
+  const allKeys = Array.from(new Set(rows.flatMap((r) => Object.keys(r).filter((k) => k !== "t"))));
+  const effectiveKeys = keys.length ? keys : allKeys;
   const latestByKey = new Map<string, number>();
   const last = rows.at(-1);
-  if (last) for (const k of keys) if (typeof last[k] === "number") latestByKey.set(k, last[k]);
+  if (last) for (const k of effectiveKeys) if (typeof last[k] === "number") latestByKey.set(k, last[k]);
 
-  const visibleKeys = keys.filter((k) => !hidden[k]);
+  const visibleKeys = effectiveKeys.filter((k) => !hidden[k]);
 
   return (
     <section className="relative -mx-4 bg-[var(--surface)] md:mx-0">
@@ -583,30 +636,32 @@ function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snap
         </h2>
 
         {/* Segmented market selector — mirrors football tabs */}
-        <div className="mt-3 flex overflow-x-auto rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {MARKET_TABS.map((t) => {
-            const active = tab === t.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTab(t.id)}
-                className={`shrink-0 flex-1 px-4 py-2.5 text-center text-[13px] font-semibold whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)]/60 last:border-r-0 ${
-                  active
-                    ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
-                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-                }`}
-              >
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
+        {visibleTabs.length > 1 && (
+          <div className="mt-3 flex overflow-x-auto rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {visibleTabs.map((t) => {
+              const active = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTab(t.id)}
+                  className={`shrink-0 flex-1 px-4 py-2.5 text-center text-[13px] font-semibold whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)]/60 last:border-r-0 ${
+                    active
+                      ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
+                      : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Legend — minimal, matches MarketAnalyticsCard */}
-        {keys.length > 0 && (
+        {effectiveKeys.length > 0 && (
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
-            {keys.map((k, idx) => {
+            {effectiveKeys.map((k, idx) => {
               const off = !!hidden[k];
               const v = latestByKey.get(k);
               return (
@@ -631,7 +686,8 @@ function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snap
         )}
       </div>
 
-      {/* Chart — full width, edge-to-edge, no y-axis, dashed grid only */}
+      {/* Chart — full width, edge-to-edge, no y-axis, dashed grid only,
+          endpoint labels on the right (mirrors football MarketAnalyticsCard) */}
       <div className="relative mt-3 h-[340px] w-full sm:h-[380px] md:h-[420px]">
         {rows.length === 0 ? (
           <div className="grid h-full place-items-center text-[10px] font-bold uppercase tracking-[0.28em] text-white/40">
@@ -639,7 +695,14 @@ function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snap
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={rows} margin={{ top: 12, right: 24, bottom: 8, left: 0 }}>
+            <LineChart
+              data={rows}
+              margin={{ top: 12, right: 84, bottom: 8, left: 0 }}
+              onMouseMove={(state: any) => {
+                if (state && typeof state.activeTooltipIndex === "number") setActiveIndex(state.activeTooltipIndex);
+              }}
+              onMouseLeave={() => setActiveIndex(null)}
+            >
               <CartesianGrid strokeDasharray="3 6" stroke="#ffffff" strokeOpacity={0.28} vertical={false} />
               <XAxis
                 dataKey="t"
@@ -656,12 +719,12 @@ function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snap
                 content={() => null}
                 cursor={{ stroke: "rgba(255,255,255,0.28)", strokeWidth: 1, strokeDasharray: "3 4" }}
               />
-              {visibleKeys.map((k, i) => (
+              {visibleKeys.map((k) => (
                 <Line
                   key={k}
                   type="linear"
                   dataKey={k}
-                  stroke={colorForUfcKey(k, keys.indexOf(k))}
+                  stroke={colorForUfcKey(k, effectiveKeys.indexOf(k))}
                   strokeWidth={2.25}
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -671,13 +734,55 @@ function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snap
                   connectNulls
                 />
               ))}
+              <Customized
+                component={(cprops: any) => {
+                  const yAxis = Object.values(cprops.yAxisMap ?? {})[0] as any;
+                  const yScale = yAxis?.scale;
+                  const offset = cprops.offset ?? { left: 0, top: 0, width: 0, height: 0 };
+                  if (!yScale || !rows.length) return null;
+                  const idx = activeIndex != null ? activeIndex : rows.length - 1;
+                  const row = rows[idx];
+                  if (!row) return null;
+                  const rightX = offset.left + offset.width;
+                  return (
+                    <g>
+                      {visibleKeys.map((k) => {
+                        const raw = row[k];
+                        const v = typeof raw === "number" ? raw : Number(raw);
+                        if (!Number.isFinite(v)) return null;
+                        const y = yScale(v);
+                        const color = colorForUfcKey(k, effectiveKeys.indexOf(k));
+                        const xAxis = Object.values(cprops.xAxisMap ?? {})[0] as any;
+                        const xScale = xAxis?.scale;
+                        const cx = xScale ? xScale(row.t) : rightX;
+                        return (
+                          <g key={`ep-${k}`}>
+                            <circle cx={cx} cy={y} r={4.5} fill={color} />
+                            <circle cx={cx} cy={y} r={9} fill={color} opacity={0.18} />
+                            <text x={rightX + 6} y={y - 4} fill={color} fontSize={13} fontWeight={800} style={{ letterSpacing: "0.02em" }}>
+                              {abbrevUfcLabel(labelFor(k))}
+                            </text>
+                            <text x={rightX + 6} y={y + 12} fill={color} fontSize={15} fontWeight={800} style={{ letterSpacing: "-0.01em" }}>
+                              {`${Math.round(v)}%`}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </g>
+                  );
+                }}
+              />
             </LineChart>
           </ResponsiveContainer>
         )}
       </div>
+
+      {/* Divider — matches football MarketAnalyticsCard footer divider */}
+      <div className="mt-6 h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
     </section>
   );
 }
+
 
 
 /* ---------- Tale of tape ---------- */
