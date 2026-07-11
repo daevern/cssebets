@@ -15,10 +15,10 @@ import {
   fetchFighter,
   fetchFighterRecords,
   fetchFightStats,
-  pickBookmaker,
   parseCm,
   type ApiMmaFight,
 } from "@/lib/apimma.server";
+
 
 export type UfcSyncResult = {
   ok: boolean;
