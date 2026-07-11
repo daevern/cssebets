@@ -298,11 +298,13 @@ async function syncOddsForFight(fightRow: {
 
   // Aggregate across ALL bookmakers so no single provider gap kills a market.
   const mlPrices: Record<"a" | "b", number[]> = { a: [], b: [] };
+  const threeWayPrices: Record<"a" | "draw" | "b", number[]> = { a: [], draw: [], b: [] };
   const methodPrices: Record<string, number[]> = {
     a_ko_tko: [], a_submission: [], a_decision: [],
     b_ko_tko: [], b_submission: [], b_decision: [],
   };
   const roundPrices: Record<string, number[]> = {};
+  const handicapPrices: Record<string, { label: string; prices: number[] }> = {};
   // Over/Under total-rounds prices per boundary (1.5, 2.5, 3.5, 4.5) →
   // used to derive per-round finish odds when the API has no explicit
   // "Round Betting" market (which is the norm for API-Sports MMA).
@@ -326,6 +328,20 @@ async function syncOddsForFight(fightRow: {
     if (!key) return;
     if (!roundPrices[key]) roundPrices[key] = [];
     roundPrices[key].push(price);
+  };
+  const parseHandicapSelection = (raw: string, price: number) => {
+    if (!Number.isFinite(price) || price <= 1) return;
+    const side = nameSideOf(raw);
+    if (!side) return;
+    const match = raw.match(/([+-])\s*(\d+(?:\.\d+)?)/);
+    if (!match) return;
+    const line = Number(match[2]);
+    if (!Number.isFinite(line)) return;
+    const sign = match[1] === "+" ? "plus" : "minus";
+    const key = `${side}_${sign}_${String(line).replace(".", "_")}`;
+    const fighter = side === "a" ? fightRow.fighter_a : fightRow.fighter_b;
+    if (!handicapPrices[key]) handicapPrices[key] = { label: `${fighter} ${match[1]}${line}`, prices: [] };
+    handicapPrices[key].prices.push(price);
   };
 
   for (const bm of odds.bookmakers) {
@@ -357,6 +373,29 @@ async function syncOddsForFight(fightRow: {
         const side = nameSideOf(v.value);
         if (side) mlPrices[side].push(price);
       }
+    }
+
+    // ---- Fight Result / 3-way, including draw if offered ----
+    const threeWayBet = bm.bets.find((b: any) => b.id === 1)
+      ?? bm.bets.find((b: any) => /3\s*way|three\s*way|result/i.test(b.name ?? ""));
+    if (threeWayBet) {
+      for (const v of threeWayBet.values) {
+        const val = String(v.value).toLowerCase();
+        const price = Number(v.odd);
+        if (!Number.isFinite(price) || price <= 1) continue;
+        if (/draw|tie/.test(val)) threeWayPrices.draw.push(price);
+        else {
+          const side = nameSideOf(v.value);
+          if (side) threeWayPrices[side].push(price);
+        }
+      }
+    }
+
+    // ---- Handicap / spread ----
+    for (const bet of bm.bets) {
+      const nm = (bet.name ?? "").toLowerCase();
+      if (bet.id !== 3 && !/handicap|spread/.test(nm)) continue;
+      for (const v of bet.values) parseHandicapSelection(v.value, Number(v.odd));
     }
 
     // ---- Method by known IDs ----
