@@ -169,6 +169,18 @@ function LandingPage() {
       </header>
 
       <main className="mx-auto w-full min-w-0 max-w-3xl overflow-x-hidden px-4 pb-28 pt-5 md:pb-14">
+        {/* UFC 329 pill */}
+        <Link
+          to="/ufc"
+          className="mb-5 flex items-center justify-between rounded-full border border-[var(--color-surface-border)] bg-gradient-to-r from-red-900/40 to-black px-4 py-2 text-xs font-bold text-white transition hover:border-red-500"
+        >
+          <span className="flex items-center gap-2">
+            <span className="rounded bg-red-600 px-2 py-0.5 text-[10px]">NEW</span>
+            UFC 329 · Main & Co-Main markets
+          </span>
+          <ArrowUpRight className="h-4 w-4" />
+        </Link>
+
         {/* Fixtures navigator */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
