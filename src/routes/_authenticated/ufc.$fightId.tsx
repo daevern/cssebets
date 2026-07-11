@@ -452,6 +452,10 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
           {tab === "moneyline" && (
             <p className="text-[11px] text-[var(--color-ink-muted)]">Draw, technical draw or no-contest voids both selections.</p>
           )}
+          {tab === "method" && (
+            <p className="text-[11px] text-[var(--color-ink-muted)]">Model-derived from the live market. Closes 30 minutes before walk-outs.</p>
+          )}
+
         </div>
 
         {filtered.length === 0 ? (
