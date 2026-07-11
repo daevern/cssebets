@@ -870,4 +870,4 @@ function FormColumn({ name, rows, accent }: { name: string; rows: any[]; accent:
   );
 }
 
-}
+
