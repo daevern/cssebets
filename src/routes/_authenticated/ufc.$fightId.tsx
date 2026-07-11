@@ -783,7 +783,7 @@ function TaleOfTheTape({ a, b, fight }: { a: any; b: any; fight: any }) {
     { label: "Reach", aVal: a?.reach_cm ? `${a.reach_cm} cm` : "—", bVal: b?.reach_cm ? `${b.reach_cm} cm` : "—" },
     { label: "Weight", aVal: a?.weight_lbs ? `${a.weight_lbs} lbs` : "—", bVal: b?.weight_lbs ? `${b.weight_lbs} lbs` : "—" },
     { label: "Stance", aVal: a?.stance ?? "—", bVal: b?.stance ?? "—" },
-    { label: "Age", aVal: age(a?.dob), bVal: age(b?.dob) },
+    { label: "Age", aVal: age(a?.dob, a?.age_years), bVal: age(b?.dob, b?.age_years) },
     { label: "KO", aVal: finishRecord(a, "ko"), bVal: finishRecord(b, "ko") },
     { label: "Sub", aVal: finishRecord(a, "sub"), bVal: finishRecord(b, "sub") },
     { label: "Team", aVal: a?.team_name ?? "—", bVal: b?.team_name ?? "—" },
@@ -815,10 +815,10 @@ function recordStr(f: any) {
   if (record_w == null && record_l == null) return "—";
   return `${record_w ?? 0}-${record_l ?? 0}${record_d ? `-${record_d}` : ""}`;
 }
-function age(dob?: string | null) {
-  if (!dob) return "—";
+function age(dob?: string | null, fallback?: number | null) {
+  if (!dob) return fallback ? String(fallback) : "—";
   const d = new Date(dob);
-  if (Number.isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return fallback ? String(fallback) : "—";
   const diff = Date.now() - d.getTime();
   return String(Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000)));
 }
