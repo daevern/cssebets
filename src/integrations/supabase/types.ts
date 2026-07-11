@@ -2597,6 +2597,50 @@ export type Database = {
         }
         Relationships: []
       }
+      ufc_fight_h2h: {
+        Row: {
+          created_at: string
+          date: string | null
+          event_name: string | null
+          fight_id: string
+          id: string
+          method: string | null
+          past_fight_apimma_id: number | null
+          round: number | null
+          winner_slot: string | null
+        }
+        Insert: {
+          created_at?: string
+          date?: string | null
+          event_name?: string | null
+          fight_id: string
+          id?: string
+          method?: string | null
+          past_fight_apimma_id?: number | null
+          round?: number | null
+          winner_slot?: string | null
+        }
+        Update: {
+          created_at?: string
+          date?: string | null
+          event_name?: string | null
+          fight_id?: string
+          id?: string
+          method?: string | null
+          past_fight_apimma_id?: number | null
+          round?: number | null
+          winner_slot?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ufc_fight_h2h_fight_id_fkey"
+            columns: ["fight_id"]
+            isOneToOne: false
+            referencedRelation: "ufc_fights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ufc_fight_markets: {
         Row: {
           fight_id: string
@@ -2638,15 +2682,140 @@ export type Database = {
           },
         ]
       }
+      ufc_fight_stats: {
+        Row: {
+          control_time_sec: number | null
+          created_at: string
+          fight_id: string
+          fighter_slot: string
+          id: string
+          knockdowns: number | null
+          raw: Json | null
+          significant_strikes_attempted: number | null
+          significant_strikes_landed: number | null
+          strikes_attempted: number | null
+          strikes_landed: number | null
+          submission_attempts: number | null
+          takedowns_attempted: number | null
+          takedowns_landed: number | null
+          updated_at: string
+        }
+        Insert: {
+          control_time_sec?: number | null
+          created_at?: string
+          fight_id: string
+          fighter_slot: string
+          id?: string
+          knockdowns?: number | null
+          raw?: Json | null
+          significant_strikes_attempted?: number | null
+          significant_strikes_landed?: number | null
+          strikes_attempted?: number | null
+          strikes_landed?: number | null
+          submission_attempts?: number | null
+          takedowns_attempted?: number | null
+          takedowns_landed?: number | null
+          updated_at?: string
+        }
+        Update: {
+          control_time_sec?: number | null
+          created_at?: string
+          fight_id?: string
+          fighter_slot?: string
+          id?: string
+          knockdowns?: number | null
+          raw?: Json | null
+          significant_strikes_attempted?: number | null
+          significant_strikes_landed?: number | null
+          strikes_attempted?: number | null
+          strikes_landed?: number | null
+          submission_attempts?: number | null
+          takedowns_attempted?: number | null
+          takedowns_landed?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ufc_fight_stats_fight_id_fkey"
+            columns: ["fight_id"]
+            isOneToOne: false
+            referencedRelation: "ufc_fights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ufc_fighters: {
+        Row: {
+          apimma_id: number | null
+          country: string | null
+          created_at: string
+          dob: string | null
+          height_cm: number | null
+          id: string
+          name: string
+          nickname: string | null
+          photo_url: string | null
+          reach_cm: number | null
+          record_d: number | null
+          record_l: number | null
+          record_w: number | null
+          stance: string | null
+          updated_at: string
+          weight_class: string | null
+        }
+        Insert: {
+          apimma_id?: number | null
+          country?: string | null
+          created_at?: string
+          dob?: string | null
+          height_cm?: number | null
+          id?: string
+          name: string
+          nickname?: string | null
+          photo_url?: string | null
+          reach_cm?: number | null
+          record_d?: number | null
+          record_l?: number | null
+          record_w?: number | null
+          stance?: string | null
+          updated_at?: string
+          weight_class?: string | null
+        }
+        Update: {
+          apimma_id?: number | null
+          country?: string | null
+          created_at?: string
+          dob?: string | null
+          height_cm?: number | null
+          id?: string
+          name?: string
+          nickname?: string | null
+          photo_url?: string | null
+          reach_cm?: number | null
+          record_d?: number | null
+          record_l?: number | null
+          record_w?: number | null
+          stance?: string | null
+          updated_at?: string
+          weight_class?: string | null
+        }
+        Relationships: []
+      }
       ufc_fights: {
         Row: {
+          apimma_fight_id: number | null
+          apimma_fighter_a_id: number | null
+          apimma_fighter_b_id: number | null
           card_position: string
           commence_time: string
           created_at: string
           event_id: string
           fighter_a: string
+          fighter_a_logo: string | null
           fighter_b: string
+          fighter_b_logo: string | null
           id: string
+          is_title_fight: boolean
           odds_api_event_id: string | null
           result_method: string | null
           result_round: number | null
@@ -2654,16 +2823,23 @@ export type Database = {
           settled_at: string | null
           status: string
           updated_at: string
+          weight_class: string | null
           winner: string | null
         }
         Insert: {
+          apimma_fight_id?: number | null
+          apimma_fighter_a_id?: number | null
+          apimma_fighter_b_id?: number | null
           card_position?: string
           commence_time: string
           created_at?: string
           event_id: string
           fighter_a: string
+          fighter_a_logo?: string | null
           fighter_b: string
+          fighter_b_logo?: string | null
           id?: string
+          is_title_fight?: boolean
           odds_api_event_id?: string | null
           result_method?: string | null
           result_round?: number | null
@@ -2671,16 +2847,23 @@ export type Database = {
           settled_at?: string | null
           status?: string
           updated_at?: string
+          weight_class?: string | null
           winner?: string | null
         }
         Update: {
+          apimma_fight_id?: number | null
+          apimma_fighter_a_id?: number | null
+          apimma_fighter_b_id?: number | null
           card_position?: string
           commence_time?: string
           created_at?: string
           event_id?: string
           fighter_a?: string
+          fighter_a_logo?: string | null
           fighter_b?: string
+          fighter_b_logo?: string | null
           id?: string
+          is_title_fight?: boolean
           odds_api_event_id?: string | null
           result_method?: string | null
           result_round?: number | null
@@ -2688,6 +2871,7 @@ export type Database = {
           settled_at?: string | null
           status?: string
           updated_at?: string
+          weight_class?: string | null
           winner?: string | null
         }
         Relationships: [
