@@ -366,7 +366,13 @@ function OddsButton({
 }
 
 function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
-  const [tab, setTab] = useState<"moneyline" | "method" | "round">("moneyline");
+  const availableTypes = new Set(markets.filter((m) => m.is_active).map((m) => m.market_type));
+  const visibleTabs = MARKET_TABS.filter((t) => availableTypes.has(t.id));
+  const firstAvailable = visibleTabs[0]?.id ?? "moneyline";
+  const [tab, setTab] = useState<"moneyline" | "method" | "round">(firstAvailable);
+  useEffect(() => {
+    if (visibleTabs.length && !visibleTabs.some((t) => t.id === tab)) setTab(visibleTabs[0].id);
+  }, [visibleTabs.map((t) => t.id).join(","), tab]);
   const [pick, setPick] = useState<Market | null>(null);
   const [stake, setStake] = useState("10");
 
@@ -397,11 +403,19 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
   const potentialReturn = pick ? stakeNum * Number(pick.odds) : 0;
   const potentialGain = potentialReturn - stakeNum;
 
+  if (visibleTabs.length === 0) {
+    return (
+      <div className="rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-2)] py-6 text-center text-xs text-[var(--color-ink-muted)]">
+        No markets available yet — walkouts approaching.
+      </div>
+    );
+  }
+
   return (
     <div className="pt-4 space-y-4 -mx-3 sm:-mx-2 md:mx-0">
       {/* Segmented tab bar — identical to football MarketTabs */}
       <div className="flex overflow-x-auto rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {MARKET_TABS.map((t) => {
+        {visibleTabs.map((t) => {
           const active = tab === t.id;
           return (
             <button
@@ -419,6 +433,7 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
           );
         })}
       </div>
+
 
       <div className="px-3 sm:px-2 md:px-0 space-y-3">
         {/* Question heading (mirrors QuestionHeading) */}
