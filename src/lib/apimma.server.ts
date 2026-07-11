@@ -35,6 +35,8 @@ export type ApiMmaFighter = {
   id: number;
   name: string;
   nickname?: string | null;
+  age?: number | null;
+  gender?: string | null;
   category?: string | null;
   height?: string | null;
   weight?: string | null;
@@ -44,6 +46,7 @@ export type ApiMmaFighter = {
   birth_place?: string | null;
   country?: string | null;
   photo?: string | null;
+  team?: { id: number | null; name: string | null } | null;
   record?: { wins: number; losses: number; draws: number } | null;
 };
 
@@ -73,6 +76,13 @@ export type ApiMmaFighterRecord = {
   category?: string | null;
   status: { long: string; short: string };
   fighters: ApiMmaFight["fighters"];
+};
+
+export type ApiMmaFighterRecordSummary = {
+  fighter: { id: number; name: string; photo?: string | null };
+  total?: { win?: number | null; loss?: number | null; draw?: number | null } | null;
+  ko?: { win?: number | null; loss?: number | null } | null;
+  sub?: { win?: number | null; loss?: number | null } | null;
 };
 
 export async function apiMmaGet<T>(
@@ -123,9 +133,33 @@ export async function searchFighter(name: string) {
   }
 }
 
-export async function fetchFighterRecords(id: number) {
-  const r = await apiMmaGet<ApiMmaFighterRecord[]>("/fighters/records", { id });
+export async function fetchFighterRecordSummary(id: number) {
+  const r = await apiMmaGet<ApiMmaFighterRecordSummary[]>("/fighters/records", { id });
+  return r.response?.[0] ?? null;
+}
+
+export async function fetchFightsForFighterSeason(id: number, season: number) {
+  const r = await apiMmaGet<ApiMmaFighterRecord[]>("/fights", { fighter: id, season });
   return r.response ?? [];
+}
+
+export async function fetchFighterFightHistory(id: number, seasonsBack = 8) {
+  const currentYear = new Date().getUTCFullYear();
+  const out: ApiMmaFighterRecord[] = [];
+  const seen = new Set<number>();
+  for (let y = currentYear; y >= currentYear - seasonsBack; y--) {
+    try {
+      const rows = await fetchFightsForFighterSeason(id, y);
+      for (const row of rows) {
+        if (seen.has(row.id)) continue;
+        seen.add(row.id);
+        out.push(row);
+      }
+    } catch {
+      // Keep enrichment best-effort; paid API plans still return sparse years.
+    }
+  }
+  return out.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
 
@@ -152,6 +186,19 @@ export function parseCm(v?: string | null): number | null {
   if (m) return Number(m[1]);
   const feet = v.match(/(\d+)\s*['\u2032]\s*(\d+)/);
   if (feet) return Math.round((Number(feet[1]) * 12 + Number(feet[2])) * 2.54);
+  const inches = v.match(/(\d+(?:\.\d+)?)\s*(?:in|inches|['\u2032])/i);
+  if (inches) return Math.round(Number(inches[1]) * 2.54);
+  const bare = v.match(/^\s*(\d+(?:\.\d+)?)\s*$/);
+  if (bare) return Number(bare[1]);
+  return null;
+}
+
+export function parseLbs(v?: string | null): number | null {
+  if (!v) return null;
+  const lbs = v.match(/(\d+(?:\.\d+)?)\s*(?:lb|lbs|pounds?)/i);
+  if (lbs) return Number(lbs[1]);
+  const kg = v.match(/(\d+(?:\.\d+)?)\s*kg/i);
+  if (kg) return Math.round(Number(kg[1]) * 2.20462);
   const bare = v.match(/^\s*(\d+(?:\.\d+)?)\s*$/);
   if (bare) return Number(bare[1]);
   return null;

@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authenticated/ufc/")({
 
 type Market = {
   fight_id: string;
-  market_type: "moneyline" | "method" | "round";
+  market_type: "moneyline" | "three_way" | "method" | "round" | "total_rounds" | "distance" | "handicap";
   selection_key: string;
   label: string;
   odds: number;

@@ -5,8 +5,11 @@
 // Bookmaker odds are real (bet365/Pinnacle/Betfair preferred). Selection
 // keys match the settlement RPC contract:
 //   moneyline: 'a' | 'b'
+//   three_way: 'a' | 'draw' | 'b'
 //   method   : '{a|b}_{ko_tko|submission|decision}'
 //   round    : 'r1'..'r5' | 'distance'
+//   total_rounds: 'over_1_5' | 'under_1_5' ...
+//   handicap: '{a|b}_{plus|minus}_5_5'
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { applyOutrightMargin } from "@/lib/odds-margin.server";
 import {
@@ -14,9 +17,11 @@ import {
   fetchOddsForFight,
   fetchFighter,
   searchFighter,
-  fetchFighterRecords,
+  fetchFighterRecordSummary,
+  fetchFighterFightHistory,
   fetchFightStats,
   parseCm,
+  parseLbs,
   type ApiMmaFight,
 } from "@/lib/apimma.server";
 
@@ -142,8 +147,12 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
 
   // Try /fighters?id=; on failure or empty response, fall back to name search.
   let detail: Awaited<ReturnType<typeof fetchFighter>> | null = null;
+  let recordSummary: Awaited<ReturnType<typeof fetchFighterRecordSummary>> | null = null;
   try {
-    detail = await fetchFighter(apimmaId);
+    [detail, recordSummary] = await Promise.all([
+      fetchFighter(apimmaId),
+      fetchFighterRecordSummary(apimmaId).catch(() => null),
+    ]);
   } catch (e) {
     console.warn("fetchFighter failed", apimmaId, (e as Error).message);
   }
@@ -158,20 +167,32 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
 
   const coalesce = <T,>(next: T | null | undefined, prev: T | null | undefined): T | null =>
     (next ?? prev ?? null) as T | null;
+  const total = recordSummary?.total;
+  const ko = recordSummary?.ko;
+  const sub = recordSummary?.sub;
 
   const payload = {
     apimma_id: apimmaId,
     name: cleanDisplayText(detail?.name || existing?.name || name),
     nickname: coalesce(detail?.nickname, existing?.nickname),
-    record_w: coalesce(detail?.record?.wins, existing?.record_w),
-    record_l: coalesce(detail?.record?.losses, existing?.record_l),
-    record_d: coalesce(detail?.record?.draws, existing?.record_d),
+    record_w: coalesce(detail?.record?.wins ?? total?.win, existing?.record_w),
+    record_l: coalesce(detail?.record?.losses ?? total?.loss, existing?.record_l),
+    record_d: coalesce(detail?.record?.draws ?? total?.draw, existing?.record_d),
     reach_cm: coalesce(parseCm(detail?.reach ?? null), existing?.reach_cm),
     height_cm: coalesce(parseCm(detail?.height ?? null), existing?.height_cm),
+    weight_lbs: coalesce(parseLbs(detail?.weight ?? null), existing?.weight_lbs),
     stance: coalesce(detail?.stance, existing?.stance),
     dob: coalesce(detail?.birth_date, existing?.dob),
+    age_years: coalesce(detail?.age, existing?.age_years),
     weight_class: cleanDisplayText(coalesce(detail?.category, existing?.weight_class)),
     country: coalesce(detail?.country, existing?.country),
+    birth_place: coalesce(detail?.birth_place, existing?.birth_place),
+    gender: coalesce(detail?.gender, existing?.gender),
+    team_name: coalesce(detail?.team?.name, existing?.team_name),
+    ko_w: coalesce(ko?.win, existing?.ko_w),
+    ko_l: coalesce(ko?.loss, existing?.ko_l),
+    sub_w: coalesce(sub?.win, existing?.sub_w),
+    sub_l: coalesce(sub?.loss, existing?.sub_l),
     photo_url: coalesce(detail?.photo ?? logo ?? null, existing?.photo_url),
   };
   if (existing?.id) {
@@ -277,11 +298,13 @@ async function syncOddsForFight(fightRow: {
 
   // Aggregate across ALL bookmakers so no single provider gap kills a market.
   const mlPrices: Record<"a" | "b", number[]> = { a: [], b: [] };
+  const threeWayPrices: Record<"a" | "draw" | "b", number[]> = { a: [], draw: [], b: [] };
   const methodPrices: Record<string, number[]> = {
     a_ko_tko: [], a_submission: [], a_decision: [],
     b_ko_tko: [], b_submission: [], b_decision: [],
   };
   const roundPrices: Record<string, number[]> = {};
+  const handicapPrices: Record<string, { label: string; prices: number[] }> = {};
   // Over/Under total-rounds prices per boundary (1.5, 2.5, 3.5, 4.5) →
   // used to derive per-round finish odds when the API has no explicit
   // "Round Betting" market (which is the norm for API-Sports MMA).
@@ -305,6 +328,20 @@ async function syncOddsForFight(fightRow: {
     if (!key) return;
     if (!roundPrices[key]) roundPrices[key] = [];
     roundPrices[key].push(price);
+  };
+  const parseHandicapSelection = (raw: string, price: number) => {
+    if (!Number.isFinite(price) || price <= 1) return;
+    const side = nameSideOf(raw);
+    if (!side) return;
+    const match = raw.match(/([+-])\s*(\d+(?:\.\d+)?)/);
+    if (!match) return;
+    const line = Number(match[2]);
+    if (!Number.isFinite(line)) return;
+    const sign = match[1] === "+" ? "plus" : "minus";
+    const key = `${side}_${sign}_${String(line).replace(".", "_")}`;
+    const fighter = side === "a" ? fightRow.fighter_a : fightRow.fighter_b;
+    if (!handicapPrices[key]) handicapPrices[key] = { label: `${fighter} ${match[1]}${line}`, prices: [] };
+    handicapPrices[key].prices.push(price);
   };
 
   for (const bm of odds.bookmakers) {
@@ -336,6 +373,29 @@ async function syncOddsForFight(fightRow: {
         const side = nameSideOf(v.value);
         if (side) mlPrices[side].push(price);
       }
+    }
+
+    // ---- Fight Result / 3-way, including draw if offered ----
+    const threeWayBet = bm.bets.find((b: any) => b.id === 1)
+      ?? bm.bets.find((b: any) => /3\s*way|three\s*way|result/i.test(b.name ?? ""));
+    if (threeWayBet) {
+      for (const v of threeWayBet.values) {
+        const val = String(v.value).toLowerCase();
+        const price = Number(v.odd);
+        if (!Number.isFinite(price) || price <= 1) continue;
+        if (/draw|tie/.test(val)) threeWayPrices.draw.push(price);
+        else {
+          const side = nameSideOf(v.value);
+          if (side) threeWayPrices[side].push(price);
+        }
+      }
+    }
+
+    // ---- Handicap / spread ----
+    for (const bet of bm.bets) {
+      const nm = (bet.name ?? "").toLowerCase();
+      if (bet.id !== 3 && !/handicap|spread/.test(nm)) continue;
+      for (const v of bet.values) parseHandicapSelection(v.value, Number(v.odd));
     }
 
     // ---- Method by known IDs ----
@@ -468,6 +528,16 @@ async function syncOddsForFight(fightRow: {
     }
   }
 
+  const distanceLine = scheduledRounds === 5 ? 4 : 2;
+  if (!distancePrices.yes.length && !distancePrices.no.length) {
+    const overDistance = median(ouOverPrices[distanceLine]);
+    const underDistance = median(ouUnderPrices[distanceLine]);
+    if (overDistance > 1 && underDistance > 1) {
+      distancePrices.yes.push(overDistance);
+      distancePrices.no.push(underDistance);
+    }
+  }
+
   // ---- Persist Moneyline ----
   if (mlPrices.a.length && mlPrices.b.length) {
     const priced = await apply2WayMargin(median(mlPrices.a), median(mlPrices.b));
@@ -479,6 +549,33 @@ async function syncOddsForFight(fightRow: {
       { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", odds: priced.a },
       { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", odds: priced.b },
     );
+  }
+
+  // ---- Persist Fight Result (3-way) ----
+  const threeWayEntries: Array<{ team: string; odds: number }> = [];
+  if (threeWayPrices.a.length) threeWayEntries.push({ team: "a", odds: median(threeWayPrices.a) });
+  if (threeWayPrices.draw.length) threeWayEntries.push({ team: "draw", odds: median(threeWayPrices.draw) });
+  if (threeWayPrices.b.length) threeWayEntries.push({ team: "b", odds: median(threeWayPrices.b) });
+  if (threeWayEntries.length >= 2) {
+    const priced = await applyOutrightMargin(threeWayEntries);
+    for (const p of priced) {
+      const label = p.team === "a" ? fightRow.fighter_a : p.team === "b" ? fightRow.fighter_b : "Draw";
+      upserts.push({ fight_id: fightRow.id, market_type: "three_way", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
+      snapshots.push({ fight_id: fightRow.id, market_type: "three_way", selection_key: p.team, odds: p.odds });
+    }
+  }
+
+  // ---- Persist Handicap ----
+  const handicapEntries = Object.entries(handicapPrices)
+    .filter(([, v]) => v.prices.length)
+    .map(([team, v]) => ({ team, odds: median(v.prices), label: v.label }));
+  if (handicapEntries.length >= 2) {
+    const priced = await applyOutrightMargin(handicapEntries.map(({ team, odds }) => ({ team, odds })));
+    for (const p of priced) {
+      const meta = handicapEntries.find((h) => h.team === p.team);
+      upserts.push({ fight_id: fightRow.id, market_type: "handicap", selection_key: p.team, label: meta?.label ?? p.team, odds: p.odds, is_active: true, updated_at: nowIso });
+      snapshots.push({ fight_id: fightRow.id, market_type: "handicap", selection_key: p.team, odds: p.odds });
+    }
   }
 
   // ---- Persist Method ----
@@ -624,17 +721,19 @@ async function syncFightStats(fightRowId: string, apimmaFightId: number) {
 }
 
 // ---- H2H + recent form ----
-async function syncH2H(fightRowId: string, aId: number, bId: number) {
+async function syncH2H(fightRowId: string, aId: number, bId: number, currentApimmaFightId: number) {
   try {
     const [recA, recB] = await Promise.all([
-      fetchFighterRecords(aId).catch(() => []),
-      fetchFighterRecords(bId).catch(() => []),
+      fetchFighterFightHistory(aId, 16).catch(() => []),
+      fetchFighterFightHistory(bId, 16).catch(() => []),
     ]);
 
     const rows: any[] = [];
 
     // Direct H2H (from A's records where opponent is B)
     for (const r of recA) {
+      if (r.id === currentApimmaFightId) continue;
+      if (r.status.short !== "FT" && r.status.short !== "AFT") continue;
       const opp = r.fighters.first.id === aId ? r.fighters.second : r.fighters.first;
       if (opp.id !== bId) continue;
       const aWon = r.fighters.first.id === aId ? r.fighters.first.winner : r.fighters.second.winner;
@@ -656,8 +755,9 @@ async function syncH2H(fightRowId: string, aId: number, bId: number) {
     }
 
     // Recent form: last 6 fights per fighter (excluding this upcoming fight itself)
-    const pushForm = (records: Awaited<ReturnType<typeof fetchFighterRecords>>, selfId: number, slot: "a" | "b") => {
+    const pushForm = (records: Awaited<ReturnType<typeof fetchFighterFightHistory>>, selfId: number, slot: "a" | "b") => {
       const sorted = [...records]
+        .filter((r) => r.id !== currentApimmaFightId)
         .filter((r) => r.status.short === "FT" || r.status.short === "AFT")
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 6);
@@ -683,6 +783,7 @@ async function syncH2H(fightRowId: string, aId: number, bId: number) {
     pushForm(recA, aId, "a");
     pushForm(recB, bId, "b");
 
+    await (supabaseAdmin as any).from("ufc_fight_h2h").delete().eq("fight_id", fightRowId);
     if (rows.length) {
       await (supabaseAdmin as any)
         .from("ufc_fight_h2h")
@@ -742,7 +843,7 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
     });
 
     totalMarkets += await syncOddsForFight(fightRow, t.f.id);
-    await syncH2H(fightRow.id, t.f.fighters.first.id, t.f.fighters.second.id);
+    await syncH2H(fightRow.id, t.f.fighters.first.id, t.f.fighters.second.id, t.f.id);
     // Live stats only when fight is in progress or finished
     if (["LIVE", "FT", "AFT"].includes(t.f.status.short)) {
       await syncFightStats(fightRow.id, t.f.id);
