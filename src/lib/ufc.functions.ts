@@ -135,6 +135,18 @@ export const placeUfcBet = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Method-of-victory market locks 30 minutes before commence_time so we
+    // never accept bets against stale synthetic prices near walk-outs.
+    if (data.marketType === "method") {
+      const { data: f } = await (supabaseAdmin as any)
+        .from("ufc_fights").select("commence_time").eq("id", data.fightId).maybeSingle();
+      const commenceMs = f?.commence_time ? new Date(f.commence_time).getTime() : 0;
+      if (commenceMs && (commenceMs - Date.now()) <= 30 * 60 * 1000) {
+        throw new Error("Method of Victory market is closed (locks 30 minutes before the fight).");
+      }
+    }
+
     const { data: market } = await (supabaseAdmin as any)
       .from("ufc_fight_markets")
       .select("odds, label, is_active")
@@ -143,6 +155,7 @@ export const placeUfcBet = createServerFn({ method: "POST" })
       .eq("selection_key", data.selectionKey)
       .maybeSingle();
     if (!market || !market.is_active) throw new Error("This market is no longer available. Please pick another.");
+
 
     const { data: betId, error } = await (supabaseAdmin as any).rpc("place_ufc_bet_atomic", {
       p_user_id: userId,
