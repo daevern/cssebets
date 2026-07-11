@@ -13,11 +13,13 @@ import {
   fetchFightsByDate,
   fetchOddsForFight,
   fetchFighter,
+  searchFighter,
   fetchFighterRecords,
   fetchFightStats,
   parseCm,
   type ApiMmaFight,
 } from "@/lib/apimma.server";
+
 
 
 export type UfcSyncResult = {
