@@ -375,7 +375,7 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
   const availableTypes = new Set(markets.filter((m) => m.is_active).map((m) => m.market_type));
   const visibleTabs = MARKET_TABS.filter((t) => availableTypes.has(t.id));
   const firstAvailable = visibleTabs[0]?.id ?? "moneyline";
-  const [tab, setTab] = useState<"moneyline" | "method" | "round">(firstAvailable);
+  const [tab, setTab] = useState<MarketType>(firstAvailable);
   useEffect(() => {
     if (visibleTabs.length && !visibleTabs.some((t) => t.id === tab)) setTab(visibleTabs[0].id);
   }, [visibleTabs.map((t) => t.id).join(","), tab]);
@@ -570,7 +570,7 @@ function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snap
   const availableTypes = new Set(markets.filter((m) => m.is_active).map((m) => m.market_type));
   const visibleTabs = MARKET_TABS.filter((t) => availableTypes.has(t.id));
   const firstAvailable = visibleTabs[0]?.id ?? "moneyline";
-  const [tab, setTab] = useState<"moneyline" | "method" | "round">(firstAvailable);
+  const [tab, setTab] = useState<MarketType>(firstAvailable);
   useEffect(() => {
     if (visibleTabs.length && !visibleTabs.some((t) => t.id === tab)) setTab(visibleTabs[0].id);
   }, [visibleTabs.map((t) => t.id).join(","), tab]);
