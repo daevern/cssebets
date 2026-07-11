@@ -303,14 +303,13 @@ function ScoreFighter({ name, logo, record }: { name: string; logo?: string | nu
 /* ---------- Markets board — mirrors football OddsButton + StakeSlip ---------- */
 
 const MARKET_TABS: Array<{ id: MarketType; label: string }> = [
-  { id: "moneyline", label: "Moneyline" },
-  { id: "three_way", label: "Fight Result" },
-  { id: "handicap", label: "Handicap" },
-  { id: "round", label: "Round" },
+  { id: "moneyline", label: "Fight Winner" },
   { id: "method", label: "Method" },
   { id: "total_rounds", label: "Total Rounds" },
   { id: "distance", label: "Distance" },
+  { id: "round", label: "Winning Round" },
 ];
+
 
 
 function classifyUfc(selection: string): "home" | "away" | "neutral" {
