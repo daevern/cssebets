@@ -408,7 +408,7 @@ async function syncOddsForFight(fightRow: {
       }
     }
 
-    // ---- "Fight to go the distance" (Yes → distance) ----
+    // ---- "Fight to go the distance" (Yes/No) ----
     for (const bet of bm.bets) {
       const nm = (bet.name ?? "").toLowerCase();
       if (!/go\s*the\s*distance|goes\s*the\s*distance|fight\s*to\s*(go|end)/.test(nm)) continue;
@@ -416,13 +416,17 @@ async function syncOddsForFight(fightRow: {
         const val = String(v.value).toLowerCase();
         const price = Number(v.odd);
         if (!Number.isFinite(price) || price <= 1) continue;
-        if (/^yes$|distance/.test(val)) {
+        if (/^yes$|^y$|distance/.test(val)) {
+          distancePrices.yes.push(price);
           if (!roundPrices["distance"]) roundPrices["distance"] = [];
           roundPrices["distance"].push(price);
+        } else if (/^no$|^n$|inside\s*distance|not\s*go/.test(val)) {
+          distancePrices.no.push(price);
         }
       }
     }
   }
+
 
   // ---- Derive round-finish odds from Over/Under totals ----
   // Fair prob at each boundary: pUnder_k = (1/oddU_k) / (1/oddU_k + 1/oddO_k)
