@@ -612,11 +612,15 @@ async function syncOddsForFight(fightRow: {
         .from("ufc_fighters").select("ko_w, sub_w").eq("apimma_id", fightRow.apimma_fighter_a_id).maybeSingle();
       const { data: fB_rec } = await (supabaseAdmin as any)
         .from("ufc_fighters").select("ko_w, sub_w").eq("apimma_id", fightRow.apimma_fighter_b_id).maybeSingle();
+      // KO/Sub split per fighter with Bayesian smoothing toward a UFC-wide
+      // prior (~65% KO / 35% Sub among finishes). Prevents absurd odds for
+      // fighters whose historical mix is lopsided (e.g. Conor McGregor has
+      // essentially zero submissions → raw mix gives 78x for "by Submission").
+      const PRIOR_KO = 6.5, PRIOR_SUB = 3.5; // 10 pseudo-finishes @ 65/35
       const finishMix = (rec: any): { ko: number; sub: number } => {
         const ko = Number(rec?.ko_w ?? 0), sub = Number(rec?.sub_w ?? 0);
-        const t = ko + sub;
-        if (t <= 0) return { ko: 0.7, sub: 0.3 };
-        return { ko: ko / t, sub: sub / t };
+        const t = ko + sub + PRIOR_KO + PRIOR_SUB;
+        return { ko: (ko + PRIOR_KO) / t, sub: (sub + PRIOR_SUB) / t };
       };
       const mixA = finishMix(fA_rec);
       const mixB = finishMix(fB_rec);
@@ -636,15 +640,20 @@ async function syncOddsForFight(fightRow: {
 
   if (methodEntries.length >= 2 && !methodLocked) {
     const priced = await applyOutrightMargin(methodEntries);
+    // Cap at 40x — real bookmakers rarely quote method-of-victory above this,
+    // and it protects the platform from long-tail synthesis noise.
+    const METHOD_MAX_ODDS = 40;
     for (const p of priced) {
       const [slot, ...rest] = p.team.split("_");
       const m = rest.join("_");
       const fighter = slot === "a" ? fightRow.fighter_a : fightRow.fighter_b;
       const label = `${fighter} by ${m === "ko_tko" ? "KO/TKO" : m === "submission" ? "Submission" : "Decision"}`;
-      upserts.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
-      snapshots.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, odds: p.odds });
+      const capped = Math.min(METHOD_MAX_ODDS, Number(p.odds));
+      upserts.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, label, odds: capped, is_active: true, updated_at: nowIso });
+      snapshots.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, odds: capped });
     }
   }
+
 
 
 
