@@ -21,21 +21,36 @@ export const listUfcFights = createServerFn({ method: "GET" }).handler(async () 
 
   const { data: fights } = await (supabaseAdmin as any)
     .from("ufc_fights")
-    .select("id, fighter_a, fighter_b, commence_time, card_position, scheduled_rounds, status, winner, result_method, result_round")
+    .select("id, fighter_a, fighter_b, fighter_a_logo, fighter_b_logo, apimma_fighter_a_id, apimma_fighter_b_id, commence_time, card_position, scheduled_rounds, status, winner, result_method, result_round, weight_class, is_title_fight")
     .eq("event_id", event.id)
     .in("card_position", ["main", "co_main"])
     .order("commence_time", { ascending: true });
 
   const fightIds = (fights ?? []).map((f: any) => f.id);
-  const { data: markets } = fightIds.length
-    ? await (supabaseAdmin as any)
-        .from("ufc_fight_markets")
-        .select("fight_id, market_type, selection_key, label, odds, is_active, updated_at")
-        .in("fight_id", fightIds)
-    : { data: [] as any[] };
+  const fighterIds = Array.from(new Set(
+    (fights ?? []).flatMap((f: any) => [f.apimma_fighter_a_id, f.apimma_fighter_b_id]).filter(Boolean),
+  ));
+  const [{ data: markets }, { data: fighters }] = await Promise.all([
+    fightIds.length
+      ? (supabaseAdmin as any)
+          .from("ufc_fight_markets")
+          .select("fight_id, market_type, selection_key, label, odds, is_active, updated_at")
+          .in("fight_id", fightIds)
+      : Promise.resolve({ data: [] as any[] }),
+    fighterIds.length
+      ? (supabaseAdmin as any)
+          .from("ufc_fighters")
+          .select("apimma_id, photo_url")
+          .in("apimma_id", fighterIds)
+      : Promise.resolve({ data: [] as any[] }),
+  ]);
+  const photoBy = new Map<number, string>();
+  for (const f of (fighters ?? [])) if (f?.apimma_id && f.photo_url) photoBy.set(f.apimma_id, f.photo_url);
 
   const withMarkets = (fights ?? []).map((f: any) => ({
     ...f,
+    fighter_a_logo: f.fighter_a_logo || photoBy.get(f.apimma_fighter_a_id) || null,
+    fighter_b_logo: f.fighter_b_logo || photoBy.get(f.apimma_fighter_b_id) || null,
     markets: (markets ?? []).filter((m: any) => m.fight_id === f.id),
   }));
 
