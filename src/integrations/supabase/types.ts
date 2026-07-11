@@ -2603,9 +2603,13 @@ export type Database = {
           date: string | null
           event_name: string | null
           fight_id: string
+          fighter_slot: string | null
           id: string
+          is_win: boolean | null
           method: string | null
+          opponent_name: string | null
           past_fight_apimma_id: number | null
+          record_type: string
           round: number | null
           winner_slot: string | null
         }
@@ -2614,9 +2618,13 @@ export type Database = {
           date?: string | null
           event_name?: string | null
           fight_id: string
+          fighter_slot?: string | null
           id?: string
+          is_win?: boolean | null
           method?: string | null
+          opponent_name?: string | null
           past_fight_apimma_id?: number | null
+          record_type?: string
           round?: number | null
           winner_slot?: string | null
         }
@@ -2625,9 +2633,13 @@ export type Database = {
           date?: string | null
           event_name?: string | null
           fight_id?: string
+          fighter_slot?: string | null
           id?: string
+          is_win?: boolean | null
           method?: string | null
+          opponent_name?: string | null
           past_fight_apimma_id?: number | null
+          record_type?: string
           round?: number | null
           winner_slot?: string | null
         }
