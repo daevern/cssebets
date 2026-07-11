@@ -576,12 +576,8 @@ function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snap
   const keys = Array.from(new Set(filtered.map((s) => s.selection_key)));
   const labelFor = (k: string) => markets.find((m) => m.market_type === tab && m.selection_key === k)?.label ?? k;
 
-  const [hidden, setHidden] = useState<Record<string, boolean>>({});
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-  const filtered = snapshots.filter((s) => s.market_type === tab);
-  const keys = Array.from(new Set(filtered.map((s) => s.selection_key)));
-  const labelFor = (k: string) => markets.find((m) => m.market_type === tab && m.selection_key === k)?.label ?? k;
+
 
   // Build implied-probability series so the chart matches football (0–100%).
   // If only a single snapshot exists we still want a visible flat line, so
