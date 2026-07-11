@@ -269,7 +269,10 @@ async function syncOddsForFight(fightRow: {
   fighter_a: string;
   fighter_b: string;
   scheduled_rounds: 3 | 5;
+  apimma_fighter_a_id: number | null;
+  apimma_fighter_b_id: number | null;
 }, apimmaFightId: number) {
+
   let odds;
   try {
     odds = await fetchOddsForFight(apimmaFightId);
