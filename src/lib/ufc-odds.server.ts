@@ -708,13 +708,14 @@ async function syncOddsForFight(fightRow: {
 
 
 
-  // Deactivate any previously-persisted three_way / handicap rows so the
-  // client hides them (product removed these market types from the UI).
+  // Deactivate any previously-persisted three_way / handicap / distance rows
+  // so the client hides them (product removed these market types from the UI).
   await (supabaseAdmin as any)
     .from("ufc_fight_markets")
     .update({ is_active: false })
     .eq("fight_id", fightRow.id)
-    .in("market_type", ["three_way", "handicap"]);
+    .in("market_type", ["three_way", "handicap", "distance"]);
+
 
   // Also deactivate any total_rounds lines we no longer surface (only 2.5
   // for 3-round fights; 2.5 and 4.5 for 5-round fights).
