@@ -528,6 +528,16 @@ async function syncOddsForFight(fightRow: {
     }
   }
 
+  const distanceLine = scheduledRounds === 5 ? 4 : 2;
+  if (!distancePrices.yes.length && !distancePrices.no.length) {
+    const overDistance = median(ouOverPrices[distanceLine]);
+    const underDistance = median(ouUnderPrices[distanceLine]);
+    if (overDistance > 1 && underDistance > 1) {
+      distancePrices.yes.push(overDistance);
+      distancePrices.no.push(underDistance);
+    }
+  }
+
   // ---- Persist Moneyline ----
   if (mlPrices.a.length && mlPrices.b.length) {
     const priced = await apply2WayMargin(median(mlPrices.a), median(mlPrices.b));
@@ -539,6 +549,33 @@ async function syncOddsForFight(fightRow: {
       { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", odds: priced.a },
       { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", odds: priced.b },
     );
+  }
+
+  // ---- Persist Fight Result (3-way) ----
+  const threeWayEntries: Array<{ team: string; odds: number }> = [];
+  if (threeWayPrices.a.length) threeWayEntries.push({ team: "a", odds: median(threeWayPrices.a) });
+  if (threeWayPrices.draw.length) threeWayEntries.push({ team: "draw", odds: median(threeWayPrices.draw) });
+  if (threeWayPrices.b.length) threeWayEntries.push({ team: "b", odds: median(threeWayPrices.b) });
+  if (threeWayEntries.length >= 2) {
+    const priced = await applyOutrightMargin(threeWayEntries);
+    for (const p of priced) {
+      const label = p.team === "a" ? fightRow.fighter_a : p.team === "b" ? fightRow.fighter_b : "Draw";
+      upserts.push({ fight_id: fightRow.id, market_type: "three_way", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
+      snapshots.push({ fight_id: fightRow.id, market_type: "three_way", selection_key: p.team, odds: p.odds });
+    }
+  }
+
+  // ---- Persist Handicap ----
+  const handicapEntries = Object.entries(handicapPrices)
+    .filter(([, v]) => v.prices.length)
+    .map(([team, v]) => ({ team, odds: median(v.prices), label: v.label }));
+  if (handicapEntries.length >= 2) {
+    const priced = await applyOutrightMargin(handicapEntries.map(({ team, odds }) => ({ team, odds })));
+    for (const p of priced) {
+      const meta = handicapEntries.find((h) => h.team === p.team);
+      upserts.push({ fight_id: fightRow.id, market_type: "handicap", selection_key: p.team, label: meta?.label ?? p.team, odds: p.odds, is_active: true, updated_at: nowIso });
+      snapshots.push({ fight_id: fightRow.id, market_type: "handicap", selection_key: p.team, odds: p.odds });
+    }
   }
 
   // ---- Persist Method ----
