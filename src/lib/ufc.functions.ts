@@ -56,6 +56,42 @@ export const getUfcMarketHistory = createServerFn({ method: "GET" })
     return { snapshots: rows ?? [] };
   });
 
+export const getUfcFightDetail = createServerFn({ method: "GET" })
+  .inputValidator((i: unknown) => z.object({ fightId: z.string().uuid() }).parse(i))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: fight } = await (supabaseAdmin as any)
+      .from("ufc_fights")
+      .select("*")
+      .eq("id", data.fightId)
+      .maybeSingle();
+    if (!fight) return { fight: null };
+
+    const [{ data: markets }, { data: stats }, { data: h2h }, { data: fighterA }, { data: fighterB }, { data: event }] =
+      await Promise.all([
+        (supabaseAdmin as any).from("ufc_fight_markets").select("*").eq("fight_id", data.fightId),
+        (supabaseAdmin as any).from("ufc_fight_stats").select("*").eq("fight_id", data.fightId),
+        (supabaseAdmin as any)
+          .from("ufc_fight_h2h")
+          .select("*")
+          .eq("fight_id", data.fightId)
+          .order("date", { ascending: false }),
+        (supabaseAdmin as any).from("ufc_fighters").select("*").eq("apimma_id", fight.apimma_fighter_a_id).maybeSingle(),
+        (supabaseAdmin as any).from("ufc_fighters").select("*").eq("apimma_id", fight.apimma_fighter_b_id).maybeSingle(),
+        (supabaseAdmin as any).from("ufc_events").select("id, name, starts_at").eq("id", fight.event_id).maybeSingle(),
+      ]);
+
+    return {
+      fight,
+      event,
+      markets: markets ?? [],
+      stats: stats ?? [],
+      h2h: h2h ?? [],
+      fighterA: fighterA ?? null,
+      fighterB: fighterB ?? null,
+    };
+  });
+
 export const listMyUfcBets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

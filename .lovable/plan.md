@@ -1,115 +1,80 @@
+# Switch UFC to API-Sports MMA + match detail pages
 
-# UFC 329 — Main + Co-Main Betting Market (with Method & Rounds)
+## What I verified
 
-Adds MMA alongside the World Cup product. Odds pulled from The Odds API (already wired via `ODDS_API_KEY`). Only the last two fights on the UFC 329 card (co-main + main event) are shown and bettable. Includes moneyline, method of victory, and round betting.
+Tested `https://v1.mma.api-sports.io` with the existing `API_FOOTBALL_KEY` — it works (same API-Sports account covers MMA). Endpoints available:
 
-Scope: option (c) — real betting surface with wallet debits, settlement, and admin tooling.
+- `/fights?date=…` `?league=` `?season=` — card, fighters (id, name, logo), scheduled category, status
+- `/fights/statistics/fighters?id={fightId}` — per-fighter strike counts, takedowns, control time, etc.
+- `/fighters?id=…` / `?search=…` — record, reach, stance, DOB, weight class, photo
+- `/fighters/records?id=…` — win/loss history → H2H when we intersect two fighters
+- `/odds?fight=…` — 29 markets from 20 bookmakers, including: Moneyline (Home/Away), Round Betting, Method of Victory, Over/Under rounds, Fight goes the distance, Win by KO/TKO, Win by Submission, Win by Decision (unanimous/split)
 
----
+**Blocker to flag:** the current API-Sports plan is **Free** (100 req/day, no live-date access — only 2 days back). Real-time odds movement + live in-fight stats need at least the **Pro** plan on api-sports.io. I'll build it to work with any tier, but live movement won't function until the plan is upgraded.
 
-## 1. Markets offered per fight
+## Plan
 
-- **Moneyline / h2h** — Fighter A wins, Fighter B wins. (2-way, no draw for UFC.)
-- **Method of Victory** — KO/TKO, Submission, Decision per fighter → up to 6 outcomes. Odds API market key: `h2h_method`.
-- **Round Betting** — round 1, 2, 3 (and 4, 5 for 5-round main event), plus "goes the distance". Odds API market key: `rounds`. Main event = 5 rounds, co-main = 3 rounds (tagged per fight).
+### 1. Data layer
+New file `src/lib/apimma.server.ts` mirroring `apifootball.server.ts`:
+- `apiMmaGet(path, params)` with `x-apisports-key: API_FOOTBALL_KEY`, quota tracking in a new `apimma_quota` row (reuse `apifootball_quota` table structure — add `provider` column via migration, or new table `apimma_quota`).
+- Helpers: `fetchFightsByDate`, `fetchFightsByLeague`, `fetchOddsForFight`, `fetchFighter`, `fetchFightStats`, `fetchFighterRecords`.
 
-All three market types run through the existing house-margin engine (`applyOutrightMargin` in `odds-margin.server.ts`) so pricing stays consistent with WC markets.
+### 2. Schema migration
+- Add columns to `ufc_fights`: `apimma_fight_id` (unique), `apimma_fighter_a_id`, `apimma_fighter_b_id`, `weight_class`, `is_title_fight`, `fighter_a_logo`, `fighter_b_logo`.
+- New `ufc_fighters` table: id, apimma_id, name, nickname, record_w/l/d, reach, height, stance, dob, weight_class, photo_url, country.
+- New `ufc_fight_stats` table: fight_id, fighter_id, strikes_landed, strikes_attempted, takedowns_landed, takedowns_attempted, control_time_sec, submission_attempts, knockdowns, updated_at (live stats).
+- New `ufc_fight_h2h` table: fighter_a_id, fighter_b_id, past_fight_id, date, winner_id, method, round.
+- `ufc_market_snapshots` already exists — verify columns; if missing per-selection snapshots, extend to store (fight_id, market_type, selection_key, odds, bookmaker, captured_at) for movement charts.
+- GRANTs + RLS (read for authenticated on all read-only tables; writes via service role).
 
-## 2. Data model (one migration)
+### 3. Odds sync (replaces `ufc-odds.server.ts` logic)
+`runUfcOddsSync` rewritten:
+- Pull upcoming UFC fights via `/fights?league=1&season=<year>` (UFC league id) or `date=`.
+- Filter to just the next fight card (latest event by date cluster, per user's earlier ask).
+- Upsert into `ufc_fights` + `ufc_fighters`.
+- For each fight, call `/odds?fight={id}`, pick a stable bookmaker (bet365 with fallback chain), map:
+  - Bet 2 "Home/Away" → moneyline
+  - Bet 29 "Method of Victory" → method (ko_tko / submission / decision)
+  - Bet 6 "Round Betting" → round
+- Apply platform margin (existing `apply2WayMargin` / new `applyNWayMargin`).
+- Write every pull to `ufc_market_snapshots` for the movement chart (dedupe if odds unchanged).
+- Delete old moneyline-derived Method/Round modelling code.
 
-New public tables, all with RLS + explicit GRANTs:
+### 4. Cron
+Existing `/api/public/hooks/ufc-odds-live` route stays; interval already 30s. Add rate-limit awareness (respect quota, back off if plan cap hit).
 
-- **`ufc_events`** — `event_key` (e.g. `ufc_329`), `name`, `starts_at`, `is_active`.
-- **`ufc_fights`** — `event_id`, `odds_api_event_id`, `fighter_a`, `fighter_b`, `commence_time`, `card_position` (`main` | `co_main` | `other`), `scheduled_rounds` (3 or 5), `status`, `winner` (`a` | `b` | `draw` | null), `result_method` (`ko_tko` | `submission` | `decision` | null), `result_round` (int null), `settled_at`.
-- **`ufc_fight_markets`** — one row per (fight, market_type, selection_key): `market_type` (`moneyline` | `method` | `round`), `label`, `odds`, `is_active`, `updated_at`. Unique on (fight_id, market_type, selection_key).
-- **`ufc_market_snapshots`** — time-series (same cols + `sampled_at`) for movement sparklines.
-- **`ufc_bets`** — `user_id`, `fight_id`, `market_type`, `selection_key`, `stake`, `odds_locked`, `status`, `payout`, `placed_at`, `settled_at`.
+### 5. Match detail page — `/ufc/$fightId`
+New route `src/routes/_authenticated/ufc.$fightId.tsx`, styled after `/matches/$matchId`:
+- **Header:** poster (both fighter photos), names, weight class, card position, scheduled rounds, countdown.
+- **Live odds panel** (Moneyline / Method / Round tabs) — same bet slip flow as current `ufc.tsx`.
+- **Market movement chart** — Recharts line chart, one line per selection, X = time, Y = decimal odds; source: `ufc_market_snapshots`. Reuse the pattern from `src/components/matches/MarketAnalyticsCard.tsx`.
+- **Tale of the tape** — side-by-side record, reach, height, stance, age, country from `ufc_fighters`.
+- **Live fight stats** — strikes/takedowns/control time from `ufc_fight_stats` when fight is live; hidden pre-fight. Auto-refresh via realtime subscription on `ufc_fight_stats`.
+- **H2H** — previous meetings from `ufc_fight_h2h` (empty state if none).
 
-Policies:
-- Read tables (`ufc_events`, `ufc_fights`, `ufc_fight_markets`, `ufc_market_snapshots`): SELECT for `authenticated` + `anon`.
-- `ufc_bets`: SELECT/INSERT only where `auth.uid() = user_id`; updates only via server code using `supabaseAdmin`.
+Add link from each card on `/ufc` list → `/ufc/$fightId`.
 
-## 3. Server integration
+### 6. Server functions
+`src/lib/ufc.functions.ts` additions:
+- `getUfcFightDetail({ fightId })` — returns fight + fighters + latest markets + stats + h2h.
+- `getUfcMarketHistory({ fightId, marketType })` — snapshots for the chart.
+- Existing `listUfcFights`, `placeUfcBet`, admin fns untouched except payload shape now carries real Method/Round odds.
 
-New `src/lib/ufc-odds.server.ts`:
+### 7. Admin page
+`admin.ufc.tsx` gets a small "Sync fighters + stats" button (calls a new admin fn that pulls `/fighters` and `/fights/statistics` for the current card). Refund/void/settle flows unchanged.
 
-- `syncUfcEvent(eventKey)`:
-  - `GET /v4/sports/mma_mixed_martial_arts/events` to find UFC 329 event ids.
-  - `GET /v4/sports/mma_mixed_martial_arts/events/{id}/odds?regions=us,eu&markets=h2h,h2h_method,rounds&oddsFormat=decimal` for the two target fights (last 2 by `commence_time`).
-  - Median across bookmakers per selection, apply house margin, upsert `ufc_fight_markets`, append `ufc_market_snapshots`.
-- Small `applyMmaTwoWayMargin` helper added to `odds-margin.server.ts` for the moneyline; method + rounds reuse `applyOutrightMargin`.
-- `settleUfcFight(fightId, { winner, method, round })`:
-  - Moneyline → winner side.
-  - Method → matching `winner_method` (e.g. `a_ko`).
-  - Round → matching round bucket or `distance` if fight went full scheduled rounds.
-  - Credits wallets via existing wallet-transaction helper, writes `audit_log`.
+### 8. Cleanup
+- Remove Odds API import path from `ufc-odds.server.ts` entirely; keep only API-MMA path.
+- Leave `ODDS_API_KEY` secret in place (used elsewhere? — will grep; if UFC-only, note it can be removed).
 
-Refresh strategy (protects Odds API quota):
-- New pg_cron hook `src/routes/api/public/hooks/ufc-odds-live.ts` runs the sync **every 30 s** — but only calls the API when at least one active fight is within a 4h window of `commence_time`. Zero cost outside fight night.
-- Client polls the DB (not the API) **every 5 s** via `useQuery` `refetchInterval` + a Supabase realtime channel on `ufc_fight_markets` for instant push. This is the "auto-refresh every few seconds" feel without burning credits.
+## Technical notes
 
-## 4. Server functions (`src/lib/ufc.functions.ts`)
+- API-Sports MMA UFC league id needs one-time lookup via `/leagues` on first sync (cached in `platform_settings`).
+- Bookmaker preference chain: bet365 (5) → Pinnacle (9) → Betfair (18) → first available.
+- Method of Victory mapping needs care: API's "Home Win by KO/TKO/DQ" etc. are per-fighter; we'll aggregate into per-fighter method selections (`fighter_a_ko`, `fighter_a_sub`, `fighter_a_dec`, same for B) — richer than current 3-option model. UI Method tab becomes 6 buttons.
+- Round Betting is per-fighter per-round too; UI stays "select fighter → round" collapsible.
+- Snapshots for the chart: capture every 30s only if any odds value changed vs last snapshot (avoid table bloat).
 
-- `listUfcFights()` — auth; returns the 2 fights + markets grouped by type.
-- `getUfcMarketHistory({ fightId, marketType })` — 24h snapshots for sparkline.
-- `placeUfcBet({ fightId, marketType, selectionKey, stake })` — auth; validates stake vs wallet, checks market is active, locks current odds, inserts `ufc_bets`, debits wallet atomically.
-- `listMyUfcBets()` — auth; user's own bets.
-- Admin-only (`has_role('admin')`):
-  - `adminSyncUfc()` — manual sync trigger.
-  - `adminSetUfcCard({ event, fights })` — set fighter names, card position, scheduled_rounds (in case Odds API naming needs correction).
-  - `adminSettleUfcFight({ fightId, winner, method, round })` — grade all 3 market types in one call.
-  - `adminVoidUfcFight({ fightId, reason })` — refund all open bets on that fight.
+## User action required after build
 
-## 5. UI
-
-New route `src/routes/_authenticated/ufc.tsx`:
-
-- Header "UFC 329 — Main Card" with event time + LIVE chip.
-- Two fight tiles (reuses `MarketCard` styling from `matches.index.tsx`): Main Event on top, Co-Main below. Each tile shows:
-  - Fighter names, scheduled-rounds badge.
-  - **Tabs**: Moneyline · Method · Rounds (pattern from `MarketTabs.tsx`).
-  - Selections with live decimal odds, implied %, sparkline from `ufc_market_snapshots`.
-  - Tap → bet slip.
-- Bet slip sheet (reuses `CashoutSheet` pattern): selection, stake input, potential payout, confirm.
-- "Updated Xs ago" chip; realtime updates without full refetch.
-
-Admin route `src/routes/management/admin.ufc.tsx`:
-- Manual sync button.
-- Card mapper (fighter A / B, card position, scheduled rounds).
-- Settle form: winner + method + round → settles all markets in one submit.
-- Void button per fight.
-- Table of open UFC bets with payout preview.
-
-Discovery:
-- Small "UFC 329" pill on `/matches` index linking to `/ufc` (avoids restructuring bottom nav).
-
-## 6. Files touched
-
-Created:
-- `supabase/migrations/<ts>_ufc_market.sql`
-- `src/lib/ufc-odds.server.ts`
-- `src/lib/ufc.functions.ts`
-- `src/routes/api/public/hooks/ufc-odds-live.ts`
-- `src/routes/_authenticated/ufc.tsx`
-- `src/routes/management/admin.ufc.tsx`
-- `src/components/ufc/FightCard.tsx`
-- `src/components/ufc/UfcMarketTabs.tsx`
-- `src/components/ufc/BetSlipSheet.tsx`
-
-Edited:
-- `src/lib/odds-margin.server.ts` — add 2-way MMA margin helper.
-- `src/routes/_authenticated/matches.index.tsx` — add UFC 329 pill.
-- `src/routes/management/admin.tsx` — nav entry for UFC admin.
-
-## 7. Setup steps after implementation
-
-- Migration seeds the `ufc_events` row for UFC 329.
-- One manual `adminSyncUfc()` populates fights + markets. If Odds API naming doesn't match the announced card, use the admin card editor to correct.
-- Add a pg_cron entry pointing to `/api/public/hooks/ufc-odds-live` every 30 s during the event window (added to runbook).
-
-## 8. Out of scope
-
-- Non-UFC MMA events.
-- Parlays across UFC selections.
-- Auto-settlement from a scores feed (admin confirms — MMA feed reliability is poor).
-- Prop markets beyond method + rounds (fight-of-the-night, performance bonuses, etc.).
+Upgrade the API-Sports account to at least the **Pro** plan (~€19/mo) so live in-fight dates and >100 req/day work. Free plan will still populate the page but odds won't move in real time and live stats won't appear.
