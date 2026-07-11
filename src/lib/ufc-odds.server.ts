@@ -497,37 +497,76 @@ async function syncFightStats(fightRowId: string, apimmaFightId: number) {
   }
 }
 
-// ---- H2H ----
+// ---- H2H + recent form ----
 async function syncH2H(fightRowId: string, aId: number, bId: number) {
   try {
-    const records = await fetchFighterRecords(aId);
-    if (!records?.length) return;
+    const [recA, recB] = await Promise.all([
+      fetchFighterRecords(aId).catch(() => []),
+      fetchFighterRecords(bId).catch(() => []),
+    ]);
+
     const rows: any[] = [];
-    for (const r of records) {
+
+    // Direct H2H (from A's records where opponent is B)
+    for (const r of recA) {
       const opp = r.fighters.first.id === aId ? r.fighters.second : r.fighters.first;
       if (opp.id !== bId) continue;
-      const aSlotWinner = r.fighters.first.id === aId
-        ? (r.fighters.first.winner ? "a" : r.fighters.second.winner ? "b" : "draw")
-        : (r.fighters.second.winner ? "a" : r.fighters.first.winner ? "b" : "draw");
+      const aWon = r.fighters.first.id === aId ? r.fighters.first.winner : r.fighters.second.winner;
+      const bWon = r.fighters.first.id === bId ? r.fighters.first.winner : r.fighters.second.winner;
+      const winner_slot = aWon ? "a" : bWon ? "b" : "draw";
       rows.push({
         fight_id: fightRowId,
+        record_type: "direct",
         past_fight_apimma_id: r.id,
         date: r.date.slice(0, 10),
-        event_name: r.slug ?? null,
-        winner_slot: aSlotWinner,
+        event_name: cleanDisplayText(r.slug ?? null),
+        winner_slot,
+        fighter_slot: null,
+        opponent_name: cleanDisplayText(opp.name),
+        is_win: aWon ?? null,
         method: null,
         round: null,
       });
     }
+
+    // Recent form: last 6 fights per fighter (excluding this upcoming fight itself)
+    const pushForm = (records: Awaited<ReturnType<typeof fetchFighterRecords>>, selfId: number, slot: "a" | "b") => {
+      const sorted = [...records]
+        .filter((r) => r.status.short === "FT" || r.status.short === "AFT")
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 6);
+      for (const r of sorted) {
+        const isFirst = r.fighters.first.id === selfId;
+        const self = isFirst ? r.fighters.first : r.fighters.second;
+        const opp = isFirst ? r.fighters.second : r.fighters.first;
+        rows.push({
+          fight_id: fightRowId,
+          record_type: slot === "a" ? "form_a" : "form_b",
+          past_fight_apimma_id: r.id,
+          date: r.date.slice(0, 10),
+          event_name: cleanDisplayText(r.slug ?? null),
+          winner_slot: null,
+          fighter_slot: slot,
+          opponent_name: cleanDisplayText(opp.name),
+          is_win: self.winner ?? null,
+          method: null,
+          round: null,
+        });
+      }
+    };
+    pushForm(recA, aId, "a");
+    pushForm(recB, bId, "b");
+
     if (rows.length) {
       await (supabaseAdmin as any)
         .from("ufc_fight_h2h")
-        .upsert(rows, { onConflict: "fight_id,past_fight_apimma_id" });
+        .upsert(rows, { onConflict: "fight_id,record_type,past_fight_apimma_id" });
     }
   } catch (e) {
     console.warn("syncH2H failed", (e as Error).message);
   }
 }
+
 
 export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<UfcSyncResult> {
   const key = process.env.API_FOOTBALL_KEY?.trim();
