@@ -47,6 +47,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedChangelogRouteImport } from './routes/_authenticated/changelog'
 import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/bets'
 import { Route as ManagementAdminIndexRouteImport } from './routes/management/admin.index'
+import { Route as AuthenticatedUfcIndexRouteImport } from './routes/_authenticated/ufc.index'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
 import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
 import { Route as ManagementAdminWalletAdjustmentsRouteImport } from './routes/management/admin.wallet-adjustments'
@@ -295,6 +296,11 @@ const ManagementAdminIndexRoute = ManagementAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => ManagementAdminRoute,
+} as any)
+const AuthenticatedUfcIndexRoute = AuthenticatedUfcIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedUfcRoute,
 } as any)
 const AuthenticatedMatchesIndexRoute =
   AuthenticatedMatchesIndexRouteImport.update({
@@ -683,6 +689,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/matches/': typeof AuthenticatedMatchesIndexRoute
+  '/ufc/': typeof AuthenticatedUfcIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
@@ -722,7 +729,6 @@ export interface FileRoutesByTo {
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/trust-center': typeof AuthenticatedTrustCenterRoute
-  '/ufc': typeof AuthenticatedUfcRouteWithChildren
   '/wallet': typeof AuthenticatedWalletRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
@@ -774,6 +780,7 @@ export interface FileRoutesByTo {
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/matches': typeof AuthenticatedMatchesIndexRoute
+  '/ufc': typeof AuthenticatedUfcIndexRoute
   '/management/admin': typeof ManagementAdminIndexRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
@@ -869,6 +876,7 @@ export interface FileRoutesById {
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
+  '/_authenticated/ufc/': typeof AuthenticatedUfcIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
@@ -964,6 +972,7 @@ export interface FileRouteTypes {
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
     | '/matches/'
+    | '/ufc/'
     | '/management/admin/'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
@@ -1003,7 +1012,6 @@ export interface FileRouteTypes {
     | '/support'
     | '/tournament-winner'
     | '/trust-center'
-    | '/ufc'
     | '/wallet'
     | '/email/unsubscribe'
     | '/management/access-denied'
@@ -1055,6 +1063,7 @@ export interface FileRouteTypes {
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
     | '/matches'
+    | '/ufc'
     | '/management/admin'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
@@ -1149,6 +1158,7 @@ export interface FileRouteTypes {
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
     | '/_authenticated/matches/'
+    | '/_authenticated/ufc/'
     | '/management/admin/'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
@@ -1460,6 +1470,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/management/admin/'
       preLoaderRoute: typeof ManagementAdminIndexRouteImport
       parentRoute: typeof ManagementAdminRoute
+    }
+    '/_authenticated/ufc/': {
+      id: '/_authenticated/ufc/'
+      path: '/'
+      fullPath: '/ufc/'
+      preLoaderRoute: typeof AuthenticatedUfcIndexRouteImport
+      parentRoute: typeof AuthenticatedUfcRoute
     }
     '/_authenticated/matches/': {
       id: '/_authenticated/matches/'
@@ -1857,10 +1874,12 @@ const AuthenticatedMatchesRouteWithChildren =
 
 interface AuthenticatedUfcRouteChildren {
   AuthenticatedUfcFightIdRoute: typeof AuthenticatedUfcFightIdRoute
+  AuthenticatedUfcIndexRoute: typeof AuthenticatedUfcIndexRoute
 }
 
 const AuthenticatedUfcRouteChildren: AuthenticatedUfcRouteChildren = {
   AuthenticatedUfcFightIdRoute: AuthenticatedUfcFightIdRoute,
+  AuthenticatedUfcIndexRoute: AuthenticatedUfcIndexRoute,
 }
 
 const AuthenticatedUfcRouteWithChildren =
@@ -2065,3 +2084,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

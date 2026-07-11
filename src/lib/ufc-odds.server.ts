@@ -36,6 +36,13 @@ function normalizeFighterName(name: string) {
     .replace(/[^a-z0-9]/g, "");
 }
 
+function cleanDisplayText(value?: string | null) {
+  if (!value) return value ?? null;
+  return value
+    .replace(/BenoÃ®t/g, "Benoît")
+    .replace(/Saint Denis/g, "Saint Denis");
+}
+
 async function apply2WayMargin(a: number, b: number) {
   const priced = await applyOutrightMargin([
     { team: "a", odds: a },
@@ -95,6 +102,33 @@ function pickCard(fights: ApiMmaFight[], targetIso: string): ApiMmaFight[] {
   return best?.fights ?? [];
 }
 
+function fightMatchesEventTitle(fight: ApiMmaFight) {
+  const [, title = ""] = (fight.slug ?? "").split(":");
+  if (!title.trim()) return false;
+  const normalizedTitle = normalizeFighterName(title);
+  const first = normalizeFighterName(fight.fighters.first.name).replace(/^(the|a)/, "");
+  const second = normalizeFighterName(fight.fighters.second.name).replace(/^(the|a)/, "");
+  const firstLast = normalizeFighterName(fight.fighters.first.name.split(" ").slice(-1)[0] ?? "");
+  const secondLast = normalizeFighterName(fight.fighters.second.name.split(" ").slice(-1)[0] ?? "");
+  return (
+    (normalizedTitle.includes(first) && normalizedTitle.includes(second)) ||
+    (normalizedTitle.includes(firstLast) && normalizedTitle.includes(secondLast))
+  );
+}
+
+function pickMainAndCoMain(card: ApiMmaFight[]) {
+  const sorted = [...card].sort((a, b) => a.timestamp - b.timestamp || a.id - b.id);
+  const mainCard = sorted.filter((f) => f.is_main);
+  const candidates = mainCard.length >= 2 ? mainCard : sorted;
+  const latestTs = Math.max(...candidates.map((f) => f.timestamp));
+  const latest = candidates.filter((f) => f.timestamp === latestTs);
+  const mainFight = latest.find(fightMatchesEventTitle) ?? latest[0] ?? candidates[candidates.length - 1];
+  const coMainFight = [...candidates]
+    .filter((f) => f.id !== mainFight.id)
+    .sort((a, b) => b.timestamp - a.timestamp || b.id - a.id)[0] ?? null;
+  return { mainFight, coMainFight };
+}
+
 async function upsertFighter(apimmaId: number, name: string, logo?: string) {
   // Try to enrich with /fighters details, but tolerate failure (rate-limits).
   let detail: Awaited<ReturnType<typeof fetchFighter>> | null = null;
@@ -105,7 +139,7 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
   }
   const payload = {
     apimma_id: apimmaId,
-    name: detail?.name || name,
+    name: cleanDisplayText(detail?.name || name),
     nickname: detail?.nickname ?? null,
     record_w: detail?.record?.wins ?? null,
     record_l: detail?.record?.losses ?? null,
@@ -114,7 +148,7 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
     height_cm: parseCm(detail?.height ?? null),
     stance: detail?.stance ?? null,
     dob: detail?.birth_date ?? null,
-    weight_class: detail?.category ?? null,
+    weight_class: cleanDisplayText(detail?.category ?? null),
     country: detail?.country ?? null,
     photo_url: detail?.photo ?? logo ?? null,
   };
@@ -147,14 +181,14 @@ async function saveFight(input: {
     apimma_fight_id: f.id,
     apimma_fighter_a_id: f.fighters.first.id,
     apimma_fighter_b_id: f.fighters.second.id,
-    fighter_a: f.fighters.first.name,
-    fighter_b: f.fighters.second.name,
+    fighter_a: cleanDisplayText(f.fighters.first.name),
+    fighter_b: cleanDisplayText(f.fighters.second.name),
     fighter_a_logo: f.fighters.first.logo ?? null,
     fighter_b_logo: f.fighters.second.logo ?? null,
     commence_time: f.date,
     card_position: input.cardPosition,
     scheduled_rounds: input.scheduledRounds,
-    weight_class: f.category ?? null,
+    weight_class: cleanDisplayText(f.category ?? null),
     is_title_fight: /title|championship/i.test(f.slug ?? ""),
   };
 
@@ -450,12 +484,10 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
   const card = pickCard(allFights, event.starts_at);
   if (!card.length) return { ok: true, skipped: "no card cluster matched" };
 
-  // Main card runs LAST on the event. Take the last two fights chronologically:
-  // main event = latest commence_time, co-main = second latest.
-  const sorted = [...card].sort((a, b) => a.timestamp - b.timestamp);
-  const last = sorted.slice(-2);
-  const mainFight: ApiMmaFight = last[last.length - 1];
-  const coMainFight: ApiMmaFight | null = last.length === 2 ? last[0] : null;
+  // API-MMA marks the main-card fights with is_main. The final two main-card
+  // fights can share the same timestamp, so use the event title slug to keep
+  // the named headline bout as main event.
+  const { mainFight, coMainFight } = pickMainAndCoMain(card);
 
   const targets: Array<{ f: ApiMmaFight; pos: "main" | "co_main"; rounds: 3 | 5 }> = [
     { f: mainFight, pos: "main", rounds: 5 },
