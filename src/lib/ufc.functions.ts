@@ -128,7 +128,7 @@ export const placeUfcBet = createServerFn({ method: "POST" })
         fightId: z.string().uuid(),
         marketType: z.enum(["moneyline", "three_way", "method", "round", "total_rounds", "distance", "handicap"]),
         selectionKey: z.string().min(1).max(32),
-        stake: z.number().positive().max(10000),
+        stake: z.number().positive().min(10).max(50000),
       })
       .parse(i),
   )
@@ -142,7 +142,7 @@ export const placeUfcBet = createServerFn({ method: "POST" })
       .eq("market_type", data.marketType)
       .eq("selection_key", data.selectionKey)
       .maybeSingle();
-    if (!market || !market.is_active) throw new Error("Market not available");
+    if (!market || !market.is_active) throw new Error("This market is no longer available. Please pick another.");
 
     const { data: betId, error } = await (supabaseAdmin as any).rpc("place_ufc_bet_atomic", {
       p_user_id: userId,
@@ -153,7 +153,16 @@ export const placeUfcBet = createServerFn({ method: "POST" })
       p_stake: data.stake,
       p_odds: market.odds,
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      const msg = error.message ?? "";
+      if (/Insufficient balance/i.test(msg)) throw new Error("Insufficient points balance. Top up to place this bet.");
+      if (/Wallet not found/i.test(msg)) throw new Error("Your wallet isn't ready yet. Please refresh and try again.");
+      if (/Fight not open/i.test(msg)) throw new Error("This fight is no longer open for betting.");
+      if (/Fight not found/i.test(msg)) throw new Error("Fight not found.");
+      if (/Market not available/i.test(msg)) throw new Error("This market is no longer available. Please pick another.");
+      if (/Invalid odds|Stake must be positive/i.test(msg)) throw new Error("Invalid stake or odds. Please try again.");
+      throw new Error("Could not place bet. Please try again.");
+    }
     return { betId, odds: market.odds, potentialPayout: Number((data.stake * market.odds).toFixed(2)) };
   });
 
