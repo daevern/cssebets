@@ -241,10 +241,18 @@ async function saveFight(input: {
     ? (supabaseAdmin as any).from("ufc_fights").update(payload).eq("id", existing.id)
     : (supabaseAdmin as any).from("ufc_fights").insert(payload);
   const { data, error } = await q
-    .select("id, fighter_a, fighter_b, scheduled_rounds")
+    .select("id, fighter_a, fighter_b, scheduled_rounds, apimma_fighter_a_id, apimma_fighter_b_id")
     .maybeSingle();
   if (error) throw new Error(`fight save failed: ${error.message}`);
-  return data as { id: string; fighter_a: string; fighter_b: string; scheduled_rounds: 3 | 5 };
+  return data as {
+    id: string;
+    fighter_a: string;
+    fighter_b: string;
+    scheduled_rounds: 3 | 5;
+    apimma_fighter_a_id: number | null;
+    apimma_fighter_b_id: number | null;
+  };
+
 }
 
 // ---- Odds mapping ----
@@ -261,7 +269,10 @@ async function syncOddsForFight(fightRow: {
   fighter_a: string;
   fighter_b: string;
   scheduled_rounds: 3 | 5;
+  apimma_fighter_a_id: number | null;
+  apimma_fighter_b_id: number | null;
 }, apimmaFightId: number) {
+
   let odds;
   try {
     odds = await fetchOddsForFight(apimmaFightId);
@@ -556,11 +567,71 @@ async function syncOddsForFight(fightRow: {
   // moneyline anyway) and MMA scorecard handicaps confuse users. Aggregation
   // above still runs cheaply so we can revisit later without a schema change.
 
-  // ---- Persist Method ----
+  // ---- Persist Method (from bookmaker feed when available) ----
   const methodEntries: Array<{ team: string; odds: number }> = [];
   for (const [key, prices] of Object.entries(methodPrices)) {
     if (prices.length) methodEntries.push({ team: key, odds: median(prices) });
   }
+
+  // ---- Synthesize Method of Victory when the bookmaker feed is silent ----
+  // API-Sports MMA rarely exposes per-fighter method markets, but users still
+  // expect "KO/TKO / Submission / Decision" tiles. We derive them from the
+  // fair moneyline probability + fair distance probability, splitting each
+  // fighter's finish share by career KO vs Sub mix.
+  if (methodEntries.length < 6) {
+    const mlA = median(mlPrices.a);
+    const mlB = median(mlPrices.b);
+    let pDist: number | null = null;
+    const dYes = median(distancePrices.yes);
+    const dNo = median(distancePrices.no);
+    if (dYes > 1 && dNo > 1) {
+      const iy = 1 / dYes, ino = 1 / dNo;
+      pDist = iy / (iy + ino);
+    } else if (fairUnder[distanceLine] !== undefined) {
+      pDist = 1 - fairUnder[distanceLine];
+    }
+    if (mlA > 1 && mlB > 1 && pDist !== null && pDist > 0 && pDist < 1) {
+      const iA = 1 / mlA, iB = 1 / mlB;
+      const pA = iA / (iA + iB);
+      const pB = 1 - pA;
+
+      // Look up career KO/Sub mix from ufc_fighters (best-effort).
+      const fighterIds = [fightRow.apimma_fighter_a_id, fightRow.apimma_fighter_b_id].filter((x): x is number => !!x);
+      const koRatio: Record<"a" | "b", number> = { a: 0.7, b: 0.7 };
+      if (fighterIds.length) {
+        const { data: stats } = await (supabaseAdmin as any)
+          .from("ufc_fighters")
+          .select("apimma_id, ko_w, sub_w")
+          .in("apimma_id", fighterIds);
+        for (const r of (stats ?? []) as Array<{ apimma_id: number; ko_w: number | null; sub_w: number | null }>) {
+          const ko = Number(r.ko_w ?? 0);
+          const sub = Number(r.sub_w ?? 0);
+          const slot: "a" | "b" | null =
+            r.apimma_id === fightRow.apimma_fighter_a_id ? "a"
+            : r.apimma_id === fightRow.apimma_fighter_b_id ? "b" : null;
+          if (slot && ko + sub > 0) koRatio[slot] = ko / (ko + sub);
+        }
+      }
+
+      const pFinish = 1 - pDist;
+      const probs: Record<string, number> = {
+        a_ko_tko: pA * pFinish * koRatio.a,
+        a_submission: pA * pFinish * (1 - koRatio.a),
+        a_decision: pA * pDist,
+        b_ko_tko: pB * pFinish * koRatio.b,
+        b_submission: pB * pFinish * (1 - koRatio.b),
+        b_decision: pB * pDist,
+      };
+      // Only fill entries the feed didn't already provide, so real prices win.
+      const already = new Set(methodEntries.map((e) => e.team));
+      for (const [k, p] of Object.entries(probs)) {
+        if (already.has(k)) continue;
+        const clamped = Math.max(0.01, Math.min(0.9, p));
+        methodEntries.push({ team: k, odds: 1 / clamped });
+      }
+    }
+  }
+
   if (methodEntries.length >= 2) {
     const priced = await applyOutrightMargin(methodEntries);
     for (const p of priced) {
@@ -572,6 +643,7 @@ async function syncOddsForFight(fightRow: {
       snapshots.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, odds: p.odds });
     }
   }
+
 
   // ---- Persist Round (advanced — shown under "More markets") ----
   const roundEntries = Object.entries(roundPrices).map(([k, arr]) => ({ team: k, odds: median(arr) }));
