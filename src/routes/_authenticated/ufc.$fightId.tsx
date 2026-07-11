@@ -19,15 +19,18 @@ export const Route = createFileRoute("/_authenticated/ufc/$fightId")({
   component: UfcFightDetailPage,
 });
 
+type MarketType = "moneyline" | "method" | "round" | "total_rounds" | "distance";
+
 type Market = {
   fight_id: string;
-  market_type: "moneyline" | "method" | "round";
+  market_type: MarketType;
   selection_key: string;
   label: string;
   odds: number;
   is_active: boolean;
   updated_at: string;
 };
+
 
 const MIN_STAKE = 10;
 const MAX_STAKE = 50000;
