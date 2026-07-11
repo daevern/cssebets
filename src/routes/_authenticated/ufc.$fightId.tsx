@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/ufc/$fightId")({
   component: UfcFightDetailPage,
 });
 
-type MarketType = "moneyline" | "method" | "round" | "total_rounds" | "distance";
+type MarketType = "moneyline" | "three_way" | "method" | "round" | "total_rounds" | "distance" | "handicap";
 
 type Market = {
   fight_id: string;
@@ -304,6 +304,8 @@ function ScoreFighter({ name, logo, record }: { name: string; logo?: string | nu
 
 const MARKET_TABS: Array<{ id: MarketType; label: string }> = [
   { id: "moneyline", label: "Moneyline" },
+  { id: "three_way", label: "Fight Result" },
+  { id: "handicap", label: "Handicap" },
   { id: "round", label: "Round" },
   { id: "method", label: "Method" },
   { id: "total_rounds", label: "Total Rounds" },
@@ -313,8 +315,8 @@ const MARKET_TABS: Array<{ id: MarketType; label: string }> = [
 
 function classifyUfc(selection: string): "home" | "away" | "neutral" {
   const s = selection.toLowerCase();
-  if (s === "a") return "home";
-  if (s === "b") return "away";
+  if (s === "a" || s.startsWith("a_")) return "home";
+  if (s === "b" || s.startsWith("b_")) return "away";
   return "neutral";
 }
 
@@ -446,6 +448,8 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
         <div className="mb-2 space-y-0.5">
           <h4 className="text-[15px] font-semibold leading-snug text-[var(--color-ink)]">
             {tab === "moneyline" && "Who wins the fight?"}
+            {tab === "three_way" && "Who wins the fight result?"}
+            {tab === "handicap" && "Who covers the handicap?"}
             {tab === "method" && "How does the fight end?"}
             {tab === "round" && "Which round does it end in?"}
             {tab === "total_rounds" && "How many rounds will the fight last?"}
@@ -458,7 +462,7 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
             No {tab.replace("_", " ")} odds available yet.
           </div>
         ) : (
-          <div className={`grid gap-2 ${tab === "moneyline" || tab === "distance" ? "grid-cols-2" : "grid-cols-3"}`}>
+          <div className={`grid gap-2 ${tab === "moneyline" || tab === "distance" || tab === "handicap" ? "grid-cols-2" : "grid-cols-3"}`}>
 
             {filtered.map((m) => (
               <OddsButton
@@ -777,8 +781,12 @@ function TaleOfTheTape({ a, b, fight }: { a: any; b: any; fight: any }) {
     { label: "Record", aVal: recordStr(a), bVal: recordStr(b) },
     { label: "Height", aVal: a?.height_cm ? `${a.height_cm} cm` : "—", bVal: b?.height_cm ? `${b.height_cm} cm` : "—" },
     { label: "Reach", aVal: a?.reach_cm ? `${a.reach_cm} cm` : "—", bVal: b?.reach_cm ? `${b.reach_cm} cm` : "—" },
+    { label: "Weight", aVal: a?.weight_lbs ? `${a.weight_lbs} lbs` : "—", bVal: b?.weight_lbs ? `${b.weight_lbs} lbs` : "—" },
     { label: "Stance", aVal: a?.stance ?? "—", bVal: b?.stance ?? "—" },
     { label: "Age", aVal: age(a?.dob), bVal: age(b?.dob) },
+    { label: "KO", aVal: finishRecord(a, "ko"), bVal: finishRecord(b, "ko") },
+    { label: "Sub", aVal: finishRecord(a, "sub"), bVal: finishRecord(b, "sub") },
+    { label: "Team", aVal: a?.team_name ?? "—", bVal: b?.team_name ?? "—" },
     { label: "Country", aVal: a?.country ?? "—", bVal: b?.country ?? "—" },
   ];
   return (
@@ -813,6 +821,13 @@ function age(dob?: string | null) {
   if (Number.isNaN(d.getTime())) return "—";
   const diff = Date.now() - d.getTime();
   return String(Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000)));
+}
+function finishRecord(f: any, kind: "ko" | "sub") {
+  if (!f) return "—";
+  const w = f[`${kind}_w`];
+  const l = f[`${kind}_l`];
+  if (w == null && l == null) return "—";
+  return `${w ?? 0}-${l ?? 0}`;
 }
 
 /* ---------- Live stats compare ---------- */
