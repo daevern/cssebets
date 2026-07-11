@@ -1,0 +1,1 @@
+DELETE FROM public.ufc_fights WHERE apimma_fight_id IS NULL;
