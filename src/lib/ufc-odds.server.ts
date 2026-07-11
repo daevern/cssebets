@@ -567,69 +567,13 @@ async function syncOddsForFight(fightRow: {
   // moneyline anyway) and MMA scorecard handicaps confuse users. Aggregation
   // above still runs cheaply so we can revisit later without a schema change.
 
-  // ---- Persist Method (from bookmaker feed when available) ----
+  // ---- Persist Method (from bookmaker feed ONLY — never synthesised) ----
+  // If API-Sports doesn't quote per-fighter method markets for this fight, we
+  // publish nothing and the UI hides the Method tab. Real-money product must
+  // never quote fabricated odds.
   const methodEntries: Array<{ team: string; odds: number }> = [];
   for (const [key, prices] of Object.entries(methodPrices)) {
     if (prices.length) methodEntries.push({ team: key, odds: median(prices) });
-  }
-
-  // ---- Synthesize Method of Victory when the bookmaker feed is silent ----
-  // API-Sports MMA rarely exposes per-fighter method markets, but users still
-  // expect "KO/TKO / Submission / Decision" tiles. We derive them from the
-  // fair moneyline probability + fair distance probability, splitting each
-  // fighter's finish share by career KO vs Sub mix.
-  if (methodEntries.length < 6) {
-    const mlA = median(mlPrices.a);
-    const mlB = median(mlPrices.b);
-    let pDist: number | null = null;
-    const dYes = median(distancePrices.yes);
-    const dNo = median(distancePrices.no);
-    if (dYes > 1 && dNo > 1) {
-      const iy = 1 / dYes, ino = 1 / dNo;
-      pDist = iy / (iy + ino);
-    } else if (fairUnder[distanceLine] !== undefined) {
-      pDist = 1 - fairUnder[distanceLine];
-    }
-    if (mlA > 1 && mlB > 1 && pDist !== null && pDist > 0 && pDist < 1) {
-      const iA = 1 / mlA, iB = 1 / mlB;
-      const pA = iA / (iA + iB);
-      const pB = 1 - pA;
-
-      // Look up career KO/Sub mix from ufc_fighters (best-effort).
-      const fighterIds = [fightRow.apimma_fighter_a_id, fightRow.apimma_fighter_b_id].filter((x): x is number => !!x);
-      const koRatio: Record<"a" | "b", number> = { a: 0.7, b: 0.7 };
-      if (fighterIds.length) {
-        const { data: stats } = await (supabaseAdmin as any)
-          .from("ufc_fighters")
-          .select("apimma_id, ko_w, sub_w")
-          .in("apimma_id", fighterIds);
-        for (const r of (stats ?? []) as Array<{ apimma_id: number; ko_w: number | null; sub_w: number | null }>) {
-          const ko = Number(r.ko_w ?? 0);
-          const sub = Number(r.sub_w ?? 0);
-          const slot: "a" | "b" | null =
-            r.apimma_id === fightRow.apimma_fighter_a_id ? "a"
-            : r.apimma_id === fightRow.apimma_fighter_b_id ? "b" : null;
-          if (slot && ko + sub > 0) koRatio[slot] = ko / (ko + sub);
-        }
-      }
-
-      const pFinish = 1 - pDist;
-      const probs: Record<string, number> = {
-        a_ko_tko: pA * pFinish * koRatio.a,
-        a_submission: pA * pFinish * (1 - koRatio.a),
-        a_decision: pA * pDist,
-        b_ko_tko: pB * pFinish * koRatio.b,
-        b_submission: pB * pFinish * (1 - koRatio.b),
-        b_decision: pB * pDist,
-      };
-      // Only fill entries the feed didn't already provide, so real prices win.
-      const already = new Set(methodEntries.map((e) => e.team));
-      for (const [k, p] of Object.entries(probs)) {
-        if (already.has(k)) continue;
-        const clamped = Math.max(0.01, Math.min(0.9, p));
-        methodEntries.push({ team: k, odds: 1 / clamped });
-      }
-    }
   }
 
   if (methodEntries.length >= 2) {
@@ -643,6 +587,7 @@ async function syncOddsForFight(fightRow: {
       snapshots.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, odds: p.odds });
     }
   }
+
 
 
   // ---- Persist Round (advanced — shown under "More markets") ----
@@ -729,6 +674,17 @@ async function syncOddsForFight(fightRow: {
     .eq("fight_id", fightRow.id)
     .eq("market_type", "total_rounds")
     .not("selection_key", "in", `(${keepKeys.map((k) => `"${k}"`).join(",")})`);
+
+  // If the feed doesn't quote Method of Victory for this fight, deactivate
+  // any previously-persisted method rows so the UI hides the Method tab.
+  // We never synthesise method odds for a real-money product.
+  if (!methodEntries.length) {
+    await (supabaseAdmin as any)
+      .from("ufc_fight_markets")
+      .update({ is_active: false })
+      .eq("fight_id", fightRow.id)
+      .eq("market_type", "method");
+  }
 
   if (!upserts.length) return 0;
   const { error: mErr } = await (supabaseAdmin as any)
