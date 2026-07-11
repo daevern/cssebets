@@ -448,15 +448,18 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
             {tab === "moneyline" && "Who wins the fight?"}
             {tab === "method" && "How does the fight end?"}
             {tab === "round" && "Which round does it end in?"}
+            {tab === "total_rounds" && "How many rounds will the fight last?"}
+            {tab === "distance" && "Does the fight go the distance?"}
           </h4>
         </div>
 
         {filtered.length === 0 ? (
           <div className="rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-2)] py-6 text-center text-xs text-[var(--color-ink-muted)]">
-            No {tab} odds available yet.
+            No {tab.replace("_", " ")} odds available yet.
           </div>
         ) : (
-          <div className={`grid gap-2 ${tab === "moneyline" ? "grid-cols-2" : "grid-cols-3"}`}>
+          <div className={`grid gap-2 ${tab === "moneyline" || tab === "distance" ? "grid-cols-2" : "grid-cols-3"}`}>
+
             {filtered.map((m) => (
               <OddsButton
                 key={`${m.market_type}:${m.selection_key}`}
