@@ -551,32 +551,10 @@ async function syncOddsForFight(fightRow: {
     );
   }
 
-  // ---- Persist Fight Result (3-way) ----
-  const threeWayEntries: Array<{ team: string; odds: number }> = [];
-  if (threeWayPrices.a.length) threeWayEntries.push({ team: "a", odds: median(threeWayPrices.a) });
-  if (threeWayPrices.draw.length) threeWayEntries.push({ team: "draw", odds: median(threeWayPrices.draw) });
-  if (threeWayPrices.b.length) threeWayEntries.push({ team: "b", odds: median(threeWayPrices.b) });
-  if (threeWayEntries.length >= 2) {
-    const priced = await applyOutrightMargin(threeWayEntries);
-    for (const p of priced) {
-      const label = p.team === "a" ? fightRow.fighter_a : p.team === "b" ? fightRow.fighter_b : "Draw";
-      upserts.push({ fight_id: fightRow.id, market_type: "three_way", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
-      snapshots.push({ fight_id: fightRow.id, market_type: "three_way", selection_key: p.team, odds: p.odds });
-    }
-  }
-
-  // ---- Persist Handicap ----
-  const handicapEntries = Object.entries(handicapPrices)
-    .filter(([, v]) => v.prices.length)
-    .map(([team, v]) => ({ team, odds: median(v.prices), label: v.label }));
-  if (handicapEntries.length >= 2) {
-    const priced = await applyOutrightMargin(handicapEntries.map(({ team, odds }) => ({ team, odds })));
-    for (const p of priced) {
-      const meta = handicapEntries.find((h) => h.team === p.team);
-      upserts.push({ fight_id: fightRow.id, market_type: "handicap", selection_key: p.team, label: meta?.label ?? p.team, odds: p.odds, is_active: true, updated_at: nowIso });
-      snapshots.push({ fight_id: fightRow.id, market_type: "handicap", selection_key: p.team, odds: p.odds });
-    }
-  }
+  // ---- Fight Result (3-way) and Handicap intentionally NOT persisted ----
+  // Product decision: the 3-way market duplicates moneyline (draws/NC void
+  // moneyline anyway) and MMA scorecard handicaps confuse users. Aggregation
+  // above still runs cheaply so we can revisit later without a schema change.
 
   // ---- Persist Method ----
   const methodEntries: Array<{ team: string; odds: number }> = [];
@@ -595,7 +573,7 @@ async function syncOddsForFight(fightRow: {
     }
   }
 
-  // ---- Persist Round ----
+  // ---- Persist Round (advanced — shown under "More markets") ----
   const roundEntries = Object.entries(roundPrices).map(([k, arr]) => ({ team: k, odds: median(arr) }));
   if (roundEntries.length >= 2) {
     const priced = await applyOutrightMargin(roundEntries);
@@ -606,13 +584,24 @@ async function syncOddsForFight(fightRow: {
     }
   }
 
-  // ---- Persist Total Rounds (Over/Under per line, aggregated across bookmakers) ----
-  for (let k = 1; k <= 4; k++) {
-    const over = median(ouOverPrices[k]);
-    const under = median(ouUnderPrices[k]);
+  // ---- Persist Total Rounds — restricted to key lines only (2.5 always;
+  //      4.5 only on 5-round fights). Too many O/U lines crowd the page. ----
+  const totalLines = scheduledRounds === 5 ? [2, 4] : [2];
+  for (const k of totalLines) {
+    let over = median(ouOverPrices[k]);
+    let under = median(ouUnderPrices[k]);
+    // Fallback: if only one side is priced, derive the other from the fair
+    // probability we already computed so users never see a half-market.
+    // This is why "Under 4.5" used to disappear on some feeds.
+    if ((!over || over <= 1) && fairUnder[k] !== undefined && under > 1) {
+      over = 1 / Math.max(0.01, 1 - fairUnder[k]);
+    }
+    if ((!under || under <= 1) && fairUnder[k] !== undefined && over > 1) {
+      under = 1 / Math.max(0.01, fairUnder[k]);
+    }
     if (over > 1 && under > 1) {
       const priced = await apply2WayMargin(over, under);
-      const line = `${k}_5`; // "1_5" → 1.5 rounds
+      const line = `${k}_5`;
       const lineLabel = `${k}.5`;
       upserts.push(
         { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `over_${line}`, label: `Over ${lineLabel} rounds`, odds: priced.a, is_active: true, updated_at: nowIso },
@@ -624,6 +613,7 @@ async function syncOddsForFight(fightRow: {
       );
     }
   }
+
 
   // ---- Persist Distance (Yes/No) ----
   const yes = median(distancePrices.yes);
