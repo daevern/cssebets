@@ -274,8 +274,9 @@ async function syncOddsForFight(fightRow: {
   }
 
   // ---- Method of Victory (per fighter) ----
-  // API-Sports bets 17-20 give home/away Sub, home/away KO/TKO. Bet 11+12 =
-  // decision (unanimous, split/majority — combined into "decision").
+  // Broad capture: try known API-Sports bet IDs, then fall back to name-based
+  // scanning across every bet the bookmaker returns, so different providers
+  // (bet365 vs Pinnacle vs Betfair) all yield the full 6-way method board.
   const methodPrices: Record<string, number[]> = {
     a_ko_tko: [], a_submission: [], a_decision: [],
     b_ko_tko: [], b_submission: [], b_decision: [],
@@ -298,7 +299,6 @@ async function syncOddsForFight(fightRow: {
     const u = bm.bets.find((b) => b.id === unanimousId);
     const s = bm.bets.find((b) => b.id === splitId);
     if (!u && !s) return;
-    // implied prob = 1/odds; sum probabilities of unanimous + split
     let p = 0;
     for (const bet of [u, s]) {
       if (!bet) continue;
@@ -311,6 +311,40 @@ async function syncOddsForFight(fightRow: {
   };
   combineDec(13, 14, "a");
   combineDec(15, 16, "b");
+
+  // Name-based fallback: scan every bet whose name/value mentions method.
+  // Values look like "Max Holloway by KO/TKO", "Conor McGregor by Decision",
+  // "KO/TKO - Home", "Submission - Away", etc.
+  const nameSideOf = (text: string): "a" | "b" | null => {
+    const n = normalizeFighterName(text);
+    if (!n) return null;
+    if (n.includes(fA) || fA.includes(n)) return "a";
+    if (n.includes(fB) || fB.includes(n)) return "b";
+    const lowered = text.toLowerCase();
+    if (/\bhome\b|\bfighter ?1\b|\b1\b/.test(lowered)) return "a";
+    if (/\baway\b|\bfighter ?2\b|\b2\b/.test(lowered)) return "b";
+    return null;
+  };
+  const methodBucketOf = (text: string): "ko_tko" | "submission" | "decision" | null => {
+    const s = text.toLowerCase();
+    if (/(ko|tko|knockout|technical\s*knock)/.test(s)) return "ko_tko";
+    if (/(sub|submission|tap|choke|lock)/.test(s)) return "submission";
+    if (/(decision|points|dec\.|unanimous|split|majority)/.test(s)) return "decision";
+    return null;
+  };
+  for (const bet of bm.bets) {
+    const nm = (bet.name ?? "").toLowerCase();
+    if (!/method|victory|winning method|way|result/.test(nm)) continue;
+    for (const v of bet.values) {
+      const price = Number(v.odd);
+      if (!Number.isFinite(price)) continue;
+      const slot = nameSideOf(v.value);
+      const bucket = methodBucketOf(v.value);
+      if (!slot || !bucket) continue;
+      // Skip if already captured by ID-based path (avoid double-pushing).
+      methodPrices[`${slot}_${bucket}`].push(price);
+    }
+  }
 
   const methodEntries: Array<{ team: string; odds: number }> = [];
   for (const [key, prices] of Object.entries(methodPrices)) {
@@ -328,35 +362,47 @@ async function syncOddsForFight(fightRow: {
     }
   }
 
-  // ---- Round Betting (bet 6) — collapse per-fighter into overall round ----
-  const roundBet = bm.bets.find((b) => b.id === 6);
-  if (roundBet) {
-    const roundPrices: Record<string, number[]> = {};
-    for (const v of roundBet.values) {
-      // Values look like "1st Round", "2nd Round", ..., "Goes the distance"
-      const val = v.value.toLowerCase();
-      const price = Number(v.odd);
-      if (!Number.isFinite(price)) continue;
-      let key: string | null = null;
-      if (/distance|decision/.test(val)) key = "distance";
-      else {
-        const m = val.match(/(\d+)/);
-        if (m) key = `r${m[1]}`;
+  // ---- Round Betting — bet 6 first, then name-based fallback across all bets ----
+  const roundPrices: Record<string, number[]> = {};
+  const pushRoundValue = (rawValue: string, price: number) => {
+    if (!Number.isFinite(price)) return;
+    const val = rawValue.toLowerCase();
+    let key: string | null = null;
+    if (/distance|goes.*distance|decision|points/.test(val)) key = "distance";
+    else {
+      const m = val.match(/round\s*(\d+)|(\d+)(?:st|nd|rd|th)\s*round|^\s*(\d+)\s*$/);
+      const num = m ? m[1] ?? m[2] ?? m[3] : null;
+      if (num) {
+        const n = Number(num);
+        if (n >= 1 && n <= 5) key = `r${n}`;
       }
-      if (!key) continue;
-      if (!roundPrices[key]) roundPrices[key] = [];
-      roundPrices[key].push(price);
     }
-    const roundEntries = Object.entries(roundPrices).map(([k, arr]) => ({ team: k, odds: median(arr) }));
-    if (roundEntries.length >= 2) {
-      const priced = await applyOutrightMargin(roundEntries);
-      for (const p of priced) {
-        const label = p.team === "distance" ? "Goes the distance" : `Round ${p.team.slice(1)}`;
-        upserts.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
-        snapshots.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, odds: p.odds });
-      }
+    if (!key) return;
+    if (!roundPrices[key]) roundPrices[key] = [];
+    roundPrices[key].push(price);
+  };
+
+  const roundBetById = bm.bets.find((b) => b.id === 6);
+  if (roundBetById) {
+    for (const v of roundBetById.values) pushRoundValue(v.value, Number(v.odd));
+  }
+  for (const bet of bm.bets) {
+    const nm = (bet.name ?? "").toLowerCase();
+    if (bet.id === 6) continue;
+    if (!/round|distance/.test(nm)) continue;
+    for (const v of bet.values) pushRoundValue(v.value, Number(v.odd));
+  }
+  const roundEntries = Object.entries(roundPrices).map(([k, arr]) => ({ team: k, odds: median(arr) }));
+  if (roundEntries.length >= 2) {
+    const priced = await applyOutrightMargin(roundEntries);
+    for (const p of priced) {
+      const label = p.team === "distance" ? "Goes the distance" : `Round ${p.team.slice(1)}`;
+      upserts.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
+      snapshots.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, odds: p.odds });
     }
   }
+
+
 
   if (!upserts.length) return 0;
   const { error: mErr } = await (supabaseAdmin as any)
