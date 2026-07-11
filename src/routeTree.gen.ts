@@ -85,6 +85,7 @@ import { Route as ManagementAdminAnalyticsRouteImport } from './routes/managemen
 import { Route as ManagementAdminAlertsRouteImport } from './routes/management/admin.alerts'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedWalletTransactionListRouteImport } from './routes/_authenticated/wallet.transaction-list'
+import { Route as AuthenticatedUfcFightIdRouteImport } from './routes/_authenticated/ufc.$fightId'
 import { Route as AuthenticatedMatchesMatchIdRouteImport } from './routes/_authenticated/matches.$matchId'
 import { Route as AuthenticatedFreeBetsPlaceRouteImport } from './routes/_authenticated/free-bets.place'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
@@ -509,6 +510,11 @@ const AuthenticatedWalletTransactionListRoute =
     path: '/transaction-list',
     getParentRoute: () => AuthenticatedWalletRoute,
   } as any)
+const AuthenticatedUfcFightIdRoute = AuthenticatedUfcFightIdRouteImport.update({
+  id: '/$fightId',
+  path: '/$fightId',
+  getParentRoute: () => AuthenticatedUfcRoute,
+} as any)
 const AuthenticatedMatchesMatchIdRoute =
   AuthenticatedMatchesMatchIdRouteImport.update({
     id: '/$matchId',
@@ -624,7 +630,7 @@ export interface FileRoutesByFullPath {
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/trust-center': typeof AuthenticatedTrustCenterRoute
-  '/ufc': typeof AuthenticatedUfcRoute
+  '/ufc': typeof AuthenticatedUfcRouteWithChildren
   '/wallet': typeof AuthenticatedWalletRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
@@ -638,6 +644,7 @@ export interface FileRoutesByFullPath {
   '/management/users': typeof ManagementUsersRoute
   '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
+  '/ufc/$fightId': typeof AuthenticatedUfcFightIdRoute
   '/wallet/transaction-list': typeof AuthenticatedWalletTransactionListRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
@@ -715,7 +722,7 @@ export interface FileRoutesByTo {
   '/support': typeof AuthenticatedSupportRoute
   '/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/trust-center': typeof AuthenticatedTrustCenterRoute
-  '/ufc': typeof AuthenticatedUfcRoute
+  '/ufc': typeof AuthenticatedUfcRouteWithChildren
   '/wallet': typeof AuthenticatedWalletRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
@@ -728,6 +735,7 @@ export interface FileRoutesByTo {
   '/management/users': typeof ManagementUsersRoute
   '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
+  '/ufc/$fightId': typeof AuthenticatedUfcFightIdRoute
   '/wallet/transaction-list': typeof AuthenticatedWalletTransactionListRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
@@ -808,7 +816,7 @@ export interface FileRoutesById {
   '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/tournament-winner': typeof AuthenticatedTournamentWinnerRoute
   '/_authenticated/trust-center': typeof AuthenticatedTrustCenterRoute
-  '/_authenticated/ufc': typeof AuthenticatedUfcRoute
+  '/_authenticated/ufc': typeof AuthenticatedUfcRouteWithChildren
   '/_authenticated/wallet': typeof AuthenticatedWalletRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/management/access-denied': typeof ManagementAccessDeniedRoute
@@ -822,6 +830,7 @@ export interface FileRoutesById {
   '/management/users': typeof ManagementUsersRoute
   '/_authenticated/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/_authenticated/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
+  '/_authenticated/ufc/$fightId': typeof AuthenticatedUfcFightIdRoute
   '/_authenticated/wallet/transaction-list': typeof AuthenticatedWalletTransactionListRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
@@ -916,6 +925,7 @@ export interface FileRouteTypes {
     | '/management/users'
     | '/free-bets/place'
     | '/matches/$matchId'
+    | '/ufc/$fightId'
     | '/wallet/transaction-list'
     | '/lovable/email/suppression'
     | '/management/admin/alerts'
@@ -1006,6 +1016,7 @@ export interface FileRouteTypes {
     | '/management/users'
     | '/free-bets/place'
     | '/matches/$matchId'
+    | '/ufc/$fightId'
     | '/wallet/transaction-list'
     | '/lovable/email/suppression'
     | '/management/admin/alerts'
@@ -1099,6 +1110,7 @@ export interface FileRouteTypes {
     | '/management/users'
     | '/_authenticated/free-bets/place'
     | '/_authenticated/matches/$matchId'
+    | '/_authenticated/ufc/$fightId'
     | '/_authenticated/wallet/transaction-list'
     | '/lovable/email/suppression'
     | '/management/admin/alerts'
@@ -1715,6 +1727,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWalletTransactionListRouteImport
       parentRoute: typeof AuthenticatedWalletRoute
     }
+    '/_authenticated/ufc/$fightId': {
+      id: '/_authenticated/ufc/$fightId'
+      path: '/$fightId'
+      fullPath: '/ufc/$fightId'
+      preLoaderRoute: typeof AuthenticatedUfcFightIdRouteImport
+      parentRoute: typeof AuthenticatedUfcRoute
+    }
     '/_authenticated/matches/$matchId': {
       id: '/_authenticated/matches/$matchId'
       path: '/$matchId'
@@ -1836,6 +1855,17 @@ const AuthenticatedMatchesRouteChildren: AuthenticatedMatchesRouteChildren = {
 const AuthenticatedMatchesRouteWithChildren =
   AuthenticatedMatchesRoute._addFileChildren(AuthenticatedMatchesRouteChildren)
 
+interface AuthenticatedUfcRouteChildren {
+  AuthenticatedUfcFightIdRoute: typeof AuthenticatedUfcFightIdRoute
+}
+
+const AuthenticatedUfcRouteChildren: AuthenticatedUfcRouteChildren = {
+  AuthenticatedUfcFightIdRoute: AuthenticatedUfcFightIdRoute,
+}
+
+const AuthenticatedUfcRouteWithChildren =
+  AuthenticatedUfcRoute._addFileChildren(AuthenticatedUfcRouteChildren)
+
 interface AuthenticatedWalletRouteChildren {
   AuthenticatedWalletTransactionListRoute: typeof AuthenticatedWalletTransactionListRoute
 }
@@ -1864,7 +1894,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedTournamentWinnerRoute: typeof AuthenticatedTournamentWinnerRoute
   AuthenticatedTrustCenterRoute: typeof AuthenticatedTrustCenterRoute
-  AuthenticatedUfcRoute: typeof AuthenticatedUfcRoute
+  AuthenticatedUfcRoute: typeof AuthenticatedUfcRouteWithChildren
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRouteWithChildren
   AuthenticatedFreeBetsPlaceRoute: typeof AuthenticatedFreeBetsPlaceRoute
 }
@@ -1885,7 +1915,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedTournamentWinnerRoute: AuthenticatedTournamentWinnerRoute,
   AuthenticatedTrustCenterRoute: AuthenticatedTrustCenterRoute,
-  AuthenticatedUfcRoute: AuthenticatedUfcRoute,
+  AuthenticatedUfcRoute: AuthenticatedUfcRouteWithChildren,
   AuthenticatedWalletRoute: AuthenticatedWalletRouteWithChildren,
   AuthenticatedFreeBetsPlaceRoute: AuthenticatedFreeBetsPlaceRoute,
 }
