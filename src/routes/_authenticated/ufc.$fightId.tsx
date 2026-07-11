@@ -303,7 +303,7 @@ const MARKET_TABS: Array<{ id: MarketType; label: string }> = [
   { id: "moneyline", label: "Fight Winner" },
   { id: "method", label: "Method" },
   { id: "total_rounds", label: "Total Rounds" },
-  { id: "total_rounds", label: "Total Rounds" },
+
   { id: "round", label: "Winning Round" },
 ];
 
