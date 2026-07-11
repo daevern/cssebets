@@ -45,10 +45,15 @@ function useTicker(ms = 30_000) {
   return n;
 }
 
-function timeChip(iso: string, status: string, now: number) {
-  if (status === "live") return "LIVE";
-  if (status === "finished") return "Full time";
-  const d = new Date(iso);
+function lastName(name: string) {
+  const parts = name.trim().split(/\s+/);
+  return parts[parts.length - 1] ?? name;
+}
+
+function statusLabel(f: Fight, now: number) {
+  if (f.status === "live") return "LIVE";
+  if (f.status === "finished") return "Full time";
+  const d = new Date(f.commence_time);
   const today = new Date(now);
   const sameDay = d.toDateString() === today.toDateString();
   const h = d.getHours() % 12 || 12;
@@ -64,6 +69,30 @@ function moneylinePct(markets: Market[]) {
   const ib = 1 / Number(b.odds);
   const s = ia + ib;
   return { a: Math.round((ia / s) * 100), b: Math.round((ib / s) * 100), oddsA: Number(a.odds), oddsB: Number(b.odds) };
+}
+
+/* Fighter portrait — the visual equivalent of TeamFlag on the football side. */
+function FighterPortrait({ url, name, size = 56 }: { url?: string | null; name: string; size?: number }) {
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt={name}
+        className="rounded-lg border border-[var(--color-surface-border)] bg-[var(--surface-3)] object-cover"
+        style={{ width: size, height: size }}
+        loading="lazy"
+      />
+    );
+  }
+  const initials = name.split(" ").map((s) => s[0]).slice(0, 2).join("");
+  return (
+    <div
+      className="grid place-items-center rounded-lg border border-[var(--color-surface-border)] bg-[var(--surface-3)] text-[11px] font-bold text-[var(--ink)]"
+      style={{ width: size, height: size }}
+    >
+      {initials}
+    </div>
+  );
 }
 
 function UfcPage() {
@@ -111,7 +140,7 @@ function UfcPage() {
     return (
       <div className="flex flex-col gap-8 px-4 pt-5 pb-24 text-[var(--ink)]">
         <header>
-          <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight md:text-4xl">
+          <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight text-[var(--ink)] md:text-4xl">
             UFC <span className="text-[var(--neon)]">Fight Night</span>
           </h1>
           <p className="mt-2 text-sm text-[var(--ink-muted)]">No UFC event is currently active.</p>
@@ -121,37 +150,25 @@ function UfcPage() {
     );
   }
 
-  const eventDate = new Date(data.event.starts_at);
-
   return (
     <div className="flex flex-col gap-8 px-4 pt-5 pb-24 text-[var(--ink)]">
       <header className="space-y-2">
-        <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--ink-muted)]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
-          Main card
-        </div>
-        <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight md:text-4xl">
+        <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight text-[var(--ink)] md:text-4xl">
           {data.event.name}
         </h1>
-        <p className="text-sm text-[var(--ink-muted)]">
-          {eventDate.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}
-          {" · "}
-          {eventDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
-          <span className="ml-2 inline-flex items-center gap-1 text-rose-400">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500" /> Live odds
-          </span>
-        </p>
       </header>
 
       {upcoming.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight">
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
-              Upcoming Fights
-            </h2>
+            <div>
+              <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+                Upcoming Fights
+              </h2>
+            </div>
             <Link to="/matches" className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]">
-              All sports <ChevronRight className="h-3 w-3" />
+              View all <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
           <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -163,12 +180,16 @@ function UfcPage() {
       )}
 
       <section className="space-y-3">
-        <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight">
-          <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
-          Next Fight
-        </h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+              Next Fight
+            </h2>
+          </div>
+        </div>
         {featured ? (
-          <FeaturedFightCard fight={featured} now={now} />
+          <FeaturedFightCard fight={featured} now={now} eventName={data.event.name} />
         ) : (
           <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-10 text-center text-sm text-[var(--ink-muted)]">
             Card is being finalised — check back closer to walk-outs.
@@ -181,33 +202,10 @@ function UfcPage() {
   );
 }
 
-function FighterAvatar({ url, name, size = 44 }: { url?: string | null; name: string; size?: number }) {
-  if (url) {
-    return (
-      <img
-        src={url}
-        alt={name}
-        className="rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)] object-cover"
-        style={{ width: size, height: size }}
-        loading="lazy"
-      />
-    );
-  }
-  const initials = name.split(" ").map((s) => s[0]).slice(0, 2).join("");
-  return (
-    <div
-      className="grid place-items-center rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)] text-[11px] font-bold text-[var(--ink)]"
-      style={{ width: size, height: size }}
-    >
-      {initials}
-    </div>
-  );
-}
-
+/* ------ Trending chip — mirrors football TrendingChip layout ------ */
 function FightChip({ fight, now }: { fight: Fight; now: number }) {
   const live = fight.status === "live";
   const pct = moneylinePct(fight.markets);
-  const label = fight.card_position === "main" ? "Main Event" : fight.card_position === "co_main" ? "Co-Main" : "Fight";
   return (
     <Link
       to="/ufc/$fightId"
@@ -218,24 +216,30 @@ function FightChip({ fight, now }: { fight: Fight; now: number }) {
       style={{ width: 172 }}
     >
       <div className="flex items-center gap-1.5">
-        <FighterAvatar url={fight.fighter_a_logo} name={fight.fighter_a} size={26} />
-        <span className="text-[10px] font-bold text-[var(--ink-muted)]">vs</span>
-        <FighterAvatar url={fight.fighter_b_logo} name={fight.fighter_b} size={26} />
+        <FighterPortrait url={fight.fighter_a_logo} name={fight.fighter_a} size={30} />
+        <span className="text-[10px] font-bold text-[var(--ink-muted)]">·</span>
+        <FighterPortrait url={fight.fighter_b_logo} name={fight.fighter_b} size={30} />
       </div>
-      <div className="mt-2 line-clamp-2 text-[12px] font-bold leading-tight tracking-tight text-[var(--ink)]">
-        {fight.fighter_a.split(" ").slice(-1)[0]} vs {fight.fighter_b.split(" ").slice(-1)[0]}
+      <div className="mt-2 text-[12px] font-bold tracking-tight text-[var(--ink)]">
+        {lastName(fight.fighter_a)} vs {lastName(fight.fighter_b)}
       </div>
-      <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-        {label} · {timeChip(fight.commence_time, fight.status, now)}
-      </div>
+      {live ? (
+        <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-rose-400">
+          <span className="h-1 w-1 animate-pulse rounded-full bg-rose-500" /> LIVE
+        </div>
+      ) : (
+        <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+          {statusLabel(fight, now)}
+        </div>
+      )}
       {pct ? (
         <div className="mt-2 grid grid-cols-2 gap-1 rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-3)]/60 p-1 text-center">
           <div>
-            <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">A</div>
+            <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">{lastName(fight.fighter_a).slice(0, 4).toUpperCase()}</div>
             <div className="text-[11px] font-bold tabular-nums text-rose-400">{pct.a}%</div>
           </div>
           <div className="border-l border-[var(--color-surface-border)]">
-            <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">B</div>
+            <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">{lastName(fight.fighter_b).slice(0, 4).toUpperCase()}</div>
             <div className="text-[11px] font-bold tabular-nums text-[var(--neon)]">{pct.b}%</div>
           </div>
         </div>
@@ -244,17 +248,19 @@ function FightChip({ fight, now }: { fight: Fight; now: number }) {
   );
 }
 
-function FeaturedFightCard({ fight, now }: { fight: Fight; now: number }) {
+/* ------ Featured card — mirrors football FeaturedMarketCard layout ------ */
+function FeaturedFightCard({ fight, now, eventName }: { fight: Fight; now: number; eventName: string }) {
   const live = fight.status === "live";
   const pct = moneylinePct(fight.markets);
-  const posLabel = fight.card_position === "main" ? "Main Event" : "Co-Main Event";
 
   return (
     <Link
       to="/ufc/$fightId"
       params={{ fightId: fight.id }}
       className={`group relative block overflow-hidden rounded-2xl border bg-[var(--surface-2)] transition-colors ${
-        live ? "border-rose-500/50 hover:border-rose-500/70" : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/40"
+        live
+          ? "border-rose-500/50 hover:border-rose-500/70"
+          : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/40"
       }`}
     >
       {live && (
@@ -270,22 +276,30 @@ function FeaturedFightCard({ fight, now }: { fight: Fight; now: number }) {
           <span className={live ? "flex items-center gap-1.5 text-rose-400" : "text-[var(--ink-muted)]"}>
             {live && (
               <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-70" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
               </span>
             )}
-            {timeChip(fight.commence_time, fight.status, now)}
+            {statusLabel(fight, now)}
           </span>
-          <span className="text-[var(--ink-muted)]">
-            {posLabel}
-            {fight.weight_class ? ` · ${fight.weight_class}` : ""}
-            {fight.is_title_fight ? " · Title" : ""}
-          </span>
+          <span className="text-[var(--ink-muted)]">{eventName}</span>
         </div>
 
         <div className="mt-3 flex flex-col gap-2.5">
-          <FighterRow name={fight.fighter_a} logo={fight.fighter_a_logo} pct={pct?.a ?? null} mult={pct?.oddsA ?? null} tone="home" />
-          <FighterRow name={fight.fighter_b} logo={fight.fighter_b_logo} pct={pct?.b ?? null} mult={pct?.oddsB ?? null} tone="away" />
+          <FighterRow
+            name={fight.fighter_a}
+            logo={fight.fighter_a_logo}
+            pct={pct?.a ?? null}
+            mult={pct?.oddsA ?? null}
+            tone="home"
+          />
+          <FighterRow
+            name={fight.fighter_b}
+            logo={fight.fighter_b_logo}
+            pct={pct?.b ?? null}
+            mult={pct?.oddsB ?? null}
+            tone="away"
+          />
         </div>
 
         <div
@@ -314,22 +328,33 @@ function FighterRow({
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <FighterAvatar url={logo} name={name} size={40} />
+        <FighterPortrait url={logo} name={name} size={44} />
         <span className="truncate text-[15px] font-bold tracking-tight text-[var(--ink)]">{name}</span>
       </div>
       {pct != null && (
-        <div className="flex items-center gap-2">
-          <div className="hidden sm:block h-1.5 w-24 overflow-hidden rounded-full bg-[var(--surface-3)]">
-            <div className={`h-full rounded-full ${barColor} ${barGlow} transition-[width] duration-500`} style={{ width: `${Math.max(4, Math.min(100, pct))}%` }} />
-          </div>
-          <div className="flex flex-col items-end">
+        <div className="hidden sm:block h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-[var(--surface-3)]">
+          <div
+            className={`h-full rounded-full ${barColor} ${barGlow} transition-[width] duration-500`}
+            style={{ width: `${Math.max(4, Math.min(100, pct))}%` }}
+          />
+        </div>
+      )}
+      {pct != null && (
+        <div className="flex flex-col items-end">
+          <div className="flex items-center gap-2">
+            <div className="sm:hidden h-1.5 w-14 overflow-hidden rounded-full bg-[var(--surface-3)]">
+              <div
+                className={`h-full rounded-full ${barColor} ${barGlow} transition-[width] duration-500`}
+                style={{ width: `${Math.max(4, Math.min(100, pct))}%` }}
+              />
+            </div>
             <span className={`rounded-full border ${borderColor} px-3 py-1 text-[13px] font-bold tabular-nums ${color}`}>
               {pct}%
             </span>
-            {mult != null && (
-              <span className="mt-0.5 text-[10px] tabular-nums text-[var(--ink-muted)]">{mult.toFixed(2)}x</span>
-            )}
           </div>
+          {mult != null && (
+            <span className="mt-0.5 text-[10px] tabular-nums text-[var(--ink-muted)]">{mult.toFixed(2)}x</span>
+          )}
         </div>
       )}
     </div>
