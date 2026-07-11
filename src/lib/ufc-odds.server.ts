@@ -639,11 +639,31 @@ async function syncOddsForFight(fightRow: {
 
 
 
+  // Deactivate any previously-persisted three_way / handicap rows so the
+  // client hides them (product removed these market types from the UI).
+  await (supabaseAdmin as any)
+    .from("ufc_fight_markets")
+    .update({ is_active: false })
+    .eq("fight_id", fightRow.id)
+    .in("market_type", ["three_way", "handicap"]);
+
+  // Also deactivate any total_rounds lines we no longer surface (only 2.5
+  // for 3-round fights; 2.5 and 4.5 for 5-round fights).
+  const keepKeys = (scheduledRounds === 5 ? [2, 4] : [2])
+    .flatMap((k) => [`over_${k}_5`, `under_${k}_5`]);
+  await (supabaseAdmin as any)
+    .from("ufc_fight_markets")
+    .update({ is_active: false })
+    .eq("fight_id", fightRow.id)
+    .eq("market_type", "total_rounds")
+    .not("selection_key", "in", `(${keepKeys.map((k) => `"${k}"`).join(",")})`);
+
   if (!upserts.length) return 0;
   const { error: mErr } = await (supabaseAdmin as any)
     .from("ufc_fight_markets")
     .upsert(upserts, { onConflict: "fight_id,market_type,selection_key" });
   if (mErr) throw new Error(`market save failed: ${mErr.message}`);
+
 
   // De-dupe snapshots
   const { data: last } = await (supabaseAdmin as any)
