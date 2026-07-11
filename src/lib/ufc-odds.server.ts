@@ -1,45 +1,42 @@
-// Server-only: pull UFC odds from The Odds API and persist as
-// ufc_fight_markets + ufc_market_snapshots. Only main + co-main are kept
-// (last two fights on the card by commence_time).
+// Server-only: pull UFC fights, fighters, odds, stats from API-Sports MMA
+// (https://v1.mma.api-sports.io) and persist to ufc_fights, ufc_fighters,
+// ufc_fight_markets, ufc_market_snapshots, ufc_fight_stats, ufc_fight_h2h.
+//
+// Bookmaker odds are real (bet365/Pinnacle/Betfair preferred). Selection
+// keys match the settlement RPC contract:
+//   moneyline: 'a' | 'b'
+//   method   : '{a|b}_{ko_tko|submission|decision}'
+//   round    : 'r1'..'r5' | 'distance'
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { applyOutrightMargin, getRealOddsMarginSettings } from "@/lib/odds-margin.server";
+import { applyOutrightMargin } from "@/lib/odds-margin.server";
+import {
+  fetchFightsByDate,
+  fetchOddsForFight,
+  fetchFighter,
+  fetchFighterRecords,
+  fetchFightStats,
+  pickBookmaker,
+  parseCm,
+  type ApiMmaFight,
+} from "@/lib/apimma.server";
 
-const SPORT = "mma_mixed_martial_arts";
-const BASE = "https://api.the-odds-api.com/v4/sports";
-
-type OddsEvent = {
-  id: string;
-  commence_time: string;
-  home_team: string;
-  away_team: string;
-  sport_title?: string;
+export type UfcSyncResult = {
+  ok: boolean;
+  skipped?: string;
+  fights?: number;
+  markets?: number;
+  error?: string;
 };
 
-type EventOdds = OddsEvent & {
-  bookmakers: Array<{
-    key: string;
-    markets: Array<{
-      key: string;
-      outcomes: Array<{ name: string; price: number; description?: string }>;
-    }>;
-  }>;
-};
+function normalizeFighterName(name: string) {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
 
-type SavedFight = {
-  id: string;
-  fighter_a: string;
-  fighter_b: string;
-  scheduled_rounds: 3 | 5;
-};
-
-const median = (nums: number[]) => {
-  if (!nums.length) return 0;
-  const s = [...nums].sort((a, b) => a - b);
-  const mid = Math.floor(s.length / 2);
-  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
-};
-
-async function apply2WayMargin(a: number, b: number): Promise<{ a: number; b: number }> {
+async function apply2WayMargin(a: number, b: number) {
   const priced = await applyOutrightMargin([
     { team: "a", odds: a },
     { team: "b", odds: b },
@@ -50,263 +47,444 @@ async function apply2WayMargin(a: number, b: number): Promise<{ a: number; b: nu
   };
 }
 
-function normalizeFighterName(name: string) {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]/g, "");
+// Try to find UFC fights near a target timestamp. Returns fights sorted by
+// commence time; caller filters main + co-main.
+async function findEventFights(targetIso: string): Promise<ApiMmaFight[]> {
+  const target = new Date(targetIso);
+  const days: string[] = [];
+  // Search ±1 day window to handle timezone crossing (Malaysia = UTC+8).
+  for (let d = -1; d <= 1; d++) {
+    const dt = new Date(target.getTime() + d * 24 * 60 * 60 * 1000);
+    days.push(dt.toISOString().slice(0, 10));
+  }
+  const seen = new Map<number, ApiMmaFight>();
+  for (const day of days) {
+    try {
+      const fights = await fetchFightsByDate(day);
+      for (const f of fights) {
+        // Only UFC events (slug starts with "UFC")
+        if (!f.slug?.toUpperCase().startsWith("UFC")) continue;
+        if (f.status.short === "CANC") continue;
+        // Skip TBA placeholder cards
+        const nm = `${f.fighters.first.name} ${f.fighters.second.name}`.toLowerCase();
+        if (nm.includes("tba") || nm.includes("opponent")) continue;
+        seen.set(f.id, f);
+      }
+    } catch (e) {
+      console.error("api-mma date fetch failed", day, e);
+    }
+  }
+  return Array.from(seen.values()).sort((a, b) => a.timestamp - b.timestamp);
+}
+
+// Cluster by UTC date and pick cluster closest to targetIso.
+function pickCard(fights: ApiMmaFight[], targetIso: string): ApiMmaFight[] {
+  const clusters = new Map<string, ApiMmaFight[]>();
+  for (const f of fights) {
+    const key = f.date.slice(0, 10);
+    if (!clusters.has(key)) clusters.set(key, []);
+    clusters.get(key)!.push(f);
+  }
+  const target = new Date(targetIso).getTime();
+  let best: { fights: ApiMmaFight[]; delta: number } | null = null;
+  for (const [, list] of clusters) {
+    const ts = new Date(list[0].date).getTime();
+    const delta = Math.abs(ts - target);
+    if (!best || delta < best.delta) best = { fights: list, delta };
+  }
+  return best?.fights ?? [];
+}
+
+async function upsertFighter(apimmaId: number, name: string, logo?: string) {
+  // Try to enrich with /fighters details, but tolerate failure (rate-limits).
+  let detail: Awaited<ReturnType<typeof fetchFighter>> = null;
+  try {
+    detail = await fetchFighter(apimmaId);
+  } catch (e) {
+    console.warn("fetchFighter failed", apimmaId, (e as Error).message);
+  }
+  const payload = {
+    apimma_id: apimmaId,
+    name: detail?.name || name,
+    nickname: detail?.nickname ?? null,
+    record_w: detail?.record?.wins ?? null,
+    record_l: detail?.record?.losses ?? null,
+    record_d: detail?.record?.draws ?? null,
+    reach_cm: parseCm(detail?.reach ?? null),
+    height_cm: parseCm(detail?.height ?? null),
+    stance: detail?.stance ?? null,
+    dob: detail?.birth_date ?? null,
+    weight_class: detail?.category ?? null,
+    country: detail?.country ?? null,
+    photo_url: detail?.photo ?? logo ?? null,
+  };
+  const { data: existing } = await (supabaseAdmin as any)
+    .from("ufc_fighters")
+    .select("id")
+    .eq("apimma_id", apimmaId)
+    .maybeSingle();
+  if (existing?.id) {
+    await (supabaseAdmin as any).from("ufc_fighters").update(payload).eq("id", existing.id);
+    return existing.id as string;
+  }
+  const { data } = await (supabaseAdmin as any)
+    .from("ufc_fighters")
+    .insert(payload)
+    .select("id")
+    .maybeSingle();
+  return data?.id as string;
 }
 
 async function saveFight(input: {
   eventId: string;
-  oddsApiEventId: string;
-  fighterA: string;
-  fighterB: string;
-  commenceTime: string;
+  apimmaFight: ApiMmaFight;
   cardPosition: "main" | "co_main" | "other";
   scheduledRounds: 3 | 5;
-}): Promise<SavedFight> {
-  const selection = "id, fighter_a, fighter_b, scheduled_rounds";
+}) {
+  const f = input.apimmaFight;
   const payload = {
     event_id: input.eventId,
-    odds_api_event_id: input.oddsApiEventId,
-    fighter_a: input.fighterA,
-    fighter_b: input.fighterB,
-    commence_time: input.commenceTime,
+    apimma_fight_id: f.id,
+    apimma_fighter_a_id: f.fighters.first.id,
+    apimma_fighter_b_id: f.fighters.second.id,
+    fighter_a: f.fighters.first.name,
+    fighter_b: f.fighters.second.name,
+    fighter_a_logo: f.fighters.first.logo ?? null,
+    fighter_b_logo: f.fighters.second.logo ?? null,
+    commence_time: f.date,
     card_position: input.cardPosition,
     scheduled_rounds: input.scheduledRounds,
+    weight_class: f.category ?? null,
+    is_title_fight: /title|championship/i.test(f.slug ?? ""),
   };
 
-  const { data: existing, error: lookupError } = await (supabaseAdmin as any)
+  const { data: existing } = await (supabaseAdmin as any)
     .from("ufc_fights")
     .select("id")
-    .eq("odds_api_event_id", input.oddsApiEventId)
+    .eq("apimma_fight_id", f.id)
     .maybeSingle();
-  if (lookupError) throw new Error(`fight lookup failed: ${lookupError.message}`);
 
-  const query = existing?.id
+  const q = existing?.id
     ? (supabaseAdmin as any).from("ufc_fights").update(payload).eq("id", existing.id)
     : (supabaseAdmin as any).from("ufc_fights").insert(payload);
-
-  const { data, error } = await query.select(selection).maybeSingle();
+  const { data, error } = await q
+    .select("id, fighter_a, fighter_b, scheduled_rounds")
+    .maybeSingle();
   if (error) throw new Error(`fight save failed: ${error.message}`);
-  if (!data) throw new Error("fight save failed: no row returned");
-  return data as SavedFight;
+  return data as { id: string; fighter_a: string; fighter_b: string; scheduled_rounds: 3 | 5 };
 }
 
-export type UfcSyncResult = {
-  ok: boolean;
-  skipped?: string;
-  fights?: number;
-  markets?: number;
-  error?: string;
-};
+// ---- Odds mapping ----
+
+function median(nums: number[]) {
+  if (!nums.length) return 0;
+  const s = [...nums].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+async function syncOddsForFight(fightRow: {
+  id: string;
+  fighter_a: string;
+  fighter_b: string;
+  scheduled_rounds: 3 | 5;
+}, apimmaFightId: number) {
+  let odds;
+  try {
+    odds = await fetchOddsForFight(apimmaFightId);
+  } catch (e) {
+    console.warn("fetchOdds failed", apimmaFightId, (e as Error).message);
+    return 0;
+  }
+  if (!odds?.bookmakers?.length) return 0;
+  const bm = pickBookmaker(odds.bookmakers);
+  if (!bm) return 0;
+
+  const nowIso = new Date().toISOString();
+  const upserts: any[] = [];
+  const snapshots: any[] = [];
+
+  const fA = normalizeFighterName(fightRow.fighter_a);
+  const fB = normalizeFighterName(fightRow.fighter_b);
+  const side = (name: string): "a" | "b" | null => {
+    const n = normalizeFighterName(name);
+    if (n === fA || fA.includes(n) || n.includes(fA)) return "a";
+    if (n === fB || fB.includes(n) || n.includes(fB)) return "b";
+    return null;
+  };
+
+  // ---- Moneyline (bet 2 "Home/Away" or bet 1 "3Way Result") ----
+  const mlBet = bm.bets.find((b) => b.id === 2) ?? bm.bets.find((b) => b.id === 1);
+  if (mlBet) {
+    const aVals: number[] = [];
+    const bVals: number[] = [];
+    for (const v of mlBet.values) {
+      const val = v.value.toLowerCase();
+      const price = Number(v.odd);
+      if (!Number.isFinite(price)) continue;
+      if (val === "home" || val === "1") aVals.push(price);
+      else if (val === "away" || val === "2") bVals.push(price);
+      // "Draw" (3-way) is ignored — we only support 2-way moneyline
+    }
+    if (aVals.length && bVals.length) {
+      const priced = await apply2WayMargin(median(aVals), median(bVals));
+      upserts.push(
+        { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", label: fightRow.fighter_a, odds: priced.a, is_active: true, updated_at: nowIso },
+        { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", label: fightRow.fighter_b, odds: priced.b, is_active: true, updated_at: nowIso },
+      );
+      snapshots.push(
+        { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", odds: priced.a },
+        { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", odds: priced.b },
+      );
+    }
+  }
+
+  // ---- Method of Victory (per fighter) ----
+  // API-Sports bets 17-20 give home/away Sub, home/away KO/TKO. Bet 11+12 =
+  // decision (unanimous, split/majority — combined into "decision").
+  const methodPrices: Record<string, number[]> = {
+    a_ko_tko: [], a_submission: [], a_decision: [],
+    b_ko_tko: [], b_submission: [], b_decision: [],
+  };
+  const captureMethod = (betId: number, slot: "a" | "b", method: "ko_tko" | "submission" | "decision") => {
+    const bet = bm.bets.find((b) => b.id === betId);
+    if (!bet) return;
+    for (const v of bet.values) {
+      const p = Number(v.odd);
+      if (Number.isFinite(p)) methodPrices[`${slot}_${method}`].push(p);
+    }
+  };
+  captureMethod(17, "a", "submission");
+  captureMethod(18, "a", "ko_tko");
+  captureMethod(19, "b", "submission");
+  captureMethod(20, "b", "ko_tko");
+  // Decision splits: bets 13 (home unanimous) + 14 (home split); 15+16 for away.
+  // Combine both into one implied decision price per fighter.
+  const combineDec = (unanimousId: number, splitId: number, slot: "a" | "b") => {
+    const u = bm.bets.find((b) => b.id === unanimousId);
+    const s = bm.bets.find((b) => b.id === splitId);
+    if (!u && !s) return;
+    // implied prob = 1/odds; sum probabilities of unanimous + split
+    let p = 0;
+    for (const bet of [u, s]) {
+      if (!bet) continue;
+      for (const v of bet.values) {
+        const price = Number(v.odd);
+        if (Number.isFinite(price) && price > 1) p += 1 / price;
+      }
+    }
+    if (p > 0) methodPrices[`${slot}_decision`].push(1 / p);
+  };
+  combineDec(13, 14, "a");
+  combineDec(15, 16, "b");
+
+  const methodEntries: Array<{ team: string; odds: number }> = [];
+  for (const [key, prices] of Object.entries(methodPrices)) {
+    if (prices.length) methodEntries.push({ team: key, odds: median(prices) });
+  }
+  if (methodEntries.length >= 2) {
+    const priced = await applyOutrightMargin(methodEntries);
+    for (const p of priced) {
+      const [slot, ...rest] = p.team.split("_");
+      const m = rest.join("_");
+      const fighter = slot === "a" ? fightRow.fighter_a : fightRow.fighter_b;
+      const label = `${fighter} by ${m === "ko_tko" ? "KO/TKO" : m === "submission" ? "Submission" : "Decision"}`;
+      upserts.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
+      snapshots.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, odds: p.odds });
+    }
+  }
+
+  // ---- Round Betting (bet 6) — collapse per-fighter into overall round ----
+  const roundBet = bm.bets.find((b) => b.id === 6);
+  if (roundBet) {
+    const roundPrices: Record<string, number[]> = {};
+    for (const v of roundBet.values) {
+      // Values look like "1st Round", "2nd Round", ..., "Goes the distance"
+      const val = v.value.toLowerCase();
+      const price = Number(v.odd);
+      if (!Number.isFinite(price)) continue;
+      let key: string | null = null;
+      if (/distance|decision/.test(val)) key = "distance";
+      else {
+        const m = val.match(/(\d+)/);
+        if (m) key = `r${m[1]}`;
+      }
+      if (!key) continue;
+      if (!roundPrices[key]) roundPrices[key] = [];
+      roundPrices[key].push(price);
+    }
+    const roundEntries = Object.entries(roundPrices).map(([k, arr]) => ({ team: k, odds: median(arr) }));
+    if (roundEntries.length >= 2) {
+      const priced = await applyOutrightMargin(roundEntries);
+      for (const p of priced) {
+        const label = p.team === "distance" ? "Goes the distance" : `Round ${p.team.slice(1)}`;
+        upserts.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
+        snapshots.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, odds: p.odds });
+      }
+    }
+  }
+
+  if (!upserts.length) return 0;
+  const { error: mErr } = await (supabaseAdmin as any)
+    .from("ufc_fight_markets")
+    .upsert(upserts, { onConflict: "fight_id,market_type,selection_key" });
+  if (mErr) throw new Error(`market save failed: ${mErr.message}`);
+
+  // De-dupe snapshots: skip if identical to last snapshot for the same key.
+  const { data: last } = await (supabaseAdmin as any)
+    .from("ufc_market_snapshots")
+    .select("market_type, selection_key, odds")
+    .eq("fight_id", fightRow.id)
+    .order("sampled_at", { ascending: false })
+    .limit(50);
+  const lastMap = new Map<string, number>();
+  for (const r of (last ?? []) as any[]) {
+    const k = `${r.market_type}::${r.selection_key}`;
+    if (!lastMap.has(k)) lastMap.set(k, Number(r.odds));
+  }
+  const fresh = snapshots.filter((s) => lastMap.get(`${s.market_type}::${s.selection_key}`) !== s.odds);
+  if (fresh.length) {
+    await (supabaseAdmin as any).from("ufc_market_snapshots").insert(fresh);
+  }
+  return upserts.length;
+}
+
+// ---- Fight stats (live) ----
+async function syncFightStats(fightRowId: string, apimmaFightId: number) {
+  try {
+    const stats = await fetchFightStats(apimmaFightId);
+    if (!stats?.length) return;
+    const { data: fightRow } = await (supabaseAdmin as any)
+      .from("ufc_fights")
+      .select("apimma_fighter_a_id, apimma_fighter_b_id")
+      .eq("id", fightRowId)
+      .maybeSingle();
+    if (!fightRow) return;
+    for (const s of stats) {
+      const slot: "a" | "b" | null =
+        s.fighter.id === fightRow.apimma_fighter_a_id ? "a"
+        : s.fighter.id === fightRow.apimma_fighter_b_id ? "b" : null;
+      if (!slot) continue;
+      const num = (t: string) => {
+        const row = s.statistics.find((x) => x.type?.toLowerCase() === t.toLowerCase());
+        if (!row) return null;
+        const n = Number(String(row.value ?? "").replace(/[^\d.]/g, ""));
+        return Number.isFinite(n) ? n : null;
+      };
+      const payload = {
+        fight_id: fightRowId,
+        fighter_slot: slot,
+        strikes_landed: num("Strikes Landed") ?? num("Total Strikes Landed"),
+        strikes_attempted: num("Strikes Attempted") ?? num("Total Strikes Attempted"),
+        significant_strikes_landed: num("Significant Strikes Landed"),
+        significant_strikes_attempted: num("Significant Strikes Attempted"),
+        takedowns_landed: num("Takedowns Landed"),
+        takedowns_attempted: num("Takedowns Attempted"),
+        submission_attempts: num("Submission Attempts"),
+        knockdowns: num("Knockdowns"),
+        control_time_sec: num("Control Time"),
+        raw: s.statistics,
+      };
+      await (supabaseAdmin as any)
+        .from("ufc_fight_stats")
+        .upsert(payload, { onConflict: "fight_id,fighter_slot" });
+    }
+  } catch (e) {
+    console.warn("syncFightStats failed", apimmaFightId, (e as Error).message);
+  }
+}
+
+// ---- H2H ----
+async function syncH2H(fightRowId: string, aId: number, bId: number) {
+  try {
+    const records = await fetchFighterRecords(aId);
+    if (!records?.length) return;
+    const rows: any[] = [];
+    for (const r of records) {
+      const opp = r.fighters.first.id === aId ? r.fighters.second : r.fighters.first;
+      if (opp.id !== bId) continue;
+      const aSlotWinner = r.fighters.first.id === aId
+        ? (r.fighters.first.winner ? "a" : r.fighters.second.winner ? "b" : "draw")
+        : (r.fighters.second.winner ? "a" : r.fighters.first.winner ? "b" : "draw");
+      rows.push({
+        fight_id: fightRowId,
+        past_fight_apimma_id: r.id,
+        date: r.date.slice(0, 10),
+        event_name: r.slug ?? null,
+        winner_slot: aSlotWinner,
+        method: null,
+        round: null,
+      });
+    }
+    if (rows.length) {
+      await (supabaseAdmin as any)
+        .from("ufc_fight_h2h")
+        .upsert(rows, { onConflict: "fight_id,past_fight_apimma_id" });
+    }
+  } catch (e) {
+    console.warn("syncH2H failed", (e as Error).message);
+  }
+}
 
 export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<UfcSyncResult> {
-  const apiKey = process.env.ODDS_API_KEY?.trim();
-  if (!apiKey) return { ok: false, skipped: "ODDS_API_KEY not set" };
+  const key = process.env.API_FOOTBALL_KEY?.trim();
+  if (!key) return { ok: false, skipped: "API_FOOTBALL_KEY not set" };
 
   const { data: event } = await (supabaseAdmin as any)
     .from("ufc_events")
     .select("id, event_key, name, starts_at")
-    .eq("event_key", "ufc_329")
     .eq("is_active", true)
+    .order("starts_at", { ascending: true })
+    .limit(1)
     .maybeSingle();
   if (!event) return { ok: true, skipped: "no active event" };
 
-  // Cost guard: only hit API when we're within 12h of event start (or force).
+  // Cost guard: only hit API within ±3 days of event start (or force).
   const startsAt = new Date(event.starts_at).getTime();
-  const now = Date.now();
-  const withinWindow = Math.abs(startsAt - now) < 12 * 60 * 60 * 1000;
-  if (!opts.force && !withinWindow) {
-    return { ok: true, skipped: "outside event window" };
+  const withinWindow = Math.abs(startsAt - Date.now()) < 3 * 24 * 60 * 60 * 1000;
+  if (!opts.force && !withinWindow) return { ok: true, skipped: "outside event window" };
+
+  const allFights = await findEventFights(event.starts_at);
+  if (!allFights.length) return { ok: true, skipped: "no UFC fights found near event date" };
+
+  const card = pickCard(allFights, event.starts_at);
+  if (!card.length) return { ok: true, skipped: "no card cluster matched" };
+
+  // Only keep main + co-main (last two by commence time; main = is_main flag if set)
+  const sorted = [...card].sort((a, b) => a.timestamp - b.timestamp);
+  const mainIdx = sorted.findIndex((f) => f.is_main);
+  let mainFight: ApiMmaFight, coMainFight: ApiMmaFight | null;
+  if (mainIdx >= 0) {
+    mainFight = sorted[mainIdx];
+    coMainFight = sorted[mainIdx - 1] ?? sorted.filter((_, i) => i !== mainIdx).slice(-1)[0] ?? null;
+  } else {
+    const last = sorted.slice(-2);
+    mainFight = last[last.length - 1];
+    coMainFight = last.length === 2 ? last[0] : null;
   }
-
-  // 1. List UFC events on the sport
-  const evRes = await fetch(`${BASE}/${SPORT}/events?apiKey=${apiKey}`);
-  if (!evRes.ok) return { ok: false, error: `events ${evRes.status}` };
-  const allEvents = (await evRes.json()) as OddsEvent[];
-
-  // The Odds API tags every MMA fight as sport_title "MMA" — no UFC event name.
-  // Strategy: cluster all upcoming fights by their commence date (in UTC), pick
-  // the cluster nearest to event.starts_at (or the next upcoming one if that's
-  // too far off), then take the last 2 fights of that cluster = co-main + main.
-  const sorted = [...allEvents]
-    .filter((e) => !Number.isNaN(new Date(e.commence_time).getTime()))
-    .sort((a, b) => new Date(a.commence_time).getTime() - new Date(b.commence_time).getTime());
-
-  if (!sorted.length) return { ok: true, skipped: "no upcoming MMA events on odds board" };
-
-  // Group by UTC date (YYYY-MM-DD) — a UFC card runs across a single evening/night.
-  const clusters = new Map<string, OddsEvent[]>();
-  for (const e of sorted) {
-    const key = e.commence_time.slice(0, 10);
-    if (!clusters.has(key)) clusters.set(key, []);
-    clusters.get(key)!.push(e);
-  }
-
-  // Pick the cluster closest to our configured starts_at; if none within 30 days,
-  // fall back to the next upcoming cluster (>= now).
-  const clusterEntries = Array.from(clusters.entries()).map(([date, fights]) => {
-    const clusterTs = new Date(fights[0].commence_time).getTime();
-    return { date, fights, ts: clusterTs, delta: Math.abs(clusterTs - startsAt) };
-  });
-
-  let chosen = clusterEntries.reduce((best, c) => (c.delta < best.delta ? c : best));
-  if (chosen.delta > 30 * 24 * 60 * 60 * 1000) {
-    const upcoming = clusterEntries.filter((c) => c.ts >= now).sort((a, b) => a.ts - b.ts);
-    if (upcoming.length) chosen = upcoming[0];
-  }
-
-  const target = chosen.fights;
-  if (!target.length) return { ok: true, skipped: "no fights found for event" };
-
-  // Last two by commence_time = co-main + main (main is last).
-  const lastTwo = target.slice(-2);
-  const [coMain, main] = lastTwo.length === 2 ? lastTwo : [null, lastTwo[0]];
+  const targets: Array<{ f: ApiMmaFight; pos: "main" | "co_main"; rounds: 3 | 5 }> = [
+    { f: mainFight, pos: "main", rounds: 5 },
+  ];
+  if (coMainFight) targets.push({ f: coMainFight, pos: "co_main", rounds: 3 });
 
   let totalMarkets = 0;
-  const nowIso = new Date().toISOString();
-
-  for (const ev of lastTwo) {
-    const isMain = ev === main;
-    const isCoMain = ev === coMain;
-    const position = isMain ? "main" : isCoMain ? "co_main" : "other";
-    const scheduledRounds = isMain ? 5 : 3;
+  for (const t of targets) {
+    // Upsert fighters (with detail enrichment)
+    await upsertFighter(t.f.fighters.first.id, t.f.fighters.first.name, t.f.fighters.first.logo);
+    await upsertFighter(t.f.fighters.second.id, t.f.fighters.second.name, t.f.fighters.second.logo);
 
     const fightRow = await saveFight({
       eventId: event.id,
-      oddsApiEventId: ev.id,
-      fighterA: ev.home_team,
-      fighterB: ev.away_team,
-      commenceTime: ev.commence_time,
-      cardPosition: position,
-      scheduledRounds,
+      apimmaFight: t.f,
+      cardPosition: t.pos,
+      scheduledRounds: t.rounds,
     });
 
-    // Fetch odds. The Odds API for MMA only supports h2h (moneyline);
-    // method-of-victory and round-betting are NOT offered by this feed. We
-    // pull h2h and derive method/round prices from the moneyline using
-    // standard MMA priors (see below).
-    const oddsUrl =
-      `${BASE}/${SPORT}/events/${ev.id}/odds` +
-      `?apiKey=${apiKey}&regions=us,eu&markets=h2h&oddsFormat=decimal`;
-    const oddsRes = await fetch(oddsUrl);
-    if (!oddsRes.ok) continue;
-    const eventOdds = (await oddsRes.json()) as EventOdds;
-
-    const h2hA: number[] = [];
-    const h2hB: number[] = [];
-
-    const fA = normalizeFighterName(fightRow.fighter_a);
-    const fB = normalizeFighterName(fightRow.fighter_b);
-    const side = (n: string) => (normalizeFighterName(n) === fA ? "a" : normalizeFighterName(n) === fB ? "b" : null);
-
-    for (const bm of eventOdds.bookmakers ?? []) {
-      for (const mkt of bm.markets ?? []) {
-        if (mkt.key !== "h2h") continue;
-        for (const o of mkt.outcomes) {
-          const s = side(o.name);
-          if (s === "a" && Number.isFinite(o.price)) h2hA.push(o.price);
-          else if (s === "b" && Number.isFinite(o.price)) h2hB.push(o.price);
-        }
-      }
-    }
-
-    if (!h2hA.length || !h2hB.length) continue;
-
-    const upserts: Array<{
-      fight_id: string;
-      market_type: string;
-      selection_key: string;
-      label: string;
-      odds: number;
-      is_active: boolean;
-      updated_at: string;
-    }> = [];
-    const snapshots: Array<{
-      fight_id: string;
-      market_type: string;
-      selection_key: string;
-      odds: number;
-    }> = [];
-
-    const priced = await apply2WayMargin(median(h2hA), median(h2hB));
-    upserts.push(
-      { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", label: fightRow.fighter_a, odds: priced.a, is_active: true, updated_at: nowIso },
-      { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", label: fightRow.fighter_b, odds: priced.b, is_active: true, updated_at: nowIso },
-    );
-    snapshots.push(
-      { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", odds: priced.a },
-      { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", odds: priced.b },
-    );
-
-    // ---------- Derived Method-of-Victory ----------
-    // Implied win probabilities from moneyline (fair, post-margin removal
-    // done inside apply2WayMargin — we re-derive from the priced numbers).
-    const invA = 1 / priced.a;
-    const invB = 1 / priced.b;
-    const norm = invA + invB;
-    const pA = invA / norm;
-    const pB = invB / norm;
-
-    // Priors per fighter: split win prob across KO/TKO, Submission, Decision.
-    // 5-round main events go the distance more often; 3-rounders less so.
-    const methodPriors = scheduledRounds === 5
-      ? { ko_tko: 0.42, submission: 0.16, decision: 0.42 }
-      : { ko_tko: 0.38, submission: 0.15, decision: 0.47 };
-
-    const methodEntries: Array<{ team: string; odds: number }> = [];
-    for (const s of ["a", "b"] as const) {
-      const pWin = s === "a" ? pA : pB;
-      for (const [m, prior] of Object.entries(methodPriors)) {
-        const p = Math.max(pWin * prior, 0.005);
-        methodEntries.push({ team: `${s}_${m}`, odds: 1 / p });
-      }
-    }
-    const methodPriced = await applyOutrightMargin(methodEntries);
-    for (const p of methodPriced) {
-      const [s, ...rest] = p.team.split("_");
-      const m = rest.join("_");
-      const fighter = s === "a" ? fightRow.fighter_a : fightRow.fighter_b;
-      const methodLabel = m === "ko_tko" ? "KO/TKO" : m === "submission" ? "Submission" : "Decision";
-      const label = `${fighter} by ${methodLabel}`;
-      upserts.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
-      snapshots.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, odds: p.odds });
-    }
-
-    // ---------- Derived Round Betting ----------
-    // Non-decision probability = 1 - decisionProb (both fighters combined).
-    // Distribute finishes across rounds with decreasing weight; "distance"
-    // captures decisions.
-    const decisionProb = (pA + pB) * methodPriors.decision;
-    const finishProb = Math.max(1 - decisionProb, 0.05);
-    const roundWeights = scheduledRounds === 5
-      ? [0.34, 0.24, 0.18, 0.14, 0.10]
-      : [0.45, 0.32, 0.23];
-    const roundEntries: Array<{ team: string; odds: number }> = [];
-    for (let i = 0; i < scheduledRounds; i++) {
-      const p = Math.max(finishProb * roundWeights[i], 0.005);
-      roundEntries.push({ team: `r${i + 1}`, odds: 1 / p });
-    }
-    roundEntries.push({ team: "distance", odds: 1 / Math.max(decisionProb, 0.005) });
-    const roundPriced = await applyOutrightMargin(roundEntries);
-    for (const p of roundPriced) {
-      const label = p.team === "distance" ? "Goes the distance" : `Round ${p.team.slice(1)}`;
-      upserts.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
-      snapshots.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, odds: p.odds });
-    }
-
-
-    if (upserts.length) {
-      const { error: marketsError } = await (supabaseAdmin as any)
-        .from("ufc_fight_markets")
-        .upsert(upserts, { onConflict: "fight_id,market_type,selection_key" });
-      if (marketsError) throw new Error(`market save failed: ${marketsError.message}`);
-      const { error: snapshotsError } = await (supabaseAdmin as any).from("ufc_market_snapshots").insert(snapshots);
-      if (snapshotsError) throw new Error(`snapshot save failed: ${snapshotsError.message}`);
-      totalMarkets += upserts.length;
+    totalMarkets += await syncOddsForFight(fightRow, t.f.id);
+    await syncH2H(fightRow.id, t.f.fighters.first.id, t.f.fighters.second.id);
+    // Live stats only when fight is in progress or finished
+    if (["LIVE", "FT", "AFT"].includes(t.f.status.short)) {
+      await syncFightStats(fightRow.id, t.f.id);
     }
   }
 
@@ -315,11 +493,8 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
     action: "ufc.odds_sync",
     entity: "ufc_events",
     entity_id: event.id,
-    metadata: { fights: lastTwo.length, markets: totalMarkets },
+    metadata: { fights: targets.length, markets: totalMarkets, provider: "api-mma" },
   });
 
-  return { ok: true, fights: lastTwo.length, markets: totalMarkets };
+  return { ok: true, fights: targets.length, markets: totalMarkets };
 }
-
-// Silence unused import
-void getRealOddsMarginSettings;
