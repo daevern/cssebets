@@ -61,7 +61,7 @@ export const getUfcMarketHistory = createServerFn({ method: "GET" })
   .inputValidator((i: unknown) => z.object({ fightId: z.string().uuid() }).parse(i))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data: rows } = await (supabaseAdmin as any)
       .from("ufc_market_snapshots")
       .select("market_type, selection_key, odds, sampled_at")
