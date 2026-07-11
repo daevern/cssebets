@@ -382,12 +382,34 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
 
   const qc = useQueryClient();
   const placeFn = useServerFn(placeUfcBet);
+
+  // Load user's existing OPEN bets on this fight to prevent duplicate selections
+  const { data: openBetsData } = useQuery({
+    queryKey: ["ufc-my-open-bets", fight.id],
+    queryFn: async () => {
+      const { data: u } = await supabase.auth.getUser();
+      if (!u?.user) return [] as any[];
+      const { data } = await supabase
+        .from("ufc_bets")
+        .select("market_type, selection_key")
+        .eq("user_id", u.user.id)
+        .eq("fight_id", fight.id)
+        .eq("status", "open");
+      return data ?? [];
+    },
+    refetchOnWindowFocus: true,
+    staleTime: 5_000,
+  });
+  const takenKeys = new Set((openBetsData ?? []).map((b: any) => `${b.market_type}:${b.selection_key}`));
+
   const mut = useMutation({
     mutationFn: (v: { stake: number; market: Market }) =>
       placeFn({ data: { fightId: fight.id, marketType: v.market.market_type, selectionKey: v.market.selection_key, stake: v.stake } }),
     onSuccess: () => {
       toast.success("Prediction locked");
       qc.invalidateQueries({ queryKey: ["ufc-fight-detail", fight.id] });
+      qc.invalidateQueries({ queryKey: ["ufc-my-open-bets", fight.id] });
+      qc.invalidateQueries({ queryKey: ["my-ufc-bets"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
       setPick(null);
     },
