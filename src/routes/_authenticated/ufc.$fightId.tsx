@@ -636,31 +636,9 @@ function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snap
     <section className="relative -mx-4 bg-[var(--surface)] md:mx-0">
       <div className="px-4 pt-5 md:px-6 md:pt-6">
         <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
-          {tab === "moneyline" ? "Who will win?" : tab === "method" ? "How does it end?" : "Which round?"}
+          Who will win?
         </h2>
 
-        {/* Segmented market selector — mirrors football tabs */}
-        {visibleTabs.length > 1 && (
-          <div className="mt-3 flex overflow-x-auto rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {visibleTabs.map((t) => {
-              const active = tab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setTab(t.id)}
-                  className={`shrink-0 flex-1 px-4 py-2.5 text-center text-[13px] font-semibold whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)]/60 last:border-r-0 ${
-                    active
-                      ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
-                      : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
 
         {/* Legend — minimal, matches MarketAnalyticsCard */}
         {effectiveKeys.length > 0 && (
