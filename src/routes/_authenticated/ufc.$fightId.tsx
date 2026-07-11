@@ -447,7 +447,7 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
             {tab === "method" && "How does the fight end?"}
             {tab === "round" && "Which round does it end in?"}
             {tab === "total_rounds" && "How many rounds will the fight last?"}
-            {tab === "distance" && "Does the fight go the distance?"}
+            
           </h4>
           {tab === "moneyline" && (
             <p className="text-[11px] text-[var(--color-ink-muted)]">Draw, technical draw or no-contest voids both selections.</p>
