@@ -721,7 +721,7 @@ async function syncFightStats(fightRowId: string, apimmaFightId: number) {
 }
 
 // ---- H2H + recent form ----
-async function syncH2H(fightRowId: string, aId: number, bId: number) {
+async function syncH2H(fightRowId: string, aId: number, bId: number, currentApimmaFightId: number) {
   try {
     const [recA, recB] = await Promise.all([
       fetchFighterFightHistory(aId, 16).catch(() => []),
@@ -732,6 +732,8 @@ async function syncH2H(fightRowId: string, aId: number, bId: number) {
 
     // Direct H2H (from A's records where opponent is B)
     for (const r of recA) {
+      if (r.id === currentApimmaFightId) continue;
+      if (r.status.short !== "FT" && r.status.short !== "AFT") continue;
       const opp = r.fighters.first.id === aId ? r.fighters.second : r.fighters.first;
       if (opp.id !== bId) continue;
       const aWon = r.fighters.first.id === aId ? r.fighters.first.winner : r.fighters.second.winner;
@@ -755,6 +757,7 @@ async function syncH2H(fightRowId: string, aId: number, bId: number) {
     // Recent form: last 6 fights per fighter (excluding this upcoming fight itself)
     const pushForm = (records: Awaited<ReturnType<typeof fetchFighterFightHistory>>, selfId: number, slot: "a" | "b") => {
       const sorted = [...records]
+        .filter((r) => r.id !== currentApimmaFightId)
         .filter((r) => r.status.short === "FT" || r.status.short === "AFT")
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 6);
@@ -780,6 +783,7 @@ async function syncH2H(fightRowId: string, aId: number, bId: number) {
     pushForm(recA, aId, "a");
     pushForm(recB, bId, "b");
 
+    await (supabaseAdmin as any).from("ufc_fight_h2h").delete().eq("fight_id", fightRowId);
     if (rows.length) {
       await (supabaseAdmin as any)
         .from("ufc_fight_h2h")
@@ -839,7 +843,7 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
     });
 
     totalMarkets += await syncOddsForFight(fightRow, t.f.id);
-    await syncH2H(fightRow.id, t.f.fighters.first.id, t.f.fighters.second.id);
+    await syncH2H(fightRow.id, t.f.fighters.first.id, t.f.fighters.second.id, t.f.id);
     // Live stats only when fight is in progress or finished
     if (["LIVE", "FT", "AFT"].includes(t.f.status.short)) {
       await syncFightStats(fightRow.id, t.f.id);
