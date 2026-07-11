@@ -450,18 +450,13 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
   const card = pickCard(allFights, event.starts_at);
   if (!card.length) return { ok: true, skipped: "no card cluster matched" };
 
-  // Only keep main + co-main (last two by commence time; main = is_main flag if set)
+  // Main card runs LAST on the event. Take the last two fights chronologically:
+  // main event = latest commence_time, co-main = second latest.
   const sorted = [...card].sort((a, b) => a.timestamp - b.timestamp);
-  const mainIdx = sorted.findIndex((f) => f.is_main);
-  let mainFight: ApiMmaFight, coMainFight: ApiMmaFight | null;
-  if (mainIdx >= 0) {
-    mainFight = sorted[mainIdx];
-    coMainFight = sorted[mainIdx - 1] ?? sorted.filter((_, i) => i !== mainIdx).slice(-1)[0] ?? null;
-  } else {
-    const last = sorted.slice(-2);
-    mainFight = last[last.length - 1];
-    coMainFight = last.length === 2 ? last[0] : null;
-  }
+  const last = sorted.slice(-2);
+  const mainFight: ApiMmaFight = last[last.length - 1];
+  const coMainFight: ApiMmaFight | null = last.length === 2 ? last[0] : null;
+
   const targets: Array<{ f: ApiMmaFight; pos: "main" | "co_main"; rounds: 3 | 5 }> = [
     { f: mainFight, pos: "main", rounds: 5 },
   ];
