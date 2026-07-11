@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUfcFightDetail, getUfcMarketHistory, placeUfcBet } from "@/lib/ufc.functions";
-import { Loader2, X, Activity, TrendingUp, Users, History } from "lucide-react";
+import { Loader2, ArrowUpRight, X, Activity, TrendingUp, Users, History } from "lucide-react";
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from "recharts";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
@@ -28,6 +28,9 @@ type Market = {
   is_active: boolean;
   updated_at: string;
 };
+
+const MIN_STAKE = 10;
+const MAX_STAKE = 50000;
 
 function UfcFightDetailPage() {
   const { fightId } = Route.useParams();
@@ -59,8 +62,6 @@ function UfcFightDetailPage() {
     return () => { supabase.removeChannel(ch); };
   }, [fightId, qc]);
 
-  const [betCtx, setBetCtx] = useState<{ market: Market } | null>(null);
-
   return (
     <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
       <div
@@ -77,7 +78,6 @@ function UfcFightDetailPage() {
           <FightAnalytics
             data={data as any}
             history={(history?.snapshots ?? []) as any[]}
-            onPick={(m) => setBetCtx({ market: m })}
           />
         )}
 
@@ -86,27 +86,14 @@ function UfcFightDetailPage() {
           <span>© {new Date().getFullYear()} <BrandText /></span>
         </footer>
       </div>
-
-      {betCtx && data?.fight && (
-        <BetSlip fight={data.fight as any} market={betCtx.market} onClose={() => setBetCtx(null)} />
-      )}
     </div>
   );
 }
 
-function FightAnalytics({
-  data,
-  history,
-  onPick,
-}: {
-  data: any;
-  history: any[];
-  onPick: (m: Market) => void;
-}) {
+function FightAnalytics({ data, history }: { data: any; history: any[] }) {
   const { fight, fighterA, fighterB, markets, stats, h2h, event } = data;
   const isLive = fight.status && !["scheduled", "finished", "void"].includes(fight.status);
   const isFinished = fight.status === "finished";
-  const phaseLabel = isFinished ? "Result" : isLive ? "Live" : "Pre-fight";
 
   return (
     <>
@@ -118,20 +105,20 @@ function FightAnalytics({
         <span>{event?.name ?? "Fight"}</span>
       </nav>
 
-      <FightHero fight={fight} fighterA={fighterA} fighterB={fighterB} phaseLabel={phaseLabel} isLive={isLive} isFinished={isFinished} />
+      <FightHero fight={fight} fighterA={fighterA} fighterB={fighterB} isLive={isLive} isFinished={isFinished} />
 
-      {/* Market movement (like MarketAnalyticsCard) */}
+      {/* Market analytics — historical odds movement, mirrors MarketAnalyticsCard placement */}
       <MarketMovementSection markets={markets} snapshots={history} />
 
-      {/* Take a position — only before/during, hidden when finished */}
+      {/* Take a position — mirrors football MarketTabs section header */}
       {!isFinished && (
         <section className="space-y-4">
           <div className="flex items-baseline justify-between">
-            <h2 className="font-display text-lg font-semibold tracking-tight md:text-xl">
+            <h2 className="font-display text-lg font-semibold tracking-tight text-[var(--color-ink)] md:text-xl">
               Take a position
             </h2>
           </div>
-          <MarketsBoard markets={markets} fight={fight} onPick={onPick} />
+          <MarketsBoard markets={markets} fight={fight} />
         </section>
       )}
 
@@ -198,15 +185,15 @@ function AnalysisSection({ kicker, meta, children }: { kicker?: ReactNode; meta?
   );
 }
 
-/* ---------- Hero ---------- */
+/* ---------- Hero — mirrors football MatchHero article layout ---------- */
 
-function FighterHeadshot({ url, name, size = 76 }: { url?: string | null; name: string; size?: number }) {
+function FighterHeadshot({ url, name, size = 96 }: { url?: string | null; name: string; size?: number }) {
   if (url) {
     return (
       <img
         src={url}
         alt={name}
-        className="rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)] object-cover"
+        className="h-full w-full object-cover"
         style={{ width: size, height: size }}
       />
     );
@@ -214,7 +201,7 @@ function FighterHeadshot({ url, name, size = 76 }: { url?: string | null; name: 
   const initials = name.split(" ").map((s) => s[0]).slice(0, 2).join("");
   return (
     <div
-      className="grid place-items-center rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)] text-sm font-bold text-[var(--color-ink-muted)]"
+      className="grid place-items-center bg-[var(--surface-3)] font-display text-lg font-semibold text-[var(--color-ink-muted)]"
       style={{ width: size, height: size }}
     >
       {initials}
@@ -241,155 +228,355 @@ function useCountdown(iso: string) {
 }
 
 function FightHero({
-  fight, fighterA, fighterB, phaseLabel, isLive, isFinished,
+  fight, fighterA, fighterB, isLive, isFinished,
 }: {
-  fight: any; fighterA: any; fighterB: any; phaseLabel: string; isLive: boolean; isFinished: boolean;
+  fight: any; fighterA: any; fighterB: any; isLive: boolean; isFinished: boolean;
 }) {
   const kickoff = new Date(fight.commence_time);
   const dateStr = kickoff.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   const timeStr = kickoff.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
   const countdown = useCountdown(fight.commence_time);
 
-  const posLabel = fight.card_position === "main" ? "Main Event" : fight.card_position === "co_main" ? "Co-Main Event" : "Fight";
+  const recordA = fighterA ? `${fighterA.record_w ?? 0}-${fighterA.record_l ?? 0}${fighterA.record_d ? `-${fighterA.record_d}` : ""}` : null;
+  const recordB = fighterB ? `${fighterB.record_w ?? 0}-${fighterB.record_l ?? 0}${fighterB.record_d ? `-${fighterB.record_d}` : ""}` : null;
 
   return (
-    <section className="relative overflow-hidden border border-[var(--color-surface-border)] bg-gradient-to-b from-[var(--surface-2)] to-[var(--color-surface)] p-5 md:p-6">
-      {isLive && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{ background: "radial-gradient(120% 60% at 50% 0%, rgba(244,63,94,0.12), transparent 60%)" }}
-        />
-      )}
-      <div className="relative">
-        <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-          <span>
-            {posLabel}
+    <article className="relative flex flex-col gap-6">
+      {/* Title + status — mirrors football hero title */}
+      <div className="flex flex-col gap-3">
+        <h1 className="font-display text-[26px] font-semibold leading-[1.05] tracking-tight text-[var(--color-ink)] md:text-4xl">
+          {fight.fighter_a} <span className="text-[var(--color-ink-muted)]/70">vs</span> {fight.fighter_b}
+        </h1>
+        <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.02em]">
+          {isLive ? (
+            <span className="inline-flex items-center gap-1.5 text-destructive">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-destructive" />
+              </span>
+              <span className="font-semibold uppercase tracking-[0.22em]">LIVE</span>
+            </span>
+          ) : isFinished ? (
+            <span className="font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Result</span>
+          ) : countdown ? (
+            <span className="text-[var(--color-ink-muted)]">
+              Walkouts in <span className="font-semibold text-[var(--color-neon)]">{countdown}</span>
+            </span>
+          ) : (
+            <span className="text-[var(--color-ink-muted)]">
+              Walkouts <span className="text-[var(--color-ink)]">{dateStr} · {timeStr}</span>
+            </span>
+          )}
+          <span className="text-[var(--color-ink-muted)]/60">·</span>
+          <span className="text-[var(--color-ink-muted)]">
+            {fight.card_position === "main" ? "Main Event" : fight.card_position === "co_main" ? "Co-Main Event" : "Fight"}
             {fight.weight_class ? ` · ${fight.weight_class}` : ""}
             {fight.is_title_fight ? " · Title" : ""}
           </span>
-          <span className={isLive ? "flex items-center gap-1.5 text-rose-400" : ""}>
-            {isLive && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500" />}
-            {phaseLabel}
+        </div>
+      </div>
+
+      {/* Scoreboard — headshots + VS, mirrors football's centered flag scoreboard */}
+      <div className="flex items-center justify-center gap-5 sm:gap-8 md:gap-12">
+        <ScoreFighter name={fight.fighter_a} logo={fight.fighter_a_logo || fighterA?.photo_url} record={recordA} />
+        <div className="flex flex-col items-center">
+          {isFinished && fight.winner ? (
+            <span className="font-display text-4xl font-semibold tabular-nums text-[var(--color-ink)] sm:text-5xl md:text-6xl">
+              {fight.winner === "a" ? "W" : fight.winner === "b" ? "L" : "D"}
+              <span className="text-2xl font-light text-[var(--color-ink-muted)]/50 sm:text-3xl mx-1">–</span>
+              {fight.winner === "b" ? "W" : fight.winner === "a" ? "L" : "D"}
+            </span>
+          ) : (
+            <span className="font-display text-xl font-light tracking-tight text-[var(--color-ink-muted)] sm:text-2xl">vs</span>
+          )}
+          <span className="mt-1 text-[10px] font-medium uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+            {fight.scheduled_rounds} rounds
           </span>
         </div>
-
-        <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <FighterSide fighter={fighterA} name={fight.fighter_a} logo={fight.fighter_a_logo} side="left" />
-          <div className="flex flex-col items-center gap-1">
-            <span className="font-display text-2xl font-black tracking-tight text-[var(--color-neon)]">VS</span>
-            {isFinished && fight.winner && (
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-ink-muted)]">
-                {fight.winner === "a" ? "A wins" : fight.winner === "b" ? "B wins" : "Draw"}
-              </span>
-            )}
-          </div>
-          <FighterSide fighter={fighterB} name={fight.fighter_b} logo={fight.fighter_b_logo} side="right" />
-        </div>
-
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-[var(--color-ink-muted)]">
-          <span>{dateStr} · {timeStr}</span>
-          <span>·</span>
-          <span>{fight.scheduled_rounds} rounds</span>
-          {countdown && !isLive && !isFinished && (
-            <>
-              <span>·</span>
-              <span className="font-mono font-bold text-[var(--color-neon)]">{countdown}</span>
-            </>
-          )}
-        </div>
+        <ScoreFighter name={fight.fighter_b} logo={fight.fighter_b_logo || fighterB?.photo_url} record={recordB} />
       </div>
-    </section>
+
+      {/* Divider before graph */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
+    </article>
   );
 }
 
-function FighterSide({ fighter, name, logo, side }: { fighter: any; name: string; logo?: string | null; side: "left" | "right" }) {
-  const align = side === "left" ? "items-start text-left" : "items-end text-right";
-  const record = fighter ? `${fighter.record_w ?? 0}-${fighter.record_l ?? 0}${fighter.record_d ? `-${fighter.record_d}` : ""}` : "—";
+function ScoreFighter({ name, logo, record }: { name: string; logo?: string | null; record: string | null }) {
   return (
-    <div className={`flex flex-col ${align} gap-2`}>
-      <FighterHeadshot url={logo || fighter?.photo_url} name={name} size={72} />
-      <div className="min-w-0">
-        <div className="truncate font-display text-[15px] font-bold tracking-tight text-[var(--color-ink)]">{name}</div>
-        <div className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">{record}</div>
+    <div className="flex flex-col items-center gap-2">
+      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)] sm:h-20 sm:w-20 md:h-24 md:w-24">
+        <FighterHeadshot url={logo} name={name} size={96} />
       </div>
-    </div>
-  );
-}
-
-/* ---------- Markets board ---------- */
-
-function MarketsBoard({ markets, fight, onPick }: { markets: Market[]; fight: any; onPick: (m: Market) => void }) {
-  const [tab, setTab] = useState<"moneyline" | "method" | "round">("moneyline");
-  const filtered = markets.filter((m) => m.market_type === tab);
-  const finished = fight.status === "finished";
-  return (
-    <div className="border border-[var(--color-surface-border)] bg-[var(--surface-2)]">
-      <div className="flex border-b border-[var(--color-surface-border)] text-[11px]">
-        {(["moneyline", "method", "round"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 px-3 py-3 font-bold uppercase tracking-[0.14em] transition ${
-              tab === t ? "bg-[var(--surface-3)] text-[var(--color-ink)]" : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-            }`}
-          >{t}</button>
-        ))}
-      </div>
-      <div className="p-3">
-        {filtered.length === 0 ? (
-          <div className="py-6 text-center text-xs text-[var(--color-ink-muted)]">No {tab} odds available yet.</div>
-        ) : (
-          <div className="grid grid-cols-2 gap-2">
-            {filtered.map((m) => (
-              <button
-                key={m.selection_key}
-                disabled={!m.is_active || finished}
-                onClick={() => onPick(m)}
-                className="flex items-center justify-between border border-[var(--color-surface-border)] bg-[var(--color-surface)]/60 px-3 py-3 text-left transition hover:border-[var(--color-neon)]/40 hover:bg-[var(--surface-3)] disabled:opacity-50"
-              >
-                <span className="line-clamp-2 min-w-0 flex-1 text-xs font-medium text-[var(--color-ink)]">{m.label}</span>
-                <span className="ml-2 font-mono text-base font-black text-[var(--color-neon)]">
-                  {Number(m.odds).toFixed(2)}
-                </span>
-              </button>
-            ))}
-          </div>
+      <div className="text-center">
+        <div className="max-w-[10ch] truncate font-display text-[11px] font-semibold text-[var(--color-ink)] sm:max-w-[16ch] sm:text-xs">{name}</div>
+        {record && (
+          <div className="text-[9px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)] sm:text-[10px]">{record}</div>
         )}
       </div>
     </div>
   );
 }
 
-/* ---------- Market movement ---------- */
+/* ---------- Markets board — mirrors football OddsButton + StakeSlip ---------- */
+
+const MARKET_TABS: Array<{ id: "moneyline" | "method" | "round"; label: string }> = [
+  { id: "moneyline", label: "Moneyline" },
+  { id: "method", label: "Method" },
+  { id: "round", label: "Round" },
+];
+
+function classifyUfc(selection: string): "home" | "away" | "neutral" {
+  const s = selection.toLowerCase();
+  if (s === "a") return "home";
+  if (s === "b") return "away";
+  return "neutral";
+}
+
+const VARIANT_STYLES: Record<"home" | "away" | "neutral", { base: string; selected: string; priceColor: string; badgeBg: string; badgeText: string }> = {
+  home: {
+    base: "bg-black border border-[var(--color-neon)]/15 hover:border-[var(--color-neon)]/70",
+    selected: "border-2 border-[var(--color-neon)] bg-black shadow-[0_0_0_1px_var(--color-neon)]",
+    priceColor: "text-[var(--color-neon)]",
+    badgeBg: "bg-[var(--color-neon)]",
+    badgeText: "text-black",
+  },
+  away: {
+    base: "bg-black border border-[var(--color-neon)]/15 hover:border-[#fb7185]/70",
+    selected: "border-2 border-[#fb7185] bg-black shadow-[0_0_0_1px_#fb7185]",
+    priceColor: "text-[var(--color-neon)]",
+    badgeBg: "bg-[#fb7185]",
+    badgeText: "text-black",
+  },
+  neutral: {
+    base: "bg-black border border-[var(--color-neon)]/15 hover:border-[var(--color-neon)]/70",
+    selected: "border-2 border-[var(--color-neon)] bg-black shadow-[0_0_0_1px_var(--color-neon)]",
+    priceColor: "text-[var(--color-neon)]",
+    badgeBg: "bg-[var(--color-neon)]",
+    badgeText: "text-black",
+  },
+};
+
+function OddsButton({
+  label, price, selected, disabled, variant, onClick,
+}: {
+  label: string; price: number; selected: boolean; disabled: boolean; variant: "home" | "away" | "neutral"; onClick: () => void;
+}) {
+  const styles = VARIANT_STYLES[variant];
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      aria-pressed={selected}
+      className={`relative flex min-h-[64px] flex-col items-center justify-center gap-0.5 rounded-md px-2 py-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50 text-[var(--color-ink)] ${
+        selected ? styles.selected : styles.base
+      }`}
+    >
+      <span className="w-full whitespace-normal break-words text-center text-[12px] font-medium leading-tight">
+        {label}
+      </span>
+      <span className={`font-display text-base font-bold tabular-nums ${styles.priceColor}`}>
+        {price.toFixed(2)}x
+      </span>
+      {selected && (
+        <span className={`absolute right-1.5 top-1 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold ${styles.badgeBg} ${styles.badgeText}`}>✓</span>
+      )}
+    </button>
+  );
+}
+
+function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
+  const [tab, setTab] = useState<"moneyline" | "method" | "round">("moneyline");
+  const [pick, setPick] = useState<Market | null>(null);
+  const [stake, setStake] = useState("10");
+
+  const qc = useQueryClient();
+  const placeFn = useServerFn(placeUfcBet);
+  const mut = useMutation({
+    mutationFn: (v: { stake: number; market: Market }) =>
+      placeFn({ data: { fightId: fight.id, marketType: v.market.market_type, selectionKey: v.market.selection_key, stake: v.stake } }),
+    onSuccess: () => {
+      toast.success("Prediction locked");
+      qc.invalidateQueries({ queryKey: ["ufc-fight-detail", fight.id] });
+      qc.invalidateQueries({ queryKey: ["wallet"] });
+      setPick(null);
+    },
+    onError: (e: any) => toast.error(e?.message || "Failed to place bet"),
+  });
+
+  const filtered = markets.filter((m) => m.market_type === tab);
+  const finished = fight.status === "finished";
+
+  const stakeNum = Number(stake) || 0;
+  const stakeErr =
+    !Number.isFinite(stakeNum) || stakeNum < MIN_STAKE
+      ? `Minimum stake is ${MIN_STAKE} points.`
+      : stakeNum > MAX_STAKE
+        ? `Maximum stake is ${MAX_STAKE.toLocaleString()} points.`
+        : null;
+  const potentialReturn = pick ? stakeNum * Number(pick.odds) : 0;
+  const potentialGain = potentialReturn - stakeNum;
+
+  return (
+    <div className="space-y-3">
+      {/* Tab pills — football style */}
+      <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {MARKET_TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => { setTab(t.id); setPick(null); }}
+            className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
+              tab === t.id
+                ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
+                : "border-[var(--color-surface-border)] bg-[var(--surface-2)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Question heading (mirrors QuestionHeading) */}
+      <div className="mb-2 space-y-0.5">
+        <h4 className="text-[15px] font-semibold leading-snug text-[var(--color-ink)]">
+          {tab === "moneyline" && "Who wins the fight?"}
+          {tab === "method" && "How does the fight end?"}
+          {tab === "round" && "Which round does it end in?"}
+        </h4>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-2)] py-6 text-center text-xs text-[var(--color-ink-muted)]">
+          No {tab} odds available yet.
+        </div>
+      ) : (
+        <div className={`grid gap-2 ${tab === "moneyline" ? "grid-cols-2" : "grid-cols-3"}`}>
+          {filtered.map((m) => (
+            <OddsButton
+              key={`${m.market_type}:${m.selection_key}`}
+              label={m.label}
+              price={Number(m.odds)}
+              selected={pick?.selection_key === m.selection_key && pick?.market_type === m.market_type}
+              disabled={!m.is_active || finished}
+              variant={classifyUfc(m.selection_key)}
+              onClick={() => setPick(m)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Stake slip — mirrors football StakeSlip */}
+      {pick && (
+        <div className="mt-2 rounded-lg border border-[var(--color-surface-border)] bg-[#070D0A] p-3.5 space-y-2.5 animate-in fade-in-50 duration-200">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1 space-y-1">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-neon)]">
+                Your prediction
+              </div>
+              <div className="truncate text-[11px] text-[var(--color-ink-muted)]">
+                {fight.fighter_a} vs {fight.fighter_b}
+              </div>
+              <div className="text-[13px] leading-snug text-[var(--color-ink)]">
+                <span className="font-semibold">{pick.label}</span>
+                <span className="mx-1.5 text-[var(--color-ink-muted)]">·</span>
+                <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
+                  {Number(pick.odds).toFixed(2)}x
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPick(null)}
+              aria-label="Clear selection"
+              className="shrink-0 rounded-full p-1 text-[var(--color-ink-muted)] hover:bg-white/5 hover:text-[var(--color-ink)]"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              type="number"
+              inputMode="numeric"
+              min={MIN_STAKE}
+              max={MAX_STAKE}
+              value={stake}
+              onChange={(e) => setStake(e.target.value)}
+              placeholder={`Points (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
+              className="flex-1 min-w-0 rounded-md border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-base font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)]"
+            />
+            <button
+              type="button"
+              disabled={mut.isPending || !!stakeErr}
+              onClick={() => mut.mutate({ stake: stakeNum, market: pick })}
+              className="flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[var(--color-neon)] px-4 py-2.5 text-[12px] font-bold text-black transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)]"
+            >
+              {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (
+                <><span>Lock Prediction</span><ArrowUpRight className="h-3.5 w-3.5" /></>
+              )}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+              <span className="text-[var(--color-ink-muted)]">Return</span>
+              <span className="font-display font-bold tabular-nums text-[var(--color-ink)]">
+                {potentialReturn.toFixed(2)}
+              </span>
+            </div>
+            <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+              <span className="text-[var(--color-ink-muted)]">Gain</span>
+              <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
+                +{potentialGain.toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          {stakeErr && (
+            <div className="text-[11px] text-destructive">{stakeErr}</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Market movement — mirrors MarketAnalyticsCard framing ---------- */
 
 function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snapshots: any[] }) {
   const [tab, setTab] = useState<"moneyline" | "method" | "round">("moneyline");
   return (
-    <section className="space-y-4">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3">
-        <span className="flex min-w-0 items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-          <TrendingUp className="h-3 w-3" /> Market analytics
-        </span>
-        <span className="shrink-0 text-[10px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]">
-          Last 24h
-        </span>
-      </div>
-      <div className="border border-[var(--color-surface-border)] bg-[var(--surface-2)]">
-        <div className="flex border-b border-[var(--color-surface-border)] text-[11px]">
-          {(["moneyline", "method", "round"] as const).map((t) => (
+    <section className="relative -mx-4 bg-[var(--surface)] md:mx-0">
+      <div className="px-4 pt-5 md:px-6 md:pt-6">
+        <div className="flex items-baseline justify-between">
+          <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
+            {tab === "moneyline" ? "Who will win?" : tab === "method" ? "How does it end?" : "Which round?"}
+          </h2>
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+            <TrendingUp className="h-3 w-3" /> Last 24h
+          </span>
+        </div>
+        <div className="mt-3 flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {MARKET_TABS.map((t) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`flex-1 px-3 py-2 font-bold uppercase tracking-[0.14em] transition ${
-                tab === t ? "bg-[var(--surface-3)] text-[var(--color-ink)]" : "text-[var(--color-ink-muted)]"
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
+                tab === t.id
+                  ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
+                  : "border-[var(--color-surface-border)] bg-[var(--surface-2)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
               }`}
-            >{t}</button>
+            >
+              {t.label}
+            </button>
           ))}
         </div>
-        <div className="p-3">
-          <MovementChart snapshots={snapshots} marketType={tab} markets={markets} />
-        </div>
+      </div>
+      <div className="mt-3 px-4 md:px-6">
+        <MovementChart snapshots={snapshots} marketType={tab} markets={markets} />
       </div>
     </section>
   );
@@ -398,7 +585,7 @@ function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snap
 function MovementChart({ snapshots, marketType, markets }: { snapshots: any[]; marketType: string; markets: Market[] }) {
   const filtered = snapshots.filter((s) => s.market_type === marketType);
   if (filtered.length === 0) {
-    return <div className="py-8 text-center text-xs text-[var(--color-ink-muted)]">Movement history builds up over time — check back after a few sync cycles.</div>;
+    return <div className="py-10 text-center text-xs text-[var(--color-ink-muted)]">Movement history builds up over time — check back after a few sync cycles.</div>;
   }
   const keys = Array.from(new Set(filtered.map((s) => s.selection_key)));
   const labelFor = (k: string) => markets.find((m) => m.market_type === marketType && m.selection_key === k)?.label ?? k;
@@ -410,13 +597,13 @@ function MovementChart({ snapshots, marketType, markets }: { snapshots: any[]; m
     buckets.get(bucketKey)[s.selection_key] = Number(s.odds);
   }
   const data = Array.from(buckets.values()).sort((a, b) => a.t - b.t);
-  const colors = ["#22e06b", "#fb7185", "#a3e635", "#f59e0b", "#8b5cf6", "#ec4899", "#10b981", "#f97316"];
+  const colors = ["#22C55E", "#EC4899", "#3B82F6", "#F59E0B", "#A78BFA", "#FB7185", "#10B981", "#F97316"];
   return (
-    <div className="h-56 w-full">
+    <div className="h-56 w-full sm:h-64">
       <ResponsiveContainer>
         <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-surface-border)" />
-          <XAxis dataKey="t" tickFormatter={(t) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} stroke="var(--color-ink-muted)" fontSize={10} />
+          <CartesianGrid strokeDasharray="3 6" stroke="#ffffff" strokeOpacity={0.15} vertical={false} />
+          <XAxis dataKey="t" tickFormatter={(t) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} stroke="var(--color-ink-muted)" fontSize={10} tickLine={false} />
           <YAxis stroke="var(--color-ink-muted)" fontSize={10} domain={["auto", "auto"]} />
           <Tooltip
             contentStyle={{ background: "var(--surface-2)", border: "1px solid var(--color-surface-border)", fontSize: 11 }}
@@ -524,73 +711,6 @@ function LiveStatsCompare({ stats, homeName, awayName }: { stats: any[]; homeNam
             </div>
           );
         })}
-      </div>
-    </div>
-  );
-}
-
-/* ---------- Bet slip ---------- */
-
-function BetSlip({ fight, market, onClose }: { fight: any; market: Market; onClose: () => void }) {
-  const qc = useQueryClient();
-  const placeFn = useServerFn(placeUfcBet);
-  const [stake, setStake] = useState("10");
-  const stakeNum = Number(stake) || 0;
-  const potential = stakeNum * Number(market.odds);
-
-  const mutation = useMutation({
-    mutationFn: (v: { stake: number }) =>
-      placeFn({ data: { fightId: fight.id, marketType: market.market_type, selectionKey: market.selection_key, stake: v.stake } }),
-    onSuccess: () => {
-      toast.success("Bet placed");
-      qc.invalidateQueries({ queryKey: ["ufc-fight-detail", fight.id] });
-      qc.invalidateQueries({ queryKey: ["wallet"] });
-      onClose();
-    },
-    onError: (e: any) => toast.error(e?.message || "Failed to place bet"),
-  });
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
-      <div
-        className="w-full max-w-md rounded-t-2xl border-t border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4 text-[var(--color-ink)]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mb-3 flex items-start justify-between">
-          <div>
-            <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-neon)]">
-              {market.market_type}
-            </div>
-            <div className="text-sm font-bold">{market.label}</div>
-            <div className="text-xs text-[var(--color-ink-muted)]">{fight.fighter_a} vs {fight.fighter_b}</div>
-          </div>
-          <button onClick={onClose}><X className="h-5 w-5 text-[var(--color-ink-muted)]" /></button>
-        </div>
-
-        <div className="mb-2 flex items-baseline justify-between text-xs">
-          <span className="text-[var(--color-ink-muted)]">Odds</span>
-          <span className="font-mono text-lg font-bold text-[var(--color-neon)]">{Number(market.odds).toFixed(2)}</span>
-        </div>
-
-        <label className="block text-xs font-medium text-[var(--color-ink-muted)]">Stake</label>
-        <input
-          type="number" inputMode="decimal" min="1" step="1" value={stake}
-          onChange={(e) => setStake(e.target.value)}
-          className="mt-1 w-full border border-[var(--color-surface-border)] bg-[var(--color-surface)] px-3 py-2 font-mono text-lg text-[var(--color-ink)] focus:border-[var(--color-neon)] focus:outline-none"
-        />
-
-        <div className="mt-3 flex items-baseline justify-between">
-          <span className="text-xs text-[var(--color-ink-muted)]">Potential payout</span>
-          <span className="font-mono text-xl font-bold">${potential.toFixed(2)}</span>
-        </div>
-
-        <button
-          disabled={mutation.isPending || stakeNum <= 0}
-          onClick={() => mutation.mutate({ stake: stakeNum })}
-          className="mt-4 w-full bg-[var(--color-neon)] px-4 py-3 text-sm font-bold uppercase tracking-[0.18em] text-[#04140A] transition hover:opacity-90 disabled:opacity-50"
-        >
-          {mutation.isPending ? "Placing…" : "Confirm bet"}
-        </button>
       </div>
     </div>
   );
