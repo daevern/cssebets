@@ -463,7 +463,7 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
             No {tab.replace("_", " ")} odds available yet.
           </div>
         ) : (
-          <div className={`grid gap-2 ${tab === "moneyline" || tab === "distance" ? "grid-cols-2" : "grid-cols-3"}`}>
+          <div className={`grid gap-2 ${tab === "moneyline" ? "grid-cols-2" : "grid-cols-3"}`}>
 
 
             {filtered.map((m) => (
