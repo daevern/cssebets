@@ -488,6 +488,17 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
     }
   }
 
+  // Cleanup: demote any fights on this event that aren't in the current card
+  // (stale seed data, cancelled fights, replaced cards) to card_position='other'
+  // so the /ufc page only shows real, current main + co-main.
+  const keepIds = targets.map((t) => t.f.id);
+  await (supabaseAdmin as any)
+    .from("ufc_fights")
+    .update({ card_position: "other" })
+    .eq("event_id", event.id)
+    .in("card_position", ["main", "co_main"])
+    .not("apimma_fight_id", "in", `(${keepIds.join(",")})`);
+
   await (supabaseAdmin as any).from("audit_log").insert({
     user_id: null,
     action: "ufc.odds_sync",
