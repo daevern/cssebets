@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Info, Users, LineChart, LifeBuoy } from "lucide-react";
+import { Info, Users, LineChart, LifeBuoy, ArrowUpRight } from "lucide-react";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { getLandingData, type LandingNextMatch } from "@/lib/landing.functions";
