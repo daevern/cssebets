@@ -2855,6 +2855,7 @@ export type Database = {
           fighter_b_logo: string | null
           id: string
           is_title_fight: boolean
+          margin_disabled: boolean
           odds_api_event_id: string | null
           result_method: string | null
           result_round: number | null
@@ -2879,6 +2880,7 @@ export type Database = {
           fighter_b_logo?: string | null
           id?: string
           is_title_fight?: boolean
+          margin_disabled?: boolean
           odds_api_event_id?: string | null
           result_method?: string | null
           result_round?: number | null
@@ -2903,6 +2905,7 @@ export type Database = {
           fighter_b_logo?: string | null
           id?: string
           is_title_fight?: boolean
+          margin_disabled?: boolean
           odds_api_event_id?: string | null
           result_method?: string | null
           result_round?: number | null
@@ -3528,6 +3531,15 @@ export type Database = {
         }
         Returns: Json
       }
+      regrade_ufc_bet_manual: {
+        Args: {
+          p_actor_id: string
+          p_bet_id: string
+          p_new_status: string
+          p_reason: string
+        }
+        Returns: Json
+      }
       reject_wallet_adjustment: {
         Args: {
           p_admin_id?: string
@@ -3772,6 +3784,10 @@ export type Database = {
             }
           }
       void_match_atomic: { Args: { p_match_id: string }; Returns: number }
+      void_ufc_bet_manual: {
+        Args: { p_actor_id: string; p_bet_id: string; p_reason: string }
+        Returns: Json
+      }
       void_ufc_fight_atomic: {
         Args: { p_fight_id: string; p_reason: string }
         Returns: number
