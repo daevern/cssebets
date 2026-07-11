@@ -107,10 +107,27 @@ export async function fetchFighter(id: number) {
   return r.response?.[0] ?? null;
 }
 
+export async function searchFighter(name: string) {
+  const q = name.split(" ").slice(-1)[0]?.trim();
+  if (!q || q.length < 3) return null;
+  try {
+    const r = await apiMmaGet<ApiMmaFighter[]>("/fighters", { search: q });
+    const list = r.response ?? [];
+    if (!list.length) return null;
+    // Prefer an exact-ish full name match.
+    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    const target = norm(name);
+    return list.find((f) => norm(f.name) === target) ?? list.find((f) => norm(f.name).includes(target)) ?? list[0];
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchFighterRecords(id: number) {
   const r = await apiMmaGet<ApiMmaFighterRecord[]>("/fighters/records", { id });
   return r.response ?? [];
 }
+
 
 export async function fetchFightStats(fightId: number) {
   const r = await apiMmaGet<ApiMmaStatsResponse>("/fights/statistics/fighters", { id: fightId });
