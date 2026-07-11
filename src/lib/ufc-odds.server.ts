@@ -675,6 +675,17 @@ async function syncOddsForFight(fightRow: {
     .eq("market_type", "total_rounds")
     .not("selection_key", "in", `(${keepKeys.map((k) => `"${k}"`).join(",")})`);
 
+  // If the feed doesn't quote Method of Victory for this fight, deactivate
+  // any previously-persisted method rows so the UI hides the Method tab.
+  // We never synthesise method odds for a real-money product.
+  if (!methodEntries.length) {
+    await (supabaseAdmin as any)
+      .from("ufc_fight_markets")
+      .update({ is_active: false })
+      .eq("fight_id", fightRow.id)
+      .eq("market_type", "method");
+  }
+
   if (!upserts.length) return 0;
   const { error: mErr } = await (supabaseAdmin as any)
     .from("ufc_fight_markets")
