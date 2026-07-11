@@ -308,3 +308,96 @@ export const listUfcBetsForAdmin = createServerFn({ method: "GET" })
       .order("placed_at", { ascending: false });
     return { bets: bets ?? [] };
   });
+
+// Void a single UFC bet (mirrors voidPredictionAdmin for football).
+export const voidUfcBetAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      betId: z.string().uuid(),
+      reason: z.string().trim().min(3).max(500),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: result, error } = await (supabaseAdmin as any).rpc("void_ufc_bet_manual", {
+      p_bet_id: data.betId,
+      p_actor_id: context.userId,
+      p_reason: data.reason,
+    });
+    if (error) throw new Error(error.message);
+    await (supabaseAdmin as any).from("audit_log").insert({
+      user_id: context.userId,
+      action: "ufc_bet.void",
+      entity: "ufc_bet",
+      entity_id: data.betId,
+      reason: data.reason,
+      metadata: result,
+    });
+    return { ok: true, ...(result as any) };
+  });
+
+// Regrade a single UFC bet to won/lost/void/pending (open) with wallet delta.
+export const regradeUfcBetAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      betId: z.string().uuid(),
+      newStatus: z.enum(["won", "lost", "void", "pending"]),
+      reason: z.string().trim().min(3).max(500),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Map UI "pending" -> ufc_bets "open".
+    const target = data.newStatus === "pending" ? "open" : data.newStatus;
+    const { data: result, error } = await (supabaseAdmin as any).rpc("regrade_ufc_bet_manual", {
+      p_bet_id: data.betId,
+      p_new_status: target,
+      p_actor_id: context.userId,
+      p_reason: data.reason,
+    });
+    if (error) throw new Error(error.message);
+    await (supabaseAdmin as any).from("audit_log").insert({
+      user_id: context.userId,
+      action: "ufc_bet.regrade",
+      entity: "ufc_bet",
+      entity_id: data.betId,
+      reason: data.reason,
+      metadata: result,
+    });
+    return { ok: true, ...(result as any) };
+  });
+
+// Per-fight margin disable toggle (mirrors setMatchMarginDisabled for football).
+export const setUfcFightMarginDisabled = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      fightId: z.string().uuid(),
+      disabled: z.boolean(),
+      reason: z.string().trim().min(3).max(500),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: old } = await (supabaseAdmin as any)
+      .from("ufc_fights").select("margin_disabled").eq("id", data.fightId).maybeSingle();
+    const { error } = await (supabaseAdmin as any)
+      .from("ufc_fights").update({ margin_disabled: data.disabled }).eq("id", data.fightId);
+    if (error) throw new Error(error.message);
+    await (supabaseAdmin as any).from("audit_log").insert({
+      user_id: context.userId,
+      action: "ufc_fight.margin_disabled",
+      entity: "ufc_fights",
+      entity_id: data.fightId,
+      old_value: { margin_disabled: !!old?.margin_disabled },
+      new_value: { margin_disabled: data.disabled },
+      reason: data.reason,
+    });
+    return { ok: true };
+  });
+
