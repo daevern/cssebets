@@ -80,11 +80,29 @@ function MyPredictionsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ufc_bets")
-        .select("*, ufc_fights(fighter_a, fighter_b, commence_time, status)")
+        .select("*, ufc_fights(fighter_a, fighter_b, commence_time, status, apimma_fighter_a_id, apimma_fighter_b_id, fighter_a_logo, fighter_b_logo)")
         .eq("user_id", uid!)
         .order("placed_at", { ascending: false });
       if (error) throw error;
-      return data as any[];
+      const rows = (data ?? []) as any[];
+      const ids = Array.from(new Set(
+        rows.flatMap((b) => [b.ufc_fights?.apimma_fighter_a_id, b.ufc_fights?.apimma_fighter_b_id]).filter(Boolean)
+      )) as number[];
+      let photoBy = new Map<number, string>();
+      if (ids.length) {
+        const { data: fighters } = await supabase
+          .from("ufc_fighters")
+          .select("apimma_id, photo_url")
+          .in("apimma_id", ids);
+        for (const f of (fighters ?? []) as any[]) {
+          if (f?.apimma_id && f.photo_url) photoBy.set(f.apimma_id, f.photo_url);
+        }
+      }
+      return rows.map((b) => ({
+        ...b,
+        _photo_a: b.ufc_fights?.fighter_a_logo || photoBy.get(b.ufc_fights?.apimma_fighter_a_id) || null,
+        _photo_b: b.ufc_fights?.fighter_b_logo || photoBy.get(b.ufc_fights?.apimma_fighter_b_id) || null,
+      }));
     },
   });
 
