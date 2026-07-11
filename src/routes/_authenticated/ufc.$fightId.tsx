@@ -778,7 +778,9 @@ function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snap
 
 function TaleOfTheTape({ a, b, fight }: { a: any; b: any; fight: any }) {
   const rows: Array<{ label: string; aVal: string; bVal: string }> = [
+    { label: "Nickname", aVal: a?.nickname ?? "—", bVal: b?.nickname ?? "—" },
     { label: "Record", aVal: recordStr(a), bVal: recordStr(b) },
+    { label: "Division", aVal: a?.weight_class ?? fight.weight_class ?? "—", bVal: b?.weight_class ?? fight.weight_class ?? "—" },
     { label: "Height", aVal: a?.height_cm ? `${a.height_cm} cm` : "—", bVal: b?.height_cm ? `${b.height_cm} cm` : "—" },
     { label: "Reach", aVal: a?.reach_cm ? `${a.reach_cm} cm` : "—", bVal: b?.reach_cm ? `${b.reach_cm} cm` : "—" },
     { label: "Weight", aVal: a?.weight_lbs ? `${a.weight_lbs} lbs` : "—", bVal: b?.weight_lbs ? `${b.weight_lbs} lbs` : "—" },
@@ -788,7 +790,7 @@ function TaleOfTheTape({ a, b, fight }: { a: any; b: any; fight: any }) {
     { label: "Sub", aVal: finishRecord(a, "sub"), bVal: finishRecord(b, "sub") },
     { label: "Team", aVal: a?.team_name ?? "—", bVal: b?.team_name ?? "—" },
     { label: "Country", aVal: a?.country ?? "—", bVal: b?.country ?? "—" },
-  ];
+  ].filter((row) => row.aVal !== "—" || row.bVal !== "—");
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 text-[10px] font-black uppercase tracking-[0.18em]">
