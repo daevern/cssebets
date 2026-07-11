@@ -287,6 +287,8 @@ async function syncOddsForFight(fightRow: {
   // "Round Betting" market (which is the norm for API-Sports MMA).
   const ouOverPrices: Record<number, number[]> = { 1: [], 2: [], 3: [], 4: [] };
   const ouUnderPrices: Record<number, number[]> = { 1: [], 2: [], 3: [], 4: [] };
+  const distancePrices: { yes: number[]; no: number[] } = { yes: [], no: [] };
+
   const pushRoundValue = (rawValue: string, price: number) => {
     if (!Number.isFinite(price) || price <= 1) return;
     const val = rawValue.toLowerCase();
