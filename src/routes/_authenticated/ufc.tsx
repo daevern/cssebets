@@ -153,9 +153,18 @@ function FightCard({ fight, onPick }: { fight: Fight; onPick: (m: Market) => voi
             {fight.fighter_a} <span className="text-[var(--ink-dim)]">vs</span> {fight.fighter_b}
           </div>
         </div>
-        <div className="text-right text-[10px] text-[var(--ink-dim)]">
-          {fight.scheduled_rounds} rds
-          {secondsAgo != null && <div>{secondsAgo}s ago</div>}
+        <div className="flex items-center gap-2">
+          <Link
+            to="/ufc/$fightId"
+            params={{ fightId: fight.id }}
+            className="rounded border border-[var(--border)] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--accent)] hover:bg-[var(--surface-3)]"
+          >
+            Details
+          </Link>
+          <div className="text-right text-[10px] text-[var(--ink-dim)]">
+            {fight.scheduled_rounds} rds
+            {secondsAgo != null && <div>{secondsAgo}s ago</div>}
+          </div>
         </div>
       </div>
 
