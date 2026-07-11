@@ -241,10 +241,18 @@ async function saveFight(input: {
     ? (supabaseAdmin as any).from("ufc_fights").update(payload).eq("id", existing.id)
     : (supabaseAdmin as any).from("ufc_fights").insert(payload);
   const { data, error } = await q
-    .select("id, fighter_a, fighter_b, scheduled_rounds")
+    .select("id, fighter_a, fighter_b, scheduled_rounds, apimma_fighter_a_id, apimma_fighter_b_id")
     .maybeSingle();
   if (error) throw new Error(`fight save failed: ${error.message}`);
-  return data as { id: string; fighter_a: string; fighter_b: string; scheduled_rounds: 3 | 5 };
+  return data as {
+    id: string;
+    fighter_a: string;
+    fighter_b: string;
+    scheduled_rounds: 3 | 5;
+    apimma_fighter_a_id: number | null;
+    apimma_fighter_b_id: number | null;
+  };
+
 }
 
 // ---- Odds mapping ----
