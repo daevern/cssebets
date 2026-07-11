@@ -301,8 +301,8 @@ function ScoreFighter({ name, logo, record }: { name: string; logo?: string | nu
 
 const MARKET_TABS: Array<{ id: "moneyline" | "method" | "round"; label: string }> = [
   { id: "moneyline", label: "Moneyline" },
-  { id: "method", label: "Method" },
   { id: "round", label: "Round" },
+  { id: "method", label: "Method" },
 ];
 
 function classifyUfc(selection: string): "home" | "away" | "neutral" {
