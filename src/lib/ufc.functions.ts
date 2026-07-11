@@ -168,6 +168,7 @@ export const placeUfcBet = createServerFn({ method: "POST" })
     });
     if (error) {
       const msg = error.message ?? "";
+      if (/DUPLICATE_SELECTION/i.test(msg)) throw new Error("You already have an open bet on this selection. Cash it out or wait for it to settle before betting again.");
       if (/Insufficient balance/i.test(msg)) throw new Error("Insufficient points balance. Top up to place this bet.");
       if (/Wallet not found/i.test(msg)) throw new Error("Your wallet isn't ready yet. Please refresh and try again.");
       if (/Fight not open/i.test(msg)) throw new Error("This fight is no longer open for betting.");
