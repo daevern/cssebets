@@ -70,6 +70,24 @@ function MyPredictionsPage() {
     },
   });
 
+  const { data: ufcBets } = useQuery({
+    queryKey: ["my-ufc-bets", uid],
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ufc_bets")
+        .select("*, ufc_fights(fighter_a, fighter_b, commence_time, status)")
+        .eq("user_id", uid!)
+        .order("placed_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+
   const settleFn = useServerFn(settleFinishedPending);
 
   useEffect(() => {
@@ -95,9 +113,14 @@ function MyPredictionsPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "predictions", filter: `user_id=eq.${uid}` }, () => {
         qc.invalidateQueries({ queryKey: ["my-predictions", uid] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "ufc_bets", filter: `user_id=eq.${uid}` }, () => {
+        qc.invalidateQueries({ queryKey: ["my-ufc-bets", uid] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [qc, uid]);
+
+  const hasAny = (data?.length ?? 0) + (ufcBets?.length ?? 0) > 0;
 
   return (
     <PageShell kicker="FIFA WORLD CUP · 2026" title="Your" titleAccent="Picks">
@@ -107,7 +130,7 @@ function MyPredictionsPage() {
             <Loader2 className="h-6 w-6 animate-spin text-[var(--color-neon)]" />
           </div>
         </StencilPanel>
-      ) : !data?.length ? (
+      ) : !hasAny ? (
         <StencilPanel accent>
           <div className="flex flex-col items-center gap-4 py-6 text-center">
             <TicketIcon />
@@ -121,10 +144,12 @@ function MyPredictionsPage() {
         </StencilPanel>
       ) : (
         <div className="space-y-3">
-          {data.map((p) => <PredictionRow key={p.id} p={p} />)}
+          {(ufcBets ?? []).map((b) => <UfcBetRow key={b.id} b={b} />)}
+          {(data ?? []).map((p) => <PredictionRow key={p.id} p={p} />)}
         </div>
       )}
     </PageShell>
+
   );
 }
 
@@ -402,5 +427,74 @@ function TeamFlag({ name }: { name: string }) {
       className="h-9 w-14 shrink-0 border border-border/40 object-cover shadow-sm"
       loading="lazy"
     />
+  );
+}
+
+function UfcBetRow({ b }: { b: any }) {
+  const stakeN = Number(b.stake);
+  const oddsN = Number(b.odds_locked);
+  const payout = Number(b.potential_payout ?? stakeN * oddsN).toFixed(2);
+  const profit = (stakeN * oddsN - stakeN).toFixed(2);
+  const ticketId = String(b.id).replace(/-/g, "").slice(0, 10).toUpperCase();
+  const commence = b.ufc_fights?.commence_time
+    ? new Date(b.ufc_fights.commence_time).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+    : "—";
+  const status = b.status ?? "pending";
+  const statusTone =
+    status === "won" ? "text-[var(--color-neon)] border-[var(--color-neon)]/60 bg-[var(--color-neon)]/10"
+    : status === "lost" ? "text-destructive border-destructive/60 bg-destructive/10"
+    : "text-[var(--color-ink-muted)] border-[var(--color-surface-border)] bg-[var(--color-surface)]/40";
+  const marketLabel = String(b.market_type ?? "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+  return (
+    <StencilPanel
+      accent={status === "won"}
+      kicker={<><span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-neon)] animate-pulse" /> UFC Ticket</>}
+      meta={`#${ticketId}`}
+    >
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)] mb-2">Fight</div>
+            <div className="font-display font-bold text-sm leading-tight truncate">
+              {b.ufc_fights?.fighter_a ?? "—"} <span className="text-[var(--color-ink-muted)]">vs</span> {b.ufc_fights?.fighter_b ?? "—"}
+            </div>
+            <div className="text-[11px] text-[var(--color-ink-muted)] mt-2">{commence}</div>
+          </div>
+          <div className={`shrink-0 border px-2 py-1 text-[10px] uppercase tracking-[0.22em] font-bold ${statusTone}`}>
+            {status}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="border border-dashed border-[var(--color-surface-border)] px-2.5 py-1.5">
+            <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">Market</div>
+            <div className="font-medium truncate">{marketLabel}</div>
+          </div>
+          <div className="border border-dashed border-[var(--color-surface-border)] px-2.5 py-1.5">
+            <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">Selection</div>
+            <div className="font-medium truncate">{b.selection_label ?? b.selection_key}</div>
+          </div>
+        </div>
+
+        <div className="border-t border-dashed border-[var(--color-surface-border)]" />
+
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">Stake</div>
+            <div className="font-mono font-semibold tabular-nums">{stakeN.toFixed(2)}</div>
+          </div>
+          <div>
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">Odds</div>
+            <div className="font-mono font-semibold tabular-nums">{oddsN.toFixed(2)}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">Potential</div>
+            <div className="font-mono font-bold text-[var(--color-neon)] text-lg leading-tight tabular-nums">{payout}</div>
+            <div className="text-[10px] text-[var(--color-ink-muted)] tabular-nums">+{profit} profit</div>
+          </div>
+        </div>
+      </div>
+    </StencilPanel>
   );
 }
