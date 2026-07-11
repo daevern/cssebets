@@ -567,16 +567,74 @@ async function syncOddsForFight(fightRow: {
   // moneyline anyway) and MMA scorecard handicaps confuse users. Aggregation
   // above still runs cheaply so we can revisit later without a schema change.
 
-  // ---- Persist Method (from bookmaker feed ONLY — never synthesised) ----
-  // If API-Sports doesn't quote per-fighter method markets for this fight, we
-  // publish nothing and the UI hides the Method tab. Real-money product must
-  // never quote fabricated odds.
+  // ---- Persist Method of Victory ----
+  // Prefer real bookmaker prices when present. Otherwise synthesise from the
+  // live moneyline + distance/total-rounds market so the tile always tracks
+  // reality (recomputed every sync). To avoid quoting stale prices right at
+  // walk-outs, freeze the market 30 minutes before commence_time — we stop
+  // recomputing and deactivate any existing method rows for the fight.
+  const METHOD_LOCK_MS = 30 * 60 * 1000;
+  const { data: fightMeta } = await (supabaseAdmin as any)
+    .from("ufc_fights")
+    .select("commence_time")
+    .eq("id", fightRow.id)
+    .maybeSingle();
+  const commenceMs = fightMeta?.commence_time ? new Date(fightMeta.commence_time).getTime() : 0;
+  const methodLocked = commenceMs > 0 && (commenceMs - Date.now()) <= METHOD_LOCK_MS;
+
   const methodEntries: Array<{ team: string; odds: number }> = [];
   for (const [key, prices] of Object.entries(methodPrices)) {
     if (prices.length) methodEntries.push({ team: key, odds: median(prices) });
   }
+  const feedProvidedMethod = methodEntries.length >= 2;
 
-  if (methodEntries.length >= 2) {
+  // Synthesise when feed is silent AND market isn't locked.
+  if (!feedProvidedMethod && !methodLocked && mlPrices.a.length && mlPrices.b.length) {
+    // Fair win probs from moneyline.
+    const mA = median(mlPrices.a), mB = median(mlPrices.b);
+    const invA = 1 / mA, invB = 1 / mB;
+    const sumM = invA + invB;
+    const pA = invA / sumM, pB = invB / sumM;
+    // Fair distance prob: prefer explicit distance market, else derive from
+    // total_rounds boundary.
+    let pDistance = 0;
+    const yesD = median(distancePrices.yes), noD = median(distancePrices.no);
+    if (yesD > 1 && noD > 1) {
+      const iy = 1 / yesD, ino = 1 / noD;
+      pDistance = iy / (iy + ino);
+    } else if (fairUnder[distanceLine] !== undefined) {
+      pDistance = Math.max(0.001, 1 - fairUnder[distanceLine]);
+    }
+    if (pDistance > 0.02 && pDistance < 0.98) {
+      const pFinish = 1 - pDistance;
+      // KO/TKO vs Submission per-fighter split from career mix.
+      const { data: fA_rec } = await (supabaseAdmin as any)
+        .from("ufc_fighters").select("ko_w, sub_w").eq("apimma_id", fightRow.apimma_fighter_a_id).maybeSingle();
+      const { data: fB_rec } = await (supabaseAdmin as any)
+        .from("ufc_fighters").select("ko_w, sub_w").eq("apimma_id", fightRow.apimma_fighter_b_id).maybeSingle();
+      const finishMix = (rec: any): { ko: number; sub: number } => {
+        const ko = Number(rec?.ko_w ?? 0), sub = Number(rec?.sub_w ?? 0);
+        const t = ko + sub;
+        if (t <= 0) return { ko: 0.7, sub: 0.3 };
+        return { ko: ko / t, sub: sub / t };
+      };
+      const mixA = finishMix(fA_rec);
+      const mixB = finishMix(fB_rec);
+      const pA_finish = pFinish * pA;
+      const pB_finish = pFinish * pB;
+      const probs: Record<string, number> = {
+        a_ko_tko: Math.max(0.01, pA_finish * mixA.ko),
+        a_submission: Math.max(0.01, pA_finish * mixA.sub),
+        a_decision: Math.max(0.01, pDistance * pA),
+        b_ko_tko: Math.max(0.01, pB_finish * mixB.ko),
+        b_submission: Math.max(0.01, pB_finish * mixB.sub),
+        b_decision: Math.max(0.01, pDistance * pB),
+      };
+      for (const [k, p] of Object.entries(probs)) methodEntries.push({ team: k, odds: 1 / p });
+    }
+  }
+
+  if (methodEntries.length >= 2 && !methodLocked) {
     const priced = await applyOutrightMargin(methodEntries);
     for (const p of priced) {
       const [slot, ...rest] = p.team.split("_");
@@ -587,6 +645,8 @@ async function syncOddsForFight(fightRow: {
       snapshots.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, odds: p.odds });
     }
   }
+
+
 
 
 
