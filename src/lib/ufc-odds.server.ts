@@ -231,8 +231,6 @@ async function syncOddsForFight(fightRow: {
     return 0;
   }
   if (!odds?.bookmakers?.length) return 0;
-  const bm = pickBookmaker(odds.bookmakers);
-  if (!bm) return 0;
 
   const nowIso = new Date().toISOString();
   const upserts: any[] = [];
@@ -240,89 +238,15 @@ async function syncOddsForFight(fightRow: {
 
   const fA = normalizeFighterName(fightRow.fighter_a);
   const fB = normalizeFighterName(fightRow.fighter_b);
-  const side = (name: string): "a" | "b" | null => {
-    const n = normalizeFighterName(name);
-    if (n === fA || fA.includes(n) || n.includes(fA)) return "a";
-    if (n === fB || fB.includes(n) || n.includes(fB)) return "b";
-    return null;
-  };
 
-  // ---- Moneyline (bet 2 "Home/Away" or bet 1 "3Way Result") ----
-  const mlBet = bm.bets.find((b) => b.id === 2) ?? bm.bets.find((b) => b.id === 1);
-  if (mlBet) {
-    const aVals: number[] = [];
-    const bVals: number[] = [];
-    for (const v of mlBet.values) {
-      const val = v.value.toLowerCase();
-      const price = Number(v.odd);
-      if (!Number.isFinite(price)) continue;
-      if (val === "home" || val === "1") aVals.push(price);
-      else if (val === "away" || val === "2") bVals.push(price);
-      // "Draw" (3-way) is ignored — we only support 2-way moneyline
-    }
-    if (aVals.length && bVals.length) {
-      const priced = await apply2WayMargin(median(aVals), median(bVals));
-      upserts.push(
-        { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", label: fightRow.fighter_a, odds: priced.a, is_active: true, updated_at: nowIso },
-        { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", label: fightRow.fighter_b, odds: priced.b, is_active: true, updated_at: nowIso },
-      );
-      snapshots.push(
-        { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", odds: priced.a },
-        { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", odds: priced.b },
-      );
-    }
-  }
-
-  // ---- Method of Victory (per fighter) ----
-  // Broad capture: try known API-Sports bet IDs, then fall back to name-based
-  // scanning across every bet the bookmaker returns, so different providers
-  // (bet365 vs Pinnacle vs Betfair) all yield the full 6-way method board.
-  const methodPrices: Record<string, number[]> = {
-    a_ko_tko: [], a_submission: [], a_decision: [],
-    b_ko_tko: [], b_submission: [], b_decision: [],
-  };
-  const captureMethod = (betId: number, slot: "a" | "b", method: "ko_tko" | "submission" | "decision") => {
-    const bet = bm.bets.find((b) => b.id === betId);
-    if (!bet) return;
-    for (const v of bet.values) {
-      const p = Number(v.odd);
-      if (Number.isFinite(p)) methodPrices[`${slot}_${method}`].push(p);
-    }
-  };
-  captureMethod(17, "a", "submission");
-  captureMethod(18, "a", "ko_tko");
-  captureMethod(19, "b", "submission");
-  captureMethod(20, "b", "ko_tko");
-  // Decision splits: bets 13 (home unanimous) + 14 (home split); 15+16 for away.
-  // Combine both into one implied decision price per fighter.
-  const combineDec = (unanimousId: number, splitId: number, slot: "a" | "b") => {
-    const u = bm.bets.find((b) => b.id === unanimousId);
-    const s = bm.bets.find((b) => b.id === splitId);
-    if (!u && !s) return;
-    let p = 0;
-    for (const bet of [u, s]) {
-      if (!bet) continue;
-      for (const v of bet.values) {
-        const price = Number(v.odd);
-        if (Number.isFinite(price) && price > 1) p += 1 / price;
-      }
-    }
-    if (p > 0) methodPrices[`${slot}_decision`].push(1 / p);
-  };
-  combineDec(13, 14, "a");
-  combineDec(15, 16, "b");
-
-  // Name-based fallback: scan every bet whose name/value mentions method.
-  // Values look like "Max Holloway by KO/TKO", "Conor McGregor by Decision",
-  // "KO/TKO - Home", "Submission - Away", etc.
   const nameSideOf = (text: string): "a" | "b" | null => {
     const n = normalizeFighterName(text);
     if (!n) return null;
-    if (n.includes(fA) || fA.includes(n)) return "a";
-    if (n.includes(fB) || fB.includes(n)) return "b";
+    if (n === fA || n.includes(fA) || fA.includes(n)) return "a";
+    if (n === fB || n.includes(fB) || fB.includes(n)) return "b";
     const lowered = text.toLowerCase();
-    if (/\bhome\b|\bfighter ?1\b|\b1\b/.test(lowered)) return "a";
-    if (/\baway\b|\bfighter ?2\b|\b2\b/.test(lowered)) return "b";
+    if (/\bhome\b|\bfighter\s*1\b|^1$/.test(lowered)) return "a";
+    if (/\baway\b|\bfighter\s*2\b|^2$/.test(lowered)) return "b";
     return null;
   };
   const methodBucketOf = (text: string): "ko_tko" | "submission" | "decision" | null => {
@@ -332,20 +256,149 @@ async function syncOddsForFight(fightRow: {
     if (/(decision|points|dec\.|unanimous|split|majority)/.test(s)) return "decision";
     return null;
   };
-  for (const bet of bm.bets) {
-    const nm = (bet.name ?? "").toLowerCase();
-    if (!/method|victory|winning method|way|result/.test(nm)) continue;
-    for (const v of bet.values) {
-      const price = Number(v.odd);
-      if (!Number.isFinite(price)) continue;
-      const slot = nameSideOf(v.value);
-      const bucket = methodBucketOf(v.value);
-      if (!slot || !bucket) continue;
-      // Skip if already captured by ID-based path (avoid double-pushing).
-      methodPrices[`${slot}_${bucket}`].push(price);
+
+  // Aggregate across ALL bookmakers so no single provider gap kills a market.
+  const mlPrices: Record<"a" | "b", number[]> = { a: [], b: [] };
+  const methodPrices: Record<string, number[]> = {
+    a_ko_tko: [], a_submission: [], a_decision: [],
+    b_ko_tko: [], b_submission: [], b_decision: [],
+  };
+  const roundPrices: Record<string, number[]> = {};
+  const pushRoundValue = (rawValue: string, price: number) => {
+    if (!Number.isFinite(price) || price <= 1) return;
+    const val = rawValue.toLowerCase();
+    let key: string | null = null;
+    if (/distance|goes.*distance|go\s*the\s*distance|decision\s*only|full\s*time/.test(val)) key = "distance";
+    else {
+      const m = val.match(/round\s*(\d+)|(\d+)(?:st|nd|rd|th)\s*round|^\s*(\d+)\s*$/);
+      const num = m ? m[1] ?? m[2] ?? m[3] : null;
+      if (num) {
+        const n = Number(num);
+        if (n >= 1 && n <= 5) key = `r${n}`;
+      }
+    }
+    if (!key) return;
+    if (!roundPrices[key]) roundPrices[key] = [];
+    roundPrices[key].push(price);
+  };
+
+  for (const bm of odds.bookmakers) {
+    if (!bm?.bets?.length) continue;
+
+    // ---- Moneyline ----
+    const mlBet = bm.bets.find((b: any) => b.id === 2) ?? bm.bets.find((b: any) => b.id === 1);
+    if (mlBet) {
+      for (const v of mlBet.values) {
+        const val = String(v.value).toLowerCase();
+        const price = Number(v.odd);
+        if (!Number.isFinite(price) || price <= 1) continue;
+        if (val === "home" || val === "1") mlPrices.a.push(price);
+        else if (val === "away" || val === "2") mlPrices.b.push(price);
+        else {
+          const side = nameSideOf(v.value);
+          if (side) mlPrices[side].push(price);
+        }
+      }
+    }
+    // Some feeds list "Fight Winner" or similar by fighter name only
+    for (const bet of bm.bets) {
+      const nm = (bet.name ?? "").toLowerCase();
+      if (bet.id === 2 || bet.id === 1) continue;
+      if (!/(fight\s*winner|to\s*win\s*fight|match\s*winner|winner)/.test(nm)) continue;
+      for (const v of bet.values) {
+        const price = Number(v.odd);
+        if (!Number.isFinite(price) || price <= 1) continue;
+        const side = nameSideOf(v.value);
+        if (side) mlPrices[side].push(price);
+      }
+    }
+
+    // ---- Method by known IDs ----
+    const captureMethod = (betId: number, slot: "a" | "b", method: "ko_tko" | "submission" | "decision") => {
+      const bet = bm.bets.find((b: any) => b.id === betId);
+      if (!bet) return;
+      for (const v of bet.values) {
+        const p = Number(v.odd);
+        if (Number.isFinite(p) && p > 1) methodPrices[`${slot}_${method}`].push(p);
+      }
+    };
+    captureMethod(17, "a", "submission");
+    captureMethod(18, "a", "ko_tko");
+    captureMethod(19, "b", "submission");
+    captureMethod(20, "b", "ko_tko");
+    const combineDec = (unanimousId: number, splitId: number, slot: "a" | "b") => {
+      const u = bm.bets.find((b: any) => b.id === unanimousId);
+      const s = bm.bets.find((b: any) => b.id === splitId);
+      if (!u && !s) return;
+      let p = 0;
+      for (const bet of [u, s]) {
+        if (!bet) continue;
+        for (const v of bet.values) {
+          const price = Number(v.odd);
+          if (Number.isFinite(price) && price > 1) p += 1 / price;
+        }
+      }
+      if (p > 0) methodPrices[`${slot}_decision`].push(1 / p);
+    };
+    combineDec(13, 14, "a");
+    combineDec(15, 16, "b");
+
+    // ---- Method name-based fallback ----
+    for (const bet of bm.bets) {
+      const nm = (bet.name ?? "").toLowerCase();
+      if (!/method|victory|winning\s*method|way\s*of|end\s*by|result/.test(nm)) continue;
+      for (const v of bet.values) {
+        const price = Number(v.odd);
+        if (!Number.isFinite(price) || price <= 1) continue;
+        const slot = nameSideOf(v.value);
+        const bucket = methodBucketOf(v.value);
+        if (!slot || !bucket) continue;
+        methodPrices[`${slot}_${bucket}`].push(price);
+      }
+    }
+
+    // ---- Round Betting ----
+    const roundBetById = bm.bets.find((b: any) => b.id === 6);
+    if (roundBetById) {
+      for (const v of roundBetById.values) pushRoundValue(v.value, Number(v.odd));
+    }
+    for (const bet of bm.bets) {
+      const nm = (bet.name ?? "").toLowerCase();
+      if (bet.id === 6) continue;
+      if (!/round|distance/.test(nm)) continue;
+      for (const v of bet.values) pushRoundValue(v.value, Number(v.odd));
+    }
+
+    // ---- "Fight to go the distance" (Yes → distance) ----
+    for (const bet of bm.bets) {
+      const nm = (bet.name ?? "").toLowerCase();
+      if (!/go\s*the\s*distance|goes\s*the\s*distance|fight\s*to\s*(go|end)/.test(nm)) continue;
+      for (const v of bet.values) {
+        const val = String(v.value).toLowerCase();
+        const price = Number(v.odd);
+        if (!Number.isFinite(price) || price <= 1) continue;
+        if (/^yes$|distance/.test(val)) {
+          if (!roundPrices["distance"]) roundPrices["distance"] = [];
+          roundPrices["distance"].push(price);
+        }
+      }
     }
   }
 
+  // ---- Persist Moneyline ----
+  if (mlPrices.a.length && mlPrices.b.length) {
+    const priced = await apply2WayMargin(median(mlPrices.a), median(mlPrices.b));
+    upserts.push(
+      { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", label: fightRow.fighter_a, odds: priced.a, is_active: true, updated_at: nowIso },
+      { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", label: fightRow.fighter_b, odds: priced.b, is_active: true, updated_at: nowIso },
+    );
+    snapshots.push(
+      { fight_id: fightRow.id, market_type: "moneyline", selection_key: "a", odds: priced.a },
+      { fight_id: fightRow.id, market_type: "moneyline", selection_key: "b", odds: priced.b },
+    );
+  }
+
+  // ---- Persist Method ----
   const methodEntries: Array<{ team: string; odds: number }> = [];
   for (const [key, prices] of Object.entries(methodPrices)) {
     if (prices.length) methodEntries.push({ team: key, odds: median(prices) });
@@ -362,36 +415,7 @@ async function syncOddsForFight(fightRow: {
     }
   }
 
-  // ---- Round Betting — bet 6 first, then name-based fallback across all bets ----
-  const roundPrices: Record<string, number[]> = {};
-  const pushRoundValue = (rawValue: string, price: number) => {
-    if (!Number.isFinite(price)) return;
-    const val = rawValue.toLowerCase();
-    let key: string | null = null;
-    if (/distance|goes.*distance|decision|points/.test(val)) key = "distance";
-    else {
-      const m = val.match(/round\s*(\d+)|(\d+)(?:st|nd|rd|th)\s*round|^\s*(\d+)\s*$/);
-      const num = m ? m[1] ?? m[2] ?? m[3] : null;
-      if (num) {
-        const n = Number(num);
-        if (n >= 1 && n <= 5) key = `r${n}`;
-      }
-    }
-    if (!key) return;
-    if (!roundPrices[key]) roundPrices[key] = [];
-    roundPrices[key].push(price);
-  };
-
-  const roundBetById = bm.bets.find((b) => b.id === 6);
-  if (roundBetById) {
-    for (const v of roundBetById.values) pushRoundValue(v.value, Number(v.odd));
-  }
-  for (const bet of bm.bets) {
-    const nm = (bet.name ?? "").toLowerCase();
-    if (bet.id === 6) continue;
-    if (!/round|distance/.test(nm)) continue;
-    for (const v of bet.values) pushRoundValue(v.value, Number(v.odd));
-  }
+  // ---- Persist Round ----
   const roundEntries = Object.entries(roundPrices).map(([k, arr]) => ({ team: k, odds: median(arr) }));
   if (roundEntries.length >= 2) {
     const priced = await applyOutrightMargin(roundEntries);
@@ -402,15 +426,13 @@ async function syncOddsForFight(fightRow: {
     }
   }
 
-
-
   if (!upserts.length) return 0;
   const { error: mErr } = await (supabaseAdmin as any)
     .from("ufc_fight_markets")
     .upsert(upserts, { onConflict: "fight_id,market_type,selection_key" });
   if (mErr) throw new Error(`market save failed: ${mErr.message}`);
 
-  // De-dupe snapshots: skip if identical to last snapshot for the same key.
+  // De-dupe snapshots
   const { data: last } = await (supabaseAdmin as any)
     .from("ufc_market_snapshots")
     .select("market_type, selection_key, odds")
@@ -428,6 +450,7 @@ async function syncOddsForFight(fightRow: {
   }
   return upserts.length;
 }
+
 
 // ---- Fight stats (live) ----
 async function syncFightStats(fightRowId: string, apimmaFightId: number) {
