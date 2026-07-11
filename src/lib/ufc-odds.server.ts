@@ -36,6 +36,13 @@ function normalizeFighterName(name: string) {
     .replace(/[^a-z0-9]/g, "");
 }
 
+function cleanDisplayText(value?: string | null) {
+  if (!value) return value ?? null;
+  return value
+    .replace(/BenoÃ®t/g, "Benoît")
+    .replace(/Saint Denis/g, "Saint Denis");
+}
+
 async function apply2WayMargin(a: number, b: number) {
   const priced = await applyOutrightMargin([
     { team: "a", odds: a },
@@ -132,7 +139,7 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
   }
   const payload = {
     apimma_id: apimmaId,
-    name: detail?.name || name,
+    name: cleanDisplayText(detail?.name || name),
     nickname: detail?.nickname ?? null,
     record_w: detail?.record?.wins ?? null,
     record_l: detail?.record?.losses ?? null,
@@ -141,7 +148,7 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
     height_cm: parseCm(detail?.height ?? null),
     stance: detail?.stance ?? null,
     dob: detail?.birth_date ?? null,
-    weight_class: detail?.category ?? null,
+    weight_class: cleanDisplayText(detail?.category ?? null),
     country: detail?.country ?? null,
     photo_url: detail?.photo ?? logo ?? null,
   };
@@ -174,14 +181,14 @@ async function saveFight(input: {
     apimma_fight_id: f.id,
     apimma_fighter_a_id: f.fighters.first.id,
     apimma_fighter_b_id: f.fighters.second.id,
-    fighter_a: f.fighters.first.name,
-    fighter_b: f.fighters.second.name,
+    fighter_a: cleanDisplayText(f.fighters.first.name),
+    fighter_b: cleanDisplayText(f.fighters.second.name),
     fighter_a_logo: f.fighters.first.logo ?? null,
     fighter_b_logo: f.fighters.second.logo ?? null,
     commence_time: f.date,
     card_position: input.cardPosition,
     scheduled_rounds: input.scheduledRounds,
-    weight_class: f.category ?? null,
+    weight_class: cleanDisplayText(f.category ?? null),
     is_title_fight: /title|championship/i.test(f.slug ?? ""),
   };
 
