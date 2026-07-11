@@ -19,15 +19,18 @@ export const Route = createFileRoute("/_authenticated/ufc/$fightId")({
   component: UfcFightDetailPage,
 });
 
+type MarketType = "moneyline" | "method" | "round" | "total_rounds" | "distance";
+
 type Market = {
   fight_id: string;
-  market_type: "moneyline" | "method" | "round";
+  market_type: MarketType;
   selection_key: string;
   label: string;
   odds: number;
   is_active: boolean;
   updated_at: string;
 };
+
 
 const MIN_STAKE = 10;
 const MAX_STAKE = 50000;
@@ -299,11 +302,14 @@ function ScoreFighter({ name, logo, record }: { name: string; logo?: string | nu
 
 /* ---------- Markets board — mirrors football OddsButton + StakeSlip ---------- */
 
-const MARKET_TABS: Array<{ id: "moneyline" | "method" | "round"; label: string }> = [
+const MARKET_TABS: Array<{ id: MarketType; label: string }> = [
   { id: "moneyline", label: "Moneyline" },
   { id: "round", label: "Round" },
   { id: "method", label: "Method" },
+  { id: "total_rounds", label: "Total Rounds" },
+  { id: "distance", label: "Distance" },
 ];
+
 
 function classifyUfc(selection: string): "home" | "away" | "neutral" {
   const s = selection.toLowerCase();
@@ -369,7 +375,7 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
   const availableTypes = new Set(markets.filter((m) => m.is_active).map((m) => m.market_type));
   const visibleTabs = MARKET_TABS.filter((t) => availableTypes.has(t.id));
   const firstAvailable = visibleTabs[0]?.id ?? "moneyline";
-  const [tab, setTab] = useState<"moneyline" | "method" | "round">(firstAvailable);
+  const [tab, setTab] = useState<MarketType>(firstAvailable);
   useEffect(() => {
     if (visibleTabs.length && !visibleTabs.some((t) => t.id === tab)) setTab(visibleTabs[0].id);
   }, [visibleTabs.map((t) => t.id).join(","), tab]);
@@ -442,15 +448,18 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
             {tab === "moneyline" && "Who wins the fight?"}
             {tab === "method" && "How does the fight end?"}
             {tab === "round" && "Which round does it end in?"}
+            {tab === "total_rounds" && "How many rounds will the fight last?"}
+            {tab === "distance" && "Does the fight go the distance?"}
           </h4>
         </div>
 
         {filtered.length === 0 ? (
           <div className="rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-2)] py-6 text-center text-xs text-[var(--color-ink-muted)]">
-            No {tab} odds available yet.
+            No {tab.replace("_", " ")} odds available yet.
           </div>
         ) : (
-          <div className={`grid gap-2 ${tab === "moneyline" ? "grid-cols-2" : "grid-cols-3"}`}>
+          <div className={`grid gap-2 ${tab === "moneyline" || tab === "distance" ? "grid-cols-2" : "grid-cols-3"}`}>
+
             {filtered.map((m) => (
               <OddsButton
                 key={`${m.market_type}:${m.selection_key}`}
@@ -561,19 +570,17 @@ function abbrevUfcLabel(label: string): string {
 }
 
 function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snapshots: any[] }) {
-  const availableTypes = new Set(markets.filter((m) => m.is_active).map((m) => m.market_type));
-  const visibleTabs = MARKET_TABS.filter((t) => availableTypes.has(t.id));
-  const firstAvailable = visibleTabs[0]?.id ?? "moneyline";
-  const [tab, setTab] = useState<"moneyline" | "method" | "round">(firstAvailable);
-  useEffect(() => {
-    if (visibleTabs.length && !visibleTabs.some((t) => t.id === tab)) setTab(visibleTabs[0].id);
-  }, [visibleTabs.map((t) => t.id).join(","), tab]);
+  // Market movement chart is moneyline-only (mirrors football MarketAnalyticsCard).
+  const tab: MarketType = "moneyline";
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const filtered = snapshots.filter((s) => s.market_type === tab);
   const keys = Array.from(new Set(filtered.map((s) => s.selection_key)));
   const labelFor = (k: string) => markets.find((m) => m.market_type === tab && m.selection_key === k)?.label ?? k;
+
+
+
 
   // Build implied-probability series so the chart matches football (0–100%).
   // If only a single snapshot exists we still want a visible flat line, so
@@ -632,31 +639,9 @@ function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snap
     <section className="relative -mx-4 bg-[var(--surface)] md:mx-0">
       <div className="px-4 pt-5 md:px-6 md:pt-6">
         <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
-          {tab === "moneyline" ? "Who will win?" : tab === "method" ? "How does it end?" : "Which round?"}
+          Who will win?
         </h2>
 
-        {/* Segmented market selector — mirrors football tabs */}
-        {visibleTabs.length > 1 && (
-          <div className="mt-3 flex overflow-x-auto rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {visibleTabs.map((t) => {
-              const active = tab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setTab(t.id)}
-                  className={`shrink-0 flex-1 px-4 py-2.5 text-center text-[13px] font-semibold whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)]/60 last:border-r-0 ${
-                    active
-                      ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
-                      : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
 
         {/* Legend — minimal, matches MarketAnalyticsCard */}
         {effectiveKeys.length > 0 && (

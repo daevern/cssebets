@@ -13,11 +13,13 @@ import {
   fetchFightsByDate,
   fetchOddsForFight,
   fetchFighter,
+  searchFighter,
   fetchFighterRecords,
   fetchFightStats,
   parseCm,
   type ApiMmaFight,
 } from "@/lib/apimma.server";
+
 
 
 export type UfcSyncResult = {
@@ -130,33 +132,48 @@ function pickMainAndCoMain(card: ApiMmaFight[]) {
 }
 
 async function upsertFighter(apimmaId: number, name: string, logo?: string) {
-  // Try to enrich with /fighters details, but tolerate failure (rate-limits).
+  // Read existing row FIRST so a failed/empty detail lookup never overwrites
+  // known-good tale-of-the-tape fields with nulls.
+  const { data: existing } = await (supabaseAdmin as any)
+    .from("ufc_fighters")
+    .select("*")
+    .eq("apimma_id", apimmaId)
+    .maybeSingle();
+
+  // Try /fighters?id=; on failure or empty response, fall back to name search.
   let detail: Awaited<ReturnType<typeof fetchFighter>> | null = null;
   try {
     detail = await fetchFighter(apimmaId);
   } catch (e) {
     console.warn("fetchFighter failed", apimmaId, (e as Error).message);
   }
+  if (!detail || (!detail.record && !detail.reach && !detail.height)) {
+    try {
+      const found = await searchFighter(name);
+      if (found) detail = { ...(detail ?? {} as any), ...found };
+    } catch (e) {
+      console.warn("searchFighter failed", name, (e as Error).message);
+    }
+  }
+
+  const coalesce = <T,>(next: T | null | undefined, prev: T | null | undefined): T | null =>
+    (next ?? prev ?? null) as T | null;
+
   const payload = {
     apimma_id: apimmaId,
-    name: cleanDisplayText(detail?.name || name),
-    nickname: detail?.nickname ?? null,
-    record_w: detail?.record?.wins ?? null,
-    record_l: detail?.record?.losses ?? null,
-    record_d: detail?.record?.draws ?? null,
-    reach_cm: parseCm(detail?.reach ?? null),
-    height_cm: parseCm(detail?.height ?? null),
-    stance: detail?.stance ?? null,
-    dob: detail?.birth_date ?? null,
-    weight_class: cleanDisplayText(detail?.category ?? null),
-    country: detail?.country ?? null,
-    photo_url: detail?.photo ?? logo ?? null,
+    name: cleanDisplayText(detail?.name || existing?.name || name),
+    nickname: coalesce(detail?.nickname, existing?.nickname),
+    record_w: coalesce(detail?.record?.wins, existing?.record_w),
+    record_l: coalesce(detail?.record?.losses, existing?.record_l),
+    record_d: coalesce(detail?.record?.draws, existing?.record_d),
+    reach_cm: coalesce(parseCm(detail?.reach ?? null), existing?.reach_cm),
+    height_cm: coalesce(parseCm(detail?.height ?? null), existing?.height_cm),
+    stance: coalesce(detail?.stance, existing?.stance),
+    dob: coalesce(detail?.birth_date, existing?.dob),
+    weight_class: cleanDisplayText(coalesce(detail?.category, existing?.weight_class)),
+    country: coalesce(detail?.country, existing?.country),
+    photo_url: coalesce(detail?.photo ?? logo ?? null, existing?.photo_url),
   };
-  const { data: existing } = await (supabaseAdmin as any)
-    .from("ufc_fighters")
-    .select("id")
-    .eq("apimma_id", apimmaId)
-    .maybeSingle();
   if (existing?.id) {
     await (supabaseAdmin as any).from("ufc_fighters").update(payload).eq("id", existing.id);
     return existing.id as string;
@@ -168,6 +185,7 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
     .maybeSingle();
   return data?.id as string;
 }
+
 
 async function saveFight(input: {
   eventId: string;
@@ -269,6 +287,8 @@ async function syncOddsForFight(fightRow: {
   // "Round Betting" market (which is the norm for API-Sports MMA).
   const ouOverPrices: Record<number, number[]> = { 1: [], 2: [], 3: [], 4: [] };
   const ouUnderPrices: Record<number, number[]> = { 1: [], 2: [], 3: [], 4: [] };
+  const distancePrices: { yes: number[]; no: number[] } = { yes: [], no: [] };
+
   const pushRoundValue = (rawValue: string, price: number) => {
     if (!Number.isFinite(price) || price <= 1) return;
     const val = rawValue.toLowerCase();
@@ -390,7 +410,7 @@ async function syncOddsForFight(fightRow: {
       }
     }
 
-    // ---- "Fight to go the distance" (Yes → distance) ----
+    // ---- "Fight to go the distance" (Yes/No) ----
     for (const bet of bm.bets) {
       const nm = (bet.name ?? "").toLowerCase();
       if (!/go\s*the\s*distance|goes\s*the\s*distance|fight\s*to\s*(go|end)/.test(nm)) continue;
@@ -398,13 +418,17 @@ async function syncOddsForFight(fightRow: {
         const val = String(v.value).toLowerCase();
         const price = Number(v.odd);
         if (!Number.isFinite(price) || price <= 1) continue;
-        if (/^yes$|distance/.test(val)) {
+        if (/^yes$|^y$|distance/.test(val)) {
+          distancePrices.yes.push(price);
           if (!roundPrices["distance"]) roundPrices["distance"] = [];
           roundPrices["distance"].push(price);
+        } else if (/^no$|^n$|inside\s*distance|not\s*go/.test(val)) {
+          distancePrices.no.push(price);
         }
       }
     }
   }
+
 
   // ---- Derive round-finish odds from Over/Under totals ----
   // Fair prob at each boundary: pUnder_k = (1/oddU_k) / (1/oddU_k + 1/oddO_k)
@@ -484,6 +508,49 @@ async function syncOddsForFight(fightRow: {
       snapshots.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, odds: p.odds });
     }
   }
+
+  // ---- Persist Total Rounds (Over/Under per line, aggregated across bookmakers) ----
+  for (let k = 1; k <= 4; k++) {
+    const over = median(ouOverPrices[k]);
+    const under = median(ouUnderPrices[k]);
+    if (over > 1 && under > 1) {
+      const priced = await apply2WayMargin(over, under);
+      const line = `${k}_5`; // "1_5" → 1.5 rounds
+      const lineLabel = `${k}.5`;
+      upserts.push(
+        { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `over_${line}`, label: `Over ${lineLabel} rounds`, odds: priced.a, is_active: true, updated_at: nowIso },
+        { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `under_${line}`, label: `Under ${lineLabel} rounds`, odds: priced.b, is_active: true, updated_at: nowIso },
+      );
+      snapshots.push(
+        { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `over_${line}`, odds: priced.a },
+        { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `under_${line}`, odds: priced.b },
+      );
+    }
+  }
+
+  // ---- Persist Distance (Yes/No) ----
+  const yes = median(distancePrices.yes);
+  const no = median(distancePrices.no);
+  if (yes > 1 && no > 1) {
+    const priced = await apply2WayMargin(yes, no);
+    upserts.push(
+      { fight_id: fightRow.id, market_type: "distance", selection_key: "yes", label: "Goes the distance", odds: priced.a, is_active: true, updated_at: nowIso },
+      { fight_id: fightRow.id, market_type: "distance", selection_key: "no", label: "Ends inside distance", odds: priced.b, is_active: true, updated_at: nowIso },
+    );
+    snapshots.push(
+      { fight_id: fightRow.id, market_type: "distance", selection_key: "yes", odds: priced.a },
+      { fight_id: fightRow.id, market_type: "distance", selection_key: "no", odds: priced.b },
+    );
+  } else if (yes > 1 && !no) {
+    // Only "Yes" side available — derive "No" from the same fair prob 1 - pYes/(pYes+pNo≈1).
+    // Fall back to publishing Yes-only as display.
+    upserts.push(
+      { fight_id: fightRow.id, market_type: "distance", selection_key: "yes", label: "Goes the distance", odds: yes, is_active: true, updated_at: nowIso },
+    );
+    snapshots.push({ fight_id: fightRow.id, market_type: "distance", selection_key: "yes", odds: yes });
+  }
+
+
 
   if (!upserts.length) return 0;
   const { error: mErr } = await (supabaseAdmin as any)
