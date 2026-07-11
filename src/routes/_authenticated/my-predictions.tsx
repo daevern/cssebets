@@ -70,6 +70,24 @@ function MyPredictionsPage() {
     },
   });
 
+  const { data: ufcBets } = useQuery({
+    queryKey: ["my-ufc-bets", uid],
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ufc_bets")
+        .select("*, ufc_fights(fighter_a, fighter_b, commence_time, status)")
+        .eq("user_id", uid!)
+        .order("placed_at", { ascending: false });
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
+
   const settleFn = useServerFn(settleFinishedPending);
 
   useEffect(() => {
