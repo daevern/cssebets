@@ -724,8 +724,8 @@ async function syncFightStats(fightRowId: string, apimmaFightId: number) {
 async function syncH2H(fightRowId: string, aId: number, bId: number) {
   try {
     const [recA, recB] = await Promise.all([
-      fetchFighterRecords(aId).catch(() => []),
-      fetchFighterRecords(bId).catch(() => []),
+      fetchFighterFightHistory(aId, 16).catch(() => []),
+      fetchFighterFightHistory(bId, 16).catch(() => []),
     ]);
 
     const rows: any[] = [];
@@ -753,7 +753,7 @@ async function syncH2H(fightRowId: string, aId: number, bId: number) {
     }
 
     // Recent form: last 6 fights per fighter (excluding this upcoming fight itself)
-    const pushForm = (records: Awaited<ReturnType<typeof fetchFighterRecords>>, selfId: number, slot: "a" | "b") => {
+    const pushForm = (records: Awaited<ReturnType<typeof fetchFighterFightHistory>>, selfId: number, slot: "a" | "b") => {
       const sorted = [...records]
         .filter((r) => r.status.short === "FT" || r.status.short === "AFT")
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
