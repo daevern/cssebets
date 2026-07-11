@@ -91,7 +91,8 @@ function AdminPredictionsPage() {
     const byFixture = new Map<string, { sport: string; label: string; rows: any[] }>();
     for (const r of filtered) {
       const key = `${r.sport}:${r.fixture_id ?? "unknown"}`;
-      const g = byFixture.get(key) ?? { sport: r.sport, label: r.fixture_label ?? "—", rows: [] };
+      const g = byFixture.get(key) ?? { sport: r.sport, label: r.fixture_label ?? "—", rows: [] as any[] };
+
       g.rows.push(r);
       byFixture.set(key, g);
     }
