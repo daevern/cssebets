@@ -4,9 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUfcFightDetail, getUfcMarketHistory, placeUfcBet } from "@/lib/ufc.functions";
-import { Loader2, ArrowUpRight, X, Activity, TrendingUp, Users, History } from "lucide-react";
+import { Loader2, ArrowUpRight, X, Activity, Users, History } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/_authenticated/ufc/$fightId")({
@@ -419,53 +419,59 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
   const potentialGain = potentialReturn - stakeNum;
 
   return (
-    <div className="space-y-3">
-      {/* Tab pills — football style */}
-      <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {MARKET_TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => { setTab(t.id); setPick(null); }}
-            className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
-              tab === t.id
-                ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
-                : "border-[var(--color-surface-border)] bg-[var(--surface-2)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+    <div className="pt-4 space-y-4 -mx-3 sm:-mx-2 md:mx-0">
+      {/* Segmented tab bar — identical to football MarketTabs */}
+      <div className="flex overflow-x-auto rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {MARKET_TABS.map((t) => {
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => { setTab(t.id); setPick(null); }}
+              className={`shrink-0 px-4 py-2.5 text-center text-[13px] font-semibold whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)]/60 last:border-r-0 flex-1 ${
+                active
+                  ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
+                  : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+              }`}
+            >
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Question heading (mirrors QuestionHeading) */}
-      <div className="mb-2 space-y-0.5">
-        <h4 className="text-[15px] font-semibold leading-snug text-[var(--color-ink)]">
-          {tab === "moneyline" && "Who wins the fight?"}
-          {tab === "method" && "How does the fight end?"}
-          {tab === "round" && "Which round does it end in?"}
-        </h4>
+      <div className="px-3 sm:px-2 md:px-0 space-y-3">
+        {/* Question heading (mirrors QuestionHeading) */}
+        <div className="mb-2 space-y-0.5">
+          <h4 className="text-[15px] font-semibold leading-snug text-[var(--color-ink)]">
+            {tab === "moneyline" && "Who wins the fight?"}
+            {tab === "method" && "How does the fight end?"}
+            {tab === "round" && "Which round does it end in?"}
+          </h4>
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-2)] py-6 text-center text-xs text-[var(--color-ink-muted)]">
+            No {tab} odds available yet.
+          </div>
+        ) : (
+          <div className={`grid gap-2 ${tab === "moneyline" ? "grid-cols-2" : "grid-cols-3"}`}>
+            {filtered.map((m) => (
+              <OddsButton
+                key={`${m.market_type}:${m.selection_key}`}
+                label={m.label}
+                price={Number(m.odds)}
+                selected={pick?.selection_key === m.selection_key && pick?.market_type === m.market_type}
+                disabled={!m.is_active || finished}
+                variant={classifyUfc(m.selection_key)}
+                onClick={() => setPick(m)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-2)] py-6 text-center text-xs text-[var(--color-ink-muted)]">
-          No {tab} odds available yet.
-        </div>
-      ) : (
-        <div className={`grid gap-2 ${tab === "moneyline" ? "grid-cols-2" : "grid-cols-3"}`}>
-          {filtered.map((m) => (
-            <OddsButton
-              key={`${m.market_type}:${m.selection_key}`}
-              label={m.label}
-              price={Number(m.odds)}
-              selected={pick?.selection_key === m.selection_key && pick?.market_type === m.market_type}
-              disabled={!m.is_active || finished}
-              variant={classifyUfc(m.selection_key)}
-              onClick={() => setPick(m)}
-            />
-          ))}
-        </div>
-      )}
 
       {/* Stake slip — mirrors football StakeSlip */}
       {pick && (
@@ -543,81 +549,157 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
   );
 }
 
-/* ---------- Market movement — mirrors MarketAnalyticsCard framing ---------- */
+/* ---------- Market movement — 1:1 with football MarketAnalyticsCard ---------- */
+
+const MOVEMENT_COLORS = ["#22C55E", "#EC4899", "#3B82F6", "#F59E0B", "#A78BFA", "#FB7185", "#10B981", "#F97316"];
+
+function colorForUfcKey(key: string, idx: number): string {
+  if (key === "a") return "#22C55E";
+  if (key === "b") return "#EC4899";
+  return MOVEMENT_COLORS[idx % MOVEMENT_COLORS.length];
+}
 
 function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snapshots: any[] }) {
   const [tab, setTab] = useState<"moneyline" | "method" | "round">("moneyline");
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
+
+  const filtered = snapshots.filter((s) => s.market_type === tab);
+  const keys = Array.from(new Set(filtered.map((s) => s.selection_key)));
+  const labelFor = (k: string) => markets.find((m) => m.market_type === tab && m.selection_key === k)?.label ?? k;
+
+  // Build implied-probability series so the chart matches football (0–100%).
+  const rows = (() => {
+    const buckets = new Map<number, any>();
+    // Group snapshots per timestamp bucket per market
+    const grouped = new Map<number, Record<string, number>>();
+    for (const s of filtered) {
+      const t = Math.round(new Date(s.sampled_at).getTime() / 30000) * 30000;
+      const g = grouped.get(t) ?? {};
+      g[s.selection_key] = Number(s.odds);
+      grouped.set(t, g);
+    }
+    for (const [t, g] of grouped) {
+      const invSum = Object.values(g).reduce((a, o) => a + (o > 1 ? 1 / o : 0), 0);
+      const row: any = { t };
+      for (const k of Object.keys(g)) {
+        const inv = g[k] > 1 ? 1 / g[k] : 0;
+        row[k] = invSum > 0 ? Math.round((inv / invSum) * 100) : 0;
+      }
+      buckets.set(t, row);
+    }
+    return Array.from(buckets.values()).sort((a, b) => a.t - b.t);
+  })();
+
+  const latestByKey = new Map<string, number>();
+  const last = rows.at(-1);
+  if (last) for (const k of keys) if (typeof last[k] === "number") latestByKey.set(k, last[k]);
+
+  const visibleKeys = keys.filter((k) => !hidden[k]);
+
   return (
     <section className="relative -mx-4 bg-[var(--surface)] md:mx-0">
       <div className="px-4 pt-5 md:px-6 md:pt-6">
-        <div className="flex items-baseline justify-between">
-          <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
-            {tab === "moneyline" ? "Who will win?" : tab === "method" ? "How does it end?" : "Which round?"}
-          </h2>
-          <span className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-            <TrendingUp className="h-3 w-3" /> Last 24h
-          </span>
+        <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
+          {tab === "moneyline" ? "Who will win?" : tab === "method" ? "How does it end?" : "Which round?"}
+        </h2>
+
+        {/* Segmented market selector — mirrors football tabs */}
+        <div className="mt-3 flex overflow-x-auto rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {MARKET_TABS.map((t) => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={`shrink-0 flex-1 px-4 py-2.5 text-center text-[13px] font-semibold whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)]/60 last:border-r-0 ${
+                  active
+                    ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
+                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
         </div>
-        <div className="mt-3 flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {MARKET_TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
-                tab === t.id
-                  ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
-                  : "border-[var(--color-surface-border)] bg-[var(--surface-2)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+
+        {/* Legend — minimal, matches MarketAnalyticsCard */}
+        {keys.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
+            {keys.map((k, idx) => {
+              const off = !!hidden[k];
+              const v = latestByKey.get(k);
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setHidden((h) => ({ ...h, [k]: !h[k] }))}
+                  className={`inline-flex items-center gap-1.5 bg-transparent p-0 transition-opacity ${
+                    off ? "opacity-40" : "opacity-100 hover:opacity-80"
+                  }`}
+                  aria-pressed={!off}
+                >
+                  <span className="h-2 w-2 rounded-full" style={{ background: colorForUfcKey(k, idx) }} />
+                  <span className="font-medium tracking-tight text-white/85">{labelFor(k)}</span>
+                  {typeof v === "number" && (
+                    <span className="font-mono text-white/60">{v}%</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
-      <div className="mt-3 px-4 md:px-6">
-        <MovementChart snapshots={snapshots} marketType={tab} markets={markets} />
+
+      {/* Chart — full width, edge-to-edge, no y-axis, dashed grid only */}
+      <div className="relative mt-3 h-[340px] w-full sm:h-[380px] md:h-[420px]">
+        {rows.length === 0 ? (
+          <div className="grid h-full place-items-center text-[10px] font-bold uppercase tracking-[0.28em] text-white/40">
+            Movement history warming up…
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={rows} margin={{ top: 12, right: 24, bottom: 8, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 6" stroke="#ffffff" strokeOpacity={0.28} vertical={false} />
+              <XAxis
+                dataKey="t"
+                stroke="#ffffff"
+                strokeOpacity={0.15}
+                tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }}
+                tickLine={false}
+                axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
+                tickFormatter={(v) => new Date(v).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                minTickGap={48}
+              />
+              <YAxis hide domain={[0, 100]} width={0} padding={{ top: 0, bottom: 0 }} />
+              <Tooltip
+                content={() => null}
+                cursor={{ stroke: "rgba(255,255,255,0.28)", strokeWidth: 1, strokeDasharray: "3 4" }}
+              />
+              {visibleKeys.map((k, i) => (
+                <Line
+                  key={k}
+                  type="linear"
+                  dataKey={k}
+                  stroke={colorForUfcKey(k, keys.indexOf(k))}
+                  strokeWidth={2.25}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  dot={false}
+                  activeDot={false}
+                  isAnimationActive={false}
+                  connectNulls
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </section>
   );
 }
 
-function MovementChart({ snapshots, marketType, markets }: { snapshots: any[]; marketType: string; markets: Market[] }) {
-  const filtered = snapshots.filter((s) => s.market_type === marketType);
-  if (filtered.length === 0) {
-    return <div className="py-10 text-center text-xs text-[var(--color-ink-muted)]">Movement history builds up over time — check back after a few sync cycles.</div>;
-  }
-  const keys = Array.from(new Set(filtered.map((s) => s.selection_key)));
-  const labelFor = (k: string) => markets.find((m) => m.market_type === marketType && m.selection_key === k)?.label ?? k;
-  const buckets = new Map<string, any>();
-  for (const s of filtered) {
-    const t = new Date(s.sampled_at).getTime();
-    const bucketKey = String(Math.round(t / 60000) * 60000);
-    if (!buckets.has(bucketKey)) buckets.set(bucketKey, { t: Number(bucketKey) });
-    buckets.get(bucketKey)[s.selection_key] = Number(s.odds);
-  }
-  const data = Array.from(buckets.values()).sort((a, b) => a.t - b.t);
-  const colors = ["#22C55E", "#EC4899", "#3B82F6", "#F59E0B", "#A78BFA", "#FB7185", "#10B981", "#F97316"];
-  return (
-    <div className="h-56 w-full sm:h-64">
-      <ResponsiveContainer>
-        <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 6" stroke="#ffffff" strokeOpacity={0.15} vertical={false} />
-          <XAxis dataKey="t" tickFormatter={(t) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} stroke="var(--color-ink-muted)" fontSize={10} tickLine={false} />
-          <YAxis stroke="var(--color-ink-muted)" fontSize={10} domain={["auto", "auto"]} />
-          <Tooltip
-            contentStyle={{ background: "var(--surface-2)", border: "1px solid var(--color-surface-border)", fontSize: 11 }}
-            labelFormatter={(t) => new Date(t as number).toLocaleTimeString()}
-          />
-          <Legend wrapperStyle={{ fontSize: 10 }} />
-          {keys.map((k, i) => (
-            <Line key={k} type="monotone" dataKey={k} name={labelFor(k)} stroke={colors[i % colors.length]} dot={false} strokeWidth={2} />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
 
 /* ---------- Tale of tape ---------- */
 
