@@ -147,8 +147,12 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
 
   // Try /fighters?id=; on failure or empty response, fall back to name search.
   let detail: Awaited<ReturnType<typeof fetchFighter>> | null = null;
+  let recordSummary: Awaited<ReturnType<typeof fetchFighterRecordSummary>> | null = null;
   try {
-    detail = await fetchFighter(apimmaId);
+    [detail, recordSummary] = await Promise.all([
+      fetchFighter(apimmaId),
+      fetchFighterRecordSummary(apimmaId).catch(() => null),
+    ]);
   } catch (e) {
     console.warn("fetchFighter failed", apimmaId, (e as Error).message);
   }
@@ -163,20 +167,32 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
 
   const coalesce = <T,>(next: T | null | undefined, prev: T | null | undefined): T | null =>
     (next ?? prev ?? null) as T | null;
+  const total = recordSummary?.total;
+  const ko = recordSummary?.ko;
+  const sub = recordSummary?.sub;
 
   const payload = {
     apimma_id: apimmaId,
     name: cleanDisplayText(detail?.name || existing?.name || name),
     nickname: coalesce(detail?.nickname, existing?.nickname),
-    record_w: coalesce(detail?.record?.wins, existing?.record_w),
-    record_l: coalesce(detail?.record?.losses, existing?.record_l),
-    record_d: coalesce(detail?.record?.draws, existing?.record_d),
+    record_w: coalesce(detail?.record?.wins ?? total?.win, existing?.record_w),
+    record_l: coalesce(detail?.record?.losses ?? total?.loss, existing?.record_l),
+    record_d: coalesce(detail?.record?.draws ?? total?.draw, existing?.record_d),
     reach_cm: coalesce(parseCm(detail?.reach ?? null), existing?.reach_cm),
     height_cm: coalesce(parseCm(detail?.height ?? null), existing?.height_cm),
+    weight_lbs: coalesce(parseLbs(detail?.weight ?? null), existing?.weight_lbs),
     stance: coalesce(detail?.stance, existing?.stance),
     dob: coalesce(detail?.birth_date, existing?.dob),
+    age_years: coalesce(detail?.age, existing?.age_years),
     weight_class: cleanDisplayText(coalesce(detail?.category, existing?.weight_class)),
     country: coalesce(detail?.country, existing?.country),
+    birth_place: coalesce(detail?.birth_place, existing?.birth_place),
+    gender: coalesce(detail?.gender, existing?.gender),
+    team_name: coalesce(detail?.team?.name, existing?.team_name),
+    ko_w: coalesce(ko?.win, existing?.ko_w),
+    ko_l: coalesce(ko?.loss, existing?.ko_l),
+    sub_w: coalesce(sub?.win, existing?.sub_w),
+    sub_l: coalesce(sub?.loss, existing?.sub_l),
     photo_url: coalesce(detail?.photo ?? logo ?? null, existing?.photo_url),
   };
   if (existing?.id) {
