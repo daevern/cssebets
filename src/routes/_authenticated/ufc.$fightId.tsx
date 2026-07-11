@@ -137,30 +137,9 @@ function FightAnalytics({ data, history }: { data: any; history: any[] }) {
         </AnalysisSection>
       )}
 
-      {/* H2H */}
-      <AnalysisSection
-        kicker={<><History className="h-3 w-3" /> Head to head</>}
-        meta={h2h.length > 0 ? `${h2h.length} prior` : "None"}
-      >
-        {h2h.length === 0 ? (
-          <p className="text-sm text-[var(--color-ink-muted)]">These fighters haven't met before.</p>
-        ) : (
-          <ul className="space-y-2">
-            {h2h.map((h: any) => (
-              <li
-                key={h.id}
-                className="flex items-center justify-between border border-[var(--color-surface-border)]/70 bg-[var(--color-surface)]/45 px-3 py-2 text-xs"
-              >
-                <span className="text-[var(--color-ink-muted)]">{h.date}</span>
-                <span className="font-bold text-[var(--color-ink)]">
-                  {h.winner_slot === "a" ? fight.fighter_a : h.winner_slot === "b" ? fight.fighter_b : "Draw"}
-                </span>
-                <span className="text-[var(--color-ink-muted)]">{h.event_name ?? ""}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </AnalysisSection>
+      {/* H2H + recent form */}
+      <H2HSection h2h={h2h} fight={fight} />
+
     </>
   );
 }
