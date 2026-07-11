@@ -5,8 +5,11 @@
 // Bookmaker odds are real (bet365/Pinnacle/Betfair preferred). Selection
 // keys match the settlement RPC contract:
 //   moneyline: 'a' | 'b'
+//   three_way: 'a' | 'draw' | 'b'
 //   method   : '{a|b}_{ko_tko|submission|decision}'
 //   round    : 'r1'..'r5' | 'distance'
+//   total_rounds: 'over_1_5' | 'under_1_5' ...
+//   handicap: '{a|b}_{plus|minus}_5_5'
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { applyOutrightMargin } from "@/lib/odds-margin.server";
 import {
@@ -14,9 +17,11 @@ import {
   fetchOddsForFight,
   fetchFighter,
   searchFighter,
-  fetchFighterRecords,
+  fetchFighterRecordSummary,
+  fetchFighterFightHistory,
   fetchFightStats,
   parseCm,
+  parseLbs,
   type ApiMmaFight,
 } from "@/lib/apimma.server";
 
