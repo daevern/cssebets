@@ -385,36 +385,67 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
     z.object({
       userId: z.string().uuid().optional(),
       matchId: z.string().uuid().optional(),
+      fixtureId: z.string().uuid().optional(),
       market: z.string().max(40).optional(),
       status: z.string().max(20).optional(),
+      sport: z.enum(["all", "football", "ufc"]).optional().default("all"),
     }).parse(i ?? {}),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await requireTier(supabase, userId, ADMIN_TIERS);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const rows: any[] = [];
-    for (let from = 0; ; from += ADMIN_PAGE_SIZE) {
-      let q = supabaseAdmin
-        .from("predictions")
-        .select("id, user_id, match_id, market, outcome, virtual_stake, reference_odds, potential_return, points, status, created_at, settled_at, flagged_for_review, flagged_reason")
-        .order("created_at", { ascending: false })
-        .range(from, from + ADMIN_PAGE_SIZE - 1);
-      if (data.userId) q = q.eq("user_id", data.userId);
-      if (data.matchId) q = q.eq("match_id", data.matchId);
-      if (data.market) q = q.eq("market", data.market as any);
-      if (data.status) q = q.eq("status", data.status as any);
-      const { data: page, error } = await q;
-      if (error) throw new Error(error.message);
-      if (!page || page.length === 0) break;
-      rows.push(...page);
-      if (page.length < ADMIN_PAGE_SIZE) break;
+
+    // --- Football predictions ---
+    const footballRows: any[] = [];
+    if (data.sport !== "ufc") {
+      for (let from = 0; ; from += ADMIN_PAGE_SIZE) {
+        let q = supabaseAdmin
+          .from("predictions")
+          .select("id, user_id, match_id, market, outcome, virtual_stake, reference_odds, potential_return, points, status, created_at, settled_at, flagged_for_review, flagged_reason")
+          .order("created_at", { ascending: false })
+          .range(from, from + ADMIN_PAGE_SIZE - 1);
+        if (data.userId) q = q.eq("user_id", data.userId);
+        if (data.matchId || data.fixtureId) q = q.eq("match_id", (data.matchId ?? data.fixtureId) as string);
+        if (data.market) q = q.eq("market", data.market as any);
+        if (data.status) q = q.eq("status", data.status as any);
+        const { data: page, error } = await q;
+        if (error) throw new Error(error.message);
+        if (!page || page.length === 0) break;
+        footballRows.push(...page);
+        if (page.length < ADMIN_PAGE_SIZE) break;
+      }
     }
 
-    const uids = Array.from(new Set(rows.map((r: any) => r.user_id).filter(Boolean)));
-    const mids = Array.from(new Set(rows.map((r: any) => r.match_id).filter(Boolean)));
+    // --- UFC bets (normalized to prediction row shape) ---
+    const ufcRows: any[] = [];
+    if (data.sport !== "football") {
+      // UI uses prediction-vocabulary statuses (pending/won/lost/void).
+      // ufc_bets stores "open" for unsettled; map both ways.
+      const uiToUfc: Record<string, string> = { pending: "open", won: "won", lost: "lost", void: "void" };
+      let uq = (supabaseAdmin as any)
+        .from("ufc_bets")
+        .select("id, user_id, fight_id, market_type, selection_label, selection_key, stake, odds_locked, potential_payout, status, placed_at, settled_at")
+        .order("placed_at", { ascending: false });
+      if (data.userId) uq = uq.eq("user_id", data.userId);
+      if (data.fixtureId) uq = uq.eq("fight_id", data.fixtureId);
+      if (data.market) uq = uq.eq("market_type", data.market);
+      if (data.status) uq = uq.eq("status", uiToUfc[data.status] ?? data.status);
+      const { data: bets, error } = await uq;
+      if (error) throw new Error(error.message);
+      ufcRows.push(...(bets ?? []));
+    }
+
+    // --- Resolve display labels ---
+    const uids = Array.from(new Set(
+      [...footballRows.map((r: any) => r.user_id), ...ufcRows.map((r: any) => r.user_id)].filter(Boolean),
+    ));
+    const mids = Array.from(new Set(footballRows.map((r: any) => r.match_id).filter(Boolean)));
+    const fids = Array.from(new Set(ufcRows.map((r: any) => r.fight_id).filter(Boolean)));
+
     const profiles: any[] = [];
     const matches: any[] = [];
+    const fights: any[] = [];
     await Promise.all([
       ...chunkArray(uids).map(async (ids) => {
         if (!ids.length) return;
@@ -428,22 +459,65 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
         if (error) throw new Error(error.message);
         matches.push(...(page ?? []));
       }),
+      ...chunkArray(fids).map(async (ids) => {
+        if (!ids.length) return;
+        const { data: page, error } = await (supabaseAdmin as any)
+          .from("ufc_fights").select("id, fighter_a, fighter_b").in("id", ids);
+        if (error) throw new Error(error.message);
+        fights.push(...(page ?? []));
+      }),
     ]);
     const profileById = new Map(profiles.map((p: any) => [p.id, p]));
     const matchById = new Map(matches.map((m: any) => [m.id, m]));
-    return {
-      total: rows.length,
-      predictions: rows.map((r: any) => {
-        const match = matchById.get(r.match_id);
-        return ({
+    const fightById = new Map(fights.map((f: any) => [f.id, f]));
+
+    const ufcStatusForUi: Record<string, string> = { open: "pending", won: "won", lost: "lost", void: "void" };
+
+    const normalizedFootball = footballRows.map((r: any) => {
+      const match = matchById.get(r.match_id);
+      const label = match ? `${match.home_team} vs ${match.away_team}` : "—";
+      return {
         ...r,
+        sport: "football" as const,
+        fixture_id: r.match_id,
+        fixture_label: label,
         display_name: profileById.get(r.user_id)?.display_name ?? r.user_id.slice(0, 8),
-        match: match
-          ? `${match.home_team} vs ${match.away_team}`
-          : "—",
-      }); }),
-    };
+        match: label,
+      };
+    });
+
+    const normalizedUfc = ufcRows.map((r: any) => {
+      const fight = fightById.get(r.fight_id);
+      const label = fight ? `${fight.fighter_a} vs ${fight.fighter_b}` : "—";
+      return {
+        id: r.id,
+        user_id: r.user_id,
+        match_id: null,
+        sport: "ufc" as const,
+        fixture_id: r.fight_id,
+        fixture_label: label,
+        match: label,
+        market: r.market_type,
+        outcome: r.selection_label,
+        virtual_stake: r.stake,
+        reference_odds: r.odds_locked,
+        potential_return: r.potential_payout,
+        points: 0,
+        status: ufcStatusForUi[r.status] ?? r.status,
+        created_at: r.placed_at,
+        settled_at: r.settled_at,
+        flagged_for_review: false,
+        flagged_reason: null,
+        display_name: profileById.get(r.user_id)?.display_name ?? r.user_id.slice(0, 8),
+      };
+    });
+
+    const combined = [...normalizedFootball, ...normalizedUfc]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    return { total: combined.length, predictions: combined };
   });
+
 
 export const listAuditLog = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
