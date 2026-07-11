@@ -419,53 +419,59 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
   const potentialGain = potentialReturn - stakeNum;
 
   return (
-    <div className="space-y-3">
-      {/* Tab pills — football style */}
-      <div className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {MARKET_TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => { setTab(t.id); setPick(null); }}
-            className={`shrink-0 rounded-full border px-3.5 py-1.5 text-[12px] font-semibold transition-colors ${
-              tab === t.id
-                ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
-                : "border-[var(--color-surface-border)] bg-[var(--surface-2)] text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+    <div className="pt-4 space-y-4 -mx-3 sm:-mx-2 md:mx-0">
+      {/* Segmented tab bar — identical to football MarketTabs */}
+      <div className="flex overflow-x-auto rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {MARKET_TABS.map((t) => {
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => { setTab(t.id); setPick(null); }}
+              className={`shrink-0 px-4 py-2.5 text-center text-[13px] font-semibold whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)]/60 last:border-r-0 flex-1 ${
+                active
+                  ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
+                  : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+              }`}
+            >
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Question heading (mirrors QuestionHeading) */}
-      <div className="mb-2 space-y-0.5">
-        <h4 className="text-[15px] font-semibold leading-snug text-[var(--color-ink)]">
-          {tab === "moneyline" && "Who wins the fight?"}
-          {tab === "method" && "How does the fight end?"}
-          {tab === "round" && "Which round does it end in?"}
-        </h4>
+      <div className="px-3 sm:px-2 md:px-0 space-y-3">
+        {/* Question heading (mirrors QuestionHeading) */}
+        <div className="mb-2 space-y-0.5">
+          <h4 className="text-[15px] font-semibold leading-snug text-[var(--color-ink)]">
+            {tab === "moneyline" && "Who wins the fight?"}
+            {tab === "method" && "How does the fight end?"}
+            {tab === "round" && "Which round does it end in?"}
+          </h4>
+        </div>
+
+        {filtered.length === 0 ? (
+          <div className="rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-2)] py-6 text-center text-xs text-[var(--color-ink-muted)]">
+            No {tab} odds available yet.
+          </div>
+        ) : (
+          <div className={`grid gap-2 ${tab === "moneyline" ? "grid-cols-2" : "grid-cols-3"}`}>
+            {filtered.map((m) => (
+              <OddsButton
+                key={`${m.market_type}:${m.selection_key}`}
+                label={m.label}
+                price={Number(m.odds)}
+                selected={pick?.selection_key === m.selection_key && pick?.market_type === m.market_type}
+                disabled={!m.is_active || finished}
+                variant={classifyUfc(m.selection_key)}
+                onClick={() => setPick(m)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-2)] py-6 text-center text-xs text-[var(--color-ink-muted)]">
-          No {tab} odds available yet.
-        </div>
-      ) : (
-        <div className={`grid gap-2 ${tab === "moneyline" ? "grid-cols-2" : "grid-cols-3"}`}>
-          {filtered.map((m) => (
-            <OddsButton
-              key={`${m.market_type}:${m.selection_key}`}
-              label={m.label}
-              price={Number(m.odds)}
-              selected={pick?.selection_key === m.selection_key && pick?.market_type === m.market_type}
-              disabled={!m.is_active || finished}
-              variant={classifyUfc(m.selection_key)}
-              onClick={() => setPick(m)}
-            />
-          ))}
-        </div>
-      )}
 
       {/* Stake slip — mirrors football StakeSlip */}
       {pick && (
