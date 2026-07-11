@@ -97,7 +97,7 @@ function pickCard(fights: ApiMmaFight[], targetIso: string): ApiMmaFight[] {
 
 async function upsertFighter(apimmaId: number, name: string, logo?: string) {
   // Try to enrich with /fighters details, but tolerate failure (rate-limits).
-  let detail: Awaited<ReturnType<typeof fetchFighter>> = null;
+  let detail: Awaited<ReturnType<typeof fetchFighter>> | null = null;
   try {
     detail = await fetchFighter(apimmaId);
   } catch (e) {
