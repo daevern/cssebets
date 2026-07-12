@@ -58,8 +58,27 @@ export async function runFootballDataSync(opts: { userId?: string | null } = {})
     const regAway = m.score?.regularTime?.away ?? null;
     const ftHome = m.score?.fullTime?.home ?? null;
     const ftAway = m.score?.fullTime?.away ?? null;
-    const homeScore = regHome ?? (duration === "REGULAR" || duration == null ? ftHome : null);
-    const awayScore = regAway ?? (duration === "REGULAR" || duration == null ? ftAway : null);
+    const etHome = m.score?.extraTime?.home ?? 0;
+    const etAway = m.score?.extraTime?.away ?? 0;
+    const penHome = m.score?.penalties?.home ?? 0;
+    const penAway = m.score?.penalties?.away ?? 0;
+    // Regulation-time (90-minute) score. Prefer explicit `regularTime` from
+    // provider. If missing, derive from fullTime minus extraTime/penalties for
+    // knockout matches that went past 90 (provider omits regularTime for many
+    // such fixtures — e.g. WC QFs). Only use FT directly when duration says
+    // the match ended in regulation.
+    let homeScore: number | null = regHome;
+    let awayScore: number | null = regAway;
+    if (homeScore === null && ftHome !== null) {
+      if (duration === "REGULAR" || duration == null) {
+        homeScore = ftHome;
+        awayScore = ftAway;
+      } else {
+        homeScore = ftHome - etHome - penHome;
+        awayScore = (ftAway ?? 0) - etAway - penAway;
+      }
+    }
+
     const homeScoreHt = m.score?.halfTime?.home ?? null;
     const awayScoreHt = m.score?.halfTime?.away ?? null;
     const winner = status === "finished" && homeScore !== null && awayScore !== null
