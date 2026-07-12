@@ -1,43 +1,51 @@
-## Why Norway vs England (and similar knockouts) didn't settle
+# UFC auto-settle from MMA feed
 
-Football-Data returned this QF as `FINISHED` with FT 1-2 (HT 1-1, England advanced on penalties/ET), but with `duration != "REGULAR"` and no `score.regularTime`. Our sync only fills `home_score`/`away_score` when we can be certain those are the 90-minute goals:
+The MMA feed (API-Sports MMA) reliably reports **winner** for finished fights (`status.short` = `FT` / `AFT`, plus a `winner: true` boolean per fighter), but does NOT expose **method of victory** or **finishing round** on its public endpoints. So we can auto-settle winner-only markets and leave the rest for admin.
 
-```ts
-const homeScore = regHome ?? (duration === "REGULAR" || duration == null ? ftHome : null);
-```
+## Behavior
 
-So both columns stayed NULL, and the settlement branch:
+Every time the existing UFC odds cron fires (already every 30s during fight windows), after odds sync we run an auto-settle pass:
 
-```ts
-if (matchId && status === "finished" && homeScore !== null && awayScore !== null) { ... }
-```
+1. For each `ufc_fights` row whose `status = 'scheduled'` and `commence_time < now()`, look up the fight in the MMA feed by `apimma_fight_id`.
+2. If the feed reports it finished (`FT`/`AFT`), determine winner slot (`a` / `b` / `draw`).
+3. Call new RPC `auto_settle_ufc_winner_atomic(fight_id, winner)` which:
+   - Loops open bets on that fight
+   - Settles **moneyline** and **three_way** bets (won if selection matches winner; on draw, only three_way `draw` wins; moneyline draws are voided/refunded)
+   - Credits wallets for wins, writes `wallet_transactions` and `audit_log`
+   - Marks fight `winner` + `settled_at = now()` but keeps `status = 'scheduled'` so admin's existing Settle button still works for method/round/total/etc.
+   - Leaves method / round / total_rounds / distance / handicap bets untouched (still `open`) for admin to finalise.
+4. When the admin later opens Admin → UFC and clicks Settle with method+round, the existing `settle_ufc_fight_atomic` finishes remaining open bets (its loop already filters `status='open'`, so it won't touch already-settled moneyline bets) and flips fight status to `finished`.
 
-was skipped. Auto-settlement will never run for this fixture as-is; every 90-minute market bet stays PENDING. The `to_qualify` market could grade (we have `qualifier = AWAY`) but the current settlement path only runs when both regulation scores are known.
+Admin UI stays exactly as it is; auto-settle is invisible unless you look at bet status.
 
-## Fix
+## Technical
 
-### 1. Backfill this match now
-- Re-fetch this fixture from Football-Data by external_id and inspect `score.regularTime` / `score.duration`.
-- If `regularTime` is present, update the row and call the existing settlement RPC so all 25 pending bets grade.
-- If `regularTime` is genuinely missing, use the HT score + goal timing endpoint (`/matches/{id}` returns `goals[]` with minute) to reconstruct the regulation-time score, then update + settle.
-- Last resort: leave 90-minute markets for admin manual regrade (already available in Admin > Predictions) but immediately settle the `to_qualify` bets using `qualifier = AWAY`.
+**Migration** — `auto_settle_ufc_winner_atomic(p_fight_id uuid, p_winner text)`:
+- `FOR UPDATE` fight row; skip if `winner` already set (idempotent).
+- Loop `ufc_bets WHERE fight_id = $1 AND status='open' AND market_type IN ('moneyline','three_way')`.
+- Moneyline: `won := selection_key = p_winner`; on `p_winner='draw'` → void + refund stake.
+- Three-way: `won := selection_key = p_winner` (draw is a valid selection).
+- On win: credit wallet `stake * odds_locked`, insert `wallet_transactions` (kind `bet_win`), mark bet `won`.
+- On loss: mark bet `lost` (stake already debited at placement).
+- On void: refund stake to wallet, mark bet `void`.
+- Update `ufc_fights.winner = p_winner`; keep `status='scheduled'`.
+- Insert `audit_log` row with `action='ufc.auto_settle_winner'`.
 
-### 2. Make the sync robust for future knockouts
-Update `src/lib/sync.server.ts` so that when the match is FINISHED and `regularTime` is missing:
-  - If provider returns `score.duration === "REGULAR"` → use FT as the regulation score (already handled).
-  - If provider returns `duration` of `EXTRA_TIME` / `PENALTY_SHOOTOUT` and `goals[]` is available → sum only goals with `minute <= 90` (plus stoppage) per side to derive regulation score.
-  - Otherwise flag the match as `needs_manual_settlement` (audit_log entry + surface in Admin > Predictions filter) so it doesn't silently sit PENDING.
+**Server helper** — `src/lib/ufc-odds.server.ts`: new `runUfcAutoSettle()` that:
+- Loads scheduled fights past commence_time with an `apimma_fight_id`.
+- Batches MMA feed calls by date (reuse `fetchFightsByDate`), matches on `apimma_fight_id`.
+- Skips fights already `winner IS NOT NULL`.
+- Calls the new RPC per finished fight.
+- Returns `{ checked, settledFights, settledBets }`.
 
-Also settle the `to_qualify` market independently of regulation score whenever `qualifier` is set — it doesn't depend on 90-minute goals.
+**Cron hook** — extend `src/routes/api/public/hooks/ufc-odds-live.ts` to invoke `runUfcAutoSettle()` after `runUfcOddsSync()`. No new cron entry needed.
 
-### 3. Verify
-- After backfill, confirm all 25 Norway vs England predictions move out of PENDING (won/lost/void) and wallets are credited.
-- Confirm audit_log entries exist for each settlement.
-- Add a quick admin query (or extend existing Predictions page) to list any finished matches with pending bets → prevents this from being noticed only by users.
+**Admin visibility** — no UI change required; the Predictions page already shows UFC bets and their status will now flip from PENDING → WON/LOST/VOID automatically for winner markets. Admin still uses the Settle button for method/round markets.
 
-## Technical notes
+## Files touched
 
-- File: `src/lib/sync.server.ts` — extend the regulation-score derivation and split `to_qualify` settlement out of the score-null guard.
-- File: `src/lib/settlement.server.ts` — ensure `to_qualify` can be settled when only `qualifier` is known (may already work; verify).
-- Backfill can run as a one-off server function callable from Admin, or as a psql-safe migration invocation — I'll wire it as a `createServerFn` triggered from Admin > Matches to keep it repeatable for future knockouts.
-- No schema changes required for the fix; optional `needs_manual_settlement` boolean can be added later if we want an explicit flag rather than a computed view.
+- `supabase/migrations/<timestamp>_ufc_auto_settle_winner.sql` (new RPC + grants)
+- `src/lib/ufc-odds.server.ts` (add `runUfcAutoSettle`)
+- `src/routes/api/public/hooks/ufc-odds-live.ts` (call auto-settle after odds sync)
+
+No frontend changes.

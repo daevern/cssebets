@@ -962,3 +962,94 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
 
   return { ok: true, fights: targets.length, markets: totalMarkets };
 }
+
+// ---------------------------------------------------------------------------
+// Auto-settle winner markets (moneyline + three_way) from the MMA feed.
+//
+// API-Sports MMA exposes `winner: boolean` on each fighter for finished fights
+// (status.short in {FT, AFT}) but does NOT expose method-of-victory or
+// finishing round. So this pass only settles winner-based markets; method /
+// round / total_rounds / distance / handicap bets stay open for admin to
+// finalise via the existing Settle button.
+// ---------------------------------------------------------------------------
+export type UfcAutoSettleResult = {
+  ok: boolean;
+  checked: number;
+  settledFights: number;
+  settledBets: number;
+  error?: string;
+};
+
+export async function runUfcAutoSettle(): Promise<UfcAutoSettleResult> {
+  const nowIso = new Date().toISOString();
+  const { data: fights, error } = await (supabaseAdmin as any)
+    .from("ufc_fights")
+    .select("id, apimma_fight_id, apimma_fighter_a_id, apimma_fighter_b_id, commence_time, status, winner")
+    .eq("status", "scheduled")
+    .is("winner", null)
+    .not("apimma_fight_id", "is", null)
+    .lt("commence_time", nowIso);
+  if (error) return { ok: false, checked: 0, settledFights: 0, settledBets: 0, error: error.message };
+
+  const rows = (fights ?? []) as Array<any>;
+  if (rows.length === 0) return { ok: true, checked: 0, settledFights: 0, settledBets: 0 };
+
+  // Batch feed lookups by UTC date (± the commence_time day) to keep the API
+  // quota low: one /fights?date=YYYY-MM-DD call covers every fight that day.
+  const dateSet = new Set<string>();
+  for (const r of rows) {
+    const t = new Date(r.commence_time as string);
+    for (let d = -1; d <= 1; d++) {
+      const dt = new Date(t.getTime() + d * 24 * 60 * 60 * 1000);
+      dateSet.add(dt.toISOString().slice(0, 10));
+    }
+  }
+  const byId = new Map<number, ApiMmaFight>();
+  for (const day of dateSet) {
+    try {
+      const list = await fetchFightsByDate(day);
+      for (const f of list) byId.set(f.id, f);
+    } catch (e) {
+      console.warn("[ufc-auto-settle] fetch failed", day, (e as Error).message);
+    }
+  }
+
+  let settledFights = 0;
+  let settledBets = 0;
+  for (const r of rows) {
+    const feed = byId.get(r.apimma_fight_id as number);
+    if (!feed) continue;
+    if (feed.status.short !== "FT" && feed.status.short !== "AFT") continue;
+
+    const firstId = feed.fighters.first.id;
+    const secondId = feed.fighters.second.id;
+    const aId = r.apimma_fighter_a_id as number | null;
+    const bId = r.apimma_fighter_b_id as number | null;
+    const aWon = aId === firstId ? feed.fighters.first.winner : aId === secondId ? feed.fighters.second.winner : null;
+    const bWon = bId === firstId ? feed.fighters.first.winner : bId === secondId ? feed.fighters.second.winner : null;
+
+    let winner: "a" | "b" | "draw" | null = null;
+    if (aWon === true) winner = "a";
+    else if (bWon === true) winner = "b";
+    else if (aWon === false && bWon === false) winner = "draw";
+    if (!winner) continue;
+
+    try {
+      const { data: n, error: rpcErr } = await (supabaseAdmin as any).rpc("auto_settle_ufc_winner_atomic", {
+        p_fight_id: r.id,
+        p_winner: winner,
+      });
+      if (rpcErr) {
+        console.error("[ufc-auto-settle] rpc error", r.id, rpcErr.message);
+        continue;
+      }
+      settledFights += 1;
+      settledBets += Number(n ?? 0);
+    } catch (e) {
+      console.error("[ufc-auto-settle] rpc threw", r.id, (e as Error).message);
+    }
+  }
+
+  return { ok: true, checked: rows.length, settledFights, settledBets };
+}
+
