@@ -3261,6 +3261,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      auto_settle_ufc_winner_atomic: {
+        Args: { p_fight_id: string; p_winner: string }
+        Returns: number
+      }
       award_referral_milestones: {
         Args: { p_referred_user_id: string }
         Returns: undefined
