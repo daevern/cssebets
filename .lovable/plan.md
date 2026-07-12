@@ -1,47 +1,43 @@
-## Goal
+## Why Norway vs England (and similar knockouts) didn't settle
 
-Bring back Method of Victory as a synthetic market, but keep it tightly anchored to the real bookmaker odds we already ingest, and freeze the market 30 minutes before the fight starts so we never settle on stale/late-moving prices.
+Football-Data returned this QF as `FINISHED` with FT 1-2 (HT 1-1, England advanced on penalties/ET), but with `duration != "REGULAR"` and no `score.regularTime`. Our sync only fills `home_score`/`away_score` when we can be certain those are the 90-minute goals:
 
-## How it works
+```ts
+const homeScore = regHome ?? (duration === "REGULAR" || duration == null ? ftHome : null);
+```
 
-**1. Re-enable synthesis in `src/lib/ufc-odds.server.ts`**
+So both columns stayed NULL, and the settlement branch:
 
-Restore the 6-selection method block (`a_ko_tko`, `a_submission`, `a_decision`, `b_ko_tko`, `b_submission`, `b_decision`) with the same math as before, but recomputed on every odds sync so it tracks the live moneyline + distance market:
+```ts
+if (matchId && status === "finished" && homeScore !== null && awayScore !== null) { ... }
+```
 
-- Read fair win probs `pA`, `pB` from the current moneyline rows we just upserted.
-- Read fair distance prob `pDistance` from the current total_rounds/distance rows.
-- Finish share = `1 - pDistance`, split per fighter by win prob.
-- KO vs Submission split per fighter from `ufc_fighters.ko_w` / `sub_w` (default 70/30).
-- Apply the platform outright margin, persist to `ufc_fight_markets` as `method`, snapshot to `ufc_market_snapshots`.
+was skipped. Auto-settlement will never run for this fixture as-is; every 90-minute market bet stays PENDING. The `to_qualify` market could grade (we have `qualifier = AWAY`) but the current settlement path only runs when both regulation scores are known.
 
-Because the sync runs every 30s during the event window, the synthetic prices always reflect the latest real moneyline/distance state — never more than one sync cycle behind reality.
+## Fix
 
-**2. Freeze the market 30 minutes before walk-out**
+### 1. Backfill this match now
+- Re-fetch this fixture from Football-Data by external_id and inspect `score.regularTime` / `score.duration`.
+- If `regularTime` is present, update the row and call the existing settlement RPC so all 25 pending bets grade.
+- If `regularTime` is genuinely missing, use the HT score + goal timing endpoint (`/matches/{id}` returns `goals[]` with minute) to reconstruct the regulation-time score, then update + settle.
+- Last resort: leave 90-minute markets for admin manual regrade (already available in Admin > Predictions) but immediately settle the `to_qualify` bets using `qualifier = AWAY`.
 
-- In `runUfcOddsSync`, when `commence_time - now <= 30 min`, stop recomputing method rows for that fight and mark existing method rows `is_active = false` (or add a `locked_at` timestamp).
-- In `src/lib/ufc.functions.ts` (bet placement), reject any method bet where `now >= commence_time - 30 min`. Same cutoff enforced server-side so the UI can't be bypassed.
-- In `src/routes/_authenticated/ufc.$fightId.tsx`, hide method tiles (or show them disabled with "Market closed") once inside the 30-min window.
+### 2. Make the sync robust for future knockouts
+Update `src/lib/sync.server.ts` so that when the match is FINISHED and `regularTime` is missing:
+  - If provider returns `score.duration === "REGULAR"` → use FT as the regulation score (already handled).
+  - If provider returns `duration` of `EXTRA_TIME` / `PENALTY_SHOOTOUT` and `goals[]` is available → sum only goals with `minute <= 90` (plus stoppage) per side to derive regulation score.
+  - Otherwise flag the match as `needs_manual_settlement` (audit_log entry + surface in Admin > Predictions filter) so it doesn't silently sit PENDING.
 
-The same 30-min freeze can optionally apply to all synthetic-derived markets; the plan applies it to `method` only unless you want it broader.
+Also settle the `to_qualify` market independently of regulation score whenever `qualifier` is set — it doesn't depend on 90-minute goals.
 
-**3. Transparency (small UI note)**
+### 3. Verify
+- After backfill, confirm all 25 Norway vs England predictions move out of PENDING (won/lost/void) and wallets are credited.
+- Confirm audit_log entries exist for each settlement.
+- Add a quick admin query (or extend existing Predictions page) to list any finished matches with pending bets → prevents this from being noticed only by users.
 
-Add a subtle "Model-derived from live market" label on the Method tab so the market is clearly distinguished from raw bookmaker markets. No visual redesign.
+## Technical notes
 
-**4. Settlement**
-
-No change needed — `settle_ufc_fight_atomic` already resolves method rows by winning slot + finish bucket and refunds on draw/NC.
-
-## What the user sees
-
-- Method of Victory tab returns with 6 tiles on every fight that has moneyline + distance priced.
-- Odds move continuously with the real market up until T-30 min, then lock.
-- After T-30 the tab shows "Market closed" and no new method bets can be placed; existing bets settle normally after the fight.
-
-## Files touched
-
-- `src/lib/ufc-odds.server.ts` — restore synthesis; add 30-min freeze/deactivate.
-- `src/lib/ufc.functions.ts` — server-side cutoff on method bet placement.
-- `src/routes/_authenticated/ufc.$fightId.tsx` — Method tab visibility + "model-derived" label + closed state.
-
-Ready to implement on approval.
+- File: `src/lib/sync.server.ts` — extend the regulation-score derivation and split `to_qualify` settlement out of the score-null guard.
+- File: `src/lib/settlement.server.ts` — ensure `to_qualify` can be settled when only `qualifier` is known (may already work; verify).
+- Backfill can run as a one-off server function callable from Admin, or as a psql-safe migration invocation — I'll wire it as a `createServerFn` triggered from Admin > Matches to keep it repeatable for future knockouts.
+- No schema changes required for the fix; optional `needs_manual_settlement` boolean can be added later if we want an explicit flag rather than a computed view.
