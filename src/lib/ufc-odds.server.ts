@@ -994,23 +994,35 @@ export async function runUfcAutoSettle(): Promise<UfcAutoSettleResult> {
   const rows = (fights ?? []) as Array<any>;
   if (rows.length === 0) return { ok: true, checked: 0, settledFights: 0, settledBets: 0 };
 
-  // Batch feed lookups by UTC date (± the commence_time day) to keep the API
-  // quota low: one /fights?date=YYYY-MM-DD call covers every fight that day.
-  const dateSet = new Set<string>();
+  // Batch feed lookups by UTC date. Try the actual commence date first, then
+  // adjacent dates only if needed for timezone drift. This keeps settlement
+  // from burning quota with three calls every cron tick.
+  const primaryDates = new Set<string>();
+  const fallbackDates = new Set<string>();
   for (const r of rows) {
     const t = new Date(r.commence_time as string);
+    primaryDates.add(t.toISOString().slice(0, 10));
     for (let d = -1; d <= 1; d++) {
       const dt = new Date(t.getTime() + d * 24 * 60 * 60 * 1000);
-      dateSet.add(dt.toISOString().slice(0, 10));
+      fallbackDates.add(dt.toISOString().slice(0, 10));
     }
   }
   const byId = new Map<number, ApiMmaFight>();
-  for (const day of dateSet) {
+  const fetchDate = async (day: string) => {
     try {
       const list = await fetchFightsByDate(day);
       for (const f of list) byId.set(f.id, f);
     } catch (e) {
       console.warn("[ufc-auto-settle] fetch failed", day, (e as Error).message);
+    }
+  };
+  for (const day of primaryDates) await fetchDate(day);
+  const missingAfterPrimary = rows.some((r) => !byId.has(r.apimma_fight_id as number));
+  if (missingAfterPrimary) {
+    for (const day of fallbackDates) {
+      if (primaryDates.has(day)) continue;
+      await fetchDate(day);
+      if (rows.every((r) => byId.has(r.apimma_fight_id as number))) break;
     }
   }
 
