@@ -1,18 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Cron target: fires every 30s during event windows. runUfcOddsSync early-exits
-// cheaply when outside the ±12h event window, so cost off fight-night is ~zero.
-// After the odds pass we run runUfcAutoSettle which flips moneyline/three_way
-// bets from PENDING → WON/LOST as soon as the MMA feed reports a finished
-// fight. Method/round bets stay open for admin to finalise.
+// Cron target: fires every 30s during event windows. Once fights have started,
+// settlement gets feed quota priority over odds refreshes so finished fights can
+// pay out promptly.
 export const Route = createFileRoute("/api/public/hooks/ufc-odds-live")({
   server: {
     handlers: {
       POST: async () => {
         try {
           const { runUfcOddsSync, runUfcAutoSettle } = await import("@/lib/ufc-odds.server");
-          const odds = await runUfcOddsSync();
           const settle = await runUfcAutoSettle();
+          const odds = settle.checked > 0
+            ? { ok: true, skipped: "settlement check in progress" }
+            : await runUfcOddsSync();
           return new Response(JSON.stringify({ odds, settle }), {
             headers: { "content-type": "application/json" },
           });
