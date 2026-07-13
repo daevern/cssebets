@@ -3246,6 +3246,7 @@ export type Database = {
           p_market: string
           p_match_id: string
           p_odds: number
+          p_outcome?: string
           p_user_id: string
         }
         Returns: undefined
