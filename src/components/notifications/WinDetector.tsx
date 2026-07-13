@@ -115,7 +115,34 @@ export function WinDetector() {
     }
   }
 
+  // PROMO: force the celebratory ticket for a specific account so they can
+  // screenshot it for Instagram. Mock fixture (Norway vs England, DRAW @ 3.88)
+  // matches the promo stake/payout override inside WinTicketModal.
+  const PROMO_USER_ID = "ba37e352-b4bf-4fb1-a15c-11b11a3b4cb1";
+  const [promoOpen, setPromoOpen] = useState(false);
+  useEffect(() => {
+    if (user?.id === PROMO_USER_ID) setPromoOpen(true);
+  }, [user?.id]);
+
+  if (user?.id === PROMO_USER_ID && !forced && !data) {
+    const promoTicket: WinTicketData = {
+      id: "promo-ticket-0001",
+      matchLabel: "Norway vs England",
+      homeTeam: "Norway",
+      awayTeam: "England",
+      marketLabel: "result",
+      selectionLabel: "DRAW",
+      odds: 3.88,
+      stake: 1000,
+      gross: 3880,
+      profit: 2880,
+      settledAt: new Date().toISOString(),
+    };
+    return <WinTicketModal open={promoOpen} onOpenChange={setPromoOpen} data={promoTicket} />;
+  }
+
   const ticket = toTicket(forced ?? data);
 
   return <WinTicketModal open={open} onOpenChange={handleOpenChange} data={ticket} />;
 }
+
