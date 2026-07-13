@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Users view own audit" ON public.audit_log;
