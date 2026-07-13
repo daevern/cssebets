@@ -147,6 +147,7 @@ export const submitPrediction = createServerFn({ method: "POST" })
       if (msg.includes("MAX_SINGLE_BET_PAYOUT")) throw new Error("Potential return exceeds the per-bet limit.");
       if (msg.includes("MAX_OUTCOME_LIABILITY") || msg.includes("MAX_MATCH_LIABILITY")) throw new Error("This selection is temporarily limited due to platform risk controls.");
       if (msg.includes("CORRECT_SCORE_OTHER_LIMIT")) throw new Error("This selection is temporarily limited due to platform risk controls.");
+      if (msg.includes("DUPLICATE_SELECTION")) throw new Error("You already have a pending bet on this selection.");
       if (msg.includes("DUPLICATE_REQUEST")) throw new Error("Duplicate bet detected. Please refresh and try again.");
       if (msg.includes("USER_MATCH_STAKE_EXCEEDED")) throw new Error("You've reached your maximum stake on this match.");
       if (msg.includes("USER_MATCH_PAYOUT_EXCEEDED")) throw new Error("You've reached your maximum potential return on this match.");
