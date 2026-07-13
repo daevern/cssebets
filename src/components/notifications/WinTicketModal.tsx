@@ -114,23 +114,31 @@ export function WinTicketModal({
 
                     <div className="border-t border-dashed border-[var(--color-surface-border)]" />
 
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">Stake</div>
-                        <div className="font-mono font-semibold tabular-nums">{data.stake.toFixed(2)}</div>
-                      </div>
-                      <div>
-                        <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">Odds</div>
-                        <div className="font-mono font-semibold tabular-nums">{data.odds.toFixed(2)}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">Payout</div>
-                        <div className="font-mono text-lg font-bold leading-tight tabular-nums text-[var(--color-neon)]">
-                          {data.gross.toFixed(2)}
+                    {/* PROMO DISPLAY OVERRIDE — hardcoded stake/payout for Instagram screenshot. Backend values are untouched. */}
+                    {(() => {
+                      const promoStake = 1000;
+                      const promoGross = 3880;
+                      const promoProfit = promoGross - promoStake;
+                      return (
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">Stake</div>
+                            <div className="font-mono font-semibold tabular-nums">{promoStake.toFixed(2)}</div>
+                          </div>
+                          <div>
+                            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">Odds</div>
+                            <div className="font-mono font-semibold tabular-nums">{data.odds.toFixed(2)}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">Payout</div>
+                            <div className="font-mono text-lg font-bold leading-tight tabular-nums text-[var(--color-neon)]">
+                              {promoGross.toFixed(2)}
+                            </div>
+                            <div className="text-[10px] tabular-nums text-[var(--color-ink-muted)]">+{promoProfit.toFixed(2)} profit</div>
+                          </div>
                         </div>
-                        <div className="text-[10px] tabular-nums text-[var(--color-ink-muted)]">+{data.profit.toFixed(2)} profit</div>
-                      </div>
-                    </div>
+                      );
+                    })()}
 
                     <div className="flex items-center justify-between gap-2 border-t border-dashed border-[var(--color-surface-border)] pt-3">
                       <span className="rounded-full border border-[var(--color-neon)]/60 bg-[var(--color-neon)]/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">
