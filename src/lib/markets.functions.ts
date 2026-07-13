@@ -165,6 +165,7 @@ export const placeMarketBet = createServerFn({ method: "POST" })
       if (msg.includes("MAX_OUTCOME_LIABILITY") || msg.includes("MAX_MATCH_LIABILITY") || msg.includes("CORRECT_SCORE_OTHER_LIMIT")) {
         throw new Error("This selection is temporarily limited due to platform risk controls.");
       }
+      if (msg.includes("DUPLICATE_SELECTION")) throw new Error("You already have a pending bet on this selection.");
       if (msg.includes("DUPLICATE_REQUEST")) throw new Error("Duplicate submit detected — please try again.");
       if (msg.includes("MAX_STAKE_EXCEEDED")) throw new Error("Stake exceeds per-bet maximum.");
       if (msg.includes("MAX_PAYOUT_EXCEEDED")) {
