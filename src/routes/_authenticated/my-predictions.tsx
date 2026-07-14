@@ -311,9 +311,15 @@ function PredictionRow({ p }: { p: any }) {
             <div className="font-mono font-semibold tabular-nums">{oddsN.toFixed(2)}</div>
           </div>
           <div className="text-right">
-            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">Potential</div>
-            <div className="font-mono font-bold text-[var(--color-neon)] text-lg leading-tight tabular-nums">{payout}</div>
-            <div className="text-[10px] text-[var(--color-ink-muted)] tabular-nums">+{profit} profit</div>
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">
+              {p.free_bet_id ? "Wins Pay" : "Potential"}
+            </div>
+            <div className="font-mono font-bold text-[var(--color-neon)] text-lg leading-tight tabular-nums">
+              {p.free_bet_id ? `+${profit}` : payout}
+            </div>
+            <div className="text-[10px] text-[var(--color-ink-muted)] tabular-nums">
+              {p.free_bet_id ? "profit only · stake returns to house" : `+${profit} profit`}
+            </div>
           </div>
         </div>
 
