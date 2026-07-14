@@ -214,7 +214,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     }
 
     return result;
-  }, [data, range, now, isFinished, winningOutcome]);
+  }, [data, range, liveMinutes, now, isFinished, winningOutcome]);
 
 
   const yDomain = useMemo<[number, number]>(() => {
