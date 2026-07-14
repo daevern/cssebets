@@ -229,6 +229,23 @@ export function useNotifications() {
       (preds.data ?? []).forEach((p: any) => list.push(...buildFromPrediction(p)));
       (payouts.data ?? []).forEach((p: any) => list.push(...buildFromPayout(p)));
       (pointReqs.data ?? []).forEach((p: any) => list.push(...buildFromPointRequest(p)));
+
+      // PROMO: pinned synthetic win entry for a specific account so they
+      // can reopen the celebratory ticket anytime from the notifications feed.
+      if (uid === "79b6a2c9-8ed2-45ba-8ef6-c24620a0c410") {
+        list.push({
+          id: "pred:promo-ticket-arg-0001:won",
+          kind: "bet_won",
+          category: "wins",
+          title: "You won",
+          subtitle: "Argentina vs Switzerland · Won 3,250 pts",
+          timestamp: new Date().toISOString(),
+          href: "/notifications?win=promo-ticket-arg-0001",
+          amount: 3250,
+          status: "won",
+        });
+      }
+
       list.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1));
       return list;
     },
