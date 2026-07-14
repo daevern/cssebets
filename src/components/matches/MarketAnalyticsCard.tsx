@@ -58,9 +58,16 @@ function abbrevLabel(label: string): string {
 type Range = "LIVE" | "1D" | "1W" | "1M" | "ALL";
 type ChartRow = Record<string, number | string>;
 const RANGES: Range[] = ["LIVE", "1D", "1W", "1M", "ALL"];
-const LIVE_MINUTE_OPTIONS = [10, 30, 60, 120] as const;
-type LiveMinutes = (typeof LIVE_MINUTE_OPTIONS)[number];
-const DEFAULT_LIVE_MINUTES: LiveMinutes = 30;
+const LIVE_WINDOW_OPTIONS = [
+  { value: 30, label: "30s" },
+  { value: 60, label: "1m" },
+  { value: 600, label: "10m" },
+  { value: 1800, label: "30m" },
+  { value: 3600, label: "60m" },
+  { value: 5400, label: "90m" },
+] as const;
+type LiveWindowSeconds = (typeof LIVE_WINDOW_OPTIONS)[number]["value"];
+const DEFAULT_LIVE_SECONDS: LiveWindowSeconds = 1800;
 const RANGE_MS: Record<Exclude<Range, "LIVE">, number | null> = {
   "1D": 24 * 60 * 60_000,
   "1W": 7 * 24 * 60 * 60_000,
@@ -96,7 +103,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
   const qc = useQueryClient();
   const [market, setMarket] = useState<string | undefined>(undefined);
   const [range, setRange] = useState<Range>("LIVE");
-  const [liveMinutes, setLiveMinutes] = useState<LiveMinutes>(DEFAULT_LIVE_MINUTES);
+  const [liveSeconds, setLiveSeconds] = useState<LiveWindowSeconds>(DEFAULT_LIVE_SECONDS);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const now = useNowTick(1000);
@@ -159,9 +166,9 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     if (!data) return empty;
 
     // Unified time-series build for every range — LIVE uses a user-selected
-    // minute window (10/30/60/120). Real snapshots come from match_odds_snapshots
+    // window (30s/1m/10m/30m/60m/90m). Real snapshots come from match_odds_snapshots
     // (written by the live-odds cron every ~15s during in-play matches). No synthetic points.
-    const windowMs = range === "LIVE" ? liveMinutes * 60_000 : RANGE_MS[range];
+    const windowMs = range === "LIVE" ? liveSeconds * 1000 : RANGE_MS[range];
     const cutoff = windowMs == null ? 0 : now - windowMs;
 
     const filtered: MarketSeries[] = data.series.map((s) => {
@@ -214,7 +221,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     }
 
     return result;
-  }, [data, range, liveMinutes, now, isFinished, winningOutcome]);
+  }, [data, range, liveSeconds, now, isFinished, winningOutcome]);
 
 
   const yDomain = useMemo<[number, number]>(() => {
@@ -341,19 +348,9 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                 dataKey="t"
                 stroke="#ffffff"
                 strokeOpacity={0.15}
-                tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }}
+                tick={false}
                 tickLine={false}
                 axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
-                tickFormatter={(v) => {
-                  const d = new Date(v);
-                  if (range === "LIVE") {
-                    return d.toLocaleTimeString(undefined, { minute: "2-digit", second: "2-digit" });
-                  }
-                  if (range === "1D") {
-                    return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-                  }
-                  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-                }}
                 minTickGap={48}
               />
               <YAxis hide domain={yDomain} width={0} padding={{ top: 0, bottom: 0 }} />
@@ -483,13 +480,13 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
         </div>
         {range === "LIVE" && !isFinished && (
           <div className="mt-2 flex items-center gap-1.5">
-            {LIVE_MINUTE_OPTIONS.map((m) => {
-              const active = m === liveMinutes;
+            {LIVE_WINDOW_OPTIONS.map(({ value, label }) => {
+              const active = value === liveSeconds;
               return (
                 <button
-                  key={m}
+                  key={value}
                   type="button"
-                  onClick={() => setLiveMinutes(m)}
+                  onClick={() => setLiveSeconds(value)}
                   aria-pressed={active}
                   className={`rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums tracking-tight transition-colors ${
                     active
@@ -497,7 +494,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                       : "text-white/50 hover:text-white/80"
                   }`}
                 >
-                  {m}m
+                  {label}
                 </button>
               );
             })}
