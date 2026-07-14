@@ -166,9 +166,9 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     if (!data) return empty;
 
     // Unified time-series build for every range — LIVE uses a user-selected
-    // minute window (10/30/60/120). Real snapshots come from match_odds_snapshots
+    // window (30s/1m/10m/30m/60m/90m). Real snapshots come from match_odds_snapshots
     // (written by the live-odds cron every ~15s during in-play matches). No synthetic points.
-    const windowMs = range === "LIVE" ? liveMinutes * 60_000 : RANGE_MS[range];
+    const windowMs = range === "LIVE" ? liveSeconds * 1000 : RANGE_MS[range];
     const cutoff = windowMs == null ? 0 : now - windowMs;
 
     const filtered: MarketSeries[] = data.series.map((s) => {
@@ -221,7 +221,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     }
 
     return result;
-  }, [data, range, liveMinutes, now, isFinished, winningOutcome]);
+  }, [data, range, liveSeconds, now, isFinished, winningOutcome]);
 
 
   const yDomain = useMemo<[number, number]>(() => {
@@ -490,13 +490,13 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
         </div>
         {range === "LIVE" && !isFinished && (
           <div className="mt-2 flex items-center gap-1.5">
-            {LIVE_MINUTE_OPTIONS.map((m) => {
-              const active = m === liveMinutes;
+            {LIVE_WINDOW_OPTIONS.map(({ value, label }) => {
+              const active = value === liveSeconds;
               return (
                 <button
-                  key={m}
+                  key={value}
                   type="button"
-                  onClick={() => setLiveMinutes(m)}
+                  onClick={() => setLiveSeconds(value)}
                   aria-pressed={active}
                   className={`rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums tracking-tight transition-colors ${
                     active
@@ -504,7 +504,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                       : "text-white/50 hover:text-white/80"
                   }`}
                 >
-                  {m}m
+                  {label}
                 </button>
               );
             })}
