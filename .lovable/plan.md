@@ -1,28 +1,33 @@
-## Why users can currently bet the same market twice
+## Fixes
 
-Two things combined:
+### 1. Live trade tape only shows 8 trades (should show all recent)
 
-1. `platform_settings.max_bets_per_user_per_match` is set to `0` — which the guard treats as "unlimited pending bets per match".
-2. Even when that setting is > 0, the guard only counts total pending bets on a match. It never checked `(market, outcome)`, so a user could stake AWAY twice as long as they stayed under the total cap.
+**Root cause:** In `src/components/matches/LiveTradeTape.tsx`, the normalization loop caps the list at 8 items even when more trades exist:
 
-There is no rule anywhere that says "one bet per market/selection per user per match", so nothing actually changed in code — the safeguard the user expects was never enforced at the DB level.
+```ts
+while (filled.length < 8) {
+  filled.push(list[i % list.length]);
+  i += 1;
+}
+```
 
-## Fix
+If the server returns 14 trades, the loop exits at 8. The intent was "pad up to at least 8 so the scroll column always fills", but it also truncates larger lists.
 
-Add a hard rule: **one pending bet per (user, match, market, outcome)**. Applies to football only (predictions table); UFC is out of scope for this change.
+**Fix:** Change the target from `8` to `Math.max(8, list.length)` so all incoming trades are shown, and shorter lists still pad to fill the column. The server (`getRecentTrades`) already fetches up to 30 trades, so no backend change needed — the France v Spain match's 14 bets will all appear.
 
-### Steps
+### 2. Add minute filter to LIVE range
 
-1. **Migration** — extend `public.assert_betting_allowed` to add, before the existing count check:
-   - `SELECT 1 FROM predictions WHERE user_id = p_user_id AND match_id = p_match_id AND market = p_market::prediction_market AND outcome = p_outcome AND status = 'pending'`
-   - If found, `RAISE EXCEPTION 'DUPLICATE_SELECTION'`.
-   - Requires adding `p_outcome text` parameter to `assert_betting_allowed` and updating the single call site inside `place_bet_atomic` to pass `p_outcome`.
-   - Keep `max_bets_per_user_per_match` behavior unchanged.
+In `src/components/matches/MarketAnalyticsCard.tsx`, when `range === "LIVE"` is selected, render a secondary segmented control below the LIVE/1D/1W/1M/ALL row with options: **10m · 30m · 60m · 120m**.
 
-2. **Server error mapping** in `src/lib/predictions.functions.ts` — map `DUPLICATE_SELECTION` to a user-facing message: "You already have a pending bet on this selection."
+- Add state `liveWindowMin` (default 30m — currently hard-coded 90 seconds is way too short for real fixtures anyway; switching default to 30m is a nicer UX).
+- When `range === "LIVE"`, compute `windowMs = liveWindowMin * 60_000` and use that instead of the constant `LIVE_WINDOW_SECONDS`.
+- Sub-filter row only renders while LIVE is active; styled to match existing range pills.
+- Persist selection in component state (no URL / storage).
 
-### Notes
+### Scope
 
-- Settled/lost/won/void bets are not counted — a user can re-bet the same selection on a future match, or re-bet after a previous one was voided.
-- This does not restrict "different selections in the same market" (e.g. HOME and DRAW on Result), only the exact same market + selection.
-- No UI changes; the existing error toast surface handles the new message.
+Frontend-only, two files touched:
+- `src/components/matches/LiveTradeTape.tsx` — one-line fix.
+- `src/components/matches/MarketAnalyticsCard.tsx` — add live minute-window state + sub-filter UI, replace the `LIVE_WINDOW_SECONDS` constant use.
+
+No server function, DB, or RLS changes.

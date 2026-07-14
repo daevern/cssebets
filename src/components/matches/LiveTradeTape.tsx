@@ -44,10 +44,12 @@ export function LiveTradeTape({ trades, outcomeType, className }: LiveTradeTapeP
       )
       .filter((t) => t.amount > 0);
     if (list.length === 0) return [];
-    // Ensure at least 8 items so the loop always fills the column.
+    // Ensure at least 8 items so the loop always fills the column,
+    // but never truncate when there are more real trades to show.
+    const target = Math.max(8, list.length);
     const filled: typeof list = [];
     let i = 0;
-    while (filled.length < 8) {
+    while (filled.length < target) {
       filled.push(list[i % list.length]);
       i += 1;
     }
