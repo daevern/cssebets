@@ -114,10 +114,11 @@ export function WinTicketModal({
 
                     <div className="border-t border-dashed border-[var(--color-surface-border)]" />
 
-                    {/* PROMO DISPLAY OVERRIDE — hardcoded stake/payout for Instagram screenshot. Backend values are untouched. */}
+                    {/* PROMO DISPLAY OVERRIDE — for promo tickets, use the ticket's own stake/gross so each promo shows correct payout. */}
                     {(() => {
-                      const promoStake = 1000;
-                      const promoGross = 3880;
+                      const isNorwayPromo = data.id === "promo-ticket-0001";
+                      const promoStake = isNorwayPromo ? 1000 : data.stake;
+                      const promoGross = isNorwayPromo ? 3880 : data.gross;
                       const promoProfit = promoGross - promoStake;
                       return (
                         <div className="grid grid-cols-3 gap-2">

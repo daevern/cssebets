@@ -115,13 +115,14 @@ export function WinDetector() {
     }
   }
 
-  // PROMO: force the celebratory ticket for a specific account so they can
-  // screenshot it for Instagram. Mock fixture (Norway vs England, DRAW @ 3.88)
-  // matches the promo stake/payout override inside WinTicketModal.
+  // PROMO: force the celebratory ticket for specific accounts so they can
+  // screenshot it for Instagram. Each promo has a fixed stake/odds/payout
+  // that matches the override inside WinTicketModal (when applicable).
   const PROMO_USER_ID = "ba37e352-b4bf-4fb1-a15c-11b11a3b4cb1";
+  const PROMO_USER_ID_ARG = "79b6a2c9-8ed2-45ba-8ef6-c24620a0c410";
   const [promoOpen, setPromoOpen] = useState(false);
   useEffect(() => {
-    if (user?.id === PROMO_USER_ID) setPromoOpen(true);
+    if (user?.id === PROMO_USER_ID || user?.id === PROMO_USER_ID_ARG) setPromoOpen(true);
   }, [user?.id]);
 
   if (user?.id === PROMO_USER_ID && !forced && !data) {
@@ -136,6 +137,24 @@ export function WinDetector() {
       stake: 1000,
       gross: 3880,
       profit: 2880,
+      settledAt: new Date().toISOString(),
+    };
+    return <WinTicketModal open={promoOpen} onOpenChange={setPromoOpen} data={promoTicket} />;
+  }
+
+  if (user?.id === PROMO_USER_ID_ARG && !forced && !data) {
+    // Correct score 1-1 @ 6.50, stake 800 → payout 5200, profit 4400
+    const promoTicket: WinTicketData = {
+      id: "promo-ticket-arg-0001",
+      matchLabel: "Argentina vs Switzerland",
+      homeTeam: "Argentina",
+      awayTeam: "Switzerland",
+      marketLabel: "correct score",
+      selectionLabel: "1-1",
+      odds: 6.50,
+      stake: 800,
+      gross: 5200,
+      profit: 4400,
       settledAt: new Date().toISOString(),
     };
     return <WinTicketModal open={promoOpen} onOpenChange={setPromoOpen} data={promoTicket} />;
