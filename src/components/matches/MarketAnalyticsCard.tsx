@@ -348,19 +348,9 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
                 dataKey="t"
                 stroke="#ffffff"
                 strokeOpacity={0.15}
-                tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }}
+                tick={false}
                 tickLine={false}
                 axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
-                tickFormatter={(v) => {
-                  const d = new Date(v);
-                  if (range === "LIVE") {
-                    return d.toLocaleTimeString(undefined, { minute: "2-digit", second: "2-digit" });
-                  }
-                  if (range === "1D") {
-                    return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-                  }
-                  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-                }}
                 minTickGap={48}
               />
               <YAxis hide domain={yDomain} width={0} padding={{ top: 0, bottom: 0 }} />
