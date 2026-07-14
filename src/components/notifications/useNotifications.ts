@@ -232,7 +232,10 @@ export function useNotifications() {
 
       // PROMO: pinned synthetic win entry for a specific account so they
       // can reopen the celebratory ticket anytime from the notifications feed.
-      if (uid === "79b6a2c9-8ed2-45ba-8ef6-c24620a0c410") {
+      if (
+        uid === "79b6a2c9-8ed2-45ba-8ef6-c24620a0c410" ||
+        uid === "ba37e352-b4bf-4fb1-a15c-11b11a3b4cb1"
+      ) {
         list.push({
           id: "pred:promo-ticket-arg-0001:won",
           kind: "bet_won",
