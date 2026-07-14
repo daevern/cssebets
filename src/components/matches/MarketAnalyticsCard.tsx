@@ -481,6 +481,28 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
             );
           })}
         </div>
+        {range === "LIVE" && !isFinished && (
+          <div className="mt-2 flex items-center gap-1.5">
+            {LIVE_MINUTE_OPTIONS.map((m) => {
+              const active = m === liveMinutes;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setLiveMinutes(m)}
+                  aria-pressed={active}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums tracking-tight transition-colors ${
+                    active
+                      ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/40"
+                      : "text-white/50 hover:text-white/80"
+                  }`}
+                >
+                  {m}m
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Volume badge below the graph */}
