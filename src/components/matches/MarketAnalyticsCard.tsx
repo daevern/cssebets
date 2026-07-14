@@ -58,9 +58,16 @@ function abbrevLabel(label: string): string {
 type Range = "LIVE" | "1D" | "1W" | "1M" | "ALL";
 type ChartRow = Record<string, number | string>;
 const RANGES: Range[] = ["LIVE", "1D", "1W", "1M", "ALL"];
-const LIVE_MINUTE_OPTIONS = [10, 30, 60, 120] as const;
-type LiveMinutes = (typeof LIVE_MINUTE_OPTIONS)[number];
-const DEFAULT_LIVE_MINUTES: LiveMinutes = 30;
+const LIVE_WINDOW_OPTIONS = [
+  { value: 30, label: "30s" },
+  { value: 60, label: "1m" },
+  { value: 600, label: "10m" },
+  { value: 1800, label: "30m" },
+  { value: 3600, label: "60m" },
+  { value: 5400, label: "90m" },
+] as const;
+type LiveWindowSeconds = (typeof LIVE_WINDOW_OPTIONS)[number]["value"];
+const DEFAULT_LIVE_SECONDS: LiveWindowSeconds = 1800;
 const RANGE_MS: Record<Exclude<Range, "LIVE">, number | null> = {
   "1D": 24 * 60 * 60_000,
   "1W": 7 * 24 * 60 * 60_000,
