@@ -96,6 +96,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
   const qc = useQueryClient();
   const [market, setMarket] = useState<string | undefined>(undefined);
   const [range, setRange] = useState<Range>("LIVE");
+  const [liveMinutes, setLiveMinutes] = useState<LiveMinutes>(DEFAULT_LIVE_MINUTES);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const now = useNowTick(1000);
@@ -157,10 +158,10 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
     const empty = { chartData: [] as ChartRow[], filteredSeries: [] as MarketSeries[], latestByKey: new Map<string, number>() };
     if (!data) return empty;
 
-    // Unified time-series build for every range — LIVE just uses a 90s window.
-    // Real snapshots come from match_odds_snapshots (written by the live-odds
-    // cron every ~15s during in-play matches). No synthetic points.
-    const windowMs = RANGE_MS[range];
+    // Unified time-series build for every range — LIVE uses a user-selected
+    // minute window (10/30/60/120). Real snapshots come from match_odds_snapshots
+    // (written by the live-odds cron every ~15s during in-play matches). No synthetic points.
+    const windowMs = range === "LIVE" ? liveMinutes * 60_000 : RANGE_MS[range];
     const cutoff = windowMs == null ? 0 : now - windowMs;
 
     const filtered: MarketSeries[] = data.series.map((s) => {
