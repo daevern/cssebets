@@ -661,7 +661,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       <div>
         {csSuspended && <div className="mb-2"><SuspendedBadge /></div>}
         <QuestionHeading
-          question="Advanced: What will the final score be?"
+          question="What will the score be?"
           note="Tap multiple scores — each locks its own points stake."
         />
 
