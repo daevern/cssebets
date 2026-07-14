@@ -276,8 +276,15 @@ function PredictionRow({ p }: { p: any }) {
             )}
             <div className="text-[11px] text-[var(--color-ink-muted)] mt-2">{kickoffLabel}</div>
           </div>
-          <div className={`shrink-0 border px-2 py-1 text-[10px] uppercase tracking-[0.22em] font-bold ${statusTone}`}>
-            {p.status}
+          <div className="flex shrink-0 flex-col items-end gap-1">
+            <div className={`border px-2 py-1 text-[10px] uppercase tracking-[0.22em] font-bold ${statusTone}`}>
+              {p.status}
+            </div>
+            {p.free_bet_id ? (
+              <div className="border border-[var(--color-neon)] bg-[var(--color-neon)]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--color-neon)]">
+                Free Bet
+              </div>
+            ) : null}
           </div>
         </div>
 
