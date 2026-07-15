@@ -74,8 +74,22 @@ function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [referralInput, setReferralInput] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    captureReferralFromUrl();
+    const stored = getStoredReferralCode();
+    if (stored) setReferralInput(stored);
+  }, []);
+
+  function resolveReferralCode(): string | null {
+    const typed = normalizeReferralCode(referralInput);
+    if (typed) return typed;
+    const stored = getStoredReferralCode();
+    return stored ? normalizeReferralCode(stored) : null;
+  }
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -83,8 +97,11 @@ function RegisterPage() {
     try {
       if (password.length < 8) throw new Error("Password must be at least 8 characters");
       if (password !== confirm) throw new Error("Passwords do not match");
+      if (referralInput.trim() && !normalizeReferralCode(referralInput)) {
+        throw new Error("Referral code must be 4–12 letters/numbers");
+      }
       await checkAuthRateLimit({ data: { email } });
-      const refCode = getStoredReferralCode();
+      const refCode = resolveReferralCode();
       const { data: signUp, error } = await supabase.auth.signUp({
         email,
         password,
