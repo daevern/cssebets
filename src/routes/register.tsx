@@ -313,6 +313,24 @@ function RegisterPage() {
                 </Field>
               </div>
 
+              <Field
+                label="Referral code"
+                htmlFor="referral"
+                hint="Have a friend's code? Enter it — you both get rewarded."
+              >
+                <Input
+                  id="referral"
+                  value={referralInput}
+                  onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
+                  placeholder="Optional · e.g. 9W928VQ"
+                  maxLength={12}
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className={inputClass}
+                />
+              </Field>
+
               <button
                 type="submit"
                 disabled={loading}
