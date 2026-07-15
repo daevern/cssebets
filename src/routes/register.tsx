@@ -1,14 +1,26 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { checkAuthRateLimit } from "@/lib/rate-limit.functions";
 import { notifyAdminsOfRegistration } from "@/lib/notifications.functions";
-import { getStoredReferralCode, clearStoredReferralCode } from "@/lib/referral-code";
+import {
+  captureReferralFromUrl,
+  getStoredReferralCode,
+  clearStoredReferralCode,
+} from "@/lib/referral-code";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CsseAppIcon, CsseWordmark, BrandText } from "@/components/brand/CsseMark";
 import { ArrowRight, Radio, ShieldCheck, Trophy, Users } from "lucide-react";
+
+const REFERRAL_CODE_RE = /^[A-Z0-9]{4,12}$/;
+
+function normalizeReferralCode(input: string): string | null {
+  const code = input.trim().toUpperCase();
+  if (!code) return null;
+  return REFERRAL_CODE_RE.test(code) ? code : null;
+}
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -62,8 +74,22 @@ function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [referralInput, setReferralInput] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    captureReferralFromUrl();
+    const stored = getStoredReferralCode();
+    if (stored) setReferralInput(stored);
+  }, []);
+
+  function resolveReferralCode(): string | null {
+    const typed = normalizeReferralCode(referralInput);
+    if (typed) return typed;
+    const stored = getStoredReferralCode();
+    return stored ? normalizeReferralCode(stored) : null;
+  }
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -71,8 +97,11 @@ function RegisterPage() {
     try {
       if (password.length < 8) throw new Error("Password must be at least 8 characters");
       if (password !== confirm) throw new Error("Passwords do not match");
+      if (referralInput.trim() && !normalizeReferralCode(referralInput)) {
+        throw new Error("Referral code must be 4–12 letters/numbers");
+      }
       await checkAuthRateLimit({ data: { email } });
-      const refCode = getStoredReferralCode();
+      const refCode = resolveReferralCode();
       const { data: signUp, error } = await supabase.auth.signUp({
         email,
         password,
@@ -107,9 +136,12 @@ function RegisterPage() {
         throw new Error("Phone must be in international format, e.g. +60123456789");
       if (password.length < 8) throw new Error("Password must be at least 8 characters");
       if (password !== confirm) throw new Error("Passwords do not match");
+      if (referralInput.trim() && !normalizeReferralCode(referralInput)) {
+        throw new Error("Referral code must be 4–12 letters/numbers");
+      }
       const syntheticEmail = phoneToSyntheticEmail(p);
       await checkAuthRateLimit({ data: { phone: p } });
-      const refCode = getStoredReferralCode();
+      const refCode = resolveReferralCode();
       const { data: signUp, error } = await supabase.auth.signUp({
         email: syntheticEmail,
         password,
@@ -280,6 +312,24 @@ function RegisterPage() {
                   />
                 </Field>
               </div>
+
+              <Field
+                label="Referral code"
+                htmlFor="referral"
+                hint="Have a friend's code? Enter it — you both get rewarded."
+              >
+                <Input
+                  id="referral"
+                  value={referralInput}
+                  onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
+                  placeholder="Optional · e.g. 9W928VQ"
+                  maxLength={12}
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className={inputClass}
+                />
+              </Field>
 
               <button
                 type="submit"
