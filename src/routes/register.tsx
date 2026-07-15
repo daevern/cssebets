@@ -1,14 +1,26 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { checkAuthRateLimit } from "@/lib/rate-limit.functions";
 import { notifyAdminsOfRegistration } from "@/lib/notifications.functions";
-import { getStoredReferralCode, clearStoredReferralCode } from "@/lib/referral-code";
+import {
+  captureReferralFromUrl,
+  getStoredReferralCode,
+  clearStoredReferralCode,
+} from "@/lib/referral-code";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CsseAppIcon, CsseWordmark, BrandText } from "@/components/brand/CsseMark";
 import { ArrowRight, Radio, ShieldCheck, Trophy, Users } from "lucide-react";
+
+const REFERRAL_CODE_RE = /^[A-Z0-9]{4,12}$/;
+
+function normalizeReferralCode(input: string): string | null {
+  const code = input.trim().toUpperCase();
+  if (!code) return null;
+  return REFERRAL_CODE_RE.test(code) ? code : null;
+}
 
 export const Route = createFileRoute("/register")({
   head: () => ({
