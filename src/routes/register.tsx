@@ -136,9 +136,12 @@ function RegisterPage() {
         throw new Error("Phone must be in international format, e.g. +60123456789");
       if (password.length < 8) throw new Error("Password must be at least 8 characters");
       if (password !== confirm) throw new Error("Passwords do not match");
+      if (referralInput.trim() && !normalizeReferralCode(referralInput)) {
+        throw new Error("Referral code must be 4–12 letters/numbers");
+      }
       const syntheticEmail = phoneToSyntheticEmail(p);
       await checkAuthRateLimit({ data: { phone: p } });
-      const refCode = getStoredReferralCode();
+      const refCode = resolveReferralCode();
       const { data: signUp, error } = await supabase.auth.signUp({
         email: syntheticEmail,
         password,
