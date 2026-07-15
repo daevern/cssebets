@@ -1,33 +1,74 @@
-## Fixes
 
-### 1. Live trade tape only shows 8 trades (should show all recent)
+## Accounting audit — current state
 
-**Root cause:** In `src/components/matches/LiveTradeTape.tsx`, the normalization loop caps the list at 8 items even when more trades exist:
+**Test user identified:** `daevernganendrah31@gmail.com` → user_id `79b6a2c9-8ed2-45ba-8ef6-c24620a0c410`
 
-```ts
-while (filled.length < 8) {
-  filled.push(list[i % list.length]);
-  i += 1;
-}
-```
+### Test user footprint (to be removed)
 
-If the server returns 14 trades, the loop exits at 8. The intent was "pad up to at least 8 so the scroll column always fills", but it also truncates larger lists.
+| Table | Rows | Notes |
+|---|---|---|
+| `predictions` | 81 | 45 non-sim (9 won, 11 lost, 36 void, 1 pending), 24 sim |
+| `ufc_bets` | 2 | 1 won (15.10 payout), 1 void |
+| `wallet_transactions` | 179 | credit/debit/refund history |
+| `wallets` | 1 | balance 1,502.33 (flagged sim) |
+| `payout_requests` | 8 | 6 completed (615.67), 1 uploaded (100), 1 rejected (125) |
+| `point_requests` | 7 | totalling 3,550 pts |
 
-**Fix:** Change the target from `8` to `Math.max(8, list.length)` so all incoming trades are shown, and shorter lists still pad to fill the column. The server (`getRecentTrades`) already fetches up to 30 trades, so no backend change needed — the France v Spain match's 14 bets will all appear.
+### Realized house PnL — everything else
 
-### 2. Add minute filter to LIVE range
+Excludes the test user and any `is_simulation = true` rows.
 
-In `src/components/matches/MarketAnalyticsCard.tsx`, when `range === "LIVE"` is selected, render a secondary segmented control below the LIVE/1D/1W/1M/ALL row with options: **10m · 30m · 60m · 120m**.
+**Football predictions (settled)**
+- Won: 141 tickets, stakes 13,108.33 → paid out 32,050.01
+- Lost: 385 tickets, stakes 22,499.58 → paid out 0
+- Void: 45 tickets, stakes 788.80 → refunded 788.80 (PnL neutral)
+- Stakes collected: **36,396.71** · Payouts paid: **32,838.81**
+- **House PnL: +3,557.90 pts**
 
-- Add state `liveWindowMin` (default 30m — currently hard-coded 90 seconds is way too short for real fixtures anyway; switching default to 30m is a nicer UX).
-- When `range === "LIVE"`, compute `windowMs = liveWindowMin * 60_000` and use that instead of the constant `LIVE_WINDOW_SECONDS`.
-- Sub-filter row only renders while LIVE is active; styled to match existing range pills.
-- Persist selection in component state (no URL / storage).
+**UFC bets (settled)**
+- Won: 3 tickets, stakes 140.80 → paid 358.71
+- Lost: 1 ticket, stake 10.00
+- **House PnL: −207.91 pts**
 
-### Scope
+**Combined realized house PnL: +3,349.99 pts**
 
-Frontend-only, two files touched:
-- `src/components/matches/LiveTradeTape.tsx` — one-line fix.
-- `src/components/matches/MarketAnalyticsCard.tsx` — add live minute-window state + sub-filter UI, replace the `LIVE_WINDOW_SECONDS` constant use.
+Open liability from non-test, non-sim pending tickets: **0** (nothing outstanding).
 
-No server function, DB, or RLS changes.
+### Bankroll reconciliation
+
+`platform_bankroll` (live) currently shows:
+- balance 57,465.00 · stakes_collected 39,451.71 · payouts_paid 30,678.31 (recorded PnL 8,773.40)
+
+Those totals include the test user's activity (stakes 3,055.00, payouts ~3,347 across football + UFC) plus what looks like a seeded opening balance. After the cleanup the totals will be restated from the surviving settled rows.
+
+---
+
+## What I'll do (build mode)
+
+1. **Purge test user data** (in this order to satisfy FKs):
+   - `wallet_transactions` where `user_id = <test>`
+   - `payout_requests`, `point_requests` where `user_id = <test>`
+   - `ufc_bets` where `user_id = <test>`
+   - `predictions` where `user_id = <test>` (also removes rows from `market_odds_snapshots`/`match_pool_transactions` only if they cascade; otherwise deleted by prediction_id where present)
+   - `match_pool_transactions` rows tied to those predictions/bets
+   - `wallets` row for the test user
+   - `profiles` row for the test user
+   - `user_roles` rows for the test user
+   - `auth.users` row is left alone (managed by Supabase); email can be nulled from `profiles` only. If you want the auth row deleted too, say so and I'll use the admin API in a one-off server fn.
+
+2. **Restate `platform_bankroll` (kind = 'live')** from surviving rows:
+   - `total_stakes_collected` = 36,396.71
+   - `total_payouts_paid` = 32,838.81
+   - `balance` adjusted by `−(test_user_net_contribution)` so the opening seed is preserved. I'll compute the exact delta from the deleted wallet_transactions bankroll debits/credits and apply it in the same transaction.
+
+3. **Report back** a final ledger:
+   - Stakes collected, payouts paid, realized PnL, open liability, restated bankroll balance.
+
+### Technical notes
+
+- All deletes and the bankroll restatement run in a single `supabase--insert` transaction so a failure rolls the whole thing back.
+- No schema changes, no RLS changes, no code changes.
+- Simulation rows (`is_simulation = true`) are left untouched for everyone — they never touched the live bankroll.
+- If any FK blocks a delete I'll surface the row and ask before force-cascading.
+
+Approve and I'll execute.
