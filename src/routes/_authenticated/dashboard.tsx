@@ -288,8 +288,6 @@ function HomePage() {
   );
 }
 
-/* Locked sport category grid — shared with landing */
-import { SportCategoryGrid } from "@/components/SportCategoryGrid";
 
 /* ------------ Subs bench SVG (empty state) ------------ */
 function SubsBench(props: SVGProps<SVGSVGElement>) {
