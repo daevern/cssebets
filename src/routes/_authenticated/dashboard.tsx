@@ -155,7 +155,7 @@ function HomePage() {
   const isTbd = (s: string | null | undefined) =>
     !s || String(s).trim().toUpperCase() === "TBD";
 
-  const { featured, trending } = useMemo(() => {
+  const { featured } = useMemo(() => {
     const arr = (data ?? []).filter(
       (m) =>
         !isTbd(m.home_team) &&
@@ -167,10 +167,7 @@ function HomePage() {
       .filter((m) => m.status !== "finished" && new Date(m.kickoff_at).getTime() > now)
       .sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime());
     const featured = upcoming[0] ?? live[0] ?? null;
-    const trending = [...live, ...upcoming.slice(0, 6)]
-      .filter((m) => m.id !== featured?.id)
-      .slice(0, 8);
-    return { featured, trending };
+    return { featured };
   }, [data, now]);
 
   const displayName =
