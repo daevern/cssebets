@@ -311,18 +311,26 @@ function SportCategoryGrid() {
       {SPORT_CATEGORIES.map((s) => (
         <div
           key={s.key}
-          className="relative overflow-hidden rounded-xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-3"
+          className="relative overflow-hidden rounded-xl border border-[var(--neon)]/30 bg-[var(--surface-2)] p-3 shadow-[0_0_0_1px_rgba(34,224,107,0.06),0_0_18px_-8px_rgba(34,224,107,0.35)]"
         >
-          <div className="pointer-events-none absolute inset-0 bg-[var(--surface)]/40 backdrop-blur-[1px]" />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(90% 55% at 50% 0%, rgba(34,224,107,0.10), transparent 65%)",
+            }}
+          />
+          <div className="pointer-events-none absolute inset-0 bg-[var(--surface)]/30 backdrop-blur-[1px]" />
           <div className="relative flex items-center gap-2">
             <img
               src={s.logo}
               alt={`${s.label} logo`}
-              className="h-7 w-7 rounded object-contain bg-white/90 p-0.5"
+              className="h-8 w-8 rounded-md object-contain bg-white/95 p-1"
               loading="lazy"
             />
             <span className="text-[13px] font-bold tracking-tight text-[var(--ink)]">{s.label}</span>
-            <Lock className="ml-auto h-3.5 w-3.5 text-[var(--ink-muted)]" />
+            <Lock className="ml-auto h-3.5 w-3.5 text-[var(--neon)]/70" />
           </div>
           {"leagues" in s && s.leagues ? (
             <div className="relative mt-3 flex flex-wrap items-center gap-1.5">
@@ -332,15 +340,13 @@ function SportCategoryGrid() {
                   src={l.src}
                   alt={`${l.name} logo`}
                   title={l.name}
-                  className="h-5 w-5 rounded bg-white/90 object-contain p-0.5"
+                  className="h-6 w-6 rounded bg-white/95 object-contain p-1"
                   loading="lazy"
                 />
               ))}
             </div>
           ) : (
-            <div className="relative mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--ink-muted)]">
-              Coming soon
-            </div>
+            <div className="relative mt-3 h-6" />
           )}
         </div>
       ))}
