@@ -186,19 +186,13 @@ function HomePage() {
       </header>
 
 
-      {/* Upcoming Fixtures — locked sport categories */}
+      {/* Coming soon — locked sport categories */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
-            Upcoming Fixtures
+            Coming soon
           </h2>
-          <Link
-            to="/matches"
-            className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]"
-          >
-            View all <ChevronRight className="h-3 w-3" />
-          </Link>
         </div>
         <SportCategoryGrid />
       </section>
@@ -206,13 +200,16 @@ function HomePage() {
       {/* Next fixture — single card matching matches/markets style */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
-              Next Fixture
-            </h2>
-            
-          </div>
+          <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+            Next Fixture
+          </h2>
+          <Link
+            to="/matches"
+            className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]"
+          >
+            View all <ChevronRight className="h-3 w-3" />
+          </Link>
         </div>
         {featured ? (
           <FeaturedMarketCard match={featured} now={now} />
