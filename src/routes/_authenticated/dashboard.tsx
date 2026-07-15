@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { SVGProps } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, ChevronRight, Ticket, TrendingUp } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Lock, Ticket, TrendingUp } from "lucide-react";
 import { PageFooter } from "@/components/ui/page-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
@@ -155,7 +155,7 @@ function HomePage() {
   const isTbd = (s: string | null | undefined) =>
     !s || String(s).trim().toUpperCase() === "TBD";
 
-  const { featured, trending } = useMemo(() => {
+  const { featured } = useMemo(() => {
     const arr = (data ?? []).filter(
       (m) =>
         !isTbd(m.home_team) &&
@@ -167,10 +167,7 @@ function HomePage() {
       .filter((m) => m.status !== "finished" && new Date(m.kickoff_at).getTime() > now)
       .sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime());
     const featured = upcoming[0] ?? live[0] ?? null;
-    const trending = [...live, ...upcoming.slice(0, 6)]
-      .filter((m) => m.id !== featured?.id)
-      .slice(0, 8);
-    return { featured, trending };
+    return { featured };
   }, [data, now]);
 
   const displayName =
@@ -200,31 +197,22 @@ function HomePage() {
         <ArrowUpRight className="h-4 w-4" />
       </Link>
 
-      {/* Upcoming Fixtures — small chip strip */}
-      {trending.length > 0 && (
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
-                <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
-                Upcoming Fixtures
-              </h2>
-              
-            </div>
-            <Link
-              to="/matches"
-              className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]"
-            >
-              View all <ChevronRight className="h-3 w-3" />
-            </Link>
-          </div>
-          <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {trending.map((m) => (
-              <TrendingChip key={m.id} match={m} now={now} />
-            ))}
-          </div>
-        </section>
-      )}
+      {/* Upcoming Fixtures — locked sport categories */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+            Upcoming Fixtures
+          </h2>
+          <Link
+            to="/matches"
+            className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]"
+          >
+            View all <ChevronRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <SportCategoryGrid />
+      </section>
 
       {/* Next fixture — single card matching matches/markets style */}
       <section className="space-y-3">
@@ -309,6 +297,67 @@ function HomePage() {
       
 
       <PageFooter />
+    </div>
+  );
+}
+
+/* ------------ Locked sport category grid ------------ */
+const SPORT_CATEGORIES = [
+  {
+    key: "football",
+    label: "Football",
+    logo: "https://www.google.com/s2/favicons?domain=fifa.com&sz=128",
+    leagues: [
+      { name: "Premier League", src: "https://www.google.com/s2/favicons?domain=premierleague.com&sz=128" },
+      { name: "La Liga", src: "https://www.google.com/s2/favicons?domain=laliga.com&sz=128" },
+      { name: "Serie A", src: "https://www.google.com/s2/favicons?domain=legaseriea.it&sz=128" },
+      { name: "Champions League", src: "https://www.google.com/s2/favicons?domain=uefa.com&sz=128" },
+    ],
+  },
+  { key: "f1", label: "Formula 1", logo: "https://www.google.com/s2/favicons?domain=formula1.com&sz=128" },
+  { key: "ufc", label: "UFC", logo: "https://www.google.com/s2/favicons?domain=ufc.com&sz=128" },
+  { key: "nba", label: "NBA", logo: "https://www.google.com/s2/favicons?domain=nba.com&sz=128" },
+] as const;
+
+function SportCategoryGrid() {
+  return (
+    <div className="grid grid-cols-2 gap-2.5">
+      {SPORT_CATEGORIES.map((s) => (
+        <div
+          key={s.key}
+          className="relative overflow-hidden rounded-xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-3"
+        >
+          <div className="pointer-events-none absolute inset-0 bg-[var(--surface)]/40 backdrop-blur-[1px]" />
+          <div className="relative flex items-center gap-2">
+            <img
+              src={s.logo}
+              alt={`${s.label} logo`}
+              className="h-7 w-7 rounded object-contain bg-white/90 p-0.5"
+              loading="lazy"
+            />
+            <span className="text-[13px] font-bold tracking-tight text-[var(--ink)]">{s.label}</span>
+            <Lock className="ml-auto h-3.5 w-3.5 text-[var(--ink-muted)]" />
+          </div>
+          {"leagues" in s && s.leagues ? (
+            <div className="relative mt-3 flex flex-wrap items-center gap-1.5">
+              {s.leagues.map((l) => (
+                <img
+                  key={l.name}
+                  src={l.src}
+                  alt={`${l.name} logo`}
+                  title={l.name}
+                  className="h-5 w-5 rounded bg-white/90 object-contain p-0.5"
+                  loading="lazy"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="relative mt-3 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--ink-muted)]">
+              Coming soon
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
