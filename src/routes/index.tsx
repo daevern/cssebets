@@ -171,7 +171,10 @@ function LandingPage() {
         </div>
       </header>
 
+      <CategoryRail />
+
       <main className="mx-auto w-full min-w-0 max-w-3xl overflow-x-hidden px-4 pb-28 pt-5 md:pb-14">
+
 
 
 
