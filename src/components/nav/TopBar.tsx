@@ -3,6 +3,8 @@ import { Bell, User, Home, LineChart, Activity, Coins, Headphones } from "lucide
 import { CsseLogo } from "@/components/brand/CsseMark";
 import { TokenChip } from "@/components/engagement/TokenVault";
 import { WalletChip } from "@/components/wallet/WalletCard";
+import { CategoryRail } from "@/components/nav/CategoryRail";
+
 
 const DESKTOP_NAV = [
   { to: "/dashboard", label: "Home", icon: Home, exact: true },
