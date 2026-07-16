@@ -32,7 +32,10 @@ export function TopBar({
       <MobileBar balance={balance} loading={loading} />
       {/* Desktop layout — spacious, inline primary nav */}
       <DesktopBar balance={balance} loading={loading} />
+      {/* Kalshi-style category ribbon under the top nav */}
+      <CategoryRail />
     </header>
+
   );
 }
 
