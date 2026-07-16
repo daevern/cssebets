@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { useAuth } from "@/hooks/use-auth";
-import { SportCategoryGrid } from "@/components/SportCategoryGrid";
+
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
