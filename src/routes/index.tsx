@@ -170,12 +170,16 @@ function LandingPage() {
       </header>
 
       <main className="mx-auto w-full min-w-0 max-w-3xl overflow-x-hidden px-4 pb-28 pt-5 md:pb-14">
-        {/* Coming soon — locked sport categories */}
-        <section className="mb-5 space-y-3">
-          <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
-            Coming soon
-          </h2>
+        {/* Expanding markets — locked sport categories */}
+        <section className="mb-6 space-y-2.5">
+          <div className="flex items-baseline justify-between">
+            <h2 className="text-[15px] font-semibold tracking-tight text-[var(--ink)]">
+              Expanding markets
+            </h2>
+            <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+              Coming soon
+            </span>
+          </div>
           <SportCategoryGrid />
         </section>
 
