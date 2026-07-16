@@ -45,7 +45,10 @@ export function CategoryRail() {
         className="pointer-events-none absolute right-0 top-0 bottom-0 z-10 w-10 bg-gradient-to-l from-[var(--surface)] to-transparent"
       />
 
-      <div className="scrollbar-none flex h-full items-center gap-1 overflow-x-auto px-4 sm:px-6 md:px-8">
+      <div
+        className="flex h-full items-center gap-1 overflow-x-auto px-4 sm:px-6 md:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+
         {CATEGORIES.map((c) => {
           const active = isActive(c);
           const base =
