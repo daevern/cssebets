@@ -9,6 +9,7 @@ type Category = {
 };
 
 const CATEGORIES: Category[] = [
+  { key: "world-cup-2026", label: "World Cup 2026", to: "/matches" },
   { key: "premier-league", label: "Premier League", soon: true },
   { key: "la-liga", label: "La Liga", soon: true },
   { key: "serie-a", label: "Serie A", soon: true },
