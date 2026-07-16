@@ -282,12 +282,12 @@ function StakeSlip({
 
       <div className="flex gap-2">
         <input
-          type="number"
+          type="text"
           inputMode="numeric"
-          min={MIN_STAKE}
-          max={MAX_STAKE}
+          pattern="[0-9]*"
+          autoComplete="off"
           value={stake}
-          onChange={(e) => setStake(e.target.value)}
+          onChange={(e) => setStake(e.target.value.replace(/\D/g, ""))}
           disabled={noBalance}
           placeholder={`Points (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
           className="flex-1 min-w-0 rounded-md border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-base font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:opacity-40 disabled:cursor-not-allowed"

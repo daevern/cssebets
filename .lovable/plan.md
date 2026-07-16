@@ -1,26 +1,38 @@
-## Change
+## Problem
 
-Raise referral signup bonus from **25 → 50 CSSE**, and backfill everyone already attributed via a referral who hasn't received the bonus yet.
+In `src/components/matches/MarketTabs.tsx`, the `StakeSlip` stake field uses `<input type="number" min={10} max={...}>`. On mobile (mainly Android Chrome), deleting the last digit or typing after an empty value causes the on-screen keyboard to hide and reappear. This is a bug, not intentional.
 
-## Steps
+Root causes:
+1. `type="number"` + `min` — emptying the field makes it "invalid", browser dismisses the numeric IME; refocus on next tap reopens it.
+2. `sticky` positioning on the slip — soft keyboard resize shifts the sticky element, which can steal focus on some Android builds.
 
-1. **Migration — update `handle_new_user`**
-   - Change the `csse_credit_tokens(..., 25, ...)` call to `50`.
-   - Keep the guard (`v_referral_id IS NOT NULL`) so bonus only fires when a `referrals` row is actually inserted.
-   - Keep audit reason `referral_signup_bonus_awarded`.
+## Fix (frontend only, `src/components/matches/MarketTabs.tsx`)
 
-2. **Data backfill (via insert tool, not migration)**
-   - Find every user in `referrals` (referred_user_id) who does NOT already have a `csse_token_transactions` row with `reason = 'referral_signup_bonus'`.
-   - For each, call `csse_credit_tokens(referred_user_id, 50, 'earn', 'referral_signup_bonus', referral_id::text, jsonb_build_object('referrer_user_id', referrer_user_id, 'backfill', true))`.
-   - Insert `audit_log` entry `referral_signup_bonus_backfilled` per user.
-   - This includes `mabb1337` (previously credited 25) — top up by 25 to bring him to 50, OR skip if already credited. **Decision: skip already-credited users** (mabb1337 keeps his 25 — simplest and avoids double-award edge cases). If you want mabb1337 topped up to 50 as well, say so and I'll add a 25-token top-up for him specifically.
+Scoped to the `StakeSlip` input at ~lines 284–294. No other files, no backend changes.
 
-## Files touched
+1. **Swap input type to text with numeric IME.**
+   - `type="text"` (was `type="number"`)
+   - Keep `inputMode="numeric"` and add `pattern="[0-9]*"` (iOS numeric keypad)
+   - Add `autoComplete="off"`
+   - Remove HTML `min` / `max` attributes (JS `stakeError()` already validates)
 
-- New migration: update `public.handle_new_user` (25 → 50).
-- Data-only SQL via insert tool: backfill 50 CSSE for referred users missing the bonus + audit rows.
+2. **Sanitize onChange to digits only** so pasting/typing non-numerics doesn't sneak through now that `type="number"` is gone:
+   - `onChange={(e) => setStake(e.target.value.replace(/\D/g, ""))}`
+   - Allow the value to be an empty string while editing (don't coerce to "0"); existing `Number(stake) || 0` logic and `stakeError` already handle empty gracefully — the Place-Bet button stays disabled until value ≥ MIN_STAKE.
+
+3. **No visual/style changes.** Class names, layout, sticky behavior, submit button, return/gain display all stay as-is.
+
+## Why this fixes it
+
+Removing `type="number"` eliminates the browser's built-in numeric-validity check that was dismissing the IME on empty/invalid state. `inputMode="numeric"` + `pattern="[0-9]*"` keeps the same numeric keypad on iOS and Android without the dismissal behavior. Sticky layout stays but is no longer the trigger — the keyboard stops closing on delete/retype, so the sticky reflow issue becomes invisible in practice.
 
 ## Out of scope
 
-- Referrer milestone amounts (unchanged: 50/50/100 at 50/500/1000 wagered).
-- UI copy on `/register` (no amount is shown there today).
+- No change to validation rules, min/max stake, server functions, or the submit flow.
+- Not touching `sticky` positioning (not needed once #1 is fixed).
+- Not touching the Correct Score stake slips separately — they reuse the same `StakeSlip` component, so they're fixed automatically.
+
+## Verification
+
+- On a mobile viewport (or real Android device): open `/matches/:matchId` → pick a selection → focus stake → delete "10" → keyboard stays up → type digits → keyboard stays up.
+- Desktop: input still accepts only digits; Place Bet still disables below min stake and above balance.
