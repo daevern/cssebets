@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Info, Users, LineChart, LifeBuoy } from "lucide-react";
-import { SportCategoryGrid } from "@/components/SportCategoryGrid";
+
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { getLandingData, type LandingNextMatch } from "@/lib/landing.functions";
@@ -170,18 +170,8 @@ function LandingPage() {
       </header>
 
       <main className="mx-auto w-full min-w-0 max-w-3xl overflow-x-hidden px-4 pb-28 pt-5 md:pb-14">
-        {/* Expanding markets — locked sport categories */}
-        <section className="mb-6 space-y-2.5">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-[15px] font-semibold tracking-tight text-[var(--ink)]">
-              Expanding markets
-            </h2>
-            <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-              Coming soon
-            </span>
-          </div>
-          <SportCategoryGrid />
-        </section>
+
+
 
         {/* Fixtures navigator */}
         <section className="space-y-3">

@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { useAuth } from "@/hooks/use-auth";
-import { SportCategoryGrid } from "@/components/SportCategoryGrid";
+
 
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -187,16 +187,8 @@ function HomePage() {
       </header>
 
 
-      {/* Coming soon — locked sport categories */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
-            Coming soon
-          </h2>
-        </div>
-        <SportCategoryGrid />
-      </section>
+
+
 
       {/* Next fixture — single card matching matches/markets style */}
       <section className="space-y-3">
