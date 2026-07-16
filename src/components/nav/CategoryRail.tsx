@@ -9,14 +9,15 @@ type Category = {
 };
 
 const CATEGORIES: Category[] = [
-  { key: "premier-league", label: "Premier League", to: "/matches" },
-  { key: "la-liga", label: "La Liga", to: "/matches" },
-  { key: "serie-a", label: "Serie A", to: "/matches" },
-  { key: "ucl", label: "UCL", to: "/matches" },
+  { key: "premier-league", label: "Premier League", soon: true },
+  { key: "la-liga", label: "La Liga", soon: true },
+  { key: "serie-a", label: "Serie A", soon: true },
+  { key: "ucl", label: "UCL", soon: true },
   { key: "f1", label: "Formula 1", soon: true },
   { key: "ufc", label: "UFC", soon: true },
   { key: "nba", label: "NBA", soon: true },
 ];
+
 
 export function CategoryRail() {
   const { pathname } = useLocation();
