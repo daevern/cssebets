@@ -4,21 +4,32 @@ import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, ChevronRight, Loader2 } from "lucide-react";
 import { listF1Races, getF1Race } from "../f1.functions";
+import { teamFlagUrl } from "@/lib/country-flags";
 
-const COUNTRY_FLAG: Record<string, string> = {
-  Bahrain: "🇧🇭", "Saudi Arabia": "🇸🇦", Australia: "🇦🇺", Japan: "🇯🇵", China: "🇨🇳",
-  USA: "🇺🇸", "United States": "🇺🇸", Miami: "🇺🇸", "Emilia Romagna": "🇮🇹", Italy: "🇮🇹",
-  Monaco: "🇲🇨", Canada: "🇨🇦", Spain: "🇪🇸", Austria: "🇦🇹", "Great Britain": "🇬🇧",
-  UK: "🇬🇧", "United Kingdom": "🇬🇧", Hungary: "🇭🇺", Belgium: "🇧🇪", Netherlands: "🇳🇱",
-  Azerbaijan: "🇦🇿", Singapore: "🇸🇬", Mexico: "🇲🇽", Brazil: "🇧🇷", "Abu Dhabi": "🇦🇪",
-  Qatar: "🇶🇦", "Las Vegas": "🇺🇸", France: "🇫🇷", Germany: "🇩🇪", Portugal: "🇵🇹",
-  Turkey: "🇹🇷", Russia: "🇷🇺",
-};
-
-function flagFor(country?: string | null) {
-  if (!country) return "🏁";
-  return COUNTRY_FLAG[country] ?? "🏁";
+function CountryFlag({ country, size = 20 }: { country?: string | null; size?: number }) {
+  const url = country ? teamFlagUrl(country, 80) : null;
+  if (!url) {
+    return (
+      <span
+        aria-hidden
+        className="inline-grid place-items-center rounded-sm bg-[var(--surface-3)] text-[10px]"
+        style={{ width: size * 1.4, height: size }}
+      >
+        🏁
+      </span>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={country ?? ""}
+      className="inline-block rounded-[2px] object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+      style={{ width: size * 1.4, height: size }}
+      loading="lazy"
+    />
+  );
 }
+
 
 function statusLabel(iso: string, status: string) {
   if (status === "in_progress") return "LIVE";
@@ -95,18 +106,19 @@ export function F1SeasonPage() {
 
   return (
     <div className="flex flex-col gap-8 px-4 pt-5 pb-24 text-[var(--color-ink)]">
-      <header className="space-y-3">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-surface-border)] bg-gradient-to-r from-red-900/40 to-black px-4 py-2 text-xs font-bold text-white">
-          <span className="rounded bg-red-600 px-2 py-0.5 text-[10px]">F1</span>
-          Formula 1 · {season} · Race markets
-        </div>
-        <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight text-[var(--color-ink)] md:text-4xl">
-          Race-by-race markets
-        </h1>
-        <p className="text-sm text-[var(--color-ink-muted)]">
-          Predict every Grand Prix. Odds move with the paddock — lock in your call until lights out.
-        </p>
+      <header className="space-y-2">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-1.5 text-xs font-semibold tracking-tight text-[var(--color-ink-muted)]"
+        >
+          <Link to="/matches" className="hover:text-[var(--color-ink)]">Sports</Link>
+          <ChevronRight className="h-3 w-3 opacity-60" />
+          <span className="text-[var(--color-ink)]">F1</span>
+          <ChevronRight className="h-3 w-3 opacity-60" />
+          <span className="text-[var(--color-ink-muted)]">{season}</span>
+        </nav>
       </header>
+
 
       {upcoming.length > 0 && (
         <section className="space-y-3">
@@ -194,7 +206,7 @@ function RaceChip({ race }: { race: RaceRow }) {
       style={{ width: 184 }}
     >
       <div className="flex items-center gap-1.5">
-        <span className="text-xl leading-none">{flagFor(race.country)}</span>
+        <CountryFlag country={race.country} size={14} />
         <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
           R{race.round}
         </span>
@@ -268,7 +280,7 @@ function FeaturedRaceCard({ race }: { race: RaceRow }) {
         </div>
 
         <div className="mt-3 flex items-start gap-3">
-          <span className="text-4xl leading-none">{flagFor(race.country)}</span>
+          <CountryFlag country={race.country} size={28} />
           <div className="min-w-0">
             <div className="font-display text-lg font-bold leading-tight text-[var(--color-ink)]">{race.name}</div>
             <div className="text-xs text-[var(--color-ink-muted)] truncate">{race.circuit}</div>

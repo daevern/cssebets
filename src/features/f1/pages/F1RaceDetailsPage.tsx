@@ -12,6 +12,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Customized,
 } from "recharts";
 import { getF1Race, placeF1RaceBet, getF1MarketHistories } from "../f1.functions";
 import { getMyWallet } from "@/lib/wallet.functions";
@@ -116,16 +117,19 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stake, setStake] = useState<string>("100");
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setSubTab(topTab === "top_finishers" ? "race_winner" : "head_to_head");
     setSelectedId(null);
     setHidden({});
+    setActiveIndex(null);
   }, [topTab]);
 
   useEffect(() => {
     setSelectedId(null);
     setHidden({});
+    setActiveIndex(null);
   }, [subTab]);
 
   const race: any = q.data?.race;
@@ -171,32 +175,39 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     [chartMarkets, driverByKey],
   );
 
-  const chartData = useMemo(() => {
+  // Build per-series points restricted to the selected range, then merge onto shared timeline.
+  const { chartData, yDomain } = useMemo(() => {
     const byMarket = chartQ.data?.byMarket ?? {};
-    // Build per-market anchored series
     const now = Date.now();
-    const start = now - RANGE_HOURS[range] * 3600_000;
+    const windowMs = RANGE_HOURS[range] * 3600_000;
+
     const perSeries: Record<string, { t: number; y: number }[]> = {};
     for (const s of seriesMeta) {
-      const raw = byMarket[s.id] ?? [];
-      const points = raw.map((p: any) => ({
-        t: new Date(p.snapshot_at).getTime(),
-        y: oddsToPct(Number(p.odds)),
-      }));
-      if (points.length === 0) {
-        perSeries[s.id] = [
-          { t: start, y: s.currentPct },
-          { t: now, y: s.currentPct },
-        ];
-      } else {
-        perSeries[s.id] = [...points, { t: now, y: s.currentPct }];
-      }
+      const raw = (byMarket[s.id] ?? [])
+        .map((p: any) => ({ t: new Date(p.snapshot_at).getTime(), y: oddsToPct(Number(p.odds)) }))
+        .sort((a: any, b: any) => a.t - b.t);
+
+      const cutoff = range === "ALL" ? -Infinity : now - windowMs;
+      const inWin = raw.filter((p) => p.t >= cutoff);
+
+      // Anchor at cutoff with the last-known value before the window so the line doesn't jump in.
+      const before = raw.filter((p) => p.t < cutoff).at(-1);
+      const anchor = range !== "ALL" && before ? [{ t: cutoff, y: before.y }] : [];
+
+      // Always end at "now" with the latest observed value (or current price if no history at all).
+      const latest = inWin.at(-1) ?? before ?? { t: now, y: s.currentPct };
+      const tail = { t: now, y: latest.y };
+
+      const merged = [...anchor, ...inWin];
+      if (merged.length === 0) merged.push({ t: cutoff === -Infinity ? now - 3600_000 : cutoff, y: s.currentPct });
+      if (merged[merged.length - 1].t < now) merged.push(tail);
+      perSeries[s.id] = merged;
     }
-    // Merge onto a single timeline
+
+    // Merge on a shared timeline with forward-fill.
     const times = new Set<number>();
     for (const arr of Object.values(perSeries)) for (const p of arr) times.add(p.t);
     const sortedT = [...times].sort((a, b) => a - b);
-    // Forward-fill per series
     const cursors: Record<string, number> = {};
     const last: Record<string, number> = {};
     const rows: Record<string, number | string>[] = [];
@@ -214,10 +225,40 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       }
       rows.push(row);
     }
-    return rows;
+
+    // y domain padded around the visible values so movement reads clearly.
+    const values: number[] = [];
+    for (const r of rows) for (const s of seriesMeta) {
+      const v = r[s.key];
+      if (typeof v === "number" && Number.isFinite(v)) values.push(v);
+    }
+    let domain: [number, number] = [0, 100];
+    if (values.length) {
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const spread = Math.max(max - min, 4);
+      const pad = spread * 0.35;
+      domain = [Math.max(0, Math.floor(min - pad)), Math.min(100, Math.ceil(max + pad))];
+    }
+    return { chartData: rows, yDomain: domain };
   }, [chartQ.data, seriesMeta, range]);
 
   const visibleSeries = seriesMeta.filter((s) => !hidden[s.id]);
+  const scrubIdx = activeIndex != null ? activeIndex : Math.max(0, chartData.length - 1);
+  const splitData = useMemo(() => {
+    return chartData.map((row, i) => {
+      const out: Record<string, number | string> = { t: row.t as number };
+      for (const s of seriesMeta) {
+        const v = row[s.key];
+        if (typeof v === "number") {
+          if (i <= scrubIdx) out[`${s.key}__a`] = v;
+          if (i >= scrubIdx) out[`${s.key}__d`] = v;
+        }
+      }
+      return out;
+    });
+  }, [chartData, seriesMeta, scrubIdx]);
+
 
   const placeMut = useMutation({
     mutationFn: async () => {
@@ -328,7 +369,16 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 12, right: 40, bottom: 8, left: 0 }}>
+              <LineChart
+                data={splitData}
+                margin={{ top: 12, right: 84, bottom: 8, left: 0 }}
+                onMouseMove={(state: any) => {
+                  if (state && typeof state.activeTooltipIndex === "number") {
+                    setActiveIndex(state.activeTooltipIndex);
+                  }
+                }}
+                onMouseLeave={() => setActiveIndex(null)}
+              >
                 <CartesianGrid strokeDasharray="3 6" stroke="#ffffff" strokeOpacity={0.28} vertical={false} />
                 <XAxis
                   dataKey="t"
@@ -337,17 +387,35 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
                   tick={false}
                   tickLine={false}
                   axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
+                  minTickGap={48}
                 />
-                <YAxis hide domain={[0, "auto"]} />
+                <YAxis hide domain={yDomain} width={0} padding={{ top: 0, bottom: 0 }} />
                 <Tooltip
                   content={() => null}
                   cursor={{ stroke: "rgba(255,255,255,0.28)", strokeWidth: 1, strokeDasharray: "3 4" }}
                 />
                 {visibleSeries.map((s) => (
                   <Line
-                    key={s.id}
+                    key={`${s.id}-dim`}
                     type="linear"
-                    dataKey={s.key}
+                    dataKey={`${s.key}__d`}
+                    stroke={s.color}
+                    strokeOpacity={0.22}
+                    strokeWidth={2.25}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    dot={false}
+                    activeDot={false}
+                    isAnimationActive={false}
+                    connectNulls
+                  />
+                ))}
+                {visibleSeries.map((s) => (
+                  <Line
+                    key={`${s.id}-active`}
+                    type="linear"
+                    dataKey={`${s.key}__a`}
+                    name={s.label}
                     stroke={s.color}
                     strokeWidth={2.25}
                     strokeLinecap="round"
@@ -358,30 +426,87 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
                     connectNulls
                   />
                 ))}
+                <Customized
+                  component={(cprops: any) => {
+                    const yAxis = Object.values(cprops.yAxisMap ?? {})[0] as any;
+                    const yScale = yAxis?.scale;
+                    const offset = cprops.offset ?? { left: 0, top: 0, width: 0, height: 0 };
+                    if (!yScale || !chartData.length) return null;
+                    const idx = activeIndex != null ? activeIndex : chartData.length - 1;
+                    const row = chartData[idx];
+                    if (!row) return null;
+                    const rightX = offset.left + offset.width;
+                    return (
+                      <g>
+                        {visibleSeries.map((s) => {
+                          const raw = row[s.key];
+                          const v = typeof raw === "number" ? raw : Number(raw);
+                          if (!Number.isFinite(v)) return null;
+                          const y = yScale(v);
+                          const xAxis = Object.values(cprops.xAxisMap ?? {})[0] as any;
+                          const xScale = xAxis?.scale;
+                          const cx = xScale ? xScale(row.t) : rightX;
+                          return (
+                            <g key={`ep-${s.id}`}>
+                              <circle cx={cx} cy={y} r={4.5} fill={s.color} />
+                              <circle cx={cx} cy={y} r={9} fill={s.color} opacity={0.18} />
+                              <text
+                                x={rightX + 6}
+                                y={y - 4}
+                                fill={s.color}
+                                fontSize={13}
+                                fontWeight={800}
+                                style={{ letterSpacing: "0.02em" }}
+                              >
+                                {s.short}
+                              </text>
+                              <text
+                                x={rightX + 6}
+                                y={y + 12}
+                                fill={s.color}
+                                fontSize={15}
+                                fontWeight={800}
+                                style={{ letterSpacing: "-0.01em" }}
+                              >
+                                {`${Math.round(v)}%`}
+                              </text>
+                            </g>
+                          );
+                        })}
+                      </g>
+                    );
+                  }}
+                />
               </LineChart>
             </ResponsiveContainer>
           )}
         </div>
+
+        {/* Range selector — spans the chart width, aligned with the x-axis */}
+        <div className="mt-2 w-full pl-4 pr-[84px] md:pl-6">
+          <div className="flex items-center justify-between">
+            {(Object.keys(RANGE_HOURS) as Range[]).map((r) => {
+              const active = r === range;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRange(r)}
+                  aria-pressed={active}
+                  className={`inline-flex items-center gap-1.5 text-[12px] font-medium tracking-tight transition-colors ${
+                    active ? "text-white" : "text-white/50 hover:text-white/80"
+                  }`}
+                >
+                  {r}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
-      {/* Timeframe */}
-      <div className="mb-4 flex items-center justify-end border-b border-[var(--color-surface-border)]/60 pb-3 pt-2">
-        <div className="flex items-center gap-4 text-xs font-semibold">
-          {(Object.keys(RANGE_HOURS) as Range[]).map((r) => (
-            <button
-              key={r}
-              onClick={() => setRange(r)}
-              className={
-                range === r
-                  ? "text-[var(--color-ink)]"
-                  : "text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)]"
-              }
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div className="mb-4 mt-3 h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
+
 
       {/* Top tabs */}
       <div className="mb-4 flex items-baseline gap-6">

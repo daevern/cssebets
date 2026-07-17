@@ -25,6 +25,10 @@ const NAME_TO_ISO2: Record<string, string> = {
   uzbekistan: "UZ", vietnam: "VN", "cape verde": "CV", "cabo verde": "CV",
   "curacao": "CW", "haiti": "HT", "el salvador": "SV", guatemala: "GT",
   "trinidad and tobago": "TT", bolivia: "BO",
+  // F1-specific race hosts / labels
+  bahrain: "BH", monaco: "MC", azerbaijan: "AZ", "abu dhabi": "AE",
+  "great britain": "GB", "united kingdom": "GB", uk: "GB",
+  "emilia romagna": "IT", miami: "US", "las vegas": "US",
 };
 
 const SUBDIVISION_FLAGS: Record<string, string> = {
