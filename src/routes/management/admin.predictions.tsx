@@ -63,10 +63,12 @@ function AdminPredictionsPage() {
   });
 
   const voidMut = useMutation({
-    mutationFn: async (row: any) =>
-      row.sport === "ufc"
+    mutationFn: async (row: any) => {
+      if (row.sport === "f1") throw new Error("F1 void not supported yet");
+      return row.sport === "ufc"
         ? voidUfcFn({ data: { betId: row.id, reason } })
-        : voidFn({ data: { predictionId: row.id, reason } }),
+        : voidFn({ data: { predictionId: row.id, reason } });
+    },
     onSuccess: () => {
       toast.success("Voided & refunded");
       qc.invalidateQueries({ queryKey: ["admin-predictions"] });
@@ -75,10 +77,12 @@ function AdminPredictionsPage() {
   });
 
   const regradeMut = useMutation({
-    mutationFn: async (v: { row: any; newStatus: string }) =>
-      v.row.sport === "ufc"
+    mutationFn: async (v: { row: any; newStatus: string }) => {
+      if (v.row.sport === "f1") throw new Error("F1 regrade not supported yet");
+      return v.row.sport === "ufc"
         ? regradeUfcFn({ data: { betId: v.row.id, newStatus: v.newStatus as any, reason } })
-        : regradeFn({ data: { predictionId: v.row.id, newStatus: v.newStatus as any, reason } }),
+        : regradeFn({ data: { predictionId: v.row.id, newStatus: v.newStatus as any, reason } });
+    },
     onSuccess: (r: any) => {
       const delta = Number(r?.delta ?? 0);
       toast.success(`Regraded · wallet delta ${delta >= 0 ? "+" : ""}${delta.toFixed(2)}`);
@@ -86,6 +90,7 @@ function AdminPredictionsPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const filtered = (q.data?.predictions ?? []).filter((p: any) => !flaggedOnly || p.flagged_for_review);
 
