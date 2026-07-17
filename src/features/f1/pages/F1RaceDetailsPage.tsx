@@ -704,8 +704,8 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
                     {isConstructor ? "Constructor" : (drvTeam?.name ?? "")}
                   </div>
                 </div>
-                <div className="tabular-nums text-lg font-bold text-[var(--color-ink)]">
-                  {pct >= 10 ? Math.round(pct) : pct.toFixed(1)}%
+                <div className="font-display tabular-nums text-lg font-bold text-[var(--color-neon)]">
+                  {Number(m.odds).toFixed(2)}<span className="text-sm">x</span>
                 </div>
               </button>
             );
