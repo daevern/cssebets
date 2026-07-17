@@ -16,7 +16,12 @@ import {
   buildChampionshipOdds,
 } from "./f1OddsBuilder.server";
 
-const CURRENT_SEASON = new Date().getUTCFullYear();
+// NOTE: Do NOT read `new Date()` at module scope — on Cloudflare Workers the
+// clock is frozen at module init (returns 1970) until the first request runs.
+function currentSeason() {
+  return new Date().getUTCFullYear();
+}
+
 
 async function isRunInFlight(task: string, minutes = 10) {
   const cutoff = new Date(Date.now() - minutes * 60_000).toISOString();
