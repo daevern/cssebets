@@ -4229,6 +4229,18 @@ export type Database = {
         }
         Returns: string
       }
+      place_sports_bet_atomic: {
+        Args: {
+          p_event_id: string
+          p_idempotency_key?: string
+          p_market_id: string
+          p_max_odds: number
+          p_selection_id: string
+          p_stake: number
+          p_user_id: string
+        }
+        Returns: string
+      }
       place_ufc_bet_atomic: {
         Args: {
           p_fight_id: string
@@ -4412,6 +4424,18 @@ export type Database = {
           p_match_id: string
         }
         Returns: number
+      }
+      settle_sports_market_atomic: {
+        Args: {
+          p_market_id: string
+          p_run_id?: string
+          p_void?: boolean
+          p_winning_selection_ids: string[]
+        }
+        Returns: {
+          bets_updated: number
+          total_payout: number
+        }[]
       }
       settle_to_qualify_for_match: {
         Args: { p_match_id: string; p_qualifier: string }
