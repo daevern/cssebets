@@ -159,7 +159,8 @@ export async function syncF1DriversAndTeams(seasonPref = CURRENT_SEASON) {
 }
 
 // ---- Build markets for upcoming races ----
-export async function syncF1Odds(season = CURRENT_SEASON) {
+export async function syncF1Odds(seasonPref = CURRENT_SEASON) {
+  const season = await resolveActiveSeason(seasonPref);
   const start = Date.now();
   const run = await startRun("odds");
   if (run.skipped) return { ok: true, skipped: "already running" };
