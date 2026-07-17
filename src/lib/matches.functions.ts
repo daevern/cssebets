@@ -36,6 +36,7 @@ export const listMatchesForUsers = createServerFn({ method: "GET" })
       .from("matches")
       .select("id, home_team, away_team, kickoff_at, status, home_score, away_score, stage, group_name, reference_odds, odds_updated_at, odds_source, is_simulation, odds_status, suspended_markets, manual_override")
       .or("is_simulation.is.null,is_simulation.eq.false")
+      .ilike("stage", "FIFA World Cup%")
       .order("kickoff_at", { ascending: true });
     if (error) throw new Error(error.message);
     return ((data ?? []) as any[]).map(({ is_simulation: _is, ...rest }: any) => rest);
