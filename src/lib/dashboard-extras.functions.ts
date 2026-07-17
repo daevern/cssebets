@@ -1,5 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 
+export type NextRaceDriver = {
+  driver_key: string;
+  name: string;
+  abbr: string | null;
+  team: string | null;
+  photo_url: string | null;
+  odds: number;
+  pct: number;
+};
+
 export type NextF1Race = {
   id: string;
   name: string;
@@ -8,7 +18,9 @@ export type NextF1Race = {
   starts_at: string;
   round: number | null;
   season: number | null;
+  topDrivers: NextRaceDriver[];
 } | null;
+
 
 export type NextUfcFight = {
   id: string;
@@ -49,6 +61,52 @@ export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler
     ]);
 
     const race = raceRes?.data ?? null;
+
+    let topDrivers: NextRaceDriver[] = [];
+    if (race) {
+      const { data: winnerMarkets } = await (supabaseAdmin as any)
+        .from("f1_race_markets")
+        .select("selection_key, odds, status")
+        .eq("race_id", race.id)
+        .eq("market_type", "race_winner")
+        .eq("status", "open")
+        .order("odds", { ascending: true })
+        .limit(3);
+      const keys = (winnerMarkets ?? []).map((m: any) => m.selection_key);
+      let driversByKey: Record<string, { name: string; abbr: string | null; team_key: string | null; photo_url: string | null }> = {};
+      let teamsByKey: Record<string, string> = {};
+      if (keys.length) {
+        const { data: drivers } = await (supabaseAdmin as any)
+          .from("f1_drivers")
+          .select("driver_key, name, abbr, team_key, photo_url")
+          .in("driver_key", keys);
+        for (const d of drivers ?? []) driversByKey[d.driver_key] = d;
+        const teamKeys = Array.from(new Set((drivers ?? []).map((d: any) => d.team_key).filter(Boolean)));
+        if (teamKeys.length) {
+          const { data: teams } = await (supabaseAdmin as any)
+            .from("f1_constructors")
+            .select("team_key, name")
+            .in("team_key", teamKeys);
+          for (const t of teams ?? []) teamsByKey[t.team_key] = t.name;
+        }
+      }
+      const invSum = (winnerMarkets ?? []).reduce((s: number, m: any) => s + 1 / Number(m.odds), 0);
+      topDrivers = (winnerMarkets ?? []).map((m: any) => {
+        const d = driversByKey[m.selection_key];
+        const odds = Number(m.odds);
+        const pct = invSum > 0 ? Math.round((1 / odds / invSum) * 100) : 0;
+        return {
+          driver_key: m.selection_key,
+          name: d?.name ?? m.selection_key,
+          abbr: d?.abbr ?? null,
+          team: d?.team_key ? teamsByKey[d.team_key] ?? null : null,
+          photo_url: d?.photo_url ?? null,
+          odds,
+          pct,
+        };
+      });
+    }
+
 
     let fight: NextUfcFight = null;
     const event = eventRes?.data ?? null;
@@ -101,6 +159,7 @@ export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler
             starts_at: race.starts_at,
             round: race.round ?? null,
             season: race.season ?? null,
+            topDrivers,
           }
         : null,
       nextFight: fight,
