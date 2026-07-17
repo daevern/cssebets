@@ -115,9 +115,15 @@ export async function syncMatchOddsApiFootball(matchId: string): Promise<SyncRes
 
   const resolved = await resolveFixtureId(match);
   if (!resolved.fixtureId) {
+    const status =
+      resolved.note === "daily quota exhausted"
+        ? "quota_exhausted"
+        : resolved.note === "per-minute rate limit"
+          ? "rate_limited"
+          : "no_fixture";
     return {
       matchId,
-      status: resolved.note === "daily quota exhausted" ? "quota_exhausted" : "no_fixture",
+      status,
       quotaSpent: resolved.quotaSpent,
       note: resolved.note,
     };
@@ -127,7 +133,7 @@ export async function syncMatchOddsApiFootball(matchId: string): Promise<SyncRes
   if ("skipped" in oddsRes) {
     return {
       matchId,
-      status: "quota_exhausted",
+      status: oddsRes.reason === "per-minute rate limit" ? "rate_limited" : "quota_exhausted",
       quotaSpent: resolved.quotaSpent,
       note: oddsRes.reason,
       quotaRemaining: oddsRes.quota.remaining,
