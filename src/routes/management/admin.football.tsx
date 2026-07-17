@@ -141,8 +141,6 @@ function AdminFootballPage() {
           >
             {runSettle.isPending ? "Settling…" : "Settle finished events"}
           </button>
-        </div>
-      </section>
           <button
             type="button"
             disabled={runSuspend.isPending}
