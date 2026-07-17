@@ -205,7 +205,7 @@ function RaceChip({ race }: { race: RaceRow }) {
       style={{ width: 184 }}
     >
       <div className="flex items-center gap-1.5">
-        <CountryFlag country={race.country} size={14} />
+        <CountryFlag country={race.country} w={22} h={14} />
         <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
           R{race.round}
         </span>
