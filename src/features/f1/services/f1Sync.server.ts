@@ -64,47 +64,38 @@ function keyify(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 }
 
-// Try requested season, then fall back up to 3 previous seasons if the
-// provider has no data yet (common early in the year on free tiers).
-async function fetchF1RacesWithFallback(seasonPref: number) {
-  for (let s = seasonPref; s >= seasonPref - 3; s--) {
-    const races = await fetchF1Races(s);
-    if (races && races.length > 0) return { season: s, races };
-  }
-  return { season: seasonPref, races: [] as Awaited<ReturnType<typeof fetchF1Races>> };
-}
-
 // ---- Sync races ----
 export async function syncF1Races(seasonPref = currentSeason()) {
   const start = Date.now();
   const run = await startRun("races");
   if (run.skipped) return { ok: true, skipped: "already running" };
   try {
-    const { season, races } = await fetchF1RacesWithFallback(seasonPref);
-    const grandsPrix = races.filter((r) => r.type?.toLowerCase() === "race");
-    const usingFallback = season !== seasonPref;
-    // When the provider hasn't published the requested season yet, shift the
-    // historical calendar forward so users see a "live" schedule and markets.
-    const yearShiftMs = usingFallback ? (seasonPref - season) * 365.25 * 24 * 3600 * 1000 : 0;
+    const season = seasonPref;
+    const races = await fetchF1Races(season);
+    const grandsPrix = races
+      .filter((r) => r.type?.toLowerCase() === "race")
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     let n = 0;
-    for (const r of grandsPrix) {
+    for (const [index, r] of grandsPrix.entries()) {
       const race_key = `${season}-r${r.id}`;
-      const originalDate = new Date(r.date);
-      const shiftedDate = new Date(originalDate.getTime() + yearShiftMs);
       const rawStatus = r.status?.toLowerCase() ?? "";
-      const status = usingFallback
-        ? (shiftedDate.getTime() < Date.now() - 3 * 3600_000 ? "finished" : "scheduled")
-        : rawStatus.includes("finished") ? "finished" : rawStatus.includes("progress") ? "in_progress" : "scheduled";
+      const status = rawStatus.includes("completed") || rawStatus.includes("finished")
+        ? "finished"
+        : rawStatus.includes("cancel")
+          ? "cancelled"
+          : rawStatus.includes("progress") || rawStatus.includes("live")
+            ? "in_progress"
+            : "scheduled";
       await (supabaseAdmin as any).from("f1_races").upsert(
         {
           race_key,
           provider_id: r.id,
-          season: usingFallback ? seasonPref : season,
-          round: (races.filter((x) => x.competition.id === r.competition.id && x.type?.toLowerCase() === "race" && x.date <= r.date).length),
+          season,
+          round: index + 1,
           name: r.competition.name,
           circuit: r.circuit?.name ?? null,
           country: r.competition.location?.country ?? null,
-          starts_at: shiftedDate.toISOString(),
+          starts_at: new Date(r.date).toISOString(),
           status,
         },
         { onConflict: "race_key" },
@@ -116,8 +107,8 @@ export async function syncF1Races(seasonPref = currentSeason()) {
       { year: season, name: `Formula 1 ${season}`, is_active: true },
       { onConflict: "year" },
     );
-    await finishRun(run.id, "ok", { records: n, meta: { seasonUsed: season }, durationMs: Date.now() - start });
-    return { ok: true, races: n, seasonUsed: season };
+    await finishRun(run.id, "ok", { records: n, meta: { seasonUsed: season, providerRows: races.length }, durationMs: Date.now() - start });
+    return { ok: true, races: n, seasonUsed: season, providerRows: races.length };
   } catch (e: any) {
     await finishRun(run.id, "error", { error: e.message, durationMs: Date.now() - start });
     throw e;
@@ -212,7 +203,7 @@ export async function syncF1Odds(seasonPref = currentSeason()) {
     const { data: races } = await (supabaseAdmin as any)
       .from("f1_races")
       .select("id, race_key, name, starts_at, status, provider_id, season")
-      .neq("status", "finished")
+      .in("status", ["scheduled", "in_progress"])
       .order("starts_at", { ascending: true });
 
     // Active drivers

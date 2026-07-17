@@ -63,10 +63,11 @@ function TopContenders({ raceId }: { raceId: string }) {
 export function F1SeasonPage() {
   const listRaces = useServerFn(listF1Races);
   const listChamp = useServerFn(listF1ChampionshipMarkets);
-  const season = new Date().getUTCFullYear();
+  const fallbackSeason = new Date().getUTCFullYear();
   const [tab, setTab] = useState<"upcoming" | "past" | "outrights">("upcoming");
 
   const racesQ = useQuery({ queryKey: ["f1-races"], queryFn: () => listRaces(), refetchInterval: 60_000 });
+  const season = racesQ.data?.season ?? fallbackSeason;
   const champQ = useQuery({
     queryKey: ["f1-champ", season],
     queryFn: () => listChamp({ data: { season } }),
@@ -77,14 +78,14 @@ export function F1SeasonPage() {
   const upcoming = useMemo(
     () =>
       (racesQ.data?.races ?? [])
-        .filter((r: any) => r.status !== "finished")
+        .filter((r: any) => r.status === "scheduled" || r.status === "in_progress")
         .sort((a: any, b: any) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()),
     [racesQ.data],
   );
   const past = useMemo(
     () =>
       (racesQ.data?.races ?? [])
-        .filter((r: any) => r.status === "finished")
+        .filter((r: any) => r.status === "finished" || r.status === "cancelled")
         .sort((a: any, b: any) => new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime()),
     [racesQ.data],
   );
@@ -193,7 +194,7 @@ export function F1SeasonPage() {
                 </div>
               </div>
               <div className="rounded-md bg-muted px-2 py-1 text-[10px] font-semibold uppercase text-muted-foreground">
-                Settled
+                {r.status === "cancelled" ? "Cancelled" : "Settled"}
               </div>
             </Card>
           ))}

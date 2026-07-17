@@ -8,10 +8,11 @@ export const Route = createFileRoute("/api/public/hooks/f1-sync")({
           const url = new URL(request.url);
           const seasonParam = url.searchParams.get("season");
           const season = seasonParam ? Number(seasonParam) : new Date().getUTCFullYear();
-          const { syncF1Races, syncF1DriversAndTeams } = await import("@/features/f1/services/f1Sync.server");
+          const { syncF1Races, syncF1DriversAndTeams, syncF1Odds } = await import("@/features/f1/services/f1Sync.server");
           const races = await syncF1Races(season);
           const drivers = await syncF1DriversAndTeams(season);
-          return new Response(JSON.stringify({ season, races, drivers }), {
+          const odds = await syncF1Odds(season);
+          return new Response(JSON.stringify({ season, races, drivers, odds }), {
             headers: { "content-type": "application/json" },
           });
         } catch (e) {

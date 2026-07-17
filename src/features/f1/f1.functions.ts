@@ -18,8 +18,13 @@ export const listF1Races = createServerFn({ method: "GET" })
     const { data } = await (context.supabase as any)
       .from("f1_races")
       .select("id, race_key, season, round, name, circuit, country, starts_at, status")
+      .order("season", { ascending: false })
       .order("starts_at", { ascending: true });
-    return { races: data ?? [] };
+    const rows = data ?? [];
+    const activeSeason = rows.find((r: any) => r.status === "scheduled" || r.status === "in_progress")?.season
+      ?? rows[0]?.season
+      ?? new Date().getUTCFullYear();
+    return { races: rows.filter((r: any) => r.season === activeSeason), season: activeSeason };
   });
 
 export const getF1Race = createServerFn({ method: "GET" })
@@ -154,8 +159,9 @@ export const adminSyncF1All = createServerFn({ method: "POST" })
     await requireAdmin(context.supabase, context.userId);
     const { syncF1Races, syncF1DriversAndTeams, syncF1Odds } = await import("./services/f1Sync.server");
     const races = await syncF1Races();
-    const drivers = await syncF1DriversAndTeams();
-    const odds = await syncF1Odds();
+    const season = typeof (races as any).seasonUsed === "number" ? (races as any).seasonUsed : undefined;
+    const drivers = await syncF1DriversAndTeams(season);
+    const odds = await syncF1Odds(season);
     return { races, drivers, odds };
   });
 
