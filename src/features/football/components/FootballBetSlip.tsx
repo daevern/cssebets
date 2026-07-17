@@ -54,7 +54,10 @@ export function FootballBetSlip({
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 md:inset-auto md:right-4 md:bottom-4 md:w-96">
-      <div className="rounded-t-2xl md:rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface)] p-4 shadow-2xl">
+      <div
+        className="rounded-t-2xl md:rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface)] p-4 shadow-2xl"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
+      >
         <div className="flex items-center justify-between mb-3">
           <div>
             <div className="text-xs text-[var(--ink-muted)]">{selection.displayName}</div>
