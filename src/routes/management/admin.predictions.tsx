@@ -23,18 +23,20 @@ export const Route = createFileRoute("/management/admin/predictions")({
 
 const FOOTBALL_MARKETS = ["result", "correct_score", "total_goals", "btts", "first_scorer", "group_winner", "tournament_winner"];
 const UFC_MARKETS = ["moneyline", "three_way", "method", "round", "total_rounds", "distance", "handicap"];
+const F1_MARKETS = ["race_winner", "podium_finish", "top_5_finish", "top_10_finish", "fastest_lap", "top_constructor_race", "teammate_h2h", "drivers_champion", "constructors_champion"];
 const STATUSES = ["", "pending", "won", "lost", "void"];
 const SPORTS = [
   { value: "all", label: "All sports" },
   { value: "football", label: "Football" },
   { value: "ufc", label: "UFC" },
+  { value: "f1", label: "Formula 1" },
 ] as const;
 const REGRADE_TARGETS = ["won", "lost", "void", "pending"] as const;
 
 function AdminPredictionsPage() {
   const qc = useQueryClient();
   const { isViewer } = useAuth();
-  const [sport, setSport] = useState<"all" | "football" | "ufc">("all");
+  const [sport, setSport] = useState<"all" | "football" | "ufc" | "f1">("all");
   const [market, setMarket] = useState("");
   const [status, setStatus] = useState("");
   const [reason, setReason] = useState("");
@@ -50,8 +52,10 @@ function AdminPredictionsPage() {
   const marketOptions = useMemo(() => {
     if (sport === "football") return ["", ...FOOTBALL_MARKETS];
     if (sport === "ufc") return ["", ...UFC_MARKETS];
-    return ["", ...FOOTBALL_MARKETS, ...UFC_MARKETS];
+    if (sport === "f1") return ["", ...F1_MARKETS];
+    return ["", ...FOOTBALL_MARKETS, ...UFC_MARKETS, ...F1_MARKETS];
   }, [sport]);
+
 
   const q = useQuery({
     queryKey: ["admin-predictions", sport, market, status],
