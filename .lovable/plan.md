@@ -1,51 +1,49 @@
-## What's happening
+## Goal
+Remove "Finishing Position" (race winner) tab from the F1 race page and replace it with **Top 5 Finishers**. Add two new markets to **Race Specials**: **Fastest Lap** and **Top Constructor** (best-scoring team in the race).
 
-The "Take a position" panel shows "Not available" for France vs England (Jul 18, 3rd-place) and Spain vs Argentina (Jul 19, Final) because `match_market_odds` is empty for both — 0 rows. Only the top 1X2 (`reference_odds`) is populated, so nothing feeds the Goals / Cards / Corners / Specials / Score tabs.
+The `race_winner` market stays in the DB (it's the base probability used by the featured card, RaceChip, and to derive other odds) — it's just removed from the details-page tabs.
 
-## Root cause (verified against logs + DB + code)
+## Changes
 
-The detailed markets (BTTS, O/U, cards, corners, correct score, etc.) come exclusively from **api-football**. Two things combine to break it:
+### 1. Odds builder (`src/features/f1/services/f1OddsBuilder.server.ts`)
+Add three new derivation helpers, all anchored to `buildRaceWinnerOdds` probabilities with the shared 6% overround, floor 1.05, cap 50:
+- `buildTop5Odds(winnerOdds)` — `p = clamp(winnerP * 4.2, 0.02, 0.97)`.
+- `buildFastestLapOdds(winnerOdds)` — softer distribution: `p = clamp(winnerP * 1.4 + 0.02, 0.01, 0.6)`, renormalised so probs sum ≈ 1 across drivers.
+- `buildTopConstructorRaceOdds(teamProbs)` — aggregate each team's driver winner-probabilities, renormalise, apply overround.
 
-1. **The DB function `regenerate_match_market_odds` intentionally deactivates every generated market for real (non-simulation) matches.** Comment in the SQL: *"Never generate fallback market odds for real matches."* So if api-football doesn't fill them, there is no fallback — the panel goes blank.
+### 2. Sync writer (`src/features/f1/services/f1Sync.server.ts`)
+Inside the per-race loop, in addition to `race_winner`, `podium`, `points_finish`, upsert:
+- `top_5_finish` rows per driver.
+- `fastest_lap` rows per driver.
+- `top_constructor_race` rows per team (`selection_key = team_key`, `label = team name`).
 
-2. **The api-football sync has been failing since Jul 15.** Direct invocation returns:
-   ```
-   { ok:false, error: "api-football error: {\"rateLimit\":\"Too many requests. You have exceeded the limit of requests per minute of your subscription.\"}" }
-   ```
-   Seven cron jobs (`apifootball-live` 1m, `apifootball-sync-1min-near-kickoff` 1m, `apifootball-lineups` 5m, `apifootball-sync-5min-global-odds` 5m, `apifootball-fulltime` 10m, `apifootball-odds-sync-15m` 15m, `apifootball-prematch` 30m) all fire at the top of the minute and blow past the plan's per-minute cap. `apiFootballGet` throws on the rate-limit response; `syncUpcomingMatchOdds` has no per-match try/catch, so the entire batch aborts with 500 and zero rows are written. The `pace()` throttle is module-scope — meaningless across Cloudflare Worker isolates.
+All use the same `f1_race_markets` upsert conflict target (`race_id,market_type,selection_key,secondary_selection_key`) — no migration needed since `market_type` is free-form text.
 
-Result: `audit_log` shows no successful `apifootball.sync` since Jul 15 18:52 (the semi-final). Meanwhile the-odds-api keeps refreshing `reference_odds` only, hiding the outage on the match list but leaving detail markets empty.
+### 3. Settlement (`src/features/f1/services/f1Settlement.server.ts`)
+Extend `settleF1RaceById`:
+- `top_5_finish` — winning if driver in `ordered.slice(0,5)`.
+- `fastest_lap` — settle from `fetchF1RaceResults`'s per-driver `time`/laps; if provider does not expose a fastest-lap flag on the result payload, call a new adapter `fetchF1FastestLap(raceId)` hitting API-Sports `/rankings/fastestlaps?race=…` and match by driver key. If the endpoint returns empty (early race data), skip settlement for that market and let the auto-settle retry (existing behaviour for null `winning`).
+- `top_constructor_race` — sum `points` per team from `ordered`; team with max total wins; ties resolved by best finishing position.
 
-## Fix
+### 4. Race details page (`src/features/f1/pages/F1RaceDetailsPage.tsx`)
+- `SubTab` type: `"top_5_finish" | "podium" | "points_finish" | "head_to_head" | "fastest_lap" | "top_constructor_race"`.
+- `SUB_TABS_TOP`:
+  1. Top 5 Finishers (`top_5_finish`)
+  2. Podium Finishers (`podium`)
+  3. Top 10 Finishers (`points_finish`)
+- `SUB_TABS_SPECIALS`:
+  1. Teammate H2H (`head_to_head`)
+  2. Fastest Lap (`fastest_lap`)
+  3. Top Constructor (`top_constructor_race`)
+- `SECTION_TITLES` entries for the new keys ("Which 5 drivers finish top 5?", "Who sets the fastest lap?", "Which team scores the most points?").
+- Default `subTab` on load becomes `top_5_finish`; the `topTab` switch effect flips to `top_5_finish` / `head_to_head`.
+- Grouping map (`g`) initialised with all six keys.
+- `top_constructor_race` rows render with team badge/flag instead of the driver portrait (reuse existing team lookup already loaded from `getF1Race`).
 
-1. **`src/lib/apifootball.server.ts` — treat per-minute rate-limit as a soft skip.** In `apiFootballGet`, detect `json.errors.rateLimit` and return `{ skipped: true, reason: "per-minute rate limit", quota }` instead of throwing. This mirrors the existing daily-quota skip path.
+### 5. Backfill for existing scheduled races
+Trigger the existing admin "Sync all" once the code ships (no data migration required) so open races gain the new market rows. Races already `finished` are ignored by the sync loop, which is correct.
 
-2. **`src/lib/apifootball-sync.server.ts` — isolate per-match failures and bail on rate limit.**
-   - Wrap the `syncMatchOddsApiFootball(...)` call in `syncUpcomingMatchOdds` with try/catch so one match's failure can't 500 the whole batch.
-   - Break the loop when a call returns `status: "quota_exhausted"` with the new `"per-minute rate limit"` reason (or add a `rate_limited` status).
-   - Add a small `await new Promise(r => setTimeout(r, 250))` between matches so a single Worker isolate stays under ~4 req/s.
-
-3. **Reduce cron collisions.** Update the pg_cron schedule so jobs don't all land on `:00`:
-   - `apifootball-sync-5min-global-odds`: `2,7,12,17,22,27,32,37,42,47,52,57 * * * *` (offset +2)
-   - `apifootball-odds-sync-15m`: `3,18,33,48 * * * *`
-   - `apifootball-lineups`: `4,9,14,19,24,29,34,39,44,49,54,59 * * * *`
-   - `apifootball-fulltime`: `6,16,26,36,46,56 * * * *`
-   Keep `apifootball-live` and `apifootball-sync-1min-near-kickoff` on `* * * * *` (they're the most latency-sensitive) but the two share only a small footprint per call.
-
-4. **Backfill the two open fixtures immediately.** Trigger the single-match odds sync once for each after the fix ships (via the admin "Refresh odds" action or a one-shot invocation of `syncMatchOddsApiFootball` for the France-England and Spain-Argentina match IDs).
-
-5. **Optional durability follow-up (out of scope for this fix but worth noting):** move `pace()` to a DB-backed per-minute counter so the cap holds across all Worker isolates. Not required to restore odds today.
-
-## Files touched
-
-- `src/lib/apifootball.server.ts` — rate-limit soft-skip.
-- `src/lib/apifootball-sync.server.ts` — per-match try/catch, inter-match delay, propagate rate-limit break.
-- One migration to rewrite the four pg_cron schedules above.
-- No client/UI changes required — once markets are written, the existing `MarketTabs` will show them automatically.
-
-## Verification
-
-- After deploy, invoke `POST /api/public/hooks/apifootball-sync?max=2&hours=48&freshness=24` and confirm 200 with `results[].status: "ok"` and non-zero `markets`.
-- Confirm `SELECT count(*) FROM match_market_odds WHERE match_id IN ('56960295-...','e7ddf0dd-...')` returns ~90+ rows each.
-- Reload `/matches/56960295-...` → Goals / Cards / Corners / Specials / Score tabs render selections.
-- Watch worker logs for 15 minutes and confirm no more `apifootball-sync → 500` responses.
+## Out of scope
+- No change to season page / featured card (still driven by `race_winner`).
+- No change to championship outrights.
+- No new DB migration (schema already accommodates new `market_type` values).

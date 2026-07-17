@@ -20,7 +20,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { PageFooter } from "@/components/ui/page-footer";
 
 type TopTab = "top_finishers" | "race_specials";
-type SubTab = "race_winner" | "podium" | "points_finish" | "head_to_head";
+type SubTab =
+  | "top_5_finish"
+  | "podium"
+  | "points_finish"
+  | "head_to_head"
+  | "fastest_lap"
+  | "top_constructor_race";
 type Range = "1D" | "1W" | "1M" | "ALL";
 
 const RANGE_HOURS: Record<Range, number> = {
@@ -31,20 +37,24 @@ const RANGE_HOURS: Record<Range, number> = {
 };
 
 const SUB_TABS_TOP: { id: SubTab; label: string }[] = [
-  { id: "race_winner", label: "Finishing Position" },
+  { id: "top_5_finish", label: "Top 5 Finishers" },
   { id: "podium", label: "Podium Finishers" },
   { id: "points_finish", label: "Top 10 Finishers" },
 ];
 
 const SUB_TABS_SPECIALS: { id: SubTab; label: string }[] = [
   { id: "head_to_head", label: "Teammate H2H" },
+  { id: "fastest_lap", label: "Fastest Lap" },
+  { id: "top_constructor_race", label: "Top Constructor" },
 ];
 
 const SECTION_TITLES: Partial<Record<SubTab, string>> = {
-  race_winner: "Who wins the race?",
+  top_5_finish: "Who will finish top 5?",
   podium: "Who will finish top 3?",
   points_finish: "Who will finish in the points?",
   head_to_head: "Which teammate finishes ahead?",
+  fastest_lap: "Who sets the fastest lap?",
+  top_constructor_race: "Which team scores the most points?",
 };
 
 const MIN_STAKE = 10;
@@ -113,7 +123,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const balance = Number(wallet.data?.balance ?? 0);
 
   const [topTab, setTopTab] = useState<TopTab>("top_finishers");
-  const [subTab, setSubTab] = useState<SubTab>("race_winner");
+  const [subTab, setSubTab] = useState<SubTab>("top_5_finish");
   const [range, setRange] = useState<Range>("ALL");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stake, setStake] = useState<string>("100");
@@ -121,7 +131,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    setSubTab(topTab === "top_finishers" ? "race_winner" : "head_to_head");
+    setSubTab(topTab === "top_finishers" ? "top_5_finish" : "head_to_head");
     setSelectedId(null);
     setHidden({});
     setActiveIndex(null);
@@ -140,7 +150,14 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const driverByKey = useMemo(() => Object.fromEntries(drivers.map((d) => [d.driver_key, d])), [drivers]);
 
   const grouped = useMemo(() => {
-    const g: Record<SubTab, any[]> = { race_winner: [], podium: [], points_finish: [], head_to_head: [] };
+    const g: Record<SubTab, any[]> = {
+      top_5_finish: [],
+      podium: [],
+      points_finish: [],
+      head_to_head: [],
+      fastest_lap: [],
+      top_constructor_race: [],
+    };
     for (const m of q.data?.markets ?? []) (g[m.market_type as SubTab] ??= []).push(m);
     for (const k of Object.keys(g) as SubTab[]) g[k].sort((a, b) => Number(a.odds) - Number(b.odds));
     return g;
@@ -567,8 +584,10 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
           </div>
         )}
         {currentMarkets.map((m: any) => {
-          const drv = driverByKey[m.selection_key];
-          const team = drv?.team_key ? teamByKey[drv.team_key] : null;
+          const isConstructor = subTab === "top_constructor_race";
+          const team = isConstructor ? teamByKey[m.selection_key] : null;
+          const drv = !isConstructor ? driverByKey[m.selection_key] : null;
+          const drvTeam = drv?.team_key ? teamByKey[drv.team_key] : null;
           const pct = probabilities[m.id] * 100;
           const isSel = selectedId === m.id;
           return (
@@ -581,7 +600,15 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
               }`}
             >
               <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[var(--surface-3)] ring-1 ring-[var(--color-surface-border)]/60">
-                {drv?.photo_url ? (
+                {isConstructor ? (
+                  team?.logo_url ? (
+                    <img src={team.logo_url} alt={m.label} className="h-full w-full object-contain p-1" />
+                  ) : (
+                    <div className="grid h-full w-full place-items-center text-[10px] font-bold text-[var(--color-ink-muted)]">
+                      {m.label.slice(0, 3).toUpperCase()}
+                    </div>
+                  )
+                ) : drv?.photo_url ? (
                   <img src={drv.photo_url} alt={m.label} className="h-full w-full object-cover" />
                 ) : (
                   <div className="grid h-full w-full place-items-center text-[10px] font-bold text-[var(--color-ink-muted)]">
@@ -590,8 +617,12 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-[var(--color-ink)]">{drv?.name ?? m.label}</div>
-                <div className="truncate text-xs text-[var(--color-ink-muted)]">{team?.name ?? ""}</div>
+                <div className="truncate text-sm font-semibold text-[var(--color-ink)]">
+                  {isConstructor ? (team?.name ?? m.label) : (drv?.name ?? m.label)}
+                </div>
+                <div className="truncate text-xs text-[var(--color-ink-muted)]">
+                  {isConstructor ? "Constructor" : (drvTeam?.name ?? "")}
+                </div>
               </div>
               <div className="tabular-nums text-lg font-bold text-[var(--color-ink)]">
                 {pct >= 10 ? Math.round(pct) : pct.toFixed(1)}%

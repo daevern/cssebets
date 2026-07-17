@@ -1,6 +1,6 @@
 // F1 settlement: race markets settle from race results; championship settles at season end.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { fetchF1RaceResults } from "../adapters/apiF1Adapter.server";
+import { fetchF1RaceResults, fetchF1FastestLap } from "../adapters/apiF1Adapter.server";
 
 function keyify(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -26,9 +26,34 @@ export async function settleF1RaceById(raceId: string) {
 
   const winner = ordered[0]?.driver.name ? keyify(ordered[0].driver.name) : null;
   const podium = new Set(ordered.slice(0, 3).map((r) => keyify(r.driver.name)));
+  const top5 = new Set(ordered.slice(0, 5).map((r) => keyify(r.driver.name)));
   const pointsFinishers = new Set(ordered.slice(0, 10).map((r) => keyify(r.driver.name)));
   const positionByKey: Record<string, number> = {};
   for (const r of ordered) positionByKey[keyify(r.driver.name)] = r.position!;
+
+  // Constructor points total per team in this race
+  const teamPoints: Record<string, { pts: number; bestPos: number }> = {};
+  for (const r of ordered) {
+    const tk = keyify(r.team.name);
+    const cur = teamPoints[tk] ?? { pts: 0, bestPos: 999 };
+    cur.pts += Number(r.points ?? 0);
+    cur.bestPos = Math.min(cur.bestPos, r.position ?? 999);
+    teamPoints[tk] = cur;
+  }
+  const topConstructor = Object.entries(teamPoints).sort((a, b) => {
+    if (b[1].pts !== a[1].pts) return b[1].pts - a[1].pts;
+    return a[1].bestPos - b[1].bestPos;
+  })[0]?.[0] ?? null;
+
+  // Fastest lap — only settle when provider returns a result.
+  let fastestLapKey: string | null = null;
+  try {
+    const fl = await fetchF1FastestLap(race.provider_id);
+    const top = fl.sort((a, b) => (a.position ?? 999) - (b.position ?? 999))[0];
+    if (top?.driver?.name) fastestLapKey = keyify(top.driver.name);
+  } catch {
+    fastestLapKey = null;
+  }
 
   const { data: markets } = await (supabaseAdmin as any)
     .from("f1_race_markets")
@@ -41,8 +66,13 @@ export async function settleF1RaceById(raceId: string) {
     let winning: boolean | null = null;
     if (m.market_type === "race_winner") winning = m.selection_key === winner;
     else if (m.market_type === "podium") winning = podium.has(m.selection_key);
+    else if (m.market_type === "top_5_finish") winning = top5.has(m.selection_key);
     else if (m.market_type === "points_finish") winning = pointsFinishers.has(m.selection_key);
-    else if (m.market_type === "head_to_head") {
+    else if (m.market_type === "top_constructor_race") {
+      if (topConstructor) winning = m.selection_key === topConstructor;
+    } else if (m.market_type === "fastest_lap") {
+      if (fastestLapKey) winning = m.selection_key === fastestLapKey;
+    } else if (m.market_type === "head_to_head") {
       const a = positionByKey[m.selection_key];
       const b = positionByKey[m.secondary_selection_key];
       if (a && b) winning = a < b;
