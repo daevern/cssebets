@@ -117,16 +117,19 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stake, setStake] = useState<string>("100");
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setSubTab(topTab === "top_finishers" ? "race_winner" : "head_to_head");
     setSelectedId(null);
     setHidden({});
+    setActiveIndex(null);
   }, [topTab]);
 
   useEffect(() => {
     setSelectedId(null);
     setHidden({});
+    setActiveIndex(null);
   }, [subTab]);
 
   const race: any = q.data?.race;
