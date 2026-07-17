@@ -106,18 +106,19 @@ export function F1SeasonPage() {
 
   return (
     <div className="flex flex-col gap-8 px-4 pt-5 pb-24 text-[var(--color-ink)]">
-      <header className="space-y-3">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-surface-border)] bg-gradient-to-r from-red-900/40 to-black px-4 py-2 text-xs font-bold text-white">
-          <span className="rounded bg-red-600 px-2 py-0.5 text-[10px]">F1</span>
-          Formula 1 · {season} · Race markets
-        </div>
-        <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight text-[var(--color-ink)] md:text-4xl">
-          Race-by-race markets
-        </h1>
-        <p className="text-sm text-[var(--color-ink-muted)]">
-          Predict every Grand Prix. Odds move with the paddock — lock in your call until lights out.
-        </p>
+      <header className="space-y-2">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-1.5 text-xs font-semibold tracking-tight text-[var(--color-ink-muted)]"
+        >
+          <Link to="/matches" className="hover:text-[var(--color-ink)]">Sports</Link>
+          <ChevronRight className="h-3 w-3 opacity-60" />
+          <span className="text-[var(--color-ink)]">F1</span>
+          <ChevronRight className="h-3 w-3 opacity-60" />
+          <span className="text-[var(--color-ink-muted)]">{season}</span>
+        </nav>
       </header>
+
 
       {upcoming.length > 0 && (
         <section className="space-y-3">
