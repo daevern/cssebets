@@ -181,23 +181,22 @@ export async function syncF1DriversAndTeams(seasonPref = CURRENT_SEASON) {
 
 // ---- Build markets for upcoming races ----
 export async function syncF1Odds(seasonPref = CURRENT_SEASON) {
-  const season = await resolveActiveSeason(seasonPref);
   const start = Date.now();
   const run = await startRun("odds");
   if (run.skipped) return { ok: true, skipped: "already running" };
   try {
-    // Get standings for house odds
-    const standings = await fetchF1DriverStandings(season);
+    // Get standings for house odds (probe back through recent seasons if provider is empty)
+    const standProbe = await probeApiSeason(seasonPref, (s) => fetchF1DriverStandings(s));
+    const standings: any[] = standProbe.rows;
+    const dataSeason = standProbe.season;
     const standingByName: Record<string, number> = {};
     for (const s of standings) standingByName[keyify(s.driver.name)] = s.points ?? 0;
 
-    // Upcoming races: not finished, starts within next 14 days
-    const cutoff = new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString();
+    // All scheduled/in-progress races we have on file — build markets for the full remaining calendar
     const { data: races } = await (supabaseAdmin as any)
       .from("f1_races")
-      .select("id, race_key, name, starts_at, status, provider_id")
+      .select("id, race_key, name, starts_at, status, provider_id, season")
       .neq("status", "finished")
-      .lt("starts_at", cutoff)
       .order("starts_at", { ascending: true });
 
     // Active drivers
