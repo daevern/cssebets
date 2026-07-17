@@ -908,9 +908,8 @@ function F1DriverRow({
     </div>
   );
 }
-    </Link>
-  );
-}
+
+
 
 /* ------------ Next UFC fight card ------------ */
 function FightPhoto({ url, name }: { url: string | null; name: string }) {
