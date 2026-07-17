@@ -172,10 +172,8 @@ function UfcPage() {
                 Upcoming Fights
               </h2>
             </div>
-            <Link to="/matches" className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]">
-              View all <ChevronRight className="h-3 w-3" />
-            </Link>
           </div>
+
           <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {upcoming.map((f) => (
               <FightChip key={f.id} fight={f} now={now} />
