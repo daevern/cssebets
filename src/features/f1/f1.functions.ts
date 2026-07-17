@@ -54,10 +54,11 @@ export const listF1ChampionshipMarkets = createServerFn({ method: "GET" })
   });
 
 export const getF1OddsHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ marketId: z.string().uuid() }).parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const since = new Date(Date.now() - 24 * 3600_000).toISOString();
-    const { data: rows } = await (supabase as any)
+    const { data: rows } = await (context.supabase as any)
       .from("f1_race_odds_snapshots")
       .select("odds, snapshot_at")
       .eq("market_id", data.marketId)
