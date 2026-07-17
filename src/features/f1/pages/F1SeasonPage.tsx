@@ -4,21 +4,32 @@ import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, ChevronRight, Loader2 } from "lucide-react";
 import { listF1Races, getF1Race } from "../f1.functions";
+import { teamFlagUrl } from "@/lib/country-flags";
 
-const COUNTRY_FLAG: Record<string, string> = {
-  Bahrain: "🇧🇭", "Saudi Arabia": "🇸🇦", Australia: "🇦🇺", Japan: "🇯🇵", China: "🇨🇳",
-  USA: "🇺🇸", "United States": "🇺🇸", Miami: "🇺🇸", "Emilia Romagna": "🇮🇹", Italy: "🇮🇹",
-  Monaco: "🇲🇨", Canada: "🇨🇦", Spain: "🇪🇸", Austria: "🇦🇹", "Great Britain": "🇬🇧",
-  UK: "🇬🇧", "United Kingdom": "🇬🇧", Hungary: "🇭🇺", Belgium: "🇧🇪", Netherlands: "🇳🇱",
-  Azerbaijan: "🇦🇿", Singapore: "🇸🇬", Mexico: "🇲🇽", Brazil: "🇧🇷", "Abu Dhabi": "🇦🇪",
-  Qatar: "🇶🇦", "Las Vegas": "🇺🇸", France: "🇫🇷", Germany: "🇩🇪", Portugal: "🇵🇹",
-  Turkey: "🇹🇷", Russia: "🇷🇺",
-};
-
-function flagFor(country?: string | null) {
-  if (!country) return "🏁";
-  return COUNTRY_FLAG[country] ?? "🏁";
+function CountryFlag({ country, size = 20 }: { country?: string | null; size?: number }) {
+  const url = country ? teamFlagUrl(country, 80) : null;
+  if (!url) {
+    return (
+      <span
+        aria-hidden
+        className="inline-grid place-items-center rounded-sm bg-[var(--surface-3)] text-[10px]"
+        style={{ width: size * 1.4, height: size }}
+      >
+        🏁
+      </span>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={country ?? ""}
+      className="inline-block rounded-[2px] object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
+      style={{ width: size * 1.4, height: size }}
+      loading="lazy"
+    />
+  );
 }
+
 
 function statusLabel(iso: string, status: string) {
   if (status === "in_progress") return "LIVE";
