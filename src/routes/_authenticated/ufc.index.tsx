@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { listUfcFights } from "@/lib/ufc.functions";
-import { ArrowUpRight, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowUpRight, Loader2 } from "lucide-react";
 import { PageFooter } from "@/components/ui/page-footer";
 
 export const Route = createFileRoute("/_authenticated/ufc/")({
@@ -124,9 +124,10 @@ function UfcPage() {
 
   const { featured, upcoming } = useMemo(() => {
     const main = fights.find((f) => f.card_position === "main") ?? null;
-    const rest = fights.filter((f) => f.id !== main?.id);
+    const rest = fights.filter((f) => f.id !== main?.id && f.status !== "finished");
     return { featured: main, upcoming: rest };
   }, [fights]);
+
 
   if (isLoading) {
     return (
@@ -171,10 +172,8 @@ function UfcPage() {
                 Upcoming Fights
               </h2>
             </div>
-            <Link to="/matches" className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]">
-              View all <ChevronRight className="h-3 w-3" />
-            </Link>
           </div>
+
           <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {upcoming.map((f) => (
               <FightChip key={f.id} fight={f} now={now} />

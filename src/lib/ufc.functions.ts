@@ -19,11 +19,21 @@ export const listUfcFights = createServerFn({ method: "GET" }).handler(async () 
     .maybeSingle();
   if (!event) return { event: null, fights: [] };
 
+  // Only include fights within the event's window (event day ± 12h).
+  // Prevents stale fights from prior events (same event row reused by sync)
+  // from leaking into the card.
+  const eventStartMs = new Date(event.starts_at).getTime();
+  const windowStart = new Date(eventStartMs - 12 * 60 * 60 * 1000).toISOString();
+  const windowEnd = new Date(eventStartMs + 24 * 60 * 60 * 1000).toISOString();
+
   const { data: fights } = await (supabaseAdmin as any)
     .from("ufc_fights")
     .select("id, fighter_a, fighter_b, fighter_a_logo, fighter_b_logo, apimma_fighter_a_id, apimma_fighter_b_id, commence_time, card_position, scheduled_rounds, status, winner, result_method, result_round, weight_class, is_title_fight")
     .eq("event_id", event.id)
+    .gte("commence_time", windowStart)
+    .lte("commence_time", windowEnd)
     .order("commence_time", { ascending: true });
+
 
   const fightIds = (fights ?? []).map((f: any) => f.id);
   const fighterIds = Array.from(new Set(
