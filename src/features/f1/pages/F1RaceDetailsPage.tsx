@@ -668,7 +668,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
             const team = isConstructor ? teamByKey[m.selection_key] : null;
             const drv = !isConstructor ? driverByKey[m.selection_key] : null;
             const drvTeam = drv?.team_key ? teamByKey[drv.team_key] : null;
-            void probabilities;
+            
             const isSel = selectedId === m.id;
             return (
               <button
