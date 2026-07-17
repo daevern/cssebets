@@ -59,13 +59,23 @@ function keyify(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 }
 
+// Try requested season, then fall back up to 3 previous seasons if the
+// provider has no data yet (common early in the year on free tiers).
+async function fetchF1RacesWithFallback(seasonPref: number) {
+  for (let s = seasonPref; s >= seasonPref - 3; s--) {
+    const races = await fetchF1Races(s);
+    if (races && races.length > 0) return { season: s, races };
+  }
+  return { season: seasonPref, races: [] as Awaited<ReturnType<typeof fetchF1Races>> };
+}
+
 // ---- Sync races ----
-export async function syncF1Races(season = CURRENT_SEASON) {
+export async function syncF1Races(seasonPref = CURRENT_SEASON) {
   const start = Date.now();
   const run = await startRun("races");
   if (run.skipped) return { ok: true, skipped: "already running" };
   try {
-    const races = await fetchF1Races(season);
+    const { season, races } = await fetchF1RacesWithFallback(seasonPref);
     const grandsPrix = races.filter((r) => r.type?.toLowerCase() === "race");
     let n = 0;
     for (const r of grandsPrix) {
@@ -91,8 +101,8 @@ export async function syncF1Races(season = CURRENT_SEASON) {
       { year: season, name: `Formula 1 ${season}`, is_active: true },
       { onConflict: "year" },
     );
-    await finishRun(run.id, "ok", { records: n, durationMs: Date.now() - start });
-    return { ok: true, races: n };
+    await finishRun(run.id, "ok", { records: n, meta: { seasonUsed: season }, durationMs: Date.now() - start });
+    return { ok: true, races: n, seasonUsed: season };
   } catch (e: any) {
     await finishRun(run.id, "error", { error: e.message, durationMs: Date.now() - start });
     throw e;
