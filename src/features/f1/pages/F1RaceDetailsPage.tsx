@@ -12,6 +12,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Customized,
 } from "recharts";
 import { getF1Race, placeF1RaceBet, getF1MarketHistories } from "../f1.functions";
 import { getMyWallet } from "@/lib/wallet.functions";
