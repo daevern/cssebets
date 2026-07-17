@@ -401,3 +401,30 @@ export const setUfcFightMarginDisabled = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+
+// Anonymised recent bets for a fight (privacy-safe live tape).
+export const getUfcTradeTape = createServerFn({ method: "GET" })
+  .inputValidator((i: unknown) => z.object({ fightId: z.string().uuid() }).parse(i))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const since = new Date(Date.now() - 30 * 60_000).toISOString();
+    const { data: rows } = await (supabaseAdmin as any)
+      .from("ufc_bets")
+      .select("id, market_type, selection_label, stake, odds_locked, created_at")
+      .eq("fight_id", data.fightId)
+      .gt("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(25);
+    // Bucket stake for privacy: S / M / L / XL
+    const bucket = (v: number) => (v < 100 ? "S" : v < 500 ? "M" : v < 2000 ? "L" : "XL");
+    return {
+      trades: (rows ?? []).map((r: any) => ({
+        id: r.id,
+        market: r.market_type,
+        selection: r.selection_label,
+        stakeBucket: bucket(Number(r.stake)),
+        odds: Number(r.odds_locked),
+        placedAt: r.created_at,
+      })),
+    };
+  });
