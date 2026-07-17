@@ -67,7 +67,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       </Card>
 
       <div className="mb-3 flex gap-1 overflow-x-auto pb-1">
-        {(Object.keys(grouped) as Array<keyof typeof grouped>).map((k) => (
+        {(["race_winner", "podium", "points_finish", "head_to_head"] as const).map((k) => (
           <Button
             key={k}
             size="sm"
