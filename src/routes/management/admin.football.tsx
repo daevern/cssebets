@@ -366,6 +366,46 @@ function AdminFootballPage() {
           </table>
         </div>
       </section>
+
+      {/* ---------- SYNC ERROR DRILLDOWN ---------- */}
+      <section className="rounded-xl border p-4 space-y-3">
+        <h2 className="font-semibold">Recent sync errors (API-Football)</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="text-left text-muted-foreground">
+              <tr>
+                <th className="py-1 pr-3">When</th>
+                <th className="py-1 pr-3">Run</th>
+                <th className="py-1 pr-3">Message</th>
+                <th className="py-1 pr-3">Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(syncErrorsData?.errors ?? []).map((e: any) => (
+                <tr key={e.id} className="border-t border-white/5 align-top">
+                  <td className="py-1 pr-3 whitespace-nowrap">
+                    {new Date(e.created_at).toLocaleTimeString()}
+                  </td>
+                  <td className="py-1 pr-3 font-mono">
+                    {e.sync_run_id ? e.sync_run_id.slice(0, 8) : "—"}
+                  </td>
+                  <td className="py-1 pr-3 text-red-400">{e.message}</td>
+                  <td className="py-1 pr-3 font-mono text-muted-foreground">
+                    {e.detail ? JSON.stringify(e.detail).slice(0, 80) : "—"}
+                  </td>
+                </tr>
+              ))}
+              {!syncErrorsData?.errors?.length && (
+                <tr>
+                  <td colSpan={4} className="py-2 text-center text-muted-foreground">
+                    No sync errors — good news.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }
