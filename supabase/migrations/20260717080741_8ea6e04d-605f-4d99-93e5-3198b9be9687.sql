@@ -1,0 +1,1 @@
+UPDATE public.ufc_events SET name = 'Usman vs Du Plessis' WHERE event_key = 'ufc_329';
