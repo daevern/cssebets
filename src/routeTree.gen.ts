@@ -43,6 +43,7 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
 import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
 import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
+import { Route as AuthenticatedF1RouteImport } from './routes/_authenticated/f1'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChangelogRouteImport } from './routes/_authenticated/changelog'
 import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/bets'
@@ -284,6 +285,11 @@ const AuthenticatedMatchesRoute = AuthenticatedMatchesRouteImport.update({
 const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
   id: '/help',
   path: '/help',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedF1Route = AuthenticatedF1RouteImport.update({
+  id: '/f1',
+  path: '/f1',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -686,6 +692,7 @@ export interface FileRoutesByFullPath {
   '/bets': typeof AuthenticatedBetsRoute
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/f1': typeof AuthenticatedF1Route
   '/help': typeof AuthenticatedHelpRoute
   '/matches': typeof AuthenticatedMatchesRouteWithChildren
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
@@ -789,6 +796,7 @@ export interface FileRoutesByTo {
   '/bets': typeof AuthenticatedBetsRoute
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/f1': typeof AuthenticatedF1Route
   '/help': typeof AuthenticatedHelpRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -891,6 +899,7 @@ export interface FileRoutesById {
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
   '/_authenticated/changelog': typeof AuthenticatedChangelogRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/f1': typeof AuthenticatedF1Route
   '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/matches': typeof AuthenticatedMatchesRouteWithChildren
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
@@ -996,6 +1005,7 @@ export interface FileRouteTypes {
     | '/bets'
     | '/changelog'
     | '/dashboard'
+    | '/f1'
     | '/help'
     | '/matches'
     | '/my-predictions'
@@ -1099,6 +1109,7 @@ export interface FileRouteTypes {
     | '/bets'
     | '/changelog'
     | '/dashboard'
+    | '/f1'
     | '/help'
     | '/my-predictions'
     | '/notifications'
@@ -1200,6 +1211,7 @@ export interface FileRouteTypes {
     | '/_authenticated/bets'
     | '/_authenticated/changelog'
     | '/_authenticated/dashboard'
+    | '/_authenticated/f1'
     | '/_authenticated/help'
     | '/_authenticated/matches'
     | '/_authenticated/my-predictions'
@@ -1560,6 +1572,13 @@ declare module '@tanstack/react-router' {
       path: '/help'
       fullPath: '/help'
       preLoaderRoute: typeof AuthenticatedHelpRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/f1': {
+      id: '/_authenticated/f1'
+      path: '/f1'
+      fullPath: '/f1'
+      preLoaderRoute: typeof AuthenticatedF1RouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/dashboard': {
@@ -2083,6 +2102,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBetsRoute: typeof AuthenticatedBetsRoute
   AuthenticatedChangelogRoute: typeof AuthenticatedChangelogRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedF1Route: typeof AuthenticatedF1Route
   AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
   AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRouteWithChildren
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
@@ -2109,6 +2129,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBetsRoute: AuthenticatedBetsRoute,
   AuthenticatedChangelogRoute: AuthenticatedChangelogRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedF1Route: AuthenticatedF1Route,
   AuthenticatedHelpRoute: AuthenticatedHelpRoute,
   AuthenticatedMatchesRoute: AuthenticatedMatchesRouteWithChildren,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
