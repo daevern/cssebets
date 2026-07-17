@@ -102,6 +102,14 @@ export async function fetchF1RaceResults(raceId: number) {
   return r.response ?? [];
 }
 
+export async function fetchF1FastestLap(raceId: number) {
+  const r = await f1Get<Array<{ driver: { id: number; name: string }; time?: string; position?: number | null }>>(
+    "/rankings/fastestlaps",
+    { race: raceId },
+  );
+  return r.response ?? [];
+}
+
 export async function fetchF1Drivers(season: number) {
   const r = await f1Get<Array<{ id: number; name: string; abbr?: string; number?: number; nationality?: string; teams?: Array<{ team: { id: number; name: string } }>; image?: string }>>(
     "/drivers",
