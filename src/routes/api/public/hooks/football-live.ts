@@ -12,9 +12,13 @@ export const Route = createFileRoute("/api/public/hooks/football-live")({
           const { settleFinishedFootballEvents } = await import(
             "@/features/football/services/footballSettlement.server"
           );
+          const { suspendStaleFootballMarkets } = await import(
+            "@/features/football/services/oddsFreshness.server"
+          );
           const live = await syncFootballLiveScores();
+          const freshness = await suspendStaleFootballMarkets();
           const settled = await settleFinishedFootballEvents({ max: 20 });
-          return new Response(JSON.stringify({ ok: true, live, settled }), {
+          return new Response(JSON.stringify({ ok: true, live, freshness, settled }), {
             headers: { "content-type": "application/json" },
           });
         } catch (error) {
