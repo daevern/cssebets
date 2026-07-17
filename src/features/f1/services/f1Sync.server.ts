@@ -16,7 +16,12 @@ import {
   buildChampionshipOdds,
 } from "./f1OddsBuilder.server";
 
-const CURRENT_SEASON = new Date().getUTCFullYear();
+// NOTE: Do NOT read `new Date()` at module scope — on Cloudflare Workers the
+// clock is frozen at module init (returns 1970) until the first request runs.
+function currentSeason() {
+  return new Date().getUTCFullYear();
+}
+
 
 async function isRunInFlight(task: string, minutes = 10) {
   const cutoff = new Date(Date.now() - minutes * 60_000).toISOString();
@@ -70,7 +75,7 @@ async function fetchF1RacesWithFallback(seasonPref: number) {
 }
 
 // ---- Sync races ----
-export async function syncF1Races(seasonPref = CURRENT_SEASON) {
+export async function syncF1Races(seasonPref = currentSeason()) {
   const start = Date.now();
   const run = await startRun("races");
   if (run.skipped) return { ok: true, skipped: "already running" };
@@ -119,7 +124,7 @@ export async function syncF1Races(seasonPref = CURRENT_SEASON) {
   }
 }
 
-async function resolveActiveSeason(pref = CURRENT_SEASON) {
+async function resolveActiveSeason(pref = currentSeason()) {
   // Prefer requested season if it has races; otherwise use the most recent year in f1_races.
   const { data: hit } = await (supabaseAdmin as any)
     .from("f1_races").select("season").eq("season", pref).limit(1);
@@ -139,23 +144,34 @@ async function probeApiSeason(pref: number, probe: (s: number) => Promise<any[]>
 }
 
 // ---- Sync drivers + teams ----
-export async function syncF1DriversAndTeams(seasonPref = CURRENT_SEASON) {
+export async function syncF1DriversAndTeams(seasonPref = currentSeason()) {
   const start = Date.now();
   const run = await startRun("drivers");
   if (run.skipped) return { ok: true, skipped: "already running" };
   try {
-    const teamProbe = await probeApiSeason(seasonPref, (s) => fetchF1Teams(s));
-    const driverProbe = await probeApiSeason(seasonPref, (s) => fetchF1Drivers(s));
-    const teams = teamProbe.rows;
-    const drivers = driverProbe.rows;
-    for (const t of teams) {
+    // The API-Sports /drivers and /teams endpoints do not accept a `season`
+    // query on the free plan. Derive the active grid from the standings
+    // (rankings), which returns every current driver + their team in one call.
+    const driverStandProbe = await probeApiSeason(seasonPref, (s) => fetchF1DriverStandings(s));
+    const teamStandProbe = await probeApiSeason(seasonPref, (s) => fetchF1TeamStandings(s));
+    const driverRows = driverStandProbe.rows;
+    const teamRows = teamStandProbe.rows;
+    const teamsSeen = new Map<string, { id: number; name: string; logo?: string }>();
+    for (const t of teamRows) {
+      if (t.team?.name) teamsSeen.set(keyify(t.team.name), t.team);
+    }
+    for (const d of driverRows) {
+      if (d.team?.name && !teamsSeen.has(keyify(d.team.name))) teamsSeen.set(keyify(d.team.name), d.team);
+    }
+    for (const t of teamsSeen.values()) {
       await (supabaseAdmin as any).from("f1_constructors").upsert(
         { team_key: keyify(t.name), provider_id: t.id, name: t.name, active: true, logo_url: t.logo ?? null },
         { onConflict: "team_key" },
       );
     }
-    for (const d of drivers) {
-      const teamName = d.teams?.[0]?.team?.name ?? null;
+    for (const row of driverRows) {
+      const d = row.driver;
+      const teamName = row.team?.name ?? null;
       await (supabaseAdmin as any).from("f1_drivers").upsert(
         {
           driver_key: keyify(d.name),
@@ -171,8 +187,8 @@ export async function syncF1DriversAndTeams(seasonPref = CURRENT_SEASON) {
         { onConflict: "driver_key" },
       );
     }
-    await finishRun(run.id, "ok", { records: drivers.length + teams.length, durationMs: Date.now() - start });
-    return { ok: true, drivers: drivers.length, teams: teams.length };
+    await finishRun(run.id, "ok", { records: driverRows.length + teamsSeen.size, durationMs: Date.now() - start });
+    return { ok: true, drivers: driverRows.length, teams: teamsSeen.size };
   } catch (e: any) {
     await finishRun(run.id, "error", { error: e.message, durationMs: Date.now() - start });
     throw e;
@@ -180,7 +196,7 @@ export async function syncF1DriversAndTeams(seasonPref = CURRENT_SEASON) {
 }
 
 // ---- Build markets for upcoming races ----
-export async function syncF1Odds(seasonPref = CURRENT_SEASON) {
+export async function syncF1Odds(seasonPref = currentSeason()) {
   const start = Date.now();
   const run = await startRun("odds");
   if (run.skipped) return { ok: true, skipped: "already running" };
