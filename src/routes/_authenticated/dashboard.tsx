@@ -795,6 +795,57 @@ function NextRaceCard({ race, now }: { race: NonNullable<NextF1Race>; now: numbe
           )}
         </div>
       </div>
+
+      {race.topDrivers.length > 0 && (
+        <div className="mt-4">
+          <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--ink-muted)]">
+            <span>Win favourites</span>
+            <span className="text-[var(--neon)]/80">Live odds</span>
+          </div>
+          <div className={`grid gap-2 ${race.topDrivers.length === 1 ? "grid-cols-1" : race.topDrivers.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+            {race.topDrivers.map((d, i) => (
+              <div
+                key={d.driver_key}
+                className={`relative flex flex-col items-center rounded-xl border p-2 ${
+                  i === 0
+                    ? "border-[var(--neon)]/60 bg-[var(--neon)]/[0.06]"
+                    : "border-[var(--color-surface-border)] bg-[var(--surface-3)]/40"
+                }`}
+              >
+                {i === 0 && (
+                  <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded-full bg-[var(--neon)] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-black">
+                    Fav
+                  </span>
+                )}
+                <div className="h-12 w-12 overflow-hidden rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)]">
+                  {d.photo_url ? (
+                    <img src={d.photo_url} alt={d.name} className="h-full w-full object-cover object-top" loading="lazy" />
+                  ) : (
+                    <div className="grid h-full w-full place-items-center font-display text-[10px] font-bold text-[var(--ink-muted)]">
+                      {d.abbr ?? d.name.slice(0, 3).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="mt-1.5 max-w-full truncate text-center text-[11px] font-bold tracking-tight text-[var(--ink)]">
+                  {d.abbr ?? d.name.split(" ").slice(-1)[0]}
+                </div>
+                {d.team && (
+                  <div className="max-w-full truncate text-center text-[9px] uppercase tracking-wider text-[var(--ink-muted)]">
+                    {d.team}
+                  </div>
+                )}
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className={`font-display text-sm font-bold tabular-nums ${i === 0 ? "text-[var(--neon)]" : "text-[var(--ink)]"}`}>
+                    {d.pct}%
+                  </span>
+                  <span className="text-[9px] tabular-nums text-[var(--ink-muted)]">{d.odds.toFixed(2)}x</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)]/5 py-2.5 text-[13px] font-bold tracking-tight text-[var(--neon)] transition-transform group-hover:translate-y-[-1px] group-hover:bg-[var(--neon)]/10">
         Open race markets <ArrowUpRight className="h-4 w-4" />
       </div>
