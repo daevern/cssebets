@@ -75,7 +75,7 @@ async function fetchF1RacesWithFallback(seasonPref: number) {
 }
 
 // ---- Sync races ----
-export async function syncF1Races(seasonPref = CURRENT_SEASON) {
+export async function syncF1Races(seasonPref = currentSeason()) {
   const start = Date.now();
   const run = await startRun("races");
   if (run.skipped) return { ok: true, skipped: "already running" };
@@ -124,7 +124,7 @@ export async function syncF1Races(seasonPref = CURRENT_SEASON) {
   }
 }
 
-async function resolveActiveSeason(pref = CURRENT_SEASON) {
+async function resolveActiveSeason(pref = currentSeason()) {
   // Prefer requested season if it has races; otherwise use the most recent year in f1_races.
   const { data: hit } = await (supabaseAdmin as any)
     .from("f1_races").select("season").eq("season", pref).limit(1);
@@ -144,7 +144,7 @@ async function probeApiSeason(pref: number, probe: (s: number) => Promise<any[]>
 }
 
 // ---- Sync drivers + teams ----
-export async function syncF1DriversAndTeams(seasonPref = CURRENT_SEASON) {
+export async function syncF1DriversAndTeams(seasonPref = currentSeason()) {
   const start = Date.now();
   const run = await startRun("drivers");
   if (run.skipped) return { ok: true, skipped: "already running" };
@@ -185,7 +185,7 @@ export async function syncF1DriversAndTeams(seasonPref = CURRENT_SEASON) {
 }
 
 // ---- Build markets for upcoming races ----
-export async function syncF1Odds(seasonPref = CURRENT_SEASON) {
+export async function syncF1Odds(seasonPref = currentSeason()) {
   const start = Date.now();
   const run = await startRun("odds");
   if (run.skipped) return { ok: true, skipped: "already running" };
