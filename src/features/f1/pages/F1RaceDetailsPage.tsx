@@ -123,7 +123,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const balance = Number(wallet.data?.balance ?? 0);
 
   const [topTab, setTopTab] = useState<TopTab>("top_finishers");
-  const [subTab, setSubTab] = useState<SubTab>("race_winner");
+  const [subTab, setSubTab] = useState<SubTab>("top_5_finish");
   const [range, setRange] = useState<Range>("ALL");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stake, setStake] = useState<string>("100");
@@ -131,7 +131,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    setSubTab(topTab === "top_finishers" ? "race_winner" : "head_to_head");
+    setSubTab(topTab === "top_finishers" ? "top_5_finish" : "head_to_head");
     setSelectedId(null);
     setHidden({});
     setActiveIndex(null);
@@ -150,7 +150,14 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const driverByKey = useMemo(() => Object.fromEntries(drivers.map((d) => [d.driver_key, d])), [drivers]);
 
   const grouped = useMemo(() => {
-    const g: Record<SubTab, any[]> = { race_winner: [], podium: [], points_finish: [], head_to_head: [] };
+    const g: Record<SubTab, any[]> = {
+      top_5_finish: [],
+      podium: [],
+      points_finish: [],
+      head_to_head: [],
+      fastest_lap: [],
+      top_constructor_race: [],
+    };
     for (const m of q.data?.markets ?? []) (g[m.market_type as SubTab] ??= []).push(m);
     for (const k of Object.keys(g) as SubTab[]) g[k].sort((a, b) => Number(a.odds) - Number(b.odds));
     return g;
