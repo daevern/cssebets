@@ -113,7 +113,7 @@ function AdminPredictionsPage() {
       <div>
         <h1 className="text-2xl font-bold">Predictions</h1>
         <p className="text-sm text-muted-foreground">
-          Unified view of football and UFC bets. Filter by sport, void or regrade with wallet auto-adjustment.
+          Unified view of football, UFC and F1 bets. Filter by sport, void or regrade with wallet auto-adjustment (football/UFC only).
         </p>
       </div>
 
