@@ -17,6 +17,7 @@ import {
 import { getF1Race, placeF1RaceBet, getF1MarketHistories } from "../f1.functions";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { PageFooter } from "@/components/ui/page-footer";
 
 type TopTab = "top_finishers" | "race_specials";
 type SubTab = "race_winner" | "podium" | "points_finish" | "head_to_head";
