@@ -74,6 +74,49 @@ export function buildPointsOdds(winnerOdds: OddsOutput[]): OddsOutput[] {
   });
 }
 
+// Top-5 finish probability — sits between podium (top-3) and points (top-10).
+export function buildTop5Odds(winnerOdds: OddsOutput[]): OddsOutput[] {
+  return winnerOdds.map((w) => {
+    const p = clamp(w.probability * 4.2, 0.02, 0.97);
+    const fair = 1 / p;
+    const offered = clamp(fair * (1 - OVERROUND), FLOOR, CAP);
+    return { ...w, probability: p, fairOdds: fair, offeredOdds: Math.round(offered * 100) / 100 };
+  });
+}
+
+// Fastest lap — flatter than race winner (any driver can bolt on softs late).
+export function buildFastestLapOdds(winnerOdds: OddsOutput[]): OddsOutput[] {
+  const raw = winnerOdds.map((w) => Math.max(0.005, w.probability * 1.4 + 0.02));
+  const sum = raw.reduce((a, b) => a + b, 0) || 1;
+  return winnerOdds.map((w, i) => {
+    const p = clamp(raw[i] / sum, 0.005, 0.6);
+    const fair = 1 / p;
+    const offered = clamp(fair * (1 - OVERROUND), FLOOR, CAP);
+    return { ...w, probability: p, fairOdds: fair, offeredOdds: Math.round(offered * 100) / 100 };
+  });
+}
+
+// Top constructor in the race — aggregate each team's driver win probabilities.
+export function buildTopConstructorRaceOdds(
+  teams: Array<{ teamKey: string; teamName: string; driverProbs: number[] }>,
+): Array<{ teamKey: string; teamName: string; probability: number; offeredOdds: number }> {
+  if (teams.length === 0) return [];
+  // Team weight: sum of driver win probs, boosted (both drivers can score).
+  const raw = teams.map((t) => t.driverProbs.reduce((a, b) => a + b, 0));
+  const sum = raw.reduce((a, b) => a + b, 0) || 1;
+  return teams.map((t, i) => {
+    const p = clamp(raw[i] / sum, 0.01, 0.95);
+    const fair = 1 / p;
+    const offered = clamp(fair * (1 - OVERROUND), FLOOR, CAP);
+    return {
+      teamKey: t.teamKey,
+      teamName: t.teamName,
+      probability: p,
+      offeredOdds: Math.round(offered * 100) / 100,
+    };
+  });
+}
+
 // Head-to-head between two drivers: probability one beats the other = pA / (pA + pB)
 export function buildHeadToHeadOdds(
   a: { key: string; probability: number },
