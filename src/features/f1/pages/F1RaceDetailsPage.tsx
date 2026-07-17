@@ -584,8 +584,10 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
           </div>
         )}
         {currentMarkets.map((m: any) => {
-          const drv = driverByKey[m.selection_key];
-          const team = drv?.team_key ? teamByKey[drv.team_key] : null;
+          const isConstructor = subTab === "top_constructor_race";
+          const team = isConstructor ? teamByKey[m.selection_key] : null;
+          const drv = !isConstructor ? driverByKey[m.selection_key] : null;
+          const drvTeam = drv?.team_key ? teamByKey[drv.team_key] : null;
           const pct = probabilities[m.id] * 100;
           const isSel = selectedId === m.id;
           return (
@@ -598,7 +600,15 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
               }`}
             >
               <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[var(--surface-3)] ring-1 ring-[var(--color-surface-border)]/60">
-                {drv?.photo_url ? (
+                {isConstructor ? (
+                  team?.logo_url ? (
+                    <img src={team.logo_url} alt={m.label} className="h-full w-full object-contain p-1" />
+                  ) : (
+                    <div className="grid h-full w-full place-items-center text-[10px] font-bold text-[var(--color-ink-muted)]">
+                      {m.label.slice(0, 3).toUpperCase()}
+                    </div>
+                  )
+                ) : drv?.photo_url ? (
                   <img src={drv.photo_url} alt={m.label} className="h-full w-full object-cover" />
                 ) : (
                   <div className="grid h-full w-full place-items-center text-[10px] font-bold text-[var(--color-ink-muted)]">
@@ -607,8 +617,12 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-[var(--color-ink)]">{drv?.name ?? m.label}</div>
-                <div className="truncate text-xs text-[var(--color-ink-muted)]">{team?.name ?? ""}</div>
+                <div className="truncate text-sm font-semibold text-[var(--color-ink)]">
+                  {isConstructor ? (team?.name ?? m.label) : (drv?.name ?? m.label)}
+                </div>
+                <div className="truncate text-xs text-[var(--color-ink-muted)]">
+                  {isConstructor ? "Constructor" : (drvTeam?.name ?? "")}
+                </div>
               </div>
               <div className="tabular-nums text-lg font-bold text-[var(--color-ink)]">
                 {pct >= 10 ? Math.round(pct) : pct.toFixed(1)}%
