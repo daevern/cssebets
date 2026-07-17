@@ -103,6 +103,7 @@ import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/p
 import { Route as ApiPublicHooksOddsLiveRouteImport } from './routes/api/public/hooks/odds-live'
 import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
 import { Route as ApiPublicHooksFootballSyncRouteImport } from './routes/api/public/hooks/football-sync'
+import { Route as ApiPublicHooksFootballSettleRouteImport } from './routes/api/public/hooks/football-settle'
 import { Route as ApiPublicHooksFootballLiveRouteImport } from './routes/api/public/hooks/football-live'
 import { Route as ApiPublicHooksApifootballSyncRouteImport } from './routes/api/public/hooks/apifootball-sync'
 import { Route as ApiPublicHooksApifootballPrematchRouteImport } from './routes/api/public/hooks/apifootball-prematch'
@@ -623,6 +624,12 @@ const ApiPublicHooksFootballSyncRoute =
     path: '/api/public/hooks/football-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksFootballSettleRoute =
+  ApiPublicHooksFootballSettleRouteImport.update({
+    id: '/api/public/hooks/football-settle',
+    path: '/api/public/hooks/football-settle',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksFootballLiveRoute =
   ApiPublicHooksFootballLiveRouteImport.update({
     id: '/api/public/hooks/football-live',
@@ -758,6 +765,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
+  '/api/public/hooks/football-settle': typeof ApiPublicHooksFootballSettleRoute
   '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
@@ -857,6 +865,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
+  '/api/public/hooks/football-settle': typeof ApiPublicHooksFootballSettleRoute
   '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
@@ -961,6 +970,7 @@ export interface FileRoutesById {
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
   '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
+  '/api/public/hooks/football-settle': typeof ApiPublicHooksFootballSettleRoute
   '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
@@ -1065,6 +1075,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/football-live'
+    | '/api/public/hooks/football-settle'
     | '/api/public/hooks/football-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/odds-live'
@@ -1164,6 +1175,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/football-live'
+    | '/api/public/hooks/football-settle'
     | '/api/public/hooks/football-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/odds-live'
@@ -1267,6 +1279,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
     | '/api/public/hooks/football-live'
+    | '/api/public/hooks/football-settle'
     | '/api/public/hooks/football-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/odds-live'
@@ -1297,6 +1310,7 @@ export interface RootRouteChildren {
   ApiPublicHooksApifootballPrematchRoute: typeof ApiPublicHooksApifootballPrematchRoute
   ApiPublicHooksApifootballSyncRoute: typeof ApiPublicHooksApifootballSyncRoute
   ApiPublicHooksFootballLiveRoute: typeof ApiPublicHooksFootballLiveRoute
+  ApiPublicHooksFootballSettleRoute: typeof ApiPublicHooksFootballSettleRoute
   ApiPublicHooksFootballSyncRoute: typeof ApiPublicHooksFootballSyncRoute
   ApiPublicHooksHealthCheckRoute: typeof ApiPublicHooksHealthCheckRoute
   ApiPublicHooksOddsLiveRoute: typeof ApiPublicHooksOddsLiveRoute
@@ -1968,6 +1982,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFootballSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/football-settle': {
+      id: '/api/public/hooks/football-settle'
+      path: '/api/public/hooks/football-settle'
+      fullPath: '/api/public/hooks/football-settle'
+      preLoaderRoute: typeof ApiPublicHooksFootballSettleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/football-live': {
       id: '/api/public/hooks/football-live'
       path: '/api/public/hooks/football-live'
@@ -2247,6 +2268,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksApifootballPrematchRoute,
   ApiPublicHooksApifootballSyncRoute: ApiPublicHooksApifootballSyncRoute,
   ApiPublicHooksFootballLiveRoute: ApiPublicHooksFootballLiveRoute,
+  ApiPublicHooksFootballSettleRoute: ApiPublicHooksFootballSettleRoute,
   ApiPublicHooksFootballSyncRoute: ApiPublicHooksFootballSyncRoute,
   ApiPublicHooksHealthCheckRoute: ApiPublicHooksHealthCheckRoute,
   ApiPublicHooksOddsLiveRoute: ApiPublicHooksOddsLiveRoute,
