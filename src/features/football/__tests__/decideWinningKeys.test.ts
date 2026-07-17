@@ -111,8 +111,8 @@ describe("decideWinningKeys — half markets", () => {
   it("highest scoring half: first (HT 3-0, FT 3-1)", () => {
     expect(keys(decideWinningKeys(mk("highest_scoring_half"), ctx(3, 1, [3, 0])))).toEqual(["first"]);
   });
-  it("highest scoring half: equal (HT 1-0, FT 2-1)", () => {
-    expect(keys(decideWinningKeys(mk("highest_scoring_half"), ctx(2, 1, [1, 0])))).toEqual(["equal"]);
+  it("highest scoring half: equal (HT 1-1, FT 2-2)", () => {
+    expect(keys(decideWinningKeys(mk("highest_scoring_half"), ctx(2, 2, [1, 1])))).toEqual(["equal"]);
   });
 });
 
