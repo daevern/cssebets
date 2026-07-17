@@ -240,14 +240,20 @@ export async function syncF1Odds(seasonPref = currentSeason()) {
       const winnerOdds = buildRaceWinnerOdds(inputs);
       const podium = buildPodiumOdds(winnerOdds);
       const points = buildPointsOdds(winnerOdds);
+      const top5 = buildTop5Odds(winnerOdds);
+      const fastest = buildFastestLapOdds(winnerOdds);
 
-      // Upsert race_winner + podium + points markets
+      // Upsert per-driver markets
       for (let i = 0; i < driverList.length; i++) {
         const d = driverList[i];
-        const w = winnerOdds[i];
-        const po = podium[i];
-        const pt = points[i];
-        for (const [type, odds] of [["race_winner", w.offeredOdds], ["podium", po.offeredOdds], ["points_finish", pt.offeredOdds]] as const) {
+        const perDriver = [
+          ["race_winner", winnerOdds[i].offeredOdds],
+          ["podium", podium[i].offeredOdds],
+          ["points_finish", points[i].offeredOdds],
+          ["top_5_finish", top5[i].offeredOdds],
+          ["fastest_lap", fastest[i].offeredOdds],
+        ] as const;
+        for (const [type, odds] of perDriver) {
           marketRows.push({
             race_id: race.id,
             market_type: type,
@@ -258,6 +264,31 @@ export async function syncF1Odds(seasonPref = currentSeason()) {
             status: "open",
           });
         }
+      }
+
+      // Top constructor in the race — aggregate driver win probs per team
+      const teamAgg: Record<string, { name: string; probs: number[] }> = {};
+      for (let i = 0; i < driverList.length; i++) {
+        const d = driverList[i];
+        if (!d.team_key) continue;
+        (teamAgg[d.team_key] ??= { name: d.team_key, probs: [] }).probs.push(winnerOdds[i].probability);
+      }
+      const teamInputsRace = Object.entries(teamAgg).map(([teamKey, v]) => ({
+        teamKey,
+        teamName: v.name,
+        driverProbs: v.probs,
+      }));
+      const topConOdds = buildTopConstructorRaceOdds(teamInputsRace);
+      for (const t of topConOdds) {
+        marketRows.push({
+          race_id: race.id,
+          market_type: "top_constructor_race",
+          selection_key: t.teamKey,
+          secondary_selection_key: "",
+          label: t.teamName,
+          odds: t.offeredOdds,
+          status: "open",
+        });
       }
 
       // H2H — teammates only (keeps market count sane)
