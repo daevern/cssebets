@@ -222,6 +222,24 @@ function HomePage() {
         )}
       </section>
 
+      {/* Next F1 race + Next UFC fight */}
+      {(extras?.nextRace || extras?.nextFight) && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+              Also on the card
+            </h2>
+          </div>
+          <div className="grid gap-3">
+            {extras?.nextRace && <NextRaceCard race={extras.nextRace} now={now} />}
+            {extras?.nextFight && <NextFightCard fight={extras.nextFight} now={now} />}
+          </div>
+        </section>
+      )}
+
+
+
 
 
       {/* Your Position — picks */}
