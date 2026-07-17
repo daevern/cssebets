@@ -759,7 +759,7 @@ function whenLabel(iso: string, now: number) {
   const today = new Date(now);
   const sameDay = d.toDateString() === today.toDateString();
   const h = d.getHours() % 12 || 12;
-  const time = `${h}:${String(d.getMinutes()).padStart(2, "0")}${d.getHours() >= 12 ? "PM" : "AM"}`;
+    const time = `${h}:${String(d.getMinutes()).padStart(2, "0")} ${d.getHours() >= 12 ? "PM" : "AM"}`;
   return sameDay
     ? `Today · ${time}`
     : `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${time}`;
