@@ -226,6 +226,9 @@ function RaceChip({ race }: { race: RaceRow }) {
         <div className="mt-2 grid grid-cols-2 gap-1 rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-3)]/60 p-1 text-center">
           {top.map((d: any, i: number) => (
             <div key={i} className={i === 1 ? "border-l border-[var(--color-surface-border)]" : ""}>
+              <div className="flex justify-center pb-0.5">
+                <DriverPortrait url={d.photo} name={d.label} size={24} />
+              </div>
               <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--color-ink-muted)] truncate">
                 {d.label.split(" ").slice(-1)[0].slice(0, 4).toUpperCase()}
               </div>
