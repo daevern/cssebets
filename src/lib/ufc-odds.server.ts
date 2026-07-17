@@ -231,16 +231,9 @@ async function saveFight(input: {
     is_title_fight: /title|championship/i.test(f.slug ?? ""),
   };
 
-  const { data: existing } = await (supabaseAdmin as any)
+  const { data, error } = await (supabaseAdmin as any)
     .from("ufc_fights")
-    .select("id")
-    .eq("apimma_fight_id", f.id)
-    .maybeSingle();
-
-  const q = existing?.id
-    ? (supabaseAdmin as any).from("ufc_fights").update(payload).eq("id", existing.id)
-    : (supabaseAdmin as any).from("ufc_fights").insert(payload);
-  const { data, error } = await q
+    .upsert(payload, { onConflict: "apimma_fight_id" })
     .select("id, fighter_a, fighter_b, scheduled_rounds, apimma_fighter_a_id, apimma_fighter_b_id")
     .maybeSingle();
   if (error) throw new Error(`fight save failed: ${error.message}`);
