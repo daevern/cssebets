@@ -583,53 +583,134 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
             No markets in this category yet.
           </div>
         )}
-        {currentMarkets.map((m: any) => {
-          const isConstructor = subTab === "top_constructor_race";
-          const team = isConstructor ? teamByKey[m.selection_key] : null;
-          const drv = !isConstructor ? driverByKey[m.selection_key] : null;
-          const drvTeam = drv?.team_key ? teamByKey[drv.team_key] : null;
-          const pct = probabilities[m.id] * 100;
-          const isSel = selectedId === m.id;
-          return (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => setSelectedId(m.id)}
-              className={`flex w-full items-center gap-3 py-3 text-left transition ${
-                isSel ? "bg-[var(--color-neon)]/5" : ""
-              }`}
-            >
-              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[var(--surface-3)] ring-1 ring-[var(--color-surface-border)]/60">
-                {isConstructor ? (
-                  team?.logo_url ? (
-                    <img src={team.logo_url} alt={m.label} className="h-full w-full object-contain p-1" />
+
+        {subTab === "head_to_head" ? (
+          (() => {
+            // Group the two rows of each pairing (A-beats-B, B-beats-A) into one card.
+            const pairs = new Map<string, { yes: any; no: any }>();
+            for (const m of currentMarkets) {
+              const a = m.selection_key as string;
+              const b = m.secondary_selection_key as string;
+              if (!a || !b) continue;
+              const key = [a, b].sort().join("|");
+              const bucket = pairs.get(key) ?? ({} as { yes: any; no: any });
+              // Favorite (lowest odds) becomes the "yes" side so the question reads naturally.
+              if (!bucket.yes || Number(m.odds) < Number(bucket.yes.odds)) {
+                if (bucket.yes) bucket.no = bucket.yes;
+                bucket.yes = m;
+              } else {
+                bucket.no = m;
+              }
+              pairs.set(key, bucket);
+            }
+            const list = [...pairs.values()].filter((p) => p.yes && p.no);
+            return list.map(({ yes, no }) => {
+              const drvA = driverByKey[yes.selection_key];
+              const drvB = driverByKey[yes.secondary_selection_key];
+              const teamA = drvA?.team_key ? teamByKey[drvA.team_key] : null;
+              const nameA = drvA?.name ?? yes.selection_key;
+              const nameB = drvB?.name ?? yes.secondary_selection_key;
+              const yesSel = selectedId === yes.id;
+              const noSel = selectedId === no.id;
+              return (
+                <div key={yes.id} className="py-3">
+                  <div className="mb-2 flex items-center gap-2">
+                    {teamA?.name && (
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+                        {teamA.name}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mb-2 text-sm font-semibold text-[var(--color-ink)]">
+                    Will {nameA} beat {nameB}?
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(yes.id)}
+                      className={`flex items-center justify-between rounded-md border px-3 py-2.5 text-left transition ${
+                        yesSel
+                          ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10"
+                          : "border-[var(--color-surface-border)] hover:border-[var(--color-neon)]/50"
+                      }`}
+                    >
+                      <span className="text-[13px] font-bold uppercase tracking-wide text-[var(--color-ink)]">
+                        Yes
+                      </span>
+                      <span className="font-display text-base font-bold tabular-nums text-[var(--color-neon)]">
+                        {Number(yes.odds).toFixed(2)}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(no.id)}
+                      className={`flex items-center justify-between rounded-md border px-3 py-2.5 text-left transition ${
+                        noSel
+                          ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10"
+                          : "border-[var(--color-surface-border)] hover:border-[var(--color-neon)]/50"
+                      }`}
+                    >
+                      <span className="text-[13px] font-bold uppercase tracking-wide text-[var(--color-ink)]">
+                        No
+                      </span>
+                      <span className="font-display text-base font-bold tabular-nums text-[var(--color-neon)]">
+                        {Number(no.odds).toFixed(2)}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              );
+            });
+          })()
+        ) : (
+          currentMarkets.map((m: any) => {
+            const isConstructor = subTab === "top_constructor_race";
+            const team = isConstructor ? teamByKey[m.selection_key] : null;
+            const drv = !isConstructor ? driverByKey[m.selection_key] : null;
+            const drvTeam = drv?.team_key ? teamByKey[drv.team_key] : null;
+            const pct = probabilities[m.id] * 100;
+            const isSel = selectedId === m.id;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setSelectedId(m.id)}
+                className={`flex w-full items-center gap-3 py-3 text-left transition ${
+                  isSel ? "bg-[var(--color-neon)]/5" : ""
+                }`}
+              >
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[var(--surface-3)] ring-1 ring-[var(--color-surface-border)]/60">
+                  {isConstructor ? (
+                    team?.logo_url ? (
+                      <img src={team.logo_url} alt={m.label} className="h-full w-full object-contain p-1" />
+                    ) : (
+                      <div className="grid h-full w-full place-items-center text-[10px] font-bold text-[var(--color-ink-muted)]">
+                        {m.label.slice(0, 3).toUpperCase()}
+                      </div>
+                    )
+                  ) : drv?.photo_url ? (
+                    <img src={drv.photo_url} alt={m.label} className="h-full w-full object-cover" />
                   ) : (
                     <div className="grid h-full w-full place-items-center text-[10px] font-bold text-[var(--color-ink-muted)]">
-                      {m.label.slice(0, 3).toUpperCase()}
+                      {(drv?.abbr ?? m.label.slice(0, 3)).toUpperCase()}
                     </div>
-                  )
-                ) : drv?.photo_url ? (
-                  <img src={drv.photo_url} alt={m.label} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="grid h-full w-full place-items-center text-[10px] font-bold text-[var(--color-ink-muted)]">
-                    {(drv?.abbr ?? m.label.slice(0, 3)).toUpperCase()}
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold text-[var(--color-ink)]">
+                    {isConstructor ? (team?.name ?? m.label) : (drv?.name ?? m.label)}
                   </div>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-[var(--color-ink)]">
-                  {isConstructor ? (team?.name ?? m.label) : (drv?.name ?? m.label)}
+                  <div className="truncate text-xs text-[var(--color-ink-muted)]">
+                    {isConstructor ? "Constructor" : (drvTeam?.name ?? "")}
+                  </div>
                 </div>
-                <div className="truncate text-xs text-[var(--color-ink-muted)]">
-                  {isConstructor ? "Constructor" : (drvTeam?.name ?? "")}
+                <div className="tabular-nums text-lg font-bold text-[var(--color-ink)]">
+                  {pct >= 10 ? Math.round(pct) : pct.toFixed(1)}%
                 </div>
-              </div>
-              <div className="tabular-nums text-lg font-bold text-[var(--color-ink)]">
-                {pct >= 10 ? Math.round(pct) : pct.toFixed(1)}%
-              </div>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })
+        )}
       </div>
 
       <div className="mt-8 rounded-lg border border-[var(--color-neon)]/30 bg-[var(--color-neon)]/5 p-4 text-sm">
