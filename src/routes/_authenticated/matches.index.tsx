@@ -93,7 +93,7 @@ function MatchesPage() {
 
   const { live, upcoming, completed } = useMemo(() => {
     const arr = data ?? [];
-    const horizon = now + 48 * 60 * 60 * 1000;
+    const horizon = now + 14 * 24 * 60 * 60 * 1000;
     const l: Match[] = []; const u: Match[] = []; const c: Match[] = [];
     for (const m of arr) {
       if (m.status === "finished") { c.push(m); continue; }
