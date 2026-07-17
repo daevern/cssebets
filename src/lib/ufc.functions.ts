@@ -10,14 +10,19 @@ async function requireAdmin(supabase: any, userId: string) {
 
 export const listUfcFights = createServerFn({ method: "GET" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: event } = await (supabaseAdmin as any)
+  // Always derive the featured event from the latest event date so a stale
+  // still-active row from a prior card can never win the selection. We pick
+  // the row with the greatest starts_at and fall back to any active row only
+  // if nothing has a scheduled date yet.
+  const { data: events } = await (supabaseAdmin as any)
     .from("ufc_events")
-    .select("id, event_key, name, starts_at")
+    .select("id, event_key, name, starts_at, is_active")
     .eq("is_active", true)
-    .order("starts_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .order("starts_at", { ascending: false, nullsFirst: false })
+    .limit(1);
+  const event = (events ?? [])[0] ?? null;
   if (!event) return { event: null, fights: [] };
+
 
   // Only include fights within the event's window (event day ± 12h).
   // Prevents stale fights from prior events (same event row reused by sync)
