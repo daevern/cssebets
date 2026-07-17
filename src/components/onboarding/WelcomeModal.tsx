@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { markOnboardingSkipped } from "@/lib/onboarding.functions";
 import { useTour } from "./TourProvider";
 
+const DISMISS_KEY_PREFIX = "onboarding:welcomeDismissed:";
+
 export function WelcomeModal() {
   const { status, startFullTour } = useTour();
   const { user } = useAuth();
@@ -15,28 +17,44 @@ export function WelcomeModal() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
 
+  const dismissKey = user?.id ? `${DISMISS_KEY_PREFIX}${user.id}` : null;
+
+  function markDismissed() {
+    if (!dismissKey || typeof window === "undefined") return;
+    try { window.localStorage.setItem(dismissKey, new Date().toISOString()); } catch {}
+  }
+  function wasDismissed() {
+    if (!dismissKey || typeof window === "undefined") return false;
+    try { return !!window.localStorage.getItem(dismissKey); } catch { return false; }
+  }
+
   useEffect(() => {
     if (!status) return;
     const shouldShow =
       status.userEnabled &&
       status.globalEnabled &&
       !status.completedAt &&
-      !status.skippedAt;
+      !status.skippedAt &&
+      !wasDismissed();
     setOpen(!!shouldShow);
-  }, [status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, dismissKey]);
 
   const onStart = () => {
+    markDismissed();
     setOpen(false);
     setTimeout(() => startFullTour(), 200);
   };
 
   const onSkip = async () => {
+    markDismissed();
     setOpen(false);
     try {
       await skipFn({});
       qc.invalidateQueries({ queryKey: ["onboarding-status", user?.id] });
     } catch {}
   };
+
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onSkip()}>
