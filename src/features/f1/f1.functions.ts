@@ -2,7 +2,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabase } from "@/integrations/supabase/client";
+
 
 async function requireAdmin(sb: any, userId: string) {
   const { data } = await sb.from("user_roles").select("role").eq("user_id", userId);
@@ -12,20 +12,23 @@ async function requireAdmin(sb: any, userId: string) {
 
 // ---------- Public reads ----------
 
-export const listF1Races = createServerFn({ method: "GET" }).handler(async () => {
-  const { data } = await (supabase as any)
-    .from("f1_races")
-    .select("id, race_key, season, round, name, circuit, country, starts_at, status")
-    .order("starts_at", { ascending: true });
-  return { races: data ?? [] };
-});
+export const listF1Races = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await (context.supabase as any)
+      .from("f1_races")
+      .select("id, race_key, season, round, name, circuit, country, starts_at, status")
+      .order("starts_at", { ascending: true });
+    return { races: data ?? [] };
+  });
 
 export const getF1Race = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ raceId: z.string().uuid() }).parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const [{ data: race }, { data: markets }] = await Promise.all([
-      (supabase as any).from("f1_races").select("*").eq("id", data.raceId).maybeSingle(),
-      (supabase as any)
+      (context.supabase as any).from("f1_races").select("*").eq("id", data.raceId).maybeSingle(),
+      (context.supabase as any)
         .from("f1_race_markets")
         .select("id, market_type, selection_key, secondary_selection_key, label, odds, status")
         .eq("race_id", data.raceId)
@@ -38,9 +41,10 @@ export const getF1Race = createServerFn({ method: "GET" })
   });
 
 export const listF1ChampionshipMarkets = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ season: z.number().int() }).parse(i))
-  .handler(async ({ data }) => {
-    const { data: rows } = await (supabase as any)
+  .handler(async ({ data, context }) => {
+    const { data: rows } = await (context.supabase as any)
       .from("f1_championship_markets")
       .select("id, season, market_type, selection_key, label, odds, status")
       .eq("season", data.season)
@@ -50,10 +54,11 @@ export const listF1ChampionshipMarkets = createServerFn({ method: "GET" })
   });
 
 export const getF1OddsHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ marketId: z.string().uuid() }).parse(i))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const since = new Date(Date.now() - 24 * 3600_000).toISOString();
-    const { data: rows } = await (supabase as any)
+    const { data: rows } = await (context.supabase as any)
       .from("f1_race_odds_snapshots")
       .select("odds, snapshot_at")
       .eq("market_id", data.marketId)
