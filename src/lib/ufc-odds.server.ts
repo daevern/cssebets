@@ -908,10 +908,21 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
   // the named headline bout as main event.
   const { mainFight, coMainFight } = pickMainAndCoMain(card);
 
-  const targets: Array<{ f: ApiMmaFight; pos: "main" | "co_main"; rounds: 3 | 5 }> = [
+  // Include the full main card, not just headliner + co-main. API-MMA's
+  // `is_main` flag marks every main-card bout; fall back to the whole card
+  // cluster if the feed hasn't tagged them yet.
+  const mainCardFights = card.filter((f) => f.is_main);
+  const fullCard = mainCardFights.length >= 2 ? mainCardFights : card;
+
+  const targets: Array<{ f: ApiMmaFight; pos: "main" | "co_main" | "other"; rounds: 3 | 5 }> = [
     { f: mainFight, pos: "main", rounds: 5 },
   ];
   if (coMainFight) targets.push({ f: coMainFight, pos: "co_main", rounds: 3 });
+  for (const f of fullCard) {
+    if (f.id === mainFight.id) continue;
+    if (coMainFight && f.id === coMainFight.id) continue;
+    targets.push({ f, pos: "other", rounds: 3 });
+  }
 
   let totalMarkets = 0;
   for (const t of targets) {
