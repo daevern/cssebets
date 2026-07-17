@@ -269,7 +269,7 @@ function BetsTable({ rows, isViewer, reason, voidMut, regradeMut, hideFixture = 
               <TableCell>
                 <select
                   className="h-7 rounded border bg-background px-1 text-[11px]"
-                  disabled={isViewer || !reason || regradeMut.isPending}
+                  disabled={isViewer || !reason || regradeMut.isPending || p.sport === "f1"}
                   defaultValue=""
                   onChange={(e) => {
                     const v = e.target.value;
@@ -291,7 +291,7 @@ function BetsTable({ rows, isViewer, reason, voidMut, regradeMut, hideFixture = 
               <TableCell className="text-right">
                 <Button
                   size="sm" variant="outline"
-                  disabled={isViewer || p.status !== "pending" || !reason || voidMut.isPending}
+                  disabled={isViewer || p.status !== "pending" || !reason || voidMut.isPending || p.sport === "f1"}
                   onClick={() => voidMut.mutate(p)}
                 >
                   Void
@@ -300,6 +300,7 @@ function BetsTable({ rows, isViewer, reason, voidMut, regradeMut, hideFixture = 
             </TableRow>
           );
         })}
+
         {!rows.length && (
           <TableRow><TableCell colSpan={hideFixture ? 11 : 12} className="text-center text-muted-foreground">No bets.</TableCell></TableRow>
         )}
