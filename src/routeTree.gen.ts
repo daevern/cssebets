@@ -113,6 +113,7 @@ import { Route as ApiPublicHooksApifootballLiveRouteImport } from './routes/api/
 import { Route as ApiPublicHooksApifootballLineupsRouteImport } from './routes/api/public/hooks/apifootball-lineups'
 import { Route as ApiPublicHooksApifootballFulltimeRouteImport } from './routes/api/public/hooks/apifootball-fulltime'
 import { Route as AuthenticatedFootballMatchesMatchIdRouteImport } from './routes/_authenticated/football/matches.$matchId'
+import { Route as AuthenticatedF1RacesRaceIdRouteImport } from './routes/_authenticated/f1.races.$raceId'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -684,6 +685,12 @@ const AuthenticatedFootballMatchesMatchIdRoute =
     path: '/football/matches/$matchId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedF1RacesRaceIdRoute =
+  AuthenticatedF1RacesRaceIdRouteImport.update({
+    id: '/races/$raceId',
+    path: '/races/$raceId',
+    getParentRoute: () => AuthenticatedF1Route,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -772,6 +779,7 @@ export interface FileRoutesByFullPath {
   '/matches/': typeof AuthenticatedMatchesIndexRoute
   '/ufc/': typeof AuthenticatedUfcIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/f1/races/$raceId': typeof AuthenticatedF1RacesRaceIdRoute
   '/football/matches/$matchId': typeof AuthenticatedFootballMatchesMatchIdRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
@@ -873,6 +881,7 @@ export interface FileRoutesByTo {
   '/matches': typeof AuthenticatedMatchesIndexRoute
   '/ufc': typeof AuthenticatedUfcIndexRoute
   '/management/admin': typeof ManagementAdminIndexRoute
+  '/f1/races/$raceId': typeof AuthenticatedF1RacesRaceIdRoute
   '/football/matches/$matchId': typeof AuthenticatedFootballMatchesMatchIdRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
@@ -980,6 +989,7 @@ export interface FileRoutesById {
   '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
   '/_authenticated/ufc/': typeof AuthenticatedUfcIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/_authenticated/f1/races/$raceId': typeof AuthenticatedF1RacesRaceIdRoute
   '/_authenticated/football/matches/$matchId': typeof AuthenticatedFootballMatchesMatchIdRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
@@ -1087,6 +1097,7 @@ export interface FileRouteTypes {
     | '/matches/'
     | '/ufc/'
     | '/management/admin/'
+    | '/f1/races/$raceId'
     | '/football/matches/$matchId'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
@@ -1188,6 +1199,7 @@ export interface FileRouteTypes {
     | '/matches'
     | '/ufc'
     | '/management/admin'
+    | '/f1/races/$raceId'
     | '/football/matches/$matchId'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
@@ -1294,6 +1306,7 @@ export interface FileRouteTypes {
     | '/_authenticated/matches/'
     | '/_authenticated/ufc/'
     | '/management/admin/'
+    | '/_authenticated/f1/races/$raceId'
     | '/_authenticated/football/matches/$matchId'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
@@ -2074,15 +2087,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFootballMatchesMatchIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/f1/races/$raceId': {
+      id: '/_authenticated/f1/races/$raceId'
+      path: '/races/$raceId'
+      fullPath: '/f1/races/$raceId'
+      preLoaderRoute: typeof AuthenticatedF1RacesRaceIdRouteImport
+      parentRoute: typeof AuthenticatedF1Route
+    }
   }
 }
 
 interface AuthenticatedF1RouteChildren {
   AuthenticatedF1IndexRoute: typeof AuthenticatedF1IndexRoute
+  AuthenticatedF1RacesRaceIdRoute: typeof AuthenticatedF1RacesRaceIdRoute
 }
 
 const AuthenticatedF1RouteChildren: AuthenticatedF1RouteChildren = {
   AuthenticatedF1IndexRoute: AuthenticatedF1IndexRoute,
+  AuthenticatedF1RacesRaceIdRoute: AuthenticatedF1RacesRaceIdRoute,
 }
 
 const AuthenticatedF1RouteWithChildren = AuthenticatedF1Route._addFileChildren(
