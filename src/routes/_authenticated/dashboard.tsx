@@ -813,7 +813,7 @@ function NextRaceCard({ race, now }: { race: NonNullable<NextF1Race>; now: numbe
     <Link
       to="/f1/races/$raceId"
       params={{ raceId: race.id }}
-      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] transition-colors hover:border-[var(--neon)]/40"
+      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] transition-colors hover:border-[var(--neon)]/40 next-fixture-corner"
     >
       <div className="relative p-4">
         <div className="flex items-center justify-between text-[11px] font-semibold">
@@ -935,7 +935,7 @@ function NextFightCard({ fight, now }: { fight: NonNullable<NextUfcFight>; now: 
     <Link
       to="/ufc/$fightId"
       params={{ fightId: fight.id }}
-      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4 transition-colors hover:border-[var(--neon)]/40"
+      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4 transition-colors hover:border-[var(--neon)]/40 next-fixture-corner"
     >
       <div className="flex items-center justify-between text-[11px] font-semibold text-[var(--ink-muted)]">
         <span className="flex items-center gap-1.5">
