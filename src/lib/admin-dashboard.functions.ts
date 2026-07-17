@@ -420,7 +420,7 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
 
     // --- UFC bets (normalized to prediction row shape) ---
     const ufcRows: any[] = [];
-    if (data.sport !== "football") {
+    if (data.sport === "all" || data.sport === "ufc") {
       // UI uses prediction-vocabulary statuses (pending/won/lost/void).
       // ufc_bets stores "open" for unsettled; map both ways.
       const uiToUfc: Record<string, string> = { pending: "open", won: "won", lost: "lost", void: "void" };
@@ -436,6 +436,36 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       if (error) throw new Error(error.message);
       ufcRows.push(...(bets ?? []));
     }
+
+    // --- F1 bets (race + championship, normalized) ---
+    const f1Rows: any[] = [];
+    if (data.sport === "all" || data.sport === "f1") {
+      const uiToF1: Record<string, string> = { pending: "open", won: "won", lost: "lost", void: "void" };
+      let rq = (supabaseAdmin as any)
+        .from("f1_bets")
+        .select("id, user_id, race_id, market_type, selection_key, selection_label, stake, odds_locked, potential_payout, status, created_at, settled_at")
+        .order("created_at", { ascending: false });
+      if (data.userId) rq = rq.eq("user_id", data.userId);
+      if (data.fixtureId) rq = rq.eq("race_id", data.fixtureId);
+      if (data.market) rq = rq.eq("market_type", data.market);
+      if (data.status) rq = rq.eq("status", uiToF1[data.status] ?? data.status);
+      const { data: raceBets, error: rErr } = await rq;
+      if (rErr) throw new Error(rErr.message);
+      (raceBets ?? []).forEach((b: any) => f1Rows.push({ ...b, _kind: "race" }));
+
+      // Championship (season) bets — no fixture join
+      let cq = (supabaseAdmin as any)
+        .from("f1_championship_bets")
+        .select("id, user_id, season, market_type, selection_key, selection_label, stake, odds_locked, potential_payout, status, created_at, settled_at")
+        .order("created_at", { ascending: false });
+      if (data.userId) cq = cq.eq("user_id", data.userId);
+      if (data.market) cq = cq.eq("market_type", data.market);
+      if (data.status) cq = cq.eq("status", uiToF1[data.status] ?? data.status);
+      const { data: champBets, error: cErr } = await cq;
+      if (cErr) throw new Error(cErr.message);
+      (champBets ?? []).forEach((b: any) => f1Rows.push({ ...b, _kind: "championship" }));
+    }
+
 
     // --- Resolve display labels ---
     const uids = Array.from(new Set(
