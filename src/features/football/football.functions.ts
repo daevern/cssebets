@@ -152,6 +152,87 @@ export const listFootballFlags = createServerFn({ method: "GET" }).handler(async
   return map;
 });
 
+// ---------- Odds history (per market, anonymized) ----------
+
+export const getFootballOddsHistory = createServerFn({ method: "GET" })
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        marketId: z.string().uuid(),
+        hours: z.number().int().min(1).max(72).default(12),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data }) => {
+    const since = new Date(Date.now() - data.hours * 3600_000).toISOString();
+    const { data: rows } = await browserPublishable
+      .from("sports_odds_snapshots" as any)
+      .select("selection_key, decimal_odds, fetched_at, provider_ts")
+      .eq("sports_market_id", data.marketId)
+      .gte("fetched_at", since)
+      .order("fetched_at", { ascending: true })
+      .limit(1000);
+
+    const series = new Map<string, { t: string; odds: number }[]>();
+    for (const r of (rows ?? []) as any[]) {
+      const key = r.selection_key as string;
+      if (!series.has(key)) series.set(key, []);
+      series.get(key)!.push({
+        t: r.provider_ts ?? r.fetched_at,
+        odds: Number(r.decimal_odds),
+      });
+    }
+    return {
+      series: Array.from(series.entries()).map(([selectionKey, points]) => ({
+        selectionKey,
+        points,
+      })),
+    };
+  });
+
+// ---------- Live trade tape (anonymized per event) ----------
+
+export const getFootballTradeTape = createServerFn({ method: "GET" })
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        eventId: z.string().uuid(),
+        limit: z.number().int().min(5).max(50).default(20),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data }) => {
+    // Bets are RLS-restricted to owner; use admin client for a strictly
+    // anonymized read (no user_id, no bet id, no payout — only market/selection/stake bucket/odds/time).
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: bets } = await (supabaseAdmin as any)
+      .from("sports_bets")
+      .select("market_key, selection_key, stake, accepted_odds, placed_at, sports_market_id")
+      .eq("sports_event_id", data.eventId)
+      .eq("sport_code", "football")
+      .order("placed_at", { ascending: false })
+      .limit(data.limit);
+
+    const bucket = (s: number) => {
+      if (s < 50) return "<50";
+      if (s < 100) return "50-100";
+      if (s < 500) return "100-500";
+      if (s < 1000) return "500-1k";
+      if (s < 5000) return "1k-5k";
+      return "5k+";
+    };
+
+    return {
+      trades: ((bets as any[]) ?? []).map((b) => ({
+        marketKey: b.market_key as string,
+        selectionKey: b.selection_key as string,
+        stakeBucket: bucket(Number(b.stake)),
+        odds: Number(b.accepted_odds),
+        placedAt: b.placed_at as string,
+      })),
+    };
+  });
+
 // ---------- Authenticated: my bets ----------
 
 export const listMyFootballBets = createServerFn({ method: "GET" })
