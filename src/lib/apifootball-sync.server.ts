@@ -98,7 +98,7 @@ async function houseAdjust(market: string, raw: ParsedOdds[]): Promise<ParsedOdd
 
 export type SyncResult = {
   matchId: string;
-  status: "ok" | "skipped" | "no_fixture" | "no_odds" | "quota_exhausted";
+  status: "ok" | "skipped" | "no_fixture" | "no_odds" | "quota_exhausted" | "rate_limited" | "error";
   bookmakers?: number;
   markets?: number;
   quotaSpent: number;
