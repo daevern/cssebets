@@ -31,10 +31,6 @@ export async function settleF1RaceById(raceId: string) {
   const positionByKey: Record<string, number> = {};
   for (const r of ordered) positionByKey[keyify(r.driver.name)] = r.position!;
 
-  // Driver -> team key for constructor settlement
-  const teamByDriver: Record<string, string> = {};
-  for (const r of ordered) teamByDriver[keyify(r.driver.name)] = keyify(r.team.name);
-
   // Constructor points total per team in this race
   const teamPoints: Record<string, { pts: number; bestPos: number }> = {};
   for (const r of ordered) {
