@@ -50,6 +50,7 @@ import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/b
 import { Route as ManagementAdminIndexRouteImport } from './routes/management/admin.index'
 import { Route as AuthenticatedUfcIndexRouteImport } from './routes/_authenticated/ufc.index'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
+import { Route as AuthenticatedF1IndexRouteImport } from './routes/_authenticated/f1.index'
 import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
 import { Route as ManagementAdminWalletAdjustmentsRouteImport } from './routes/management/admin.wallet-adjustments'
 import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
@@ -323,6 +324,11 @@ const AuthenticatedMatchesIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedMatchesRoute,
   } as any)
+const AuthenticatedF1IndexRoute = AuthenticatedF1IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedF1Route,
+} as any)
 const ManagementAdminWalletLedgerRoute =
   ManagementAdminWalletLedgerRouteImport.update({
     id: '/wallet-ledger',
@@ -692,7 +698,7 @@ export interface FileRoutesByFullPath {
   '/bets': typeof AuthenticatedBetsRoute
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/f1': typeof AuthenticatedF1Route
+  '/f1': typeof AuthenticatedF1RouteWithChildren
   '/help': typeof AuthenticatedHelpRoute
   '/matches': typeof AuthenticatedMatchesRouteWithChildren
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
@@ -762,6 +768,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/f1/': typeof AuthenticatedF1IndexRoute
   '/matches/': typeof AuthenticatedMatchesIndexRoute
   '/ufc/': typeof AuthenticatedUfcIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
@@ -796,7 +803,6 @@ export interface FileRoutesByTo {
   '/bets': typeof AuthenticatedBetsRoute
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/f1': typeof AuthenticatedF1Route
   '/help': typeof AuthenticatedHelpRoute
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -863,6 +869,7 @@ export interface FileRoutesByTo {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/f1': typeof AuthenticatedF1IndexRoute
   '/matches': typeof AuthenticatedMatchesIndexRoute
   '/ufc': typeof AuthenticatedUfcIndexRoute
   '/management/admin': typeof ManagementAdminIndexRoute
@@ -899,7 +906,7 @@ export interface FileRoutesById {
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
   '/_authenticated/changelog': typeof AuthenticatedChangelogRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/f1': typeof AuthenticatedF1Route
+  '/_authenticated/f1': typeof AuthenticatedF1RouteWithChildren
   '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/matches': typeof AuthenticatedMatchesRouteWithChildren
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
@@ -969,6 +976,7 @@ export interface FileRoutesById {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/_authenticated/f1/': typeof AuthenticatedF1IndexRoute
   '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
   '/_authenticated/ufc/': typeof AuthenticatedUfcIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
@@ -1075,6 +1083,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
+    | '/f1/'
     | '/matches/'
     | '/ufc/'
     | '/management/admin/'
@@ -1109,7 +1118,6 @@ export interface FileRouteTypes {
     | '/bets'
     | '/changelog'
     | '/dashboard'
-    | '/f1'
     | '/help'
     | '/my-predictions'
     | '/notifications'
@@ -1176,6 +1184,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
+    | '/f1'
     | '/matches'
     | '/ufc'
     | '/management/admin'
@@ -1281,6 +1290,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
+    | '/_authenticated/f1/'
     | '/_authenticated/matches/'
     | '/_authenticated/ufc/'
     | '/management/admin/'
@@ -1622,6 +1632,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/matches/'
       preLoaderRoute: typeof AuthenticatedMatchesIndexRouteImport
       parentRoute: typeof AuthenticatedMatchesRoute
+    }
+    '/_authenticated/f1/': {
+      id: '/_authenticated/f1/'
+      path: '/'
+      fullPath: '/f1/'
+      preLoaderRoute: typeof AuthenticatedF1IndexRouteImport
+      parentRoute: typeof AuthenticatedF1Route
     }
     '/management/admin/wallet-ledger': {
       id: '/management/admin/wallet-ledger'
@@ -2060,6 +2077,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedF1RouteChildren {
+  AuthenticatedF1IndexRoute: typeof AuthenticatedF1IndexRoute
+}
+
+const AuthenticatedF1RouteChildren: AuthenticatedF1RouteChildren = {
+  AuthenticatedF1IndexRoute: AuthenticatedF1IndexRoute,
+}
+
+const AuthenticatedF1RouteWithChildren = AuthenticatedF1Route._addFileChildren(
+  AuthenticatedF1RouteChildren,
+)
+
 interface AuthenticatedMatchesRouteChildren {
   AuthenticatedMatchesMatchIdRoute: typeof AuthenticatedMatchesMatchIdRoute
   AuthenticatedMatchesIndexRoute: typeof AuthenticatedMatchesIndexRoute
@@ -2102,7 +2131,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBetsRoute: typeof AuthenticatedBetsRoute
   AuthenticatedChangelogRoute: typeof AuthenticatedChangelogRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedF1Route: typeof AuthenticatedF1Route
+  AuthenticatedF1Route: typeof AuthenticatedF1RouteWithChildren
   AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
   AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRouteWithChildren
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
@@ -2129,7 +2158,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBetsRoute: AuthenticatedBetsRoute,
   AuthenticatedChangelogRoute: AuthenticatedChangelogRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedF1Route: AuthenticatedF1Route,
+  AuthenticatedF1Route: AuthenticatedF1RouteWithChildren,
   AuthenticatedHelpRoute: AuthenticatedHelpRoute,
   AuthenticatedMatchesRoute: AuthenticatedMatchesRouteWithChildren,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
