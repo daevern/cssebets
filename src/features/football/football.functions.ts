@@ -316,3 +316,23 @@ export const adminSetFootballFlag = createServerFn({ method: "POST" })
       .eq("key", data.key);
     return { ok: true };
   });
+
+export const adminListRecentSyncRuns = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("sports_sync_runs" as any)
+      .select("id, provider, job_type, sport_code, competition_code, status, started_at, finished_at, records_fetched, records_created, records_updated")
+      .eq("sport_code", "football")
+      .order("started_at", { ascending: false })
+      .limit(25);
+    const { data: quota } = await supabaseAdmin
+      .from("apifootball_quota")
+      .select("day, used, day_limit, updated_at")
+      .order("day", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return { runs: (data as any[]) ?? [], quota: quota ?? null };
+  });
