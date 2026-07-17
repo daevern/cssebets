@@ -126,7 +126,7 @@ export function F1SeasonPage() {
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-neon)]" />
               Upcoming Grands Prix
             </h2>
-            <Link to="/matches" className="flex items-center gap-1 text-[12px] font-semibold text-[var(--color-neon)]">
+            <Link to="/f1/races" className="flex items-center gap-1 text-[12px] font-semibold text-[var(--color-neon)]">
               View all <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
