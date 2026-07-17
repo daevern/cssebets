@@ -292,6 +292,16 @@ export const adminSettleFootball = createServerFn({ method: "POST" })
     return await settleFinishedFootballEvents();
   });
 
+export const adminSuspendStaleFootball = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { suspendStaleFootballMarkets } = await import(
+      "./services/oddsFreshness.server"
+    );
+    return await suspendStaleFootballMarkets();
+  });
+
 export const adminSetFootballFlag = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) =>

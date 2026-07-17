@@ -8,6 +8,7 @@ import {
   adminSyncFootballOdds,
   adminSettleFootball,
   adminSetFootballFlag,
+  adminSuspendStaleFootball,
 } from "@/features/football/football.functions";
 import { ALL_FOOTBALL_COMPETITIONS } from "@/features/football/config/footballCompetitions";
 
