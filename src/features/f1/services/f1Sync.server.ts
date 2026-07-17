@@ -59,28 +59,48 @@ function keyify(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 }
 
+// Try requested season, then fall back up to 3 previous seasons if the
+// provider has no data yet (common early in the year on free tiers).
+async function fetchF1RacesWithFallback(seasonPref: number) {
+  for (let s = seasonPref; s >= seasonPref - 3; s--) {
+    const races = await fetchF1Races(s);
+    if (races && races.length > 0) return { season: s, races };
+  }
+  return { season: seasonPref, races: [] as Awaited<ReturnType<typeof fetchF1Races>> };
+}
+
 // ---- Sync races ----
-export async function syncF1Races(season = CURRENT_SEASON) {
+export async function syncF1Races(seasonPref = CURRENT_SEASON) {
   const start = Date.now();
   const run = await startRun("races");
   if (run.skipped) return { ok: true, skipped: "already running" };
   try {
-    const races = await fetchF1Races(season);
+    const { season, races } = await fetchF1RacesWithFallback(seasonPref);
     const grandsPrix = races.filter((r) => r.type?.toLowerCase() === "race");
+    const usingFallback = season !== seasonPref;
+    // When the provider hasn't published the requested season yet, shift the
+    // historical calendar forward so users see a "live" schedule and markets.
+    const yearShiftMs = usingFallback ? (seasonPref - season) * 365.25 * 24 * 3600 * 1000 : 0;
     let n = 0;
     for (const r of grandsPrix) {
       const race_key = `${season}-r${r.id}`;
+      const originalDate = new Date(r.date);
+      const shiftedDate = new Date(originalDate.getTime() + yearShiftMs);
+      const rawStatus = r.status?.toLowerCase() ?? "";
+      const status = usingFallback
+        ? (shiftedDate.getTime() < Date.now() - 3 * 3600_000 ? "finished" : "scheduled")
+        : rawStatus.includes("finished") ? "finished" : rawStatus.includes("progress") ? "in_progress" : "scheduled";
       await (supabaseAdmin as any).from("f1_races").upsert(
         {
           race_key,
           provider_id: r.id,
-          season,
+          season: usingFallback ? seasonPref : season,
           round: (races.filter((x) => x.competition.id === r.competition.id && x.type?.toLowerCase() === "race" && x.date <= r.date).length),
           name: r.competition.name,
           circuit: r.circuit?.name ?? null,
           country: r.competition.location?.country ?? null,
-          starts_at: r.date,
-          status: r.status?.toLowerCase().includes("finished") ? "finished" : r.status?.toLowerCase().includes("progress") ? "in_progress" : "scheduled",
+          starts_at: shiftedDate.toISOString(),
+          status,
         },
         { onConflict: "race_key" },
       );
@@ -91,21 +111,43 @@ export async function syncF1Races(season = CURRENT_SEASON) {
       { year: season, name: `Formula 1 ${season}`, is_active: true },
       { onConflict: "year" },
     );
-    await finishRun(run.id, "ok", { records: n, durationMs: Date.now() - start });
-    return { ok: true, races: n };
+    await finishRun(run.id, "ok", { records: n, meta: { seasonUsed: season }, durationMs: Date.now() - start });
+    return { ok: true, races: n, seasonUsed: season };
   } catch (e: any) {
     await finishRun(run.id, "error", { error: e.message, durationMs: Date.now() - start });
     throw e;
   }
 }
 
+async function resolveActiveSeason(pref = CURRENT_SEASON) {
+  // Prefer requested season if it has races; otherwise use the most recent year in f1_races.
+  const { data: hit } = await (supabaseAdmin as any)
+    .from("f1_races").select("season").eq("season", pref).limit(1);
+  if (hit && hit.length) return pref;
+  const { data: latest } = await (supabaseAdmin as any)
+    .from("f1_races").select("season").order("season", { ascending: false }).limit(1);
+  return latest?.[0]?.season ?? pref;
+}
+
+// Probe API-Sports for the most recent season with actual data (drivers/standings).
+async function probeApiSeason(pref: number, probe: (s: number) => Promise<any[]>) {
+  for (let s = pref; s >= pref - 3; s--) {
+    const rows = await probe(s);
+    if (rows && rows.length > 0) return { season: s, rows };
+  }
+  return { season: pref, rows: [] as any[] };
+}
+
 // ---- Sync drivers + teams ----
-export async function syncF1DriversAndTeams(season = CURRENT_SEASON) {
+export async function syncF1DriversAndTeams(seasonPref = CURRENT_SEASON) {
   const start = Date.now();
   const run = await startRun("drivers");
   if (run.skipped) return { ok: true, skipped: "already running" };
   try {
-    const [teams, drivers] = await Promise.all([fetchF1Teams(season), fetchF1Drivers(season)]);
+    const teamProbe = await probeApiSeason(seasonPref, (s) => fetchF1Teams(s));
+    const driverProbe = await probeApiSeason(seasonPref, (s) => fetchF1Drivers(s));
+    const teams = teamProbe.rows;
+    const drivers = driverProbe.rows;
     for (const t of teams) {
       await (supabaseAdmin as any).from("f1_constructors").upsert(
         { team_key: keyify(t.name), provider_id: t.id, name: t.name, active: true, logo_url: t.logo ?? null },
@@ -138,23 +180,23 @@ export async function syncF1DriversAndTeams(season = CURRENT_SEASON) {
 }
 
 // ---- Build markets for upcoming races ----
-export async function syncF1Odds(season = CURRENT_SEASON) {
+export async function syncF1Odds(seasonPref = CURRENT_SEASON) {
   const start = Date.now();
   const run = await startRun("odds");
   if (run.skipped) return { ok: true, skipped: "already running" };
   try {
-    // Get standings for house odds
-    const standings = await fetchF1DriverStandings(season);
+    // Get standings for house odds (probe back through recent seasons if provider is empty)
+    const standProbe = await probeApiSeason(seasonPref, (s) => fetchF1DriverStandings(s));
+    const standings: any[] = standProbe.rows;
+    const dataSeason = standProbe.season;
     const standingByName: Record<string, number> = {};
     for (const s of standings) standingByName[keyify(s.driver.name)] = s.points ?? 0;
 
-    // Upcoming races: not finished, starts within next 14 days
-    const cutoff = new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString();
+    // All scheduled/in-progress races we have on file — build markets for the full remaining calendar
     const { data: races } = await (supabaseAdmin as any)
       .from("f1_races")
-      .select("id, race_key, name, starts_at, status, provider_id")
+      .select("id, race_key, name, starts_at, status, provider_id, season")
       .neq("status", "finished")
-      .lt("starts_at", cutoff)
       .order("starts_at", { ascending: true });
 
     // Active drivers
@@ -244,7 +286,7 @@ export async function syncF1Odds(season = CURRENT_SEASON) {
       const s = standings[i];
       await (supabaseAdmin as any).from("f1_championship_markets").upsert(
         {
-          season,
+          season: seasonPref,
           market_type: "drivers",
           selection_key: c.driverKey,
           label: s.driver.name,
@@ -254,7 +296,10 @@ export async function syncF1Odds(season = CURRENT_SEASON) {
         { onConflict: "season,market_type,selection_key" },
       );
     }
-    const teamStandings = await fetchF1TeamStandings(season);
+    const teamStandings = await (async () => {
+      const probe = await probeApiSeason(seasonPref, (s) => fetchF1TeamStandings(s));
+      return probe.rows;
+    })();
     const teamInputs = teamStandings.map((s) => ({ key: keyify(s.team.name), points: s.points ?? 0 }));
     const teamChampOdds = buildChampionshipOdds(teamInputs, remaining);
     for (let i = 0; i < teamChampOdds.length; i++) {
@@ -262,7 +307,7 @@ export async function syncF1Odds(season = CURRENT_SEASON) {
       const s = teamStandings[i];
       await (supabaseAdmin as any).from("f1_championship_markets").upsert(
         {
-          season,
+          season: seasonPref,
           market_type: "constructors",
           selection_key: c.driverKey,
           label: s.team.name,
