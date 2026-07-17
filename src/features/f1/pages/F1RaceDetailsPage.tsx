@@ -175,32 +175,39 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     [chartMarkets, driverByKey],
   );
 
-  const chartData = useMemo(() => {
+  // Build per-series points restricted to the selected range, then merge onto shared timeline.
+  const { chartData, yDomain } = useMemo(() => {
     const byMarket = chartQ.data?.byMarket ?? {};
-    // Build per-market anchored series
     const now = Date.now();
-    const start = now - RANGE_HOURS[range] * 3600_000;
+    const windowMs = RANGE_HOURS[range] * 3600_000;
+
     const perSeries: Record<string, { t: number; y: number }[]> = {};
     for (const s of seriesMeta) {
-      const raw = byMarket[s.id] ?? [];
-      const points = raw.map((p: any) => ({
-        t: new Date(p.snapshot_at).getTime(),
-        y: oddsToPct(Number(p.odds)),
-      }));
-      if (points.length === 0) {
-        perSeries[s.id] = [
-          { t: start, y: s.currentPct },
-          { t: now, y: s.currentPct },
-        ];
-      } else {
-        perSeries[s.id] = [...points, { t: now, y: s.currentPct }];
-      }
+      const raw = (byMarket[s.id] ?? [])
+        .map((p: any) => ({ t: new Date(p.snapshot_at).getTime(), y: oddsToPct(Number(p.odds)) }))
+        .sort((a: any, b: any) => a.t - b.t);
+
+      const cutoff = range === "ALL" ? -Infinity : now - windowMs;
+      const inWin = raw.filter((p) => p.t >= cutoff);
+
+      // Anchor at cutoff with the last-known value before the window so the line doesn't jump in.
+      const before = raw.filter((p) => p.t < cutoff).at(-1);
+      const anchor = range !== "ALL" && before ? [{ t: cutoff, y: before.y }] : [];
+
+      // Always end at "now" with the latest observed value (or current price if no history at all).
+      const latest = inWin.at(-1) ?? before ?? { t: now, y: s.currentPct };
+      const tail = { t: now, y: latest.y };
+
+      const merged = [...anchor, ...inWin];
+      if (merged.length === 0) merged.push({ t: cutoff === -Infinity ? now - 3600_000 : cutoff, y: s.currentPct });
+      if (merged[merged.length - 1].t < now) merged.push(tail);
+      perSeries[s.id] = merged;
     }
-    // Merge onto a single timeline
+
+    // Merge on a shared timeline with forward-fill.
     const times = new Set<number>();
     for (const arr of Object.values(perSeries)) for (const p of arr) times.add(p.t);
     const sortedT = [...times].sort((a, b) => a - b);
-    // Forward-fill per series
     const cursors: Record<string, number> = {};
     const last: Record<string, number> = {};
     const rows: Record<string, number | string>[] = [];
@@ -218,10 +225,40 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       }
       rows.push(row);
     }
-    return rows;
+
+    // y domain padded around the visible values so movement reads clearly.
+    const values: number[] = [];
+    for (const r of rows) for (const s of seriesMeta) {
+      const v = r[s.key];
+      if (typeof v === "number" && Number.isFinite(v)) values.push(v);
+    }
+    let domain: [number, number] = [0, 100];
+    if (values.length) {
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const spread = Math.max(max - min, 4);
+      const pad = spread * 0.35;
+      domain = [Math.max(0, Math.floor(min - pad)), Math.min(100, Math.ceil(max + pad))];
+    }
+    return { chartData: rows, yDomain: domain };
   }, [chartQ.data, seriesMeta, range]);
 
   const visibleSeries = seriesMeta.filter((s) => !hidden[s.id]);
+  const scrubIdx = activeIndex != null ? activeIndex : Math.max(0, chartData.length - 1);
+  const splitData = useMemo(() => {
+    return chartData.map((row, i) => {
+      const out: Record<string, number | string> = { t: row.t as number };
+      for (const s of seriesMeta) {
+        const v = row[s.key];
+        if (typeof v === "number") {
+          if (i <= scrubIdx) out[`${s.key}__a`] = v;
+          if (i >= scrubIdx) out[`${s.key}__d`] = v;
+        }
+      }
+      return out;
+    });
+  }, [chartData, seriesMeta, scrubIdx]);
+
 
   const placeMut = useMutation({
     mutationFn: async () => {
