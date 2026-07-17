@@ -109,8 +109,19 @@ export async function syncF1Races(seasonPref = CURRENT_SEASON) {
   }
 }
 
+async function resolveActiveSeason(pref = CURRENT_SEASON) {
+  // Prefer requested season if it has races; otherwise use the most recent year in f1_races.
+  const { data: hit } = await (supabaseAdmin as any)
+    .from("f1_races").select("season").eq("season", pref).limit(1);
+  if (hit && hit.length) return pref;
+  const { data: latest } = await (supabaseAdmin as any)
+    .from("f1_races").select("season").order("season", { ascending: false }).limit(1);
+  return latest?.[0]?.season ?? pref;
+}
+
 // ---- Sync drivers + teams ----
-export async function syncF1DriversAndTeams(season = CURRENT_SEASON) {
+export async function syncF1DriversAndTeams(seasonPref = CURRENT_SEASON) {
+  const season = await resolveActiveSeason(seasonPref);
   const start = Date.now();
   const run = await startRun("drivers");
   if (run.skipped) return { ok: true, skipped: "already running" };
