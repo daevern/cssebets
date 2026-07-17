@@ -5,6 +5,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, ChevronRight, Loader2 } from "lucide-react";
 import { listF1Races, getF1Race } from "../f1.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
+import { PageFooter } from "@/components/ui/page-footer";
 
 function CountryFlag({ country, w = 36, h = 24 }: { country?: string | null; w?: number; h?: number }) {
   const url = country ? teamFlagUrl(country, 160) : null;
@@ -151,6 +152,8 @@ export function F1SeasonPage() {
           </div>
         )}
       </section>
+
+      <PageFooter />
     </div>
   );
 }
