@@ -279,7 +279,7 @@ function FeaturedRaceCard({ race }: { race: RaceRow }) {
         </div>
 
         <div className="mt-3 flex items-start gap-3">
-          <CountryFlag country={race.country} size={28} />
+          <CountryFlag country={race.country} w={44} h={28} />
           <div className="min-w-0">
             <div className="font-display text-lg font-bold leading-tight text-[var(--color-ink)]">{race.name}</div>
             <div className="text-xs text-[var(--color-ink-muted)] truncate">{race.circuit}</div>
