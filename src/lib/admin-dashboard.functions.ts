@@ -398,7 +398,7 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
 
     // --- Football predictions ---
     const footballRows: any[] = [];
-    if (data.sport !== "ufc") {
+    if (data.sport === "all" || data.sport === "football") {
       for (let from = 0; ; from += ADMIN_PAGE_SIZE) {
         let q = supabaseAdmin
           .from("predictions")
@@ -416,6 +416,7 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
         if (page.length < ADMIN_PAGE_SIZE) break;
       }
     }
+
 
     // --- UFC bets (normalized to prediction row shape) ---
     const ufcRows: any[] = [];
