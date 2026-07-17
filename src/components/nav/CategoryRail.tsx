@@ -29,13 +29,27 @@ export function CategoryRail() {
   const { pathname } = useLocation();
   const activeRef = useRef<HTMLAnchorElement | null>(null);
 
-  // On mount, scroll the active pill into view (auto-scroll behavior).
+  const flagsFetcher = useServerFn(listFootballFlags);
+  const { data: flags } = useQuery({
+    queryKey: ["sports-feature-flags"],
+    queryFn: () => flagsFetcher(),
+    staleTime: 60_000,
+  });
+
   useEffect(() => {
     activeRef.current?.scrollIntoView({ inline: "center", block: "nearest" });
   }, []);
 
-  const isActive = (c: Category) =>
-    !c.soon && !!c.to && (pathname === c.to || pathname.startsWith(c.to + "/"));
+  const resolved = CATEGORIES.map((c) => {
+    if (c.flag && flags && !flags[c.flag]) return { ...c, soon: true, to: undefined };
+    return c;
+  });
+
+  const isActive = (c: Category) => {
+    if (c.soon || !c.to) return false;
+    const prefix = c.matchPathPrefix ?? c.to;
+    return pathname === c.to || pathname === prefix || pathname.startsWith(prefix + "/");
+  };
 
   return (
     <nav
@@ -56,7 +70,7 @@ export function CategoryRail() {
         className="flex h-full items-center gap-1 overflow-x-auto px-4 sm:px-6 md:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
 
-        {CATEGORIES.map((c) => {
+        {resolved.map((c) => {
           const active = isActive(c);
           const base =
             "flex-shrink-0 flex items-center h-full px-3.5 gap-2 border-b-2 whitespace-nowrap transition-colors";
