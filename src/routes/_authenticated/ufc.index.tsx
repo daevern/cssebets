@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { listUfcFights } from "@/lib/ufc.functions";
-import { ArrowUpRight, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowUpRight, Loader2 } from "lucide-react";
 import { PageFooter } from "@/components/ui/page-footer";
 
 export const Route = createFileRoute("/_authenticated/ufc/")({
