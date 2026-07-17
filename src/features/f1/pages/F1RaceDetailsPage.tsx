@@ -711,6 +711,8 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
           </div>
         </div>
       )}
+
+      <PageFooter />
     </div>
   );
 }
