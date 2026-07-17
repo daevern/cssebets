@@ -12,6 +12,9 @@ import {
   buildRaceWinnerOdds,
   buildPodiumOdds,
   buildPointsOdds,
+  buildTop5Odds,
+  buildFastestLapOdds,
+  buildTopConstructorRaceOdds,
   buildHeadToHeadOdds,
   buildChampionshipOdds,
 } from "./f1OddsBuilder.server";
