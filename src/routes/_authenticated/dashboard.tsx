@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { SVGProps } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, ChevronRight, Ticket, TrendingUp, Flag, Swords } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Ticket, TrendingUp, Swords } from "lucide-react";
 import { PageFooter } from "@/components/ui/page-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
@@ -765,93 +765,151 @@ function whenLabel(iso: string, now: number) {
     : `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${time}`;
 }
 
+function F1CountryFlag({ country, w = 44, h = 28 }: { country?: string | null; w?: number; h?: number }) {
+  const url = country ? teamFlagUrl(country, 160) : null;
+  if (!url) {
+    return (
+      <div
+        className="grid place-items-center bg-[var(--surface-3)] text-[9px] font-bold uppercase text-[var(--ink)]"
+        style={{ width: w, height: h }}
+      >
+        {(country ?? "").slice(0, 3)}
+      </div>
+    );
+  }
+  return (
+    <img src={url} alt={country ?? ""} className="object-cover" style={{ width: w, height: h }} loading="lazy" />
+  );
+}
+
+function DriverPortrait({ url, name, size = 44 }: { url?: string | null; name: string; size?: number }) {
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt={name}
+        className="rounded-lg border border-[var(--color-surface-border)] bg-[var(--surface-3)] object-cover"
+        style={{ width: size, height: size }}
+        loading="lazy"
+      />
+    );
+  }
+  const initials = name.split(" ").map((s) => s[0]).slice(0, 2).join("");
+  return (
+    <div
+      className="grid place-items-center rounded-lg border border-[var(--color-surface-border)] bg-[var(--surface-3)] text-[11px] font-bold text-[var(--ink)]"
+      style={{ width: size, height: size }}
+    >
+      {initials}
+    </div>
+  );
+}
+
+const F1_ROW_TONES = ["home", "away", "draw"] as const;
+
 function NextRaceCard({ race, now }: { race: NonNullable<NextF1Race>; now: number }) {
-  const flag = race.country ? teamFlagUrl(race.country, 320) : null;
+  const top = race.topDrivers.slice(0, 3);
   return (
     <Link
       to="/f1/races/$raceId"
       params={{ raceId: race.id }}
-      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4 transition-colors hover:border-[var(--neon)]/40"
+      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] transition-colors hover:border-[var(--neon)]/40"
     >
-      <div className="flex items-center justify-between text-[11px] font-semibold text-[var(--ink-muted)]">
-        <span className="flex items-center gap-1.5">
-          <Flag className="h-3 w-3 text-[var(--neon)]" />
-          Formula 1{race.round != null ? ` · Round ${race.round}` : ""}
-        </span>
-        <span>{whenLabel(race.starts_at, now)}</span>
-      </div>
-      <div className="mt-3 flex items-center gap-3">
-        {flag ? (
-          <img src={flag} alt={race.country ?? ""} className="h-9 w-14 shrink-0 object-cover" loading="lazy" />
-        ) : (
-          <div className="grid h-9 w-14 place-items-center bg-[var(--surface-3)] text-[9px] font-bold uppercase text-[var(--ink)]">
-            {(race.country ?? "F1").slice(0, 3)}
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[15px] font-bold tracking-tight text-[var(--ink)]">{race.name}</div>
-          {race.circuit && (
-            <div className="truncate text-[11px] text-[var(--ink-muted)]">{race.circuit}</div>
-          )}
+      <div className="relative p-4">
+        <div className="flex items-center justify-between text-[11px] font-semibold">
+          <span className="text-[var(--ink-muted)]">{whenLabel(race.starts_at, now)}</span>
+          {race.round != null && <span className="text-[var(--ink-muted)]">Round {race.round}</span>}
         </div>
-      </div>
 
-      {race.topDrivers.length > 0 && (
-        <div className="mt-4">
-          <div className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--ink-muted)]">
-            <span>Win favourites</span>
-            <span className="text-[var(--neon)]/80">Live odds</span>
+        <div className="mt-3 flex items-start gap-3">
+          <F1CountryFlag country={race.country} w={44} h={28} />
+          <div className="min-w-0">
+            <div className="font-display text-lg font-bold leading-tight text-[var(--ink)]">{race.name}</div>
+            {race.circuit && (
+              <div className="truncate text-xs text-[var(--ink-muted)]">{race.circuit}</div>
+            )}
           </div>
-          <div className={`grid gap-2 ${race.topDrivers.length === 1 ? "grid-cols-1" : race.topDrivers.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
-            {race.topDrivers.map((d, i) => (
-              <div
+        </div>
+
+        {top.length > 0 ? (
+          <div className="mt-4 flex flex-col gap-2.5">
+            {top.map((d, i) => (
+              <F1DriverRow
                 key={d.driver_key}
-                className={`relative flex flex-col items-center rounded-xl border p-2 ${
-                  i === 0
-                    ? "border-[var(--neon)]/60 bg-[var(--neon)]/[0.06]"
-                    : "border-[var(--color-surface-border)] bg-[var(--surface-3)]/40"
-                }`}
-              >
-                {i === 0 && (
-                  <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 rounded-full bg-[var(--neon)] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-widest text-black">
-                    Fav
-                  </span>
-                )}
-                <div className="h-12 w-12 overflow-hidden rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)]">
-                  {d.photo_url ? (
-                    <img src={d.photo_url} alt={d.name} className="h-full w-full object-cover object-top" loading="lazy" />
-                  ) : (
-                    <div className="grid h-full w-full place-items-center font-display text-[10px] font-bold text-[var(--ink-muted)]">
-                      {d.abbr ?? d.name.slice(0, 3).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <div className="mt-1.5 max-w-full truncate text-center text-[11px] font-bold tracking-tight text-[var(--ink)]">
-                  {d.abbr ?? d.name.split(" ").slice(-1)[0]}
-                </div>
-                {d.team && (
-                  <div className="max-w-full truncate text-center text-[9px] uppercase tracking-wider text-[var(--ink-muted)]">
-                    {d.team}
-                  </div>
-                )}
-                <div className="mt-1 flex items-baseline gap-1">
-                  <span className={`font-display text-sm font-bold tabular-nums ${i === 0 ? "text-[var(--neon)]" : "text-[var(--ink)]"}`}>
-                    {d.pct}%
-                  </span>
-                  <span className="text-[9px] tabular-nums text-[var(--ink-muted)]">{d.odds.toFixed(2)}x</span>
-                </div>
-              </div>
+                name={d.name}
+                team={d.team}
+                photo={d.photo_url}
+                pct={d.pct}
+                odds={d.odds}
+                tone={F1_ROW_TONES[i] ?? "draw"}
+              />
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="mt-4 rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-3)]/40 p-3 text-xs text-[var(--ink-muted)]">
+            Odds go live once the paddock arrives.
+          </div>
+        )}
 
-      <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)]/5 py-2.5 text-[13px] font-bold tracking-tight text-[var(--neon)] transition-transform group-hover:translate-y-[-1px] group-hover:bg-[var(--neon)]/10">
-        Open race markets <ArrowUpRight className="h-4 w-4" />
+        <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)]/5 py-3 text-[14px] font-bold tracking-tight text-[var(--neon)] transition-transform group-hover:translate-y-[-1px] group-hover:bg-[var(--neon)]/10">
+          Open Market <ArrowUpRight className="h-4 w-4" />
+        </div>
       </div>
     </Link>
   );
 }
+
+function F1DriverRow({
+  name, team, photo, pct, odds, tone,
+}: {
+  name: string; team: string | null; photo: string | null; pct: number; odds: number; tone: "home" | "away" | "draw";
+}) {
+  const color =
+    tone === "home" ? "text-rose-400" : tone === "away" ? "text-[var(--neon)]" : "text-sky-400";
+  const borderColor =
+    tone === "home" ? "border-rose-400/40" : tone === "away" ? "border-[var(--neon)]/40" : "border-sky-400/40";
+  const barColor =
+    tone === "home" ? "bg-rose-400" : tone === "away" ? "bg-[var(--neon)]" : "bg-sky-400";
+  const barGlow =
+    tone === "home"
+      ? "shadow-[0_0_6px_rgba(251,113,133,0.55)]"
+      : tone === "away"
+        ? "shadow-[0_0_6px_rgba(34,224,107,0.55)]"
+        : "shadow-[0_0_6px_rgba(56,189,248,0.55)]";
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <DriverPortrait url={photo} name={name} size={44} />
+        <div className="min-w-0">
+          <div className="truncate text-[15px] font-bold tracking-tight text-[var(--ink)]">{name}</div>
+          {team && <div className="truncate text-[11px] text-[var(--ink-muted)]">{team}</div>}
+        </div>
+      </div>
+      <div className="hidden sm:block h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-[var(--surface-3)]">
+        <div
+          className={`h-full rounded-full ${barColor} ${barGlow} transition-[width] duration-500`}
+          style={{ width: `${Math.max(4, Math.min(100, pct))}%` }}
+        />
+      </div>
+      <div className="flex flex-col items-end">
+        <div className="flex items-center gap-2">
+          <div className="sm:hidden h-1.5 w-14 overflow-hidden rounded-full bg-[var(--surface-3)]">
+            <div
+              className={`h-full rounded-full ${barColor} ${barGlow} transition-[width] duration-500`}
+              style={{ width: `${Math.max(4, Math.min(100, pct))}%` }}
+            />
+          </div>
+          <span className={`rounded-full border ${borderColor} px-3 py-1 text-[13px] font-bold tabular-nums ${color}`}>
+            {pct}%
+          </span>
+        </div>
+        <span className="mt-0.5 text-[10px] tabular-nums text-[var(--ink-muted)]">{odds.toFixed(2)}x</span>
+      </div>
+    </div>
+  );
+}
+
+
 
 /* ------------ Next UFC fight card ------------ */
 function FightPhoto({ url, name }: { url: string | null; name: string }) {
