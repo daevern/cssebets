@@ -455,6 +455,467 @@ export type Database = {
         }
         Relationships: []
       }
+      f1_bets: {
+        Row: {
+          created_at: string
+          id: string
+          market_id: string
+          market_type: string
+          odds_locked: number
+          potential_payout: number
+          race_id: string
+          selection_key: string
+          selection_label: string
+          settled_at: string | null
+          stake: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          market_id: string
+          market_type: string
+          odds_locked: number
+          potential_payout: number
+          race_id: string
+          selection_key: string
+          selection_label: string
+          settled_at?: string | null
+          stake: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          market_id?: string
+          market_type?: string
+          odds_locked?: number
+          potential_payout?: number
+          race_id?: string
+          selection_key?: string
+          selection_label?: string
+          settled_at?: string | null
+          stake?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "f1_bets_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "f1_race_markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "f1_bets_race_id_fkey"
+            columns: ["race_id"]
+            isOneToOne: false
+            referencedRelation: "f1_races"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      f1_championship_bets: {
+        Row: {
+          created_at: string
+          id: string
+          market_id: string
+          market_type: string
+          odds_locked: number
+          potential_payout: number
+          season: number
+          selection_key: string
+          selection_label: string
+          settled_at: string | null
+          stake: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          market_id: string
+          market_type: string
+          odds_locked: number
+          potential_payout: number
+          season: number
+          selection_key: string
+          selection_label: string
+          settled_at?: string | null
+          stake: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          market_id?: string
+          market_type?: string
+          odds_locked?: number
+          potential_payout?: number
+          season?: number
+          selection_key?: string
+          selection_label?: string
+          settled_at?: string | null
+          stake?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "f1_championship_bets_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "f1_championship_markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      f1_championship_markets: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          market_type: string
+          odds: number
+          season: number
+          selection_key: string
+          settled_at: string | null
+          status: string
+          updated_at: string
+          winning: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          market_type: string
+          odds: number
+          season: number
+          selection_key: string
+          settled_at?: string | null
+          status?: string
+          updated_at?: string
+          winning?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          market_type?: string
+          odds?: number
+          season?: number
+          selection_key?: string
+          settled_at?: string | null
+          status?: string
+          updated_at?: string
+          winning?: boolean | null
+        }
+        Relationships: []
+      }
+      f1_constructors: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          provider_id: number | null
+          team_key: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          provider_id?: number | null
+          team_key: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          provider_id?: number | null
+          team_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      f1_drivers: {
+        Row: {
+          abbr: string | null
+          active: boolean
+          created_at: string
+          driver_key: string
+          id: string
+          name: string
+          nationality: string | null
+          number: number | null
+          photo_url: string | null
+          provider_id: number | null
+          team_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          abbr?: string | null
+          active?: boolean
+          created_at?: string
+          driver_key: string
+          id?: string
+          name: string
+          nationality?: string | null
+          number?: number | null
+          photo_url?: string | null
+          provider_id?: number | null
+          team_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          abbr?: string | null
+          active?: boolean
+          created_at?: string
+          driver_key?: string
+          id?: string
+          name?: string
+          nationality?: string | null
+          number?: number | null
+          photo_url?: string | null
+          provider_id?: number | null
+          team_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "f1_drivers_team_key_fkey"
+            columns: ["team_key"]
+            isOneToOne: false
+            referencedRelation: "f1_constructors"
+            referencedColumns: ["team_key"]
+          },
+        ]
+      }
+      f1_race_markets: {
+        Row: {
+          closed_at: string | null
+          created_at: string
+          id: string
+          label: string
+          market_type: string
+          odds: number
+          opened_at: string
+          race_id: string
+          secondary_selection_key: string | null
+          selection_key: string
+          settled_at: string | null
+          status: string
+          updated_at: string
+          winning: boolean | null
+        }
+        Insert: {
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          label: string
+          market_type: string
+          odds: number
+          opened_at?: string
+          race_id: string
+          secondary_selection_key?: string | null
+          selection_key: string
+          settled_at?: string | null
+          status?: string
+          updated_at?: string
+          winning?: boolean | null
+        }
+        Update: {
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          market_type?: string
+          odds?: number
+          opened_at?: string
+          race_id?: string
+          secondary_selection_key?: string | null
+          selection_key?: string
+          settled_at?: string | null
+          status?: string
+          updated_at?: string
+          winning?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "f1_race_markets_race_id_fkey"
+            columns: ["race_id"]
+            isOneToOne: false
+            referencedRelation: "f1_races"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      f1_race_odds_snapshots: {
+        Row: {
+          id: string
+          market_id: string
+          odds: number
+          snapshot_at: string
+        }
+        Insert: {
+          id?: string
+          market_id: string
+          odds: number
+          snapshot_at?: string
+        }
+        Update: {
+          id?: string
+          market_id?: string
+          odds?: number
+          snapshot_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "f1_race_odds_snapshots_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "f1_race_markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      f1_races: {
+        Row: {
+          circuit: string | null
+          country: string | null
+          created_at: string
+          id: string
+          name: string
+          provider_id: number | null
+          quali_at: string | null
+          qualifying: Json | null
+          race_key: string
+          results: Json | null
+          round: number
+          season: number
+          settled_at: string | null
+          starts_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          circuit?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          provider_id?: number | null
+          quali_at?: string | null
+          qualifying?: Json | null
+          race_key: string
+          results?: Json | null
+          round: number
+          season: number
+          settled_at?: string | null
+          starts_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          circuit?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          provider_id?: number | null
+          quali_at?: string | null
+          qualifying?: Json | null
+          race_key?: string
+          results?: Json | null
+          round?: number
+          season?: number
+          settled_at?: string | null
+          starts_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      f1_seasons: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      f1_sync_runs: {
+        Row: {
+          duration_ms: number | null
+          error: string | null
+          finished_at: string | null
+          id: string
+          meta: Json | null
+          records: number | null
+          started_at: string
+          status: string
+          task: string
+        }
+        Insert: {
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          meta?: Json | null
+          records?: number | null
+          started_at?: string
+          status: string
+          task: string
+        }
+        Update: {
+          duration_ms?: number | null
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          meta?: Json | null
+          records?: number | null
+          started_at?: string
+          status?: string
+          task?: string
+        }
+        Relationships: []
+      }
       health_check_runs: {
         Row: {
           check_name: string
@@ -4243,6 +4704,24 @@ export type Database = {
           p_odds: number
           p_outcome: string
           p_snapshot_id?: string
+          p_stake: number
+          p_user_id: string
+        }
+        Returns: string
+      }
+      place_f1_championship_bet_atomic: {
+        Args: {
+          p_market_id: string
+          p_max_odds: number
+          p_stake: number
+          p_user_id: string
+        }
+        Returns: string
+      }
+      place_f1_race_bet_atomic: {
+        Args: {
+          p_market_id: string
+          p_max_odds: number
           p_stake: number
           p_user_id: string
         }

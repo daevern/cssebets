@@ -19,7 +19,7 @@ const CATEGORIES: Category[] = [
   { key: "la-liga", label: "La Liga", to: "/football/la-liga", flag: "la_liga_enabled", matchPathPrefix: "/football/la-liga" },
   { key: "serie-a", label: "Serie A", to: "/football/serie-a", flag: "serie_a_enabled", matchPathPrefix: "/football/serie-a" },
   { key: "ucl", label: "UCL", to: "/football/ucl", flag: "ucl_enabled", matchPathPrefix: "/football/ucl" },
-  { key: "f1", label: "Formula 1", soon: true },
+  { key: "f1", label: "Formula 1", to: "/f1", matchPathPrefix: "/f1" },
   { key: "ufc", label: "UFC", to: "/ufc", matchPathPrefix: "/ufc" },
   { key: "nba", label: "NBA", soon: true },
 ];

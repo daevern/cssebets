@@ -1,89 +1,123 @@
-# CSSEBets Multi-Sport Expansion Plan
+## Phase 2 — UFC hardening + F1 launch
 
-Build EPL, La Liga, Serie A, UCL, UFC, F1, NBA as a fully separate architecture. The existing World Cup 2026 system stays frozen — zero modifications to its files, routes, tables, or logic.
+Two parallel tracks. UFC stays where it lives today (`src/lib/ufc*.ts`, `src/routes/_authenticated/ufc.*`, `ufc_*` tables). F1 is built fresh in the same isolated pattern as football (`src/features/f1/`, `f1_*` tables) so it can't destabilise anything else.
 
-## Guardrails (non-negotiable)
-
-- **Protected World Cup file list** (identified up front, not touched):
-  - Routes: `src/routes/_authenticated/matches.tsx`, `matches.index.tsx`, `matches.$matchId.tsx`
-  - Server libs: `src/lib/apifootball*.{server,functions,ts}`, `src/lib/sim-worldcup.server.ts`, `src/lib/matches.functions.ts`, `src/lib/markets*.ts`, `src/lib/odds*.server.ts`, `src/lib/settlement.server.ts`, `src/lib/sync.server.ts`, `src/lib/match-analytics*.ts`, `src/lib/predictions*.ts`, `src/lib/bet-edit.functions.ts`, `src/lib/market-history.functions.ts`
-  - Cron hooks: `src/routes/api/public/hooks/apifootball-*.ts`, `sync-fixtures.ts`, `odds-live.ts`
-  - Tables: `matches`, `match_*`, `market_*`, `apifootball_*`, `predictions`, `tournaments`, `tournament_outrights`, `match_pool_transactions`, `match_stake_pools`
-  - Existing UFC files remain as-is (already sport-specific).
-- No changes to wallet formulas, RLS on WC tables, admin WC pages, or global styles used by WC.
-- CategoryRail's `/matches` link (WC) is preserved; new links are added, WC entry unchanged.
-
-## Phase 1 — Football (EPL / La Liga / Serie A / UCL)
-
-### Data model (all NEW, additive)
-New tables (prefixed `sports_` — fully isolated from `matches` / WC):
-- `sports_events`, `sports_event_provider_mappings`
-- `sports_markets`, `sports_market_selections`
-- `sports_odds_snapshots`, `sports_results`
-- `sports_bets`, `sports_bet_ledger_links`
-- `sports_settlement_runs`, `sports_settlement_items`
-- `sports_sync_runs`, `sports_sync_errors`
-- `sports_feature_flags`, `sports_competitions`
-
-Each table: GRANTs to authenticated/service_role, RLS enabled, policies scoped to `auth.uid()` for bets; admin-only for ops tables via `has_role`. Indexes on `(sport_code, competition_code, scheduled_at)`, unique `(provider, provider_event_id)`.
-
-### Backend
-- `src/features/football/adapters/apiFootballAdapter.server.ts` — reuses env `API_FOOTBALL_KEY` via its own quota-aware client (new file, does NOT import existing `apifootball.server.ts`).
-- `src/features/football/adapters/oddsApiAdapter.server.ts` — new Odds API client (needs `ODDS_API_KEY` secret).
-- `src/features/football/services/footballSync.server.ts` — fixtures, odds, live scores, results.
-- `src/features/football/services/footballSettlement.server.ts` — per-market settlement.
-- `src/features/football/services/footballBets.functions.ts` — atomic bet placement using existing wallet RPC.
-- `src/features/football/services/eventMapping.server.ts` — API-Football ↔ Odds API mapping with confidence scoring; low-confidence → admin review.
-
-### Frontend
-- `src/features/football/config/footballCompetitions.ts` — centralized config (league ID, sport key, markets, flags).
-- Pages: `FootballCompetitionPage.tsx` (parameterized by competition), `FootballMatchDetailsPage.tsx` (visually mirrors WC match page; copies rather than modifies WC components).
-- Components: `FootballMatchCard`, `FootballMatchHeader`, `FootballMarketCard`, `FootballBetSlip`, `FootballMarketGraph`, `FootballLiveTrades` — new copies styled to match WC.
-- Hooks: `useFootballCompetition`, `useFootballMatch`, `useFootballMarkets`.
-
-### Routes (all new)
-- `/football/epl`, `/football/la-liga`, `/football/serie-a`, `/football/ucl`
-- `/football/matches/$matchId`
-
-### Navigation
-Update `src/components/nav/CategoryRail.tsx` to:
-- Keep World Cup entry pointing to `/matches` (unchanged).
-- Point EPL/La Liga/Serie A/UCL/UFC/F1/NBA to new routes, gated by feature flags. Locked = `soon: true` until flag flips.
-- Active detection: current pathname + loaded event's `competition_code` on match-detail routes.
-
-### Cron
-New public hooks: `/api/public/hooks/football-sync-fixtures`, `football-sync-odds`, `football-sync-live`, `football-settle`. Scheduled via `pg_cron` using `apikey` header pattern.
-
-### Admin
-Additive admin page `src/routes/management/admin.sports.tsx` (index) + tabs for events, mappings, sync runs, settlement runs, sync errors. No modifications to existing WC admin pages.
-
-## Phase 2 — UFC (new, separate from existing UFC)
-Note: existing `ufc.*` routes already work. Decision needed: extend existing UFC or build parallel via `sports_events`? **Proposal**: leave existing UFC in place; only add link in CategoryRail to existing `/ufc`. Skip rebuilding unless the user wants it merged into new sports pipeline.
-
-## Phase 3 — NBA
-Routes `/nba`, `/nba/games/$gameId`. Provider: TBD (BallDontLie free / API-Sports basketball). Needs new secret. Markets: Moneyline, Spread, Totals, Team Totals, half/quarter variants.
-
-## Phase 4 — F1
-Routes `/f1`, `/f1/events/$eventId`, `/f1/races/$raceId`. Provider: TBD (API-Sports F1 / OpenF1). Needs new secret. Markets: Race Winner, Podium, Top 6/10, H2H, Constructor, Fastest Lap, Pole.
-
-## Feature flags
-DB-backed `sports_feature_flags` + `getFeatureFlags()` server fn cached client-side. Release order EPL → La Liga → Serie A → UCL → UFC → NBA → F1.
-
-## Secrets required (I will request when starting each phase)
-- `ODDS_API_KEY` (Phase 1)
-- NBA provider key (Phase 3)
-- F1 provider key (Phase 4)
-- `API_FOOTBALL_KEY` already set — reused read-only.
+Execution order: **F1 foundation first** (schema + sync), then **UFC hardening**, then **F1 UI + admin**, then **cron + polish**. Ship in that order so each layer is verifiable before the next.
 
 ---
 
-## Scope reality check — please confirm before I start
+### Track A — UFC hardening (no rewrite)
 
-This is roughly **60–100 new files, 12+ new tables, 4+ cron jobs, 3 new external API integrations**, and 4 phases of work. It will take many turns and burn significant credits. To avoid a runaway build I want to confirm:
+Applied to existing files only. No architectural changes; existing routes, tables, and bets stay intact.
 
-1. **Start with Phase 1 only (Football)** and stop for your review before UFC/NBA/F1? (Strongly recommended.)
-2. **UFC**: keep the existing `/ufc` implementation as-is and just link it in the rail, or rebuild it into the new `sports_events` architecture? (Rebuilding duplicates working code.)
-3. **Providers for NBA and F1**: do you already have accounts/keys, or should I pick free tiers (BallDontLie for NBA, OpenF1 for F1)?
-4. **Odds API subscription**: The Odds API requires a paid plan for reasonable request volume across 4 leagues. Do you have a key ready?
+1. **Retry + concurrency on the API-Sports MMA adapter** — reuse `src/features/football/services/retry.ts` (`withRetry`) inside `src/lib/apimma.server.ts` for all `apiMmaGet` calls; add a lock table check in `src/lib/ufc-odds.server.ts` `runUfcOddsSync` / `runUfcAutoSettle` to prevent overlapping cron runs.
+2. **Quota + sync-run tracking** — record each MMA API call into `apifootball_quota` (rename column-free, just tag `provider='mma'`) and write a row per sync into a new `sports_sync_runs`-style entry so UFC shows up in existing sync-health dashboards. Reuse the football sync-runs table by adding a `sport` discriminator (already present).
+3. **Odds-freshness guard** — mark UFC markets stale after N seconds without a snapshot; suppress bet placement on stale odds in `src/lib/ufc.functions.ts` place-bet path.
+4. **Admin observability on `/management/admin/ufc`** — add three panels: last 20 sync runs, current MMA quota, and open-bet liability per fight (aggregate stake + potential payout by fight_id).
+5. **Settlement safety** — confirmation dialog already exists; add server-side idempotency check (reject settle if `status='finished'`) and audit log entry.
+6. **Live trade tape** on the fight details page (`src/routes/_authenticated/ufc.$fightId.tsx`) — anonymised recent bets, reuse pattern from `src/features/football/components/LiveTradeTape.tsx`.
+7. **Odds history sparkline** on each UFC market card — reuse `OddsHistoryGraph.tsx` component; new server fn `getUfcOddsHistory`.
 
-Once you confirm, I'll begin Step 1 of Phase 1: the additive DB migration for `sports_*` tables.
+No changes to: UFC schema, existing markets, existing bet flow, wallet integration.
+
+---
+
+### Track B — F1 (isolated, new feature folder)
+
+Mirrors the football architecture exactly. Zero touch to football, UFC, or World Cup.
+
+**New folder:** `src/features/f1/`
+```text
+adapters/apiF1Adapter.server.ts     # API-Sports Formula-1 client + retry
+adapters/marketMapper.ts            # provider payload → internal market rows
+config/f1Seasons.ts                 # season + race calendar config
+services/f1Sync.server.ts           # fixtures, standings, results sync
+services/f1Settlement.server.ts     # race + championship settlement
+services/f1OddsBuilder.server.ts    # house odds from qualifying + standings
+components/F1RaceCard.tsx
+components/F1MarketCard.tsx
+components/F1BetSlip.tsx
+components/F1DriverGrid.tsx
+components/F1StandingsPanel.tsx
+pages/F1SeasonPage.tsx              # calendar + championship outrights
+pages/F1RaceDetailsPage.tsx         # per-race markets
+f1.functions.ts                     # server fns for UI + admin
+types/f1.ts
+```
+
+**New routes:**
+- `/f1` — season overview + championship outrights
+- `/f1/races/$raceId` — race markets + bet slip
+- `/management/admin/f1` — admin dashboard
+
+**Markets shipped:**
+- Race winner (outright per GP)
+- Podium finish (top-3 per driver)
+- Points finish (top-10 per driver)
+- Head-to-head matchups (auto-generated from qualifying pairs of teammates + top-10 pairs)
+- Championship outrights: Drivers' title + Constructors' title
+
+**House odds model** (API-Sports has no native F1 odds):
+- Base probability from championship standings position (softmax over points).
+- Adjusted by qualifying grid position when available (linear boost for pole/front row).
+- Convert to decimal odds with a fixed 6% overround, floor at 1.05, cap at 50.00.
+- Recompute on qualifying result, race start, and post-race for next round.
+
+**Championship outrights:**
+- Snapshot after every race weekend.
+- Settled when mathematically clinched (points gap > remaining points) or at season end.
+
+---
+
+### Database (Track B only)
+
+New migration creates:
+- `f1_seasons` (year, active, name)
+- `f1_races` (race_key, season, round, name, circuit, starts_at, status, results_json)
+- `f1_drivers` (driver_key, name, team, number, active)
+- `f1_constructors` (team_key, name, active)
+- `f1_race_markets` (race_id, market_type, selection_key, label, odds, status, opened_at, closed_at)
+- `f1_race_odds_snapshots` (market_id, odds, snapshot_at) — powers sparklines
+- `f1_bets` (user_id, race_id, market_id, selection_key, stake, odds_locked, potential_payout, status, settled_at)
+- `f1_championship_markets` + `f1_championship_bets` (season-long outrights)
+- `f1_sync_runs` (provider run log, or reuse `sports_sync_runs` if it already discriminates by sport)
+
+All tables: GRANT to `authenticated`/`service_role`, RLS enabled, policies:
+- Drivers/races/markets/snapshots: `SELECT` open to `authenticated`.
+- Bets: user sees own only; admins see all via `has_role('admin')`.
+- Admin write via `service_role` through server functions using `supabaseAdmin`.
+
+`updated_at` trigger on all mutable tables.
+
+---
+
+### Cron jobs (pg_cron via supabase--insert after routes deploy)
+
+New `/api/public/hooks/*` routes and their schedules:
+- `f1-sync` — every 15 min: races, drivers, standings, quali results.
+- `f1-odds-rebuild` — every 30 min during race weekends, hourly otherwise: recompute house odds + snapshot.
+- `f1-settle` — every 5 min on race day: settle finished races + refresh championship math.
+- `ufc-quota-log` — every hour: roll up MMA quota (piggybacks existing UFC cron).
+
+Existing UFC crons untouched; the hardening code plugs into them.
+
+---
+
+### Technical details
+
+- API-Sports F1 base: `https://v1.formula-1.api-sports.io`, same `x-apisports-key` header, same `API_FOOTBALL_KEY` secret.
+- Endpoints used: `/races?season=X`, `/rankings/drivers`, `/rankings/teams`, `/rankings/races?race=Y` (results + quali), `/drivers?season=X`, `/teams?season=X`.
+- All server work goes through `createServerFn` with `requireSupabaseAuth` for user-facing calls; admin actions verify `has_role('admin')` before touching `supabaseAdmin`.
+- Public read endpoints for the season/race pages use the server publishable client behind narrow `TO anon` policies — same pattern as football.
+- Cron hooks live under `/api/public/hooks/`; auth via `apikey` header carrying anon key.
+- All API calls wrapped in `withRetry` with exponential backoff.
+- Vitest coverage: F1 odds-builder unit tests (softmax normalisation, overround, floors/caps) and settlement decider tests (race winner, podium, points, h2h).
+
+---
+
+### Explicitly NOT included
+
+- NBA (skipped as previously agreed).
+- Live in-race markets (safety car, next retirement) — provider doesn't feed them cleanly.
+- UFC schema migration or route restructure.
+- Any change to World Cup, football, wallet ledger, or auth.

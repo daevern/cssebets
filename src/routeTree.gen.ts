@@ -43,12 +43,14 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
 import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
 import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
+import { Route as AuthenticatedF1RouteImport } from './routes/_authenticated/f1'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChangelogRouteImport } from './routes/_authenticated/changelog'
 import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/bets'
 import { Route as ManagementAdminIndexRouteImport } from './routes/management/admin.index'
 import { Route as AuthenticatedUfcIndexRouteImport } from './routes/_authenticated/ufc.index'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
+import { Route as AuthenticatedF1IndexRouteImport } from './routes/_authenticated/f1.index'
 import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
 import { Route as ManagementAdminWalletAdjustmentsRouteImport } from './routes/management/admin.wallet-adjustments'
 import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
@@ -80,6 +82,7 @@ import { Route as ManagementAdminMarketRulesRouteImport } from './routes/managem
 import { Route as ManagementAdminIncidentsRouteImport } from './routes/management/admin.incidents'
 import { Route as ManagementAdminHealthRouteImport } from './routes/management/admin.health'
 import { Route as ManagementAdminFootballRouteImport } from './routes/management/admin.football'
+import { Route as ManagementAdminF1RouteImport } from './routes/management/admin.f1'
 import { Route as ManagementAdminCorrelatedRiskRouteImport } from './routes/management/admin.correlated-risk'
 import { Route as ManagementAdminBankrollRouteImport } from './routes/management/admin.bankroll'
 import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
@@ -105,12 +108,16 @@ import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/publ
 import { Route as ApiPublicHooksFootballSyncRouteImport } from './routes/api/public/hooks/football-sync'
 import { Route as ApiPublicHooksFootballSettleRouteImport } from './routes/api/public/hooks/football-settle'
 import { Route as ApiPublicHooksFootballLiveRouteImport } from './routes/api/public/hooks/football-live'
+import { Route as ApiPublicHooksF1SyncRouteImport } from './routes/api/public/hooks/f1-sync'
+import { Route as ApiPublicHooksF1SettleRouteImport } from './routes/api/public/hooks/f1-settle'
+import { Route as ApiPublicHooksF1OddsRouteImport } from './routes/api/public/hooks/f1-odds'
 import { Route as ApiPublicHooksApifootballSyncRouteImport } from './routes/api/public/hooks/apifootball-sync'
 import { Route as ApiPublicHooksApifootballPrematchRouteImport } from './routes/api/public/hooks/apifootball-prematch'
 import { Route as ApiPublicHooksApifootballLiveRouteImport } from './routes/api/public/hooks/apifootball-live'
 import { Route as ApiPublicHooksApifootballLineupsRouteImport } from './routes/api/public/hooks/apifootball-lineups'
 import { Route as ApiPublicHooksApifootballFulltimeRouteImport } from './routes/api/public/hooks/apifootball-fulltime'
 import { Route as AuthenticatedFootballMatchesMatchIdRouteImport } from './routes/_authenticated/football/matches.$matchId'
+import { Route as AuthenticatedF1RacesRaceIdRouteImport } from './routes/_authenticated/f1.races.$raceId'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -286,6 +293,11 @@ const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
   path: '/help',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedF1Route = AuthenticatedF1RouteImport.update({
+  id: '/f1',
+  path: '/f1',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -317,6 +329,11 @@ const AuthenticatedMatchesIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedMatchesRoute,
   } as any)
+const AuthenticatedF1IndexRoute = AuthenticatedF1IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedF1Route,
+} as any)
 const ManagementAdminWalletLedgerRoute =
   ManagementAdminWalletLedgerRouteImport.update({
     id: '/wallet-ledger',
@@ -492,6 +509,11 @@ const ManagementAdminFootballRoute = ManagementAdminFootballRouteImport.update({
   path: '/football',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
+const ManagementAdminF1Route = ManagementAdminF1RouteImport.update({
+  id: '/f1',
+  path: '/f1',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
 const ManagementAdminCorrelatedRiskRoute =
   ManagementAdminCorrelatedRiskRouteImport.update({
     id: '/correlated-risk',
@@ -636,6 +658,21 @@ const ApiPublicHooksFootballLiveRoute =
     path: '/api/public/hooks/football-live',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksF1SyncRoute = ApiPublicHooksF1SyncRouteImport.update({
+  id: '/api/public/hooks/f1-sync',
+  path: '/api/public/hooks/f1-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksF1SettleRoute = ApiPublicHooksF1SettleRouteImport.update({
+  id: '/api/public/hooks/f1-settle',
+  path: '/api/public/hooks/f1-settle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksF1OddsRoute = ApiPublicHooksF1OddsRouteImport.update({
+  id: '/api/public/hooks/f1-odds',
+  path: '/api/public/hooks/f1-odds',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksApifootballSyncRoute =
   ApiPublicHooksApifootballSyncRouteImport.update({
     id: '/api/public/hooks/apifootball-sync',
@@ -672,6 +709,12 @@ const AuthenticatedFootballMatchesMatchIdRoute =
     path: '/football/matches/$matchId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedF1RacesRaceIdRoute =
+  AuthenticatedF1RacesRaceIdRouteImport.update({
+    id: '/races/$raceId',
+    path: '/races/$raceId',
+    getParentRoute: () => AuthenticatedF1Route,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -686,6 +729,7 @@ export interface FileRoutesByFullPath {
   '/bets': typeof AuthenticatedBetsRoute
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/f1': typeof AuthenticatedF1RouteWithChildren
   '/help': typeof AuthenticatedHelpRoute
   '/matches': typeof AuthenticatedMatchesRouteWithChildren
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
@@ -724,6 +768,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
   '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
+  '/management/admin/f1': typeof ManagementAdminF1Route
   '/management/admin/football': typeof ManagementAdminFootballRoute
   '/management/admin/health': typeof ManagementAdminHealthRoute
   '/management/admin/incidents': typeof ManagementAdminIncidentsRoute
@@ -755,15 +800,20 @@ export interface FileRoutesByFullPath {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/f1/': typeof AuthenticatedF1IndexRoute
   '/matches/': typeof AuthenticatedMatchesIndexRoute
   '/ufc/': typeof AuthenticatedUfcIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/f1/races/$raceId': typeof AuthenticatedF1RacesRaceIdRoute
   '/football/matches/$matchId': typeof AuthenticatedFootballMatchesMatchIdRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
   '/api/public/hooks/apifootball-live': typeof ApiPublicHooksApifootballLiveRoute
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
+  '/api/public/hooks/f1-odds': typeof ApiPublicHooksF1OddsRoute
+  '/api/public/hooks/f1-settle': typeof ApiPublicHooksF1SettleRoute
+  '/api/public/hooks/f1-sync': typeof ApiPublicHooksF1SyncRoute
   '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
   '/api/public/hooks/football-settle': typeof ApiPublicHooksFootballSettleRoute
   '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
@@ -824,6 +874,7 @@ export interface FileRoutesByTo {
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
   '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
+  '/management/admin/f1': typeof ManagementAdminF1Route
   '/management/admin/football': typeof ManagementAdminFootballRoute
   '/management/admin/health': typeof ManagementAdminHealthRoute
   '/management/admin/incidents': typeof ManagementAdminIncidentsRoute
@@ -855,15 +906,20 @@ export interface FileRoutesByTo {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/f1': typeof AuthenticatedF1IndexRoute
   '/matches': typeof AuthenticatedMatchesIndexRoute
   '/ufc': typeof AuthenticatedUfcIndexRoute
   '/management/admin': typeof ManagementAdminIndexRoute
+  '/f1/races/$raceId': typeof AuthenticatedF1RacesRaceIdRoute
   '/football/matches/$matchId': typeof AuthenticatedFootballMatchesMatchIdRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
   '/api/public/hooks/apifootball-live': typeof ApiPublicHooksApifootballLiveRoute
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
+  '/api/public/hooks/f1-odds': typeof ApiPublicHooksF1OddsRoute
+  '/api/public/hooks/f1-settle': typeof ApiPublicHooksF1SettleRoute
+  '/api/public/hooks/f1-sync': typeof ApiPublicHooksF1SyncRoute
   '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
   '/api/public/hooks/football-settle': typeof ApiPublicHooksFootballSettleRoute
   '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
@@ -891,6 +947,7 @@ export interface FileRoutesById {
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
   '/_authenticated/changelog': typeof AuthenticatedChangelogRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/f1': typeof AuthenticatedF1RouteWithChildren
   '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/matches': typeof AuthenticatedMatchesRouteWithChildren
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
@@ -929,6 +986,7 @@ export interface FileRoutesById {
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
   '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
+  '/management/admin/f1': typeof ManagementAdminF1Route
   '/management/admin/football': typeof ManagementAdminFootballRoute
   '/management/admin/health': typeof ManagementAdminHealthRoute
   '/management/admin/incidents': typeof ManagementAdminIncidentsRoute
@@ -960,15 +1018,20 @@ export interface FileRoutesById {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/_authenticated/f1/': typeof AuthenticatedF1IndexRoute
   '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
   '/_authenticated/ufc/': typeof AuthenticatedUfcIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/_authenticated/f1/races/$raceId': typeof AuthenticatedF1RacesRaceIdRoute
   '/_authenticated/football/matches/$matchId': typeof AuthenticatedFootballMatchesMatchIdRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
   '/api/public/hooks/apifootball-live': typeof ApiPublicHooksApifootballLiveRoute
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
+  '/api/public/hooks/f1-odds': typeof ApiPublicHooksF1OddsRoute
+  '/api/public/hooks/f1-settle': typeof ApiPublicHooksF1SettleRoute
+  '/api/public/hooks/f1-sync': typeof ApiPublicHooksF1SyncRoute
   '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
   '/api/public/hooks/football-settle': typeof ApiPublicHooksFootballSettleRoute
   '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
@@ -996,6 +1059,7 @@ export interface FileRouteTypes {
     | '/bets'
     | '/changelog'
     | '/dashboard'
+    | '/f1'
     | '/help'
     | '/matches'
     | '/my-predictions'
@@ -1034,6 +1098,7 @@ export interface FileRouteTypes {
     | '/management/admin/audit'
     | '/management/admin/bankroll'
     | '/management/admin/correlated-risk'
+    | '/management/admin/f1'
     | '/management/admin/football'
     | '/management/admin/health'
     | '/management/admin/incidents'
@@ -1065,15 +1130,20 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
+    | '/f1/'
     | '/matches/'
     | '/ufc/'
     | '/management/admin/'
+    | '/f1/races/$raceId'
     | '/football/matches/$matchId'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
     | '/api/public/hooks/apifootball-live'
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
+    | '/api/public/hooks/f1-odds'
+    | '/api/public/hooks/f1-settle'
+    | '/api/public/hooks/f1-sync'
     | '/api/public/hooks/football-live'
     | '/api/public/hooks/football-settle'
     | '/api/public/hooks/football-sync'
@@ -1134,6 +1204,7 @@ export interface FileRouteTypes {
     | '/management/admin/audit'
     | '/management/admin/bankroll'
     | '/management/admin/correlated-risk'
+    | '/management/admin/f1'
     | '/management/admin/football'
     | '/management/admin/health'
     | '/management/admin/incidents'
@@ -1165,15 +1236,20 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
+    | '/f1'
     | '/matches'
     | '/ufc'
     | '/management/admin'
+    | '/f1/races/$raceId'
     | '/football/matches/$matchId'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
     | '/api/public/hooks/apifootball-live'
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
+    | '/api/public/hooks/f1-odds'
+    | '/api/public/hooks/f1-settle'
+    | '/api/public/hooks/f1-sync'
     | '/api/public/hooks/football-live'
     | '/api/public/hooks/football-settle'
     | '/api/public/hooks/football-sync'
@@ -1200,6 +1276,7 @@ export interface FileRouteTypes {
     | '/_authenticated/bets'
     | '/_authenticated/changelog'
     | '/_authenticated/dashboard'
+    | '/_authenticated/f1'
     | '/_authenticated/help'
     | '/_authenticated/matches'
     | '/_authenticated/my-predictions'
@@ -1238,6 +1315,7 @@ export interface FileRouteTypes {
     | '/management/admin/audit'
     | '/management/admin/bankroll'
     | '/management/admin/correlated-risk'
+    | '/management/admin/f1'
     | '/management/admin/football'
     | '/management/admin/health'
     | '/management/admin/incidents'
@@ -1269,15 +1347,20 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
+    | '/_authenticated/f1/'
     | '/_authenticated/matches/'
     | '/_authenticated/ufc/'
     | '/management/admin/'
+    | '/_authenticated/f1/races/$raceId'
     | '/_authenticated/football/matches/$matchId'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
     | '/api/public/hooks/apifootball-live'
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
+    | '/api/public/hooks/f1-odds'
+    | '/api/public/hooks/f1-settle'
+    | '/api/public/hooks/f1-sync'
     | '/api/public/hooks/football-live'
     | '/api/public/hooks/football-settle'
     | '/api/public/hooks/football-sync'
@@ -1309,6 +1392,9 @@ export interface RootRouteChildren {
   ApiPublicHooksApifootballLiveRoute: typeof ApiPublicHooksApifootballLiveRoute
   ApiPublicHooksApifootballPrematchRoute: typeof ApiPublicHooksApifootballPrematchRoute
   ApiPublicHooksApifootballSyncRoute: typeof ApiPublicHooksApifootballSyncRoute
+  ApiPublicHooksF1OddsRoute: typeof ApiPublicHooksF1OddsRoute
+  ApiPublicHooksF1SettleRoute: typeof ApiPublicHooksF1SettleRoute
+  ApiPublicHooksF1SyncRoute: typeof ApiPublicHooksF1SyncRoute
   ApiPublicHooksFootballLiveRoute: typeof ApiPublicHooksFootballLiveRoute
   ApiPublicHooksFootballSettleRoute: typeof ApiPublicHooksFootballSettleRoute
   ApiPublicHooksFootballSyncRoute: typeof ApiPublicHooksFootballSyncRoute
@@ -1562,6 +1648,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHelpRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/f1': {
+      id: '/_authenticated/f1'
+      path: '/f1'
+      fullPath: '/f1'
+      preLoaderRoute: typeof AuthenticatedF1RouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -1603,6 +1696,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/matches/'
       preLoaderRoute: typeof AuthenticatedMatchesIndexRouteImport
       parentRoute: typeof AuthenticatedMatchesRoute
+    }
+    '/_authenticated/f1/': {
+      id: '/_authenticated/f1/'
+      path: '/'
+      fullPath: '/f1/'
+      preLoaderRoute: typeof AuthenticatedF1IndexRouteImport
+      parentRoute: typeof AuthenticatedF1Route
     }
     '/management/admin/wallet-ledger': {
       id: '/management/admin/wallet-ledger'
@@ -1821,6 +1921,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminFootballRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/f1': {
+      id: '/management/admin/f1'
+      path: '/f1'
+      fullPath: '/management/admin/f1'
+      preLoaderRoute: typeof ManagementAdminF1RouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/correlated-risk': {
       id: '/management/admin/correlated-risk'
       path: '/correlated-risk'
@@ -1996,6 +2103,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFootballLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/f1-sync': {
+      id: '/api/public/hooks/f1-sync'
+      path: '/api/public/hooks/f1-sync'
+      fullPath: '/api/public/hooks/f1-sync'
+      preLoaderRoute: typeof ApiPublicHooksF1SyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/f1-settle': {
+      id: '/api/public/hooks/f1-settle'
+      path: '/api/public/hooks/f1-settle'
+      fullPath: '/api/public/hooks/f1-settle'
+      preLoaderRoute: typeof ApiPublicHooksF1SettleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/f1-odds': {
+      id: '/api/public/hooks/f1-odds'
+      path: '/api/public/hooks/f1-odds'
+      fullPath: '/api/public/hooks/f1-odds'
+      preLoaderRoute: typeof ApiPublicHooksF1OddsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/apifootball-sync': {
       id: '/api/public/hooks/apifootball-sync'
       path: '/api/public/hooks/apifootball-sync'
@@ -2038,8 +2166,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFootballMatchesMatchIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/f1/races/$raceId': {
+      id: '/_authenticated/f1/races/$raceId'
+      path: '/races/$raceId'
+      fullPath: '/f1/races/$raceId'
+      preLoaderRoute: typeof AuthenticatedF1RacesRaceIdRouteImport
+      parentRoute: typeof AuthenticatedF1Route
+    }
   }
 }
+
+interface AuthenticatedF1RouteChildren {
+  AuthenticatedF1IndexRoute: typeof AuthenticatedF1IndexRoute
+  AuthenticatedF1RacesRaceIdRoute: typeof AuthenticatedF1RacesRaceIdRoute
+}
+
+const AuthenticatedF1RouteChildren: AuthenticatedF1RouteChildren = {
+  AuthenticatedF1IndexRoute: AuthenticatedF1IndexRoute,
+  AuthenticatedF1RacesRaceIdRoute: AuthenticatedF1RacesRaceIdRoute,
+}
+
+const AuthenticatedF1RouteWithChildren = AuthenticatedF1Route._addFileChildren(
+  AuthenticatedF1RouteChildren,
+)
 
 interface AuthenticatedMatchesRouteChildren {
   AuthenticatedMatchesMatchIdRoute: typeof AuthenticatedMatchesMatchIdRoute
@@ -2083,6 +2232,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedBetsRoute: typeof AuthenticatedBetsRoute
   AuthenticatedChangelogRoute: typeof AuthenticatedChangelogRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedF1Route: typeof AuthenticatedF1RouteWithChildren
   AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
   AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRouteWithChildren
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
@@ -2109,6 +2259,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBetsRoute: AuthenticatedBetsRoute,
   AuthenticatedChangelogRoute: AuthenticatedChangelogRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedF1Route: AuthenticatedF1RouteWithChildren,
   AuthenticatedHelpRoute: AuthenticatedHelpRoute,
   AuthenticatedMatchesRoute: AuthenticatedMatchesRouteWithChildren,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
@@ -2141,6 +2292,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminAuditRoute: typeof ManagementAdminAuditRoute
   ManagementAdminBankrollRoute: typeof ManagementAdminBankrollRoute
   ManagementAdminCorrelatedRiskRoute: typeof ManagementAdminCorrelatedRiskRoute
+  ManagementAdminF1Route: typeof ManagementAdminF1Route
   ManagementAdminFootballRoute: typeof ManagementAdminFootballRoute
   ManagementAdminHealthRoute: typeof ManagementAdminHealthRoute
   ManagementAdminIncidentsRoute: typeof ManagementAdminIncidentsRoute
@@ -2181,6 +2333,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminAuditRoute: ManagementAdminAuditRoute,
   ManagementAdminBankrollRoute: ManagementAdminBankrollRoute,
   ManagementAdminCorrelatedRiskRoute: ManagementAdminCorrelatedRiskRoute,
+  ManagementAdminF1Route: ManagementAdminF1Route,
   ManagementAdminFootballRoute: ManagementAdminFootballRoute,
   ManagementAdminHealthRoute: ManagementAdminHealthRoute,
   ManagementAdminIncidentsRoute: ManagementAdminIncidentsRoute,
@@ -2267,6 +2420,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksApifootballPrematchRoute:
     ApiPublicHooksApifootballPrematchRoute,
   ApiPublicHooksApifootballSyncRoute: ApiPublicHooksApifootballSyncRoute,
+  ApiPublicHooksF1OddsRoute: ApiPublicHooksF1OddsRoute,
+  ApiPublicHooksF1SettleRoute: ApiPublicHooksF1SettleRoute,
+  ApiPublicHooksF1SyncRoute: ApiPublicHooksF1SyncRoute,
   ApiPublicHooksFootballLiveRoute: ApiPublicHooksFootballLiveRoute,
   ApiPublicHooksFootballSettleRoute: ApiPublicHooksFootballSettleRoute,
   ApiPublicHooksFootballSyncRoute: ApiPublicHooksFootballSyncRoute,

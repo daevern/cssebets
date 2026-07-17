@@ -85,6 +85,8 @@ export type ApiMmaFighterRecordSummary = {
   sub?: { win?: number | null; loss?: number | null } | null;
 };
 
+import { withRetry } from "@/features/football/services/retry";
+
 export async function apiMmaGet<T>(
   path: string,
   params: Record<string, string | number | undefined> = {},
@@ -95,11 +97,13 @@ export async function apiMmaGet<T>(
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v));
   }
-  const res = await fetch(url.toString(), {
-    headers: { "x-apisports-key": key, Accept: "application/json" },
+  return withRetry(async () => {
+    const res = await fetch(url.toString(), {
+      headers: { "x-apisports-key": key, Accept: "application/json" },
+    });
+    if (!res.ok) throw new Error(`api-mma ${path} HTTP ${res.status}`);
+    return (await res.json()) as ApiMmaResponse<T>;
   });
-  if (!res.ok) throw new Error(`api-mma ${path} ${res.status}`);
-  return (await res.json()) as ApiMmaResponse<T>;
 }
 
 export async function fetchFightsByDate(date: string) {
