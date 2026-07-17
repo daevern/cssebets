@@ -336,3 +336,141 @@ export const adminListRecentSyncRuns = createServerFn({ method: "GET" })
       .maybeSingle();
     return { runs: (data as any[]) ?? [], quota: quota ?? null };
   });
+
+// Liability: sum open-bet exposure by (event, market). Sorted by potential payout desc.
+export const adminFootballLiability = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: bets } = await supabaseAdmin
+      .from("sports_bets")
+      .select("sports_event_id, sports_market_id, market_key, competition_code, stake, potential_payout, status")
+      .eq("sport_code", "football")
+      .in("status", ["pending", "open"])
+      .limit(5000);
+
+    type Row = {
+      eventId: string;
+      marketId: string;
+      marketKey: string;
+      competition: string;
+      betCount: number;
+      totalStake: number;
+      totalPotentialPayout: number;
+      liability: number; // payout - stake
+    };
+    const map = new Map<string, Row>();
+    for (const b of (bets as any[]) ?? []) {
+      const k = `${b.sports_event_id}::${b.sports_market_id}`;
+      const row = map.get(k) ?? {
+        eventId: b.sports_event_id,
+        marketId: b.sports_market_id,
+        marketKey: b.market_key,
+        competition: b.competition_code,
+        betCount: 0,
+        totalStake: 0,
+        totalPotentialPayout: 0,
+        liability: 0,
+      };
+      row.betCount++;
+      row.totalStake += Number(b.stake ?? 0);
+      row.totalPotentialPayout += Number(b.potential_payout ?? 0);
+      row.liability = row.totalPotentialPayout - row.totalStake;
+      map.set(k, row);
+    }
+    const rows = Array.from(map.values()).sort((a, b) => b.liability - a.liability);
+
+    // Attach event labels
+    const eventIds = Array.from(new Set(rows.map((r) => r.eventId)));
+    const { data: events } = eventIds.length
+      ? await supabaseAdmin
+          .from("sports_events" as any)
+          .select("id, event_name, home_name, away_name, scheduled_at, status")
+          .in("id", eventIds)
+      : { data: [] as any[] };
+    const evMap = new Map<string, any>();
+    for (const e of (events as any[]) ?? []) evMap.set(e.id, e);
+
+    const totals = rows.reduce(
+      (acc, r) => {
+        acc.betCount += r.betCount;
+        acc.stake += r.totalStake;
+        acc.payout += r.totalPotentialPayout;
+        acc.liability += r.liability;
+        return acc;
+      },
+      { betCount: 0, stake: 0, payout: 0, liability: 0 },
+    );
+
+    return {
+      totals,
+      rows: rows.slice(0, 50).map((r) => ({
+        ...r,
+        event: evMap.get(r.eventId)
+          ? {
+              name: evMap.get(r.eventId).event_name,
+              home: evMap.get(r.eventId).home_name,
+              away: evMap.get(r.eventId).away_name,
+              kickoff: evMap.get(r.eventId).scheduled_at,
+              status: evMap.get(r.eventId).status,
+            }
+          : null,
+      })),
+    };
+  });
+
+// Settlement log: recent settlement runs with aggregate metrics.
+export const adminFootballSettlementLog = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: runs } = await supabaseAdmin
+      .from("sports_settlement_runs")
+      .select("id, sports_event_id, status, started_at, finished_at, markets_settled, bets_settled, total_payout, notes, triggered_by")
+      .order("started_at", { ascending: false })
+      .limit(30);
+
+    const eventIds = Array.from(new Set(((runs as any[]) ?? []).map((r) => r.sports_event_id)));
+    const { data: events } = eventIds.length
+      ? await supabaseAdmin
+          .from("sports_events" as any)
+          .select("id, event_name, competition_code, home_score, away_score")
+          .in("id", eventIds)
+      : { data: [] as any[] };
+    const evMap = new Map<string, any>();
+    for (const e of (events as any[]) ?? []) evMap.set(e.id, e);
+
+    return {
+      runs: ((runs as any[]) ?? []).map((r) => ({
+        ...r,
+        event: evMap.get(r.sports_event_id)
+          ? {
+              name: evMap.get(r.sports_event_id).event_name,
+              competition: evMap.get(r.sports_event_id).competition_code,
+              score:
+                evMap.get(r.sports_event_id).home_score != null &&
+                evMap.get(r.sports_event_id).away_score != null
+                  ? `${evMap.get(r.sports_event_id).home_score}-${evMap.get(r.sports_event_id).away_score}`
+                  : null,
+            }
+          : null,
+      })),
+    };
+  });
+
+// Sync error drilldown (last 50 across football runs).
+export const adminFootballSyncErrors = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: errors } = await supabaseAdmin
+      .from("sports_sync_errors")
+      .select("id, sync_run_id, provider, message, detail, created_at")
+      .eq("provider", "api-football")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    return { errors: (errors as any[]) ?? [] };
+  });
