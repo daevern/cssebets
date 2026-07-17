@@ -340,8 +340,6 @@ export async function syncFootballLiveScores(): Promise<{ updated: number }> {
         .eq("id", (mapping as any).sports_event_id);
       updated++;
     }
-    // Silence unused-var linter for res
-    void res;
   }
   await finishSyncRun(runId, "success", { records_updated: updated });
   return { updated };
