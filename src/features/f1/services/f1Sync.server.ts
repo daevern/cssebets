@@ -278,7 +278,7 @@ export async function syncF1Odds(seasonPref = currentSeason()) {
       for (let i = 0; i < driverList.length; i++) {
         const d = driverList[i];
         if (!d.team_key) continue;
-        (teamAgg[d.team_key] ??= { name: d.team_key, probs: [] }).probs.push(winnerOdds[i].probability);
+        (teamAgg[d.team_key] ??= { name: teamNameByKey[d.team_key] ?? d.team_key, probs: [] }).probs.push(winnerOdds[i].probability);
       }
       const teamInputsRace = Object.entries(teamAgg).map(([teamKey, v]) => ({
         teamKey,
