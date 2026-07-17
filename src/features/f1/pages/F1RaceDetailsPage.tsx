@@ -353,27 +353,15 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
             {SECTION_TITLES[subTab] ?? "Market movement"}
           </h2>
 
-          {/* Legend — click to toggle driver on/off */}
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
-            {seriesMeta.map((s) => {
-              const off = !!hidden[s.id];
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setHidden((h) => ({ ...h, [s.id]: !h[s.id] }))}
-                  className={`inline-flex items-center gap-1.5 bg-transparent p-0 transition-opacity ${
-                    off ? "opacity-40" : "opacity-100 hover:opacity-80"
-                  }`}
-                  aria-pressed={!off}
-                >
-                  <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
-                  <span className="font-medium tracking-tight text-white/85">{s.label}</span>
-                  <span className="font-mono text-white/60">{s.currentPct}%</span>
-                </button>
-              );
-            })}
-          </div>
+          {/* Driver selector — collapsed dropdown; click a chip to toggle on/off */}
+          <DriverLegendDropdown
+            series={seriesMeta}
+            hidden={hidden}
+            onToggle={(id) => setHidden((h) => ({ ...h, [id]: !h[id] }))}
+            onAll={() => setHidden({})}
+            onNone={() => setHidden(Object.fromEntries(seriesMeta.map((s) => [s.id, true])))}
+          />
+
         </div>
 
         <div className="relative mt-3 h-[300px] w-full sm:h-[340px] md:h-[380px]">
