@@ -1,6 +1,6 @@
 // F1 settlement: race markets settle from race results; championship settles at season end.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { fetchF1RaceResults } from "../adapters/apiF1Adapter.server";
+import { fetchF1RaceResults, fetchF1FastestLap } from "../adapters/apiF1Adapter.server";
 
 function keyify(s: string) {
   return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
