@@ -98,7 +98,7 @@ export async function settleFootballEvent(
     htAwayScore: event.ht_away_score,
   };
 
-  for (const m of (markets ?? []) as MarketRow[]) {
+  for (const m of ((markets ?? []) as unknown) as MarketRow[]) {
     const decision = decideWinningKeys(
       { marketKey: m.market_key, period: m.period, line: m.line },
       ctx,
