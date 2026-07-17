@@ -1,5 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 
+export type NextRaceDriver = {
+  driver_key: string;
+  name: string;
+  abbr: string | null;
+  team: string | null;
+  photo_url: string | null;
+  odds: number;
+  pct: number;
+};
+
 export type NextF1Race = {
   id: string;
   name: string;
@@ -8,7 +18,9 @@ export type NextF1Race = {
   starts_at: string;
   round: number | null;
   season: number | null;
+  topDrivers: NextRaceDriver[];
 } | null;
+
 
 export type NextUfcFight = {
   id: string;
