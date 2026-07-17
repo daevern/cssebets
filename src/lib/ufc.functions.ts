@@ -23,7 +23,6 @@ export const listUfcFights = createServerFn({ method: "GET" }).handler(async () 
     .from("ufc_fights")
     .select("id, fighter_a, fighter_b, fighter_a_logo, fighter_b_logo, apimma_fighter_a_id, apimma_fighter_b_id, commence_time, card_position, scheduled_rounds, status, winner, result_method, result_round, weight_class, is_title_fight")
     .eq("event_id", event.id)
-    .in("card_position", ["main", "co_main"])
     .order("commence_time", { ascending: true });
 
   const fightIds = (fights ?? []).map((f: any) => f.id);

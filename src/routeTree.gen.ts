@@ -97,6 +97,7 @@ import { Route as AuthenticatedFootballUclRouteImport } from './routes/_authenti
 import { Route as AuthenticatedFootballSerieARouteImport } from './routes/_authenticated/football/serie-a'
 import { Route as AuthenticatedFootballLaLigaRouteImport } from './routes/_authenticated/football/la-liga'
 import { Route as AuthenticatedFootballEplRouteImport } from './routes/_authenticated/football/epl'
+import { Route as AuthenticatedF1RacesIndexRouteImport } from './routes/_authenticated/f1.races.index'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -593,6 +594,12 @@ const AuthenticatedFootballEplRoute =
     path: '/football/epl',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedF1RacesIndexRoute =
+  AuthenticatedF1RacesIndexRouteImport.update({
+    id: '/races/',
+    path: '/races/',
+    getParentRoute: () => AuthenticatedF1Route,
+  } as any)
 const LovableEmailTransactionalSendRoute =
   LovableEmailTransactionalSendRouteImport.update({
     id: '/lovable/email/transactional/send',
@@ -825,6 +832,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/f1/races/': typeof AuthenticatedF1RacesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -931,6 +939,7 @@ export interface FileRoutesByTo {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/f1/races': typeof AuthenticatedF1RacesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -1043,6 +1052,7 @@ export interface FileRoutesById {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/_authenticated/f1/races/': typeof AuthenticatedF1RacesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1155,6 +1165,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/f1/races/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1261,6 +1272,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/f1/races'
   id:
     | '__root__'
     | '/'
@@ -1372,6 +1384,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
+    | '/_authenticated/f1/races/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -2026,6 +2039,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFootballEplRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/f1/races/': {
+      id: '/_authenticated/f1/races/'
+      path: '/races'
+      fullPath: '/f1/races/'
+      preLoaderRoute: typeof AuthenticatedF1RacesIndexRouteImport
+      parentRoute: typeof AuthenticatedF1Route
+    }
     '/lovable/email/transactional/send': {
       id: '/lovable/email/transactional/send'
       path: '/lovable/email/transactional/send'
@@ -2179,11 +2199,13 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedF1RouteChildren {
   AuthenticatedF1IndexRoute: typeof AuthenticatedF1IndexRoute
   AuthenticatedF1RacesRaceIdRoute: typeof AuthenticatedF1RacesRaceIdRoute
+  AuthenticatedF1RacesIndexRoute: typeof AuthenticatedF1RacesIndexRoute
 }
 
 const AuthenticatedF1RouteChildren: AuthenticatedF1RouteChildren = {
   AuthenticatedF1IndexRoute: AuthenticatedF1IndexRoute,
   AuthenticatedF1RacesRaceIdRoute: AuthenticatedF1RacesRaceIdRoute,
+  AuthenticatedF1RacesIndexRoute: AuthenticatedF1RacesIndexRoute,
 }
 
 const AuthenticatedF1RouteWithChildren = AuthenticatedF1Route._addFileChildren(

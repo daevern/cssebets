@@ -6,25 +6,24 @@ import { ArrowUpRight, ChevronRight, Loader2 } from "lucide-react";
 import { listF1Races, getF1Race } from "../f1.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 
-function CountryFlag({ country, size = 20 }: { country?: string | null; size?: number }) {
-  const url = country ? teamFlagUrl(country, 80) : null;
+function CountryFlag({ country, w = 36, h = 24 }: { country?: string | null; w?: number; h?: number }) {
+  const url = country ? teamFlagUrl(country, 160) : null;
   if (!url) {
     return (
-      <span
-        aria-hidden
-        className="inline-grid place-items-center rounded-sm bg-[var(--surface-3)] text-[10px]"
-        style={{ width: size * 1.4, height: size }}
+      <div
+        className="grid place-items-center bg-[var(--surface-3)] text-[9px] font-bold uppercase text-[var(--color-ink)]"
+        style={{ width: w, height: h }}
       >
-        🏁
-      </span>
+        {(country ?? "").slice(0, 3)}
+      </div>
     );
   }
   return (
     <img
       src={url}
       alt={country ?? ""}
-      className="inline-block rounded-[2px] object-cover shadow-[0_0_0_1px_rgba(255,255,255,0.08)]"
-      style={{ width: size * 1.4, height: size }}
+      className="object-cover"
+      style={{ width: w, height: h }}
       loading="lazy"
     />
   );
@@ -127,7 +126,7 @@ export function F1SeasonPage() {
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-neon)]" />
               Upcoming Grands Prix
             </h2>
-            <Link to="/matches" className="flex items-center gap-1 text-[12px] font-semibold text-[var(--color-neon)]">
+            <Link to="/f1/races" className="flex items-center gap-1 text-[12px] font-semibold text-[var(--color-neon)]">
               View all <ChevronRight className="h-3 w-3" />
             </Link>
           </div>
@@ -206,7 +205,7 @@ function RaceChip({ race }: { race: RaceRow }) {
       style={{ width: 184 }}
     >
       <div className="flex items-center gap-1.5">
-        <CountryFlag country={race.country} size={14} />
+        <CountryFlag country={race.country} w={22} h={14} />
         <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
           R{race.round}
         </span>
@@ -227,6 +226,9 @@ function RaceChip({ race }: { race: RaceRow }) {
         <div className="mt-2 grid grid-cols-2 gap-1 rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-3)]/60 p-1 text-center">
           {top.map((d: any, i: number) => (
             <div key={i} className={i === 1 ? "border-l border-[var(--color-surface-border)]" : ""}>
+              <div className="flex justify-center pb-0.5">
+                <DriverPortrait url={d.photo} name={d.label} size={24} />
+              </div>
               <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--color-ink-muted)] truncate">
                 {d.label.split(" ").slice(-1)[0].slice(0, 4).toUpperCase()}
               </div>
@@ -280,7 +282,7 @@ function FeaturedRaceCard({ race }: { race: RaceRow }) {
         </div>
 
         <div className="mt-3 flex items-start gap-3">
-          <CountryFlag country={race.country} size={28} />
+          <CountryFlag country={race.country} w={44} h={28} />
           <div className="min-w-0">
             <div className="font-display text-lg font-bold leading-tight text-[var(--color-ink)]">{race.name}</div>
             <div className="text-xs text-[var(--color-ink-muted)] truncate">{race.circuit}</div>
