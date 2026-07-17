@@ -60,18 +60,14 @@ async function finishRun(id: string | null, status: "ok" | "error", extras: { re
     .eq("id", id);
 }
 
-function keyify(s: string) {
-  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+function chunk<T>(rows: T[], size = 500) {
+  const out: T[][] = [];
+  for (let i = 0; i < rows.length; i += size) out.push(rows.slice(i, i + size));
+  return out;
 }
 
-// Try requested season, then fall back up to 3 previous seasons if the
-// provider has no data yet (common early in the year on free tiers).
-async function fetchF1RacesWithFallback(seasonPref: number) {
-  for (let s = seasonPref; s >= seasonPref - 3; s--) {
-    const races = await fetchF1Races(s);
-    if (races && races.length > 0) return { season: s, races };
-  }
-  return { season: seasonPref, races: [] as Awaited<ReturnType<typeof fetchF1Races>> };
+function keyify(s: string) {
+  return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 }
 
 // ---- Sync races ----
@@ -80,31 +76,32 @@ export async function syncF1Races(seasonPref = currentSeason()) {
   const run = await startRun("races");
   if (run.skipped) return { ok: true, skipped: "already running" };
   try {
-    const { season, races } = await fetchF1RacesWithFallback(seasonPref);
-    const grandsPrix = races.filter((r) => r.type?.toLowerCase() === "race");
-    const usingFallback = season !== seasonPref;
-    // When the provider hasn't published the requested season yet, shift the
-    // historical calendar forward so users see a "live" schedule and markets.
-    const yearShiftMs = usingFallback ? (seasonPref - season) * 365.25 * 24 * 3600 * 1000 : 0;
+    const season = seasonPref;
+    const races = await fetchF1Races(season);
+    const grandsPrix = races
+      .filter((r) => r.type?.toLowerCase() === "race")
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     let n = 0;
-    for (const r of grandsPrix) {
+    for (const [index, r] of grandsPrix.entries()) {
       const race_key = `${season}-r${r.id}`;
-      const originalDate = new Date(r.date);
-      const shiftedDate = new Date(originalDate.getTime() + yearShiftMs);
       const rawStatus = r.status?.toLowerCase() ?? "";
-      const status = usingFallback
-        ? (shiftedDate.getTime() < Date.now() - 3 * 3600_000 ? "finished" : "scheduled")
-        : rawStatus.includes("finished") ? "finished" : rawStatus.includes("progress") ? "in_progress" : "scheduled";
+      const status = rawStatus.includes("completed") || rawStatus.includes("finished")
+        ? "finished"
+        : rawStatus.includes("cancel")
+          ? "cancelled"
+          : rawStatus.includes("progress") || rawStatus.includes("live")
+            ? "in_progress"
+            : "scheduled";
       await (supabaseAdmin as any).from("f1_races").upsert(
         {
           race_key,
           provider_id: r.id,
-          season: usingFallback ? seasonPref : season,
-          round: (races.filter((x) => x.competition.id === r.competition.id && x.type?.toLowerCase() === "race" && x.date <= r.date).length),
+          season,
+          round: index + 1,
           name: r.competition.name,
           circuit: r.circuit?.name ?? null,
           country: r.competition.location?.country ?? null,
-          starts_at: shiftedDate.toISOString(),
+          starts_at: new Date(r.date).toISOString(),
           status,
         },
         { onConflict: "race_key" },
@@ -116,8 +113,8 @@ export async function syncF1Races(seasonPref = currentSeason()) {
       { year: season, name: `Formula 1 ${season}`, is_active: true },
       { onConflict: "year" },
     );
-    await finishRun(run.id, "ok", { records: n, meta: { seasonUsed: season }, durationMs: Date.now() - start });
-    return { ok: true, races: n, seasonUsed: season };
+    await finishRun(run.id, "ok", { records: n, meta: { seasonUsed: season, providerRows: races.length }, durationMs: Date.now() - start });
+    return { ok: true, races: n, seasonUsed: season, providerRows: races.length };
   } catch (e: any) {
     await finishRun(run.id, "error", { error: e.message, durationMs: Date.now() - start });
     throw e;
@@ -212,7 +209,7 @@ export async function syncF1Odds(seasonPref = currentSeason()) {
     const { data: races } = await (supabaseAdmin as any)
       .from("f1_races")
       .select("id, race_key, name, starts_at, status, provider_id, season")
-      .neq("status", "finished")
+      .in("status", ["scheduled", "in_progress"])
       .order("starts_at", { ascending: true });
 
     // Active drivers
@@ -222,7 +219,15 @@ export async function syncF1Odds(seasonPref = currentSeason()) {
       .eq("active", true);
     const driverList: Array<{ driver_key: string; name: string; team_key: string | null }> = drivers ?? [];
 
-    let marketsUpserted = 0;
+    const marketRows: Array<{
+      race_id: string;
+      market_type: string;
+      selection_key: string;
+      secondary_selection_key: string;
+      label: string;
+      odds: number;
+      status: string;
+    }> = [];
     for (const race of races ?? []) {
       const inputs = driverList.map((d) => ({
         driverKey: d.driver_key,
@@ -240,21 +245,15 @@ export async function syncF1Odds(seasonPref = currentSeason()) {
         const po = podium[i];
         const pt = points[i];
         for (const [type, odds] of [["race_winner", w.offeredOdds], ["podium", po.offeredOdds], ["points_finish", pt.offeredOdds]] as const) {
-          const { data: m } = await (supabaseAdmin as any).from("f1_race_markets").upsert(
-            {
-              race_id: race.id,
-              market_type: type,
-              selection_key: d.driver_key,
-              label: d.name,
-              odds,
-              status: "open",
-            },
-            { onConflict: "race_id,market_type,selection_key,secondary_selection_key" },
-          ).select("id").single();
-          if (m?.id) {
-            await (supabaseAdmin as any).from("f1_race_odds_snapshots").insert({ market_id: m.id, odds });
-            marketsUpserted++;
-          }
+          marketRows.push({
+            race_id: race.id,
+            market_type: type,
+            selection_key: d.driver_key,
+            secondary_selection_key: "",
+            label: d.name,
+            odds,
+            status: "open",
+          });
         }
       }
 
@@ -273,44 +272,58 @@ export async function syncF1Odds(seasonPref = currentSeason()) {
           [a.key, b.key, `${a.name} beats ${b.name}`, h2h.aOdds],
           [b.key, a.key, `${b.name} beats ${a.name}`, h2h.bOdds],
         ] as const) {
-          const { data: m } = await (supabaseAdmin as any).from("f1_race_markets").upsert(
-            {
-              race_id: race.id,
-              market_type: "head_to_head",
-              selection_key: sel,
-              secondary_selection_key: secondary,
-              label,
-              odds,
-              status: "open",
-            },
-            { onConflict: "race_id,market_type,selection_key,secondary_selection_key" },
-          ).select("id").single();
-          if (m?.id) {
-            await (supabaseAdmin as any).from("f1_race_odds_snapshots").insert({ market_id: m.id, odds });
-            marketsUpserted++;
-          }
+          marketRows.push({
+            race_id: race.id,
+            market_type: "head_to_head",
+            selection_key: sel,
+            secondary_selection_key: secondary,
+            label,
+            odds,
+            status: "open",
+          });
         }
       }
+    }
+
+    let marketsUpserted = 0;
+    const snapshots: Array<{ market_id: string; odds: number }> = [];
+    for (const rowsChunk of chunk(marketRows, 400)) {
+      const { data: upserted, error } = await (supabaseAdmin as any)
+        .from("f1_race_markets")
+        .upsert(rowsChunk, { onConflict: "race_id,market_type,selection_key,secondary_selection_key" })
+        .select("id, odds");
+      if (error) throw new Error(`f1 market upsert failed: ${error.message}`);
+      for (const m of upserted ?? []) snapshots.push({ market_id: m.id, odds: Number(m.odds) });
+      marketsUpserted += upserted?.length ?? 0;
+    }
+    for (const snapshotChunk of chunk(snapshots, 500)) {
+      const { error } = await (supabaseAdmin as any).from("f1_race_odds_snapshots").insert(snapshotChunk);
+      if (error) throw new Error(`f1 odds snapshot failed: ${error.message}`);
     }
 
     // Championship outrights
     const remaining = (races ?? []).filter((r: any) => r.status !== "finished").length || 1;
     const champInputs = standings.map((s) => ({ key: keyify(s.driver.name), points: s.points ?? 0 }));
     const champOdds = buildChampionshipOdds(champInputs, remaining);
+    const champMarketRows: Array<{
+      season: number;
+      market_type: string;
+      selection_key: string;
+      label: string;
+      odds: number;
+      status: string;
+    }> = [];
     for (let i = 0; i < champOdds.length; i++) {
       const c = champOdds[i];
       const s = standings[i];
-      await (supabaseAdmin as any).from("f1_championship_markets").upsert(
-        {
-          season: seasonPref,
-          market_type: "drivers",
-          selection_key: c.driverKey,
-          label: s.driver.name,
-          odds: c.offeredOdds,
-          status: "open",
-        },
-        { onConflict: "season,market_type,selection_key" },
-      );
+      champMarketRows.push({
+        season: seasonPref,
+        market_type: "drivers",
+        selection_key: c.driverKey,
+        label: s.driver.name,
+        odds: c.offeredOdds,
+        status: "open",
+      });
     }
     const teamStandings = await (async () => {
       const probe = await probeApiSeason(seasonPref, (s) => fetchF1TeamStandings(s));
@@ -321,17 +334,20 @@ export async function syncF1Odds(seasonPref = currentSeason()) {
     for (let i = 0; i < teamChampOdds.length; i++) {
       const c = teamChampOdds[i];
       const s = teamStandings[i];
-      await (supabaseAdmin as any).from("f1_championship_markets").upsert(
-        {
-          season: seasonPref,
-          market_type: "constructors",
-          selection_key: c.driverKey,
-          label: s.team.name,
-          odds: c.offeredOdds,
-          status: "open",
-        },
-        { onConflict: "season,market_type,selection_key" },
-      );
+      champMarketRows.push({
+        season: seasonPref,
+        market_type: "constructors",
+        selection_key: c.driverKey,
+        label: s.team.name,
+        odds: c.offeredOdds,
+        status: "open",
+      });
+    }
+    if (champMarketRows.length > 0) {
+      const { error } = await (supabaseAdmin as any)
+        .from("f1_championship_markets")
+        .upsert(champMarketRows, { onConflict: "season,market_type,selection_key" });
+      if (error) throw new Error(`f1 championship market upsert failed: ${error.message}`);
     }
 
     await finishRun(run.id, "ok", { records: marketsUpserted, durationMs: Date.now() - start });
