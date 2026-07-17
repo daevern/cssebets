@@ -177,6 +177,20 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     refetchInterval: 60_000,
   });
 
+  // Seed the legend to show only the top 3 favourites by default whenever the
+  // market set changes (subTab switch or fresh race data). User toggles after
+  // that are preserved until the next reset.
+  const chartIdsKey = chartIds.join(",");
+  useEffect(() => {
+    if (chartIds.length === 0) return;
+    const next: Record<string, boolean> = {};
+    chartIds.forEach((id, idx) => {
+      if (idx >= 3) next[id] = true;
+    });
+    setHidden(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chartIdsKey]);
+
   const seriesMeta = useMemo(
     () =>
       chartMarkets.map((m: any, i) => {
