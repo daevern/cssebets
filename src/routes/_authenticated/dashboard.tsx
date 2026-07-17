@@ -3,12 +3,13 @@ import { useEffect, useMemo, useState } from "react";
 import type { SVGProps } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, ChevronRight, Ticket, TrendingUp } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Ticket, TrendingUp, Flag, Swords } from "lucide-react";
 import { PageFooter } from "@/components/ui/page-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { useAuth } from "@/hooks/use-auth";
+import { getDashboardMotorAndUfc, type NextF1Race, type NextUfcFight } from "@/lib/dashboard-extras.functions";
 
 
 
