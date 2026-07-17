@@ -307,7 +307,7 @@ export async function syncF1Odds(seasonPref = CURRENT_SEASON) {
       const s = teamStandings[i];
       await (supabaseAdmin as any).from("f1_championship_markets").upsert(
         {
-          season,
+          season: seasonPref,
           market_type: "constructors",
           selection_key: c.driverKey,
           label: s.team.name,
