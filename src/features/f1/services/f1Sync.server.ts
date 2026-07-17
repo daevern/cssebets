@@ -222,6 +222,13 @@ export async function syncF1Odds(seasonPref = currentSeason()) {
       .eq("active", true);
     const driverList: Array<{ driver_key: string; name: string; team_key: string | null }> = drivers ?? [];
 
+    // Team names by key
+    const { data: teamsRows } = await (supabaseAdmin as any)
+      .from("f1_constructors")
+      .select("team_key, name");
+    const teamNameByKey: Record<string, string> = {};
+    for (const t of teamsRows ?? []) teamNameByKey[t.team_key] = t.name;
+
     const marketRows: Array<{
       race_id: string;
       market_type: string;
