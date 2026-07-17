@@ -10,6 +10,9 @@ import {
   adminSetFootballFlag,
   adminSuspendStaleFootball,
   adminListRecentSyncRuns,
+  adminFootballLiability,
+  adminFootballSettlementLog,
+  adminFootballSyncErrors,
 } from "@/features/football/football.functions";
 import { ALL_FOOTBALL_COMPETITIONS } from "@/features/football/config/footballCompetitions";
 
@@ -27,6 +30,9 @@ function AdminFootballPage() {
   const settle = useServerFn(adminSettleFootball);
   const suspendStale = useServerFn(adminSuspendStaleFootball);
   const recentRunsFn = useServerFn(adminListRecentSyncRuns);
+  const liabilityFn = useServerFn(adminFootballLiability);
+  const settlementLogFn = useServerFn(adminFootballSettlementLog);
+  const syncErrorsFn = useServerFn(adminFootballSyncErrors);
 
   const { data: flags } = useQuery({
     queryKey: ["admin-football-flags"],
@@ -37,6 +43,24 @@ function AdminFootballPage() {
     queryKey: ["admin-football-runs"],
     queryFn: () => recentRunsFn(),
     refetchInterval: 15_000,
+  });
+
+  const { data: liabilityData } = useQuery({
+    queryKey: ["admin-football-liability"],
+    queryFn: () => liabilityFn(),
+    refetchInterval: 30_000,
+  });
+
+  const { data: settlementLog } = useQuery({
+    queryKey: ["admin-football-settlement-log"],
+    queryFn: () => settlementLogFn(),
+    refetchInterval: 30_000,
+  });
+
+  const { data: syncErrorsData } = useQuery({
+    queryKey: ["admin-football-sync-errors"],
+    queryFn: () => syncErrorsFn(),
+    refetchInterval: 30_000,
   });
 
   const flagMutation = useMutation({
@@ -132,7 +156,7 @@ function AdminFootballPage() {
 
       <section className="rounded-xl border p-4 space-y-3">
         <h2 className="font-semibold">Odds & settlement</h2>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             disabled={runOdds.isPending}
@@ -144,7 +168,10 @@ function AdminFootballPage() {
           <button
             type="button"
             disabled={runSettle.isPending}
-            onClick={() => runSettle.mutate()}
+            onClick={() => {
+              if (!confirm("Settle all finished football events now? This will credit winning payouts.")) return;
+              runSettle.mutate();
+            }}
             className="rounded-lg border px-3 py-2 text-sm hover:bg-white/5"
           >
             {runSettle.isPending ? "Settling…" : "Settle finished events"}
@@ -160,6 +187,115 @@ function AdminFootballPage() {
           >
             {runSuspend.isPending ? "Sweeping…" : "Suspend stale markets"}
           </button>
+        </div>
+      </section>
+
+      {/* ---------- LIABILITY ---------- */}
+      <section className="rounded-xl border p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Live liability (open bets)</h2>
+          {liabilityData?.totals && (
+            <div className="text-xs text-muted-foreground">
+              {liabilityData.totals.betCount} bets · stake {liabilityData.totals.stake.toFixed(2)} ·
+              potential payout {liabilityData.totals.payout.toFixed(2)} ·
+              <span className="ml-1 font-semibold text-amber-500">
+                exposure {liabilityData.totals.liability.toFixed(2)}
+              </span>
+            </div>
+          )}
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="text-left text-muted-foreground">
+              <tr>
+                <th className="py-1 pr-3">Event</th>
+                <th className="py-1 pr-3">Comp</th>
+                <th className="py-1 pr-3">Market</th>
+                <th className="py-1 pr-3 text-right">Bets</th>
+                <th className="py-1 pr-3 text-right">Stake</th>
+                <th className="py-1 pr-3 text-right">Payout</th>
+                <th className="py-1 pr-3 text-right">Exposure</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(liabilityData?.rows ?? []).map((r: any) => (
+                <tr key={`${r.eventId}-${r.marketId}`} className="border-t border-white/5">
+                  <td className="py-1 pr-3">
+                    {r.event?.name ?? r.eventId.slice(0, 8)}
+                  </td>
+                  <td className="py-1 pr-3">{r.competition}</td>
+                  <td className="py-1 pr-3 font-mono">{r.marketKey}</td>
+                  <td className="py-1 pr-3 text-right">{r.betCount}</td>
+                  <td className="py-1 pr-3 text-right">{r.totalStake.toFixed(2)}</td>
+                  <td className="py-1 pr-3 text-right">{r.totalPotentialPayout.toFixed(2)}</td>
+                  <td className="py-1 pr-3 text-right font-semibold text-amber-500">
+                    {r.liability.toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+              {!liabilityData?.rows?.length && (
+                <tr>
+                  <td colSpan={7} className="py-2 text-center text-muted-foreground">
+                    No open exposure.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* ---------- SETTLEMENT LOG ---------- */}
+      <section className="rounded-xl border p-4 space-y-3">
+        <h2 className="font-semibold">Settlement log</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="text-left text-muted-foreground">
+              <tr>
+                <th className="py-1 pr-3">Event</th>
+                <th className="py-1 pr-3">Score</th>
+                <th className="py-1 pr-3">Status</th>
+                <th className="py-1 pr-3">Markets</th>
+                <th className="py-1 pr-3">Bets</th>
+                <th className="py-1 pr-3">Payout</th>
+                <th className="py-1 pr-3">Finished</th>
+                <th className="py-1 pr-3">By</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(settlementLog?.runs ?? []).map((r: any) => {
+                const color =
+                  r.status === "success"
+                    ? "text-emerald-500"
+                    : r.status === "partial"
+                    ? "text-amber-500"
+                    : r.status === "failed"
+                    ? "text-red-500"
+                    : "text-sky-400";
+                return (
+                  <tr key={r.id} className="border-t border-white/5">
+                    <td className="py-1 pr-3">{r.event?.name ?? r.sports_event_id.slice(0, 8)}</td>
+                    <td className="py-1 pr-3">{r.event?.score ?? "—"}</td>
+                    <td className={`py-1 pr-3 font-medium ${color}`}>{r.status}</td>
+                    <td className="py-1 pr-3">{r.markets_settled}</td>
+                    <td className="py-1 pr-3">{r.bets_settled}</td>
+                    <td className="py-1 pr-3">{Number(r.total_payout).toFixed(2)}</td>
+                    <td className="py-1 pr-3">
+                      {r.finished_at ? new Date(r.finished_at).toLocaleTimeString() : "—"}
+                    </td>
+                    <td className="py-1 pr-3">{r.triggered_by ?? "auto"}</td>
+                  </tr>
+                );
+              })}
+              {!settlementLog?.runs?.length && (
+                <tr>
+                  <td colSpan={8} className="py-2 text-center text-muted-foreground">
+                    No settlement runs yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
 
