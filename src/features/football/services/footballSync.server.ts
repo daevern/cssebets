@@ -24,7 +24,31 @@ function normTeam(s: string): string {
     .replace(/[^a-z0-9]/g, "");
 }
 
-async function startSyncRun(provider: string, jobType: string, competition?: string) {
+// Concurrency guard: if another run of the same (provider, job_type) is still
+// marked 'running' and started within the last `staleMinutes`, skip this run.
+// This prevents overlapping cron ticks from double-firing API calls.
+async function isRunInFlight(provider: string, jobType: string, staleMinutes = 5) {
+  const cutoff = new Date(Date.now() - staleMinutes * 60_000).toISOString();
+  const { data } = await supabaseAdmin
+    .from("sports_sync_runs" as any)
+    .select("id")
+    .eq("provider", provider)
+    .eq("job_type", jobType)
+    .eq("status", "running")
+    .gt("started_at", cutoff)
+    .limit(1)
+    .maybeSingle();
+  return !!data;
+}
+
+async function startSyncRun(
+  provider: string,
+  jobType: string,
+  competition?: string,
+): Promise<{ id: string | undefined; skipped: boolean }> {
+  if (await isRunInFlight(provider, jobType)) {
+    return { id: undefined, skipped: true };
+  }
   const { data } = await supabaseAdmin
     .from("sports_sync_runs" as any)
     .insert({
@@ -36,7 +60,7 @@ async function startSyncRun(provider: string, jobType: string, competition?: str
     })
     .select("id")
     .single();
-  return (data as any)?.id as string | undefined;
+  return { id: (data as any)?.id as string | undefined, skipped: false };
 }
 
 async function finishSyncRun(
@@ -81,7 +105,10 @@ export async function syncFootballFixtures(
 ): Promise<FootballSyncResult> {
   const cfg = FOOTBALL_COMPETITIONS[code];
   const daysAhead = opts.daysAhead ?? 14;
-  const runId = await startSyncRun("api-football", "fixtures", code);
+  const { id: runId, skipped } = await startSyncRun("api-football", "fixtures", code);
+  if (skipped) {
+    return { competition: code, fixturesFetched: 0, created: 0, updated: 0, errors: ["skipped: already running"] };
+  }
   const errors: string[] = [];
   let created = 0;
   let updated = 0;
@@ -281,7 +308,8 @@ export async function syncFootballOddsBatch(opts: {
 } = {}): Promise<{ processed: number; errors: string[] }> {
   const maxEvents = opts.maxEvents ?? 8;
   const freshness = opts.freshnessMinutes ?? 15;
-  const runId = await startSyncRun("api-football", "odds");
+  const { id: runId, skipped } = await startSyncRun("api-football", "odds");
+  if (skipped) return { processed: 0, errors: ["skipped: already running"] };
   const errors: string[] = [];
 
   const staleBefore = new Date(Date.now() - freshness * 60_000).toISOString();
@@ -320,7 +348,8 @@ export async function syncFootballOddsBatch(opts: {
 
 // ---------- LIVE ----------
 export async function syncFootballLiveScores(): Promise<{ updated: number }> {
-  const runId = await startSyncRun("api-football", "live");
+  const { id: runId, skipped } = await startSyncRun("api-football", "live");
+  if (skipped) return { updated: 0 };
   let updated = 0;
   for (const cfg of Object.values(FOOTBALL_COMPETITIONS)) {
     const { data: flag } = await supabaseAdmin

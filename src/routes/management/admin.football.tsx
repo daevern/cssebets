@@ -9,6 +9,7 @@ import {
   adminSettleFootball,
   adminSetFootballFlag,
   adminSuspendStaleFootball,
+  adminListRecentSyncRuns,
 } from "@/features/football/football.functions";
 import { ALL_FOOTBALL_COMPETITIONS } from "@/features/football/config/footballCompetitions";
 
@@ -25,10 +26,17 @@ function AdminFootballPage() {
   const syncOdds = useServerFn(adminSyncFootballOdds);
   const settle = useServerFn(adminSettleFootball);
   const suspendStale = useServerFn(adminSuspendStaleFootball);
+  const recentRunsFn = useServerFn(adminListRecentSyncRuns);
 
   const { data: flags } = useQuery({
     queryKey: ["admin-football-flags"],
     queryFn: () => flagsFn(),
+  });
+
+  const { data: runsData } = useQuery({
+    queryKey: ["admin-football-runs"],
+    queryFn: () => recentRunsFn(),
+    refetchInterval: 15_000,
   });
 
   const flagMutation = useMutation({
@@ -152,6 +160,74 @@ function AdminFootballPage() {
           >
             {runSuspend.isPending ? "Sweeping…" : "Suspend stale markets"}
           </button>
+        </div>
+      </section>
+
+      <section className="rounded-xl border p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Sync health</h2>
+          {runsData?.quota && (
+            <div className="text-xs text-muted-foreground">
+              API quota today: {runsData.quota.used}
+              {runsData.quota.day_limit ? ` / ${runsData.quota.day_limit}` : ""}
+            </div>
+          )}
+        </div>
+        <div className="text-xs text-muted-foreground">
+          Auto-refreshing every 15s. Runs marked "running" for over 5 minutes are treated as stale
+          and won't block new jobs.
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="text-left text-muted-foreground">
+              <tr>
+                <th className="py-1 pr-3">Job</th>
+                <th className="py-1 pr-3">Comp</th>
+                <th className="py-1 pr-3">Status</th>
+                <th className="py-1 pr-3">Started</th>
+                <th className="py-1 pr-3">Duration</th>
+                <th className="py-1 pr-3">Fetched</th>
+                <th className="py-1 pr-3">New</th>
+                <th className="py-1 pr-3">Upd</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(runsData?.runs ?? []).slice(0, 15).map((r: any) => {
+                const started = new Date(r.started_at);
+                const finished = r.finished_at ? new Date(r.finished_at) : null;
+                const durMs = finished ? finished.getTime() - started.getTime() : null;
+                const color =
+                  r.status === "success"
+                    ? "text-emerald-500"
+                    : r.status === "partial"
+                    ? "text-amber-500"
+                    : r.status === "failed"
+                    ? "text-red-500"
+                    : "text-sky-400";
+                return (
+                  <tr key={r.id} className="border-t border-white/5">
+                    <td className="py-1 pr-3">{r.job_type}</td>
+                    <td className="py-1 pr-3">{r.competition_code ?? "—"}</td>
+                    <td className={`py-1 pr-3 font-medium ${color}`}>{r.status}</td>
+                    <td className="py-1 pr-3">{started.toLocaleTimeString()}</td>
+                    <td className="py-1 pr-3">
+                      {durMs != null ? `${(durMs / 1000).toFixed(1)}s` : "—"}
+                    </td>
+                    <td className="py-1 pr-3">{r.records_fetched ?? "—"}</td>
+                    <td className="py-1 pr-3">{r.records_created ?? "—"}</td>
+                    <td className="py-1 pr-3">{r.records_updated ?? "—"}</td>
+                  </tr>
+                );
+              })}
+              {!runsData?.runs?.length && (
+                <tr>
+                  <td colSpan={8} className="py-2 text-center text-muted-foreground">
+                    No runs yet.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
     </div>

@@ -3,6 +3,8 @@
 // dedicated to World Cup and must stay frozen. This client reuses the same
 // API_FOOTBALL_KEY env var but tracks its own request pacing.
 
+import { withRetry } from "../services/retry";
+
 const BASE = "https://v3.football.api-sports.io";
 
 let lastCallAt = 0;
@@ -16,22 +18,69 @@ export type ApiFootballResult<T> =
   | { ok: true; data: T }
   | { ok: false; reason: string; status?: number };
 
+// Best-effort quota tracker. Reads x-ratelimit-* headers if present and
+// upserts today's usage into apifootball_quota. Never throws — telemetry only.
+async function recordQuota(res: Response) {
+  try {
+    const used = Number(res.headers.get("x-ratelimit-requests-used") ?? "");
+    const limit = Number(res.headers.get("x-ratelimit-requests-limit") ?? "");
+    if (!Number.isFinite(used) || used <= 0) return;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const day = new Date().toISOString().slice(0, 10);
+    await supabaseAdmin.from("apifootball_quota").upsert(
+      {
+        day,
+        used,
+        day_limit: Number.isFinite(limit) && limit > 0 ? limit : undefined,
+        updated_at: new Date().toISOString(),
+      } as any,
+      { onConflict: "day" } as any,
+    );
+  } catch {
+    // swallow — telemetry must not break the request path
+  }
+}
+
 async function apiGet<T>(path: string): Promise<ApiFootballResult<T>> {
   const key = process.env.API_FOOTBALL_KEY?.trim();
   if (!key) return { ok: false, reason: "API_FOOTBALL_KEY not set" };
-  await pace();
-  const res = await fetch(`${BASE}${path}`, {
-    headers: { "x-apisports-key": key, Accept: "application/json" },
-  });
-  if (!res.ok) {
-    return { ok: false, reason: `HTTP ${res.status}`, status: res.status };
+  try {
+    return await withRetry<ApiFootballResult<T>>(
+      async () => {
+        await pace();
+        const res = await fetch(`${BASE}${path}`, {
+          headers: { "x-apisports-key": key, Accept: "application/json" },
+        });
+        // Record quota headers on every response (success or client error).
+        await recordQuota(res);
+        if (!res.ok) {
+          // Throw retryable errors so withRetry can back off; return
+          // non-retryable 4xx as a normal failure result.
+          if (res.status === 429 || res.status >= 500 || res.status === 408) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          return { ok: false, reason: `HTTP ${res.status}`, status: res.status };
+        }
+        const json = (await res.json()) as any;
+        if (json?.errors && Object.keys(json.errors).length) {
+          const msg = JSON.stringify(json.errors);
+          if (msg !== "[]" && msg !== "{}") {
+            const lower = msg.toLowerCase();
+            // API-Football signals rate-limit inside body sometimes.
+            if (lower.includes("rate") || lower.includes("limit")) {
+              throw new Error(`HTTP 429 ${msg}`);
+            }
+            return { ok: false, reason: msg };
+          }
+        }
+        return { ok: true, data: (json?.response ?? json) as T };
+      },
+      { retries: 3, baseMs: 400, maxMs: 3_500 },
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, reason: msg };
   }
-  const json = (await res.json()) as any;
-  if (json?.errors && Object.keys(json.errors).length) {
-    const msg = JSON.stringify(json.errors);
-    if (msg !== "[]" && msg !== "{}") return { ok: false, reason: msg };
-  }
-  return { ok: true, data: (json?.response ?? json) as T };
 }
 
 export type AfFixture = {

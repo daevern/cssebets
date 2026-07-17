@@ -4166,6 +4166,22 @@ export type Database = {
         Returns: Json
       }
       get_onboarding_completion_stats: { Args: never; Returns: Json }
+      get_recent_sports_sync_runs: {
+        Args: { _limit?: number }
+        Returns: {
+          competition_code: string
+          finished_at: string
+          id: string
+          job_type: string
+          provider: string
+          records_created: number
+          records_fetched: number
+          records_updated: number
+          sport_code: string
+          started_at: string
+          status: string
+        }[]
+      }
       get_simulation_outcome_analytics: { Args: never; Returns: Json }
       get_simulation_stress_metrics: { Args: never; Returns: Json }
       has_role: {
