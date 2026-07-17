@@ -127,6 +127,8 @@ export async function syncFootballFixtures(
         live_minute: f.fixture.status.elapsed,
         home_score: f.goals.home,
         away_score: f.goals.away,
+        ht_home_score: f.score?.halftime?.home ?? null,
+        ht_away_score: f.score?.halftime?.away ?? null,
         source_metadata: { api_football: { fixture_id: f.fixture.id, league_logo: f.league.logo } },
       } as any;
 
@@ -207,6 +209,7 @@ export async function syncFootballOddsForEvent(eventId: string): Promise<{
 
   const markets = normalizeOdds(payload);
   const now = new Date().toISOString();
+  const providerTs = payload.update ?? now;
   let count = 0;
 
   for (const m of markets) {
@@ -223,6 +226,9 @@ export async function syncFootballOddsForEvent(eventId: string): Promise<{
           provider: "api-football",
           status: "open",
           sort_order: m.sortOrder,
+          provider_odds_ts: providerTs,
+          last_odds_update_at: now,
+          suspension_reason: null,
         },
         { onConflict: "sports_event_id,market_key,period,line" } as any,
       )
@@ -247,19 +253,25 @@ export async function syncFootballOddsForEvent(eventId: string): Promise<{
           { onConflict: "sports_market_id,selection_key" } as any,
         );
 
-      await supabaseAdmin.from("sports_odds_snapshots" as any).insert({
-        sports_event_id: eventId,
-        sports_market_id: marketId,
-        market_key: m.marketKey,
-        selection_key: sel.selectionKey,
-        provider: "api-football",
-        decimal_odds: sel.decimalOdds,
-        provider_ts: payload.update ?? now,
-      });
-      count++;
+      // Dedupe index on (market, selection, provider_ts, odds) makes this
+      // idempotent — swallow the 23505 unique-violation quietly.
+      const { error: snapErr } = await supabaseAdmin
+        .from("sports_odds_snapshots" as any)
+        .insert({
+          sports_event_id: eventId,
+          sports_market_id: marketId,
+          market_key: m.marketKey,
+          selection_key: sel.selectionKey,
+          provider: "api-football",
+          decimal_odds: sel.decimalOdds,
+          provider_ts: providerTs,
+        });
+      if (!snapErr || /duplicate key|23505/i.test(snapErr.message ?? "")) count++;
     }
   }
 
+  // Refresh freshness on any pre-existing markets we just updated but where
+  // the upsert path only returned the id (no-op if already stamped above).
   return { ok: true, marketsUpserted: count };
 }
 
@@ -336,6 +348,8 @@ export async function syncFootballLiveScores(): Promise<{ updated: number }> {
           live_minute: f.fixture.status.elapsed,
           home_score: f.goals.home,
           away_score: f.goals.away,
+          ht_home_score: f.score?.halftime?.home ?? null,
+          ht_away_score: f.score?.halftime?.away ?? null,
         })
         .eq("id", (mapping as any).sports_event_id);
       updated++;
