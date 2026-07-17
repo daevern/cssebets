@@ -1,19 +1,24 @@
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Loader2, ArrowLeft, Search } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { Loader2, ArrowLeft, ArrowUpRight, X } from "lucide-react";
 import { toast } from "sonner";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
 import { getF1Race, placeF1RaceBet, getF1MarketHistories } from "../f1.functions";
+import { getMyWallet } from "@/lib/wallet.functions";
+import { useAuth } from "@/hooks/use-auth";
 
 type TopTab = "top_finishers" | "race_specials";
-type SubTab =
-  | "race_winner"
-  | "podium"
-  | "points_finish"
-  | "head_to_head";
+type SubTab = "race_winner" | "podium" | "points_finish" | "head_to_head";
 type Range = "1D" | "1W" | "1M" | "ALL";
 
 const RANGE_HOURS: Record<Range, number> = {
@@ -40,6 +45,20 @@ const SECTION_TITLES: Partial<Record<SubTab, string>> = {
   head_to_head: "Which teammate finishes ahead?",
 };
 
+const MIN_STAKE = 10;
+const MAX_STAKE = 50000;
+
+const CHART_PALETTE = [
+  "#22C55E",
+  "#3B82F6",
+  "#EC4899",
+  "#F59E0B",
+  "#A78BFA",
+  "#FB7185",
+  "#38BDF8",
+  "#F97316",
+];
+
 function computeProbabilities(markets: any[]): Record<string, number> {
   const invSum = markets.reduce((s, m) => s + 1 / Number(m.odds), 0) || 1;
   const out: Record<string, number> = {};
@@ -64,94 +83,17 @@ function formatBegin(iso: string) {
   return `Begins on ${weekday} · ${dateStr}, ${timeStr}`;
 }
 
-/** Compact multi-line SVG chart, Kalshi-style. */
-function MarketMovementChart({
-  series,
-  height = 180,
-}: {
-  series: { id: string; label: string; color: string; points: { t: number; y: number }[]; last: number }[];
-  height?: number;
-}) {
-  const filled = series.filter((s) => s.points.length > 0);
-  if (filled.length === 0) {
-    return (
-      <div
-        className="grid place-items-center rounded-md border border-dashed border-border/60 text-xs text-muted-foreground"
-        style={{ height }}
-      >
-        No market movement recorded yet.
-      </div>
-    );
-  }
-  const allT = filled.flatMap((s) => s.points.map((p) => p.t));
-  const tMin = Math.min(...allT);
-  const tMax = Math.max(...allT);
-  const tSpan = Math.max(1, tMax - tMin);
-  const yMax = Math.min(100, Math.max(20, Math.ceil(Math.max(...filled.flatMap((s) => s.points.map((p) => p.y))) / 10) * 10 + 5));
-  const W = 100; // viewBox width in %
-  const H = height;
-  const padR = 14; // room for the % label
-  const padL = 1;
-  const innerW = W - padR - padL;
-
-  const x = (t: number) => padL + ((t - tMin) / tSpan) * innerW;
-  const y = (v: number) => H - (v / yMax) * (H - 12) - 6;
-
-  return (
-    <div className="relative w-full" style={{ height }}>
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-full w-full">
-        {/* baseline dots */}
-        {[0.25, 0.5, 0.75].map((r) => (
-          <line
-            key={r}
-            x1={0}
-            x2={W}
-            y1={H - r * (H - 12) - 6}
-            y2={H - r * (H - 12) - 6}
-            stroke="currentColor"
-            className="text-border/40"
-            strokeDasharray="0.5 1.5"
-            strokeWidth={0.15}
-          />
-        ))}
-        {filled.map((s) => {
-          const d = s.points
-            .map((p, i) => `${i === 0 ? "M" : "L"} ${x(p.t).toFixed(2)} ${y(p.y).toFixed(2)}`)
-            .join(" ");
-          const last = s.points[s.points.length - 1];
-          return (
-            <g key={s.id}>
-              <path d={d} fill="none" stroke={s.color} strokeWidth={0.7} vectorEffect="non-scaling-stroke" />
-              <circle cx={x(last.t)} cy={y(last.y)} r={0.8} fill={s.color} />
-            </g>
-          );
-        })}
-      </svg>
-      {/* Right-edge % labels */}
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex w-24 flex-col justify-between py-2">
-        {filled
-          .slice()
-          .sort((a, b) => b.last - a.last)
-          .slice(0, 2)
-          .map((s) => (
-            <div key={s.id} className="text-right leading-tight">
-              <div className="text-[11px] font-semibold" style={{ color: s.color }}>
-                {s.label}
-              </div>
-              <div className="text-lg font-bold tabular-nums" style={{ color: s.color }}>
-                {Math.round(s.last)}%
-              </div>
-            </div>
-          ))}
-      </div>
-    </div>
-  );
+function impliedPct(odds: number) {
+  if (!odds || odds <= 1) return 0;
+  return Math.round((1 / odds) * 100);
 }
 
 export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const getRace = useServerFn(getF1Race);
   const getHistories = useServerFn(getF1MarketHistories);
   const place = useServerFn(placeF1RaceBet);
+  const walletFn = useServerFn(getMyWallet);
+  const { user } = useAuth();
   const qc = useQueryClient();
 
   const q = useQuery({
@@ -160,18 +102,31 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     refetchInterval: 30_000,
   });
 
+  const wallet = useQuery({
+    queryKey: ["my-wallet", user?.id],
+    queryFn: () => walletFn({}),
+    enabled: !!user?.id,
+    staleTime: 15_000,
+  });
+  const balance = Number(wallet.data?.balance ?? 0);
+
   const [topTab, setTopTab] = useState<TopTab>("top_finishers");
   const [subTab, setSubTab] = useState<SubTab>("race_winner");
   const [range, setRange] = useState<Range>("ALL");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [stake, setStake] = useState<number>(100);
-  const [search, setSearch] = useState("");
+  const [stake, setStake] = useState<string>("100");
+  const [hidden, setHidden] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    // Reset subtab when top-tab flips
     setSubTab(topTab === "top_finishers" ? "race_winner" : "head_to_head");
     setSelectedId(null);
+    setHidden({});
   }, [topTab]);
+
+  useEffect(() => {
+    setSelectedId(null);
+    setHidden({});
+  }, [subTab]);
 
   const race: any = q.data?.race;
   const drivers: any[] = q.data?.drivers ?? [];
@@ -189,8 +144,8 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const currentMarkets = grouped[subTab];
   const probabilities = useMemo(() => computeProbabilities(currentMarkets), [currentMarkets]);
 
-  // Top-2 for the chart (based on current subtab)
-  const chartMarkets = useMemo(() => currentMarkets.slice(0, 2), [currentMarkets]);
+  // Top ~6 for the chart. Each becomes a filterable series.
+  const chartMarkets = useMemo(() => currentMarkets.slice(0, 6), [currentMarkets]);
   const chartIds = chartMarkets.map((m) => m.id);
 
   const chartQ = useQuery({
@@ -200,49 +155,85 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     refetchInterval: 60_000,
   });
 
-  const chartColors = ["hsl(var(--primary))", "hsl(198 90% 60%)"];
-  const chartSeries = useMemo(() => {
-    if (!chartQ.data) return [];
-    return chartMarkets.map((m, i) => {
-      const raw = chartQ.data!.byMarket[m.id] ?? [];
-      const points = raw.map((p) => ({ t: new Date(p.snapshot_at).getTime(), y: oddsToPct(Number(p.odds)) }));
-      // Anchor with current odds if history is empty/sparse
-      const currentPct = oddsToPct(Number(m.odds));
-      if (points.length === 0) {
-        const now = Date.now();
-        points.push({ t: now - RANGE_HOURS[range] * 3600_000, y: currentPct });
-        points.push({ t: now, y: currentPct });
-      } else {
-        points.push({ t: Date.now(), y: currentPct });
-      }
-      return {
-        id: m.id,
-        label: shortLabel(m.label),
-        color: chartColors[i] ?? "hsl(var(--muted-foreground))",
-        points,
-        last: currentPct,
-      };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chartQ.data, chartMarkets, range]);
+  const seriesMeta = useMemo(
+    () =>
+      chartMarkets.map((m: any, i) => {
+        const drv = driverByKey[m.selection_key];
+        return {
+          id: m.id as string,
+          key: `k_${m.id}`,
+          label: drv?.name ?? m.label,
+          short: (drv?.abbr ?? m.label).toString().slice(0, 3).toUpperCase(),
+          color: CHART_PALETTE[i % CHART_PALETTE.length],
+          currentPct: impliedPct(Number(m.odds)),
+        };
+      }),
+    [chartMarkets, driverByKey],
+  );
 
-  const totalVolume = useMemo(() => {
-    // Placeholder: volume derived from open markets count until we track true volume
-    return (currentMarkets.length * 1247).toLocaleString();
-  }, [currentMarkets]);
+  const chartData = useMemo(() => {
+    const byMarket = chartQ.data?.byMarket ?? {};
+    // Build per-market anchored series
+    const now = Date.now();
+    const start = now - RANGE_HOURS[range] * 3600_000;
+    const perSeries: Record<string, { t: number; y: number }[]> = {};
+    for (const s of seriesMeta) {
+      const raw = byMarket[s.id] ?? [];
+      const points = raw.map((p: any) => ({
+        t: new Date(p.snapshot_at).getTime(),
+        y: oddsToPct(Number(p.odds)),
+      }));
+      if (points.length === 0) {
+        perSeries[s.id] = [
+          { t: start, y: s.currentPct },
+          { t: now, y: s.currentPct },
+        ];
+      } else {
+        perSeries[s.id] = [...points, { t: now, y: s.currentPct }];
+      }
+    }
+    // Merge onto a single timeline
+    const times = new Set<number>();
+    for (const arr of Object.values(perSeries)) for (const p of arr) times.add(p.t);
+    const sortedT = [...times].sort((a, b) => a - b);
+    // Forward-fill per series
+    const cursors: Record<string, number> = {};
+    const last: Record<string, number> = {};
+    const rows: Record<string, number | string>[] = [];
+    for (const t of sortedT) {
+      const row: Record<string, number | string> = { t };
+      for (const s of seriesMeta) {
+        const arr = perSeries[s.id] ?? [];
+        let idx = cursors[s.id] ?? 0;
+        while (idx < arr.length && arr[idx].t <= t) {
+          last[s.id] = arr[idx].y;
+          idx++;
+        }
+        cursors[s.id] = idx;
+        if (last[s.id] != null) row[s.key] = last[s.id];
+      }
+      rows.push(row);
+    }
+    return rows;
+  }, [chartQ.data, seriesMeta, range]);
+
+  const visibleSeries = seriesMeta.filter((s) => !hidden[s.id]);
 
   const placeMut = useMutation({
     mutationFn: async () => {
       const m = currentMarkets.find((x) => x.id === selectedId);
       if (!m) throw new Error("No selection");
-      return place({
-        data: { marketId: m.id, stake: Number(stake), maxOdds: Number(m.odds) * 1.05 },
-      });
+      const n = Number(stake);
+      if (!Number.isFinite(n) || n < MIN_STAKE) throw new Error(`Minimum stake is ${MIN_STAKE} points.`);
+      if (n > MAX_STAKE) throw new Error(`Maximum stake is ${MAX_STAKE.toLocaleString()} points.`);
+      if (n > balance) throw new Error("Insufficient points");
+      return place({ data: { marketId: m.id, stake: n, maxOdds: Number(m.odds) * 1.05 } });
     },
     onSuccess: () => {
-      toast.success("Bet placed");
+      toast.success("Prediction locked");
       setSelectedId(null);
       qc.invalidateQueries({ queryKey: ["f1-race", raceId] });
+      qc.invalidateQueries({ queryKey: ["my-wallet"] });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -255,42 +246,126 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     );
   if (!race) return <div className="p-6 text-center text-sm">Race not found.</div>;
 
-  const filteredMarkets = search
-    ? currentMarkets.filter((m) => m.label.toLowerCase().includes(search.toLowerCase()))
-    : currentMarkets;
+  const [searchState, setSearchState] = [null, null] as any; // legacy no-op
+  void searchState; void setSearchState;
 
   const selectedMarket = currentMarkets.find((x) => x.id === selectedId) ?? null;
+  const selectedDriver = selectedMarket ? driverByKey[selectedMarket.selection_key] : null;
+  const stakeNum = Number(stake) || 0;
+  const potentialReturn = selectedMarket ? stakeNum * Number(selectedMarket.odds) : 0;
+  const potentialGain = potentialReturn - stakeNum;
+  const noBalance = balance <= 0;
+  const overBalance = stakeNum > balance && stakeNum > 0;
+  const stakeError =
+    !Number.isFinite(stakeNum) || stakeNum < MIN_STAKE
+      ? `Min ${MIN_STAKE} pts`
+      : stakeNum > MAX_STAKE
+      ? `Max ${MAX_STAKE.toLocaleString()} pts`
+      : null;
+  const canSubmit = !!selectedMarket && !placeMut.isPending && !stakeError && !noBalance && !overBalance;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 pb-40 pt-4">
+    <div
+      className="mx-auto max-w-3xl px-4 pt-4"
+      style={{ paddingBottom: selectedMarket ? "calc(env(safe-area-inset-bottom) + 22rem)" : "3rem" }}
+    >
       <Link
         to="/f1"
-        className="mb-4 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+        className="mb-4 inline-flex items-center gap-1 text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
       >
         <ArrowLeft className="h-3 w-3" /> All races
       </Link>
 
       {/* Header */}
       <div className="mb-4">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-ink-muted)]">
           F1 · Round {race.round}
         </div>
-        <h1 className="text-3xl font-black leading-[1.05] tracking-tight">
-          {race.name} Main Race Winner?
+        <h1 className="font-display text-3xl font-black leading-[1.05] tracking-tight text-[var(--color-ink)]">
+          {race.name}
         </h1>
-        <div className="mt-3 text-sm text-muted-foreground">{formatBegin(race.starts_at)}</div>
+        <div className="mt-3 text-sm text-[var(--color-ink-muted)]">{formatBegin(race.starts_at)}</div>
       </div>
 
-      {/* Chart */}
-      <div className="mb-2 pt-2 text-primary/70">
-        <MarketMovementChart series={chartSeries} />
-      </div>
+      {/* Market Movement — recharts, football-analytics style */}
+      <section className="relative -mx-4 bg-[var(--color-surface)] md:mx-0">
+        <div className="px-4 pt-5 md:px-6 md:pt-6">
+          <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
+            {SECTION_TITLES[subTab] ?? "Market movement"}
+          </h2>
 
-      {/* Volume + timeframe */}
-      <div className="mb-4 flex items-center justify-between border-b border-border/60 pb-3 pt-2">
-        <div className="text-xs font-semibold text-muted-foreground">
-          <span className="text-foreground">${totalVolume}</span> vol
+          {/* Legend — click to toggle driver on/off */}
+          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
+            {seriesMeta.map((s) => {
+              const off = !!hidden[s.id];
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setHidden((h) => ({ ...h, [s.id]: !h[s.id] }))}
+                  className={`inline-flex items-center gap-1.5 bg-transparent p-0 transition-opacity ${
+                    off ? "opacity-40" : "opacity-100 hover:opacity-80"
+                  }`}
+                  aria-pressed={!off}
+                >
+                  <span className="h-2 w-2 rounded-full" style={{ background: s.color }} />
+                  <span className="font-medium tracking-tight text-white/85">{s.label}</span>
+                  <span className="font-mono text-white/60">{s.currentPct}%</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        <div className="relative mt-3 h-[300px] w-full sm:h-[340px] md:h-[380px]">
+          {chartQ.isLoading ? (
+            <div className="grid h-full place-items-center text-[10px] font-bold uppercase tracking-[0.28em] text-white/40">
+              Loading market history…
+            </div>
+          ) : chartData.length === 0 ? (
+            <div className="grid h-full place-items-center text-xs text-[var(--color-ink-muted)]">
+              No market movement recorded yet.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 12, right: 40, bottom: 8, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 6" stroke="#ffffff" strokeOpacity={0.28} vertical={false} />
+                <XAxis
+                  dataKey="t"
+                  stroke="#ffffff"
+                  strokeOpacity={0.15}
+                  tick={false}
+                  tickLine={false}
+                  axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
+                />
+                <YAxis hide domain={[0, "auto"]} />
+                <Tooltip
+                  content={() => null}
+                  cursor={{ stroke: "rgba(255,255,255,0.28)", strokeWidth: 1, strokeDasharray: "3 4" }}
+                />
+                {visibleSeries.map((s) => (
+                  <Line
+                    key={s.id}
+                    type="linear"
+                    dataKey={s.key}
+                    stroke={s.color}
+                    strokeWidth={2.25}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    dot={false}
+                    activeDot={false}
+                    isAnimationActive={false}
+                    connectNulls
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </section>
+
+      {/* Timeframe */}
+      <div className="mb-4 flex items-center justify-end border-b border-[var(--color-surface-border)]/60 pb-3 pt-2">
         <div className="flex items-center gap-4 text-xs font-semibold">
           {(Object.keys(RANGE_HOURS) as Range[]).map((r) => (
             <button
@@ -298,8 +373,8 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
               onClick={() => setRange(r)}
               className={
                 range === r
-                  ? "text-foreground"
-                  : "text-muted-foreground transition-colors hover:text-foreground"
+                  ? "text-[var(--color-ink)]"
+                  : "text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)]"
               }
             >
               {r}
@@ -308,46 +383,8 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
         </div>
       </div>
 
-      {/* Driver leaderboard (current subtab) */}
-      <div className="mb-8 divide-y divide-border/60">
-        {filteredMarkets.slice(0, subTab === "race_winner" ? 3 : 5).map((m: any) => {
-          const drv = driverByKey[m.selection_key];
-          const team = drv?.team_key ? teamByKey[drv.team_key] : null;
-          const pct = probabilities[m.id] * 100;
-          return (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => setSelectedId(m.id)}
-              className={`flex w-full items-center gap-3 py-3 text-left transition ${
-                selectedId === m.id ? "" : ""
-              }`}
-            >
-              <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60">
-                {drv?.photo_url ? (
-                  <img src={drv.photo_url} alt={m.label} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="grid h-full w-full place-items-center text-xs font-bold text-muted-foreground">
-                    {(drv?.abbr ?? m.label.slice(0, 3)).toUpperCase()}
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-base font-semibold">{drv?.name ?? m.label}</div>
-                <div className="truncate text-xs text-muted-foreground">
-                  {team?.name ?? shortLabel(m.label, true)}
-                </div>
-              </div>
-              <div className="tabular-nums text-2xl font-bold">
-                {pct >= 10 ? Math.round(pct) : pct.toFixed(1)}%
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Top tabs: Top Finishers / Race Specials */}
-      <div className="mb-6 flex items-baseline gap-6">
+      {/* Top tabs */}
+      <div className="mb-4 flex items-baseline gap-6">
         {(
           [
             { id: "top_finishers", label: "Top Finishers" },
@@ -357,8 +394,8 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
           <button
             key={t.id}
             onClick={() => setTopTab(t.id)}
-            className={`text-2xl font-bold transition-colors ${
-              topTab === t.id ? "text-foreground" : "text-muted-foreground/40 hover:text-muted-foreground"
+            className={`text-lg font-bold transition-colors ${
+              topTab === t.id ? "text-[var(--color-ink)]" : "text-[var(--color-ink-muted)]/60 hover:text-[var(--color-ink-muted)]"
             }`}
           >
             {t.label}
@@ -366,57 +403,35 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
         ))}
       </div>
 
-      {/* Sub-tabs pills */}
-      <div className="mb-6 flex flex-wrap gap-2">
-        <button
-          onClick={() => {
-            /* opens search input focus */
-            const el = document.getElementById("f1-search");
-            el?.focus();
-          }}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
-        >
-          <Search className="h-4 w-4" /> Search
-        </button>
+      {/* Sub-tabs — horizontal scrollable pill bar (football MarketTabs style) */}
+      <nav
+        className="mb-6 -mx-4 flex gap-2 overflow-x-auto px-4 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        aria-label="Market categories"
+      >
         {(topTab === "top_finishers" ? SUB_TABS_TOP : SUB_TABS_SPECIALS).map((t) => (
           <button
             key={t.id}
+            type="button"
             onClick={() => setSubTab(t.id)}
-            className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+            className={`shrink-0 snap-start min-h-9 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
               subTab === t.id
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:text-foreground"
+                ? "bg-[var(--color-neon)] text-black"
+                : "bg-white/5 text-[var(--color-ink-muted)] hover:bg-white/10 active:bg-white/15"
             }`}
           >
             {t.label}
           </button>
         ))}
-      </div>
-
-      {/* Search input (hidden until user types or focuses) */}
-      <div className="mb-4">
-        <input
-          id="f1-search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search drivers…"
-          className="w-full rounded-full border border-border bg-transparent px-4 py-2 text-sm placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-        />
-      </div>
-
-      {/* Section title */}
-      {SECTION_TITLES[subTab] && (
-        <div className="mb-3 text-lg font-semibold">{SECTION_TITLES[subTab]}</div>
-      )}
+      </nav>
 
       {/* Full market list */}
-      <div className="divide-y divide-border/60">
-        {filteredMarkets.length === 0 && (
-          <div className="py-8 text-center text-sm text-muted-foreground">
+      <div className="divide-y divide-[var(--color-surface-border)]/60">
+        {currentMarkets.length === 0 && (
+          <div className="py-8 text-center text-sm text-[var(--color-ink-muted)]">
             No markets in this category yet.
           </div>
         )}
-        {filteredMarkets.map((m: any) => {
+        {currentMarkets.map((m: any) => {
           const drv = driverByKey[m.selection_key];
           const team = drv?.team_key ? teamByKey[drv.team_key] : null;
           const pct = probabilities[m.id] * 100;
@@ -427,25 +442,23 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
               type="button"
               onClick={() => setSelectedId(m.id)}
               className={`flex w-full items-center gap-3 py-3 text-left transition ${
-                isSel ? "bg-primary/5" : ""
+                isSel ? "bg-[var(--color-neon)]/5" : ""
               }`}
             >
-              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60">
+              <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full bg-[var(--surface-3)] ring-1 ring-[var(--color-surface-border)]/60">
                 {drv?.photo_url ? (
                   <img src={drv.photo_url} alt={m.label} className="h-full w-full object-cover" />
                 ) : (
-                  <div className="grid h-full w-full place-items-center text-[10px] font-bold text-muted-foreground">
+                  <div className="grid h-full w-full place-items-center text-[10px] font-bold text-[var(--color-ink-muted)]">
                     {(drv?.abbr ?? m.label.slice(0, 3)).toUpperCase()}
                   </div>
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold">{drv?.name ?? m.label}</div>
-                <div className="truncate text-xs text-muted-foreground">
-                  {team?.name ?? shortLabel(m.label, true)}
-                </div>
+                <div className="truncate text-sm font-semibold text-[var(--color-ink)]">{drv?.name ?? m.label}</div>
+                <div className="truncate text-xs text-[var(--color-ink-muted)]">{team?.name ?? ""}</div>
               </div>
-              <div className="tabular-nums text-lg font-bold">
+              <div className="tabular-nums text-lg font-bold text-[var(--color-ink)]">
                 {pct >= 10 ? Math.round(pct) : pct.toFixed(1)}%
               </div>
             </button>
@@ -453,79 +466,116 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
         })}
       </div>
 
-      {/* Important info */}
-      <div className="mt-10 rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm">
-        <span className="font-bold">Important information:</span>{" "}
-        <span className="text-muted-foreground">
-          F1 races will be paid out after the &lsquo;Final Race Classification&rsquo; has been posted by the FIA.
+      <div className="mt-8 rounded-lg border border-[var(--color-neon)]/30 bg-[var(--color-neon)]/5 p-4 text-sm">
+        <span className="font-bold text-[var(--color-ink)]">Important information:</span>{" "}
+        <span className="text-[var(--color-ink-muted)]">
+          F1 races settle after the FIA posts the Final Race Classification.
         </span>
       </div>
 
-      {/* Bet slip with Kalshi-style slider */}
+      {/* Your position — StakeSlip-style sticky slip (matches football/world-cup) */}
       {selectedMarket && (
         <div
-          className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 p-4 backdrop-blur"
-          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
+          className="fixed inset-x-0 z-50 mx-auto max-w-2xl space-y-2.5 rounded-t-lg border border-[var(--color-neon)]/40 bg-[#050A08]/98 p-3.5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)] backdrop-blur"
+          style={{
+            bottom: "calc(72px + env(safe-area-inset-bottom))",
+            paddingBottom: "0.875rem",
+          }}
         >
-          <div className="mx-auto max-w-3xl space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Your position
-                </div>
-                <div className="truncate text-sm font-semibold">
-                  {driverByKey[selectedMarket.selection_key]?.name ?? selectedMarket.label}
-                </div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1 space-y-1">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-neon)]">
+                Your prediction
               </div>
-              <div className="text-right">
-                <div className="text-[10px] font-semibold uppercase text-muted-foreground">Odds</div>
-                <div className="font-mono text-lg font-bold">{Number(selectedMarket.odds).toFixed(2)}</div>
+              <div className="truncate text-[11px] text-[var(--color-ink-muted)]">
+                {race.name} · {SECTION_TITLES[subTab]}
               </div>
-            </div>
-
-            <div>
-              <div className="mb-2 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Stake</span>
-                <span className="font-mono text-base font-bold">{stake} pts</span>
-              </div>
-              <Slider
-                value={[stake]}
-                min={10}
-                max={5000}
-                step={10}
-                onValueChange={(v) => setStake(v[0])}
-                className="[&_[role=slider]]:h-5 [&_[role=slider]]:w-5"
-              />
-              <div className="mt-1 flex justify-between text-[10px] font-mono text-muted-foreground">
-                <span>10</span>
-                <span>1000</span>
-                <span>5000</span>
+              <div className="text-[13px] leading-snug text-[var(--color-ink)]">
+                <span className="font-semibold">{selectedDriver?.name ?? selectedMarket.label}</span>
+                <span className="mx-1.5 text-[var(--color-ink-muted)]">·</span>
+                <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
+                  {Number(selectedMarket.odds).toFixed(2)}x
+                </span>
+                <span className="ml-1.5 text-[11px] text-[var(--color-ink-muted)]">
+                  market estimate ~{impliedPct(Number(selectedMarket.odds))}%
+                </span>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setSelectedId(null)}
+              aria-label="Clear selection"
+              className="shrink-0 rounded-full p-1 text-[var(--color-ink-muted)] hover:bg-white/5 hover:text-[var(--color-ink)]"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
 
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Potential win</span>
-              <span className="font-mono text-base font-bold text-primary">
-                {(stake * Number(selectedMarket.odds)).toFixed(0)} pts
+          <div className="flex gap-2">
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="off"
+              value={stake}
+              onChange={(e) => setStake(e.target.value.replace(/\D/g, ""))}
+              disabled={noBalance}
+              placeholder={`Points (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
+              className="flex-1 min-w-0 rounded-md border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-base font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:cursor-not-allowed disabled:opacity-40"
+            />
+            <button
+              type="button"
+              disabled={!canSubmit}
+              onClick={() => placeMut.mutate()}
+              className="flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[var(--color-neon)] px-4 py-2.5 text-[12px] font-bold text-black transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)] disabled:opacity-40"
+            >
+              {placeMut.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <span>
+                    {noBalance
+                      ? "Add Points to Lock"
+                      : overBalance
+                      ? "Stake exceeds balance"
+                      : "Lock Prediction"}
+                  </span>
+                  {canSubmit && <ArrowUpRight className="h-3.5 w-3.5" />}
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+              <span className="text-[var(--color-ink-muted)]">Return</span>
+              <span className="font-display font-bold tabular-nums text-[var(--color-ink)]">
+                {potentialReturn.toFixed(2)}
               </span>
             </div>
+            <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+              <span className="text-[var(--color-ink-muted)]">Gain</span>
+              <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
+                +{potentialGain.toFixed(2)}
+              </span>
+            </div>
+          </div>
 
-            <Button
-              onClick={() => placeMut.mutate()}
-              disabled={placeMut.isPending}
-              className="w-full rounded-full py-6 text-base font-bold"
-            >
-              {placeMut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Place bet
-            </Button>
+          <div className="flex items-center justify-between text-[11px] text-[var(--color-ink-muted)]">
+            <span>
+              Points balance:{" "}
+              <span className="font-bold tabular-nums text-[var(--color-ink)]">{balance.toFixed(2)}</span>
+            </span>
+            {noBalance && <span className="font-semibold text-destructive">Add points to lock this prediction.</span>}
+            {!noBalance && overBalance && (
+              <span className="font-semibold text-destructive">Stake exceeds points balance</span>
+            )}
+            {!noBalance && !overBalance && stakeError && (
+              <span className="font-semibold text-destructive">{stakeError}</span>
+            )}
           </div>
         </div>
       )}
     </div>
   );
-}
-
-function shortLabel(s: string, sub = false) {
-  if (!sub) return s.length > 22 ? s.slice(0, 22) + "…" : s;
-  return s;
 }
