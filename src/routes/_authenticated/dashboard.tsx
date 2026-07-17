@@ -924,62 +924,101 @@ function FightPhoto({ url, name }: { url: string | null; name: string }) {
   );
 }
 
+function UfcFighterRow({
+  name,
+  photo,
+  odds,
+  pct,
+  isFavorite,
+}: {
+  name: string;
+  photo: string | null;
+  odds: number | null;
+  pct: number;
+  isFavorite: boolean;
+}) {
+  const color = isFavorite ? "text-[var(--neon)]" : "text-rose-400";
+  const borderColor = isFavorite ? "border-[var(--neon)]" : "border-rose-400";
+  const barColor = isFavorite ? "bg-[var(--neon)]" : "bg-rose-400";
+  const barGlow = isFavorite
+    ? "shadow-[0_0_6px_rgba(34,224,107,0.55)]"
+    : "shadow-[0_0_6px_rgba(251,113,133,0.55)]";
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)]">
+          <FightPhoto url={photo} name={name} />
+        </div>
+        <div className="min-w-0">
+          <div className="truncate text-[16px] font-bold tracking-tight text-[var(--ink)]">{name}</div>
+        </div>
+      </div>
+      <div className="flex items-center gap-2.5">
+        <div className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-[var(--surface-3)]">
+          <div
+            className={`h-full rounded-full ${barColor} ${barGlow} transition-[width] duration-500`}
+            style={{ width: `${Math.max(4, Math.min(100, pct))}%` }}
+          />
+        </div>
+        <div className="flex flex-col items-end">
+          <span className={`rounded-full border ${borderColor} px-3 py-1 text-[13px] font-bold tabular-nums ${color}`}>
+            {pct}%
+          </span>
+          {odds != null && (
+            <span className="mt-0.5 text-[10px] tabular-nums text-[var(--ink-muted)]">{odds.toFixed(2)}x</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function NextFightCard({ fight, now }: { fight: NonNullable<NextUfcFight>; now: number }) {
-  const cardLabel =
-    fight.card_position === "main"
-      ? "Main Event"
-      : fight.card_position === "co_main"
-        ? "Co-Main"
-        : "Fight";
+  const oddsA = fight.odds_a ?? 0;
+  const oddsB = fight.odds_b ?? 0;
+  const invA = oddsA > 0 ? 1 / oddsA : 0;
+  const invB = oddsB > 0 ? 1 / oddsB : 0;
+  const total = invA + invB;
+  const pctA = total > 0 ? Math.round((invA / total) * 100) : 0;
+  const pctB = total > 0 ? Math.round((invB / total) * 100) : 0;
+  const aIsFavorite = oddsA > 0 && oddsB > 0 && oddsA < oddsB;
+  const bIsFavorite = oddsA > 0 && oddsB > 0 && oddsB < oddsA;
+  const lastName = (n: string) => n.split(" ").pop() ?? n;
+
   return (
     <Link
       to="/ufc/$fightId"
       params={{ fightId: fight.id }}
-      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4 transition-colors hover:border-[var(--neon)]/40 next-fixture-corner"
+      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] transition-colors hover:border-[var(--neon)]/40 next-fixture-corner"
     >
-      <div className="flex items-center justify-between text-[11px] font-semibold text-[var(--ink-muted)]">
-        <span className="flex items-center gap-1.5">
-          <Swords className="h-3 w-3 text-[var(--neon)]" />
-          UFC · {cardLabel}
-          {fight.is_title_fight ? " · Title" : ""}
-        </span>
-        <span>{whenLabel(fight.commence_time, now)}</span>
-      </div>
-      {fight.event_name && (
-        <div className="mt-1 truncate text-[11px] text-[var(--ink-muted)]">{fight.event_name}</div>
-      )}
-      <div className="mt-3 flex items-center gap-3">
-        <div className="flex flex-1 items-center gap-2 min-w-0">
-          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)]">
-            <FightPhoto url={fight.fighter_a_logo} name={fight.fighter_a} />
-          </div>
-          <div className="min-w-0">
-            <div className="truncate text-[13px] font-bold tracking-tight text-[var(--ink)]">{fight.fighter_a}</div>
-            {fight.odds_a != null && (
-              <div className="text-[11px] font-bold tabular-nums text-[var(--neon)]">{fight.odds_a.toFixed(2)}x</div>
-            )}
-          </div>
+      <div className="relative p-4">
+        <div className="flex items-center justify-between text-[11px] font-semibold">
+          <span className="text-[var(--ink-muted)]">{whenLabel(fight.commence_time, now)}</span>
+          <span className="text-[var(--ink-muted)]">
+            {lastName(fight.fighter_a)} vs {lastName(fight.fighter_b)}
+          </span>
         </div>
-        <span className="shrink-0 font-display text-sm font-light text-[var(--ink-muted)]">vs</span>
-        <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
-          <div className="min-w-0 text-right">
-            <div className="truncate text-[13px] font-bold tracking-tight text-[var(--ink)]">{fight.fighter_b}</div>
-            {fight.odds_b != null && (
-              <div className="text-[11px] font-bold tabular-nums text-[var(--neon)]">{fight.odds_b.toFixed(2)}x</div>
-            )}
-          </div>
-          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)]">
-            <FightPhoto url={fight.fighter_b_logo} name={fight.fighter_b} />
-          </div>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <UfcFighterRow
+            name={fight.fighter_a}
+            photo={fight.fighter_a_logo}
+            odds={fight.odds_a}
+            pct={pctA}
+            isFavorite={aIsFavorite}
+          />
+          <UfcFighterRow
+            name={fight.fighter_b}
+            photo={fight.fighter_b_logo}
+            odds={fight.odds_b}
+            pct={pctB}
+            isFavorite={bIsFavorite}
+          />
         </div>
-      </div>
-      {fight.weight_class && (
-        <div className="mt-2 text-center text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--ink-muted)]">
-          {fight.weight_class}
+
+        <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)]/5 py-3.5 text-[14px] font-bold tracking-tight text-[var(--neon)] transition-transform group-hover:translate-y-[-1px] group-hover:bg-[var(--neon)]/10">
+          Open Market <ArrowUpRight className="h-4 w-4" />
         </div>
-      )}
-      <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)]/5 py-2.5 text-[13px] font-bold tracking-tight text-[var(--neon)] transition-transform group-hover:translate-y-[-1px] group-hover:bg-[var(--neon)]/10">
-        Open fight markets <ArrowUpRight className="h-4 w-4" />
       </div>
     </Link>
   );
