@@ -89,6 +89,10 @@ import { Route as AuthenticatedWalletTransactionListRouteImport } from './routes
 import { Route as AuthenticatedUfcFightIdRouteImport } from './routes/_authenticated/ufc.$fightId'
 import { Route as AuthenticatedMatchesMatchIdRouteImport } from './routes/_authenticated/matches.$matchId'
 import { Route as AuthenticatedFreeBetsPlaceRouteImport } from './routes/_authenticated/free-bets.place'
+import { Route as AuthenticatedFootballUclRouteImport } from './routes/_authenticated/football/ucl'
+import { Route as AuthenticatedFootballSerieARouteImport } from './routes/_authenticated/football/serie-a'
+import { Route as AuthenticatedFootballLaLigaRouteImport } from './routes/_authenticated/football/la-liga'
+import { Route as AuthenticatedFootballEplRouteImport } from './routes/_authenticated/football/epl'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -97,11 +101,14 @@ import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/pub
 import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
 import { Route as ApiPublicHooksOddsLiveRouteImport } from './routes/api/public/hooks/odds-live'
 import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
+import { Route as ApiPublicHooksFootballSyncRouteImport } from './routes/api/public/hooks/football-sync'
+import { Route as ApiPublicHooksFootballLiveRouteImport } from './routes/api/public/hooks/football-live'
 import { Route as ApiPublicHooksApifootballSyncRouteImport } from './routes/api/public/hooks/apifootball-sync'
 import { Route as ApiPublicHooksApifootballPrematchRouteImport } from './routes/api/public/hooks/apifootball-prematch'
 import { Route as ApiPublicHooksApifootballLiveRouteImport } from './routes/api/public/hooks/apifootball-live'
 import { Route as ApiPublicHooksApifootballLineupsRouteImport } from './routes/api/public/hooks/apifootball-lineups'
 import { Route as ApiPublicHooksApifootballFulltimeRouteImport } from './routes/api/public/hooks/apifootball-fulltime'
+import { Route as AuthenticatedFootballMatchesMatchIdRouteImport } from './routes/_authenticated/football/matches.$matchId'
 
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
@@ -533,6 +540,30 @@ const AuthenticatedFreeBetsPlaceRoute =
     path: '/free-bets/place',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFootballUclRoute =
+  AuthenticatedFootballUclRouteImport.update({
+    id: '/football/ucl',
+    path: '/football/ucl',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFootballSerieARoute =
+  AuthenticatedFootballSerieARouteImport.update({
+    id: '/football/serie-a',
+    path: '/football/serie-a',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFootballLaLigaRoute =
+  AuthenticatedFootballLaLigaRouteImport.update({
+    id: '/football/la-liga',
+    path: '/football/la-liga',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFootballEplRoute =
+  AuthenticatedFootballEplRouteImport.update({
+    id: '/football/epl',
+    path: '/football/epl',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const LovableEmailTransactionalSendRoute =
   LovableEmailTransactionalSendRouteImport.update({
     id: '/lovable/email/transactional/send',
@@ -580,6 +611,18 @@ const ApiPublicHooksHealthCheckRoute =
     path: '/api/public/hooks/health-check',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksFootballSyncRoute =
+  ApiPublicHooksFootballSyncRouteImport.update({
+    id: '/api/public/hooks/football-sync',
+    path: '/api/public/hooks/football-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksFootballLiveRoute =
+  ApiPublicHooksFootballLiveRouteImport.update({
+    id: '/api/public/hooks/football-live',
+    path: '/api/public/hooks/football-live',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksApifootballSyncRoute =
   ApiPublicHooksApifootballSyncRouteImport.update({
     id: '/api/public/hooks/apifootball-sync',
@@ -609,6 +652,12 @@ const ApiPublicHooksApifootballFulltimeRoute =
     id: '/api/public/hooks/apifootball-fulltime',
     path: '/api/public/hooks/apifootball-fulltime',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedFootballMatchesMatchIdRoute =
+  AuthenticatedFootballMatchesMatchIdRouteImport.update({
+    id: '/football/matches/$matchId',
+    path: '/football/matches/$matchId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -648,6 +697,10 @@ export interface FileRoutesByFullPath {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/football/epl': typeof AuthenticatedFootballEplRoute
+  '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
+  '/football/serie-a': typeof AuthenticatedFootballSerieARoute
+  '/football/ucl': typeof AuthenticatedFootballUclRoute
   '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/ufc/$fightId': typeof AuthenticatedUfcFightIdRoute
@@ -691,11 +744,14 @@ export interface FileRoutesByFullPath {
   '/matches/': typeof AuthenticatedMatchesIndexRoute
   '/ufc/': typeof AuthenticatedUfcIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/football/matches/$matchId': typeof AuthenticatedFootballMatchesMatchIdRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
   '/api/public/hooks/apifootball-live': typeof ApiPublicHooksApifootballLiveRoute
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
+  '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
+  '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
@@ -739,6 +795,10 @@ export interface FileRoutesByTo {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/football/epl': typeof AuthenticatedFootballEplRoute
+  '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
+  '/football/serie-a': typeof AuthenticatedFootballSerieARoute
+  '/football/ucl': typeof AuthenticatedFootballUclRoute
   '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/ufc/$fightId': typeof AuthenticatedUfcFightIdRoute
@@ -782,11 +842,14 @@ export interface FileRoutesByTo {
   '/matches': typeof AuthenticatedMatchesIndexRoute
   '/ufc': typeof AuthenticatedUfcIndexRoute
   '/management/admin': typeof ManagementAdminIndexRoute
+  '/football/matches/$matchId': typeof AuthenticatedFootballMatchesMatchIdRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
   '/api/public/hooks/apifootball-live': typeof ApiPublicHooksApifootballLiveRoute
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
+  '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
+  '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
@@ -835,6 +898,10 @@ export interface FileRoutesById {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/_authenticated/football/epl': typeof AuthenticatedFootballEplRoute
+  '/_authenticated/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
+  '/_authenticated/football/serie-a': typeof AuthenticatedFootballSerieARoute
+  '/_authenticated/football/ucl': typeof AuthenticatedFootballUclRoute
   '/_authenticated/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/_authenticated/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/_authenticated/ufc/$fightId': typeof AuthenticatedUfcFightIdRoute
@@ -878,11 +945,14 @@ export interface FileRoutesById {
   '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
   '/_authenticated/ufc/': typeof AuthenticatedUfcIndexRoute
   '/management/admin/': typeof ManagementAdminIndexRoute
+  '/_authenticated/football/matches/$matchId': typeof AuthenticatedFootballMatchesMatchIdRoute
   '/api/public/hooks/apifootball-fulltime': typeof ApiPublicHooksApifootballFulltimeRoute
   '/api/public/hooks/apifootball-lineups': typeof ApiPublicHooksApifootballLineupsRoute
   '/api/public/hooks/apifootball-live': typeof ApiPublicHooksApifootballLiveRoute
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
+  '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
+  '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
@@ -931,6 +1001,10 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/football/epl'
+    | '/football/la-liga'
+    | '/football/serie-a'
+    | '/football/ucl'
     | '/free-bets/place'
     | '/matches/$matchId'
     | '/ufc/$fightId'
@@ -974,11 +1048,14 @@ export interface FileRouteTypes {
     | '/matches/'
     | '/ufc/'
     | '/management/admin/'
+    | '/football/matches/$matchId'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
     | '/api/public/hooks/apifootball-live'
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
+    | '/api/public/hooks/football-live'
+    | '/api/public/hooks/football-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/odds-live'
     | '/api/public/hooks/reconciliation'
@@ -1022,6 +1099,10 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/football/epl'
+    | '/football/la-liga'
+    | '/football/serie-a'
+    | '/football/ucl'
     | '/free-bets/place'
     | '/matches/$matchId'
     | '/ufc/$fightId'
@@ -1065,11 +1146,14 @@ export interface FileRouteTypes {
     | '/matches'
     | '/ufc'
     | '/management/admin'
+    | '/football/matches/$matchId'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
     | '/api/public/hooks/apifootball-live'
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
+    | '/api/public/hooks/football-live'
+    | '/api/public/hooks/football-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/odds-live'
     | '/api/public/hooks/reconciliation'
@@ -1117,6 +1201,10 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/_authenticated/football/epl'
+    | '/_authenticated/football/la-liga'
+    | '/_authenticated/football/serie-a'
+    | '/_authenticated/football/ucl'
     | '/_authenticated/free-bets/place'
     | '/_authenticated/matches/$matchId'
     | '/_authenticated/ufc/$fightId'
@@ -1160,11 +1248,14 @@ export interface FileRouteTypes {
     | '/_authenticated/matches/'
     | '/_authenticated/ufc/'
     | '/management/admin/'
+    | '/_authenticated/football/matches/$matchId'
     | '/api/public/hooks/apifootball-fulltime'
     | '/api/public/hooks/apifootball-lineups'
     | '/api/public/hooks/apifootball-live'
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
+    | '/api/public/hooks/football-live'
+    | '/api/public/hooks/football-sync'
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/odds-live'
     | '/api/public/hooks/reconciliation'
@@ -1193,6 +1284,8 @@ export interface RootRouteChildren {
   ApiPublicHooksApifootballLiveRoute: typeof ApiPublicHooksApifootballLiveRoute
   ApiPublicHooksApifootballPrematchRoute: typeof ApiPublicHooksApifootballPrematchRoute
   ApiPublicHooksApifootballSyncRoute: typeof ApiPublicHooksApifootballSyncRoute
+  ApiPublicHooksFootballLiveRoute: typeof ApiPublicHooksFootballLiveRoute
+  ApiPublicHooksFootballSyncRoute: typeof ApiPublicHooksFootballSyncRoute
   ApiPublicHooksHealthCheckRoute: typeof ApiPublicHooksHealthCheckRoute
   ApiPublicHooksOddsLiveRoute: typeof ApiPublicHooksOddsLiveRoute
   ApiPublicHooksReconciliationRoute: typeof ApiPublicHooksReconciliationRoute
@@ -1765,6 +1858,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFreeBetsPlaceRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/football/ucl': {
+      id: '/_authenticated/football/ucl'
+      path: '/football/ucl'
+      fullPath: '/football/ucl'
+      preLoaderRoute: typeof AuthenticatedFootballUclRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/football/serie-a': {
+      id: '/_authenticated/football/serie-a'
+      path: '/football/serie-a'
+      fullPath: '/football/serie-a'
+      preLoaderRoute: typeof AuthenticatedFootballSerieARouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/football/la-liga': {
+      id: '/_authenticated/football/la-liga'
+      path: '/football/la-liga'
+      fullPath: '/football/la-liga'
+      preLoaderRoute: typeof AuthenticatedFootballLaLigaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/football/epl': {
+      id: '/_authenticated/football/epl'
+      path: '/football/epl'
+      fullPath: '/football/epl'
+      preLoaderRoute: typeof AuthenticatedFootballEplRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/lovable/email/transactional/send': {
       id: '/lovable/email/transactional/send'
       path: '/lovable/email/transactional/send'
@@ -1821,6 +1942,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksHealthCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/football-sync': {
+      id: '/api/public/hooks/football-sync'
+      path: '/api/public/hooks/football-sync'
+      fullPath: '/api/public/hooks/football-sync'
+      preLoaderRoute: typeof ApiPublicHooksFootballSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/football-live': {
+      id: '/api/public/hooks/football-live'
+      path: '/api/public/hooks/football-live'
+      fullPath: '/api/public/hooks/football-live'
+      preLoaderRoute: typeof ApiPublicHooksFootballLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/apifootball-sync': {
       id: '/api/public/hooks/apifootball-sync'
       path: '/api/public/hooks/apifootball-sync'
@@ -1855,6 +1990,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/hooks/apifootball-fulltime'
       preLoaderRoute: typeof ApiPublicHooksApifootballFulltimeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/football/matches/$matchId': {
+      id: '/_authenticated/football/matches/$matchId'
+      path: '/football/matches/$matchId'
+      fullPath: '/football/matches/$matchId'
+      preLoaderRoute: typeof AuthenticatedFootballMatchesMatchIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
@@ -1915,7 +2057,12 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedTrustCenterRoute: typeof AuthenticatedTrustCenterRoute
   AuthenticatedUfcRoute: typeof AuthenticatedUfcRouteWithChildren
   AuthenticatedWalletRoute: typeof AuthenticatedWalletRouteWithChildren
+  AuthenticatedFootballEplRoute: typeof AuthenticatedFootballEplRoute
+  AuthenticatedFootballLaLigaRoute: typeof AuthenticatedFootballLaLigaRoute
+  AuthenticatedFootballSerieARoute: typeof AuthenticatedFootballSerieARoute
+  AuthenticatedFootballUclRoute: typeof AuthenticatedFootballUclRoute
   AuthenticatedFreeBetsPlaceRoute: typeof AuthenticatedFreeBetsPlaceRoute
+  AuthenticatedFootballMatchesMatchIdRoute: typeof AuthenticatedFootballMatchesMatchIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1936,7 +2083,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTrustCenterRoute: AuthenticatedTrustCenterRoute,
   AuthenticatedUfcRoute: AuthenticatedUfcRouteWithChildren,
   AuthenticatedWalletRoute: AuthenticatedWalletRouteWithChildren,
+  AuthenticatedFootballEplRoute: AuthenticatedFootballEplRoute,
+  AuthenticatedFootballLaLigaRoute: AuthenticatedFootballLaLigaRoute,
+  AuthenticatedFootballSerieARoute: AuthenticatedFootballSerieARoute,
+  AuthenticatedFootballUclRoute: AuthenticatedFootballUclRoute,
   AuthenticatedFreeBetsPlaceRoute: AuthenticatedFreeBetsPlaceRoute,
+  AuthenticatedFootballMatchesMatchIdRoute:
+    AuthenticatedFootballMatchesMatchIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -2072,6 +2225,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksApifootballPrematchRoute:
     ApiPublicHooksApifootballPrematchRoute,
   ApiPublicHooksApifootballSyncRoute: ApiPublicHooksApifootballSyncRoute,
+  ApiPublicHooksFootballLiveRoute: ApiPublicHooksFootballLiveRoute,
+  ApiPublicHooksFootballSyncRoute: ApiPublicHooksFootballSyncRoute,
   ApiPublicHooksHealthCheckRoute: ApiPublicHooksHealthCheckRoute,
   ApiPublicHooksOddsLiveRoute: ApiPublicHooksOddsLiveRoute,
   ApiPublicHooksReconciliationRoute: ApiPublicHooksReconciliationRoute,
