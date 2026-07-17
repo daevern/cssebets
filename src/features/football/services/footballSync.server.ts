@@ -24,7 +24,31 @@ function normTeam(s: string): string {
     .replace(/[^a-z0-9]/g, "");
 }
 
-async function startSyncRun(provider: string, jobType: string, competition?: string) {
+// Concurrency guard: if another run of the same (provider, job_type) is still
+// marked 'running' and started within the last `staleMinutes`, skip this run.
+// This prevents overlapping cron ticks from double-firing API calls.
+async function isRunInFlight(provider: string, jobType: string, staleMinutes = 5) {
+  const cutoff = new Date(Date.now() - staleMinutes * 60_000).toISOString();
+  const { data } = await supabaseAdmin
+    .from("sports_sync_runs" as any)
+    .select("id")
+    .eq("provider", provider)
+    .eq("job_type", jobType)
+    .eq("status", "running")
+    .gt("started_at", cutoff)
+    .limit(1)
+    .maybeSingle();
+  return !!data;
+}
+
+async function startSyncRun(
+  provider: string,
+  jobType: string,
+  competition?: string,
+): Promise<{ id: string | undefined; skipped: boolean }> {
+  if (await isRunInFlight(provider, jobType)) {
+    return { id: undefined, skipped: true };
+  }
   const { data } = await supabaseAdmin
     .from("sports_sync_runs" as any)
     .insert({
@@ -36,7 +60,7 @@ async function startSyncRun(provider: string, jobType: string, competition?: str
     })
     .select("id")
     .single();
-  return (data as any)?.id as string | undefined;
+  return { id: (data as any)?.id as string | undefined, skipped: false };
 }
 
 async function finishSyncRun(
