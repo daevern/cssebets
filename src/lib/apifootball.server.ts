@@ -79,9 +79,16 @@ export async function apiFootballGet<T = any>(
   const json = (await res.json()) as any;
   // api-football wraps results in { response: [...] }
   if (json?.errors && Object.keys(json.errors).length) {
-    // Some plan / params errors are returned as 200s with body errors.
     const msg = JSON.stringify(json.errors);
-    if (msg !== "[]") throw new Error(`api-football error: ${msg}`);
+    if (msg !== "[]") {
+      // Per-minute rate limit is returned as a 200 with { errors: { rateLimit: "..." } }.
+      // Treat it as a soft skip (like daily quota exhaustion) so batch callers
+      // can bail cleanly instead of 500-ing.
+      if (json.errors.rateLimit) {
+        return { skipped: true, reason: "per-minute rate limit", quota };
+      }
+      throw new Error(`api-football error: ${msg}`);
+    }
   }
   return { data: (json?.response ?? json) as T, quota };
 }

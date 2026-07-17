@@ -1,123 +1,51 @@
-## Phase 2 — UFC hardening + F1 launch
+## What's happening
 
-Two parallel tracks. UFC stays where it lives today (`src/lib/ufc*.ts`, `src/routes/_authenticated/ufc.*`, `ufc_*` tables). F1 is built fresh in the same isolated pattern as football (`src/features/f1/`, `f1_*` tables) so it can't destabilise anything else.
+The "Take a position" panel shows "Not available" for France vs England (Jul 18, 3rd-place) and Spain vs Argentina (Jul 19, Final) because `match_market_odds` is empty for both — 0 rows. Only the top 1X2 (`reference_odds`) is populated, so nothing feeds the Goals / Cards / Corners / Specials / Score tabs.
 
-Execution order: **F1 foundation first** (schema + sync), then **UFC hardening**, then **F1 UI + admin**, then **cron + polish**. Ship in that order so each layer is verifiable before the next.
+## Root cause (verified against logs + DB + code)
 
----
+The detailed markets (BTTS, O/U, cards, corners, correct score, etc.) come exclusively from **api-football**. Two things combine to break it:
 
-### Track A — UFC hardening (no rewrite)
+1. **The DB function `regenerate_match_market_odds` intentionally deactivates every generated market for real (non-simulation) matches.** Comment in the SQL: *"Never generate fallback market odds for real matches."* So if api-football doesn't fill them, there is no fallback — the panel goes blank.
 
-Applied to existing files only. No architectural changes; existing routes, tables, and bets stay intact.
+2. **The api-football sync has been failing since Jul 15.** Direct invocation returns:
+   ```
+   { ok:false, error: "api-football error: {\"rateLimit\":\"Too many requests. You have exceeded the limit of requests per minute of your subscription.\"}" }
+   ```
+   Seven cron jobs (`apifootball-live` 1m, `apifootball-sync-1min-near-kickoff` 1m, `apifootball-lineups` 5m, `apifootball-sync-5min-global-odds` 5m, `apifootball-fulltime` 10m, `apifootball-odds-sync-15m` 15m, `apifootball-prematch` 30m) all fire at the top of the minute and blow past the plan's per-minute cap. `apiFootballGet` throws on the rate-limit response; `syncUpcomingMatchOdds` has no per-match try/catch, so the entire batch aborts with 500 and zero rows are written. The `pace()` throttle is module-scope — meaningless across Cloudflare Worker isolates.
 
-1. **Retry + concurrency on the API-Sports MMA adapter** — reuse `src/features/football/services/retry.ts` (`withRetry`) inside `src/lib/apimma.server.ts` for all `apiMmaGet` calls; add a lock table check in `src/lib/ufc-odds.server.ts` `runUfcOddsSync` / `runUfcAutoSettle` to prevent overlapping cron runs.
-2. **Quota + sync-run tracking** — record each MMA API call into `apifootball_quota` (rename column-free, just tag `provider='mma'`) and write a row per sync into a new `sports_sync_runs`-style entry so UFC shows up in existing sync-health dashboards. Reuse the football sync-runs table by adding a `sport` discriminator (already present).
-3. **Odds-freshness guard** — mark UFC markets stale after N seconds without a snapshot; suppress bet placement on stale odds in `src/lib/ufc.functions.ts` place-bet path.
-4. **Admin observability on `/management/admin/ufc`** — add three panels: last 20 sync runs, current MMA quota, and open-bet liability per fight (aggregate stake + potential payout by fight_id).
-5. **Settlement safety** — confirmation dialog already exists; add server-side idempotency check (reject settle if `status='finished'`) and audit log entry.
-6. **Live trade tape** on the fight details page (`src/routes/_authenticated/ufc.$fightId.tsx`) — anonymised recent bets, reuse pattern from `src/features/football/components/LiveTradeTape.tsx`.
-7. **Odds history sparkline** on each UFC market card — reuse `OddsHistoryGraph.tsx` component; new server fn `getUfcOddsHistory`.
+Result: `audit_log` shows no successful `apifootball.sync` since Jul 15 18:52 (the semi-final). Meanwhile the-odds-api keeps refreshing `reference_odds` only, hiding the outage on the match list but leaving detail markets empty.
 
-No changes to: UFC schema, existing markets, existing bet flow, wallet integration.
+## Fix
 
----
+1. **`src/lib/apifootball.server.ts` — treat per-minute rate-limit as a soft skip.** In `apiFootballGet`, detect `json.errors.rateLimit` and return `{ skipped: true, reason: "per-minute rate limit", quota }` instead of throwing. This mirrors the existing daily-quota skip path.
 
-### Track B — F1 (isolated, new feature folder)
+2. **`src/lib/apifootball-sync.server.ts` — isolate per-match failures and bail on rate limit.**
+   - Wrap the `syncMatchOddsApiFootball(...)` call in `syncUpcomingMatchOdds` with try/catch so one match's failure can't 500 the whole batch.
+   - Break the loop when a call returns `status: "quota_exhausted"` with the new `"per-minute rate limit"` reason (or add a `rate_limited` status).
+   - Add a small `await new Promise(r => setTimeout(r, 250))` between matches so a single Worker isolate stays under ~4 req/s.
 
-Mirrors the football architecture exactly. Zero touch to football, UFC, or World Cup.
+3. **Reduce cron collisions.** Update the pg_cron schedule so jobs don't all land on `:00`:
+   - `apifootball-sync-5min-global-odds`: `2,7,12,17,22,27,32,37,42,47,52,57 * * * *` (offset +2)
+   - `apifootball-odds-sync-15m`: `3,18,33,48 * * * *`
+   - `apifootball-lineups`: `4,9,14,19,24,29,34,39,44,49,54,59 * * * *`
+   - `apifootball-fulltime`: `6,16,26,36,46,56 * * * *`
+   Keep `apifootball-live` and `apifootball-sync-1min-near-kickoff` on `* * * * *` (they're the most latency-sensitive) but the two share only a small footprint per call.
 
-**New folder:** `src/features/f1/`
-```text
-adapters/apiF1Adapter.server.ts     # API-Sports Formula-1 client + retry
-adapters/marketMapper.ts            # provider payload → internal market rows
-config/f1Seasons.ts                 # season + race calendar config
-services/f1Sync.server.ts           # fixtures, standings, results sync
-services/f1Settlement.server.ts     # race + championship settlement
-services/f1OddsBuilder.server.ts    # house odds from qualifying + standings
-components/F1RaceCard.tsx
-components/F1MarketCard.tsx
-components/F1BetSlip.tsx
-components/F1DriverGrid.tsx
-components/F1StandingsPanel.tsx
-pages/F1SeasonPage.tsx              # calendar + championship outrights
-pages/F1RaceDetailsPage.tsx         # per-race markets
-f1.functions.ts                     # server fns for UI + admin
-types/f1.ts
-```
+4. **Backfill the two open fixtures immediately.** Trigger the single-match odds sync once for each after the fix ships (via the admin "Refresh odds" action or a one-shot invocation of `syncMatchOddsApiFootball` for the France-England and Spain-Argentina match IDs).
 
-**New routes:**
-- `/f1` — season overview + championship outrights
-- `/f1/races/$raceId` — race markets + bet slip
-- `/management/admin/f1` — admin dashboard
+5. **Optional durability follow-up (out of scope for this fix but worth noting):** move `pace()` to a DB-backed per-minute counter so the cap holds across all Worker isolates. Not required to restore odds today.
 
-**Markets shipped:**
-- Race winner (outright per GP)
-- Podium finish (top-3 per driver)
-- Points finish (top-10 per driver)
-- Head-to-head matchups (auto-generated from qualifying pairs of teammates + top-10 pairs)
-- Championship outrights: Drivers' title + Constructors' title
+## Files touched
 
-**House odds model** (API-Sports has no native F1 odds):
-- Base probability from championship standings position (softmax over points).
-- Adjusted by qualifying grid position when available (linear boost for pole/front row).
-- Convert to decimal odds with a fixed 6% overround, floor at 1.05, cap at 50.00.
-- Recompute on qualifying result, race start, and post-race for next round.
+- `src/lib/apifootball.server.ts` — rate-limit soft-skip.
+- `src/lib/apifootball-sync.server.ts` — per-match try/catch, inter-match delay, propagate rate-limit break.
+- One migration to rewrite the four pg_cron schedules above.
+- No client/UI changes required — once markets are written, the existing `MarketTabs` will show them automatically.
 
-**Championship outrights:**
-- Snapshot after every race weekend.
-- Settled when mathematically clinched (points gap > remaining points) or at season end.
+## Verification
 
----
-
-### Database (Track B only)
-
-New migration creates:
-- `f1_seasons` (year, active, name)
-- `f1_races` (race_key, season, round, name, circuit, starts_at, status, results_json)
-- `f1_drivers` (driver_key, name, team, number, active)
-- `f1_constructors` (team_key, name, active)
-- `f1_race_markets` (race_id, market_type, selection_key, label, odds, status, opened_at, closed_at)
-- `f1_race_odds_snapshots` (market_id, odds, snapshot_at) — powers sparklines
-- `f1_bets` (user_id, race_id, market_id, selection_key, stake, odds_locked, potential_payout, status, settled_at)
-- `f1_championship_markets` + `f1_championship_bets` (season-long outrights)
-- `f1_sync_runs` (provider run log, or reuse `sports_sync_runs` if it already discriminates by sport)
-
-All tables: GRANT to `authenticated`/`service_role`, RLS enabled, policies:
-- Drivers/races/markets/snapshots: `SELECT` open to `authenticated`.
-- Bets: user sees own only; admins see all via `has_role('admin')`.
-- Admin write via `service_role` through server functions using `supabaseAdmin`.
-
-`updated_at` trigger on all mutable tables.
-
----
-
-### Cron jobs (pg_cron via supabase--insert after routes deploy)
-
-New `/api/public/hooks/*` routes and their schedules:
-- `f1-sync` — every 15 min: races, drivers, standings, quali results.
-- `f1-odds-rebuild` — every 30 min during race weekends, hourly otherwise: recompute house odds + snapshot.
-- `f1-settle` — every 5 min on race day: settle finished races + refresh championship math.
-- `ufc-quota-log` — every hour: roll up MMA quota (piggybacks existing UFC cron).
-
-Existing UFC crons untouched; the hardening code plugs into them.
-
----
-
-### Technical details
-
-- API-Sports F1 base: `https://v1.formula-1.api-sports.io`, same `x-apisports-key` header, same `API_FOOTBALL_KEY` secret.
-- Endpoints used: `/races?season=X`, `/rankings/drivers`, `/rankings/teams`, `/rankings/races?race=Y` (results + quali), `/drivers?season=X`, `/teams?season=X`.
-- All server work goes through `createServerFn` with `requireSupabaseAuth` for user-facing calls; admin actions verify `has_role('admin')` before touching `supabaseAdmin`.
-- Public read endpoints for the season/race pages use the server publishable client behind narrow `TO anon` policies — same pattern as football.
-- Cron hooks live under `/api/public/hooks/`; auth via `apikey` header carrying anon key.
-- All API calls wrapped in `withRetry` with exponential backoff.
-- Vitest coverage: F1 odds-builder unit tests (softmax normalisation, overround, floors/caps) and settlement decider tests (race winner, podium, points, h2h).
-
----
-
-### Explicitly NOT included
-
-- NBA (skipped as previously agreed).
-- Live in-race markets (safety car, next retirement) — provider doesn't feed them cleanly.
-- UFC schema migration or route restructure.
-- Any change to World Cup, football, wallet ledger, or auth.
+- After deploy, invoke `POST /api/public/hooks/apifootball-sync?max=2&hours=48&freshness=24` and confirm 200 with `results[].status: "ok"` and non-zero `markets`.
+- Confirm `SELECT count(*) FROM match_market_odds WHERE match_id IN ('56960295-...','e7ddf0dd-...')` returns ~90+ rows each.
+- Reload `/matches/56960295-...` → Goals / Cards / Corners / Specials / Score tabs render selections.
+- Watch worker logs for 15 minutes and confirm no more `apifootball-sync → 500` responses.
