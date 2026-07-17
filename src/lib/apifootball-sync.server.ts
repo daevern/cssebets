@@ -280,10 +280,23 @@ export async function syncUpcomingMatchOdds(opts: { hoursAhead?: number; freshne
       (m as any).odds_source !== "api-football" ||
       (m as any).odds_updated_at < stale;
     if (!isStale) continue;
-    const r = await syncMatchOddsApiFootball((m as any).id);
+    let r: SyncResult;
+    try {
+      r = await syncMatchOddsApiFootball((m as any).id);
+    } catch (e) {
+      r = {
+        matchId: (m as any).id,
+        status: "error",
+        quotaSpent: 0,
+        note: (e as Error).message,
+      };
+    }
     results.push(r);
-    if (r.status === "quota_exhausted") break;
+    if (r.status === "quota_exhausted" || r.status === "rate_limited") break;
     if (results.length >= maxMatches) break;
+    // Space calls out so a single Worker isolate stays well under the
+    // per-minute cap and shares headroom with sibling cron jobs.
+    await new Promise((resolve) => setTimeout(resolve, 250));
   }
   return { processed: results.length, results };
 }
