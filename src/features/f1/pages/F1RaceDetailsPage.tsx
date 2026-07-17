@@ -816,3 +816,94 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     </div>
   );
 }
+
+type LegendSeries = { id: string; label: string; color: string; currentPct: number };
+
+function DriverLegendDropdown({
+  series,
+  hidden,
+  onToggle,
+  onAll,
+  onNone,
+}: {
+  series: LegendSeries[];
+  hidden: Record<string, boolean>;
+  onToggle: (id: string) => void;
+  onAll: () => void;
+  onNone: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const shownCount = series.filter((s) => !hidden[s.id]).length;
+
+  return (
+    <div className="relative mt-4">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="inline-flex items-center gap-2 rounded-md border border-[var(--color-surface-border)] bg-black/40 px-3 py-2 text-[12px] font-semibold text-[var(--color-ink)] hover:border-[var(--color-neon)]/60"
+      >
+        <span>Drivers on chart</span>
+        <span className="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[11px] text-white/80">
+          {shownCount}/{series.length}
+        </span>
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 z-30 mt-2 w-72 rounded-lg border border-[var(--color-surface-border)] bg-[#050A08] p-2 shadow-2xl">
+          <div className="mb-2 flex items-center justify-between border-b border-[var(--color-surface-border)]/60 px-1 pb-2 text-[11px]">
+            <span className="font-semibold uppercase tracking-wider text-[var(--color-ink-muted)]">
+              Toggle drivers
+            </span>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onAll}
+                className="font-semibold text-[var(--color-neon)] hover:underline"
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={onNone}
+                className="font-semibold text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+              >
+                None
+              </button>
+            </div>
+          </div>
+          <div className="max-h-72 overflow-y-auto">
+            {series.map((s) => {
+              const on = !hidden[s.id];
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => onToggle(s.id)}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-white/5"
+                >
+                  <span
+                    className="grid h-4 w-4 shrink-0 place-items-center rounded border"
+                    style={{
+                      borderColor: on ? s.color : "rgba(255,255,255,0.2)",
+                      background: on ? s.color : "transparent",
+                    }}
+                  >
+                    {on && <Check className="h-3 w-3 text-black" strokeWidth={3} />}
+                  </span>
+                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
+                  <span className={`flex-1 truncate font-medium ${on ? "text-white" : "text-white/50"}`}>
+                    {s.label}
+                  </span>
+                  <span className="font-mono text-[11px] text-white/60">{s.currentPct}%</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
