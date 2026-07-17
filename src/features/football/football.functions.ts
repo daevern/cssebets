@@ -72,7 +72,7 @@ export const getFootballMatch = createServerFn({ method: "GET" })
     const { data: markets } = await browserPublishable
       .from("sports_markets" as any)
       .select(
-        "id, market_key, display_name, category, period, line, status, sort_order, sports_market_selections (id, selection_key, display_name, line, decimal_odds, status, sort_order)",
+        "id, market_key, display_name, category, period, line, status, sort_order, provider_odds_ts, last_odds_update_at, stale_after_seconds, suspension_reason, sports_market_selections (id, selection_key, display_name, line, decimal_odds, status, sort_order)",
       )
       .eq("sports_event_id", data.matchId)
       .order("sort_order", { ascending: true });
@@ -101,26 +101,44 @@ export const getFootballMatch = createServerFn({ method: "GET" })
       },
     };
 
-    const normalizedMarkets: FootballMarket[] = (markets ?? []).map((m: any) => ({
-      id: m.id,
-      key: m.market_key,
-      displayName: m.display_name,
-      category: m.category,
-      period: m.period,
-      line: m.line,
-      status: m.status,
-      selections: (m.sports_market_selections ?? [])
-        .slice()
-        .sort((a: any, b: any) => a.sort_order - b.sort_order)
-        .map((s: any) => ({
-          id: s.id,
-          key: s.selection_key,
-          displayName: s.display_name,
-          odds: Number(s.decimal_odds),
-          line: s.line,
-          status: s.status,
-        })),
-    }));
+    // Compute derived "freshness" status client-side so the UI can show
+    // "Market Suspended" even if the periodic sweep hasn't flipped the
+    // status column yet. Everything computed here is a hint — the server
+    // still enforces on bet placement.
+    const nowMs = Date.now();
+    const normalizedMarkets: (FootballMarket & {
+      lastOddsUpdateAt: string | null;
+      isStale: boolean;
+      suspensionReason: string | null;
+    })[] = (markets ?? []).map((m: any) => {
+      const lastMs = m.last_odds_update_at ? new Date(m.last_odds_update_at).getTime() : null;
+      const maxAgeMs = Number(m.stale_after_seconds ?? 600) * 1000;
+      const isStale =
+        m.status === "open" && lastMs != null && nowMs - lastMs > maxAgeMs;
+      return {
+        id: m.id,
+        key: m.market_key,
+        displayName: m.display_name,
+        category: m.category,
+        period: m.period,
+        line: m.line,
+        status: m.status,
+        lastOddsUpdateAt: m.last_odds_update_at,
+        isStale,
+        suspensionReason: m.suspension_reason ?? (isStale ? "odds stale" : null),
+        selections: (m.sports_market_selections ?? [])
+          .slice()
+          .sort((a: any, b: any) => a.sort_order - b.sort_order)
+          .map((s: any) => ({
+            id: s.id,
+            key: s.selection_key,
+            displayName: s.display_name,
+            odds: Number(s.decimal_odds),
+            line: s.line,
+            status: s.status,
+          })),
+      };
+    });
 
     return { match, markets: normalizedMarkets };
   });
@@ -183,6 +201,31 @@ export const placeFootballBet = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Pre-flight: refuse bets on non-open / stale markets before we touch the
+    // atomic RPC. The RPC also validates market status, but we short-circuit
+    // here so the UI gets a clean freshness error instead of a generic one.
+    const { data: mkt } = await (supabaseAdmin as any)
+      .from("sports_markets")
+      .select("status, last_odds_update_at, stale_after_seconds, suspension_reason")
+      .eq("id", data.marketId)
+      .maybeSingle();
+    if (!mkt) throw new Error("This market is no longer available.");
+    if (mkt.status !== "open") {
+      throw new Error(
+        mkt.suspension_reason
+          ? `Market suspended (${mkt.suspension_reason}). Please try another market.`
+          : "This market is not accepting bets right now.",
+      );
+    }
+    if (mkt.last_odds_update_at) {
+      const age = Date.now() - new Date(mkt.last_odds_update_at).getTime();
+      const maxAge = Number(mkt.stale_after_seconds ?? 600) * 1000;
+      if (age > maxAge) {
+        throw new Error("Odds are stale — please refresh and try again.");
+      }
+    }
+
     const { data: betId, error } = await (supabaseAdmin as any).rpc("place_sports_bet_atomic", {
       p_user_id: userId,
       p_event_id: data.eventId,
@@ -247,6 +290,16 @@ export const adminSettleFootball = createServerFn({ method: "POST" })
     await requireAdmin(context.supabase, context.userId);
     const { settleFinishedFootballEvents } = await import("./services/footballSettlement.server");
     return await settleFinishedFootballEvents();
+  });
+
+export const adminSuspendStaleFootball = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { suspendStaleFootballMarkets } = await import(
+      "./services/oddsFreshness.server"
+    );
+    return await suspendStaleFootballMarkets();
   });
 
 export const adminSetFootballFlag = createServerFn({ method: "POST" })

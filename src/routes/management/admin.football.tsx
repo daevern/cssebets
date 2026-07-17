@@ -8,6 +8,7 @@ import {
   adminSyncFootballOdds,
   adminSettleFootball,
   adminSetFootballFlag,
+  adminSuspendStaleFootball,
 } from "@/features/football/football.functions";
 import { ALL_FOOTBALL_COMPETITIONS } from "@/features/football/config/footballCompetitions";
 
@@ -23,6 +24,7 @@ function AdminFootballPage() {
   const syncFixtures = useServerFn(adminSyncFootballFixtures);
   const syncOdds = useServerFn(adminSyncFootballOdds);
   const settle = useServerFn(adminSettleFootball);
+  const suspendStale = useServerFn(adminSuspendStaleFootball);
 
   const { data: flags } = useQuery({
     queryKey: ["admin-football-flags"],
@@ -55,6 +57,12 @@ function AdminFootballPage() {
     mutationFn: () => settle(),
     onSuccess: (r: any) => toast.success(`Settled ${Array.isArray(r) ? r.length : 0} event(s)`),
     onError: (e: any) => toast.error(e?.message ?? "Settlement failed"),
+  });
+
+  const runSuspend = useMutation({
+    mutationFn: () => suspendStale(),
+    onSuccess: (r: any) => toast.success(`Suspended ${r.suspended} stale market(s)`),
+    onError: (e: any) => toast.error(e?.message ?? "Suspension sweep failed"),
   });
 
   return (
@@ -132,6 +140,17 @@ function AdminFootballPage() {
             className="rounded-lg border px-3 py-2 text-sm hover:bg-white/5"
           >
             {runSettle.isPending ? "Settling…" : "Settle finished events"}
+          </button>
+          <button
+            type="button"
+            disabled={runSuspend.isPending}
+            onClick={() => {
+              if (!confirm("Sweep and suspend stale/ended football markets?")) return;
+              runSuspend.mutate();
+            }}
+            className="rounded-lg border px-3 py-2 text-sm hover:bg-white/5"
+          >
+            {runSuspend.isPending ? "Sweeping…" : "Suspend stale markets"}
           </button>
         </div>
       </section>

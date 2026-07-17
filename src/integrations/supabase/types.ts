@@ -2484,6 +2484,8 @@ export type Database = {
           home_provider_id: string | null
           home_score: number | null
           home_short: string | null
+          ht_away_score: number | null
+          ht_home_score: number | null
           id: string
           is_enabled: boolean
           is_featured: boolean
@@ -2515,6 +2517,8 @@ export type Database = {
           home_provider_id?: string | null
           home_score?: number | null
           home_short?: string | null
+          ht_away_score?: number | null
+          ht_home_score?: number | null
           id?: string
           is_enabled?: boolean
           is_featured?: boolean
@@ -2546,6 +2550,8 @@ export type Database = {
           home_provider_id?: string | null
           home_score?: number | null
           home_short?: string | null
+          ht_away_score?: number | null
+          ht_home_score?: number | null
           id?: string
           is_enabled?: boolean
           is_featured?: boolean
@@ -2650,18 +2656,25 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          last_odds_update_at: string | null
           line: number | null
           market_key: string
           opens_at: string | null
           period: string
           provider: string | null
           provider_market_key: string | null
+          provider_odds_ts: string | null
           settled_at: string | null
+          settlement_reason: string | null
           settlement_result: Json | null
           sort_order: number
           sports_event_id: string
+          stale_after_seconds: number
           status: string
+          suspension_reason: string | null
           updated_at: string
+          void_reason: string | null
+          winning_selection_keys: string[] | null
         }
         Insert: {
           category?: string
@@ -2669,18 +2682,25 @@ export type Database = {
           created_at?: string
           display_name: string
           id?: string
+          last_odds_update_at?: string | null
           line?: number | null
           market_key: string
           opens_at?: string | null
           period?: string
           provider?: string | null
           provider_market_key?: string | null
+          provider_odds_ts?: string | null
           settled_at?: string | null
+          settlement_reason?: string | null
           settlement_result?: Json | null
           sort_order?: number
           sports_event_id: string
+          stale_after_seconds?: number
           status?: string
+          suspension_reason?: string | null
           updated_at?: string
+          void_reason?: string | null
+          winning_selection_keys?: string[] | null
         }
         Update: {
           category?: string
@@ -2688,18 +2708,25 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          last_odds_update_at?: string | null
           line?: number | null
           market_key?: string
           opens_at?: string | null
           period?: string
           provider?: string | null
           provider_market_key?: string | null
+          provider_odds_ts?: string | null
           settled_at?: string | null
+          settlement_reason?: string | null
           settlement_result?: Json | null
           sort_order?: number
           sports_event_id?: string
+          stale_after_seconds?: number
           status?: string
+          suspension_reason?: string | null
           updated_at?: string
+          void_reason?: string | null
+          winning_selection_keys?: string[] | null
         }
         Relationships: [
           {
