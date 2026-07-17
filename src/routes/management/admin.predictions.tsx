@@ -23,18 +23,20 @@ export const Route = createFileRoute("/management/admin/predictions")({
 
 const FOOTBALL_MARKETS = ["result", "correct_score", "total_goals", "btts", "first_scorer", "group_winner", "tournament_winner"];
 const UFC_MARKETS = ["moneyline", "three_way", "method", "round", "total_rounds", "distance", "handicap"];
+const F1_MARKETS = ["race_winner", "podium_finish", "top_5_finish", "top_10_finish", "fastest_lap", "top_constructor_race", "teammate_h2h", "drivers_champion", "constructors_champion"];
 const STATUSES = ["", "pending", "won", "lost", "void"];
 const SPORTS = [
   { value: "all", label: "All sports" },
   { value: "football", label: "Football" },
   { value: "ufc", label: "UFC" },
+  { value: "f1", label: "Formula 1" },
 ] as const;
 const REGRADE_TARGETS = ["won", "lost", "void", "pending"] as const;
 
 function AdminPredictionsPage() {
   const qc = useQueryClient();
   const { isViewer } = useAuth();
-  const [sport, setSport] = useState<"all" | "football" | "ufc">("all");
+  const [sport, setSport] = useState<"all" | "football" | "ufc" | "f1">("all");
   const [market, setMarket] = useState("");
   const [status, setStatus] = useState("");
   const [reason, setReason] = useState("");
@@ -50,8 +52,10 @@ function AdminPredictionsPage() {
   const marketOptions = useMemo(() => {
     if (sport === "football") return ["", ...FOOTBALL_MARKETS];
     if (sport === "ufc") return ["", ...UFC_MARKETS];
-    return ["", ...FOOTBALL_MARKETS, ...UFC_MARKETS];
+    if (sport === "f1") return ["", ...F1_MARKETS];
+    return ["", ...FOOTBALL_MARKETS, ...UFC_MARKETS, ...F1_MARKETS];
   }, [sport]);
+
 
   const q = useQuery({
     queryKey: ["admin-predictions", sport, market, status],
@@ -59,10 +63,12 @@ function AdminPredictionsPage() {
   });
 
   const voidMut = useMutation({
-    mutationFn: async (row: any) =>
-      row.sport === "ufc"
+    mutationFn: async (row: any) => {
+      if (row.sport === "f1") throw new Error("F1 void not supported yet");
+      return row.sport === "ufc"
         ? voidUfcFn({ data: { betId: row.id, reason } })
-        : voidFn({ data: { predictionId: row.id, reason } }),
+        : voidFn({ data: { predictionId: row.id, reason } });
+    },
     onSuccess: () => {
       toast.success("Voided & refunded");
       qc.invalidateQueries({ queryKey: ["admin-predictions"] });
@@ -71,10 +77,12 @@ function AdminPredictionsPage() {
   });
 
   const regradeMut = useMutation({
-    mutationFn: async (v: { row: any; newStatus: string }) =>
-      v.row.sport === "ufc"
+    mutationFn: async (v: { row: any; newStatus: string }) => {
+      if (v.row.sport === "f1") throw new Error("F1 regrade not supported yet");
+      return v.row.sport === "ufc"
         ? regradeUfcFn({ data: { betId: v.row.id, newStatus: v.newStatus as any, reason } })
-        : regradeFn({ data: { predictionId: v.row.id, newStatus: v.newStatus as any, reason } }),
+        : regradeFn({ data: { predictionId: v.row.id, newStatus: v.newStatus as any, reason } });
+    },
     onSuccess: (r: any) => {
       const delta = Number(r?.delta ?? 0);
       toast.success(`Regraded · wallet delta ${delta >= 0 ? "+" : ""}${delta.toFixed(2)}`);
@@ -82,6 +90,7 @@ function AdminPredictionsPage() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const filtered = (q.data?.predictions ?? []).filter((p: any) => !flaggedOnly || p.flagged_for_review);
 
@@ -104,7 +113,7 @@ function AdminPredictionsPage() {
       <div>
         <h1 className="text-2xl font-bold">Predictions</h1>
         <p className="text-sm text-muted-foreground">
-          Unified view of football and UFC bets. Filter by sport, void or regrade with wallet auto-adjustment.
+          Unified view of football, UFC and F1 bets. Filter by sport, void or regrade with wallet auto-adjustment (football/UFC only).
         </p>
       </div>
 
@@ -260,7 +269,7 @@ function BetsTable({ rows, isViewer, reason, voidMut, regradeMut, hideFixture = 
               <TableCell>
                 <select
                   className="h-7 rounded border bg-background px-1 text-[11px]"
-                  disabled={isViewer || !reason || regradeMut.isPending}
+                  disabled={isViewer || !reason || regradeMut.isPending || p.sport === "f1"}
                   defaultValue=""
                   onChange={(e) => {
                     const v = e.target.value;
@@ -282,7 +291,7 @@ function BetsTable({ rows, isViewer, reason, voidMut, regradeMut, hideFixture = 
               <TableCell className="text-right">
                 <Button
                   size="sm" variant="outline"
-                  disabled={isViewer || p.status !== "pending" || !reason || voidMut.isPending}
+                  disabled={isViewer || p.status !== "pending" || !reason || voidMut.isPending || p.sport === "f1"}
                   onClick={() => voidMut.mutate(p)}
                 >
                   Void
@@ -291,6 +300,7 @@ function BetsTable({ rows, isViewer, reason, voidMut, regradeMut, hideFixture = 
             </TableRow>
           );
         })}
+
         {!rows.length && (
           <TableRow><TableCell colSpan={hideFixture ? 11 : 12} className="text-center text-muted-foreground">No bets.</TableCell></TableRow>
         )}
