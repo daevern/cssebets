@@ -20,7 +20,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { PageFooter } from "@/components/ui/page-footer";
 
 type TopTab = "top_finishers" | "race_specials";
-type SubTab = "race_winner" | "podium" | "points_finish" | "head_to_head";
+type SubTab =
+  | "top_5_finish"
+  | "podium"
+  | "points_finish"
+  | "head_to_head"
+  | "fastest_lap"
+  | "top_constructor_race";
 type Range = "1D" | "1W" | "1M" | "ALL";
 
 const RANGE_HOURS: Record<Range, number> = {
@@ -31,20 +37,24 @@ const RANGE_HOURS: Record<Range, number> = {
 };
 
 const SUB_TABS_TOP: { id: SubTab; label: string }[] = [
-  { id: "race_winner", label: "Finishing Position" },
+  { id: "top_5_finish", label: "Top 5 Finishers" },
   { id: "podium", label: "Podium Finishers" },
   { id: "points_finish", label: "Top 10 Finishers" },
 ];
 
 const SUB_TABS_SPECIALS: { id: SubTab; label: string }[] = [
   { id: "head_to_head", label: "Teammate H2H" },
+  { id: "fastest_lap", label: "Fastest Lap" },
+  { id: "top_constructor_race", label: "Top Constructor" },
 ];
 
 const SECTION_TITLES: Partial<Record<SubTab, string>> = {
-  race_winner: "Who wins the race?",
+  top_5_finish: "Who will finish top 5?",
   podium: "Who will finish top 3?",
   points_finish: "Who will finish in the points?",
   head_to_head: "Which teammate finishes ahead?",
+  fastest_lap: "Who sets the fastest lap?",
+  top_constructor_race: "Which team scores the most points?",
 };
 
 const MIN_STAKE = 10;
