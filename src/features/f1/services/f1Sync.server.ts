@@ -129,14 +129,25 @@ async function resolveActiveSeason(pref = CURRENT_SEASON) {
   return latest?.[0]?.season ?? pref;
 }
 
+// Probe API-Sports for the most recent season with actual data (drivers/standings).
+async function probeApiSeason(pref: number, probe: (s: number) => Promise<any[]>) {
+  for (let s = pref; s >= pref - 3; s--) {
+    const rows = await probe(s);
+    if (rows && rows.length > 0) return { season: s, rows };
+  }
+  return { season: pref, rows: [] as any[] };
+}
+
 // ---- Sync drivers + teams ----
 export async function syncF1DriversAndTeams(seasonPref = CURRENT_SEASON) {
-  const season = await resolveActiveSeason(seasonPref);
   const start = Date.now();
   const run = await startRun("drivers");
   if (run.skipped) return { ok: true, skipped: "already running" };
   try {
-    const [teams, drivers] = await Promise.all([fetchF1Teams(season), fetchF1Drivers(season)]);
+    const teamProbe = await probeApiSeason(seasonPref, (s) => fetchF1Teams(s));
+    const driverProbe = await probeApiSeason(seasonPref, (s) => fetchF1Drivers(s));
+    const teams = teamProbe.rows;
+    const drivers = driverProbe.rows;
     for (const t of teams) {
       await (supabaseAdmin as any).from("f1_constructors").upsert(
         { team_key: keyify(t.name), provider_id: t.id, name: t.name, active: true, logo_url: t.logo ?? null },
