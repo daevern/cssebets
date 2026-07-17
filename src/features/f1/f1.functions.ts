@@ -41,7 +41,7 @@ export const getF1Race = createServerFn({ method: "GET" })
         .order("market_type", { ascending: true })
         .order("odds", { ascending: true }),
     ]);
-    if (!race) throw new Error("Race not found");
+    if (!race) return { race: null, markets: [] as any[] };
     return { race, markets: markets ?? [] };
   });
 
