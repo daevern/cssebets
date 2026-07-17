@@ -159,6 +159,7 @@ export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler
             starts_at: race.starts_at,
             round: race.round ?? null,
             season: race.season ?? null,
+            topDrivers,
           }
         : null,
       nextFight: fight,
