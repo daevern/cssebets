@@ -388,7 +388,7 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       fixtureId: z.string().uuid().optional(),
       market: z.string().max(40).optional(),
       status: z.string().max(20).optional(),
-      sport: z.enum(["all", "football", "ufc"]).optional().default("all"),
+      sport: z.enum(["all", "football", "ufc", "f1"]).optional().default("all"),
     }).parse(i ?? {}),
   )
   .handler(async ({ data, context }) => {
