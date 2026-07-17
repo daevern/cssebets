@@ -317,9 +317,6 @@ export async function syncFootballLiveScores(): Promise<{ updated: number }> {
       .eq("key", cfg.featureFlagKey)
       .maybeSingle();
     if (!(flag as any)?.enabled) continue;
-    const res = await afFetchFixtures(cfg.apiFootballLeagueId, cfg.currentSeason, { next: 0 });
-    // Use live endpoint by calling with a special helper
-    const { afFetchLiveFixtures } = await import("../adapters/apiFootballAdapter.server");
     const live = await afFetchLiveFixtures(cfg.apiFootballLeagueId);
     if (!live.ok) continue;
     for (const f of live.data) {
