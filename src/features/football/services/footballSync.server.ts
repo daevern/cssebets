@@ -10,6 +10,7 @@ import {
 import {
   afFetchFixtures,
   afFetchOdds,
+  afFetchLiveFixtures,
   afStatusToInternal,
 } from "../adapters/apiFootballAdapter.server";
 import { normalizeOdds } from "../adapters/marketMapper";
