@@ -296,7 +296,10 @@ export async function syncF1Odds(seasonPref = CURRENT_SEASON) {
         { onConflict: "season,market_type,selection_key" },
       );
     }
-    const teamStandings = await fetchF1TeamStandings(season);
+    const teamStandings = await (async () => {
+      const probe = await probeApiSeason(seasonPref, (s) => fetchF1TeamStandings(s));
+      return probe.rows;
+    })();
     const teamInputs = teamStandings.map((s) => ({ key: keyify(s.team.name), points: s.points ?? 0 }));
     const teamChampOdds = buildChampionshipOdds(teamInputs, remaining);
     for (let i = 0; i < teamChampOdds.length; i++) {
