@@ -2,7 +2,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabase } from "@/integrations/supabase/client";
+
 
 async function requireAdmin(sb: any, userId: string) {
   const { data } = await sb.from("user_roles").select("role").eq("user_id", userId);
