@@ -21,7 +21,7 @@ export function UfcTradeTape({ fightId }: { fightId: string }) {
         <Activity className="h-3 w-3" /> Live trade tape
       </div>
       <div className="max-h-40 space-y-1 overflow-auto text-xs">
-        {trades.map((t) => (
+        {trades.map((t: any) => (
           <div key={t.id} className="flex items-center justify-between border-b border-border/60 py-1 last:border-none">
             <div className="flex-1 truncate">
               <span className="text-muted-foreground">{t.market}:</span>{" "}
