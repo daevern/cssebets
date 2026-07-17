@@ -31,18 +31,20 @@ export const getF1Race = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ raceId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const [{ data: race }, { data: markets }] = await Promise.all([
-      (context.supabase as any).from("f1_races").select("*").eq("id", data.raceId).maybeSingle(),
-      (context.supabase as any)
-        .from("f1_race_markets")
+    const sb = context.supabase as any;
+    const [{ data: race }, { data: markets }, { data: drivers }, { data: teams }] = await Promise.all([
+      sb.from("f1_races").select("*").eq("id", data.raceId).maybeSingle(),
+      sb.from("f1_race_markets")
         .select("id, market_type, selection_key, secondary_selection_key, label, odds, status")
         .eq("race_id", data.raceId)
         .eq("status", "open")
         .order("market_type", { ascending: true })
         .order("odds", { ascending: true }),
+      sb.from("f1_drivers").select("driver_key, name, abbr, team_key, photo_url").eq("active", true),
+      sb.from("f1_constructors").select("team_key, name, logo_url"),
     ]);
-    if (!race) return { race: null, markets: [] as any[] };
-    return { race, markets: markets ?? [] };
+    if (!race) return { race: null, markets: [] as any[], drivers: [] as any[], teams: [] as any[] };
+    return { race, markets: markets ?? [], drivers: drivers ?? [], teams: teams ?? [] };
   });
 
 export const listF1ChampionshipMarkets = createServerFn({ method: "GET" })
@@ -72,6 +74,33 @@ export const getF1OddsHistory = createServerFn({ method: "GET" })
       .limit(200);
     return { snapshots: rows ?? [] };
   });
+
+export const getF1MarketHistories = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        marketIds: z.array(z.string().uuid()).min(1).max(10),
+        rangeHours: z.number().int().min(1).max(24 * 365).default(24),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const since = new Date(Date.now() - data.rangeHours * 3600_000).toISOString();
+    const { data: rows } = await (context.supabase as any)
+      .from("f1_race_odds_snapshots")
+      .select("market_id, odds, snapshot_at")
+      .in("market_id", data.marketIds)
+      .gt("snapshot_at", since)
+      .order("snapshot_at", { ascending: true })
+      .limit(5000);
+    const byMarket: Record<string, { odds: number; snapshot_at: string }[]> = {};
+    for (const r of rows ?? []) {
+      (byMarket[r.market_id] ??= []).push({ odds: Number(r.odds), snapshot_at: r.snapshot_at });
+    }
+    return { byMarket };
+  });
+
 
 // ---------- Bets ----------
 
