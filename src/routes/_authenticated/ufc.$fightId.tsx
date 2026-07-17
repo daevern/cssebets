@@ -140,6 +140,10 @@ function FightAnalytics({ data, history }: { data: any; history: any[] }) {
         </AnalysisSection>
       )}
 
+      {/* Anonymised live bet tape */}
+      <UfcTradeTape fightId={fight.id} />
+
+
       {/* H2H + recent form */}
       <H2HSection h2h={h2h} fight={fight} />
 
