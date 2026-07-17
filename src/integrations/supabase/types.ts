@@ -2252,6 +2252,772 @@ export type Database = {
         }
         Relationships: []
       }
+      sports_bets: {
+        Row: {
+          accepted_odds: number
+          actual_payout: number | null
+          competition_code: string
+          created_at: string
+          id: string
+          idempotency_key: string | null
+          market_key: string
+          placed_at: string
+          potential_payout: number
+          provider_odds_ts: string | null
+          selection_key: string
+          settled_at: string | null
+          sport_code: string
+          sports_event_id: string
+          sports_market_id: string
+          sports_selection_id: string
+          stake: number
+          status: string
+          updated_at: string
+          user_id: string
+          void_reason: string | null
+        }
+        Insert: {
+          accepted_odds: number
+          actual_payout?: number | null
+          competition_code: string
+          created_at?: string
+          id?: string
+          idempotency_key?: string | null
+          market_key: string
+          placed_at?: string
+          potential_payout: number
+          provider_odds_ts?: string | null
+          selection_key: string
+          settled_at?: string | null
+          sport_code: string
+          sports_event_id: string
+          sports_market_id: string
+          sports_selection_id: string
+          stake: number
+          status?: string
+          updated_at?: string
+          user_id: string
+          void_reason?: string | null
+        }
+        Update: {
+          accepted_odds?: number
+          actual_payout?: number | null
+          competition_code?: string
+          created_at?: string
+          id?: string
+          idempotency_key?: string | null
+          market_key?: string
+          placed_at?: string
+          potential_payout?: number
+          provider_odds_ts?: string | null
+          selection_key?: string
+          settled_at?: string | null
+          sport_code?: string
+          sports_event_id?: string
+          sports_market_id?: string
+          sports_selection_id?: string
+          stake?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+          void_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_bets_sports_event_id_fkey"
+            columns: ["sports_event_id"]
+            isOneToOne: false
+            referencedRelation: "sports_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sports_bets_sports_market_id_fkey"
+            columns: ["sports_market_id"]
+            isOneToOne: false
+            referencedRelation: "sports_markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sports_bets_sports_selection_id_fkey"
+            columns: ["sports_selection_id"]
+            isOneToOne: false
+            referencedRelation: "sports_market_selections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sports_competitions: {
+        Row: {
+          allowed_markets: Json
+          api_football_league_id: number | null
+          competition_code: string
+          config: Json
+          country: string | null
+          created_at: string
+          current_season: string | null
+          display_name: string
+          display_order: number
+          fixture_sync_enabled: boolean
+          id: string
+          is_enabled: boolean
+          live_sync_enabled: boolean
+          logo_url: string | null
+          odds_api_sport_key: string | null
+          odds_sync_enabled: boolean
+          settlement_enabled: boolean
+          short_name: string | null
+          sport_code: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_markets?: Json
+          api_football_league_id?: number | null
+          competition_code: string
+          config?: Json
+          country?: string | null
+          created_at?: string
+          current_season?: string | null
+          display_name: string
+          display_order?: number
+          fixture_sync_enabled?: boolean
+          id?: string
+          is_enabled?: boolean
+          live_sync_enabled?: boolean
+          logo_url?: string | null
+          odds_api_sport_key?: string | null
+          odds_sync_enabled?: boolean
+          settlement_enabled?: boolean
+          short_name?: string | null
+          sport_code: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_markets?: Json
+          api_football_league_id?: number | null
+          competition_code?: string
+          config?: Json
+          country?: string | null
+          created_at?: string
+          current_season?: string | null
+          display_name?: string
+          display_order?: number
+          fixture_sync_enabled?: boolean
+          id?: string
+          is_enabled?: boolean
+          live_sync_enabled?: boolean
+          logo_url?: string | null
+          odds_api_sport_key?: string | null
+          odds_sync_enabled?: boolean
+          settlement_enabled?: boolean
+          short_name?: string | null
+          sport_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sports_event_provider_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          mapping_method: string | null
+          mapping_status: string
+          match_confidence: number
+          metadata: Json
+          needs_review: boolean
+          provider: string
+          provider_competition_id: string | null
+          provider_event_id: string
+          sports_event_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mapping_method?: string | null
+          mapping_status?: string
+          match_confidence?: number
+          metadata?: Json
+          needs_review?: boolean
+          provider: string
+          provider_competition_id?: string | null
+          provider_event_id: string
+          sports_event_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mapping_method?: string | null
+          mapping_status?: string
+          match_confidence?: number
+          metadata?: Json
+          needs_review?: boolean
+          provider?: string
+          provider_competition_id?: string | null
+          provider_event_id?: string
+          sports_event_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_event_provider_mappings_sports_event_id_fkey"
+            columns: ["sports_event_id"]
+            isOneToOne: false
+            referencedRelation: "sports_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sports_events: {
+        Row: {
+          away_logo: string | null
+          away_name: string | null
+          away_provider_id: string | null
+          away_score: number | null
+          away_short: string | null
+          competition_code: string
+          created_at: string
+          event_name: string | null
+          final_result: Json | null
+          home_logo: string | null
+          home_name: string | null
+          home_provider_id: string | null
+          home_score: number | null
+          home_short: string | null
+          id: string
+          is_enabled: boolean
+          is_featured: boolean
+          live_minute: number | null
+          live_state: Json
+          markets_open: boolean
+          round: string | null
+          scheduled_at: string
+          season: string | null
+          source_metadata: Json
+          sport_code: string
+          status: string
+          timezone: string | null
+          updated_at: string
+          venue: string | null
+        }
+        Insert: {
+          away_logo?: string | null
+          away_name?: string | null
+          away_provider_id?: string | null
+          away_score?: number | null
+          away_short?: string | null
+          competition_code: string
+          created_at?: string
+          event_name?: string | null
+          final_result?: Json | null
+          home_logo?: string | null
+          home_name?: string | null
+          home_provider_id?: string | null
+          home_score?: number | null
+          home_short?: string | null
+          id?: string
+          is_enabled?: boolean
+          is_featured?: boolean
+          live_minute?: number | null
+          live_state?: Json
+          markets_open?: boolean
+          round?: string | null
+          scheduled_at: string
+          season?: string | null
+          source_metadata?: Json
+          sport_code: string
+          status?: string
+          timezone?: string | null
+          updated_at?: string
+          venue?: string | null
+        }
+        Update: {
+          away_logo?: string | null
+          away_name?: string | null
+          away_provider_id?: string | null
+          away_score?: number | null
+          away_short?: string | null
+          competition_code?: string
+          created_at?: string
+          event_name?: string | null
+          final_result?: Json | null
+          home_logo?: string | null
+          home_name?: string | null
+          home_provider_id?: string | null
+          home_score?: number | null
+          home_short?: string | null
+          id?: string
+          is_enabled?: boolean
+          is_featured?: boolean
+          live_minute?: number | null
+          live_state?: Json
+          markets_open?: boolean
+          round?: string | null
+          scheduled_at?: string
+          season?: string | null
+          source_metadata?: Json
+          sport_code?: string
+          status?: string
+          timezone?: string | null
+          updated_at?: string
+          venue?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_events_competition_code_fkey"
+            columns: ["competition_code"]
+            isOneToOne: false
+            referencedRelation: "sports_competitions"
+            referencedColumns: ["competition_code"]
+          },
+        ]
+      }
+      sports_feature_flags: {
+        Row: {
+          description: string | null
+          enabled: boolean
+          key: string
+          updated_at: string
+        }
+        Insert: {
+          description?: string | null
+          enabled?: boolean
+          key: string
+          updated_at?: string
+        }
+        Update: {
+          description?: string | null
+          enabled?: boolean
+          key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sports_market_selections: {
+        Row: {
+          created_at: string
+          decimal_odds: number
+          display_name: string
+          id: string
+          line: number | null
+          result: string | null
+          selection_key: string
+          sort_order: number
+          sports_market_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          decimal_odds: number
+          display_name: string
+          id?: string
+          line?: number | null
+          result?: string | null
+          selection_key: string
+          sort_order?: number
+          sports_market_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          decimal_odds?: number
+          display_name?: string
+          id?: string
+          line?: number | null
+          result?: string | null
+          selection_key?: string
+          sort_order?: number
+          sports_market_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_market_selections_sports_market_id_fkey"
+            columns: ["sports_market_id"]
+            isOneToOne: false
+            referencedRelation: "sports_markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sports_markets: {
+        Row: {
+          category: string
+          closes_at: string | null
+          created_at: string
+          display_name: string
+          id: string
+          line: number | null
+          market_key: string
+          opens_at: string | null
+          period: string
+          provider: string | null
+          provider_market_key: string | null
+          settled_at: string | null
+          settlement_result: Json | null
+          sort_order: number
+          sports_event_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          closes_at?: string | null
+          created_at?: string
+          display_name: string
+          id?: string
+          line?: number | null
+          market_key: string
+          opens_at?: string | null
+          period?: string
+          provider?: string | null
+          provider_market_key?: string | null
+          settled_at?: string | null
+          settlement_result?: Json | null
+          sort_order?: number
+          sports_event_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          closes_at?: string | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          line?: number | null
+          market_key?: string
+          opens_at?: string | null
+          period?: string
+          provider?: string | null
+          provider_market_key?: string | null
+          settled_at?: string | null
+          settlement_result?: Json | null
+          sort_order?: number
+          sports_event_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_markets_sports_event_id_fkey"
+            columns: ["sports_event_id"]
+            isOneToOne: false
+            referencedRelation: "sports_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sports_odds_snapshots: {
+        Row: {
+          bookmaker: string | null
+          decimal_odds: number
+          fetched_at: string
+          id: number
+          market_key: string
+          provider: string
+          provider_ts: string | null
+          selection_key: string
+          sports_event_id: string
+          sports_market_id: string | null
+        }
+        Insert: {
+          bookmaker?: string | null
+          decimal_odds: number
+          fetched_at?: string
+          id?: number
+          market_key: string
+          provider: string
+          provider_ts?: string | null
+          selection_key: string
+          sports_event_id: string
+          sports_market_id?: string | null
+        }
+        Update: {
+          bookmaker?: string | null
+          decimal_odds?: number
+          fetched_at?: string
+          id?: number
+          market_key?: string
+          provider?: string
+          provider_ts?: string | null
+          selection_key?: string
+          sports_event_id?: string
+          sports_market_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_odds_snapshots_sports_event_id_fkey"
+            columns: ["sports_event_id"]
+            isOneToOne: false
+            referencedRelation: "sports_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sports_odds_snapshots_sports_market_id_fkey"
+            columns: ["sports_market_id"]
+            isOneToOne: false
+            referencedRelation: "sports_markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sports_results: {
+        Row: {
+          captured_at: string
+          extra_time: boolean
+          final_away_score: number | null
+          final_home_score: number | null
+          ft_status: string | null
+          ht_away_score: number | null
+          ht_home_score: number | null
+          id: string
+          penalties: boolean
+          provider: string
+          raw_stats: Json
+          sports_event_id: string
+          updated_at: string
+        }
+        Insert: {
+          captured_at?: string
+          extra_time?: boolean
+          final_away_score?: number | null
+          final_home_score?: number | null
+          ft_status?: string | null
+          ht_away_score?: number | null
+          ht_home_score?: number | null
+          id?: string
+          penalties?: boolean
+          provider: string
+          raw_stats?: Json
+          sports_event_id: string
+          updated_at?: string
+        }
+        Update: {
+          captured_at?: string
+          extra_time?: boolean
+          final_away_score?: number | null
+          final_home_score?: number | null
+          ft_status?: string | null
+          ht_away_score?: number | null
+          ht_home_score?: number | null
+          id?: string
+          penalties?: boolean
+          provider?: string
+          raw_stats?: Json
+          sports_event_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_results_sports_event_id_fkey"
+            columns: ["sports_event_id"]
+            isOneToOne: true
+            referencedRelation: "sports_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sports_settlement_items: {
+        Row: {
+          action: string
+          created_at: string
+          detail: Json
+          id: string
+          payout: number
+          settlement_run_id: string
+          sports_bet_id: string | null
+          sports_market_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          detail?: Json
+          id?: string
+          payout?: number
+          settlement_run_id: string
+          sports_bet_id?: string | null
+          sports_market_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          detail?: Json
+          id?: string
+          payout?: number
+          settlement_run_id?: string
+          sports_bet_id?: string | null
+          sports_market_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_settlement_items_settlement_run_id_fkey"
+            columns: ["settlement_run_id"]
+            isOneToOne: false
+            referencedRelation: "sports_settlement_runs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sports_settlement_items_sports_bet_id_fkey"
+            columns: ["sports_bet_id"]
+            isOneToOne: false
+            referencedRelation: "sports_bets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sports_settlement_items_sports_market_id_fkey"
+            columns: ["sports_market_id"]
+            isOneToOne: false
+            referencedRelation: "sports_markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sports_settlement_runs: {
+        Row: {
+          bets_settled: number
+          created_at: string
+          finished_at: string | null
+          id: string
+          markets_settled: number
+          notes: string | null
+          sports_event_id: string
+          started_at: string
+          status: string
+          total_payout: number
+          triggered_by: string | null
+        }
+        Insert: {
+          bets_settled?: number
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          markets_settled?: number
+          notes?: string | null
+          sports_event_id: string
+          started_at?: string
+          status?: string
+          total_payout?: number
+          triggered_by?: string | null
+        }
+        Update: {
+          bets_settled?: number
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          markets_settled?: number
+          notes?: string | null
+          sports_event_id?: string
+          started_at?: string
+          status?: string
+          total_payout?: number
+          triggered_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_settlement_runs_sports_event_id_fkey"
+            columns: ["sports_event_id"]
+            isOneToOne: false
+            referencedRelation: "sports_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sports_sync_errors: {
+        Row: {
+          created_at: string
+          detail: Json
+          id: string
+          message: string
+          provider: string
+          scope: string | null
+          sync_run_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json
+          id?: string
+          message: string
+          provider: string
+          scope?: string | null
+          sync_run_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          detail?: Json
+          id?: string
+          message?: string
+          provider?: string
+          scope?: string | null
+          sync_run_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_sync_errors_sync_run_id_fkey"
+            columns: ["sync_run_id"]
+            isOneToOne: false
+            referencedRelation: "sports_sync_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sports_sync_runs: {
+        Row: {
+          api_status: number | null
+          competition_code: string | null
+          finished_at: string | null
+          id: string
+          job_type: string
+          metadata: Json
+          provider: string
+          records_created: number
+          records_fetched: number
+          records_skipped: number
+          records_updated: number
+          retry_count: number
+          sport_code: string | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          api_status?: number | null
+          competition_code?: string | null
+          finished_at?: string | null
+          id?: string
+          job_type: string
+          metadata?: Json
+          provider: string
+          records_created?: number
+          records_fetched?: number
+          records_skipped?: number
+          records_updated?: number
+          retry_count?: number
+          sport_code?: string | null
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          api_status?: number | null
+          competition_code?: string | null
+          finished_at?: string | null
+          id?: string
+          job_type?: string
+          metadata?: Json
+          provider?: string
+          records_created?: number
+          records_fetched?: number
+          records_skipped?: number
+          records_updated?: number
+          retry_count?: number
+          sport_code?: string | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       support_audit_logs: {
         Row: {
           action_type: string
@@ -3375,6 +4141,13 @@ export type Database = {
       get_onboarding_completion_stats: { Args: never; Returns: Json }
       get_simulation_outcome_analytics: { Args: never; Returns: Json }
       get_simulation_stress_metrics: { Args: never; Returns: Json }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       log_onboarding_event: {
         Args: {
           p_event: string
