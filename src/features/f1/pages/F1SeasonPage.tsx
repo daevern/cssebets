@@ -151,6 +151,8 @@ export function F1SeasonPage() {
           </div>
         )}
       </section>
+
+      <PageFooter />
     </div>
   );
 }
