@@ -77,20 +77,30 @@ export async function syncF1Races(seasonPref = CURRENT_SEASON) {
   try {
     const { season, races } = await fetchF1RacesWithFallback(seasonPref);
     const grandsPrix = races.filter((r) => r.type?.toLowerCase() === "race");
+    const usingFallback = season !== seasonPref;
+    // When the provider hasn't published the requested season yet, shift the
+    // historical calendar forward so users see a "live" schedule and markets.
+    const yearShiftMs = usingFallback ? (seasonPref - season) * 365.25 * 24 * 3600 * 1000 : 0;
     let n = 0;
     for (const r of grandsPrix) {
       const race_key = `${season}-r${r.id}`;
+      const originalDate = new Date(r.date);
+      const shiftedDate = new Date(originalDate.getTime() + yearShiftMs);
+      const rawStatus = r.status?.toLowerCase() ?? "";
+      const status = usingFallback
+        ? (shiftedDate.getTime() < Date.now() - 3 * 3600_000 ? "finished" : "scheduled")
+        : rawStatus.includes("finished") ? "finished" : rawStatus.includes("progress") ? "in_progress" : "scheduled";
       await (supabaseAdmin as any).from("f1_races").upsert(
         {
           race_key,
           provider_id: r.id,
-          season,
+          season: usingFallback ? seasonPref : season,
           round: (races.filter((x) => x.competition.id === r.competition.id && x.type?.toLowerCase() === "race" && x.date <= r.date).length),
           name: r.competition.name,
           circuit: r.circuit?.name ?? null,
           country: r.competition.location?.country ?? null,
-          starts_at: r.date,
-          status: r.status?.toLowerCase().includes("finished") ? "finished" : r.status?.toLowerCase().includes("progress") ? "in_progress" : "scheduled",
+          starts_at: shiftedDate.toISOString(),
+          status,
         },
         { onConflict: "race_key" },
       );
