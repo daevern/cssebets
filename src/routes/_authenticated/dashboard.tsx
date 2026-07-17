@@ -3,12 +3,13 @@ import { useEffect, useMemo, useState } from "react";
 import type { SVGProps } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowUpRight, ChevronRight, Ticket, TrendingUp } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Ticket, TrendingUp, Flag, Swords } from "lucide-react";
 import { PageFooter } from "@/components/ui/page-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { useAuth } from "@/hooks/use-auth";
+import { getDashboardMotorAndUfc, type NextF1Race, type NextUfcFight } from "@/lib/dashboard-extras.functions";
 
 
 
@@ -101,6 +102,14 @@ function HomePage() {
     queryKey: ["matches"],
     queryFn: async () => (await listFn()) as Match[],
     refetchInterval: 60_000,
+  });
+
+  const extrasFn = useServerFn(getDashboardMotorAndUfc);
+  const { data: extras } = useQuery({
+    queryKey: ["dashboard-motor-ufc"],
+    queryFn: () => extrasFn(),
+    refetchInterval: 5 * 60_000,
+    staleTime: 60_000,
   });
 
   const { data: picks } = useQuery({
@@ -212,6 +221,24 @@ function HomePage() {
           </div>
         )}
       </section>
+
+      {/* Next F1 race + Next UFC fight */}
+      {(extras?.nextRace || extras?.nextFight) && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+              Also on the card
+            </h2>
+          </div>
+          <div className="grid gap-3">
+            {extras?.nextRace && <NextRaceCard race={extras.nextRace} now={now} />}
+            {extras?.nextFight && <NextFightCard fight={extras.nextFight} now={now} />}
+          </div>
+        </section>
+      )}
+
+
 
 
 
@@ -723,3 +750,129 @@ function TrendingChip({ match, now }: { match: Match; now: number }) {
     </Link>
   );
 }
+
+/* ------------ Next F1 race card ------------ */
+function whenLabel(iso: string, now: number) {
+  const d = new Date(iso);
+  const diff = d.getTime() - now;
+  if (diff <= 0) return "Starting";
+  const today = new Date(now);
+  const sameDay = d.toDateString() === today.toDateString();
+  const h = d.getHours() % 12 || 12;
+  const time = `${h}:${String(d.getMinutes()).padStart(2, "0")}${d.getHours() >= 12 ? "PM" : "AM"}`;
+  return sameDay
+    ? `Today · ${time}`
+    : `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${time}`;
+}
+
+function NextRaceCard({ race, now }: { race: NonNullable<NextF1Race>; now: number }) {
+  const flag = race.country ? teamFlagUrl(race.country, 320) : null;
+  return (
+    <Link
+      to="/f1/races/$raceId"
+      params={{ raceId: race.id }}
+      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4 transition-colors hover:border-[var(--neon)]/40"
+    >
+      <div className="flex items-center justify-between text-[11px] font-semibold text-[var(--ink-muted)]">
+        <span className="flex items-center gap-1.5">
+          <Flag className="h-3 w-3 text-[var(--neon)]" />
+          Formula 1{race.round != null ? ` · Round ${race.round}` : ""}
+        </span>
+        <span>{whenLabel(race.starts_at, now)}</span>
+      </div>
+      <div className="mt-3 flex items-center gap-3">
+        {flag ? (
+          <img src={flag} alt={race.country ?? ""} className="h-9 w-14 shrink-0 object-cover" loading="lazy" />
+        ) : (
+          <div className="grid h-9 w-14 place-items-center bg-[var(--surface-3)] text-[9px] font-bold uppercase text-[var(--ink)]">
+            {(race.country ?? "F1").slice(0, 3)}
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-[15px] font-bold tracking-tight text-[var(--ink)]">{race.name}</div>
+          {race.circuit && (
+            <div className="truncate text-[11px] text-[var(--ink-muted)]">{race.circuit}</div>
+          )}
+        </div>
+      </div>
+      <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)]/5 py-2.5 text-[13px] font-bold tracking-tight text-[var(--neon)] transition-transform group-hover:translate-y-[-1px] group-hover:bg-[var(--neon)]/10">
+        Open race markets <ArrowUpRight className="h-4 w-4" />
+      </div>
+    </Link>
+  );
+}
+
+/* ------------ Next UFC fight card ------------ */
+function FightPhoto({ url, name }: { url: string | null; name: string }) {
+  if (url) {
+    return <img src={url} alt={name} className="h-full w-full object-cover object-top" loading="lazy" />;
+  }
+  const initials = name.split(" ").map((s) => s[0]).slice(0, 2).join("");
+  return (
+    <div className="grid h-full w-full place-items-center bg-[var(--surface-3)] font-display text-xs font-semibold text-[var(--ink-muted)]">
+      {initials}
+    </div>
+  );
+}
+
+function NextFightCard({ fight, now }: { fight: NonNullable<NextUfcFight>; now: number }) {
+  const cardLabel =
+    fight.card_position === "main"
+      ? "Main Event"
+      : fight.card_position === "co_main"
+        ? "Co-Main"
+        : "Fight";
+  return (
+    <Link
+      to="/ufc/$fightId"
+      params={{ fightId: fight.id }}
+      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4 transition-colors hover:border-[var(--neon)]/40"
+    >
+      <div className="flex items-center justify-between text-[11px] font-semibold text-[var(--ink-muted)]">
+        <span className="flex items-center gap-1.5">
+          <Swords className="h-3 w-3 text-[var(--neon)]" />
+          UFC · {cardLabel}
+          {fight.is_title_fight ? " · Title" : ""}
+        </span>
+        <span>{whenLabel(fight.commence_time, now)}</span>
+      </div>
+      {fight.event_name && (
+        <div className="mt-1 truncate text-[11px] text-[var(--ink-muted)]">{fight.event_name}</div>
+      )}
+      <div className="mt-3 flex items-center gap-3">
+        <div className="flex flex-1 items-center gap-2 min-w-0">
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)]">
+            <FightPhoto url={fight.fighter_a_logo} name={fight.fighter_a} />
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-[13px] font-bold tracking-tight text-[var(--ink)]">{fight.fighter_a}</div>
+            {fight.odds_a != null && (
+              <div className="text-[11px] font-bold tabular-nums text-[var(--neon)]">{fight.odds_a.toFixed(2)}x</div>
+            )}
+          </div>
+        </div>
+        <span className="shrink-0 font-display text-sm font-light text-[var(--ink-muted)]">vs</span>
+        <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
+          <div className="min-w-0 text-right">
+            <div className="truncate text-[13px] font-bold tracking-tight text-[var(--ink)]">{fight.fighter_b}</div>
+            {fight.odds_b != null && (
+              <div className="text-[11px] font-bold tabular-nums text-[var(--neon)]">{fight.odds_b.toFixed(2)}x</div>
+            )}
+          </div>
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)]">
+            <FightPhoto url={fight.fighter_b_logo} name={fight.fighter_b} />
+          </div>
+        </div>
+      </div>
+      {fight.weight_class && (
+        <div className="mt-2 text-center text-[10px] font-medium uppercase tracking-[0.18em] text-[var(--ink-muted)]">
+          {fight.weight_class}
+        </div>
+      )}
+      <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)]/5 py-2.5 text-[13px] font-bold tracking-tight text-[var(--neon)] transition-transform group-hover:translate-y-[-1px] group-hover:bg-[var(--neon)]/10">
+        Open fight markets <ArrowUpRight className="h-4 w-4" />
+      </div>
+    </Link>
+  );
+}
+
