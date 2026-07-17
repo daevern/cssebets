@@ -115,65 +115,9 @@ export function WinDetector() {
     }
   }
 
-  // PROMO: force the celebratory ticket for specific accounts so they can
-  // screenshot it for Instagram. Each promo has a fixed stake/odds/payout
-  // that matches the override inside WinTicketModal (when applicable).
-  const PROMO_USER_ID = "ba37e352-b4bf-4fb1-a15c-11b11a3b4cb1";
-  const PROMO_USER_IDS_ARG = [
-    "79b6a2c9-8ed2-45ba-8ef6-c24620a0c410",
-    "ba37e352-b4bf-4fb1-a15c-11b11a3b4cb1",
-  ];
-  const isArgPromoUser = !!user?.id && PROMO_USER_IDS_ARG.includes(user.id);
-  const [promoOpen, setPromoOpen] = useState(false);
-  useEffect(() => {
-    if (user?.id === PROMO_USER_ID || isArgPromoUser) setPromoOpen(true);
-  }, [user?.id, isArgPromoUser]);
-
-  // Also allow reopening via /notifications?win=promo-ticket-arg-0001
-  useEffect(() => {
-    if (isArgPromoUser && winParam === "promo-ticket-arg-0001") {
-      setPromoOpen(true);
-    }
-  }, [isArgPromoUser, winParam]);
-
-  // ARG promo takes precedence for accounts in PROMO_USER_IDS_ARG.
-  if (isArgPromoUser && !forced) {
-    // Correct score 1-1 @ 6.50, stake 500 → payout 3250, profit 2750
-    const promoTicket: WinTicketData = {
-      id: "promo-ticket-arg-0001",
-      matchLabel: "Argentina vs Switzerland",
-      homeTeam: "Argentina",
-      awayTeam: "Switzerland",
-      marketLabel: "correct score",
-      selectionLabel: "1-1",
-      odds: 6.50,
-      stake: 500,
-      gross: 3250,
-      profit: 2750,
-      settledAt: new Date().toISOString(),
-    };
-    return <WinTicketModal open={promoOpen} onOpenChange={setPromoOpen} data={promoTicket} />;
-  }
-
-  if (user?.id === PROMO_USER_ID && !forced && !data) {
-    const promoTicket: WinTicketData = {
-      id: "promo-ticket-0001",
-      matchLabel: "Norway vs England",
-      homeTeam: "Norway",
-      awayTeam: "England",
-      marketLabel: "result",
-      selectionLabel: "DRAW",
-      odds: 3.88,
-      stake: 1000,
-      gross: 3880,
-      profit: 2880,
-      settledAt: new Date().toISOString(),
-    };
-    return <WinTicketModal open={promoOpen} onOpenChange={setPromoOpen} data={promoTicket} />;
-  }
-
   const ticket = toTicket(forced ?? data);
 
   return <WinTicketModal open={open} onOpenChange={handleOpenChange} data={ticket} />;
 }
+
 
