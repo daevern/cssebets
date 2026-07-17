@@ -104,6 +104,14 @@ function HomePage() {
     refetchInterval: 60_000,
   });
 
+  const extrasFn = useServerFn(getDashboardMotorAndUfc);
+  const { data: extras } = useQuery({
+    queryKey: ["dashboard-motor-ufc"],
+    queryFn: () => extrasFn(),
+    refetchInterval: 5 * 60_000,
+    staleTime: 60_000,
+  });
+
   const { data: picks } = useQuery({
     queryKey: ["dashboard-active-picks", uid],
     enabled: !!uid,
