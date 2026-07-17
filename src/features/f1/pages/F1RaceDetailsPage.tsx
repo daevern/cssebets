@@ -614,47 +614,47 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
               const noSel = selectedId === no.id;
               return (
                 <div key={yes.id} className="py-3">
-                  <div className="mb-2 flex items-center gap-2">
-                    {teamA?.name && (
-                      <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
-                        {teamA.name}
-                      </span>
-                    )}
-                  </div>
-                  <div className="mb-2 text-sm font-semibold text-[var(--color-ink)]">
+                  {teamA?.name && (
+                    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+                      {teamA.name}
+                    </div>
+                  )}
+                  <div className="mb-2.5 text-sm font-semibold text-[var(--color-ink)]">
                     Will {nameA} beat {nameB}?
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
                       onClick={() => setSelectedId(yes.id)}
-                      className={`flex items-center justify-between rounded-md border px-3 py-2.5 text-left transition ${
+                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-black/40 px-3 py-4 transition ${
                         yesSel
-                          ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10"
-                          : "border-[var(--color-surface-border)] hover:border-[var(--color-neon)]/50"
+                          ? "border-sky-500 ring-2 ring-sky-500/60 shadow-[0_0_0_1px_rgba(14,165,233,0.35)]"
+                          : "border-[var(--color-surface-border)] hover:border-sky-500/60"
                       }`}
                     >
-                      <span className="text-[13px] font-bold uppercase tracking-wide text-[var(--color-ink)]">
+                      <span className="text-[13px] font-semibold tracking-wide text-[var(--color-ink)]">
                         Yes
                       </span>
-                      <span className="font-display text-base font-bold tabular-nums text-[var(--color-neon)]">
+                      <span className="font-display text-2xl font-black tabular-nums text-[var(--color-neon)]">
                         {Number(yes.odds).toFixed(2)}
+                        <span className="text-base">x</span>
                       </span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setSelectedId(no.id)}
-                      className={`flex items-center justify-between rounded-md border px-3 py-2.5 text-left transition ${
+                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-black/40 px-3 py-4 transition ${
                         noSel
-                          ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10"
-                          : "border-[var(--color-surface-border)] hover:border-[var(--color-neon)]/50"
+                          ? "border-red-500 ring-2 ring-red-500/60 shadow-[0_0_0_1px_rgba(239,68,68,0.35)]"
+                          : "border-[var(--color-surface-border)] hover:border-red-500/60"
                       }`}
                     >
-                      <span className="text-[13px] font-bold uppercase tracking-wide text-[var(--color-ink)]">
+                      <span className="text-[13px] font-semibold tracking-wide text-[var(--color-ink)]">
                         No
                       </span>
-                      <span className="font-display text-base font-bold tabular-nums text-[var(--color-neon)]">
+                      <span className="font-display text-2xl font-black tabular-nums text-[var(--color-neon)]">
                         {Number(no.odds).toFixed(2)}
+                        <span className="text-base">x</span>
                       </span>
                     </button>
                   </div>
@@ -668,7 +668,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
             const team = isConstructor ? teamByKey[m.selection_key] : null;
             const drv = !isConstructor ? driverByKey[m.selection_key] : null;
             const drvTeam = drv?.team_key ? teamByKey[drv.team_key] : null;
-            const pct = probabilities[m.id] * 100;
+            
             const isSel = selectedId === m.id;
             return (
               <button
@@ -704,8 +704,8 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
                     {isConstructor ? "Constructor" : (drvTeam?.name ?? "")}
                   </div>
                 </div>
-                <div className="tabular-nums text-lg font-bold text-[var(--color-ink)]">
-                  {pct >= 10 ? Math.round(pct) : pct.toFixed(1)}%
+                <div className="font-display tabular-nums text-lg font-bold text-[var(--color-neon)]">
+                  {Number(m.odds).toFixed(2)}<span className="text-sm">x</span>
                 </div>
               </button>
             );
