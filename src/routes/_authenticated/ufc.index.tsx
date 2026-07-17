@@ -124,9 +124,10 @@ function UfcPage() {
 
   const { featured, upcoming } = useMemo(() => {
     const main = fights.find((f) => f.card_position === "main") ?? null;
-    const rest = fights.filter((f) => f.id !== main?.id);
+    const rest = fights.filter((f) => f.id !== main?.id && f.status !== "finished");
     return { featured: main, upcoming: rest };
   }, [fights]);
+
 
   if (isLoading) {
     return (
