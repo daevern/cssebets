@@ -4709,6 +4709,24 @@ export type Database = {
         }
         Returns: string
       }
+      place_f1_championship_bet_atomic: {
+        Args: {
+          p_market_id: string
+          p_max_odds: number
+          p_stake: number
+          p_user_id: string
+        }
+        Returns: string
+      }
+      place_f1_race_bet_atomic: {
+        Args: {
+          p_market_id: string
+          p_max_odds: number
+          p_stake: number
+          p_user_id: string
+        }
+        Returns: string
+      }
       place_free_bet_atomic: {
         Args: {
           p_client_request_id: string
