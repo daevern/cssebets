@@ -528,26 +528,35 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
         ))}
       </div>
 
-      {/* Sub-tabs — horizontal scrollable pill bar (football MarketTabs style) */}
-      <nav
-        className="mb-6 -mx-4 flex gap-2 overflow-x-auto px-4 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        aria-label="Market categories"
-      >
-        {(topTab === "top_finishers" ? SUB_TABS_TOP : SUB_TABS_SPECIALS).map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setSubTab(t.id)}
-            className={`shrink-0 snap-start min-h-9 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-              subTab === t.id
-                ? "bg-[var(--color-neon)] text-black"
-                : "bg-white/5 text-[var(--color-ink-muted)] hover:bg-white/10 active:bg-white/15"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </nav>
+      {/* Sub-tabs — segmented bar (matches UFC / football MarketTabs) */}
+      <div className="mb-6 -mx-4 md:mx-0">
+        <div
+          role="tablist"
+          aria-label="Market categories"
+          className="flex overflow-x-auto rounded-md border border-[var(--color-surface-border)] bg-[#070D0A] scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {(topTab === "top_finishers" ? SUB_TABS_TOP : SUB_TABS_SPECIALS).map((t) => {
+            const active = subTab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setSubTab(t.id)}
+                className={`shrink-0 flex-1 px-4 py-2.5 text-center text-[13px] font-semibold whitespace-nowrap transition-colors border-r border-[var(--color-surface-border)]/60 last:border-r-0 ${
+                  active
+                    ? "bg-[var(--color-neon)]/10 text-[var(--color-neon)] shadow-[inset_0_-2px_0_0_var(--color-neon)]"
+                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
 
       {/* Full market list */}
       <div className="divide-y divide-[var(--color-surface-border)]/60">
