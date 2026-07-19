@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getFootballMatch } from "../football.functions";
+import { getFootballMatch, listMyFootballOpenBetsForEvent } from "../football.functions";
 import { FootballMatchHeader } from "../components/FootballMatchHeader";
 import { FootballMarketCard } from "../components/FootballMarketCard";
 import { FootballBetSlip } from "../components/FootballBetSlip";
