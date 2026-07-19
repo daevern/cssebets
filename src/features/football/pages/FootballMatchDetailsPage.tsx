@@ -29,6 +29,19 @@ export function FootballMatchDetailsPage({ matchId }: { matchId: string }) {
     queryFn: () => fetcher({ data: { matchId } }),
     refetchInterval: 15_000,
   });
+  const openBetsFetcher = useServerFn(listMyFootballOpenBetsForEvent);
+  const openBetsQ = useQuery({
+    queryKey: ["football-my-bets", matchId],
+    queryFn: () => openBetsFetcher({ data: { eventId: matchId } }),
+    refetchInterval: 30_000,
+  });
+  const openBetKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const b of openBetsQ.data?.openSelections ?? []) {
+      set.add(`${b.marketId}::${b.selectionKey}`);
+    }
+    return set;
+  }, [openBetsQ.data]);
 
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [pick, setPick] = useState<{
