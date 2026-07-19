@@ -655,7 +655,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     if (!allRows.length) return <div className="text-[11px] text-[var(--color-ink-muted)]">Not available.</div>;
     const rows = showAllScores ? allRows : allRows.filter((r) => POPULAR_SCORES.includes(r.selection));
     const selectedKeys = Object.keys(csPicks);
-    const pendingSelection = csMut.isPending ? (csMut.variables as string | undefined) : undefined;
+    const pendingSelection = csMut.isPending ? csMut.variables : undefined;
     const csSuspended = isMarketSuspended("correct_score");
     return (
       <div>
