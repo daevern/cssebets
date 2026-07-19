@@ -292,14 +292,13 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
 
 
   const placeMut = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (stakeValue: number) => {
       const m = currentMarkets.find((x) => x.id === selectedId);
       if (!m) throw new Error("No selection");
-      const n = Number(stake);
-      if (!Number.isFinite(n) || n < MIN_STAKE) throw new Error(`Minimum stake is ${MIN_STAKE} points.`);
-      if (n > MAX_STAKE) throw new Error(`Maximum stake is ${MAX_STAKE.toLocaleString()} points.`);
-      if (n > balance) throw new Error("Insufficient points");
-      return place({ data: { marketId: m.id, stake: n, maxOdds: Number(m.odds) * 1.05 } });
+      if (!Number.isFinite(stakeValue) || stakeValue < MIN_STAKE) throw new Error(`Minimum stake is ${MIN_STAKE} points.`);
+      if (stakeValue > MAX_STAKE) throw new Error(`Maximum stake is ${MAX_STAKE.toLocaleString()} points.`);
+      if (stakeValue > balance) throw new Error("Insufficient points");
+      return place({ data: { marketId: m.id, stake: stakeValue, maxOdds: Number(m.odds) * 1.05 } });
     },
     onSuccess: () => {
       toast.success("Prediction locked");
