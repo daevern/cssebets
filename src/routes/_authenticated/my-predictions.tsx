@@ -226,8 +226,8 @@ function MyPredictionsPage() {
         </StencilPanel>
       ) : (
         <div className="space-y-3">
-          {(f1Bets ?? []).map((b) => <F1BetRow key={b.id} b={b} />)}
-          {(f1ChampBets ?? []).map((b) => <F1ChampBetRow key={b.id} b={b} />)}
+          {(f1Bets ?? []).map((b) => <F1BetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
+          {(f1ChampBets ?? []).map((b) => <F1ChampBetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
           {(ufcBets ?? []).map((b) => <UfcBetRow key={b.id} b={b} />)}
           {(data ?? []).map((p) => <PredictionRow key={p.id} p={p} />)}
         </div>
