@@ -1,20 +1,22 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { placeFootballBet } from "../football.functions";
 import type { FootballSelection } from "../types/football";
 
-export function FootballBetSlip({
+function FootballBetSlipInner({
   eventId,
   marketId,
   selection,
   onClose,
+  open,
 }: {
   eventId: string;
   marketId: string;
   selection: FootballSelection;
   onClose: () => void;
+  open: boolean;
 }) {
   const [stake, setStake] = useState<number>(100);
   const [submitting, setSubmitting] = useState(false);
@@ -53,7 +55,14 @@ export function FootballBetSlip({
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 md:inset-auto md:right-4 md:bottom-4 md:w-96">
+    <div
+      className="fixed inset-x-0 bottom-0 z-50 md:inset-auto md:right-4 md:bottom-4 md:w-96"
+      style={{
+        visibility: open ? "visible" : "hidden",
+        pointerEvents: open ? "auto" : "none",
+      }}
+      aria-hidden={!open}
+    >
       <div
         className="rounded-t-2xl md:rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface)] p-4 shadow-2xl"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)" }}
@@ -113,3 +122,5 @@ export function FootballBetSlip({
     </div>
   );
 }
+
+export const FootballBetSlip = memo(FootballBetSlipInner);
