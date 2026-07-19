@@ -1154,3 +1154,115 @@ export async function runUfcAutoSettle(): Promise<UfcAutoSettleResult> {
   return { ok: true, checked: rows.length, settledFights, settledBets };
 }
 
+// ---------------------------------------------------------------------------
+// Auto-discover UFC events from API-MMA. Scans the next 21 days of /fights,
+// groups by event slug, upserts into ufc_events, and activates the next
+// upcoming card (event considered finished 6h after starts_at). Runs before
+// each odds/settle tick so admins never have to hand-manage events.
+// ---------------------------------------------------------------------------
+export type UfcDiscoveryResult = {
+  ok: boolean;
+  skipped?: string;
+  discovered?: number;
+  activated?: string | null;
+  error?: string;
+};
+
+function slugifyEventKey(slug: string) {
+  return slug
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}
+
+// In-process throttle: discovery is idempotent but hits ~21 API calls, so cap
+// to once per 30 minutes per worker instance.
+let lastDiscoveryAt = 0;
+
+export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Promise<UfcDiscoveryResult> {
+  const key = process.env.API_FOOTBALL_KEY?.trim();
+  if (!key) return { ok: false, skipped: "API_FOOTBALL_KEY not set" };
+
+  const now = Date.now();
+  if (!opts.force && now - lastDiscoveryAt < 30 * 60 * 1000) {
+    return { ok: true, skipped: "throttled" };
+  }
+  lastDiscoveryAt = now;
+
+  // Scan next 21 days for any UFC-tagged fights.
+  const buckets = new Map<string, { name: string; startsAt: string }>();
+  for (let d = 0; d < 21; d++) {
+    const day = new Date(now + d * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    try {
+      const fights = await fetchFightsByDate(day);
+      for (const f of fights) {
+        if (!f.slug?.toUpperCase().startsWith("UFC")) continue;
+        if (f.status.short === "CANC") continue;
+        const [rawTitle] = (f.slug ?? "").split(":");
+        const eventTitle = (rawTitle ?? "").trim();
+        if (!eventTitle) continue;
+        const eventKey = slugifyEventKey(eventTitle);
+        if (!eventKey) continue;
+        const existing = buckets.get(eventKey);
+        if (!existing || new Date(f.date).getTime() < new Date(existing.startsAt).getTime()) {
+          buckets.set(eventKey, { name: eventTitle, startsAt: f.date });
+        }
+      }
+    } catch (e) {
+      console.warn("[ufc-discovery] date fetch failed", day, (e as Error).message);
+    }
+  }
+
+  if (buckets.size === 0) return { ok: true, discovered: 0, activated: null };
+
+  for (const [event_key, v] of buckets) {
+    await (supabaseAdmin as any)
+      .from("ufc_events")
+      .upsert(
+        { event_key, name: v.name, starts_at: v.startsAt },
+        { onConflict: "event_key" },
+      );
+  }
+
+  // Pick the active event: soonest starts_at whose end (starts_at + 6h) is
+  // still in the future.
+  const cutoffIso = new Date(now - 6 * 60 * 60 * 1000).toISOString();
+  const { data: candidate } = await (supabaseAdmin as any)
+    .from("ufc_events")
+    .select("id, name")
+    .gt("starts_at", cutoffIso)
+    .order("starts_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (candidate?.id) {
+    await (supabaseAdmin as any)
+      .from("ufc_events")
+      .update({ is_active: false })
+      .neq("id", candidate.id)
+      .eq("is_active", true);
+    await (supabaseAdmin as any)
+      .from("ufc_events")
+      .update({ is_active: true })
+      .eq("id", candidate.id);
+  } else {
+    await (supabaseAdmin as any).from("ufc_events").update({ is_active: false }).eq("is_active", true);
+  }
+
+  try {
+    await (supabaseAdmin as any).from("audit_log").insert({
+      user_id: null,
+      action: "ufc.event_discovery",
+      entity: "ufc_events",
+      entity_id: candidate?.id ?? null,
+      metadata: { discovered: buckets.size, activated: candidate?.name ?? null },
+    });
+  } catch {}
+
+  return { ok: true, discovered: buckets.size, activated: candidate?.name ?? null };
+}
+
+

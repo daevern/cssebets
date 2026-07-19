@@ -56,6 +56,11 @@ function AdminUfcPage() {
         <p className="text-sm text-muted-foreground">Manage {event?.name ?? "the active event"} card + settle bets.</p>
       </div>
 
+      <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-xs text-emerald-300">
+        Events auto-discover from API-MMA every 30 minutes and activate the next upcoming card automatically. Manual overrides below still apply.
+      </div>
+
+
       <Card className="space-y-3 p-4">
         <div className="flex items-center justify-between">
           <div>

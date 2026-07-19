@@ -1,49 +1,45 @@
-## Problem
 
-F1 markets stay open after lights-out. Belgian GP has started but bets are still placeable. Football closes markets at kickoff and shows live stats — F1 has neither.
+## Goal
 
-## Plan
+Make UFC self-managing like Football and F1. Today, `runUfcOddsSync` only runs against a `ufc_events` row that an admin has to insert and flip `is_active=true`, plus set the correct `starts_at`. We'll add automatic event discovery so the next upcoming UFC card is always live in the app with its full main + co-main + prelims, and finished events get retired without manual work.
 
-### 1. Close F1 markets at race start (server-enforced)
+## What to build
 
-- In `place_f1_race_bet_atomic` (and `place_f1_championship_bet_atomic` where relevant), add a guard: reject with `race_started` when `now() >= f1_races.starts_at` OR `status IN ('live','finished')`.
-- In `src/features/f1/f1.functions.ts` `listF1RaceMarkets` (and race detail loader), return a `bettingClosed: true` flag when `starts_at <= now()` or status is live/finished, and mark all race markets as `status='suspended'` in the response payload so the UI can't submit.
-- In `src/features/f1/services/f1Sync.server.ts`, when syncing races, if a race's `starts_at <= now()` and status is still `scheduled`, flip status to `live`; keep existing finished handling.
-- Add a lightweight cron tick in `src/routes/api/public/hooks/f1-sync.ts` (or reuse f1-odds hook) that suspends all open race markets where the parent race has started.
+### 1. New `runUfcEventDiscovery()` in `src/lib/ufc-odds.server.ts`
+- Scan API-MMA `/fights` for each of the next 21 days (batched, with the existing quota-friendly patterns).
+- Group returned fights by `slug` prefix (event title before `:`), producing one candidate event per unique UFC card, with the earliest-timestamp fight as `starts_at`.
+- Upsert into `ufc_events` keyed on a stable `event_key` derived from the slug (slugified, e.g. `ufc-fight-night-usman-vs-du-plessis`). Fields: `name` from slug, `starts_at` from earliest fight.
+- Activation rule: exactly one row has `is_active=true` — the event whose `starts_at` is the soonest that hasn't ended yet (event ends 6h after `starts_at`). All others → `is_active=false`.
+- Return `{ discovered, activated }` for logging.
 
-### 2. UI — disable bet placement + show "Race in progress"
+### 2. Wire discovery into the existing cron
+- Update `src/routes/api/public/hooks/ufc-odds-live.ts` to call `runUfcEventDiscovery()` before `runUfcOddsSync()` / `runUfcAutoSettle()`.
+- Discovery only needs to run occasionally: gate it to run once per ~30 min (compare against last `audit_log` entry `ufc.event_discovery` or a simple in-memory throttle by wall-clock minute).
 
-- `F1RaceDetailsPage.tsx` / `F1BetSlip`: when `bettingClosed`, disable Yes/No/driver buttons, hide stake slider, show a banner "Markets closed — race in progress" (mirrors football's post-kickoff behaviour).
-- `RaceChip` / upcoming cards: hide race from "Upcoming" once started; it moves to a Live/Results section.
+### 3. Adjust `runUfcOddsSync` window
+- Current cost guard skips API calls when `|now - starts_at| > 3 days`. Keep that, but since discovery now runs upstream, this stays as-is — no change needed beyond the discovery call preceding it.
 
-### 3. Live race stats (football-parity panel)
+### 4. Retire the manual admin flow (soft)
+- Admin UFC page (`src/routes/management/admin.ufc.tsx`) currently exposes create/edit/activate for `ufc_events`. Leave the page working (useful as an override) but add a small banner: "Events auto-discover from API-MMA every 30 minutes. Manual override still available."
 
-Add a `LiveRaceStats` panel on the race detail page, shown while race status is `live`. Data comes from API-F1 (paid plan supports live race feed).
+### 5. Backfill on deploy
+- Run `runUfcEventDiscovery()` once via `supabase--insert` won't work (it's app code) — trigger via the cron on next tick. No SQL migration required; `ufc_events` schema already fits.
 
-Panels to show (matching football's live analytics density):
-- Current lap / total laps, race status flag (green/yellow/SC/red).
-- Live leaderboard: position, driver, team, gap to leader, last lap time, tyre compound, pit stops.
-- Fastest lap holder + time.
-- Recent events feed (overtakes, pit stops, incidents) — last 10.
+## Technical details
 
-Implementation:
-- New adapter method in `src/features/f1/adapters/apiF1Adapter.server.ts`: `fetchLiveRaceState(raceId)` calling API-F1 `/races?id=…` + `/rankings/races` endpoints.
-- New table `f1_live_race_state` (jsonb payload + updated_at) OR reuse an existing snapshot table; cache TTL 20s to protect quota.
-- Server fn `getF1LiveRaceState({ raceId })` in `f1.functions.ts`.
-- Component `src/features/f1/components/LiveRaceStats.tsx` polling every 20s via `useQuery`.
-- Wire cron `f1-live` hook (new file `src/routes/api/public/hooks/f1-live.ts`) that refreshes live state for any race with status=`live`.
+- API-MMA quota: fetching 21 days = 21 `/fights?date=` calls. On the paid plan this is well within limits. Cache results in-memory during a single discovery run to avoid double-fetching for `runUfcOddsSync`.
+- Event end heuristic: `starts_at + 6h < now()` → considered finished (a UFC card rarely exceeds 6h from first prelim to main event walkout).
+- `event_key` generation: `slug.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,80)`.
+- No DB migration needed. All schema is in place.
 
-### 4. Backfill fix for current Belgian GP
+## Out of scope
 
-- One-off migration/action: mark Belgian GP status=`live`, suspend all its open markets so users can't place further bets until settlement.
+- Changing settlement logic.
+- Removing the admin override UI entirely.
+- UI changes on `/ufc` page (already renders whichever event is `is_active`).
 
-### Technical notes
+## Files to change
 
-- Suspension source of truth is the RPC guard — UI flags are UX only.
-- Reuse `sports_markets` suspension pattern from `oddsFreshness.server.ts` for consistency (`suspension_reason='race_started'`).
-- Live stats panel only mounts when `status='live'`; scheduled races keep current UI.
-- API-F1 live endpoints are called only from the cron, never from the client, to preserve quota.
-
-## Open question
-
-Should I also close **championship** markets (drivers/constructors title) once the season's first race starts, or keep those open all season and only close race-specific markets? Football-analog would be "keep season markets open, close per-race at lights-out" — I'll go with that unless you say otherwise.
+- `src/lib/ufc-odds.server.ts` — add `runUfcEventDiscovery()`.
+- `src/routes/api/public/hooks/ufc-odds-live.ts` — call discovery before existing sync/settle steps.
+- `src/routes/management/admin.ufc.tsx` — small banner noting auto-discovery.
