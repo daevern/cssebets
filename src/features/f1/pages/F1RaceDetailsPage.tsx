@@ -318,7 +318,10 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     );
   if (!race) return <div className="p-6 text-center text-sm">Race not found.</div>;
 
-  const selectedMarket = currentMarkets.find((x) => x.id === selectedId) ?? null;
+  const bettingClosed: boolean = !!q.data?.bettingClosed;
+  const isLive: boolean = !!q.data?.isLive;
+  const effectiveSelectedId = bettingClosed ? null : selectedId;
+  const selectedMarket = currentMarkets.find((x) => x.id === effectiveSelectedId) ?? null;
   // Keep the last non-null selection alive across background refetches so the slip
   // (and its focused input) never briefly unmounts mid-typing.
   const stickyMarketRef = useRef<any>(null);
@@ -349,6 +352,20 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
         </h1>
         <div className="mt-3 text-sm text-[var(--color-ink-muted)]">{formatBegin(race.starts_at)}</div>
       </div>
+
+      {isLive && <LiveRaceStats raceId={raceId} />}
+
+      {bettingClosed && (
+        <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
+          <div className="font-bold text-amber-400">
+            {race.status === "finished" ? "Race complete — markets closed" : "Markets closed — race in progress"}
+          </div>
+          <div className="mt-0.5 text-[12px] text-white/70">
+            No further bets accepted. Open picks settle once the FIA posts the Final Race Classification.
+          </div>
+        </div>
+      )}
+
 
       {/* Market Movement — recharts, football-analytics style */}
       <section className="relative -mx-4 bg-[var(--color-surface)] md:mx-0">
