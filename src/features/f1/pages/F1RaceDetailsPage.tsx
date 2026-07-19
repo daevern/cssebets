@@ -634,8 +634,9 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
+                      disabled={bettingClosed}
                       onClick={() => setSelectedId(yes.id)}
-                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-black/40 px-3 py-4 transition ${
+                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-black/40 px-3 py-4 transition disabled:cursor-not-allowed disabled:opacity-50 ${
                         yesSel
                           ? "border-sky-500 ring-2 ring-sky-500/60 shadow-[0_0_0_1px_rgba(14,165,233,0.35)]"
                           : "border-[var(--color-surface-border)] hover:border-sky-500/60"
