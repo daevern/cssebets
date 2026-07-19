@@ -7,10 +7,12 @@ export function FootballMarketCard({
   market,
   onSelect,
   selectedSelectionId,
+  openBetKeys,
 }: {
   market: FootballMarket;
   onSelect: (marketId: string, selection: FootballSelection) => void;
   selectedSelectionId?: string | null;
+  openBetKeys?: Set<string>;
 }) {
   const disabled = market.status !== "open";
   const [showHistory, setShowHistory] = useState(false);
