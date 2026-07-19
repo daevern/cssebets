@@ -141,6 +141,28 @@ function MyPredictionsPage() {
     },
   });
 
+  const { data: f1DriversMap } = useQuery({
+    queryKey: ["my-f1-drivers-map"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("f1_drivers").select("driver_key, name, photo_url");
+      const m: Record<string, { name: string; photo_url: string | null }> = {};
+      for (const d of (data ?? []) as any[]) m[d.driver_key] = { name: d.name, photo_url: d.photo_url };
+      return m;
+    },
+  });
+
+  const { data: f1TeamsMap } = useQuery({
+    queryKey: ["my-f1-teams-map"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("f1_constructors").select("team_key, name, logo_url");
+      const m: Record<string, { name: string; logo_url: string | null }> = {};
+      for (const t of (data ?? []) as any[]) m[t.team_key] = { name: t.name, logo_url: t.logo_url };
+      return m;
+    },
+  });
+
   const settleFn = useServerFn(settleFinishedPending);
 
   useEffect(() => {
@@ -204,8 +226,8 @@ function MyPredictionsPage() {
         </StencilPanel>
       ) : (
         <div className="space-y-3">
-          {(f1Bets ?? []).map((b) => <F1BetRow key={b.id} b={b} />)}
-          {(f1ChampBets ?? []).map((b) => <F1ChampBetRow key={b.id} b={b} />)}
+          {(f1Bets ?? []).map((b) => <F1BetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
+          {(f1ChampBets ?? []).map((b) => <F1ChampBetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
           {(ufcBets ?? []).map((b) => <UfcBetRow key={b.id} b={b} />)}
           {(data ?? []).map((p) => <PredictionRow key={p.id} p={p} />)}
         </div>
@@ -744,6 +766,9 @@ function F1TicketShell({
   stakeN,
   oddsN,
   payoutN,
+  avatarUrl,
+  avatarAlt,
+  avatarKind,
 }: {
   kicker: string;
   ticketId: string;
@@ -756,6 +781,9 @@ function F1TicketShell({
   stakeN: number;
   oddsN: number;
   payoutN: number;
+  avatarUrl?: string | null;
+  avatarAlt?: string;
+  avatarKind?: "driver" | "team";
 }) {
   const displayStatus = status === "open" ? "pending" : status;
   const profit = (payoutN - stakeN).toFixed(2);
@@ -793,7 +821,17 @@ function F1TicketShell({
           </div>
           <div className="border border-dashed border-[var(--color-surface-border)] px-2.5 py-1.5">
             <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">Selection</div>
-            <div className="font-medium truncate">{selection}</div>
+            <div className="flex items-center gap-2 min-w-0">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={avatarAlt ?? selection}
+                  className={`h-8 w-8 shrink-0 ${avatarKind === "team" ? "object-contain bg-white/5 p-0.5" : "object-cover"} rounded-full border border-[var(--color-surface-border)]`}
+                  loading="lazy"
+                />
+              ) : null}
+              <div className="font-medium truncate">{selection}</div>
+            </div>
           </div>
         </div>
 
@@ -823,7 +861,7 @@ function humanizeMarket(key: string): string {
   return String(key ?? "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function F1BetRow({ b }: { b: any }) {
+function F1BetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Record<string, { name: string; photo_url: string | null }>; teamsMap?: Record<string, { name: string; logo_url: string | null }> }) {
   const stakeN = Number(b.stake);
   const oddsN = Number(b.odds_locked);
   const payoutN = Number(b.potential_payout ?? stakeN * oddsN);
@@ -832,6 +870,13 @@ function F1BetRow({ b }: { b: any }) {
   const startsLabel = race?.starts_at
     ? new Date(race.starts_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
     : "—";
+  const isConstructor = String(b.market_type ?? "").includes("constructor");
+  const avatarUrl = isConstructor
+    ? teamsMap?.[b.selection_key]?.logo_url ?? null
+    : driversMap?.[b.selection_key]?.photo_url ?? null;
+  const avatarAlt = isConstructor
+    ? teamsMap?.[b.selection_key]?.name ?? b.selection_label ?? b.selection_key
+    : driversMap?.[b.selection_key]?.name ?? b.selection_label ?? b.selection_key;
   return (
     <F1TicketShell
       kicker="F1 Race Ticket"
@@ -845,15 +890,25 @@ function F1BetRow({ b }: { b: any }) {
       stakeN={stakeN}
       oddsN={oddsN}
       payoutN={payoutN}
+      avatarUrl={avatarUrl}
+      avatarAlt={avatarAlt}
+      avatarKind={isConstructor ? "team" : "driver"}
     />
   );
 }
 
-function F1ChampBetRow({ b }: { b: any }) {
+function F1ChampBetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Record<string, { name: string; photo_url: string | null }>; teamsMap?: Record<string, { name: string; logo_url: string | null }> }) {
   const stakeN = Number(b.stake);
   const oddsN = Number(b.odds_locked);
   const payoutN = Number(b.potential_payout ?? stakeN * oddsN);
   const ticketId = String(b.id).replace(/-/g, "").slice(0, 10).toUpperCase();
+  const isConstructor = String(b.market_type ?? "").includes("constructor");
+  const avatarUrl = isConstructor
+    ? teamsMap?.[b.selection_key]?.logo_url ?? null
+    : driversMap?.[b.selection_key]?.photo_url ?? null;
+  const avatarAlt = isConstructor
+    ? teamsMap?.[b.selection_key]?.name ?? b.selection_label ?? b.selection_key
+    : driversMap?.[b.selection_key]?.name ?? b.selection_label ?? b.selection_key;
   return (
     <F1TicketShell
       kicker="F1 Championship Ticket"
@@ -867,8 +922,12 @@ function F1ChampBetRow({ b }: { b: any }) {
       stakeN={stakeN}
       oddsN={oddsN}
       payoutN={payoutN}
+      avatarUrl={avatarUrl}
+      avatarAlt={avatarAlt}
+      avatarKind={isConstructor ? "team" : "driver"}
     />
   );
 }
+
 
 
