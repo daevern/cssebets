@@ -35,6 +35,10 @@ export function FootballMatchDetailsPage({ matchId }: { matchId: string }) {
     marketId: string;
     selection: FootballSelection;
   } | null>(null);
+  const lastPickRef = useRef<{
+    marketId: string;
+    selection: FootballSelection;
+  } | null>(null);
 
   const categories = useMemo(() => {
     if (!data) return [] as string[];
