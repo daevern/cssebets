@@ -685,8 +685,9 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
               <button
                 key={m.id}
                 type="button"
+                disabled={bettingClosed}
                 onClick={() => setSelectedId(m.id)}
-                className={`flex w-full items-center gap-3 py-3 text-left transition ${
+                className={`flex w-full items-center gap-3 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
                   isSel ? "bg-[var(--color-neon)]/5" : ""
                 }`}
               >
