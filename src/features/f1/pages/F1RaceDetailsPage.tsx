@@ -747,9 +747,9 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
         onSubmit={(n: number) => placeMut.mutate(n)}
       />
 
+      {race.status === "finished" && <F1PostRaceAnalytics raceId={raceId} />}
+
       <PageFooter />
-        </>
-      )}
     </div>
   );
 }
