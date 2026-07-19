@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import { getF1Race, placeF1RaceBet, getF1MarketHistories, getF1LiveRaceState } from "../f1.functions";
 import { LiveRaceStats } from "../components/LiveRaceStats";
+import { F1PostRaceAnalytics } from "../components/F1PostRaceAnalytics";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { PageFooter } from "@/components/ui/page-footer";
@@ -355,6 +356,13 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
 
       {isLive && <LiveRaceStats raceId={raceId} />}
 
+      {race.status === "finished" ? (
+        <>
+          <F1PostRaceAnalytics raceId={raceId} />
+          <PageFooter />
+        </>
+      ) : (
+        <>
       {bettingClosed && (
         <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
           <div className="font-bold text-amber-400">
@@ -747,6 +755,8 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       />
 
       <PageFooter />
+        </>
+      )}
     </div>
   );
 }

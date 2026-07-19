@@ -1,0 +1,1 @@
+ALTER TABLE public.f1_races ADD COLUMN IF NOT EXISTS fastest_lap JSONB;

@@ -49,17 +49,21 @@ export async function settleF1RaceById(raceId: string) {
 
   // Fastest lap — only settle when provider returns a result.
   let fastestLapKey: string | null = null;
+  let fastestLapTop: any = null;
   try {
     const fl = await fetchF1FastestLap(race.provider_id);
     const top = fl.sort((a, b) => (a.position ?? 999) - (b.position ?? 999))[0];
-    if (top?.driver?.name) fastestLapKey = keyify(top.driver.name);
+    if (top?.driver?.name) {
+      fastestLapKey = keyify(top.driver.name);
+      fastestLapTop = top;
+    }
   } catch {
     fastestLapKey = null;
   }
 
   await (supabaseAdmin as any)
     .from("f1_races")
-    .update({ results: ordered, updated_at: new Date().toISOString() })
+    .update({ results: ordered, fastest_lap: fastestLapTop, updated_at: new Date().toISOString() })
     .eq("id", raceId);
 
   const { data: markets } = await (supabaseAdmin as any)
