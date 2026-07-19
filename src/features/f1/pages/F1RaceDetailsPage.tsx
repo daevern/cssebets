@@ -652,8 +652,9 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
                     </button>
                     <button
                       type="button"
+                      disabled={bettingClosed}
                       onClick={() => setSelectedId(no.id)}
-                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-black/40 px-3 py-4 transition ${
+                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-black/40 px-3 py-4 transition disabled:cursor-not-allowed disabled:opacity-50 ${
                         noSel
                           ? "border-red-500 ring-2 ring-red-500/60 shadow-[0_0_0_1px_rgba(239,68,68,0.35)]"
                           : "border-[var(--color-surface-border)] hover:border-red-500/60"
