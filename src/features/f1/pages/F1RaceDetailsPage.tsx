@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import { getF1Race, placeF1RaceBet, getF1MarketHistories, getF1LiveRaceState } from "../f1.functions";
 import { LiveRaceStats } from "../components/LiveRaceStats";
+import { F1PostRaceAnalytics } from "../components/F1PostRaceAnalytics";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { PageFooter } from "@/components/ui/page-footer";
