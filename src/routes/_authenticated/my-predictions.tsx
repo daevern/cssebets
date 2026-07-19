@@ -845,7 +845,7 @@ function humanizeMarket(key: string): string {
   return String(key ?? "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function F1BetRow({ b }: { b: any }) {
+function F1BetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Record<string, { name: string; photo_url: string | null }>; teamsMap?: Record<string, { name: string; logo_url: string | null }> }) {
   const stakeN = Number(b.stake);
   const oddsN = Number(b.odds_locked);
   const payoutN = Number(b.potential_payout ?? stakeN * oddsN);
@@ -854,6 +854,13 @@ function F1BetRow({ b }: { b: any }) {
   const startsLabel = race?.starts_at
     ? new Date(race.starts_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
     : "—";
+  const isConstructor = String(b.market_type ?? "").includes("constructor");
+  const avatarUrl = isConstructor
+    ? teamsMap?.[b.selection_key]?.logo_url ?? null
+    : driversMap?.[b.selection_key]?.photo_url ?? null;
+  const avatarAlt = isConstructor
+    ? teamsMap?.[b.selection_key]?.name ?? b.selection_label ?? b.selection_key
+    : driversMap?.[b.selection_key]?.name ?? b.selection_label ?? b.selection_key;
   return (
     <F1TicketShell
       kicker="F1 Race Ticket"
@@ -867,15 +874,25 @@ function F1BetRow({ b }: { b: any }) {
       stakeN={stakeN}
       oddsN={oddsN}
       payoutN={payoutN}
+      avatarUrl={avatarUrl}
+      avatarAlt={avatarAlt}
+      avatarKind={isConstructor ? "team" : "driver"}
     />
   );
 }
 
-function F1ChampBetRow({ b }: { b: any }) {
+function F1ChampBetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Record<string, { name: string; photo_url: string | null }>; teamsMap?: Record<string, { name: string; logo_url: string | null }> }) {
   const stakeN = Number(b.stake);
   const oddsN = Number(b.odds_locked);
   const payoutN = Number(b.potential_payout ?? stakeN * oddsN);
   const ticketId = String(b.id).replace(/-/g, "").slice(0, 10).toUpperCase();
+  const isConstructor = String(b.market_type ?? "").includes("constructor");
+  const avatarUrl = isConstructor
+    ? teamsMap?.[b.selection_key]?.logo_url ?? null
+    : driversMap?.[b.selection_key]?.photo_url ?? null;
+  const avatarAlt = isConstructor
+    ? teamsMap?.[b.selection_key]?.name ?? b.selection_label ?? b.selection_key
+    : driversMap?.[b.selection_key]?.name ?? b.selection_label ?? b.selection_key;
   return (
     <F1TicketShell
       kicker="F1 Championship Ticket"
@@ -889,8 +906,12 @@ function F1ChampBetRow({ b }: { b: any }) {
       stakeN={stakeN}
       oddsN={oddsN}
       payoutN={payoutN}
+      avatarUrl={avatarUrl}
+      avatarAlt={avatarAlt}
+      avatarKind={isConstructor ? "team" : "driver"}
     />
   );
 }
+
 
 
