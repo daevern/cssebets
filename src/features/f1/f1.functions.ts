@@ -71,6 +71,74 @@ export const getF1LiveRaceState = createServerFn({ method: "GET" })
     }
   });
 
+export const getF1RaceAnalytics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ raceId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as any;
+    const { data: race } = await sb
+      .from("f1_races")
+      .select("id, name, round, season, circuit, country, starts_at, status, settled_at, results, fastest_lap, provider_id")
+      .eq("id", data.raceId)
+      .maybeSingle();
+    if (!race) return { race: null, classification: [], podium: [], fastestLap: null, constructorPoints: [] };
+
+    // Best-effort fastest lap backfill for older races settled before we persisted it.
+    let fastestLap: any = race.fastest_lap ?? null;
+    if (!fastestLap && race.status === "finished" && race.provider_id) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { fetchF1FastestLap } = await import("./adapters/apiF1Adapter.server");
+        const fl = await fetchF1FastestLap(race.provider_id);
+        const top = fl.sort((a: any, b: any) => (a.position ?? 999) - (b.position ?? 999))[0];
+        if (top) {
+          fastestLap = top;
+          await (supabaseAdmin as any)
+            .from("f1_races")
+            .update({ fastest_lap: top })
+            .eq("id", race.id);
+        }
+      } catch {
+        fastestLap = null;
+      }
+    }
+
+    const classification = Array.isArray(race.results) ? race.results : [];
+
+    const teamPts: Record<string, { name: string; logo: string | null; points: number; bestPos: number }> = {};
+    for (const r of classification) {
+      const teamId = r.team?.id ?? r.team?.name;
+      if (teamId == null) continue;
+      const key = String(teamId);
+      const cur = teamPts[key] ?? { name: r.team?.name ?? "—", logo: r.team?.logo ?? null, points: 0, bestPos: 999 };
+      // API-F1 exposes "points" on some responses; when missing use F1 scoring by position.
+      const pts = Number(r.points ?? scoreByPos(r.position));
+      cur.points += Number.isFinite(pts) ? pts : 0;
+      cur.bestPos = Math.min(cur.bestPos, r.position ?? 999);
+      teamPts[key] = cur;
+    }
+    const constructorPoints = Object.values(teamPts).sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      return a.bestPos - b.bestPos;
+    });
+
+    return {
+      race,
+      classification,
+      podium: classification.slice(0, 3),
+      fastestLap,
+      constructorPoints,
+    };
+  });
+
+function scoreByPos(p: number | null | undefined): number {
+  const table: Record<number, number> = { 1: 25, 2: 18, 3: 15, 4: 12, 5: 10, 6: 8, 7: 6, 8: 4, 9: 2, 10: 1 };
+  return p ? table[p] ?? 0 : 0;
+}
+
+const _unused = 0; void _unused;
+
+
 export const listF1ChampionshipMarkets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ season: z.number().int() }).parse(i))
