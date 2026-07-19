@@ -766,6 +766,9 @@ function F1TicketShell({
   stakeN,
   oddsN,
   payoutN,
+  avatarUrl,
+  avatarAlt,
+  avatarKind,
 }: {
   kicker: string;
   ticketId: string;
@@ -778,6 +781,9 @@ function F1TicketShell({
   stakeN: number;
   oddsN: number;
   payoutN: number;
+  avatarUrl?: string | null;
+  avatarAlt?: string;
+  avatarKind?: "driver" | "team";
 }) {
   const displayStatus = status === "open" ? "pending" : status;
   const profit = (payoutN - stakeN).toFixed(2);
