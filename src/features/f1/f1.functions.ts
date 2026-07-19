@@ -136,7 +136,7 @@ function scoreByPos(p: number | null | undefined): number {
   return p ? table[p] ?? 0 : 0;
 }
 
-const _unused = 0; void _unused;
+
 
 
 export const listF1ChampionshipMarkets = createServerFn({ method: "GET" })
