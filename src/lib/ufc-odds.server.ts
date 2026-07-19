@@ -145,6 +145,18 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
     .eq("apimma_id", apimmaId)
     .maybeSingle();
 
+  // Freshness gate: fighter bio + record change on the order of weeks, not
+  // seconds. If we already have a fully-enriched row updated in the last 7
+  // days, skip the 2–3 upstream calls entirely.
+  const FRESH_MS = 7 * 24 * 60 * 60 * 1000;
+  const isFresh =
+    existing?.updated_at &&
+    Date.now() - new Date(existing.updated_at as string).getTime() < FRESH_MS &&
+    existing.record_w != null &&
+    existing.height_cm != null &&
+    existing.reach_cm != null;
+  if (isFresh) return existing.id as string;
+
   // Try /fighters?id=; on failure or empty response, fall back to name search.
   let detail: Awaited<ReturnType<typeof fetchFighter>> | null = null;
   let recordSummary: Awaited<ReturnType<typeof fetchFighterRecordSummary>> | null = null;
@@ -264,7 +276,27 @@ async function syncOddsForFight(fightRow: {
   scheduled_rounds: 3 | 5;
   apimma_fighter_a_id: number | null;
   apimma_fighter_b_id: number | null;
-}, apimmaFightId: number) {
+}, apimmaFightId: number, commenceTimeIso?: string) {
+
+  // Throttle: outside the final hour before commence, skip the odds call if
+  // we already have a snapshot in the last 3 minutes. Live + T-60m windows
+  // keep the full 30s cadence for accurate line moves.
+  const msToCommence = commenceTimeIso
+    ? new Date(commenceTimeIso).getTime() - Date.now()
+    : Number.POSITIVE_INFINITY;
+  if (msToCommence > 60 * 60 * 1000) {
+    const { data: lastSnap } = await (supabaseAdmin as any)
+      .from("ufc_market_snapshots")
+      .select("sampled_at")
+      .eq("fight_id", fightRow.id)
+      .order("sampled_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const lastAt = (lastSnap as any)?.sampled_at
+      ? new Date((lastSnap as any).sampled_at).getTime()
+      : 0;
+    if (lastAt && Date.now() - lastAt < 3 * 60 * 1000) return 0;
+  }
 
   let odds;
   try {
@@ -807,9 +839,23 @@ async function syncFightStats(fightRowId: string, apimmaFightId: number) {
 // ---- H2H + recent form ----
 async function syncH2H(fightRowId: string, aId: number, bId: number, currentApimmaFightId: number) {
   try {
+    // Freshness gate: H2H + recent form don't change hour-to-hour. If we
+    // already have rows updated in the last 24h, skip the ~6 upstream calls.
+    const { data: lastRow } = await (supabaseAdmin as any)
+      .from("ufc_fight_h2h")
+      .select("created_at")
+      .eq("fight_id", fightRowId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const lastAt = (lastRow as any)?.created_at
+      ? new Date((lastRow as any).created_at).getTime()
+      : 0;
+    if (lastAt && Date.now() - lastAt < 24 * 60 * 60 * 1000) return;
+
     const [recA, recB] = await Promise.all([
-      fetchFighterFightHistory(aId, 16).catch(() => []),
-      fetchFighterFightHistory(bId, 16).catch(() => []),
+      fetchFighterFightHistory(aId, 3).catch(() => []),
+      fetchFighterFightHistory(bId, 3).catch(() => []),
     ]);
 
     const rows: any[] = [];
@@ -937,10 +983,11 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
       scheduledRounds: t.rounds,
     });
 
-    totalMarkets += await syncOddsForFight(fightRow, t.f.id);
+    totalMarkets += await syncOddsForFight(fightRow, t.f.id, t.f.date);
     await syncH2H(fightRow.id, t.f.fighters.first.id, t.f.fighters.second.id, t.f.id);
-    // Live stats only when fight is in progress or finished
-    if (["LIVE", "FT", "AFT"].includes(t.f.status.short)) {
+    // Live stats only when fight is in progress. Post-fight stats don't
+    // change, so re-pulling FT/AFT every tick just burns quota.
+    if (t.f.status.short === "LIVE") {
       await syncFightStats(fightRow.id, t.f.id);
     }
   }

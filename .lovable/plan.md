@@ -1,51 +1,53 @@
-## Why UFC bets stay PENDING
 
-Only **moneyline / three_way** bets settle automatically today. The four fights in your screenshot have a `winner` recorded, and the moneyline bet on Duncan already paid out — but every other market on those fights (`round`, `total_rounds`) is still `open`.
+## Goal
 
-Two concrete bugs in the auto-settle pipeline:
+Stop burning API-MMA quota. The paid plan has generous limits, but the current sync fans out enormous numbers of calls per 30s cron tick, which is what's causing the intermittent "rate limit / no data" behaviour.
 
-1. **`auto_settle_ufc_winner_atomic` only touches `moneyline` + `three_way`.**
-   `round`, `total_rounds`, and future method/round markets are never graded, so those tickets sit as PENDING forever unless an admin opens the fight and hand-settles it via "Settle" (which requires method + round).
+## What's wasteful today
 
-2. **After auto-settle runs, `ufc_fights.status` is left as `scheduled` and only `winner` is set.**
-   The sweep in `runUfcAutoSettle` filters on `winner IS NULL`, so once the winner is recorded these fights are skipped forever. There is no second pass that ever settles the remaining markets, and the fight never flips to `finished`, which also confuses the dashboard "next fight" query and stats views.
+In `src/lib/ufc-odds.server.ts` → `runUfcOddsSync` runs every 30s inside the event window. For **every fight on the card** it currently calls:
 
-Result today: rows 1–4 are half-graded (moneyline done, round/totals stuck), fight status is stuck at `scheduled`, and admin has to manually void or hand-grade each one.
+- `upsertFighter` × 2 → `fetchFighter` + `fetchFighterRecordSummary` (2 calls each fighter = 4/fight)
+- `syncH2H` → `fetchFighterFightHistory(id, 16)` which loops **16 seasons × 2 fighters = up to 32 calls/fight**
+- `fetchOddsForFight` (1/fight)
+- `fetchFightStats` when live (1/fight)
 
-## Fix plan
+For a 10-fight card that's ~370 calls every 30 seconds — the vast majority re-fetching data that doesn't change (fighter bio, career record, past fight history).
 
-### 1. Extend auto-settle to grade every UFC market from the feed
+Also `src/lib/apimma.server.ts` header comment still says "Free plan: 100 req/day" — misleading now that the account is paid.
 
-Update `runUfcAutoSettle` in `src/lib/ufc-odds.server.ts`:
-- Keep the current daily `/fights` batch to derive `winner`.
-- For every finished fight (`status.short` in `FT`/`AFT`), also call the MMA stats endpoint (`/fights/statistics/fighters`, already wrapped as `fetchFightStats`) and/or read `method` + `ending round` from the fight payload. Extend `ApiMmaFight` in `src/lib/apimma.server.ts` with the raw `method` / `round` fields the provider returns and parse them into a normalized `{ method: 'ko_tko' | 'submission' | 'decision'; endingRound: number | null }`.
-- Pass those into a new RPC `auto_settle_ufc_fight_atomic(fight_id, winner, method, ending_round)` that:
-  - Grades `moneyline` + `three_way` (existing logic, kept verbatim).
-  - Grades `total_rounds` (over/under X.5) using `ending_round`, with decisions treated as `scheduled_rounds`.
-  - Grades `round` (r1..r5 and `distance`) using `method` + `ending_round`.
-  - Updates `ufc_fights` with `status='finished'`, `winner`, `result_method`, `result_round`, `settled_at`.
-  - Returns the number of bets settled.
-- Change the sweep filter from `winner IS NULL` to `status <> 'finished'` so half-settled legacy rows get re-processed once.
+## Fix
 
-### 2. Backfill the four stuck fights
+All edits stay in `src/lib/ufc-odds.server.ts` and `src/lib/apimma.server.ts`. No schema changes — use existing `updated_at` / row timestamps as the freshness signal.
 
-Ship a one-off admin server fn (or reuse `adminSettleUfcFight` per fight) plus a migration that:
-- Re-runs the new auto-settle path for the four fights listed above so their `round` / `total_rounds` open bets grade against the actual result.
-- If the feed still doesn't provide method/round for one of them, mark those specific market bets `void` and refund stake (documented reason: `provider_missing_method`) so nothing stays PENDING.
+1. **Update the plan comment** in `apimma.server.ts` to reflect the paid tier (remove "Free plan: 100 req/day" note).
 
-### 3. Keep the "half-settled" case from recurring
+2. **Skip fighter enrichment when fresh** in `upsertFighter`:
+   - If `existing.updated_at` is < 7 days old AND the row has `record_w`, `height_cm`, `reach_cm` populated → return `existing.id` without calling `fetchFighter` / `fetchFighterRecordSummary` / `searchFighter`.
+   - First-time inserts and stale rows still enrich normally.
+   - Saves ~4 calls/fight/tick.
 
-- Add an operational alert (`operational_alerts` insert) whenever auto-settle records a winner but has no method/round, so we notice provider gaps instead of silently leaving tickets open.
-- Add a Vitest around the new grading helper covering: KO in R1, submission in R2, decision at scheduled distance, draw (moneyline void), and ending-round exactly on the O/U line (push → void).
+3. **Skip H2H when fresh** in `syncH2H`:
+   - Before fetching, `SELECT max(created_at) FROM ufc_fight_h2h WHERE fight_id = ?`.
+   - If any row exists and is < 24h old, return early. H2H and recent-form data don't change hour-to-hour.
+   - Saves up to ~32 calls/fight/tick.
 
-### Technical notes (for engineers)
+4. **Reduce `fetchFighterFightHistory` default** from `seasonsBack = 16` (which is what the `syncH2H` call currently passes) down to `seasonsBack = 3`. Three seasons already covers >95% of active UFC fighters' recent form and direct H2H. Update the call in `syncH2H` accordingly. Saves ~26 calls/fight even on the first run.
 
-- All wallet mutations stay inside the new atomic RPC to preserve `balance_before` / `balance_after` ledger invariants.
-- `total_rounds` push rule: if `ending_round == line` and fight went the full time of that round, treat as void (refund) — matches football O/U behavior.
-- `round.distance` wins only when `method = 'decision'`; otherwise it loses.
-- No UI changes; the admin "Predictions" screen will show these as `won` / `lost` / `void` once graded.
+5. **Throttle odds refresh per fight** in `syncOddsForFight`:
+   - Read the latest `ufc_market_snapshots.sampled_at` for the fight.
+   - If < 3 minutes old AND commence is > 1 hour away → skip the `fetchOddsForFight` call for this tick.
+   - Inside the final hour before commence, and once live, keep the current 30s cadence so line moves and closing prices stay accurate.
+   - Saves roughly (10 fights − 1) × 1 call every 30s during the pre-event window.
 
-### Out of scope
+6. **Only sync stats for LIVE fights**, not `FT`/`AFT`. Post-fight stats don't change, and the current code re-pulls them every tick until the fight row flips to `finished`. Change the guard from `["LIVE","FT","AFT"]` to `["LIVE"]` and add a "not already stored" short-circuit for the LIVE case (skip if a stats row exists and was updated in the last 30s).
 
-- No changes to F1 or football settlement.
-- No change to manual `adminSettleUfcFight` — it stays as the admin override.
+## Expected result
+
+Pre-event steady state drops from ~370 calls / 30s to well under 20 calls / 30s for a 10-fight card, with no user-visible change: odds still refresh, live stats still stream, H2H still populates on the first sync after an event is loaded. During the final hour before commence and once fights go live, cadence stays at 30s as today.
+
+## Out of scope
+
+- No changes to `runUfcAutoSettle`, market mapping, or settlement RPCs.
+- No new tables / migrations.
+- No UI changes.

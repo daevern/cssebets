@@ -2,8 +2,9 @@
 // Uses the same API_FOOTBALL_KEY (single API-Sports account key covers all
 // subscribed APIs — MMA included).
 //
-// Free plan: 100 req/day, dates limited to last ~2 days. Real-time odds
-// movement + live in-fight stats require an upgraded plan.
+// Paid plan: generous daily quota + real-time odds movement + live in-fight
+// stats. Callers still gate hot loops (see runUfcOddsSync freshness guards)
+// so we don't burn quota re-fetching data that doesn't change tick-to-tick.
 const BASE = "https://v1.mma.api-sports.io";
 
 export type ApiMmaResponse<T> = {
