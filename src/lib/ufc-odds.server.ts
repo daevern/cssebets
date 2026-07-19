@@ -839,9 +839,23 @@ async function syncFightStats(fightRowId: string, apimmaFightId: number) {
 // ---- H2H + recent form ----
 async function syncH2H(fightRowId: string, aId: number, bId: number, currentApimmaFightId: number) {
   try {
+    // Freshness gate: H2H + recent form don't change hour-to-hour. If we
+    // already have rows updated in the last 24h, skip the ~6 upstream calls.
+    const { data: lastRow } = await (supabaseAdmin as any)
+      .from("ufc_fight_h2h")
+      .select("created_at")
+      .eq("fight_id", fightRowId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const lastAt = (lastRow as any)?.created_at
+      ? new Date((lastRow as any).created_at).getTime()
+      : 0;
+    if (lastAt && Date.now() - lastAt < 24 * 60 * 60 * 1000) return;
+
     const [recA, recB] = await Promise.all([
-      fetchFighterFightHistory(aId, 16).catch(() => []),
-      fetchFighterFightHistory(bId, 16).catch(() => []),
+      fetchFighterFightHistory(aId, 3).catch(() => []),
+      fetchFighterFightHistory(bId, 3).catch(() => []),
     ]);
 
     const rows: any[] = [];
