@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
@@ -126,7 +126,6 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const [subTab, setSubTab] = useState<SubTab>("top_5_finish");
   const [range, setRange] = useState<Range>("ALL");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [stake, setStake] = useState<string>("100");
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
@@ -293,14 +292,13 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
 
 
   const placeMut = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (stakeValue: number) => {
       const m = currentMarkets.find((x) => x.id === selectedId);
       if (!m) throw new Error("No selection");
-      const n = Number(stake);
-      if (!Number.isFinite(n) || n < MIN_STAKE) throw new Error(`Minimum stake is ${MIN_STAKE} points.`);
-      if (n > MAX_STAKE) throw new Error(`Maximum stake is ${MAX_STAKE.toLocaleString()} points.`);
-      if (n > balance) throw new Error("Insufficient points");
-      return place({ data: { marketId: m.id, stake: n, maxOdds: Number(m.odds) * 1.05 } });
+      if (!Number.isFinite(stakeValue) || stakeValue < MIN_STAKE) throw new Error(`Minimum stake is ${MIN_STAKE} points.`);
+      if (stakeValue > MAX_STAKE) throw new Error(`Maximum stake is ${MAX_STAKE.toLocaleString()} points.`);
+      if (stakeValue > balance) throw new Error("Insufficient points");
+      return place({ data: { marketId: m.id, stake: stakeValue, maxOdds: Number(m.odds) * 1.05 } });
     },
     onSuccess: () => {
       toast.success("Prediction locked");
@@ -319,23 +317,14 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     );
   if (!race) return <div className="p-6 text-center text-sm">Race not found.</div>;
 
-  const [searchState, setSearchState] = [null, null] as any; // legacy no-op
-  void searchState; void setSearchState;
-
   const selectedMarket = currentMarkets.find((x) => x.id === selectedId) ?? null;
-  const selectedDriver = selectedMarket ? driverByKey[selectedMarket.selection_key] : null;
-  const stakeNum = Number(stake) || 0;
-  const potentialReturn = selectedMarket ? stakeNum * Number(selectedMarket.odds) : 0;
-  const potentialGain = potentialReturn - stakeNum;
+  // Keep the last non-null selection alive across background refetches so the slip
+  // (and its focused input) never briefly unmounts mid-typing.
+  const stickyMarketRef = useRef<any>(null);
+  if (selectedMarket) stickyMarketRef.current = selectedMarket;
+  const slipMarket = selectedMarket ?? stickyMarketRef.current;
+  const selectedDriver = slipMarket ? driverByKey[slipMarket.selection_key] : null;
   const noBalance = balance <= 0;
-  const overBalance = stakeNum > balance && stakeNum > 0;
-  const stakeError =
-    !Number.isFinite(stakeNum) || stakeNum < MIN_STAKE
-      ? `Min ${MIN_STAKE} pts`
-      : stakeNum > MAX_STAKE
-      ? `Max ${MAX_STAKE.toLocaleString()} pts`
-      : null;
-  const canSubmit = !!selectedMarket && !placeMut.isPending && !stakeError && !noBalance && !overBalance;
 
   return (
     <div
@@ -722,114 +711,172 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
         </span>
       </div>
 
-      {/* Your position — StakeSlip-style sticky slip (matches football/world-cup) */}
-      {selectedMarket && (
-        <div
-          className="fixed inset-x-0 z-50 mx-auto max-w-2xl space-y-2.5 rounded-t-lg border border-[var(--color-neon)]/40 bg-[#050A08]/98 p-3.5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)] backdrop-blur"
-          style={{
-            bottom: "calc(72px + env(safe-area-inset-bottom))",
-            paddingBottom: "0.875rem",
-          }}
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1 space-y-1">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-neon)]">
-                Your prediction
-              </div>
-              <div className="truncate text-[11px] text-[var(--color-ink-muted)]">
-                {race.name} · {SECTION_TITLES[subTab]}
-              </div>
-              <div className="text-[13px] leading-snug text-[var(--color-ink)]">
-                <span className="font-semibold">{selectedDriver?.name ?? selectedMarket.label}</span>
-                <span className="mx-1.5 text-[var(--color-ink-muted)]">·</span>
-                <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
-                  {Number(selectedMarket.odds).toFixed(2)}x
-                </span>
-                <span className="ml-1.5 text-[11px] text-[var(--color-ink-muted)]">
-                  market estimate ~{impliedPct(Number(selectedMarket.odds))}%
-                </span>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setSelectedId(null)}
-              aria-label="Clear selection"
-              className="shrink-0 rounded-full p-1 text-[var(--color-ink-muted)] hover:bg-white/5 hover:text-[var(--color-ink)]"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-
-          <div className="flex gap-2">
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              autoComplete="off"
-              value={stake}
-              onChange={(e) => setStake(e.target.value.replace(/\D/g, ""))}
-              disabled={noBalance}
-              placeholder={`Points (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
-              className="flex-1 min-w-0 rounded-md border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-base font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:cursor-not-allowed disabled:opacity-40"
-            />
-            <button
-              type="button"
-              disabled={!canSubmit}
-              onClick={() => placeMut.mutate()}
-              className="flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[var(--color-neon)] px-4 py-2.5 text-[12px] font-bold text-black transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)] disabled:opacity-40"
-            >
-              {placeMut.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <span>
-                    {noBalance
-                      ? "Add Points to Lock"
-                      : overBalance
-                      ? "Stake exceeds balance"
-                      : "Lock Prediction"}
-                  </span>
-                  {canSubmit && <ArrowUpRight className="h-3.5 w-3.5" />}
-                </>
-              )}
-            </button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-[11px]">
-            <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
-              <span className="text-[var(--color-ink-muted)]">Return</span>
-              <span className="font-display font-bold tabular-nums text-[var(--color-ink)]">
-                {potentialReturn.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
-              <span className="text-[var(--color-ink-muted)]">Gain</span>
-              <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
-                +{potentialGain.toFixed(2)}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[11px] text-[var(--color-ink-muted)]">
-            <span>
-              Points balance:{" "}
-              <span className="font-bold tabular-nums text-[var(--color-ink)]">{balance.toFixed(2)}</span>
-            </span>
-            {noBalance && <span className="font-semibold text-destructive">Add points to lock this prediction.</span>}
-            {!noBalance && overBalance && (
-              <span className="font-semibold text-destructive">Stake exceeds points balance</span>
-            )}
-            {!noBalance && !overBalance && stakeError && (
-              <span className="font-semibold text-destructive">{stakeError}</span>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Your position — always mounted so the stake input never remounts mid-typing. */}
+      <F1BetSlip
+        isOpen={!!selectedMarket}
+        market={slipMarket}
+        driverName={selectedDriver?.name ?? null}
+        raceName={race.name}
+        sectionTitle={SECTION_TITLES[subTab] ?? ""}
+        balance={balance}
+        noBalance={noBalance}
+        isPending={placeMut.isPending}
+        onClear={() => setSelectedId(null)}
+        onSubmit={(n: number) => placeMut.mutate(n)}
+      />
 
       <PageFooter />
     </div>
   );
 }
+
+type F1BetSlipProps = {
+  isOpen: boolean;
+  market: any | null;
+  driverName: string | null;
+  raceName: string;
+  sectionTitle: string;
+  balance: number;
+  noBalance: boolean;
+  isPending: boolean;
+  onClear: () => void;
+  onSubmit: (stake: number) => void;
+};
+
+const F1BetSlip = memo(function F1BetSlip({
+  isOpen,
+  market,
+  driverName,
+  raceName,
+  sectionTitle,
+  balance,
+  noBalance,
+  isPending,
+  onClear,
+  onSubmit,
+}: F1BetSlipProps) {
+  const [stake, setStake] = useState<string>("100");
+  const stakeNum = Number(stake) || 0;
+  const odds = market ? Number(market.odds) : 0;
+  const potentialReturn = market ? stakeNum * odds : 0;
+  const potentialGain = potentialReturn - stakeNum;
+  const overBalance = stakeNum > balance && stakeNum > 0;
+  const stakeError =
+    !Number.isFinite(stakeNum) || stakeNum < MIN_STAKE
+      ? `Min ${MIN_STAKE} pts`
+      : stakeNum > MAX_STAKE
+      ? `Max ${MAX_STAKE.toLocaleString()} pts`
+      : null;
+  const canSubmit = !!market && !isPending && !stakeError && !noBalance && !overBalance;
+
+  return (
+    <div
+      aria-hidden={!isOpen}
+      className="fixed inset-x-0 z-50 mx-auto max-w-2xl space-y-2.5 rounded-t-lg border border-[var(--color-neon)]/40 bg-[#050A08]/98 p-3.5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)] backdrop-blur"
+      style={{
+        bottom: "calc(72px + env(safe-area-inset-bottom))",
+        paddingBottom: "0.875rem",
+        display: isOpen && market ? undefined : "none",
+      }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-neon)]">
+            Your prediction
+          </div>
+          <div className="truncate text-[11px] text-[var(--color-ink-muted)]">
+            {raceName} · {sectionTitle}
+          </div>
+          {market && (
+            <div className="text-[13px] leading-snug text-[var(--color-ink)]">
+              <span className="font-semibold">{driverName ?? market.label}</span>
+              <span className="mx-1.5 text-[var(--color-ink-muted)]">·</span>
+              <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
+                {odds.toFixed(2)}x
+              </span>
+              <span className="ml-1.5 text-[11px] text-[var(--color-ink-muted)]">
+                market estimate ~{impliedPct(odds)}%
+              </span>
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onClear}
+          aria-label="Clear selection"
+          className="shrink-0 rounded-full p-1 text-[var(--color-ink-muted)] hover:bg-white/5 hover:text-[var(--color-ink)]"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="flex gap-2">
+        <input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="off"
+          value={stake}
+          onChange={(e) => setStake(e.target.value.replace(/\D/g, ""))}
+          disabled={noBalance}
+          placeholder={`Points (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
+          className="flex-1 min-w-0 rounded-md border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-base font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:cursor-not-allowed disabled:opacity-40"
+        />
+        <button
+          type="button"
+          disabled={!canSubmit}
+          onClick={() => onSubmit(stakeNum)}
+          className="flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[var(--color-neon)] px-4 py-2.5 text-[12px] font-bold text-black transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)] disabled:opacity-40"
+        >
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <span>
+                {noBalance
+                  ? "Add Points to Lock"
+                  : overBalance
+                  ? "Stake exceeds balance"
+                  : "Lock Prediction"}
+              </span>
+              {canSubmit && <ArrowUpRight className="h-3.5 w-3.5" />}
+            </>
+          )}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-[11px]">
+        <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+          <span className="text-[var(--color-ink-muted)]">Return</span>
+          <span className="font-display font-bold tabular-nums text-[var(--color-ink)]">
+            {potentialReturn.toFixed(2)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+          <span className="text-[var(--color-ink-muted)]">Gain</span>
+          <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
+            +{potentialGain.toFixed(2)}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between text-[11px] text-[var(--color-ink-muted)]">
+        <span>
+          Points balance:{" "}
+          <span className="font-bold tabular-nums text-[var(--color-ink)]">{balance.toFixed(2)}</span>
+        </span>
+        {noBalance && <span className="font-semibold text-destructive">Add points to lock this prediction.</span>}
+        {!noBalance && overBalance && (
+          <span className="font-semibold text-destructive">Stake exceeds points balance</span>
+        )}
+        {!noBalance && !overBalance && stakeError && (
+          <span className="font-semibold text-destructive">{stakeError}</span>
+        )}
+      </div>
+    </div>
+  );
+});
+
 
 type LegendSeries = { id: string; label: string; color: string; currentPct: number };
 

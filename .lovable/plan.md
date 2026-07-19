@@ -1,49 +1,27 @@
-## Goal
-Remove "Finishing Position" (race winner) tab from the F1 race page and replace it with **Top 5 Finishers**. Add two new markets to **Race Specials**: **Fastest Lap** and **Top Constructor** (best-scoring team in the race).
 
-The `race_winner` market stays in the DB (it's the base probability used by the featured card, RaceChip, and to derive other odds) — it's just removed from the details-page tabs.
+## What's happening
 
-## Changes
+On the F1 race page, the "Your prediction" sticky slip and its stake input live at the bottom of `F1RaceDetailsPage.tsx` — a ~920-line component that also owns the Recharts market-movement chart, the market grid, wallet query, and 30s/60s polling queries.
 
-### 1. Odds builder (`src/features/f1/services/f1OddsBuilder.server.ts`)
-Add three new derivation helpers, all anchored to `buildRaceWinnerOdds` probabilities with the shared 6% overround, floor 1.05, cap 50:
-- `buildTop5Odds(winnerOdds)` — `p = clamp(winnerP * 4.2, 0.02, 0.97)`.
-- `buildFastestLapOdds(winnerOdds)` — softer distribution: `p = clamp(winnerP * 1.4 + 0.02, 0.01, 0.6)`, renormalised so probs sum ≈ 1 across drivers.
-- `buildTopConstructorRaceOdds(teamProbs)` — aggregate each team's driver winner-probabilities, renormalise, apply overround.
+Every keystroke calls `setStake(...)`, which re-renders the whole page. Two things in the current structure cause iOS to dismiss the keyboard on that re-render:
 
-### 2. Sync writer (`src/features/f1/services/f1Sync.server.ts`)
-Inside the per-race loop, in addition to `race_winner`, `podium`, `points_finish`, upsert:
-- `top_5_finish` rows per driver.
-- `fastest_lap` rows per driver.
-- `top_constructor_race` rows per team (`selection_key = team_key`, `label = team name`).
+1. **Unstable ancestor identity around the `<input>`.** The fixed slip is rendered inline inside a large conditional/JSX block that also contains the heavy Recharts tree. On each render, sibling arrays (`chartMarkets = currentMarkets.slice(0,6)`, `seriesMeta`, `splitData`) get new references, and Recharts' `ResponsiveContainer` re-measures. On mobile Safari, when the chart component mutates the DOM in the same commit as the input update, the input node can be effectively re-inserted, which drops focus and closes the keyboard.
+2. **Background polling touches the same tree.** `useQuery(["f1-race", raceId], …, { refetchInterval: 30_000 })` and `useQuery(["f1-histories", …], { refetchInterval: 60_000 })` both replace `q.data` / `chartQ.data`. If a refetch lands mid-typing, `currentMarkets` becomes a new array, `selectedMarket = currentMarkets.find(...)` becomes a new object, and if the selected id isn't in the fresh payload for a tick, the `{selectedMarket && <slip/>}` conditional unmounts and remounts the input.
 
-All use the same `f1_race_markets` upsert conflict target (`race_id,market_type,selection_key,secondary_selection_key`) — no migration needed since `market_type` is free-form text.
+The stake input itself is written correctly (controlled, no `key` that changes per keystroke, no `autoFocus`), so the fix is structural, not a one-line tweak.
 
-### 3. Settlement (`src/features/f1/services/f1Settlement.server.ts`)
-Extend `settleF1RaceById`:
-- `top_5_finish` — winning if driver in `ordered.slice(0,5)`.
-- `fastest_lap` — settle from `fetchF1RaceResults`'s per-driver `time`/laps; if provider does not expose a fastest-lap flag on the result payload, call a new adapter `fetchF1FastestLap(raceId)` hitting API-Sports `/rankings/fastestlaps?race=…` and match by driver key. If the endpoint returns empty (early race data), skip settlement for that market and let the auto-settle retry (existing behaviour for null `winning`).
-- `top_constructor_race` — sum `points` per team from `ordered`; team with max total wins; ties resolved by best finishing position.
+## Fix
 
-### 4. Race details page (`src/features/f1/pages/F1RaceDetailsPage.tsx`)
-- `SubTab` type: `"top_5_finish" | "podium" | "points_finish" | "head_to_head" | "fastest_lap" | "top_constructor_race"`.
-- `SUB_TABS_TOP`:
-  1. Top 5 Finishers (`top_5_finish`)
-  2. Podium Finishers (`podium`)
-  3. Top 10 Finishers (`points_finish`)
-- `SUB_TABS_SPECIALS`:
-  1. Teammate H2H (`head_to_head`)
-  2. Fastest Lap (`fastest_lap`)
-  3. Top Constructor (`top_constructor_race`)
-- `SECTION_TITLES` entries for the new keys ("Which 5 drivers finish top 5?", "Who sets the fastest lap?", "Which team scores the most points?").
-- Default `subTab` on load becomes `top_5_finish`; the `topTab` switch effect flips to `top_5_finish` / `head_to_head`.
-- Grouping map (`g`) initialised with all six keys.
-- `top_constructor_race` rows render with team badge/flag instead of the driver portrait (reuse existing team lookup already loaded from `getF1Race`).
+Isolate the slip so a keystroke re-renders only the slip, not the chart/markets tree, and stop refetches from tearing the input down.
 
-### 5. Backfill for existing scheduled races
-Trigger the existing admin "Sync all" once the code ships (no data migration required) so open races gain the new market rows. Races already `finished` are ignored by the sync loop, which is correct.
+1. **Extract `F1BetSlip` into its own `React.memo` component** in `src/features/f1/pages/F1RaceDetailsPage.tsx` (or a sibling file). It owns `stake` state internally and receives stable props: `selectedMarket`, `selectedDriverName`, `raceName`, `sectionTitle`, `balance`, `onClear`, `onSubmit`, `isPending`. Because it holds its own state, `setStake` no longer re-renders the parent, so the chart/markets don't recompute per keystroke and the input node stays put.
+2. **Stabilise the mount around the input.** Always render the slip container (fixed positioned, `pointer-events-none` + inner `pointer-events-auto`) and toggle visibility via a `data-open` attribute / CSS, instead of `{selectedMarket && <div>…</div>}`. This guarantees the `<input>` DOM node is never unmounted while the user is typing, even if `selectedMarket` briefly becomes null during a refetch.
+3. **Preserve selection across refetches.** In the parent, keep `selectedMarket` sticky: when a refetch returns markets that don't include `selectedId`, keep the previous `selectedMarket` object in a `useRef` and pass that to the slip until a new selection is made. This prevents the slip from flashing empty on the 30s poll.
+4. **Reduce chart re-renders unrelated to typing.** Memoize `chartMarkets`/`seriesMeta`/`splitData` on stable primitives (e.g. `chartIdsKey`) rather than array identities, and wrap the chart section in its own `React.memo`d `F1MarketChart` component. Not strictly required for the keyboard bug once step 1 lands, but removes the wasted work that made it easy to trigger.
+5. **Verify.** Open `/f1/races/:raceId` on a mobile viewport, tap the stake input, type several digits, and confirm the keyboard stays up and the value updates. Repeat while a 30s poll fires (wait ~30s mid-typing) to confirm the slip and focus survive a refetch.
 
-## Out of scope
-- No change to season page / featured card (still driven by `race_winner`).
-- No change to championship outrights.
-- No new DB migration (schema already accommodates new `market_type` values).
+## Files touched
+
+- `src/features/f1/pages/F1RaceDetailsPage.tsx` — extract `F1BetSlip` (and optionally `F1MarketChart`), switch the slip from conditional mount to always-mounted + hidden, add sticky-selection ref.
+
+No schema, server function, or business-logic changes. UI/presentation only.
