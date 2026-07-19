@@ -133,14 +133,43 @@ export async function settleF1RaceById(raceId: string) {
 // Called by cron: finds races that started > 2 hours ago and are not settled, tries to settle.
 export async function runF1AutoSettle() {
   const cutoff = new Date(Date.now() - 2 * 3600 * 1000).toISOString();
-  const { data: races } = await (supabaseAdmin as any)
+
+  const { data: openBets } = await (supabaseAdmin as any)
+    .from("f1_bets")
+    .select("race_id")
+    .eq("status", "open")
+    .not("race_id", "is", null)
+    .limit(100);
+
+  const openRaceIds = Array.from(new Set((openBets ?? []).map((b: { race_id: string }) => b.race_id).filter(Boolean)));
+  const raceMap = new Map<string, { id: string }>();
+
+  if (openRaceIds.length) {
+    const { data: priorityRaces } = await (supabaseAdmin as any)
+      .from("f1_races")
+      .select("id")
+      .is("settled_at", null)
+      .lt("starts_at", cutoff)
+      .in("id", openRaceIds)
+      .order("starts_at", { ascending: false })
+      .limit(10);
+
+    for (const race of priorityRaces ?? []) raceMap.set(race.id, race);
+  }
+
+  const { data: fallbackRaces } = await (supabaseAdmin as any)
     .from("f1_races")
     .select("id")
     .is("settled_at", null)
     .lt("starts_at", cutoff)
+    .order("starts_at", { ascending: true })
     .limit(5);
+
+  for (const race of fallbackRaces ?? []) raceMap.set(race.id, race);
+
+  const races = Array.from(raceMap.values()).slice(0, 10);
   const results: any[] = [];
-  for (const r of races ?? []) {
+  for (const r of races) {
     try {
       const res = await settleF1RaceById(r.id);
       results.push({ raceId: r.id, ...res });
@@ -148,5 +177,5 @@ export async function runF1AutoSettle() {
       results.push({ raceId: r.id, ok: false, error: e.message });
     }
   }
-  return { checked: races?.length ?? 0, results };
+  return { checked: races.length, results };
 }
