@@ -1,53 +1,40 @@
-
 ## Goal
+Reverse the auto-void refunds on druggie777's 6 UFC bets, restore them to pending, then grade against the real fight results and payout/settle.
 
-Stop burning API-MMA quota. The paid plan has generous limits, but the current sync fans out enormous numbers of calls per 30s cron tick, which is what's causing the intermittent "rate limit / no data" behaviour.
+## Context (from the ledger)
+Six bets were refunded on 2026-07-19 12:45 UTC by the "provider_missing_method" sweep. They need to be un-refunded (debit the refund back) and re-graded once we have method + round for each fight. Two other bets on Duncan vs Cannonier (round r1 / r2) were cancelled earlier by the user himself — those stay as-is.
 
-## What's wasteful today
+| Bet | Fight | Market · Pick | Stake | Odds | Winner in DB |
+|-----|-------|---------------|-------|------|--------------|
+| ac9254d3 | Montes vs McMillen | total_rounds · Over 2.5 | 19.14 | 3.04 | draw |
+| 008d1ac5 | Delgado vs Bashi | round · Goes the distance | 69.00 | 2.00 | Delgado (a) |
+| da3b70b2 | Delgado vs Bashi | total_rounds · Over 2.5 | 10.00 | 2.00 | Delgado (a) |
+| 7f0c4d47 | Delgado vs Bashi | moneyline · Delgado | 10.00 | 1.99 | Delgado (a) |
+| 9fb5cdc8 | Duncan vs Cannonier | total_rounds · Under 2.5 | 11.00 | 2.37 | Duncan (a) |
+| 20df97d6 | Ramirez vs Hooper | round · Round 1 | 16.00 | 2.19 | Hooper (b) |
 
-In `src/lib/ufc-odds.server.ts` → `runUfcOddsSync` runs every 30s inside the event window. For **every fight on the card** it currently calls:
+## Steps
+1. Insert a `debit` wallet_transaction for each of the 6 refund rows (amount = original refund, note = "Reversal of auto-void — regrading with final result"), flipping bet status back to `open` and clearing `settled_at`/`payout`.
+2. Grade each bet using the method + ending round you provide (see question below):
+   - moneyline: pays if winner matches `selection_key`
+   - round · rN: pays if method is KO/TKO/SUB and `result_round = N`
+   - round · distance: pays if method is Decision (any)
+   - total_rounds · over/under 2.5: over pays if fight ended in R3+ or went to decision; under pays if it ended in R1 or R2 by finish
+3. For each bet: write the appropriate credit (win → `credit` for `potential_payout`; loss → no credit), set status to `won`/`lost`/`void`, and stamp `settled_at`.
+4. Update `ufc_fights.result_method` / `result_round` for these four fights so future queries are consistent.
+5. Verify druggie777's wallet balance matches the running ledger after the changes.
 
-- `upsertFighter` × 2 → `fetchFighter` + `fetchFighterRecordSummary` (2 calls each fighter = 4/fight)
-- `syncH2H` → `fetchFighterFightHistory(id, 16)` which loops **16 seasons × 2 fighters = up to 32 calls/fight**
-- `fetchOddsForFight` (1/fight)
-- `fetchFightStats` when live (1/fight)
+## Question I need answered before I can grade
+The API-MMA feed didn't return method/round for these fights — that's why the sweep voided them. Please provide the final result for each (I'll do the math). Example format:
 
-For a 10-fight card that's ~370 calls every 30 seconds — the vast majority re-fetching data that doesn't change (fighter bio, career record, past fight history).
+- Montes vs McMillen — Draw, went to decision (3 rounds)?
+- Delgado vs Bashi — Delgado by KO R2 / SUB R1 / Decision?
+- Duncan vs Cannonier — Duncan by KO R? / SUB R? / Decision?
+- Ramirez vs Hooper — Hooper by KO R? / SUB R? / Decision?
 
-Also `src/lib/apimma.server.ts` header comment still says "Free plan: 100 req/day" — misleading now that the account is paid.
+Once you send those, I'll implement the reversal + regrade in one atomic migration and confirm the final wallet balance.
 
-## Fix
-
-All edits stay in `src/lib/ufc-odds.server.ts` and `src/lib/apimma.server.ts`. No schema changes — use existing `updated_at` / row timestamps as the freshness signal.
-
-1. **Update the plan comment** in `apimma.server.ts` to reflect the paid tier (remove "Free plan: 100 req/day" note).
-
-2. **Skip fighter enrichment when fresh** in `upsertFighter`:
-   - If `existing.updated_at` is < 7 days old AND the row has `record_w`, `height_cm`, `reach_cm` populated → return `existing.id` without calling `fetchFighter` / `fetchFighterRecordSummary` / `searchFighter`.
-   - First-time inserts and stale rows still enrich normally.
-   - Saves ~4 calls/fight/tick.
-
-3. **Skip H2H when fresh** in `syncH2H`:
-   - Before fetching, `SELECT max(created_at) FROM ufc_fight_h2h WHERE fight_id = ?`.
-   - If any row exists and is < 24h old, return early. H2H and recent-form data don't change hour-to-hour.
-   - Saves up to ~32 calls/fight/tick.
-
-4. **Reduce `fetchFighterFightHistory` default** from `seasonsBack = 16` (which is what the `syncH2H` call currently passes) down to `seasonsBack = 3`. Three seasons already covers >95% of active UFC fighters' recent form and direct H2H. Update the call in `syncH2H` accordingly. Saves ~26 calls/fight even on the first run.
-
-5. **Throttle odds refresh per fight** in `syncOddsForFight`:
-   - Read the latest `ufc_market_snapshots.sampled_at` for the fight.
-   - If < 3 minutes old AND commence is > 1 hour away → skip the `fetchOddsForFight` call for this tick.
-   - Inside the final hour before commence, and once live, keep the current 30s cadence so line moves and closing prices stay accurate.
-   - Saves roughly (10 fights − 1) × 1 call every 30s during the pre-event window.
-
-6. **Only sync stats for LIVE fights**, not `FT`/`AFT`. Post-fight stats don't change, and the current code re-pulls them every tick until the fight row flips to `finished`. Change the guard from `["LIVE","FT","AFT"]` to `["LIVE"]` and add a "not already stored" short-circuit for the LIVE case (skip if a stats row exists and was updated in the last 30s).
-
-## Expected result
-
-Pre-event steady state drops from ~370 calls / 30s to well under 20 calls / 30s for a 10-fight card, with no user-visible change: odds still refresh, live stats still stream, H2H still populates on the first sync after an event is loaded. During the final hour before commence and once fights go live, cadence stays at 30s as today.
-
-## Out of scope
-
-- No changes to `runUfcAutoSettle`, market mapping, or settlement RPCs.
-- No new tables / migrations.
-- No UI changes.
+## Technical notes
+- All wallet mutations go through `wallet_transactions` with correct `balance_before`/`balance_after` to keep the ledger consistent.
+- Done as a single SQL migration so it's auditable and idempotent.
+- No code changes to the auto-settle pipeline in this task (that's already been optimised for the paid API in the previous turn).
