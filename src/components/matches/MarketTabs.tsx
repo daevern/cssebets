@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
@@ -188,13 +188,12 @@ function OddsButton({
   );
 }
 
-function StakeSlip({
+const StakeSlip = memo(function StakeSlip({
   marketLabel,
   question,
   selectionText,
   odds,
-  stake,
-  setStake,
+  resetKey,
   onSubmit,
   onClear,
   isPending,
@@ -207,9 +206,8 @@ function StakeSlip({
   question?: string;
   selectionText: string;
   odds: number;
-  stake: string;
-  setStake: (s: string) => void;
-  onSubmit: () => void;
+  resetKey: string;
+  onSubmit: (stake: string) => void;
   onClear: () => void;
   isPending: boolean;
   error: string | null;
@@ -217,6 +215,12 @@ function StakeSlip({
   sticky?: boolean;
   matchName?: string;
 }) {
+  const [stake, setStake] = useState(String(MIN_STAKE));
+
+  useEffect(() => {
+    setStake(String(MIN_STAKE));
+  }, [resetKey]);
+
   const stakeNum = Number(stake) || 0;
   const potentialReturn = stakeNum * odds;
   const potentialGain = potentialReturn - stakeNum;
@@ -295,7 +299,7 @@ function StakeSlip({
         <button
           type="button"
           disabled={!canSubmit}
-          onClick={onSubmit}
+          onClick={() => onSubmit(stake)}
           className="flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[var(--color-neon)] px-4 py-2.5 text-[12px] font-bold text-black transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)]"
         >
           {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : (
@@ -341,7 +345,7 @@ function StakeSlip({
       )}
     </div>
   );
-}
+});
 
 
 function SuspendedBadge() {
@@ -434,10 +438,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   }, [data]);
   const getGroup = (k: MarketKey): OddsRow[] => (isMarketActive(k) ? (grouped[k] ?? []) : []);
 
-  const [stakes, setStakes] = useState<Record<string, string>>({});
   const [picks, setPicks] = useState<Record<string, { selection: string; odds: number } | null>>({});
   const [csPicks, setCsPicks] = useState<Record<string, number>>({});
-  const [csStakes, setCsStakes] = useState<Record<string, string>>({});
 
   const stakeError = (n: number) =>
     !Number.isFinite(n) || n < MIN_STAKE
@@ -457,11 +459,11 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   const clearSlipId = (key: string) => { slipIdsRef.current.delete(key); };
 
   const mut = useMutation({
-    mutationFn: async (market: MarketKey) => {
+    mutationFn: async ({ market, stake }: { market: MarketKey; stake: string }) => {
       if (publicMode) { setSignInOpen(true); return null as any; }
       const pick = picks[market];
       if (!pick) throw new Error("Select an option");
-      const stakeVal = stakes[market] ?? String(MIN_STAKE);
+      const stakeVal = stake || String(MIN_STAKE);
       const n = Number(stakeVal);
       const err = stakeError(n);
       if (err) throw new Error(err);
@@ -483,9 +485,10 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         data: { matchId, market, selection: pick.selection, stake: n, clientRequestId: slipId },
       });
     },
-    onSuccess: (result, market) => {
+    onSuccess: (result, variables) => {
       if (publicMode || result == null) return;
       toast.success("Bet placed");
+      const market = variables.market;
       clearSlipId(`single:${market}`);
       setPicks((prev) => ({ ...prev, [market]: null }));
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
@@ -496,11 +499,11 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   });
 
   const csMut = useMutation({
-    mutationFn: async (selection: string) => {
+    mutationFn: async ({ selection, stake }: { selection: string; stake: string }) => {
       if (publicMode) { setSignInOpen(true); return null as any; }
       const odds = csPicks[selection];
       if (!odds) throw new Error("Selection missing");
-      const stakeVal = csStakes[selection] ?? String(MIN_STAKE);
+      const stakeVal = stake || String(MIN_STAKE);
       const n = Number(stakeVal);
       const err = stakeError(n);
       if (err) throw new Error(err);
@@ -510,12 +513,12 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
         data: { matchId, market: "correct_score", selection, stake: n, clientRequestId: slipId },
       });
     },
-    onSuccess: (result, selection) => {
+    onSuccess: (result, variables) => {
       if (publicMode || result == null) return;
+      const selection = variables.selection;
       toast.success(`Bet placed on ${selectionLabel(selection)}`);
       clearSlipId(`cs:${selection}`);
       setCsPicks((prev) => { const { [selection]: _o, ...rest } = prev; return rest; });
-      setCsStakes((prev) => { const { [selection]: _o, ...rest } = prev; return rest; });
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
       qc.invalidateQueries({ queryKey: ["my-wallet"] });
       qc.invalidateQueries({ queryKey: ["my-match-pending-bets", matchId, user?.id] });
@@ -600,9 +603,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     if (!rows.length) return <div className="text-[11px] text-[var(--color-ink-muted)]">Not available.</div>;
     const suspended = isMarketSuspended(market);
     const pick = picks[market];
-    const stake = stakes[market] ?? String(MIN_STAKE);
-    const sErr = stakeError(Number(stake));
-    const isPending = mut.isPending && mut.variables === market;
+    const isPending = mut.isPending && mut.variables?.market === market;
 
     return (
       <div>
@@ -636,12 +637,11 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
             question={marketQuestion(market, homeTeam, awayTeam)}
             selectionText={selectionLabel(pick.selection)}
             odds={pick.odds}
-            stake={stake}
-            setStake={(v) => setStakes((prev) => ({ ...prev, [market]: v }))}
-            onSubmit={() => mut.mutate(market)}
+            resetKey={`${market}:${pick.selection}`}
+            onSubmit={(stake) => mut.mutate({ market, stake })}
             onClear={() => setPicks((prev) => ({ ...prev, [market]: null }))}
             isPending={isPending}
-            error={sErr}
+            error={null}
             balance={balance}
             sticky
           />
@@ -655,7 +655,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
     if (!allRows.length) return <div className="text-[11px] text-[var(--color-ink-muted)]">Not available.</div>;
     const rows = showAllScores ? allRows : allRows.filter((r) => POPULAR_SCORES.includes(r.selection));
     const selectedKeys = Object.keys(csPicks);
-    const pendingSelection = csMut.isPending ? (csMut.variables as string | undefined) : undefined;
+    const pendingSelection = csMut.isPending ? csMut.variables : undefined;
     const csSuspended = isMarketSuspended("correct_score");
     return (
       <div>
@@ -685,7 +685,6 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
                     setCsPicks((prev) => { const { [o.selection]: _o, ...rest } = prev; return rest; });
                   } else {
                     setCsPicks((prev) => ({ ...prev, [o.selection]: Number(o.odds) }));
-                    setCsStakes((prev) => ({ ...prev, [o.selection]: prev[o.selection] ?? String(MIN_STAKE) }));
                   }
                 }}
               />
@@ -719,9 +718,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
             </div>
             {selectedKeys.map((sel) => {
               const odds = csPicks[sel];
-              const stake = csStakes[sel] ?? String(MIN_STAKE);
-              const sErr = stakeError(Number(stake));
-              const isPending = pendingSelection === sel;
+              const isPending = pendingSelection?.selection === sel;
               return (
                 <StakeSlip
                   key={sel}
@@ -729,12 +726,11 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
                   question={`Will the final score be ${selectionLabel(sel)}?`}
                   selectionText={selectionLabel(sel)}
                   odds={odds}
-                  stake={stake}
-                  setStake={(v) => setCsStakes((prev) => ({ ...prev, [sel]: v }))}
-                  onSubmit={() => csMut.mutate(sel)}
+                  resetKey={`correct_score:${sel}`}
+                  onSubmit={(stake) => csMut.mutate({ selection: sel, stake })}
                   onClear={() => setCsPicks((prev) => { const { [sel]: _o, ...rest } = prev; return rest; })}
                   isPending={isPending}
-                  error={sErr}
+                  error={null}
                   balance={balance}
                 />
               );
