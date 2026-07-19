@@ -107,6 +107,40 @@ function MyPredictionsPage() {
   });
 
 
+  const { data: f1Bets } = useQuery({
+    queryKey: ["my-f1-bets", uid],
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("f1_bets")
+        .select("*, f1_races(name, country, starts_at, status, season)")
+        .eq("user_id", uid!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data: f1ChampBets } = useQuery({
+    queryKey: ["my-f1-champ-bets", uid],
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("f1_championship_bets")
+        .select("*")
+        .eq("user_id", uid!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   const settleFn = useServerFn(settleFinishedPending);
 
   useEffect(() => {
@@ -135,11 +169,18 @@ function MyPredictionsPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "ufc_bets", filter: `user_id=eq.${uid}` }, () => {
         qc.invalidateQueries({ queryKey: ["my-ufc-bets", uid] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "f1_bets", filter: `user_id=eq.${uid}` }, () => {
+        qc.invalidateQueries({ queryKey: ["my-f1-bets", uid] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "f1_championship_bets", filter: `user_id=eq.${uid}` }, () => {
+        qc.invalidateQueries({ queryKey: ["my-f1-champ-bets", uid] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [qc, uid]);
 
-  const hasAny = (data?.length ?? 0) + (ufcBets?.length ?? 0) > 0;
+  const hasAny = (data?.length ?? 0) + (ufcBets?.length ?? 0) + (f1Bets?.length ?? 0) + (f1ChampBets?.length ?? 0) > 0;
+
 
   return (
     <PageShell kicker="FIFA WORLD CUP · 2026" title="Your" titleAccent="Picks">
@@ -163,9 +204,12 @@ function MyPredictionsPage() {
         </StencilPanel>
       ) : (
         <div className="space-y-3">
+          {(f1Bets ?? []).map((b) => <F1BetRow key={b.id} b={b} />)}
+          {(f1ChampBets ?? []).map((b) => <F1ChampBetRow key={b.id} b={b} />)}
           {(ufcBets ?? []).map((b) => <UfcBetRow key={b.id} b={b} />)}
           {(data ?? []).map((p) => <PredictionRow key={p.id} p={p} />)}
         </div>
+
       )}
     </PageShell>
 
@@ -668,4 +712,163 @@ function UfcBetRow({ b }: { b: any }) {
     </StencilPanel>
   );
 }
+
+function CountryFlagImg({ country }: { country: string | null | undefined }) {
+  const url = country ? teamFlagUrl(country, 160) : null;
+  if (!url) {
+    return (
+      <div className="grid h-9 w-14 place-items-center border border-border/40 bg-[var(--color-surface)] text-[10px] font-bold uppercase tracking-wider text-[var(--color-ink)] shadow-sm">
+        {(country ?? "F1").slice(0, 3)}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt={`${country} flag`}
+      className="h-9 w-14 shrink-0 border border-border/40 object-cover shadow-sm"
+      loading="lazy"
+    />
+  );
+}
+
+function F1TicketShell({
+  kicker,
+  ticketId,
+  title,
+  subtitle,
+  country,
+  status,
+  market,
+  selection,
+  stakeN,
+  oddsN,
+  payoutN,
+}: {
+  kicker: string;
+  ticketId: string;
+  title: string;
+  subtitle: string;
+  country: string | null;
+  status: string;
+  market: string;
+  selection: string;
+  stakeN: number;
+  oddsN: number;
+  payoutN: number;
+}) {
+  const displayStatus = status === "open" ? "pending" : status;
+  const profit = (payoutN - stakeN).toFixed(2);
+  const statusTone =
+    status === "won" ? "text-[var(--color-neon)] border-[var(--color-neon)]/60 bg-[var(--color-neon)]/10"
+    : status === "lost" ? "text-destructive border-destructive/60 bg-destructive/10"
+    : "text-[var(--color-ink-muted)] border-[var(--color-surface-border)] bg-[var(--color-surface)]/40";
+  return (
+    <StencilPanel
+      accent={status === "won"}
+      kicker={<><span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-neon)] animate-pulse" /> {kicker}</>}
+      meta={`#${ticketId}`}
+    >
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)] mb-2">Event</div>
+            <div className="flex items-center gap-3">
+              <CountryFlagImg country={country} />
+              <div className="min-w-0">
+                <div className="font-display font-bold text-base leading-tight truncate">{title}</div>
+                <div className="text-[11px] text-[var(--color-ink-muted)] truncate">{subtitle}</div>
+              </div>
+            </div>
+          </div>
+          <div className={`shrink-0 border px-2 py-1 text-[10px] uppercase tracking-[0.22em] font-bold ${statusTone}`}>
+            {displayStatus}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="border border-dashed border-[var(--color-surface-border)] px-2.5 py-1.5">
+            <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">Market</div>
+            <div className="font-medium truncate">{market}</div>
+          </div>
+          <div className="border border-dashed border-[var(--color-surface-border)] px-2.5 py-1.5">
+            <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">Selection</div>
+            <div className="font-medium truncate">{selection}</div>
+          </div>
+        </div>
+
+        <div className="border-t border-dashed border-[var(--color-surface-border)]" />
+
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">Stake</div>
+            <div className="font-mono font-semibold tabular-nums">{stakeN.toFixed(2)}</div>
+          </div>
+          <div>
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">Odds</div>
+            <div className="font-mono font-semibold tabular-nums">{oddsN.toFixed(2)}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">Potential</div>
+            <div className="font-mono font-bold text-[var(--color-neon)] text-lg leading-tight tabular-nums">{payoutN.toFixed(2)}</div>
+            <div className="text-[10px] text-[var(--color-ink-muted)] tabular-nums">+{profit} profit</div>
+          </div>
+        </div>
+      </div>
+    </StencilPanel>
+  );
+}
+
+function humanizeMarket(key: string): string {
+  return String(key ?? "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function F1BetRow({ b }: { b: any }) {
+  const stakeN = Number(b.stake);
+  const oddsN = Number(b.odds_locked);
+  const payoutN = Number(b.potential_payout ?? stakeN * oddsN);
+  const ticketId = String(b.id).replace(/-/g, "").slice(0, 10).toUpperCase();
+  const race = b.f1_races;
+  const startsLabel = race?.starts_at
+    ? new Date(race.starts_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+    : "—";
+  return (
+    <F1TicketShell
+      kicker="F1 Race Ticket"
+      ticketId={ticketId}
+      title={race?.name ?? "Grand Prix"}
+      subtitle={`${race?.country ?? ""}${race?.country ? " · " : ""}${startsLabel}`}
+      country={race?.country ?? null}
+      status={b.status ?? "pending"}
+      market={humanizeMarket(b.market_type)}
+      selection={b.selection_label ?? b.selection_key}
+      stakeN={stakeN}
+      oddsN={oddsN}
+      payoutN={payoutN}
+    />
+  );
+}
+
+function F1ChampBetRow({ b }: { b: any }) {
+  const stakeN = Number(b.stake);
+  const oddsN = Number(b.odds_locked);
+  const payoutN = Number(b.potential_payout ?? stakeN * oddsN);
+  const ticketId = String(b.id).replace(/-/g, "").slice(0, 10).toUpperCase();
+  return (
+    <F1TicketShell
+      kicker="F1 Championship Ticket"
+      ticketId={ticketId}
+      title={`${b.season} Championship`}
+      subtitle={humanizeMarket(b.market_type)}
+      country={null}
+      status={b.status ?? "pending"}
+      market={humanizeMarket(b.market_type)}
+      selection={b.selection_label ?? b.selection_key}
+      stakeN={stakeN}
+      oddsN={oddsN}
+      payoutN={payoutN}
+    />
+  );
+}
+
 
