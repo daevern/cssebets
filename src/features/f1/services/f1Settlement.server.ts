@@ -123,7 +123,7 @@ export async function runF1AutoSettle() {
   const { data: races } = await (supabaseAdmin as any)
     .from("f1_races")
     .select("id")
-    .neq("status", "finished")
+    .is("settled_at", null)
     .lt("starts_at", cutoff)
     .limit(5);
   const results: any[] = [];
