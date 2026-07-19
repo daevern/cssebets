@@ -330,6 +330,32 @@ export const placeFootballBet = createServerFn({ method: "POST" })
       }
     }
 
+    // Block duplicate open bets on the same event+market+selection so users
+    // can't accidentally double-stake the same pick (mirrors UFC behaviour).
+    const { data: sel } = await (supabaseAdmin as any)
+      .from("sports_market_selections")
+      .select("selection_key")
+      .eq("id", data.selectionId)
+      .maybeSingle();
+    if (sel?.selection_key) {
+      const { data: dupe } = await (supabaseAdmin as any)
+        .from("sports_bets")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("sport_code", "football")
+        .eq("sports_event_id", data.eventId)
+        .eq("sports_market_id", data.marketId)
+        .eq("selection_key", sel.selection_key)
+        .in("status", ["pending", "open"])
+        .limit(1)
+        .maybeSingle();
+      if (dupe?.id) {
+        throw new Error(
+          "You already have an open bet on this selection. Wait for it to settle before betting again.",
+        );
+      }
+    }
+
     const { data: betId, error } = await (supabaseAdmin as any).rpc("place_sports_bet_atomic", {
       p_user_id: userId,
       p_event_id: data.eventId,
