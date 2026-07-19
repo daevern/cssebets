@@ -107,6 +107,40 @@ function MyPredictionsPage() {
   });
 
 
+  const { data: f1Bets } = useQuery({
+    queryKey: ["my-f1-bets", uid],
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("f1_bets")
+        .select("*, f1_races(name, country, starts_at, status, season)")
+        .eq("user_id", uid!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const { data: f1ChampBets } = useQuery({
+    queryKey: ["my-f1-champ-bets", uid],
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("f1_championship_bets")
+        .select("*")
+        .eq("user_id", uid!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   const settleFn = useServerFn(settleFinishedPending);
 
   useEffect(() => {
@@ -135,11 +169,18 @@ function MyPredictionsPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "ufc_bets", filter: `user_id=eq.${uid}` }, () => {
         qc.invalidateQueries({ queryKey: ["my-ufc-bets", uid] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "f1_bets", filter: `user_id=eq.${uid}` }, () => {
+        qc.invalidateQueries({ queryKey: ["my-f1-bets", uid] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "f1_championship_bets", filter: `user_id=eq.${uid}` }, () => {
+        qc.invalidateQueries({ queryKey: ["my-f1-champ-bets", uid] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [qc, uid]);
 
-  const hasAny = (data?.length ?? 0) + (ufcBets?.length ?? 0) > 0;
+  const hasAny = (data?.length ?? 0) + (ufcBets?.length ?? 0) + (f1Bets?.length ?? 0) + (f1ChampBets?.length ?? 0) > 0;
+
 
   return (
     <PageShell kicker="FIFA WORLD CUP · 2026" title="Your" titleAccent="Picks">
