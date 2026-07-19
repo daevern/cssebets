@@ -141,6 +141,28 @@ function MyPredictionsPage() {
     },
   });
 
+  const { data: f1DriversMap } = useQuery({
+    queryKey: ["my-f1-drivers-map"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("f1_drivers").select("driver_key, name, photo_url");
+      const m: Record<string, { name: string; photo_url: string | null }> = {};
+      for (const d of (data ?? []) as any[]) m[d.driver_key] = { name: d.name, photo_url: d.photo_url };
+      return m;
+    },
+  });
+
+  const { data: f1TeamsMap } = useQuery({
+    queryKey: ["my-f1-teams-map"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("f1_constructors").select("team_key, name, logo_url");
+      const m: Record<string, { name: string; logo_url: string | null }> = {};
+      for (const t of (data ?? []) as any[]) m[t.team_key] = { name: t.name, logo_url: t.logo_url };
+      return m;
+    },
+  });
+
   const settleFn = useServerFn(settleFinishedPending);
 
   useEffect(() => {
