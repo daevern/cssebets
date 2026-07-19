@@ -263,6 +263,29 @@ export const listMyFootballBets = createServerFn({ method: "GET" })
     return { bets };
   });
 
+// Lightweight per-event fetch used by the match details page so we can
+// disable selections the user already has an open bet on (same UX as UFC).
+export const listMyFootballOpenBetsForEvent = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ eventId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: rows } = await supabase
+      .from("sports_bets" as any)
+      .select("market_key, selection_key, sports_market_id")
+      .eq("user_id", userId)
+      .eq("sport_code", "football")
+      .eq("sports_event_id", data.eventId)
+      .in("status", ["pending", "open"]);
+    return {
+      openSelections: ((rows as any[]) ?? []).map((r) => ({
+        marketKey: r.market_key as string,
+        selectionKey: r.selection_key as string,
+        marketId: r.sports_market_id as string,
+      })),
+    };
+  });
+
 // ---------- Place bet ----------
 
 export const placeFootballBet = createServerFn({ method: "POST" })
@@ -304,6 +327,32 @@ export const placeFootballBet = createServerFn({ method: "POST" })
       const maxAge = Number(mkt.stale_after_seconds ?? 600) * 1000;
       if (age > maxAge) {
         throw new Error("Odds are stale — please refresh and try again.");
+      }
+    }
+
+    // Block duplicate open bets on the same event+market+selection so users
+    // can't accidentally double-stake the same pick (mirrors UFC behaviour).
+    const { data: sel } = await (supabaseAdmin as any)
+      .from("sports_market_selections")
+      .select("selection_key")
+      .eq("id", data.selectionId)
+      .maybeSingle();
+    if (sel?.selection_key) {
+      const { data: dupe } = await (supabaseAdmin as any)
+        .from("sports_bets")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("sport_code", "football")
+        .eq("sports_event_id", data.eventId)
+        .eq("sports_market_id", data.marketId)
+        .eq("selection_key", sel.selection_key)
+        .in("status", ["pending", "open"])
+        .limit(1)
+        .maybeSingle();
+      if (dupe?.id) {
+        throw new Error(
+          "You already have an open bet on this selection. Wait for it to settle before betting again.",
+        );
       }
     }
 

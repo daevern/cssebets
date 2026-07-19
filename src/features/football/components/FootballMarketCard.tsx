@@ -7,10 +7,12 @@ export function FootballMarketCard({
   market,
   onSelect,
   selectedSelectionId,
+  openBetKeys,
 }: {
   market: FootballMarket;
   onSelect: (marketId: string, selection: FootballSelection) => void;
   selectedSelectionId?: string | null;
+  openBetKeys?: Set<string>;
 }) {
   const disabled = market.status !== "open";
   const [showHistory, setShowHistory] = useState(false);
@@ -54,18 +56,22 @@ export function FootballMarketCard({
       >
         {market.selections.map((s) => {
           const isSelected = selectedSelectionId === s.id;
-          const selDisabled = disabled || s.status !== "open";
+          const alreadyBet = openBetKeys?.has(`${market.id}::${s.key}`) ?? false;
+          const selDisabled = disabled || s.status !== "open" || alreadyBet;
           return (
             <button
               key={s.id}
               type="button"
               disabled={selDisabled}
               onClick={() => onSelect(market.id, s)}
+              aria-label={alreadyBet ? `${s.displayName} — bet already placed` : s.displayName}
               className={`min-h-11 rounded-lg border px-3 py-2.5 text-left transition-colors ${
-                isSelected
-                  ? "border-[var(--neon)] bg-[var(--neon)]/10"
-                  : "border-[var(--color-surface-border)]/70 bg-[var(--surface)]/40 hover:border-[var(--neon)]/40 active:bg-white/5"
-              } ${selDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                alreadyBet
+                  ? "border-[var(--neon)]/40 bg-[var(--neon)]/5"
+                  : isSelected
+                    ? "border-[var(--neon)] bg-[var(--neon)]/10"
+                    : "border-[var(--color-surface-border)]/70 bg-[var(--surface)]/40 hover:border-[var(--neon)]/40 active:bg-white/5"
+              } ${selDisabled ? "opacity-60 cursor-not-allowed" : ""}`}
             >
               <div className="text-[11px] text-[var(--ink-muted)] truncate">
                 {s.displayName}
@@ -73,6 +79,11 @@ export function FootballMarketCard({
               <div className="text-base font-bold tabular-nums text-[var(--ink)]">
                 {s.odds.toFixed(2)}
               </div>
+              {alreadyBet ? (
+                <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--neon)]">
+                  Bet placed
+                </div>
+              ) : null}
             </button>
           );
         })}

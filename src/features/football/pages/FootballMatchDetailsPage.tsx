@@ -1,7 +1,7 @@
 import { lazy, Suspense, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getFootballMatch } from "../football.functions";
+import { getFootballMatch, listMyFootballOpenBetsForEvent } from "../football.functions";
 import { FootballMatchHeader } from "../components/FootballMatchHeader";
 import { FootballMarketCard } from "../components/FootballMarketCard";
 import { FootballBetSlip } from "../components/FootballBetSlip";
@@ -29,6 +29,19 @@ export function FootballMatchDetailsPage({ matchId }: { matchId: string }) {
     queryFn: () => fetcher({ data: { matchId } }),
     refetchInterval: 15_000,
   });
+  const openBetsFetcher = useServerFn(listMyFootballOpenBetsForEvent);
+  const openBetsQ = useQuery({
+    queryKey: ["football-my-bets", matchId],
+    queryFn: () => openBetsFetcher({ data: { eventId: matchId } }),
+    refetchInterval: 30_000,
+  });
+  const openBetKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const b of openBetsQ.data?.openSelections ?? []) {
+      set.add(`${b.marketId}::${b.selectionKey}`);
+    }
+    return set;
+  }, [openBetsQ.data]);
 
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [pick, setPick] = useState<{
@@ -120,6 +133,7 @@ export function FootballMatchDetailsPage({ matchId }: { matchId: string }) {
                 setPick({ marketId, selection })
               }
               selectedSelectionId={pick?.selection.id ?? null}
+              openBetKeys={openBetKeys}
             />
           ))
         )}
