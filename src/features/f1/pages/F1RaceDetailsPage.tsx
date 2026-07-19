@@ -722,7 +722,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
         noBalance={noBalance}
         isPending={placeMut.isPending}
         onClear={() => setSelectedId(null)}
-        onSubmit={(n) => placeMut.mutate(n)}
+        onSubmit={(n: number) => placeMut.mutate(n)}
       />
 
       <PageFooter />
