@@ -132,17 +132,27 @@ export function FootballMatchDetailsPage({ matchId }: { matchId: string }) {
         </Suspense>
       </div>
 
-      {pick && !isClosed ? (
-        <FootballBetSlip
-          eventId={data.match.id}
-          marketId={pick.marketId}
-          selection={pick.selection}
-          onClose={() => setPick(null)}
-        />
-      ) : null}
+      {(() => {
+        // Keep the slip mounted across refetches so iOS doesn't drop focus.
+        // Preserve the last non-null pick so `visibility:hidden` transitions
+        // don't unmount the input while the user is typing.
+        const stickyPick = pick ?? lastPickRef.current;
+        if (pick) lastPickRef.current = pick;
+        if (!stickyPick) return null;
+        return (
+          <FootballBetSlip
+            eventId={data.match.id}
+            marketId={stickyPick.marketId}
+            selection={stickyPick.selection}
+            onClose={() => setPick(null)}
+            open={!!pick && !isClosed}
+          />
+        );
+      })()}
     </div>
   );
 }
+
 
 function CategoryChip({
   label,
