@@ -1,23 +1,30 @@
-## Diagnosis
+## What I verified
 
-Belgium GP shows pending because settlement never ran, even though the race is over:
+- Belgium GP is marked `finished`, but `settled_at` is still empty and its F1 bet is still open/pending.
+- Belgium has no saved result payload yet, so the settlement job has not successfully written race results and graded markets.
+- Hungary GP is scheduled for `2026-07-26` in the database, so those two Hungary bets should remain pending until that race has actually finished.
+- The F1 settlement cron exists, but I’ll make the settlement path more robust and add a one-time repair for the already-finished Belgium race.
 
-- `f1_races` row: `status='finished'`, `settled_at=NULL`, `results=NULL`.
-- All 208 markets are still `suspended`; 1 open F1 bet is stuck.
-- Root cause: the sync (`f1Sync.server.ts`) flips `status` to `finished` as soon as API-F1 marks the race completed. The auto-settle cron in `f1Settlement.server.ts` (line 126) filters `.neq("status","finished")`, so once sync sets `finished`, the settler skips the race forever. Nothing writes `results` or grades markets.
+## Plan
 
-## Fix
+1. **Harden the F1 settlement job**
+   - Update `settleF1RaceById` to select `settled_at` properly.
+   - Treat already-started/finished races with open bets as settlement candidates until `settled_at` is present.
+   - Save the fetched result rows on the race before grading, so admins can see why a market settled.
 
-1. **`src/features/f1/services/f1Settlement.server.ts` — `runF1AutoSettle`**
-   - Replace the `.neq("status","finished")` filter with `settled_at IS NULL` so any finished-but-ungraded race is picked up.
-   - Keep the 2h `starts_at` cutoff and the small batch limit.
+2. **Make top-5 settlement resilient**
+   - Grade `top_5_finish` from final race rankings by normalized driver name.
+   - Keep fastest lap / constructor specials from blocking normal top-5 settlement if their provider data is delayed.
 
-2. **Backfill Belgium GP** (SQL via `supabase--insert` migration or one-shot):
-   - Call `settleF1RaceById('47fd7f48-…')` by hitting the `/api/public/hooks/f1-live` cron endpoint after the code change, or invoke a small server function once.
-   - This will fetch results from API-F1, write `f1_races.results` + `settled_at`, grade the 208 markets (winner/finish_position/podium/points/top_5/fastest_lap/top_constructor/teammate H2H), settle the open bet, and credit the wallet if it won.
+3. **Run/repair Belgium GP settlement**
+   - Trigger the F1 settlement after the code change.
+   - If API-F1 still returns no final rankings for Belgium, inspect the live/result payload and use the provider’s available standings endpoint fallback so Belgium top-5 markets can be graded.
 
-3. **No UI changes.** The existing "Race complete — markets closed" banner and Picks list will reflect settled outcomes automatically once markets flip to `settled`.
+4. **Confirm wallet/picks/admin state**
+   - Verify the Belgium bet changes from pending to won/lost.
+   - Verify the matching market has `winning` set and `settled_at` filled.
+   - Verify winning payouts create wallet transactions only once.
 
-## Notes
-- Auto-settle runs every minute from the `f1-live` cron, so after the code fix Belgium GP settles on the next tick (subject to API-F1 having final classification data).
-- If API-F1 returns no results yet, `settleF1RaceById` returns `{ok:false,error:"no results yet"}` and will retry on the next tick — no data loss.
+5. **Leave Hungary pending**
+   - Do not manually settle Hungary now because the stored race date is still upcoming.
+   - If that date is wrong from API-F1, I’ll correct the race sync date source in a follow-up after verifying the provider row for Hungary.
