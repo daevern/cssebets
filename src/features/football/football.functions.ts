@@ -263,6 +263,29 @@ export const listMyFootballBets = createServerFn({ method: "GET" })
     return { bets };
   });
 
+// Lightweight per-event fetch used by the match details page so we can
+// disable selections the user already has an open bet on (same UX as UFC).
+export const listMyFootballOpenBetsForEvent = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ eventId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: rows } = await supabase
+      .from("sports_bets" as any)
+      .select("market_key, selection_key, sports_market_id")
+      .eq("user_id", userId)
+      .eq("sport_code", "football")
+      .eq("sports_event_id", data.eventId)
+      .in("status", ["pending", "open"]);
+    return {
+      openSelections: ((rows as any[]) ?? []).map((r) => ({
+        marketKey: r.market_key as string,
+        selectionKey: r.selection_key as string,
+        marketId: r.sports_market_id as string,
+      })),
+    };
+  });
+
 // ---------- Place bet ----------
 
 export const placeFootballBet = createServerFn({ method: "POST" })
