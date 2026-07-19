@@ -730,6 +730,154 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   );
 }
 
+type F1BetSlipProps = {
+  isOpen: boolean;
+  market: any | null;
+  driverName: string | null;
+  raceName: string;
+  sectionTitle: string;
+  balance: number;
+  noBalance: boolean;
+  isPending: boolean;
+  onClear: () => void;
+  onSubmit: (stake: number) => void;
+};
+
+const F1BetSlip = memo(function F1BetSlip({
+  isOpen,
+  market,
+  driverName,
+  raceName,
+  sectionTitle,
+  balance,
+  noBalance,
+  isPending,
+  onClear,
+  onSubmit,
+}: F1BetSlipProps) {
+  const [stake, setStake] = useState<string>("100");
+  const stakeNum = Number(stake) || 0;
+  const odds = market ? Number(market.odds) : 0;
+  const potentialReturn = market ? stakeNum * odds : 0;
+  const potentialGain = potentialReturn - stakeNum;
+  const overBalance = stakeNum > balance && stakeNum > 0;
+  const stakeError =
+    !Number.isFinite(stakeNum) || stakeNum < MIN_STAKE
+      ? `Min ${MIN_STAKE} pts`
+      : stakeNum > MAX_STAKE
+      ? `Max ${MAX_STAKE.toLocaleString()} pts`
+      : null;
+  const canSubmit = !!market && !isPending && !stakeError && !noBalance && !overBalance;
+
+  return (
+    <div
+      aria-hidden={!isOpen}
+      className="fixed inset-x-0 z-50 mx-auto max-w-2xl space-y-2.5 rounded-t-lg border border-[var(--color-neon)]/40 bg-[#050A08]/98 p-3.5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)] backdrop-blur"
+      style={{
+        bottom: "calc(72px + env(safe-area-inset-bottom))",
+        paddingBottom: "0.875rem",
+        display: isOpen && market ? undefined : "none",
+      }}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-neon)]">
+            Your prediction
+          </div>
+          <div className="truncate text-[11px] text-[var(--color-ink-muted)]">
+            {raceName} · {sectionTitle}
+          </div>
+          {market && (
+            <div className="text-[13px] leading-snug text-[var(--color-ink)]">
+              <span className="font-semibold">{driverName ?? market.label}</span>
+              <span className="mx-1.5 text-[var(--color-ink-muted)]">·</span>
+              <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
+                {odds.toFixed(2)}x
+              </span>
+              <span className="ml-1.5 text-[11px] text-[var(--color-ink-muted)]">
+                market estimate ~{impliedPct(odds)}%
+              </span>
+            </div>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onClear}
+          aria-label="Clear selection"
+          className="shrink-0 rounded-full p-1 text-[var(--color-ink-muted)] hover:bg-white/5 hover:text-[var(--color-ink)]"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="flex gap-2">
+        <input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          autoComplete="off"
+          value={stake}
+          onChange={(e) => setStake(e.target.value.replace(/\D/g, ""))}
+          disabled={noBalance}
+          placeholder={`Points (${MIN_STAKE}-${MAX_STAKE.toLocaleString()})`}
+          className="flex-1 min-w-0 rounded-md border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-base font-bold tabular-nums text-[var(--color-ink)] outline-none transition-colors focus:border-[var(--color-neon)] disabled:cursor-not-allowed disabled:opacity-40"
+        />
+        <button
+          type="button"
+          disabled={!canSubmit}
+          onClick={() => onSubmit(stakeNum)}
+          className="flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[var(--color-neon)] px-4 py-2.5 text-[12px] font-bold text-black transition-all hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[var(--color-surface-border)] disabled:text-[var(--color-ink-muted)] disabled:opacity-40"
+        >
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <>
+              <span>
+                {noBalance
+                  ? "Add Points to Lock"
+                  : overBalance
+                  ? "Stake exceeds balance"
+                  : "Lock Prediction"}
+              </span>
+              {canSubmit && <ArrowUpRight className="h-3.5 w-3.5" />}
+            </>
+          )}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-[11px]">
+        <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+          <span className="text-[var(--color-ink-muted)]">Return</span>
+          <span className="font-display font-bold tabular-nums text-[var(--color-ink)]">
+            {potentialReturn.toFixed(2)}
+          </span>
+        </div>
+        <div className="flex items-center justify-between rounded-md border border-[var(--color-surface-border)]/60 bg-black/40 px-2.5 py-1.5">
+          <span className="text-[var(--color-ink-muted)]">Gain</span>
+          <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
+            +{potentialGain.toFixed(2)}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between text-[11px] text-[var(--color-ink-muted)]">
+        <span>
+          Points balance:{" "}
+          <span className="font-bold tabular-nums text-[var(--color-ink)]">{balance.toFixed(2)}</span>
+        </span>
+        {noBalance && <span className="font-semibold text-destructive">Add points to lock this prediction.</span>}
+        {!noBalance && overBalance && (
+          <span className="font-semibold text-destructive">Stake exceeds points balance</span>
+        )}
+        {!noBalance && !overBalance && stakeError && (
+          <span className="font-semibold text-destructive">{stakeError}</span>
+        )}
+      </div>
+    </div>
+  );
+});
+
+
 type LegendSeries = { id: string; label: string; color: string; currentPct: number };
 
 function DriverLegendDropdown({
