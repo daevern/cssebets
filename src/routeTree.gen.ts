@@ -112,6 +112,7 @@ import { Route as ApiPublicHooksFootballLiveRouteImport } from './routes/api/pub
 import { Route as ApiPublicHooksF1SyncRouteImport } from './routes/api/public/hooks/f1-sync'
 import { Route as ApiPublicHooksF1SettleRouteImport } from './routes/api/public/hooks/f1-settle'
 import { Route as ApiPublicHooksF1OddsRouteImport } from './routes/api/public/hooks/f1-odds'
+import { Route as ApiPublicHooksF1LiveRouteImport } from './routes/api/public/hooks/f1-live'
 import { Route as ApiPublicHooksApifootballSyncRouteImport } from './routes/api/public/hooks/apifootball-sync'
 import { Route as ApiPublicHooksApifootballPrematchRouteImport } from './routes/api/public/hooks/apifootball-prematch'
 import { Route as ApiPublicHooksApifootballLiveRouteImport } from './routes/api/public/hooks/apifootball-live'
@@ -680,6 +681,11 @@ const ApiPublicHooksF1OddsRoute = ApiPublicHooksF1OddsRouteImport.update({
   path: '/api/public/hooks/f1-odds',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksF1LiveRoute = ApiPublicHooksF1LiveRouteImport.update({
+  id: '/api/public/hooks/f1-live',
+  path: '/api/public/hooks/f1-live',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksApifootballSyncRoute =
   ApiPublicHooksApifootballSyncRouteImport.update({
     id: '/api/public/hooks/apifootball-sync',
@@ -818,6 +824,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/apifootball-live': typeof ApiPublicHooksApifootballLiveRoute
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
+  '/api/public/hooks/f1-live': typeof ApiPublicHooksF1LiveRoute
   '/api/public/hooks/f1-odds': typeof ApiPublicHooksF1OddsRoute
   '/api/public/hooks/f1-settle': typeof ApiPublicHooksF1SettleRoute
   '/api/public/hooks/f1-sync': typeof ApiPublicHooksF1SyncRoute
@@ -925,6 +932,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/apifootball-live': typeof ApiPublicHooksApifootballLiveRoute
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
+  '/api/public/hooks/f1-live': typeof ApiPublicHooksF1LiveRoute
   '/api/public/hooks/f1-odds': typeof ApiPublicHooksF1OddsRoute
   '/api/public/hooks/f1-settle': typeof ApiPublicHooksF1SettleRoute
   '/api/public/hooks/f1-sync': typeof ApiPublicHooksF1SyncRoute
@@ -1038,6 +1046,7 @@ export interface FileRoutesById {
   '/api/public/hooks/apifootball-live': typeof ApiPublicHooksApifootballLiveRoute
   '/api/public/hooks/apifootball-prematch': typeof ApiPublicHooksApifootballPrematchRoute
   '/api/public/hooks/apifootball-sync': typeof ApiPublicHooksApifootballSyncRoute
+  '/api/public/hooks/f1-live': typeof ApiPublicHooksF1LiveRoute
   '/api/public/hooks/f1-odds': typeof ApiPublicHooksF1OddsRoute
   '/api/public/hooks/f1-settle': typeof ApiPublicHooksF1SettleRoute
   '/api/public/hooks/f1-sync': typeof ApiPublicHooksF1SyncRoute
@@ -1151,6 +1160,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/apifootball-live'
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
+    | '/api/public/hooks/f1-live'
     | '/api/public/hooks/f1-odds'
     | '/api/public/hooks/f1-settle'
     | '/api/public/hooks/f1-sync'
@@ -1258,6 +1268,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/apifootball-live'
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
+    | '/api/public/hooks/f1-live'
     | '/api/public/hooks/f1-odds'
     | '/api/public/hooks/f1-settle'
     | '/api/public/hooks/f1-sync'
@@ -1370,6 +1381,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/apifootball-live'
     | '/api/public/hooks/apifootball-prematch'
     | '/api/public/hooks/apifootball-sync'
+    | '/api/public/hooks/f1-live'
     | '/api/public/hooks/f1-odds'
     | '/api/public/hooks/f1-settle'
     | '/api/public/hooks/f1-sync'
@@ -1405,6 +1417,7 @@ export interface RootRouteChildren {
   ApiPublicHooksApifootballLiveRoute: typeof ApiPublicHooksApifootballLiveRoute
   ApiPublicHooksApifootballPrematchRoute: typeof ApiPublicHooksApifootballPrematchRoute
   ApiPublicHooksApifootballSyncRoute: typeof ApiPublicHooksApifootballSyncRoute
+  ApiPublicHooksF1LiveRoute: typeof ApiPublicHooksF1LiveRoute
   ApiPublicHooksF1OddsRoute: typeof ApiPublicHooksF1OddsRoute
   ApiPublicHooksF1SettleRoute: typeof ApiPublicHooksF1SettleRoute
   ApiPublicHooksF1SyncRoute: typeof ApiPublicHooksF1SyncRoute
@@ -2144,6 +2157,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksF1OddsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/f1-live': {
+      id: '/api/public/hooks/f1-live'
+      path: '/api/public/hooks/f1-live'
+      fullPath: '/api/public/hooks/f1-live'
+      preLoaderRoute: typeof ApiPublicHooksF1LiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/apifootball-sync': {
       id: '/api/public/hooks/apifootball-sync'
       path: '/api/public/hooks/apifootball-sync'
@@ -2442,6 +2462,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksApifootballPrematchRoute:
     ApiPublicHooksApifootballPrematchRoute,
   ApiPublicHooksApifootballSyncRoute: ApiPublicHooksApifootballSyncRoute,
+  ApiPublicHooksF1LiveRoute: ApiPublicHooksF1LiveRoute,
   ApiPublicHooksF1OddsRoute: ApiPublicHooksF1OddsRoute,
   ApiPublicHooksF1SettleRoute: ApiPublicHooksF1SettleRoute,
   ApiPublicHooksF1SyncRoute: ApiPublicHooksF1SyncRoute,
@@ -2460,13 +2481,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

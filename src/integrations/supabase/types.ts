@@ -708,6 +708,47 @@ export type Database = {
           },
         ]
       }
+      f1_live_race_state: {
+        Row: {
+          fastest_lap: Json | null
+          fetched_at: string
+          lap_current: number | null
+          lap_total: number | null
+          race_id: string
+          race_status: string | null
+          standings: Json
+          updated_at: string
+        }
+        Insert: {
+          fastest_lap?: Json | null
+          fetched_at?: string
+          lap_current?: number | null
+          lap_total?: number | null
+          race_id: string
+          race_status?: string | null
+          standings?: Json
+          updated_at?: string
+        }
+        Update: {
+          fastest_lap?: Json | null
+          fetched_at?: string
+          lap_current?: number | null
+          lap_total?: number | null
+          race_id?: string
+          race_status?: string | null
+          standings?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "f1_live_race_state_race_id_fkey"
+            columns: ["race_id"]
+            isOneToOne: true
+            referencedRelation: "f1_races"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       f1_race_markets: {
         Row: {
           closed_at: string | null
@@ -4553,6 +4594,7 @@ export type Database = {
         Args: { p_market: string; p_selection: string }
         Returns: string[]
       }
+      close_started_f1_race_markets: { Args: never; Returns: number }
       create_audit_log: {
         Args: {
           p_action: string

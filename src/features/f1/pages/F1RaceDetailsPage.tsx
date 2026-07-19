@@ -14,7 +14,8 @@ import {
   Tooltip,
   Customized,
 } from "recharts";
-import { getF1Race, placeF1RaceBet, getF1MarketHistories } from "../f1.functions";
+import { getF1Race, placeF1RaceBet, getF1MarketHistories, getF1LiveRaceState } from "../f1.functions";
+import { LiveRaceStats } from "../components/LiveRaceStats";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { PageFooter } from "@/components/ui/page-footer";
@@ -317,7 +318,10 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     );
   if (!race) return <div className="p-6 text-center text-sm">Race not found.</div>;
 
-  const selectedMarket = currentMarkets.find((x) => x.id === selectedId) ?? null;
+  const bettingClosed: boolean = !!q.data?.bettingClosed;
+  const isLive: boolean = !!q.data?.isLive;
+  const effectiveSelectedId = bettingClosed ? null : selectedId;
+  const selectedMarket = currentMarkets.find((x) => x.id === effectiveSelectedId) ?? null;
   // Keep the last non-null selection alive across background refetches so the slip
   // (and its focused input) never briefly unmounts mid-typing.
   const stickyMarketRef = useRef<any>(null);
@@ -348,6 +352,20 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
         </h1>
         <div className="mt-3 text-sm text-[var(--color-ink-muted)]">{formatBegin(race.starts_at)}</div>
       </div>
+
+      {isLive && <LiveRaceStats raceId={raceId} />}
+
+      {bettingClosed && (
+        <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
+          <div className="font-bold text-amber-400">
+            {race.status === "finished" ? "Race complete — markets closed" : "Markets closed — race in progress"}
+          </div>
+          <div className="mt-0.5 text-[12px] text-white/70">
+            No further bets accepted. Open picks settle once the FIA posts the Final Race Classification.
+          </div>
+        </div>
+      )}
+
 
       {/* Market Movement — recharts, football-analytics style */}
       <section className="relative -mx-4 bg-[var(--color-surface)] md:mx-0">
@@ -616,8 +634,9 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
                   <div className="grid grid-cols-2 gap-3">
                     <button
                       type="button"
+                      disabled={bettingClosed}
                       onClick={() => setSelectedId(yes.id)}
-                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-black/40 px-3 py-4 transition ${
+                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-black/40 px-3 py-4 transition disabled:cursor-not-allowed disabled:opacity-50 ${
                         yesSel
                           ? "border-sky-500 ring-2 ring-sky-500/60 shadow-[0_0_0_1px_rgba(14,165,233,0.35)]"
                           : "border-[var(--color-surface-border)] hover:border-sky-500/60"
@@ -633,8 +652,9 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
                     </button>
                     <button
                       type="button"
+                      disabled={bettingClosed}
                       onClick={() => setSelectedId(no.id)}
-                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-black/40 px-3 py-4 transition ${
+                      className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 bg-black/40 px-3 py-4 transition disabled:cursor-not-allowed disabled:opacity-50 ${
                         noSel
                           ? "border-red-500 ring-2 ring-red-500/60 shadow-[0_0_0_1px_rgba(239,68,68,0.35)]"
                           : "border-[var(--color-surface-border)] hover:border-red-500/60"
@@ -665,8 +685,9 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
               <button
                 key={m.id}
                 type="button"
+                disabled={bettingClosed}
                 onClick={() => setSelectedId(m.id)}
-                className={`flex w-full items-center gap-3 py-3 text-left transition ${
+                className={`flex w-full items-center gap-3 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
                   isSel ? "bg-[var(--color-neon)]/5" : ""
                 }`}
               >
