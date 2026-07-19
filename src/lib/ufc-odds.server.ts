@@ -145,6 +145,18 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
     .eq("apimma_id", apimmaId)
     .maybeSingle();
 
+  // Freshness gate: fighter bio + record change on the order of weeks, not
+  // seconds. If we already have a fully-enriched row updated in the last 7
+  // days, skip the 2–3 upstream calls entirely.
+  const FRESH_MS = 7 * 24 * 60 * 60 * 1000;
+  const isFresh =
+    existing?.updated_at &&
+    Date.now() - new Date(existing.updated_at as string).getTime() < FRESH_MS &&
+    existing.record_w != null &&
+    existing.height_cm != null &&
+    existing.reach_cm != null;
+  if (isFresh) return existing.id as string;
+
   // Try /fighters?id=; on failure or empty response, fall back to name search.
   let detail: Awaited<ReturnType<typeof fetchFighter>> | null = null;
   let recordSummary: Awaited<ReturnType<typeof fetchFighterRecordSummary>> | null = null;
