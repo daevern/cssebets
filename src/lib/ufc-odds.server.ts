@@ -983,10 +983,11 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
       scheduledRounds: t.rounds,
     });
 
-    totalMarkets += await syncOddsForFight(fightRow, t.f.id);
+    totalMarkets += await syncOddsForFight(fightRow, t.f.id, t.f.date);
     await syncH2H(fightRow.id, t.f.fighters.first.id, t.f.fighters.second.id, t.f.id);
-    // Live stats only when fight is in progress or finished
-    if (["LIVE", "FT", "AFT"].includes(t.f.status.short)) {
+    // Live stats only when fight is in progress. Post-fight stats don't
+    // change, so re-pulling FT/AFT every tick just burns quota.
+    if (t.f.status.short === "LIVE") {
       await syncFightStats(fightRow.id, t.f.id);
     }
   }
