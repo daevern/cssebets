@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getFootballMatch } from "../football.functions";
@@ -32,6 +32,10 @@ export function FootballMatchDetailsPage({ matchId }: { matchId: string }) {
 
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [pick, setPick] = useState<{
+    marketId: string;
+    selection: FootballSelection;
+  } | null>(null);
+  const lastPickRef = useRef<{
     marketId: string;
     selection: FootballSelection;
   } | null>(null);
@@ -132,17 +136,27 @@ export function FootballMatchDetailsPage({ matchId }: { matchId: string }) {
         </Suspense>
       </div>
 
-      {pick && !isClosed ? (
-        <FootballBetSlip
-          eventId={data.match.id}
-          marketId={pick.marketId}
-          selection={pick.selection}
-          onClose={() => setPick(null)}
-        />
-      ) : null}
+      {(() => {
+        // Keep the slip mounted across refetches so iOS doesn't drop focus.
+        // Preserve the last non-null pick so `visibility:hidden` transitions
+        // don't unmount the input while the user is typing.
+        const stickyPick = pick ?? lastPickRef.current;
+        if (pick) lastPickRef.current = pick;
+        if (!stickyPick) return null;
+        return (
+          <FootballBetSlip
+            eventId={data.match.id}
+            marketId={stickyPick.marketId}
+            selection={stickyPick.selection}
+            onClose={() => setPick(null)}
+            open={!!pick && !isClosed}
+          />
+        );
+      })()}
     </div>
   );
 }
+
 
 function CategoryChip({
   label,
