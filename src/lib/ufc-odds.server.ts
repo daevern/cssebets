@@ -1066,6 +1066,44 @@ export async function runUfcAutoSettle(): Promise<UfcAutoSettleResult> {
     }
   }
 
+  // Stale-finalize sweep: the API-Sports MMA /fights feed only reports the
+  // winner boolean per fighter — never method or finishing round — so bets on
+  // round / total_rounds / method markets can't be graded from the feed and
+  // otherwise sit PENDING forever after the moneyline pays out. For any fight
+  // with a recorded winner but no method/round more than 12h after commence,
+  // void the remaining open bets (stake refund) and flip status to finished.
+  const staleCutoff = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+  const { data: staleRows } = await (supabaseAdmin as any)
+    .from("ufc_fights")
+    .select("id")
+    .neq("status", "finished")
+    .not("winner", "is", null)
+    .is("result_method", null)
+    .lt("commence_time", staleCutoff)
+    .limit(50);
+  for (const s of (staleRows ?? []) as Array<{ id: string }>) {
+    try {
+      const { data: n, error: finErr } = await (supabaseAdmin as any).rpc(
+        "finalize_ufc_fight_void_remaining",
+        { p_fight_id: s.id, p_reason: "provider_missing_method" },
+      );
+      if (finErr) { console.error("[ufc-auto-settle] finalize err", s.id, finErr.message); continue; }
+      settledFights += 1;
+      settledBets += Number(n ?? 0);
+      try {
+        await (supabaseAdmin as any).from("operational_alerts").insert({
+          category: "settlement",
+          severity: "warning",
+          title: "UFC fight finalized without method/round",
+          detail: `Fight ${s.id}: winner known but provider missing method/round; ${n ?? 0} remaining bets voided/refunded.`,
+          metadata: { fight_id: s.id, voided_bets: n ?? 0 },
+        });
+      } catch {}
+    } catch (e) {
+      console.error("[ufc-auto-settle] finalize threw", s.id, (e as Error).message);
+    }
+  }
+
   return { ok: true, checked: rows.length, settledFights, settledBets };
 }
 

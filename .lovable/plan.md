@@ -1,27 +1,51 @@
+## Why UFC bets stay PENDING
 
-## What's happening
+Only **moneyline / three_way** bets settle automatically today. The four fights in your screenshot have a `winner` recorded, and the moneyline bet on Duncan already paid out — but every other market on those fights (`round`, `total_rounds`) is still `open`.
 
-On the F1 race page, the "Your prediction" sticky slip and its stake input live at the bottom of `F1RaceDetailsPage.tsx` — a ~920-line component that also owns the Recharts market-movement chart, the market grid, wallet query, and 30s/60s polling queries.
+Two concrete bugs in the auto-settle pipeline:
 
-Every keystroke calls `setStake(...)`, which re-renders the whole page. Two things in the current structure cause iOS to dismiss the keyboard on that re-render:
+1. **`auto_settle_ufc_winner_atomic` only touches `moneyline` + `three_way`.**
+   `round`, `total_rounds`, and future method/round markets are never graded, so those tickets sit as PENDING forever unless an admin opens the fight and hand-settles it via "Settle" (which requires method + round).
 
-1. **Unstable ancestor identity around the `<input>`.** The fixed slip is rendered inline inside a large conditional/JSX block that also contains the heavy Recharts tree. On each render, sibling arrays (`chartMarkets = currentMarkets.slice(0,6)`, `seriesMeta`, `splitData`) get new references, and Recharts' `ResponsiveContainer` re-measures. On mobile Safari, when the chart component mutates the DOM in the same commit as the input update, the input node can be effectively re-inserted, which drops focus and closes the keyboard.
-2. **Background polling touches the same tree.** `useQuery(["f1-race", raceId], …, { refetchInterval: 30_000 })` and `useQuery(["f1-histories", …], { refetchInterval: 60_000 })` both replace `q.data` / `chartQ.data`. If a refetch lands mid-typing, `currentMarkets` becomes a new array, `selectedMarket = currentMarkets.find(...)` becomes a new object, and if the selected id isn't in the fresh payload for a tick, the `{selectedMarket && <slip/>}` conditional unmounts and remounts the input.
+2. **After auto-settle runs, `ufc_fights.status` is left as `scheduled` and only `winner` is set.**
+   The sweep in `runUfcAutoSettle` filters on `winner IS NULL`, so once the winner is recorded these fights are skipped forever. There is no second pass that ever settles the remaining markets, and the fight never flips to `finished`, which also confuses the dashboard "next fight" query and stats views.
 
-The stake input itself is written correctly (controlled, no `key` that changes per keystroke, no `autoFocus`), so the fix is structural, not a one-line tweak.
+Result today: rows 1–4 are half-graded (moneyline done, round/totals stuck), fight status is stuck at `scheduled`, and admin has to manually void or hand-grade each one.
 
-## Fix
+## Fix plan
 
-Isolate the slip so a keystroke re-renders only the slip, not the chart/markets tree, and stop refetches from tearing the input down.
+### 1. Extend auto-settle to grade every UFC market from the feed
 
-1. **Extract `F1BetSlip` into its own `React.memo` component** in `src/features/f1/pages/F1RaceDetailsPage.tsx` (or a sibling file). It owns `stake` state internally and receives stable props: `selectedMarket`, `selectedDriverName`, `raceName`, `sectionTitle`, `balance`, `onClear`, `onSubmit`, `isPending`. Because it holds its own state, `setStake` no longer re-renders the parent, so the chart/markets don't recompute per keystroke and the input node stays put.
-2. **Stabilise the mount around the input.** Always render the slip container (fixed positioned, `pointer-events-none` + inner `pointer-events-auto`) and toggle visibility via a `data-open` attribute / CSS, instead of `{selectedMarket && <div>…</div>}`. This guarantees the `<input>` DOM node is never unmounted while the user is typing, even if `selectedMarket` briefly becomes null during a refetch.
-3. **Preserve selection across refetches.** In the parent, keep `selectedMarket` sticky: when a refetch returns markets that don't include `selectedId`, keep the previous `selectedMarket` object in a `useRef` and pass that to the slip until a new selection is made. This prevents the slip from flashing empty on the 30s poll.
-4. **Reduce chart re-renders unrelated to typing.** Memoize `chartMarkets`/`seriesMeta`/`splitData` on stable primitives (e.g. `chartIdsKey`) rather than array identities, and wrap the chart section in its own `React.memo`d `F1MarketChart` component. Not strictly required for the keyboard bug once step 1 lands, but removes the wasted work that made it easy to trigger.
-5. **Verify.** Open `/f1/races/:raceId` on a mobile viewport, tap the stake input, type several digits, and confirm the keyboard stays up and the value updates. Repeat while a 30s poll fires (wait ~30s mid-typing) to confirm the slip and focus survive a refetch.
+Update `runUfcAutoSettle` in `src/lib/ufc-odds.server.ts`:
+- Keep the current daily `/fights` batch to derive `winner`.
+- For every finished fight (`status.short` in `FT`/`AFT`), also call the MMA stats endpoint (`/fights/statistics/fighters`, already wrapped as `fetchFightStats`) and/or read `method` + `ending round` from the fight payload. Extend `ApiMmaFight` in `src/lib/apimma.server.ts` with the raw `method` / `round` fields the provider returns and parse them into a normalized `{ method: 'ko_tko' | 'submission' | 'decision'; endingRound: number | null }`.
+- Pass those into a new RPC `auto_settle_ufc_fight_atomic(fight_id, winner, method, ending_round)` that:
+  - Grades `moneyline` + `three_way` (existing logic, kept verbatim).
+  - Grades `total_rounds` (over/under X.5) using `ending_round`, with decisions treated as `scheduled_rounds`.
+  - Grades `round` (r1..r5 and `distance`) using `method` + `ending_round`.
+  - Updates `ufc_fights` with `status='finished'`, `winner`, `result_method`, `result_round`, `settled_at`.
+  - Returns the number of bets settled.
+- Change the sweep filter from `winner IS NULL` to `status <> 'finished'` so half-settled legacy rows get re-processed once.
 
-## Files touched
+### 2. Backfill the four stuck fights
 
-- `src/features/f1/pages/F1RaceDetailsPage.tsx` — extract `F1BetSlip` (and optionally `F1MarketChart`), switch the slip from conditional mount to always-mounted + hidden, add sticky-selection ref.
+Ship a one-off admin server fn (or reuse `adminSettleUfcFight` per fight) plus a migration that:
+- Re-runs the new auto-settle path for the four fights listed above so their `round` / `total_rounds` open bets grade against the actual result.
+- If the feed still doesn't provide method/round for one of them, mark those specific market bets `void` and refund stake (documented reason: `provider_missing_method`) so nothing stays PENDING.
 
-No schema, server function, or business-logic changes. UI/presentation only.
+### 3. Keep the "half-settled" case from recurring
+
+- Add an operational alert (`operational_alerts` insert) whenever auto-settle records a winner but has no method/round, so we notice provider gaps instead of silently leaving tickets open.
+- Add a Vitest around the new grading helper covering: KO in R1, submission in R2, decision at scheduled distance, draw (moneyline void), and ending-round exactly on the O/U line (push → void).
+
+### Technical notes (for engineers)
+
+- All wallet mutations stay inside the new atomic RPC to preserve `balance_before` / `balance_after` ledger invariants.
+- `total_rounds` push rule: if `ending_round == line` and fight went the full time of that round, treat as void (refund) — matches football O/U behavior.
+- `round.distance` wins only when `method = 'decision'`; otherwise it loses.
+- No UI changes; the admin "Predictions" screen will show these as `won` / `lost` / `void` once graded.
+
+### Out of scope
+
+- No changes to F1 or football settlement.
+- No change to manual `adminSettleUfcFight` — it stays as the admin override.
