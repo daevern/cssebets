@@ -133,6 +133,7 @@ export function FootballMatchDetailsPage({ matchId }: { matchId: string }) {
                 setPick({ marketId, selection })
               }
               selectedSelectionId={pick?.selection.id ?? null}
+              openBetKeys={openBetKeys}
             />
           ))
         )}
