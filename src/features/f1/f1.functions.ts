@@ -43,8 +43,32 @@ export const getF1Race = createServerFn({ method: "GET" })
       sb.from("f1_drivers").select("driver_key, name, abbr, team_key, photo_url").eq("active", true),
       sb.from("f1_constructors").select("team_key, name, logo_url"),
     ]);
-    if (!race) return { race: null, markets: [] as any[], drivers: [] as any[], teams: [] as any[] };
-    return { race, markets: markets ?? [], drivers: drivers ?? [], teams: teams ?? [] };
+    if (!race) return { race: null, markets: [] as any[], drivers: [] as any[], teams: [] as any[], bettingClosed: false, isLive: false };
+    const started = new Date(race.starts_at).getTime() <= Date.now();
+    const isLive = race.status === "in_progress" || (started && race.status !== "finished" && race.status !== "cancelled");
+    const bettingClosed = started || race.status === "in_progress" || race.status === "finished" || race.status === "cancelled";
+    return { race, markets: markets ?? [], drivers: drivers ?? [], teams: teams ?? [], bettingClosed, isLive };
+  });
+
+export const getF1LiveRaceState = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ raceId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const sb = context.supabase as any;
+    const { data: cached } = await sb
+      .from("f1_live_race_state")
+      .select("*")
+      .eq("race_id", data.raceId)
+      .maybeSingle();
+    const ageMs = cached?.fetched_at ? Date.now() - new Date(cached.fetched_at).getTime() : Infinity;
+    if (cached && ageMs < 25_000) return { state: cached };
+    try {
+      const { refreshF1LiveRaceState } = await import("./services/f1LiveState.server");
+      const fresh = await refreshF1LiveRaceState(data.raceId);
+      return { state: fresh ?? cached ?? null };
+    } catch {
+      return { state: cached ?? null };
+    }
   });
 
 export const listF1ChampionshipMarkets = createServerFn({ method: "GET" })
