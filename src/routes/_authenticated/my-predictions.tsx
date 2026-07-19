@@ -821,7 +821,17 @@ function F1TicketShell({
           </div>
           <div className="border border-dashed border-[var(--color-surface-border)] px-2.5 py-1.5">
             <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">Selection</div>
-            <div className="font-medium truncate">{selection}</div>
+            <div className="flex items-center gap-2 min-w-0">
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={avatarAlt ?? selection}
+                  className={`h-8 w-8 shrink-0 ${avatarKind === "team" ? "object-contain bg-white/5 p-0.5" : "object-cover"} rounded-full border border-[var(--color-surface-border)]`}
+                  loading="lazy"
+                />
+              ) : null}
+              <div className="font-medium truncate">{selection}</div>
+            </div>
           </div>
         </div>
 
