@@ -842,6 +842,7 @@ export type Database = {
           circuit: string | null
           country: string | null
           created_at: string
+          fastest_lap: Json | null
           id: string
           name: string
           provider_id: number | null
@@ -860,6 +861,7 @@ export type Database = {
           circuit?: string | null
           country?: string | null
           created_at?: string
+          fastest_lap?: Json | null
           id?: string
           name: string
           provider_id?: number | null
@@ -878,6 +880,7 @@ export type Database = {
           circuit?: string | null
           country?: string | null
           created_at?: string
+          fastest_lap?: Json | null
           id?: string
           name?: string
           provider_id?: number | null
