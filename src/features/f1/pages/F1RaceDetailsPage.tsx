@@ -317,23 +317,14 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     );
   if (!race) return <div className="p-6 text-center text-sm">Race not found.</div>;
 
-  const [searchState, setSearchState] = [null, null] as any; // legacy no-op
-  void searchState; void setSearchState;
-
   const selectedMarket = currentMarkets.find((x) => x.id === selectedId) ?? null;
-  const selectedDriver = selectedMarket ? driverByKey[selectedMarket.selection_key] : null;
-  const stakeNum = Number(stake) || 0;
-  const potentialReturn = selectedMarket ? stakeNum * Number(selectedMarket.odds) : 0;
-  const potentialGain = potentialReturn - stakeNum;
+  // Keep the last non-null selection alive across background refetches so the slip
+  // (and its focused input) never briefly unmounts mid-typing.
+  const stickyMarketRef = useRef<any>(null);
+  if (selectedMarket) stickyMarketRef.current = selectedMarket;
+  const slipMarket = selectedMarket ?? stickyMarketRef.current;
+  const selectedDriver = slipMarket ? driverByKey[slipMarket.selection_key] : null;
   const noBalance = balance <= 0;
-  const overBalance = stakeNum > balance && stakeNum > 0;
-  const stakeError =
-    !Number.isFinite(stakeNum) || stakeNum < MIN_STAKE
-      ? `Min ${MIN_STAKE} pts`
-      : stakeNum > MAX_STAKE
-      ? `Max ${MAX_STAKE.toLocaleString()} pts`
-      : null;
-  const canSubmit = !!selectedMarket && !placeMut.isPending && !stakeError && !noBalance && !overBalance;
 
   return (
     <div
