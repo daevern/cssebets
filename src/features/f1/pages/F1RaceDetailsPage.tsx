@@ -126,7 +126,6 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const [subTab, setSubTab] = useState<SubTab>("top_5_finish");
   const [range, setRange] = useState<Range>("ALL");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [stake, setStake] = useState<string>("100");
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
