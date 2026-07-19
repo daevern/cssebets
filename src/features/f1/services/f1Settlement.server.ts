@@ -9,7 +9,7 @@ function keyify(s: string) {
 export async function settleF1RaceById(raceId: string) {
   const { data: race } = await (supabaseAdmin as any)
     .from("f1_races")
-    .select("id, race_key, provider_id, status")
+    .select("id, race_key, provider_id, status, settled_at")
     .eq("id", raceId)
     .single();
   if (!race) throw new Error("race not found");
@@ -23,6 +23,8 @@ export async function settleF1RaceById(raceId: string) {
   const ordered = results
     .filter((r) => r.position != null)
     .sort((a, b) => (a.position ?? 999) - (b.position ?? 999));
+
+  if (!ordered.length) return { ok: false, error: "no ranked results yet" };
 
   const winner = ordered[0]?.driver.name ? keyify(ordered[0].driver.name) : null;
   const podium = new Set(ordered.slice(0, 3).map((r) => keyify(r.driver.name)));
@@ -54,6 +56,11 @@ export async function settleF1RaceById(raceId: string) {
   } catch {
     fastestLapKey = null;
   }
+
+  await (supabaseAdmin as any)
+    .from("f1_races")
+    .update({ results: ordered, updated_at: new Date().toISOString() })
+    .eq("id", raceId);
 
   const { data: markets } = await (supabaseAdmin as any)
     .from("f1_race_markets")
@@ -92,19 +99,25 @@ export async function settleF1RaceById(raceId: string) {
       .eq("status", "open");
     for (const bet of bets ?? []) {
       const newStatus = winning ? "won" : "lost";
-      await (supabaseAdmin as any)
+      const { data: updatedBets, error: betUpdateError } = await (supabaseAdmin as any)
         .from("f1_bets")
         .update({ status: newStatus, settled_at: new Date().toISOString() })
-        .eq("id", bet.id);
-      if (winning) {
-        // Credit wallet via wallet_transactions (best-effort; caller handles ledger consistency)
-        await (supabaseAdmin as any).from("wallet_transactions").insert({
-          user_id: bet.user_id,
-          amount: bet.potential_payout,
-          type: "bet_win",
-          description: `F1 bet win`,
-          metadata: { source: "f1", bet_id: bet.id, market_id: m.id },
+        .eq("id", bet.id)
+        .eq("status", "open")
+        .select("id");
+
+      if (betUpdateError) throw new Error(`f1 bet settlement failed: ${betUpdateError.message}`);
+      if (winning && (updatedBets?.length ?? 0) > 0) {
+        const { error: walletError } = await (supabaseAdmin as any).rpc("wallet_apply_change", {
+          p_user_id: bet.user_id,
+          p_type: "credit",
+          p_amount: bet.potential_payout,
+          p_reference_type: "bet_settlement",
+          p_reference_id: bet.id,
+          p_note: "F1 bet win payout",
+          p_is_simulation: false,
         });
+        if (walletError) throw new Error(`f1 payout failed: ${walletError.message}`);
       }
     }
   }
@@ -117,17 +130,46 @@ export async function settleF1RaceById(raceId: string) {
   return { ok: true, settled };
 }
 
-// Called by cron: finds races that started > 2 hours ago and not finished, tries to settle.
+// Called by cron: finds races that started > 2 hours ago and are not settled, tries to settle.
 export async function runF1AutoSettle() {
   const cutoff = new Date(Date.now() - 2 * 3600 * 1000).toISOString();
-  const { data: races } = await (supabaseAdmin as any)
+
+  const { data: openBets } = await (supabaseAdmin as any)
+    .from("f1_bets")
+    .select("race_id")
+    .eq("status", "open")
+    .not("race_id", "is", null)
+    .limit(100);
+
+  const openRaceIds = Array.from(new Set((openBets ?? []).map((b: { race_id: string }) => b.race_id).filter(Boolean)));
+  const raceMap = new Map<string, { id: string }>();
+
+  if (openRaceIds.length) {
+    const { data: priorityRaces } = await (supabaseAdmin as any)
+      .from("f1_races")
+      .select("id")
+      .is("settled_at", null)
+      .lt("starts_at", cutoff)
+      .in("id", openRaceIds)
+      .order("starts_at", { ascending: false })
+      .limit(10);
+
+    for (const race of priorityRaces ?? []) raceMap.set(race.id, race);
+  }
+
+  const { data: fallbackRaces } = await (supabaseAdmin as any)
     .from("f1_races")
     .select("id")
     .is("settled_at", null)
     .lt("starts_at", cutoff)
+    .order("starts_at", { ascending: true })
     .limit(5);
+
+  for (const race of fallbackRaces ?? []) raceMap.set(race.id, race);
+
+  const races = Array.from(raceMap.values()).slice(0, 10);
   const results: any[] = [];
-  for (const r of races ?? []) {
+  for (const r of races) {
     try {
       const res = await settleF1RaceById(r.id);
       results.push({ raceId: r.id, ...res });
@@ -135,5 +177,5 @@ export async function runF1AutoSettle() {
       results.push({ raceId: r.id, ok: false, error: e.message });
     }
   }
-  return { checked: races?.length ?? 0, results };
+  return { checked: races.length, results };
 }
