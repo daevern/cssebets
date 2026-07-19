@@ -755,6 +755,8 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       />
 
       <PageFooter />
+        </>
+      )}
     </div>
   );
 }
