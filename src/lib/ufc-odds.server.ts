@@ -276,7 +276,27 @@ async function syncOddsForFight(fightRow: {
   scheduled_rounds: 3 | 5;
   apimma_fighter_a_id: number | null;
   apimma_fighter_b_id: number | null;
-}, apimmaFightId: number) {
+}, apimmaFightId: number, commenceTimeIso?: string) {
+
+  // Throttle: outside the final hour before commence, skip the odds call if
+  // we already have a snapshot in the last 3 minutes. Live + T-60m windows
+  // keep the full 30s cadence for accurate line moves.
+  const msToCommence = commenceTimeIso
+    ? new Date(commenceTimeIso).getTime() - Date.now()
+    : Number.POSITIVE_INFINITY;
+  if (msToCommence > 60 * 60 * 1000) {
+    const { data: lastSnap } = await (supabaseAdmin as any)
+      .from("ufc_market_snapshots")
+      .select("sampled_at")
+      .eq("fight_id", fightRow.id)
+      .order("sampled_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const lastAt = (lastSnap as any)?.sampled_at
+      ? new Date((lastSnap as any).sampled_at).getTime()
+      : 0;
+    if (lastAt && Date.now() - lastAt < 3 * 60 * 1000) return 0;
+  }
 
   let odds;
   try {
