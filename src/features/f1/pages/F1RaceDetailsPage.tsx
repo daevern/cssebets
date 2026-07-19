@@ -14,7 +14,8 @@ import {
   Tooltip,
   Customized,
 } from "recharts";
-import { getF1Race, placeF1RaceBet, getF1MarketHistories } from "../f1.functions";
+import { getF1Race, placeF1RaceBet, getF1MarketHistories, getF1LiveRaceState } from "../f1.functions";
+import { LiveRaceStats } from "../components/LiveRaceStats";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { PageFooter } from "@/components/ui/page-footer";
