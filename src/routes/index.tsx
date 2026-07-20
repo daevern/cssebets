@@ -11,7 +11,7 @@ import { getLandingData, type LandingNextMatch } from "@/lib/landing.functions";
 import { recordHomeView } from "@/lib/trust-public.functions";
 import { MatchAnalyticsScreen } from "@/routes/_authenticated/matches.$matchId";
 
-const FALLBACK_MATCH_ID = "daeb90a9-359a-4aef-bf40-fdc969672448";
+const FALLBACK_MATCH_ID = "e7ddf0dd-3a92-41b2-8f4f-c88c10a49e3a";
 
 export const Route = createFileRoute("/")({
   ssr: false,
