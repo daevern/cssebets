@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { listUfcFights } from "@/lib/ufc.functions";
 import { ArrowUpRight, Loader2 } from "lucide-react";
 import { PageFooter } from "@/components/ui/page-footer";
+import { teamFlagUrl } from "@/lib/country-flags";
 
 export const Route = createFileRoute("/_authenticated/ufc/")({
   component: UfcPage,
@@ -27,6 +28,8 @@ type Fight = {
   fighter_b: string;
   fighter_a_logo?: string | null;
   fighter_b_logo?: string | null;
+  fighter_a_country?: string | null;
+  fighter_b_country?: string | null;
   commence_time: string;
   card_position: "main" | "co_main" | "other";
   scheduled_rounds: 3 | 5;
@@ -71,13 +74,25 @@ function moneylinePct(markets: Market[]) {
   return { a: Math.round((ia / s) * 100), b: Math.round((ib / s) * 100), oddsA: Number(a.odds), oddsB: Number(b.odds) };
 }
 
-/* Fighter portrait — the visual equivalent of TeamFlag on the football side. */
-function FighterPortrait({ url, name, size = 56 }: { url?: string | null; name: string; size?: number }) {
+/* Fighter portrait — falls back to country flag when there's no photo. */
+function FighterPortrait({ url, name, country, size = 56 }: { url?: string | null; name: string; country?: string | null; size?: number }) {
   if (url) {
     return (
       <img
         src={url}
         alt={name}
+        className="rounded-lg border border-[var(--color-surface-border)] bg-[var(--surface-3)] object-cover"
+        style={{ width: size, height: size }}
+        loading="lazy"
+      />
+    );
+  }
+  const flag = country ? teamFlagUrl(country, 160) : null;
+  if (flag) {
+    return (
+      <img
+        src={flag}
+        alt={country ?? name}
         className="rounded-lg border border-[var(--color-surface-border)] bg-[var(--surface-3)] object-cover"
         style={{ width: size, height: size }}
         loading="lazy"
@@ -154,10 +169,6 @@ function UfcPage() {
   return (
     <div className="flex flex-col gap-8 px-4 pt-5 pb-24 text-[var(--ink)]">
       <header className="space-y-3">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-surface-border)] bg-gradient-to-r from-red-900/40 to-black px-4 py-2 text-xs font-bold text-white">
-          <span className="rounded bg-red-600 px-2 py-0.5 text-[10px]">NEW</span>
-          {data.event.name} · Full card markets
-        </div>
         <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight text-[var(--ink)] md:text-4xl">
           {data.event.name}
         </h1>
@@ -219,9 +230,9 @@ function FightChip({ fight, now }: { fight: Fight; now: number }) {
       style={{ width: 172 }}
     >
       <div className="flex items-center gap-1.5">
-        <FighterPortrait url={fight.fighter_a_logo} name={fight.fighter_a} size={30} />
+        <FighterPortrait url={fight.fighter_a_logo} country={fight.fighter_a_country} name={fight.fighter_a} size={30} />
         <span className="text-[10px] font-bold text-[var(--ink-muted)]">·</span>
-        <FighterPortrait url={fight.fighter_b_logo} name={fight.fighter_b} size={30} />
+        <FighterPortrait url={fight.fighter_b_logo} country={fight.fighter_b_country} name={fight.fighter_b} size={30} />
       </div>
       <div className="mt-2 text-[12px] font-bold tracking-tight text-[var(--ink)]">
         {lastName(fight.fighter_a)} vs {lastName(fight.fighter_b)}
@@ -292,6 +303,7 @@ function FeaturedFightCard({ fight, now, eventName }: { fight: Fight; now: numbe
           <FighterRow
             name={fight.fighter_a}
             logo={fight.fighter_a_logo}
+            country={fight.fighter_a_country}
             pct={pct?.a ?? null}
             mult={pct?.oddsA ?? null}
             tone="home"
@@ -299,6 +311,7 @@ function FeaturedFightCard({ fight, now, eventName }: { fight: Fight; now: numbe
           <FighterRow
             name={fight.fighter_b}
             logo={fight.fighter_b_logo}
+            country={fight.fighter_b_country}
             pct={pct?.b ?? null}
             mult={pct?.oddsB ?? null}
             tone="away"
@@ -320,9 +333,9 @@ function FeaturedFightCard({ fight, now, eventName }: { fight: Fight; now: numbe
 }
 
 function FighterRow({
-  name, logo, pct, mult, tone,
+  name, logo, country, pct, mult, tone,
 }: {
-  name: string; logo?: string | null; pct: number | null; mult: number | null; tone: "home" | "away";
+  name: string; logo?: string | null; country?: string | null; pct: number | null; mult: number | null; tone: "home" | "away";
 }) {
   const color = tone === "home" ? "text-rose-400" : "text-[var(--neon)]";
   const borderColor = tone === "home" ? "border-rose-400/40" : "border-[var(--neon)]/40";
@@ -331,7 +344,7 @@ function FighterRow({
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <FighterPortrait url={logo} name={name} size={44} />
+        <FighterPortrait url={logo} country={country} name={name} size={44} />
         <span className="truncate text-[15px] font-bold tracking-tight text-[var(--ink)]">{name}</span>
       </div>
       {pct != null && (
