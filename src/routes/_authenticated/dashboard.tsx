@@ -191,7 +191,11 @@ function HomePage() {
       {/* Header — stencil greeting matching wallet/payout/picks */}
       <header className="space-y-2">
         <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight text-[var(--ink)] md:text-4xl">
-          Welcome, <span className="text-[var(--neon)]">{displayName}</span>
+          {(user as any)?.is_anonymous === true ? (
+            <>Welcome to <span className="text-[var(--neon)]">cssebets</span></>
+          ) : (
+            <>Welcome, <span className="text-[var(--neon)]">{displayName}</span></>
+          )}
         </h1>
       </header>
 
