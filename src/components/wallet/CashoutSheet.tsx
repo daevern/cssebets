@@ -166,6 +166,29 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     if (balance) setAmount(String(Math.floor(balance)));
   }
 
+  const isGuest = !user || (user as any)?.is_anonymous === true;
+
+  /* ---------- Guest / anonymous ---------- */
+  if (open && isGuest) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <StencilDialogContent
+          kicker="Cashout · Sign in required"
+          title="Log in to cash out"
+          description="Create a free account or log in to withdraw your winnings to a bank account."
+          footer={
+            <>
+              <GhostBtn onClick={() => onOpenChange(false)}>Cancel</GhostBtn>
+              <NeonBtn onClick={() => { onOpenChange(false); navigate({ to: "/auth" }); }}>
+                Log in / Register <ArrowRight className="h-3.5 w-3.5" />
+              </NeonBtn>
+            </>
+          }
+        />
+      </Dialog>
+    );
+  }
+
   /* ---------- Active payout in progress ---------- */
   if (open && !loading && activePayout && !success) {
     const statusLabel =

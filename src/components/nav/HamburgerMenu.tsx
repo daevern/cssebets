@@ -42,6 +42,8 @@ export function HamburgerMenu() {
 
   const tokens = tokensQ.data?.tokens.balance ?? 0;
   const refCode = refQ.data?.referralCode ?? "";
+  const isGuest = !user || (user as any)?.is_anonymous === true;
+  const displayCode = isGuest ? "XXXXXXX" : refCode;
 
   useEffect(() => {
     if (!open) return;
@@ -222,16 +224,19 @@ export function HamburgerMenu() {
                 {/* Referral code display */}
                 <div className="mt-3 bg-black/10 px-4 py-3">
                   <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">
-                    Your referral code
+                    {isGuest ? "Referrals" : "Your referral code"}
                   </div>
-                  <div className="mt-1 flex items-center justify-between gap-2">
+                  <p className="mt-1 text-[11px] font-medium leading-snug text-black/70">
+                    Earn tokens by referring friends. Share your code and get rewarded when they join and play.
+                  </p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
                     <span className="font-mono text-2xl font-bold tracking-[0.24em] text-black">
-                      {refCode || "—"}
+                      {displayCode || "—"}
                     </span>
                     <button
                       type="button"
                       onClick={copyCode}
-                      disabled={!refCode}
+                      disabled={isGuest || !refCode}
                       aria-label="Copy referral code"
                       className="grid h-9 w-9 place-items-center bg-black text-[var(--neon)] transition-opacity hover:opacity-90 disabled:opacity-40"
                     >
@@ -266,18 +271,27 @@ export function HamburgerMenu() {
                   })}
                 </ul>
 
-                {/* Sign out */}
+                {/* Sign out / Register */}
                 <div className="mt-auto">
                   <button
                     type="button"
-                    onClick={handleSignOut}
+                    onClick={isGuest ? () => pick(() => navigate({ to: "/auth" })) : handleSignOut}
                     className={`flex w-full items-center justify-center gap-2 bg-black px-4 py-3.5 text-[13px] font-bold uppercase tracking-[0.2em] text-[var(--neon)] transition-all duration-300 hover:bg-black/85 active:scale-[0.98] ${
                       open ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
                     }`}
                     style={{ transitionDelay: open ? "500ms" : "0ms" }}
                   >
-                    <LogOut className="h-4 w-4" />
-                    Sign out
+                    {isGuest ? (
+                      <>
+                        <User className="h-4 w-4" />
+                        Register / Log in
+                      </>
+                    ) : (
+                      <>
+                        <LogOut className="h-4 w-4" />
+                        Sign out
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
