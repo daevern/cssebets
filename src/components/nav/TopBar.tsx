@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, LineChart, Activity, Coins, Headphones } from "lucide-react";
+import { Bell, User, Home, LineChart, Activity, Coins, Headphones } from "lucide-react";
 
 import { CsseLogo } from "@/components/brand/CsseMark";
 import { TokenChip } from "@/components/engagement/TokenVault";
