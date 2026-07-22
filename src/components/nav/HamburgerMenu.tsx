@@ -184,7 +184,7 @@ export function HamburgerMenu() {
 
               {/* Content layer */}
               <div
-                className={`relative flex h-full flex-col px-6 transition-opacity duration-300 ${
+                className={`relative flex h-full flex-col overflow-y-auto px-6 transition-opacity duration-300 ${
                   open ? "opacity-100 delay-200" : "opacity-0"
                 }`}
                 style={{
