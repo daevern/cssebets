@@ -61,7 +61,7 @@ export function TokenChip() {
 /* ------------------------------------------------------------------ */
 /* Vault sheet — modern bottom sheet tuned for mobile.                 */
 /* ------------------------------------------------------------------ */
-function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
+export function TokenVaultSheet({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const { user } = useAuth();
   const uid = user?.id ?? "anon";
   const eFn = useServerFn(getMyEngagementSummary);
