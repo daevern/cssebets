@@ -4,7 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Bell, User, ShoppingBag, X, Copy, Check, LogOut } from "lucide-react";
+import { Bell, User, ShoppingBag, X, Copy, Check, LogOut, Info, Users, Activity, HelpCircle } from "lucide-react";
 import { TokenVaultSheet } from "@/components/engagement/TokenVault";
 import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
 import { useAuth } from "@/hooks/use-auth";
