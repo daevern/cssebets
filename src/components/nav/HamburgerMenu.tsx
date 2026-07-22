@@ -203,7 +203,7 @@ export function HamburgerMenu() {
                 <div className="mt-5 flex items-center justify-between bg-black/10 px-4 py-3">
                   <div className="flex items-center gap-2.5">
                     <span className="grid h-8 w-8 place-items-center rounded-full bg-black text-[var(--neon)]">
-                      <CsseMark className="h-4 w-4" />
+                      <CsseMark className="h-4 w-4" outline />
                     </span>
                     <div className="flex flex-col leading-tight">
                       <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">
