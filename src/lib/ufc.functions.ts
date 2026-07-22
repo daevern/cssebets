@@ -86,6 +86,7 @@ export const listUfcFightsAll = createServerFn({ method: "GET" }).handler(async 
   const { data: fights } = await (supabaseAdmin as any)
     .from("ufc_fights")
     .select("id, event_id, fighter_a, fighter_b, fighter_a_logo, fighter_b_logo, apimma_fighter_a_id, apimma_fighter_b_id, commence_time, card_position, scheduled_rounds, status, weight_class, is_title_fight")
+    .in("card_position", ["main", "co_main"])
     .gte("commence_time", past)
     .lte("commence_time", future)
     .order("commence_time", { ascending: true });
