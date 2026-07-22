@@ -130,7 +130,9 @@ function BetsHub() {
       cta: "Matches",
       tour: "bet-button",
       accent: true,
+    },
   ];
+
 
 
   return (
