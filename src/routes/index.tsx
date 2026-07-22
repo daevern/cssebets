@@ -1,33 +1,34 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Info, Users, LineChart, LifeBuoy } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Info, Users, LineChart, LifeBuoy, Wallet as WalletIcon, ChevronRight, ArrowUpRight } from "lucide-react";
 
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 import { CategoryRail } from "@/components/nav/CategoryRail";
 
 import { teamFlagUrl } from "@/lib/country-flags";
-import { getLandingData, type LandingNextMatch } from "@/lib/landing.functions";
+import { getGuestFeed, type GuestFootballMatch, type GuestF1Race } from "@/lib/guest-feed.functions";
+import { listUfcFightsAll } from "@/lib/ufc.functions";
 import { recordHomeView } from "@/lib/trust-public.functions";
-import { MatchAnalyticsScreen } from "@/routes/_authenticated/matches.$matchId";
-
-const FALLBACK_MATCH_ID = "e7ddf0dd-3a92-41b2-8f4f-c88c10a49e3a";
+import { GuestWalletSheet } from "@/components/wallet/GuestWalletSheet";
+import { GuestAuthPrompt } from "@/components/auth/GuestAuthPrompt";
 
 export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "CSSEBets – The FIFA World Cup 2026 Prediction Market" },
+      { title: "CSSEBets — Live sports prediction markets" },
       {
         name: "description",
         content:
-          "Trade live markets on every match, goal, lineup, and key moment with dynamic, community-driven pricing.",
+          "Browse live football, F1 and UFC prediction markets. Explore odds, movement charts and analytics — sign up in seconds to place a bet.",
       },
-      { property: "og:title", content: "CSSEBets – The FIFA World Cup 2026 Prediction Market" },
+      { property: "og:title", content: "CSSEBets — Live sports prediction markets" },
       {
         property: "og:description",
         content:
-          "Trade live markets on every match, goal, lineup, and key moment with dynamic, community-driven pricing.",
+          "Browse live football, F1 and UFC prediction markets. Explore odds, movement charts and analytics — sign up in seconds to place a bet.",
       },
       { property: "og:url", content: "https://cssebets.com/" },
       { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
@@ -41,22 +42,8 @@ export const Route = createFileRoute("/")({
 });
 
 /* ------------------------------------------------------------------ */
-/* Data / helpers                                                      */
+/* Helpers                                                             */
 /* ------------------------------------------------------------------ */
-
-function useLanding() {
-  const fn = useServerFn(getLandingData);
-  const [data, setData] = useState<{
-    nextMatches: LandingNextMatch[];
-    stats: { registeredPlayers: number; activeToday: number; betsSettled: number; pointsPaidOut: number };
-  } | null>(null);
-  useEffect(() => {
-    let m = true;
-    fn().then((d) => m && setData(d)).catch(() => m && setData({ nextMatches: [], stats: { registeredPlayers: 0, activeToday: 0, betsSettled: 0, pointsPaidOut: 0 } }));
-    return () => { m = false; };
-  }, [fn]);
-  return data;
-}
 
 function useTicker(ms = 30_000) {
   const [n, setN] = useState(() => Date.now());
@@ -71,51 +58,58 @@ function timeChip(iso: string, now: number) {
   const d = new Date(iso);
   const today = new Date(now);
   const sameDay = d.toDateString() === today.toDateString();
-  const h = d.getHours() % 12 || 12;
-  const t = `${h}:${String(d.getMinutes()).padStart(2, "0")} ${d.getHours() >= 12 ? "PM" : "AM"}`;
-  return sameDay ? `Today · ${t}` : `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${t}`;
+  const t = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  if (sameDay) return `Today · ${t}`;
+  const diffDays = Math.round((d.getTime() - now) / (24 * 3600_000));
+  if (diffDays > 0 && diffDays <= 7) {
+    return `${d.toLocaleDateString(undefined, { weekday: "short" })} · ${t}`;
+  }
+  return `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })} · ${t}`;
 }
 
-function abbrev(name: string) {
-  const stops: Record<string, string> = {
-    "United States": "USA", "United Kingdom": "UK", "Bosnia & Herzegovina": "BIH",
-  };
-  if (stops[name]) return stops[name];
-  return name.length <= 4 ? name.toUpperCase() : name.slice(0, 3).toUpperCase();
-}
-
-function threeWayPctFromOdds(h: number | null, d: number | null, a: number | null) {
-  if (h == null || d == null || a == null || !(h > 0) || !(d > 0) || !(a > 0)) return null;
-  const inv = { h: 1 / h, d: 1 / d, a: 1 / a };
-  const s = inv.h + inv.d + inv.a;
-  if (!(s > 0)) return null;
-  return {
-    home: Math.round((inv.h / s) * 100),
-    draw: Math.round((inv.d / s) * 100),
-    away: Math.round((inv.a / s) * 100),
-  };
-}
-
-function TeamFlag({ name, w = 56 }: { name: string; w?: number }) {
-  const url = teamFlagUrl(name, 320);
+function CountryFlag({ name, w = 26, h = 18 }: { name?: string | null; w?: number; h?: number }) {
+  const url = name ? teamFlagUrl(name, 160) : null;
   if (!url) {
     return (
       <div
-        className="grid place-items-center bg-[var(--surface-3)] text-[10px] font-bold uppercase text-[var(--ink)]"
-        style={{ width: w, height: Math.round(w * 0.7) }}
+        className="grid place-items-center bg-[var(--surface-3)] text-[9px] font-bold uppercase text-[var(--ink)]"
+        style={{ width: w, height: h }}
       >
-        {name.slice(0, 3)}
+        {(name ?? "").slice(0, 3)}
       </div>
     );
   }
   return (
     <img
       src={url}
-      alt={`${name} flag`}
+      alt={name ?? ""}
       className="object-cover"
-      style={{ width: w, height: Math.round(w * 0.72) }}
+      style={{ width: w, height: h }}
       loading="lazy"
     />
+  );
+}
+
+function Portrait({ url, name, size = 44 }: { url?: string | null; name: string; size?: number }) {
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt={name}
+        className="rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)] object-cover"
+        style={{ width: size, height: size }}
+        loading="lazy"
+      />
+    );
+  }
+  const initials = name.split(" ").map((s) => s[0]).slice(0, 2).join("");
+  return (
+    <div
+      className="grid place-items-center rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)] text-[11px] font-bold text-[var(--ink)]"
+      style={{ width: size, height: size }}
+    >
+      {initials}
+    </div>
   );
 }
 
@@ -123,29 +117,45 @@ function TeamFlag({ name, w = 56 }: { name: string; w?: number }) {
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
+type SportTab = "football" | "f1" | "ufc";
+
 function LandingPage() {
-  const landing = useLanding();
-  const now = useTicker(30_000);
   const trackView = useServerFn(recordHomeView);
-  useEffect(() => { trackView({}).catch(() => {}); }, [trackView]);
+  useEffect(() => {
+    trackView({}).catch(() => {});
+  }, [trackView]);
 
-  const fixtures = useMemo(() => {
-    return (landing?.nextMatches ?? []).filter(Boolean) as NonNullable<LandingNextMatch>[];
-  }, [landing]);
+  const feedFn = useServerFn(getGuestFeed);
+  const ufcFn = useServerFn(listUfcFightsAll);
 
-  const upcoming = useMemo(
-    () => fixtures.filter((f) => new Date(f.kickoffAt).getTime() > now),
-    [fixtures, now],
-  );
+  const feedQ = useQuery({
+    queryKey: ["guest-feed"],
+    queryFn: () => feedFn(),
+    refetchInterval: 60_000,
+  });
+  const ufcQ = useQuery({
+    queryKey: ["guest-ufc"],
+    queryFn: () => ufcFn(),
+    refetchInterval: 60_000,
+  });
 
-  const [idx, setIdx] = useState(0);
-  useEffect(() => { setIdx(0); }, [upcoming.length]);
-  const featured = upcoming[idx] ?? upcoming[0] ?? null;
-  const analyticsMatchId = featured?.id ?? FALLBACK_MATCH_ID;
+  const [tab, setTab] = useState<SportTab>("football");
+  const [walletOpen, setWalletOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const now = useTicker(30_000);
+
+  const football = feedQ.data?.football ?? [];
+  const f1 = feedQ.data?.f1 ?? [];
+  const ufc = useMemo(() => {
+    const rows = ufcQ.data?.fights ?? [];
+    const upcomingCutoff = Date.now() - 3 * 3600_000;
+    return rows
+      .filter((f: any) => new Date(f.commence_time).getTime() >= upcomingCutoff)
+      .slice(0, 12);
+  }, [ufcQ.data]);
 
   return (
     <div className="relative min-h-screen bg-[var(--surface)] text-[var(--ink)]">
-      {/* Minimal top nav — logo + login + register only */}
       <header
         className="sticky top-0 z-40 border-b border-[var(--color-surface-border)] bg-[var(--surface)]/95 backdrop-blur-md"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
@@ -173,103 +183,52 @@ function LandingPage() {
       </header>
 
       <main className="mx-auto w-full min-w-0 max-w-3xl overflow-x-hidden px-4 pb-28 pt-5 md:pb-14">
-
-
-
-
-        {/* Fixtures navigator */}
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
-              Upcoming Fixtures
-            </h2>
-            {upcoming.length > 1 && (
-              <div className="flex items-center gap-1.5 text-[11px] tabular-nums text-[var(--ink-muted)]">
-                <button
-                  onClick={() => setIdx((i) => Math.max(0, i - 1))}
-                  disabled={idx === 0}
-                  className="grid h-7 w-7 place-items-center rounded-full border border-[var(--color-surface-border)] transition-colors hover:border-[var(--neon)]/50 disabled:opacity-40"
-                  aria-label="Previous fixture"
-                >‹</button>
-                <span>{idx + 1} / {upcoming.length}</span>
-                <button
-                  onClick={() => setIdx((i) => Math.min(upcoming.length - 1, i + 1))}
-                  disabled={idx >= upcoming.length - 1}
-                  className="grid h-7 w-7 place-items-center rounded-full border border-[var(--color-surface-border)] transition-colors hover:border-[var(--neon)]/50 disabled:opacity-40"
-                  aria-label="Next fixture"
-                >›</button>
+        {/* Guest demo banner */}
+        <div className="mb-4 rounded-xl border border-[var(--neon)]/30 bg-[var(--neon)]/5 px-4 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--neon)]">
+                Demo mode
               </div>
-            )}
-          </div>
-
-          {fixtures.length > 0 && (
-            <div className="-mx-4 flex gap-2.5 overflow-x-auto px-4 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {fixtures.map((f) => {
-                const live = new Date(f.kickoffAt).getTime() <= now;
-                const active = !live && upcoming[idx]?.id === f.id;
-                const pct = threeWayPctFromOdds(f.homeOdds, f.drawOdds, f.awayOdds);
-                return (
-                  <button
-                    key={f.id}
-                    onClick={() => {
-                      const upIdx = upcoming.findIndex((u) => u.id === f.id);
-                      if (upIdx >= 0) setIdx(upIdx);
-                    }}
-                    className={`shrink-0 rounded-xl border bg-[var(--surface-2)] px-3 py-3 text-left transition-colors ${
-                      live
-                        ? "border-rose-500/50"
-                        : active
-                          ? "border-[var(--neon)]/60"
-                          : "border-[var(--color-surface-border)] hover:border-[var(--neon)]/50"
-                    }`}
-                    style={{ width: 172 }}
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <TeamFlag name={f.homeTeam} w={26} />
-                      <span className="text-[10px] font-bold text-[var(--ink-muted)]">·</span>
-                      <TeamFlag name={f.awayTeam} w={26} />
-                    </div>
-                    <div className="mt-2 text-[12px] font-bold tracking-tight text-[var(--ink)]">
-                      {abbrev(f.homeTeam)} vs {abbrev(f.awayTeam)}
-                    </div>
-                    {live ? (
-                      <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.14em] text-rose-400">
-                        <span className="h-1 w-1 animate-pulse rounded-full bg-rose-500" /> LIVE
-                      </div>
-                    ) : (
-                      <div className="mt-1 text-[9px] font-semibold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
-                        {timeChip(f.kickoffAt, now)}
-                      </div>
-                    )}
-                    {pct ? (
-                      <div className="mt-2 grid grid-cols-3 gap-1 rounded-md border border-[var(--color-surface-border)] bg-[var(--surface-3)]/60 p-1 text-center">
-                        <div>
-                          <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Home</div>
-                          <div className="text-[11px] font-bold tabular-nums text-rose-400">{pct.home}%</div>
-                        </div>
-                        <div className="border-x border-[var(--color-surface-border)]">
-                          <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Draw</div>
-                          <div className="text-[11px] font-bold tabular-nums text-sky-300">{pct.draw}%</div>
-                        </div>
-                        <div>
-                          <div className="text-[8px] font-bold uppercase tracking-wider text-[var(--ink-muted)]">Away</div>
-                          <div className="text-[11px] font-bold tabular-nums text-[var(--neon)]">{pct.away}%</div>
-                        </div>
-                      </div>
-                    ) : null}
-                  </button>
-                );
-              })}
+              <div className="mt-0.5 text-[13px] text-[var(--ink)]">
+                Browse live markets freely — create a free account to place a bet.
+              </div>
             </div>
-          )}
-        </section>
+            <Link
+              to="/register"
+              className="shrink-0 rounded-full bg-[var(--neon)] px-3 py-1.5 text-[11px] font-bold text-[#04140A]"
+            >
+              Sign up
+            </Link>
+          </div>
+        </div>
 
-        {/* Full match analytics — lifted from /matches/:id, visitor-safe */}
-        <section className="mt-6">
-          <MatchAnalyticsScreen key={analyticsMatchId} matchId={analyticsMatchId} publicMode />
-        </section>
+        {/* Sport tabs */}
+        <div className="mb-4 flex gap-1.5 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-1">
+          {(["football", "f1", "ufc"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex-1 rounded-full px-3 py-2 text-[12px] font-bold uppercase tracking-[0.14em] transition-colors ${
+                tab === t
+                  ? "bg-[var(--neon)] text-[#04140A]"
+                  : "text-[var(--ink-muted)] hover:text-[var(--ink)]"
+              }`}
+            >
+              {t === "football" ? "Football" : t === "f1" ? "Formula 1" : "UFC"}
+            </button>
+          ))}
+        </div>
 
+        {tab === "football" && (
+          <FootballList
+            matches={football}
+            now={now}
+            onBet={() => setAuthOpen(true)}
+          />
+        )}
+        {tab === "f1" && <F1List races={f1} now={now} onBet={() => setAuthOpen(true)} />}
+        {tab === "ufc" && <UfcList fights={ufc} now={now} onBet={() => setAuthOpen(true)} />}
 
         <footer className="mt-10 flex items-center justify-between border-t border-dashed border-[var(--color-surface-border)] pt-5 text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
           <Link to="/" className="flex items-center gap-2 hover:text-[var(--ink)]">
@@ -279,41 +238,346 @@ function LandingPage() {
         </footer>
       </main>
 
-
-      {/* Bottom nav — landing only. Links to existing routes. */}
-      <LandingBottomNav />
+      <LandingBottomNav onWallet={() => setWalletOpen(true)} />
+      <GuestWalletSheet open={walletOpen} onClose={() => setWalletOpen(false)} />
+      <GuestAuthPrompt open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Landing bottom nav — reuses existing routes                         */
+/* Football list                                                       */
 /* ------------------------------------------------------------------ */
-const LANDING_NAV = [
-  { to: "/about", label: "About", Icon: Info },
-  { to: "/community", label: "Community", Icon: Users },
-  { to: "/performance", label: "Performance", Icon: LineChart },
-  { to: "/faq", label: "Help", Icon: LifeBuoy },
-] as const;
 
-function LandingBottomNav() {
+function FootballList({
+  matches,
+  now,
+  onBet,
+}: {
+  matches: GuestFootballMatch[];
+  now: number;
+  onBet: () => void;
+}) {
+  if (!matches.length) {
+    return (
+      <EmptyState label="No football fixtures currently available." />
+    );
+  }
+  return (
+    <section className="space-y-2.5">
+      <SectionHeader title="Football markets" />
+      {matches.map((m) => (
+        <div
+          key={m.id}
+          className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4"
+        >
+          <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+            <span>{m.stage ?? "Football"}</span>
+            <span>{m.status === "live" ? <LiveDot /> : timeChip(m.kickoffAt, now)}</span>
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <TeamCell name={m.homeTeam} />
+            <span className="text-[10px] font-bold text-[var(--ink-muted)]">vs</span>
+            <TeamCell name={m.awayTeam} align="end" />
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <OddsPill label="Home" odds={m.homeOdds} onClick={onBet} tone="home" />
+            <OddsPill label="Draw" odds={m.drawOdds} onClick={onBet} tone="draw" />
+            <OddsPill label="Away" odds={m.awayOdds} onClick={onBet} tone="away" />
+          </div>
+        </div>
+      ))}
+    </section>
+  );
+}
+
+function TeamCell({ name, align = "start" }: { name: string; align?: "start" | "end" }) {
+  return (
+    <div
+      className={`flex min-w-0 flex-1 items-center gap-2 ${
+        align === "end" ? "flex-row-reverse text-right" : ""
+      }`}
+    >
+      <CountryFlag name={name} w={28} h={20} />
+      <div className="truncate text-[13px] font-bold tracking-tight">{name}</div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* F1 list                                                             */
+/* ------------------------------------------------------------------ */
+
+function F1List({
+  races,
+  now,
+  onBet,
+}: {
+  races: GuestF1Race[];
+  now: number;
+  onBet: () => void;
+}) {
+  if (!races.length) {
+    return <EmptyState label="No upcoming Grands Prix." />;
+  }
+  return (
+    <section className="space-y-2.5">
+      <SectionHeader title="Formula 1 races" />
+      {races.map((r) => {
+        const live = r.status === "in_progress";
+        return (
+          <div
+            key={r.id}
+            className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4"
+          >
+            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+              <span>Round {r.round}</span>
+              <span>{live ? <LiveDot /> : timeChip(r.starts_at, now)}</span>
+            </div>
+            <div className="mt-3 flex items-start gap-3">
+              <CountryFlag name={r.country} w={40} h={28} />
+              <div className="min-w-0">
+                <div className="font-display truncate text-[15px] font-bold tracking-tight text-[var(--ink)]">
+                  {r.name}
+                </div>
+                {r.circuit && (
+                  <div className="truncate text-[11px] text-[var(--ink-muted)]">{r.circuit}</div>
+                )}
+              </div>
+            </div>
+            {r.topDriver ? (
+              <div className="mt-3 flex items-center justify-between rounded-lg border border-[var(--color-surface-border)] bg-[var(--surface-3)]/40 p-3">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+                    Race-winner favourite
+                  </div>
+                  <div className="text-[14px] font-bold text-[var(--ink)]">{r.topDriver.name}</div>
+                </div>
+                <button
+                  onClick={onBet}
+                  className="rounded-lg border border-[var(--neon)]/50 bg-[var(--neon)]/10 px-3 py-2 text-[13px] font-bold tabular-nums text-[var(--neon)] hover:bg-[var(--neon)]/20"
+                >
+                  {r.topDriver.odds.toFixed(2)}
+                </button>
+              </div>
+            ) : (
+              <div className="mt-3 rounded-lg border border-dashed border-[var(--color-surface-border)] bg-[var(--surface-3)]/40 p-3 text-[11px] text-[var(--ink-muted)]">
+                Odds go live once the paddock arrives.
+              </div>
+            )}
+            <button
+              onClick={onBet}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--neon)]/40 bg-[var(--neon)]/5 py-2.5 text-[13px] font-bold text-[var(--neon)] hover:bg-[var(--neon)]/10"
+            >
+              View all markets <ArrowUpRight className="h-4 w-4" />
+            </button>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* UFC list                                                            */
+/* ------------------------------------------------------------------ */
+
+function UfcList({
+  fights,
+  now,
+  onBet,
+}: {
+  fights: any[];
+  now: number;
+  onBet: () => void;
+}) {
+  if (!fights.length) {
+    return <EmptyState label="No UFC fights on the card right now." />;
+  }
+  return (
+    <section className="space-y-2.5">
+      <SectionHeader title="UFC fights" />
+      {fights.map((f) => {
+        const ml = (f.markets ?? []).filter((m: any) => m.market_type === "moneyline");
+        const oddsA = ml.find((m: any) => m.selection_key === "fighter_a")?.odds;
+        const oddsB = ml.find((m: any) => m.selection_key === "fighter_b")?.odds;
+        return (
+          <div
+            key={f.id}
+            className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4"
+          >
+            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+              <span>
+                {f.event_name ?? "UFC"} · {(f.card_position ?? "").replace("_", "-")}
+              </span>
+              <span>{timeChip(f.commence_time, now)}</span>
+            </div>
+            <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              <FighterCell
+                name={f.fighter_a}
+                photo={f.fighter_a_logo}
+                country={f.fighter_a_country}
+              />
+              <div className="text-[10px] font-bold text-[var(--ink-muted)]">vs</div>
+              <FighterCell
+                name={f.fighter_b}
+                photo={f.fighter_b_logo}
+                country={f.fighter_b_country}
+                align="end"
+              />
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <OddsPill
+                label={f.fighter_a?.split(" ").slice(-1)[0] ?? "A"}
+                odds={oddsA != null ? Number(oddsA) : null}
+                onClick={onBet}
+                tone="home"
+              />
+              <OddsPill
+                label={f.fighter_b?.split(" ").slice(-1)[0] ?? "B"}
+                odds={oddsB != null ? Number(oddsB) : null}
+                onClick={onBet}
+                tone="away"
+              />
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function FighterCell({
+  name,
+  photo,
+  country,
+  align = "start",
+}: {
+  name: string;
+  photo?: string | null;
+  country?: string | null;
+  align?: "start" | "end";
+}) {
+  return (
+    <div
+      className={`flex min-w-0 items-center gap-2 ${
+        align === "end" ? "flex-row-reverse text-right" : ""
+      }`}
+    >
+      {photo ? (
+        <Portrait url={photo} name={name} size={40} />
+      ) : (
+        <div className="h-10 w-10 overflow-hidden rounded-full border border-[var(--color-surface-border)]">
+          <CountryFlag name={country} w={40} h={40} />
+        </div>
+      )}
+      <div className="truncate text-[13px] font-bold tracking-tight">{name}</div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Shared bits                                                         */
+/* ------------------------------------------------------------------ */
+
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <h2 className="flex items-center gap-2 pb-1 text-[13px] font-bold tracking-tight text-[var(--ink)]">
+      <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
+      {title}
+    </h2>
+  );
+}
+
+function EmptyState({ label }: { label: string }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-[var(--color-surface-border)] bg-[var(--surface-2)] p-8 text-center text-sm text-[var(--ink-muted)]">
+      {label}
+    </div>
+  );
+}
+
+function LiveDot() {
+  return (
+    <span className="inline-flex items-center gap-1 text-rose-400">
+      <span className="h-1 w-1 animate-pulse rounded-full bg-rose-500" /> LIVE
+    </span>
+  );
+}
+
+function OddsPill({
+  label,
+  odds,
+  onClick,
+  tone,
+}: {
+  label: string;
+  odds: number | null;
+  onClick: () => void;
+  tone: "home" | "draw" | "away";
+}) {
+  const color =
+    tone === "home"
+      ? "text-rose-400 border-rose-400/30 hover:bg-rose-400/10"
+      : tone === "draw"
+      ? "text-sky-300 border-sky-300/30 hover:bg-sky-300/10"
+      : "text-[var(--neon)] border-[var(--neon)]/40 hover:bg-[var(--neon)]/10";
+  return (
+    <button
+      onClick={onClick}
+      disabled={odds == null}
+      className={`flex flex-col items-center gap-0.5 rounded-lg border bg-[var(--surface-3)]/40 px-2 py-2 transition-colors disabled:opacity-40 ${color}`}
+    >
+      <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--ink-muted)]">
+        {label}
+      </span>
+      <span className="font-mono text-[14px] font-bold tabular-nums">
+        {odds != null ? odds.toFixed(2) : "—"}
+      </span>
+    </button>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Bottom nav                                                          */
+/* ------------------------------------------------------------------ */
+
+function LandingBottomNav({ onWallet }: { onWallet: () => void }) {
+  const items = [
+    { key: "wallet", label: "Wallet", Icon: WalletIcon, onClick: onWallet, to: null as string | null },
+    { key: "about", label: "About", Icon: Info, to: "/about" },
+    { key: "community", label: "Community", Icon: Users, to: "/community" },
+    { key: "performance", label: "Performance", Icon: LineChart, to: "/performance" },
+    { key: "help", label: "Help", Icon: LifeBuoy, to: "/faq" },
+  ] as const;
   return (
     <nav
       aria-label="Landing sections"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-surface-border)]/70 bg-[var(--surface)]/95 backdrop-blur-xl md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="mx-auto grid max-w-md grid-cols-4">
-        {LANDING_NAV.map(({ to, label, Icon }) => (
-          <Link
-            key={label}
-            to={to}
-            className="relative flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-semibold tracking-tight text-[var(--ink-muted)] transition-colors hover:text-[var(--neon)]"
-          >
-            <Icon className="h-[22px] w-[22px]" />
-            <span>{label}</span>
-          </Link>
-        ))}
+      <div className="mx-auto grid max-w-md grid-cols-5">
+        {items.map(({ key, label, Icon, to, onClick }) =>
+          to ? (
+            <Link
+              key={key}
+              to={to}
+              className="relative flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-semibold tracking-tight text-[var(--ink-muted)] transition-colors hover:text-[var(--neon)]"
+            >
+              <Icon className="h-[22px] w-[22px]" />
+              <span>{label}</span>
+            </Link>
+          ) : (
+            <button
+              key={key}
+              onClick={onClick}
+              className="relative flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-semibold tracking-tight text-[var(--ink-muted)] transition-colors hover:text-[var(--neon)]"
+            >
+              <Icon className="h-[22px] w-[22px]" />
+              <span>{label}</span>
+            </button>
+          ),
+        )}
       </div>
     </nav>
   );
