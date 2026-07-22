@@ -303,6 +303,7 @@ function FeaturedFightCard({ fight, now, eventName }: { fight: Fight; now: numbe
           <FighterRow
             name={fight.fighter_a}
             logo={fight.fighter_a_logo}
+            country={fight.fighter_a_country}
             pct={pct?.a ?? null}
             mult={pct?.oddsA ?? null}
             tone="home"
@@ -310,6 +311,7 @@ function FeaturedFightCard({ fight, now, eventName }: { fight: Fight; now: numbe
           <FighterRow
             name={fight.fighter_b}
             logo={fight.fighter_b_logo}
+            country={fight.fighter_b_country}
             pct={pct?.b ?? null}
             mult={pct?.oddsB ?? null}
             tone="away"
