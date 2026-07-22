@@ -186,8 +186,8 @@ export function HamburgerMenu() {
                 {/* Header: brand + close */}
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-baseline">
-                    <CsseMark className="mr-1.5 h-5 w-5 self-center text-black" />
-                    <CsseWordmark size={16} inverse />
+                    <CsseMark className="mr-1.5 h-5 w-5 self-center text-black" outline />
+                    <CsseWordmark size={16} inverse outline />
                   </span>
                   <button
                     type="button"
