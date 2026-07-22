@@ -543,13 +543,20 @@ function OddsPill({
 /* ------------------------------------------------------------------ */
 
 function LandingBottomNav({ onWallet }: { onWallet: () => void }) {
-  const items = [
-    { key: "wallet", label: "Wallet", Icon: WalletIcon, onClick: onWallet, to: null as string | null },
+  type NavItem = {
+    key: string;
+    label: string;
+    Icon: typeof WalletIcon;
+    to?: string;
+    onClick?: () => void;
+  };
+  const items: NavItem[] = [
+    { key: "wallet", label: "Wallet", Icon: WalletIcon, onClick: onWallet },
     { key: "about", label: "About", Icon: Info, to: "/about" },
     { key: "community", label: "Community", Icon: Users, to: "/community" },
     { key: "performance", label: "Performance", Icon: LineChart, to: "/performance" },
     { key: "help", label: "Help", Icon: LifeBuoy, to: "/faq" },
-  ] as const;
+  ];
   return (
     <nav
       aria-label="Landing sections"
