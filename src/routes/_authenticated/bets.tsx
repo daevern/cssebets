@@ -131,14 +131,9 @@ function BetsHub() {
       tour: "bet-button",
       accent: true,
     },
-    {
-      to: "/tournament-winner",
-      illustration: TacticalCrown,
-      kicker: "Market №02",
-      desc: "One pick. One champion. Lock your outright before the field tightens.",
-      cta: "World Champions",
-    },
   ];
+
+
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
