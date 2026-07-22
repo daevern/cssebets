@@ -4,7 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Bell, User, ShoppingBag, X, Copy, Check, LogOut } from "lucide-react";
+import { Bell, User, ShoppingBag, X, Copy, Check, LogOut, Info, Users, Activity, HelpCircle } from "lucide-react";
 import { TokenVaultSheet } from "@/components/engagement/TokenVault";
 import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
 import { useAuth } from "@/hooks/use-auth";
@@ -86,7 +86,15 @@ export function HamburgerMenu() {
     { key: "tokens", label: "Tokens", Icon: TokenMark, onClick: () => pick(() => setTokensOpen(true)) },
     { key: "notifications", label: "Alerts", Icon: Bell, onClick: () => pick(() => navigate({ to: "/notifications" })) },
     { key: "profile", label: "Profile", Icon: User, onClick: () => pick(() => navigate({ to: "/settings" })) },
-  ] as const;
+    ...(isGuest
+      ? [
+          { key: "about", label: "About", Icon: Info, onClick: () => pick(() => navigate({ to: "/about" })) },
+          { key: "community", label: "Community", Icon: Users, onClick: () => pick(() => navigate({ to: "/community" })) },
+          { key: "performance", label: "Performance", Icon: Activity, onClick: () => pick(() => navigate({ to: "/performance" })) },
+          { key: "help", label: "Help", Icon: HelpCircle, onClick: () => pick(() => navigate({ to: "/faq" })) },
+        ]
+      : []),
+  ];
 
   return (
     <>

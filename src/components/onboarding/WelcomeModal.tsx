@@ -30,7 +30,9 @@ export function WelcomeModal() {
 
   useEffect(() => {
     if (!status) return;
+    const isGuest = (user as any)?.is_anonymous === true;
     const shouldShow =
+      !isGuest &&
       status.userEnabled &&
       status.globalEnabled &&
       !status.completedAt &&
@@ -38,7 +40,7 @@ export function WelcomeModal() {
       !wasDismissed();
     setOpen(!!shouldShow);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, dismissKey]);
+  }, [status, dismissKey, user]);
 
   const onStart = () => {
     markDismissed();
