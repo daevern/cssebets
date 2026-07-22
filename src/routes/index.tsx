@@ -1,10 +1,20 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { CsseLogoLoader } from "@/components/brand/CsseLogoAnimated";
 
 export const Route = createFileRoute("/")({
   ssr: false,
+  beforeLoad: async () => {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      const { data: signInData, error } = await supabase.auth.signInAnonymously();
+      if (error || !signInData.session) {
+        throw redirect({ to: "/auth" });
+      }
+    }
+
+    throw redirect({ to: "/dashboard" });
+  },
   head: () => ({
     meta: [
       { title: "CSSEBets – The FIFA World Cup 2026 Prediction Market" },
@@ -47,67 +57,13 @@ export const Route = createFileRoute("/")({
  * identity to an anonymous user via `updateUser`).
  */
 function GuestGate() {
-  const flowRef = useRef(0);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const flowId = flowRef.current + 1;
-    flowRef.current = flowId;
-    let active = true;
-    const isCurrent = () => active && flowRef.current === flowId;
-
-    // Hard-navigate so _authenticated's beforeLoad re-reads localStorage
-    // with the freshly-persisted anonymous session (router.navigate can
-    // race the session write and bounce back to /auth).
-    const goto = (path: string) => {
-      if (!isCurrent()) return;
-      window.location.replace(path);
-    };
-
-    (async () => {
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!isCurrent()) return;
-
-        if (sessionData.session) {
-          goto("/dashboard");
-          return;
-        }
-
-        const { data: signInData, error: signInErr } =
-          await supabase.auth.signInAnonymously();
-        if (!isCurrent()) return;
-        if (signInErr) throw signInErr;
-        if (!signInData.session) throw new Error("no session returned");
-
-        // Give supabase-js a tick to write the session to localStorage before
-        // the destination route calls getUser().
-        await new Promise((r) => setTimeout(r, 50));
-        goto("/dashboard");
-      } catch (err: any) {
-        if (!isCurrent()) return;
-        console.error("[guest-gate] anon sign-in failed:", err);
-        setError(err?.message ?? "Could not start guest session");
-        goto("/auth");
-      }
-    })();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
   return (
     <div className="grid min-h-screen place-items-center bg-[var(--surface)] text-[var(--ink)]">
       <div className="flex flex-col items-center gap-4">
         <CsseLogoLoader />
-        {error ? (
-          <p className="text-xs text-[var(--ink-muted)]">Redirecting to sign in…</p>
-        ) : (
-          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--ink-muted)]">
-            Loading matchday
-          </p>
-        )}
+        <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--ink-muted)]">
+          Loading matchday
+        </p>
       </div>
     </div>
   );
