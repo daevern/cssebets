@@ -313,6 +313,32 @@ export function TopUpInstructionsModal({
   }
 
   const canSubmit = !!draftId && !uploading && !submit.isPending;
+  const isGuest = !user || (user as any)?.is_anonymous === true;
+
+  if (isGuest) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <StencilDialogContent
+          kicker={
+            <>
+              <Building2 className="h-3 w-3" /> Top up · Sign in required
+            </>
+          }
+          title="Log in to top up your wallet"
+          description="Create a free account or log in to top up your points wallet and start placing predictions."
+          size="sm"
+          footer={
+            <>
+              <GhostBtn onClick={() => onOpenChange(false)}>Cancel</GhostBtn>
+              <NeonBtn onClick={() => { onOpenChange(false); window.location.href = "/auth"; }}>
+                Log in / Register <ArrowRight className="h-3.5 w-3.5" />
+              </NeonBtn>
+            </>
+          }
+        />
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
