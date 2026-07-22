@@ -28,6 +28,8 @@ type Fight = {
   fighter_b: string;
   fighter_a_logo?: string | null;
   fighter_b_logo?: string | null;
+  fighter_a_country?: string | null;
+  fighter_b_country?: string | null;
   commence_time: string;
   card_position: "main" | "co_main" | "other";
   scheduled_rounds: 3 | 5;
