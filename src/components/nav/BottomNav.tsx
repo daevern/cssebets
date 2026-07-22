@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, LineChart, Activity, Wallet, Headphones } from "lucide-react";
+import { Home, Activity, Wallet, Headphones } from "lucide-react";
 import { WalletCardSheet } from "@/components/wallet/WalletCard";
 
 const items = [
   { to: "/dashboard", label: "Home", icon: Home, exact: true },
-  { to: "/matches", label: "Markets", icon: LineChart, exact: false },
   { to: "/my-predictions", label: "Picks", icon: Activity, exact: false },
   { to: "/support", label: "Support", icon: Headphones, exact: false },
 ] as const;
@@ -19,8 +18,9 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-surface-border)]/70 bg-[var(--surface)]/95 backdrop-blur-xl md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <div className="mx-auto grid max-w-md grid-cols-5">
-        {items.slice(0, 3).map((it) => renderLink(it, pathname))}
+      <div className="mx-auto grid max-w-md grid-cols-4">
+        {items.slice(0, 2).map((it) => renderLink(it, pathname))}
+
         <button
           type="button"
           onClick={() => setWalletOpen(true)}
