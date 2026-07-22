@@ -592,6 +592,9 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       <div className="mb-4 mt-3 h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
 
 
+      {bettingClosed ? (
+        <F1YourPicksSummary raceId={raceId} raceName={race.name} finished={race.status === "finished"} />
+      ) : (<>
       {/* Top tabs */}
       <div className="mb-4 flex items-baseline gap-6">
         {(
