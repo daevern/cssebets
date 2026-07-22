@@ -1,21 +1,47 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "@tanstack/react-router";
-import { Wallet as WalletIcon, Bell, User, Coins, X } from "lucide-react";
-import { WalletCardSheet } from "@/components/wallet/WalletCard";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { Bell, User, ShoppingBag, X, Copy, Check, LogOut } from "lucide-react";
 import { TokenVaultSheet } from "@/components/engagement/TokenVault";
+import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { getMyEngagementSummary } from "@/lib/engagement.functions";
+import { getMyReferralOverview } from "@/lib/referrals.functions";
 
 /**
  * Mobile-only condensed menu.
- * - 3-line trigger (top 2 white, bottom 1 green).
- * - On click: SVG-goo liquid-drop expansion into a full-height, 3/4-width
- *   green panel that overlays the page.
+ * Trigger: 3-line hamburger (2 white, 1 green).
+ * Panel: SVG-goo liquid-drop expansion into a full-height, 3/4-width green overlay.
  */
 export function HamburgerMenu() {
   const [open, setOpen] = useState(false);
-  const [walletOpen, setWalletOpen] = useState(false);
   const [tokensOpen, setTokensOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const uid = user?.id ?? "anon";
+
+  const eFn = useServerFn(getMyEngagementSummary);
+  const rFn = useServerFn(getMyReferralOverview);
+  const tokensQ = useQuery({
+    queryKey: ["engagement-summary", uid],
+    queryFn: () => eFn(),
+    staleTime: 30_000,
+    enabled: !!user && open,
+  });
+  const refQ = useQuery({
+    queryKey: ["my-referrals", uid],
+    queryFn: () => rFn(),
+    staleTime: 60_000,
+    enabled: !!user && open,
+  });
+
+  const tokens = tokensQ.data?.tokens.balance ?? 0;
+  const refCode = refQ.data?.referralCode ?? "";
 
   useEffect(() => {
     if (!open) return;
@@ -29,16 +55,38 @@ export function HamburgerMenu() {
     setTimeout(fn, 220);
   };
 
+  async function copyCode() {
+    if (!refCode) return;
+    try {
+      await navigator.clipboard.writeText(refCode);
+      setCopied(true);
+      toast.success("Referral code copied");
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Could not copy");
+    }
+  }
+
+  async function handleSignOut() {
+    setOpen(false);
+    try {
+      await supabase.auth.signOut();
+      navigate({ to: "/auth" });
+    } catch {
+      toast.error("Sign out failed");
+    }
+  }
+
   const items = [
-    { key: "wallet", label: "Wallet", Icon: WalletIcon, onClick: () => pick(() => setWalletOpen(true)) },
-    { key: "tokens", label: "Tokens", Icon: Coins, onClick: () => pick(() => setTokensOpen(true)) },
+    { key: "store", label: "Store", Icon: ShoppingBag, onClick: () => pick(() => navigate({ to: "/store" })) },
+    { key: "tokens", label: "Tokens", Icon: CsseMark, onClick: () => pick(() => setTokensOpen(true)) },
     { key: "notifications", label: "Alerts", Icon: Bell, onClick: () => pick(() => navigate({ to: "/notifications" })) },
     { key: "profile", label: "Profile", Icon: User, onClick: () => pick(() => navigate({ to: "/settings" })) },
   ] as const;
 
   return (
     <>
-      {/* SVG goo filter (rendered once, referenced from portal) */}
+      {/* SVG goo filter */}
       <svg aria-hidden width="0" height="0" className="absolute">
         <defs>
           <filter id="csse-goo">
@@ -101,7 +149,7 @@ export function HamburgerMenu() {
               }`}
               style={{ filter: "url(#csse-goo)" }}
             >
-              {/* Drip drops that "seed" the liquid from the trigger corner */}
+              {/* Drip drops */}
               <span
                 aria-hidden
                 className={`absolute right-4 top-4 block h-10 w-10 rounded-full bg-[var(--neon)] transition-all duration-300 ${
@@ -115,47 +163,83 @@ export function HamburgerMenu() {
                 }`}
               />
 
-              {/* Main blob — grows out from top-right */}
+              {/* Main blob — no rounded edges */}
               <div
                 className={`absolute inset-0 origin-top-right bg-[var(--neon)] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)] transition-all duration-500 ease-[cubic-bezier(0.34,1.4,0.64,1)] ${
-                  open
-                    ? "opacity-100 scale-100 rounded-l-[36px]"
-                    : "opacity-0 scale-[0.15] rounded-l-[80px]"
+                  open ? "opacity-100 scale-100" : "opacity-0 scale-[0.15]"
                 }`}
-                style={{
-                  paddingTop: "calc(env(safe-area-inset-top) + 24px)",
-                  paddingBottom: "calc(env(safe-area-inset-bottom) + 24px)",
-                }}
-              >
-                {/* Content is NOT filtered by goo — sits above via z-index */}
-              </div>
+              />
 
-              {/* Content layer (above the gooey blob so text stays crisp) */}
+              {/* Content layer */}
               <div
                 className={`relative flex h-full flex-col px-6 transition-opacity duration-300 ${
                   open ? "opacity-100 delay-200" : "opacity-0"
                 }`}
                 style={{
                   paddingTop: "calc(env(safe-area-inset-top) + 20px)",
-                  paddingBottom: "calc(env(safe-area-inset-bottom) + 24px)",
+                  paddingBottom: "calc(env(safe-area-inset-bottom) + 20px)",
                   filter: "none",
                 }}
               >
+                {/* Header: brand + close */}
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-black/70">
-                    Menu
+                  <span className="inline-flex items-baseline">
+                    <CsseMark className="mr-1.5 h-5 w-5 self-center text-black" />
+                    <CsseWordmark size={16} inverse />
                   </span>
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
                     aria-label="Close menu"
-                    className="grid h-9 w-9 place-items-center rounded-full bg-black/10 text-black transition-colors hover:bg-black/20"
+                    className="grid h-9 w-9 place-items-center bg-black/10 text-black transition-colors hover:bg-black/20"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 </div>
 
-                <ul className="mt-8 flex flex-col gap-2">
+                {/* Token balance display (read-only, wallet-style) */}
+                <div className="mt-5 flex items-center justify-between bg-black/10 px-4 py-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="grid h-8 w-8 place-items-center rounded-full bg-black text-[var(--neon)]">
+                      <CsseMark className="h-4 w-4" />
+                    </span>
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">
+                        Tokens
+                      </span>
+                      <span className="font-mono text-lg font-bold text-black tabular-nums">
+                        {tokensQ.isLoading ? "…" : tokens.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">
+                    CSSE
+                  </span>
+                </div>
+
+                {/* Referral code display */}
+                <div className="mt-3 bg-black/10 px-4 py-3">
+                  <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">
+                    Your referral code
+                  </div>
+                  <div className="mt-1 flex items-center justify-between gap-2">
+                    <span className="font-mono text-2xl font-bold tracking-[0.24em] text-black">
+                      {refCode || "—"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={copyCode}
+                      disabled={!refCode}
+                      aria-label="Copy referral code"
+                      className="grid h-9 w-9 place-items-center bg-black text-[var(--neon)] transition-opacity hover:opacity-90 disabled:opacity-40"
+                    >
+                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Nav items */}
+                <ul className="mt-5 flex flex-col gap-1.5">
                   {items.map((it, i) => {
                     const Icon = it.Icon;
                     return (
@@ -163,14 +247,14 @@ export function HamburgerMenu() {
                         <button
                           type="button"
                           onClick={it.onClick}
-                          className={`flex w-full items-center gap-3 rounded-2xl px-4 py-4 text-left text-[15px] font-bold uppercase tracking-[0.16em] text-black transition-all duration-300 hover:bg-black/10 active:scale-[0.98] ${
+                          className={`flex w-full items-center gap-3 px-3 py-3.5 text-left text-[15px] font-bold uppercase tracking-[0.16em] text-black transition-all duration-300 hover:bg-black/10 active:scale-[0.98] ${
                             open ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
                           }`}
                           style={{
                             transitionDelay: open ? `${260 + i * 60}ms` : "0ms",
                           }}
                         >
-                          <span className="grid h-9 w-9 place-items-center rounded-full bg-black/10">
+                          <span className="grid h-9 w-9 place-items-center bg-black/10">
                             <Icon className="h-4 w-4 text-black" />
                           </span>
                           {it.label}
@@ -180,8 +264,19 @@ export function HamburgerMenu() {
                   })}
                 </ul>
 
-                <div className="mt-auto text-right text-[9px] font-bold uppercase tracking-[0.3em] text-black/50">
-                  cssebets
+                {/* Sign out */}
+                <div className="mt-auto">
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className={`flex w-full items-center justify-center gap-2 bg-black px-4 py-3.5 text-[13px] font-bold uppercase tracking-[0.2em] text-[var(--neon)] transition-all duration-300 hover:bg-black/85 active:scale-[0.98] ${
+                      open ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+                    }`}
+                    style={{ transitionDelay: open ? "500ms" : "0ms" }}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
                 </div>
               </div>
             </div>
@@ -189,7 +284,6 @@ export function HamburgerMenu() {
           document.body,
         )}
 
-      <WalletCardSheet open={walletOpen} onOpenChange={setWalletOpen} />
       <TokenVaultSheet open={tokensOpen} onOpenChange={setTokensOpen} />
     </>
   );
