@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { listUfcFights } from "@/lib/ufc.functions";
 import { ArrowUpRight, Loader2 } from "lucide-react";
 import { PageFooter } from "@/components/ui/page-footer";
+import { teamFlagUrl } from "@/lib/country-flags";
 
 export const Route = createFileRoute("/_authenticated/ufc/")({
   component: UfcPage,
