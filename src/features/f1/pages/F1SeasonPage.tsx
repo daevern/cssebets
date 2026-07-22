@@ -6,6 +6,7 @@ import { ArrowUpRight, ChevronRight, Loader2 } from "lucide-react";
 import { listF1Races, getF1Race } from "../f1.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { PageFooter } from "@/components/ui/page-footer";
+import { F1Badge } from "@/components/brand/SportBadge";
 
 function CountryFlag({ country, w = 36, h = 24 }: { country?: string | null; w?: number; h?: number }) {
   const url = country ? teamFlagUrl(country, 160) : null;
@@ -208,6 +209,7 @@ function RaceChip({ race }: { race: RaceRow }) {
       style={{ width: 184 }}
     >
       <div className="flex items-center gap-1.5">
+        <F1Badge size={14} />
         <CountryFlag country={race.country} w={22} h={14} />
         <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
           R{race.round}
@@ -272,12 +274,14 @@ function FeaturedRaceCard({ race }: { race: RaceRow }) {
 
       <div className="relative p-4">
         <div className="flex items-center justify-between text-[11px] font-semibold">
-          <span className={live ? "flex items-center gap-1.5 text-rose-400" : "text-[var(--color-ink-muted)]"}>
-            {live && (
+          <span className={live ? "flex items-center gap-1.5 text-rose-400" : "flex items-center gap-1.5 text-[var(--color-ink-muted)]"}>
+            {live ? (
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
               </span>
+            ) : (
+              <F1Badge size={16} />
             )}
             {statusLabel(race.starts_at, race.status)}
           </span>

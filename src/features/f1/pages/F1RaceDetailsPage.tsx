@@ -20,6 +20,7 @@ import { F1PostRaceAnalytics } from "../components/F1PostRaceAnalytics";
 import { getMyWallet } from "@/lib/wallet.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { PageFooter } from "@/components/ui/page-footer";
+import { F1Badge } from "@/components/brand/SportBadge";
 
 type TopTab = "top_finishers" | "race_specials";
 type SubTab =
@@ -414,8 +415,9 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
 
       {/* Header */}
       <div className="mb-4">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-ink-muted)]">
-          F1 · Round {race.round}
+        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-ink-muted)]">
+          <F1Badge size={16} />
+          <span>F1 · Round {race.round}</span>
         </div>
         <h1 className="font-display text-3xl font-black leading-[1.05] tracking-tight text-[var(--color-ink)]">
           {race.name}
