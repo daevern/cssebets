@@ -302,11 +302,11 @@ function FightHero({
   );
 }
 
-function ScoreFighter({ name, logo, record }: { name: string; logo?: string | null; record: string | null }) {
+function ScoreFighter({ name, logo, country, record }: { name: string; logo?: string | null; country?: string | null; record: string | null }) {
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)] sm:h-20 sm:w-20 md:h-24 md:w-24">
-        <FighterHeadshot url={logo} name={name} size={96} />
+        <FighterHeadshot url={logo} name={name} country={country} />
       </div>
       <div className="text-center">
         <div className="max-w-[10ch] truncate font-display text-[11px] font-semibold text-[var(--color-ink)] sm:max-w-[16ch] sm:text-xs">{name}</div>
