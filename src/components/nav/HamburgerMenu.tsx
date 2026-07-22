@@ -77,9 +77,11 @@ export function HamburgerMenu() {
     }
   }
 
+  const TokenMark = (props: React.ComponentProps<typeof CsseMark>) => <CsseMark {...props} outline />;
+
   const items = [
     { key: "store", label: "Store", Icon: ShoppingBag, onClick: () => pick(() => navigate({ to: "/store" })) },
-    { key: "tokens", label: "Tokens", Icon: CsseMark, onClick: () => pick(() => setTokensOpen(true)) },
+    { key: "tokens", label: "Tokens", Icon: TokenMark, onClick: () => pick(() => setTokensOpen(true)) },
     { key: "notifications", label: "Alerts", Icon: Bell, onClick: () => pick(() => navigate({ to: "/notifications" })) },
     { key: "profile", label: "Profile", Icon: User, onClick: () => pick(() => navigate({ to: "/settings" })) },
   ] as const;
@@ -184,8 +186,8 @@ export function HamburgerMenu() {
                 {/* Header: brand + close */}
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-baseline">
-                    <CsseMark className="mr-1.5 h-5 w-5 self-center text-black" />
-                    <CsseWordmark size={16} inverse />
+                    <CsseMark className="mr-1.5 h-5 w-5 self-center text-black" outline />
+                    <CsseWordmark size={16} inverse outline />
                   </span>
                   <button
                     type="button"
@@ -201,7 +203,7 @@ export function HamburgerMenu() {
                 <div className="mt-5 flex items-center justify-between bg-black/10 px-4 py-3">
                   <div className="flex items-center gap-2.5">
                     <span className="grid h-8 w-8 place-items-center rounded-full bg-black text-[var(--neon)]">
-                      <CsseMark className="h-4 w-4" />
+                      <CsseMark className="h-4 w-4" outline />
                     </span>
                     <div className="flex flex-col leading-tight">
                       <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">

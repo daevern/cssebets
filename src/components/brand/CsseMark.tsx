@@ -23,6 +23,8 @@ export interface CsseMarkProps extends React.SVGAttributes<SVGSVGElement> {
   className?: string;
   variant?: MarkVariant;
   title?: string;
+  /** Draw a black outline around the green strokes so the mark stays visible on green surfaces. */
+  outline?: boolean;
 }
 
 /**
@@ -34,9 +36,15 @@ export interface CsseMarkProps extends React.SVGAttributes<SVGSVGElement> {
  * Built on a 32-unit grid with a 3.25-unit stroke so the silhouette
  * stays crisp at 16px favicon size up through 256px hero size.
  */
-export function CsseMark({ className, variant = "default", title, ...rest }: CsseMarkProps) {
+export function CsseMark({ className, variant = "default", title, outline, ...rest }: CsseMarkProps) {
   const wedgeColor = variant === "inverse" ? SURFACE : "currentColor";
   const accentColor = variant === "mono" ? "currentColor" : ACCENT;
+  const outlineStroke = {
+    stroke: "#000000",
+    strokeWidth: "4.75",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+  } as const;
 
   return (
     <svg
@@ -51,6 +59,9 @@ export function CsseMark({ className, variant = "default", title, ...rest }: Css
     >
 
       {title ? <title>{title}</title> : null}
+      {outline ? (
+        <path d="M24 7 L11 7 L4 16 L11 25 L24 25" {...outlineStroke} />
+      ) : null}
       <path
         d="M24 7 L11 7 L4 16 L11 25 L24 25"
         stroke={wedgeColor}
@@ -58,6 +69,9 @@ export function CsseMark({ className, variant = "default", title, ...rest }: Css
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      {outline ? (
+        <path d="M15 21 L21 14 L27 21" {...outlineStroke} />
+      ) : null}
       <path
         d="M15 21 L21 14 L27 21"
         stroke={accentColor}
@@ -77,6 +91,8 @@ export interface CsseWordmarkProps {
   size?: number;
   /** Render the "CSSE" half in inverse (dark on light surfaces). */
   inverse?: boolean;
+  /** Add a black outline around the green "Bets" letters so it pops on green backgrounds. */
+  outline?: boolean;
 }
 
 /**
@@ -84,7 +100,11 @@ export interface CsseWordmarkProps {
  * Uses Space Grotesk 600 with tight tracking — same family of
  * geometric sans used by enterprise SaaS brands (Linear, Notion).
  */
-export function CsseWordmark({ className, size = 20, inverse = false }: CsseWordmarkProps) {
+export function CsseWordmark({ className, size = 20, inverse = false, outline = false }: CsseWordmarkProps) {
+  const betsOutline = outline
+    ? "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000"
+    : undefined;
+
   return (
     <span
       className={cn("inline-flex items-baseline leading-none select-none", className)}
@@ -98,7 +118,7 @@ export function CsseWordmark({ className, size = 20, inverse = false }: CsseWord
       aria-label="CSSEBets"
     >
       <span style={{ color: inverse ? SURFACE : "var(--foreground, #fff)" }}>CSSE</span>
-      <span style={{ color: ACCENT }}>Bets</span>
+      <span style={{ color: ACCENT, textShadow: betsOutline }}>Bets</span>
     </span>
   );
 }
