@@ -37,7 +37,7 @@ export const getF1Race = createServerFn({ method: "GET" })
       sb.from("f1_race_markets")
         .select("id, market_type, selection_key, secondary_selection_key, label, odds, status")
         .eq("race_id", data.raceId)
-        .eq("status", "open")
+        .in("status", ["open", "closed", "suspended", "settled"])
         .order("market_type", { ascending: true })
         .order("odds", { ascending: true }),
       sb.from("f1_drivers").select("driver_key, name, abbr, team_key, photo_url").eq("active", true),

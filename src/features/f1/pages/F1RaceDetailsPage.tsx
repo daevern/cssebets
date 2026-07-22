@@ -14,7 +14,7 @@ import {
   Tooltip,
   Customized,
 } from "recharts";
-import { getF1Race, placeF1RaceBet, getF1MarketHistories, getF1LiveRaceState } from "../f1.functions";
+import { getF1Race, placeF1RaceBet, getF1MarketHistories, getF1LiveRaceState, getF1RaceAnalytics } from "../f1.functions";
 import { LiveRaceStats } from "../components/LiveRaceStats";
 import { F1PostRaceAnalytics } from "../components/F1PostRaceAnalytics";
 import { getMyWallet } from "@/lib/wallet.functions";
@@ -150,6 +150,17 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const teamByKey = useMemo(() => Object.fromEntries(teams.map((t) => [t.team_key, t])), [teams]);
   const driverByKey = useMemo(() => Object.fromEntries(drivers.map((d) => [d.driver_key, d])), [drivers]);
 
+  // Post-race: fetch classification so we can pin the final chart value to the actual outcome.
+  const isFinished = race?.status === "finished";
+  const analyticsFn = useServerFn(getF1RaceAnalytics);
+  const analyticsQ = useQuery({
+    queryKey: ["f1-race-analytics", raceId],
+    queryFn: () => analyticsFn({ data: { raceId } }),
+    enabled: isFinished,
+    staleTime: 60_000,
+  });
+
+
   const grouped = useMemo(() => {
     const g: Record<SubTab, any[]> = {
       top_5_finish: [],
@@ -208,7 +219,56 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     [chartMarkets, driverByKey],
   );
 
+  // Post-race outcome per chart market → forces final chart value to 100% (won) or 0% (lost).
+  const winnerByMarketId = useMemo(() => {
+    const out: Record<string, boolean> = {};
+    if (!isFinished || !analyticsQ.data) return out;
+    const cls: any[] = (analyticsQ.data as any).classification ?? [];
+    const flDriver: any = (analyticsQ.data as any).fastestLap?.driver ?? null;
+    const keyify = (s: string) => (s ?? "").toString().toLowerCase().normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    const posByKey: Record<string, number> = {};
+    const teamPoints: Record<string, { pts: number; bestPos: number }> = {};
+    for (const r of cls) {
+      const k = keyify(r.driver?.name ?? "");
+      if (k && r.position) posByKey[k] = r.position;
+      const tk = keyify(r.team?.name ?? "");
+      if (tk) {
+        const cur = teamPoints[tk] ?? { pts: 0, bestPos: 999 };
+        cur.pts += Number(r.points ?? 0);
+        cur.bestPos = Math.min(cur.bestPos, r.position ?? 999);
+        teamPoints[tk] = cur;
+      }
+    }
+    const winnerKey = Object.entries(posByKey).find(([, p]) => p === 1)?.[0] ?? null;
+    const podium = new Set(Object.entries(posByKey).filter(([, p]) => p <= 3).map(([k]) => k));
+    const top5 = new Set(Object.entries(posByKey).filter(([, p]) => p <= 5).map(([k]) => k));
+    const top10 = new Set(Object.entries(posByKey).filter(([, p]) => p <= 10).map(([k]) => k));
+    const topTeam = Object.entries(teamPoints).sort((a, b) =>
+      b[1].pts !== a[1].pts ? b[1].pts - a[1].pts : a[1].bestPos - b[1].bestPos,
+    )[0]?.[0] ?? null;
+    const flKey = flDriver?.name ? keyify(flDriver.name) : null;
+    for (const m of chartMarkets) {
+      const sel = m.selection_key;
+      switch (m.market_type) {
+        case "race_winner": out[m.id] = sel === winnerKey; break;
+        case "podium_finish": out[m.id] = podium.has(sel); break;
+        case "top_5_finish": out[m.id] = top5.has(sel); break;
+        case "top_10_finish": out[m.id] = top10.has(sel); break;
+        case "fastest_lap": out[m.id] = flKey != null && sel === flKey; break;
+        case "top_constructor_race": out[m.id] = sel === topTeam; break;
+        case "teammate_h2h": {
+          const a = posByKey[sel] ?? 999;
+          const b = posByKey[m.secondary_selection_key] ?? 999;
+          out[m.id] = a < b; break;
+        }
+      }
+    }
+    return out;
+  }, [isFinished, analyticsQ.data, chartMarkets]);
+
   // Build per-series points restricted to the selected range, then merge onto shared timeline.
+
   const { chartData, yDomain } = useMemo(() => {
     const byMarket = chartQ.data?.byMarket ?? {};
     const now = Date.now();
@@ -227,15 +287,21 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       const before = raw.filter((p) => p.t < cutoff).at(-1);
       const anchor = range !== "ALL" && before ? [{ t: cutoff, y: before.y }] : [];
 
-      // Always end at "now" with the latest observed value (or current price if no history at all).
+      // Always end at "now" (or at settled_at for finished races) with the final observed value.
       const latest = inWin.at(-1) ?? before ?? { t: now, y: s.currentPct };
-      const tail = { t: now, y: latest.y };
+      const finalY = isFinished && s.id in winnerByMarketId
+        ? (winnerByMarketId[s.id] ? 100 : 0)
+        : latest.y;
+      const tailT = isFinished && race?.settled_at ? new Date(race.settled_at).getTime() : now;
+      const tail = { t: tailT, y: finalY };
 
       const merged = [...anchor, ...inWin];
-      if (merged.length === 0) merged.push({ t: cutoff === -Infinity ? now - 3600_000 : cutoff, y: s.currentPct });
-      if (merged[merged.length - 1].t < now) merged.push(tail);
+      if (merged.length === 0) merged.push({ t: cutoff === -Infinity ? tailT - 3600_000 : cutoff, y: s.currentPct });
+      if (merged[merged.length - 1].t < tailT) merged.push(tail);
+      else merged[merged.length - 1] = tail;
       perSeries[s.id] = merged;
     }
+
 
     // Merge on a shared timeline with forward-fill.
     const times = new Set<number>();
@@ -274,7 +340,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       domain = [Math.max(0, Math.floor(min - pad)), Math.min(100, Math.ceil(max + pad))];
     }
     return { chartData: rows, yDomain: domain };
-  }, [chartQ.data, seriesMeta, range]);
+  }, [chartQ.data, seriesMeta, range, isFinished, winnerByMarketId, race?.settled_at]);
 
   const visibleSeries = seriesMeta.filter((s) => !hidden[s.id]);
   const scrubIdx = activeIndex != null ? activeIndex : Math.max(0, chartData.length - 1);
