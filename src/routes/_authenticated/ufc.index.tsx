@@ -154,10 +154,6 @@ function UfcPage() {
   return (
     <div className="flex flex-col gap-8 px-4 pt-5 pb-24 text-[var(--ink)]">
       <header className="space-y-3">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-surface-border)] bg-gradient-to-r from-red-900/40 to-black px-4 py-2 text-xs font-bold text-white">
-          <span className="rounded bg-red-600 px-2 py-0.5 text-[10px]">NEW</span>
-          {data.event.name} · Full card markets
-        </div>
         <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight text-[var(--ink)] md:text-4xl">
           {data.event.name}
         </h1>
