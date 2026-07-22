@@ -219,7 +219,56 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     [chartMarkets, driverByKey],
   );
 
+  // Post-race outcome per chart market → forces final chart value to 100% (won) or 0% (lost).
+  const winnerByMarketId = useMemo(() => {
+    const out: Record<string, boolean> = {};
+    if (!isFinished || !analyticsQ.data) return out;
+    const cls: any[] = (analyticsQ.data as any).classification ?? [];
+    const flDriver: any = (analyticsQ.data as any).fastestLap?.driver ?? null;
+    const keyify = (s: string) => (s ?? "").toString().toLowerCase().normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    const posByKey: Record<string, number> = {};
+    const teamPoints: Record<string, { pts: number; bestPos: number }> = {};
+    for (const r of cls) {
+      const k = keyify(r.driver?.name ?? "");
+      if (k && r.position) posByKey[k] = r.position;
+      const tk = keyify(r.team?.name ?? "");
+      if (tk) {
+        const cur = teamPoints[tk] ?? { pts: 0, bestPos: 999 };
+        cur.pts += Number(r.points ?? 0);
+        cur.bestPos = Math.min(cur.bestPos, r.position ?? 999);
+        teamPoints[tk] = cur;
+      }
+    }
+    const winnerKey = Object.entries(posByKey).find(([, p]) => p === 1)?.[0] ?? null;
+    const podium = new Set(Object.entries(posByKey).filter(([, p]) => p <= 3).map(([k]) => k));
+    const top5 = new Set(Object.entries(posByKey).filter(([, p]) => p <= 5).map(([k]) => k));
+    const top10 = new Set(Object.entries(posByKey).filter(([, p]) => p <= 10).map(([k]) => k));
+    const topTeam = Object.entries(teamPoints).sort((a, b) =>
+      b[1].pts !== a[1].pts ? b[1].pts - a[1].pts : a[1].bestPos - b[1].bestPos,
+    )[0]?.[0] ?? null;
+    const flKey = flDriver?.name ? keyify(flDriver.name) : null;
+    for (const m of chartMarkets) {
+      const sel = m.selection_key;
+      switch (m.market_type) {
+        case "race_winner": out[m.id] = sel === winnerKey; break;
+        case "podium_finish": out[m.id] = podium.has(sel); break;
+        case "top_5_finish": out[m.id] = top5.has(sel); break;
+        case "top_10_finish": out[m.id] = top10.has(sel); break;
+        case "fastest_lap": out[m.id] = flKey != null && sel === flKey; break;
+        case "top_constructor_race": out[m.id] = sel === topTeam; break;
+        case "teammate_h2h": {
+          const a = posByKey[sel] ?? 999;
+          const b = posByKey[m.secondary_selection_key] ?? 999;
+          out[m.id] = a < b; break;
+        }
+      }
+    }
+    return out;
+  }, [isFinished, analyticsQ.data, chartMarkets]);
+
   // Build per-series points restricted to the selected range, then merge onto shared timeline.
+
   const { chartData, yDomain } = useMemo(() => {
     const byMarket = chartQ.data?.byMarket ?? {};
     const now = Date.now();
