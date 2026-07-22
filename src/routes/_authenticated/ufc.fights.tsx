@@ -75,7 +75,9 @@ function moneylinePct(markets: Market[]) {
 }
 
 function FighterPortrait({ url, name, country, size = 44 }: { url?: string | null; name: string; country?: string | null; size?: number }) {
-  const src = url || (country ? teamFlagUrl(country, 160) : null);
+  const [imgErr, setImgErr] = useState(false);
+  const flag = country ? teamFlagUrl(country, 160) : null;
+  const src = url && !imgErr ? url : flag;
   if (src) {
     return (
       <img
@@ -84,6 +86,7 @@ function FighterPortrait({ url, name, country, size = 44 }: { url?: string | nul
         className="rounded-lg border border-[var(--color-surface-border)] bg-[var(--surface-3)] object-cover"
         style={{ width: size, height: size }}
         loading="lazy"
+        onError={() => setImgErr(true)}
       />
     );
   }
