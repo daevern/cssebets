@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CsseLogoLoader } from "@/components/brand/CsseLogoAnimated";
 
@@ -14,6 +14,7 @@ export const Route = createFileRoute("/")({
           "Trade live markets on every match, goal, lineup, and key moment with dynamic, community-driven pricing.",
       },
       { property: "og:title", content: "CSSEBets – The FIFA World Cup 2026 Prediction Market" },
+      { property: "og:type", content: "website" },
       {
         property: "og:description",
         content:
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/")({
       { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: "https://cssebets.com/og-image.jpg" },
     ],
     links: [{ rel: "canonical", href: "https://cssebets.com/" }],
@@ -45,67 +47,94 @@ export const Route = createFileRoute("/")({
  * identity to an anonymous user via `updateUser`).
  */
 function GuestGate() {
-  const startedRef = useRef(false);
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
 
   useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
-
-    let cancelled = false;
-
-    // Hard-navigate so _authenticated's beforeLoad re-reads localStorage
-    // with the freshly-persisted anonymous session (router.navigate can
-    // race the session write and bounce back to /auth).
-    const goto = (path: string) => {
-      if (cancelled) return;
-      window.location.replace(path);
+    let active = true;
+    const redirectToDashboard = () => {
+      window.location.replace("/dashboard");
     };
 
     (async () => {
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (cancelled) return;
-
-        if (sessionData.session) {
-          goto("/dashboard");
+        const timeout = new Promise<"timeout">((resolve) =>
+          window.setTimeout(() => resolve("timeout"), 2500),
+        );
+        const sessionResult = await Promise.race([supabase.auth.getSession(), timeout]);
+        if (!active) return;
+        if (sessionResult === "timeout") {
+          setStatus("ready");
           return;
         }
 
-        const { data: signInData, error: signInErr } =
-          await supabase.auth.signInAnonymously();
-        if (cancelled) return;
-        if (signInErr) throw signInErr;
-        if (!signInData.session) throw new Error("no session returned");
+        if (sessionResult.data.session) {
+          redirectToDashboard();
+          return;
+        }
 
-        // Give supabase-js a tick to write the session to localStorage before
-        // the destination route calls getUser().
-        await new Promise((r) => setTimeout(r, 50));
-        goto("/dashboard");
-      } catch (err: any) {
-        if (cancelled) return;
-        console.error("[guest-gate] anon sign-in failed:", err);
-        setError(err?.message ?? "Could not start guest session");
-        goto("/auth");
+        const signInResult = await Promise.race([supabase.auth.signInAnonymously(), timeout]);
+        if (!active) return;
+        if (signInResult === "timeout") {
+          setStatus("ready");
+          return;
+        }
+
+        const { data: signInData, error } = signInResult;
+        if (error || !signInData.session) throw error ?? new Error("No guest session returned");
+
+        window.setTimeout(redirectToDashboard, 100);
+        window.setTimeout(() => active && setStatus("ready"), 1800);
+      } catch (err) {
+        console.error("[guest-gate] guest session failed", err);
+        if (active) setStatus("error");
       }
     })();
 
+    const fallback = window.setTimeout(() => active && setStatus("ready"), 3500);
     return () => {
-      cancelled = true;
+      active = false;
+      window.clearTimeout(fallback);
     };
   }, []);
 
   return (
-    <div className="grid min-h-screen place-items-center bg-[var(--surface)] text-[var(--ink)]">
-      <div className="flex flex-col items-center gap-4">
-        <CsseLogoLoader />
-        {error ? (
-          <p className="text-xs text-[var(--ink-muted)]">Redirecting to sign in…</p>
-        ) : (
-          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--ink-muted)]">
+    <div className="min-h-screen bg-[var(--surface)] px-4 text-[var(--ink)]">
+      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center gap-7 py-10 text-center">
+        {status === "loading" ? <CsseLogoLoader /> : <div className="text-3xl font-black tracking-tight">CSSEBETS</div>}
+        <div className="space-y-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
+            Demo account
+          </p>
+          <h1 className="text-3xl font-black leading-tight md:text-4xl">
+            Enter the full matchday app.
+          </h1>
+          <p className="mx-auto max-w-sm text-sm leading-relaxed text-[var(--ink-muted)]">
+            Browse football, F1, UFC, picks, wallet and markets with the same app layout.
+          </p>
+        </div>
+        <div className="grid w-full gap-3">
+          <a
+            href="/dashboard"
+            className="flex h-12 items-center justify-center border border-[var(--color-neon)] bg-[var(--color-neon)] px-5 text-sm font-black uppercase tracking-[0.18em] text-black"
+          >
+            Open app
+          </a>
+          <a
+            href="/auth"
+            className="flex h-12 items-center justify-center border border-[var(--surface-border)] px-5 text-sm font-black uppercase tracking-[0.18em] text-[var(--ink)]"
+          >
+            Sign in / register
+          </a>
+        </div>
+        {status === "loading" ? (
+          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--ink-muted)]">
             Loading matchday
           </p>
-        )}
+        ) : status === "error" ? (
+          <p className="text-xs text-[var(--ink-muted)]">
+            Guest access is taking longer than expected. Tap Open app or sign in.
+          </p>
+        ) : null}
       </div>
     </div>
   );
