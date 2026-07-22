@@ -90,6 +90,7 @@ import { Route as ManagementAdminAnalyticsRouteImport } from './routes/managemen
 import { Route as ManagementAdminAlertsRouteImport } from './routes/management/admin.alerts'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedWalletTransactionListRouteImport } from './routes/_authenticated/wallet.transaction-list'
+import { Route as AuthenticatedUfcFightsRouteImport } from './routes/_authenticated/ufc.fights'
 import { Route as AuthenticatedUfcFightIdRouteImport } from './routes/_authenticated/ufc.$fightId'
 import { Route as AuthenticatedMatchesMatchIdRouteImport } from './routes/_authenticated/matches.$matchId'
 import { Route as AuthenticatedFreeBetsPlaceRouteImport } from './routes/_authenticated/free-bets.place'
@@ -554,6 +555,11 @@ const AuthenticatedWalletTransactionListRoute =
     path: '/transaction-list',
     getParentRoute: () => AuthenticatedWalletRoute,
   } as any)
+const AuthenticatedUfcFightsRoute = AuthenticatedUfcFightsRouteImport.update({
+  id: '/fights',
+  path: '/fights',
+  getParentRoute: () => AuthenticatedUfcRoute,
+} as any)
 const AuthenticatedUfcFightIdRoute = AuthenticatedUfcFightIdRouteImport.update({
   id: '/$fightId',
   path: '/$fightId',
@@ -774,6 +780,7 @@ export interface FileRoutesByFullPath {
   '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/ufc/$fightId': typeof AuthenticatedUfcFightIdRoute
+  '/ufc/fights': typeof AuthenticatedUfcFightsRoute
   '/wallet/transaction-list': typeof AuthenticatedWalletTransactionListRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
@@ -882,6 +889,7 @@ export interface FileRoutesByTo {
   '/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/ufc/$fightId': typeof AuthenticatedUfcFightIdRoute
+  '/ufc/fights': typeof AuthenticatedUfcFightsRoute
   '/wallet/transaction-list': typeof AuthenticatedWalletTransactionListRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
@@ -996,6 +1004,7 @@ export interface FileRoutesById {
   '/_authenticated/free-bets/place': typeof AuthenticatedFreeBetsPlaceRoute
   '/_authenticated/matches/$matchId': typeof AuthenticatedMatchesMatchIdRoute
   '/_authenticated/ufc/$fightId': typeof AuthenticatedUfcFightIdRoute
+  '/_authenticated/ufc/fights': typeof AuthenticatedUfcFightsRoute
   '/_authenticated/wallet/transaction-list': typeof AuthenticatedWalletTransactionListRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
@@ -1110,6 +1119,7 @@ export interface FileRouteTypes {
     | '/free-bets/place'
     | '/matches/$matchId'
     | '/ufc/$fightId'
+    | '/ufc/fights'
     | '/wallet/transaction-list'
     | '/lovable/email/suppression'
     | '/management/admin/alerts'
@@ -1218,6 +1228,7 @@ export interface FileRouteTypes {
     | '/free-bets/place'
     | '/matches/$matchId'
     | '/ufc/$fightId'
+    | '/ufc/fights'
     | '/wallet/transaction-list'
     | '/lovable/email/suppression'
     | '/management/admin/alerts'
@@ -1331,6 +1342,7 @@ export interface FileRouteTypes {
     | '/_authenticated/free-bets/place'
     | '/_authenticated/matches/$matchId'
     | '/_authenticated/ufc/$fightId'
+    | '/_authenticated/ufc/fights'
     | '/_authenticated/wallet/transaction-list'
     | '/lovable/email/suppression'
     | '/management/admin/alerts'
@@ -2003,6 +2015,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWalletTransactionListRouteImport
       parentRoute: typeof AuthenticatedWalletRoute
     }
+    '/_authenticated/ufc/fights': {
+      id: '/_authenticated/ufc/fights'
+      path: '/fights'
+      fullPath: '/ufc/fights'
+      preLoaderRoute: typeof AuthenticatedUfcFightsRouteImport
+      parentRoute: typeof AuthenticatedUfcRoute
+    }
     '/_authenticated/ufc/$fightId': {
       id: '/_authenticated/ufc/$fightId'
       path: '/$fightId'
@@ -2247,11 +2266,13 @@ const AuthenticatedMatchesRouteWithChildren =
 
 interface AuthenticatedUfcRouteChildren {
   AuthenticatedUfcFightIdRoute: typeof AuthenticatedUfcFightIdRoute
+  AuthenticatedUfcFightsRoute: typeof AuthenticatedUfcFightsRoute
   AuthenticatedUfcIndexRoute: typeof AuthenticatedUfcIndexRoute
 }
 
 const AuthenticatedUfcRouteChildren: AuthenticatedUfcRouteChildren = {
   AuthenticatedUfcFightIdRoute: AuthenticatedUfcFightIdRoute,
+  AuthenticatedUfcFightsRoute: AuthenticatedUfcFightsRoute,
   AuthenticatedUfcIndexRoute: AuthenticatedUfcIndexRoute,
 }
 
