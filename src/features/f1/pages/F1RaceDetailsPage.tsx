@@ -377,6 +377,11 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
     onError: (e: any) => toast.error(e.message),
   });
 
+  // Keep the last non-null selection alive across background refetches so the slip
+  // (and its focused input) never briefly unmounts mid-typing. Must be declared
+  // before any early returns to keep hook order stable.
+  const stickyMarketRef = useRef<any>(null);
+
   if (q.isLoading)
     return (
       <div className="p-6">
@@ -389,13 +394,11 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const isLive: boolean = !!q.data?.isLive;
   const effectiveSelectedId = bettingClosed ? null : selectedId;
   const selectedMarket = currentMarkets.find((x) => x.id === effectiveSelectedId) ?? null;
-  // Keep the last non-null selection alive across background refetches so the slip
-  // (and its focused input) never briefly unmounts mid-typing.
-  const stickyMarketRef = useRef<any>(null);
   if (selectedMarket) stickyMarketRef.current = selectedMarket;
   const slipMarket = selectedMarket ?? stickyMarketRef.current;
   const selectedDriver = slipMarket ? driverByKey[slipMarket.selection_key] : null;
   const noBalance = balance <= 0;
+
 
   return (
     <div
