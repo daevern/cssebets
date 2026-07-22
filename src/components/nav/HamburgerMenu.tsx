@@ -77,9 +77,11 @@ export function HamburgerMenu() {
     }
   }
 
+  const TokenMark = (props: React.ComponentProps<typeof CsseMark>) => <CsseMark {...props} outline />;
+
   const items = [
     { key: "store", label: "Store", Icon: ShoppingBag, onClick: () => pick(() => navigate({ to: "/store" })) },
-    { key: "tokens", label: "Tokens", Icon: CsseMark, onClick: () => pick(() => setTokensOpen(true)) },
+    { key: "tokens", label: "Tokens", Icon: TokenMark, onClick: () => pick(() => setTokensOpen(true)) },
     { key: "notifications", label: "Alerts", Icon: Bell, onClick: () => pick(() => navigate({ to: "/notifications" })) },
     { key: "profile", label: "Profile", Icon: User, onClick: () => pick(() => navigate({ to: "/settings" })) },
   ] as const;
