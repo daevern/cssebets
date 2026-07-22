@@ -57,15 +57,29 @@ function GuestGate() {
 
     (async () => {
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
+        const timeout = new Promise<"timeout">((resolve) =>
+          window.setTimeout(() => resolve("timeout"), 2500),
+        );
+        const sessionResult = await Promise.race([supabase.auth.getSession(), timeout]);
         if (!active) return;
-        if (sessionData.session) {
+        if (sessionResult === "timeout") {
+          setStatus("ready");
+          return;
+        }
+
+        if (sessionResult.data.session) {
           redirectToDashboard();
           return;
         }
 
-        const { data: signInData, error } = await supabase.auth.signInAnonymously();
+        const signInResult = await Promise.race([supabase.auth.signInAnonymously(), timeout]);
         if (!active) return;
+        if (signInResult === "timeout") {
+          setStatus("ready");
+          return;
+        }
+
+        const { data: signInData, error } = signInResult;
         if (error || !signInData.session) throw error ?? new Error("No guest session returned");
 
         window.setTimeout(redirectToDashboard, 100);
