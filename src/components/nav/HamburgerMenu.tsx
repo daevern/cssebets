@@ -94,7 +94,7 @@ export function HamburgerMenu() {
           { key: "help", label: "Help", Icon: HelpCircle, onClick: () => pick(() => navigate({ to: "/faq" })) },
         ]
       : []),
-  ] as const;
+  ];
 
   return (
     <>
