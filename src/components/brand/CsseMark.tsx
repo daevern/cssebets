@@ -91,6 +91,8 @@ export interface CsseWordmarkProps {
   size?: number;
   /** Render the "CSSE" half in inverse (dark on light surfaces). */
   inverse?: boolean;
+  /** Add a black outline around the green "Bets" letters so it pops on green backgrounds. */
+  outline?: boolean;
 }
 
 /**
