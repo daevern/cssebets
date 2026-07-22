@@ -203,39 +203,17 @@ function HomePage() {
 
 
 
-      {/* Next fixture — single card matching matches/markets style */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
-            Next Fixture
-          </h2>
-          <Link
-            to="/matches"
-            className="flex items-center gap-1 text-[12px] font-semibold text-[var(--neon)]"
-          >
-            View all <ChevronRight className="h-3 w-3" />
-          </Link>
-        </div>
-        {featured ? (
-          <FeaturedMarketCard match={featured} now={now} />
-        ) : (
-          <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-10 text-center text-sm text-[var(--ink-muted)]">
-            No fixtures on the slate yet — check back closer to kickoff.
-          </div>
-        )}
-      </section>
-
-      {/* Next F1 race + Next UFC fight */}
-      {(extras?.nextRace || extras?.nextFight) && (
+      {/* Next on the card — featured football fixture + F1 race + UFC fight */}
+      {(featured || extras?.nextRace || extras?.nextFight) && (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
               <span className="h-1.5 w-1.5 rounded-full bg-[var(--neon)]" />
-              Also on the card
+              Next on the card
             </h2>
           </div>
           <div className="grid gap-3">
+            {featured && <FeaturedMarketCard match={featured} now={now} />}
             {extras?.nextRace && <NextRaceCard race={extras.nextRace} now={now} />}
             {extras?.nextFight && <NextFightCard fight={extras.nextFight} now={now} />}
           </div>
