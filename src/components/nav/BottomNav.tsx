@@ -29,7 +29,7 @@ export function BottomNav() {
           <Wallet className="h-[22px] w-[22px]" />
           <span>Wallet</span>
         </button>
-        {items.slice(3).map((it) => renderLink(it, pathname))}
+        {items.slice(2).map((it) => renderLink(it, pathname))}
       </div>
       <WalletCardSheet open={walletOpen} onOpenChange={setWalletOpen} />
     </nav>
