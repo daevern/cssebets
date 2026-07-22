@@ -221,7 +221,7 @@ function FightCard({ fight, now }: { fight: Fight; now: number }) {
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
               </span>
             ) : (
-              <UfcBadge size={16} />
+              <UfcBadge size={32} />
             )}
             {timeChip(fight.commence_time, fight.status, now)}
           </span>

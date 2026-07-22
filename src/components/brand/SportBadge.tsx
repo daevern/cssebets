@@ -1,7 +1,7 @@
 import f1Logo from "@/assets/f1-logo.png";
 import ufcLogo from "@/assets/ufc-logo.png";
 
-export function F1Badge({ size = 18, className = "" }: { size?: number; className?: string }) {
+export function F1Badge({ size = 36, className = "" }: { size?: number; className?: string }) {
   return (
     <img
       src={f1Logo}
@@ -15,7 +15,7 @@ export function F1Badge({ size = 18, className = "" }: { size?: number; classNam
   );
 }
 
-export function UfcBadge({ size = 18, className = "" }: { size?: number; className?: string }) {
+export function UfcBadge({ size = 36, className = "" }: { size?: number; className?: string }) {
   return (
     <img
       src={ufcLogo}

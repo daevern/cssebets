@@ -801,7 +801,7 @@ function NextRaceCard({ race, now }: { race: NonNullable<NextF1Race>; now: numbe
       <div className="relative p-4">
         <div className="flex items-center justify-between text-[11px] font-semibold">
           <span className="flex items-center gap-1.5 text-[var(--ink-muted)]">
-            <F1Badge size={16} />
+            <F1Badge size={32} />
             {whenLabel(race.starts_at, now)}
           </span>
           {race.round != null && <span className="text-[var(--ink-muted)]">Round {race.round}</span>}
@@ -980,7 +980,7 @@ function NextFightCard({ fight, now }: { fight: NonNullable<NextUfcFight>; now: 
       <div className="relative p-4">
         <div className="flex items-center justify-between text-[11px] font-semibold">
           <span className="flex items-center gap-1.5 text-[var(--ink-muted)]">
-            <UfcBadge size={16} />
+            <UfcBadge size={32} />
             {whenLabel(fight.commence_time, now)}
           </span>
           <span className="text-[var(--ink-muted)]">
