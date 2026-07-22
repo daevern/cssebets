@@ -23,6 +23,8 @@ export interface CsseMarkProps extends React.SVGAttributes<SVGSVGElement> {
   className?: string;
   variant?: MarkVariant;
   title?: string;
+  /** Draw a black outline around the green strokes so the mark stays visible on green surfaces. */
+  outline?: boolean;
 }
 
 /**
