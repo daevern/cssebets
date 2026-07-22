@@ -422,16 +422,6 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
 
       {isLive && <LiveRaceStats raceId={raceId} />}
 
-      {bettingClosed && (
-        <div className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
-          <div className="font-bold text-amber-400">
-            {race.status === "finished" ? "Race complete — markets closed" : "Markets closed — race in progress"}
-          </div>
-          <div className="mt-0.5 text-[12px] text-white/70">
-            No further bets accepted. Open picks settle once the FIA posts the Final Race Classification.
-          </div>
-        </div>
-      )}
 
 
       {/* Market Movement — recharts, football-analytics style */}
