@@ -1,9 +1,11 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { Bell, User, Home, LineChart, Activity, Coins, Headphones } from "lucide-react";
+
 import { CsseLogo } from "@/components/brand/CsseMark";
 import { TokenChip } from "@/components/engagement/TokenVault";
 import { WalletChip } from "@/components/wallet/WalletCard";
 import { CategoryRail } from "@/components/nav/CategoryRail";
+import { HamburgerMenu } from "@/components/nav/HamburgerMenu";
 
 
 const DESKTOP_NAV = [
@@ -39,7 +41,7 @@ export function TopBar({
   );
 }
 
-function MobileBar({ balance, loading }: { balance?: number | null; loading?: boolean }) {
+function MobileBar({ balance: _balance, loading: _loading }: { balance?: number | null; loading?: boolean }) {
   return (
     <div className="mx-auto flex h-14 w-full min-w-0 max-w-md items-center justify-between gap-2 px-3 sm:px-4 md:hidden">
       <Link
@@ -51,26 +53,12 @@ function MobileBar({ balance, loading }: { balance?: number | null; loading?: bo
       </Link>
 
       <div className="flex min-w-0 shrink items-center justify-end gap-1 sm:gap-2">
-        {balance != null && <WalletChip balance={balance} loading={loading} />}
-        {balance != null && <TokenChip />}
-        <Link
-          to="/notifications"
-          aria-label="Notifications"
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--color-surface-border)]/70 text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)] sm:h-9 sm:w-9"
-        >
-          <Bell className="h-4 w-4" />
-        </Link>
-        <Link
-          to="/settings"
-          aria-label="Profile"
-          className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--color-surface-border)]/70 text-[var(--ink-muted)] transition-colors hover:text-[var(--ink)] sm:h-9 sm:w-9"
-        >
-          <User className="h-4 w-4" />
-        </Link>
+        <HamburgerMenu />
       </div>
     </div>
   );
 }
+
 
 function DesktopBar({ balance, loading }: { balance?: number | null; loading?: boolean }) {
   const { pathname } = useLocation();
