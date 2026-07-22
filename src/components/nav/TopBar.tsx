@@ -43,6 +43,8 @@ export function TopBar({
 }
 
 function MobileBar({ balance: _balance, loading: _loading }: { balance?: number | null; loading?: boolean }) {
+  const { user } = useAuth();
+  const isGuest = !user || (user as any)?.is_anonymous === true;
   return (
     <div className="mx-auto flex h-14 w-full min-w-0 max-w-md items-center justify-between gap-2 px-3 sm:px-4 md:hidden">
       <Link
@@ -54,6 +56,15 @@ function MobileBar({ balance: _balance, loading: _loading }: { balance?: number 
       </Link>
 
       <div className="flex min-w-0 shrink items-center justify-end gap-1 sm:gap-2">
+        {isGuest && (
+          <Link
+            to="/auth"
+            className="flex h-9 items-center gap-1.5 rounded-full border border-[var(--neon)]/60 bg-[var(--neon)]/10 px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--neon)] transition-colors hover:bg-[var(--neon)]/20"
+          >
+            <LogIn className="h-3.5 w-3.5" />
+            Log in
+          </Link>
+        )}
         <HamburgerMenu />
       </div>
     </div>
