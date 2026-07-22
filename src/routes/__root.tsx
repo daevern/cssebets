@@ -171,6 +171,7 @@ function RootComponent() {
 function InstallPromptGate() {
   const { user } = useAuth();
   if (!user) return null;
+  if ((user as any)?.is_anonymous === true) return null;
   return <InstallPrompt />;
 }
 
