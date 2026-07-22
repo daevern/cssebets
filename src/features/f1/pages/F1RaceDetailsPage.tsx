@@ -406,7 +406,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       style={{ paddingBottom: selectedMarket ? "calc(env(safe-area-inset-bottom) + 22rem)" : "3rem" }}
     >
       <Link
-        to="/f1"
+        to="/f1/races"
         className="mb-4 inline-flex items-center gap-1 text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
       >
         <ArrowLeft className="h-3 w-3" /> All races
