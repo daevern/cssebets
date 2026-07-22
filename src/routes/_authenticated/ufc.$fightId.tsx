@@ -278,7 +278,7 @@ function FightHero({
 
       {/* Scoreboard — headshots + VS, mirrors football's centered flag scoreboard */}
       <div className="flex items-center justify-center gap-5 sm:gap-8 md:gap-12">
-        <ScoreFighter name={fight.fighter_a} logo={fight.fighter_a_logo || fighterA?.photo_url} record={recordA} />
+        <ScoreFighter name={fight.fighter_a} logo={fight.fighter_a_logo || fighterA?.photo_url} country={fighterA?.country} record={recordA} />
         <div className="flex flex-col items-center">
           {isFinished && fight.winner ? (
             <span className="font-display text-4xl font-semibold tabular-nums text-[var(--color-ink)] sm:text-5xl md:text-6xl">
@@ -293,7 +293,7 @@ function FightHero({
             {fight.scheduled_rounds} rounds
           </span>
         </div>
-        <ScoreFighter name={fight.fighter_b} logo={fight.fighter_b_logo || fighterB?.photo_url} record={recordB} />
+        <ScoreFighter name={fight.fighter_b} logo={fight.fighter_b_logo || fighterB?.photo_url} country={fighterB?.country} record={recordB} />
       </div>
 
       {/* Divider before graph */}
