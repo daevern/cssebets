@@ -74,13 +74,25 @@ function moneylinePct(markets: Market[]) {
   return { a: Math.round((ia / s) * 100), b: Math.round((ib / s) * 100), oddsA: Number(a.odds), oddsB: Number(b.odds) };
 }
 
-/* Fighter portrait — the visual equivalent of TeamFlag on the football side. */
-function FighterPortrait({ url, name, size = 56 }: { url?: string | null; name: string; size?: number }) {
+/* Fighter portrait — falls back to country flag when there's no photo. */
+function FighterPortrait({ url, name, country, size = 56 }: { url?: string | null; name: string; country?: string | null; size?: number }) {
   if (url) {
     return (
       <img
         src={url}
         alt={name}
+        className="rounded-lg border border-[var(--color-surface-border)] bg-[var(--surface-3)] object-cover"
+        style={{ width: size, height: size }}
+        loading="lazy"
+      />
+    );
+  }
+  const flag = country ? teamFlagUrl(country, 160) : null;
+  if (flag) {
+    return (
+      <img
+        src={flag}
+        alt={country ?? name}
         className="rounded-lg border border-[var(--color-surface-border)] bg-[var(--surface-3)] object-cover"
         style={{ width: size, height: size }}
         loading="lazy"
