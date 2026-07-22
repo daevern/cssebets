@@ -899,8 +899,17 @@ function F1DriverRow({
 
 /* ------------ Next UFC fight card ------------ */
 function FightPhoto({ url, name }: { url: string | null; name: string }) {
-  if (url) {
-    return <img src={url} alt={name} className="h-full w-full object-cover object-top" loading="lazy" />;
+  const [err, setErr] = useState(false);
+  if (url && !err) {
+    return (
+      <img
+        src={url}
+        alt={name}
+        className="h-full w-full object-cover object-top"
+        loading="lazy"
+        onError={() => setErr(true)}
+      />
+    );
   }
   const initials = name.split(" ").map((s) => s[0]).slice(0, 2).join("");
   return (
