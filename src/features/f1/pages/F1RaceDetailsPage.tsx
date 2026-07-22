@@ -1053,3 +1053,113 @@ function DriverLegendDropdown({
   );
 }
 
+function F1YourPicksSummary({ raceId, raceName, finished }: { raceId: string; raceName: string; finished: boolean }) {
+  const { user } = useAuth();
+  const uid = user?.id;
+  const { data } = useQuery({
+    queryKey: ["f1-race-user-picks", raceId, uid],
+    enabled: !!uid,
+    refetchInterval: 30_000,
+    queryFn: async () => {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data, error } = await supabase
+        .from("f1_bets")
+        .select("id, market_type, selection_label, selection_key, virtual_stake, potential_payout, actual_payout, status, odds")
+        .eq("user_id", uid!)
+        .eq("race_id", raceId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const picks = data ?? [];
+  const totalStake = picks.reduce((s, p) => s + Number(p.virtual_stake || 0), 0);
+  const totalPayout = picks.reduce((s, p) => s + Number(p.actual_payout || 0), 0);
+  const wins = picks.filter((p) => p.status === "won").length;
+  const losses = picks.filter((p) => p.status === "lost").length;
+  const voids = picks.filter((p) => p.status === "void" || p.status === "cancelled" || p.status === "refunded").length;
+  const pnl = totalPayout - totalStake;
+
+  return (
+    <div className="relative border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-4">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.28em]">
+          {finished ? (
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-ink-muted)]" />
+          ) : (
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-destructive" />
+          )}
+          <span className={finished ? "text-[var(--color-ink-muted)]" : "text-destructive"}>
+            {finished ? "Your picks · settled" : "Your picks · in play"}
+          </span>
+        </div>
+        {picks.length > 0 && (
+          <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+            {picks.length} pick{picks.length === 1 ? "" : "s"}
+          </span>
+        )}
+      </div>
+
+      {picks.length === 0 ? (
+        <p className="text-[12px] text-[var(--color-ink-muted)]">
+          You didn't place any predictions on {raceName}.
+        </p>
+      ) : (
+        <>
+          <div className="mb-3 grid grid-cols-3 gap-2 border-b border-dashed border-[var(--color-surface-border)] pb-3">
+            <div>
+              <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Staked</div>
+              <div className="font-display text-sm font-bold tabular-nums text-[var(--color-ink)]">{totalStake.toLocaleString()} pts</div>
+            </div>
+            <div>
+              <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Returned</div>
+              <div className="font-display text-sm font-bold tabular-nums text-[var(--color-ink)]">{totalPayout.toLocaleString()} pts</div>
+            </div>
+            <div>
+              <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Net</div>
+              <div className={`font-display text-sm font-bold tabular-nums ${pnl > 0 ? "text-[var(--color-neon)]" : pnl < 0 ? "text-destructive" : "text-[var(--color-ink)]"}`}>
+                {pnl >= 0 ? "+" : ""}{pnl.toLocaleString()} pts
+              </div>
+            </div>
+          </div>
+          {finished && (
+            <div className="mb-3 flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.22em]">
+              <span className="text-[var(--color-neon)]">{wins} won</span>
+              <span className="text-[var(--color-ink-muted)]">·</span>
+              <span className="text-destructive/80">{losses} lost</span>
+              {voids > 0 && (<><span className="text-[var(--color-ink-muted)]">·</span><span className="text-[var(--color-ink-muted)]">{voids} void</span></>)}
+            </div>
+          )}
+          <div className="divide-y divide-[var(--color-surface-border)]/60">
+            {picks.map((p) => {
+              const stake = Number(p.virtual_stake || 0);
+              const payout = Number(p.actual_payout || 0);
+              const tone = p.status === "won" ? "text-[var(--color-neon)]" : p.status === "lost" ? "text-destructive" : "text-[var(--color-ink-muted)]";
+              return (
+                <div key={p.id} className="flex items-center justify-between gap-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13px] font-semibold text-[var(--color-ink)]">
+                      {p.selection_label ?? p.selection_key}
+                    </div>
+                    <div className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+                      {p.market_type?.replace(/_/g, " ")} · @{Number(p.odds).toFixed(2)}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-[10px] font-bold uppercase tracking-[0.18em] ${tone}`}>{p.status}</div>
+                    <div className="font-display text-[13px] font-bold tabular-nums text-[var(--color-ink)]">
+                      {stake.toLocaleString()} → {payout.toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+
