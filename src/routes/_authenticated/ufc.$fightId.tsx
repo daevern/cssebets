@@ -175,16 +175,31 @@ function AnalysisSection({ kicker, meta, children }: { kicker?: ReactNode; meta?
 
 /* ---------- Hero — mirrors football MatchHero article layout ---------- */
 
-function FighterHeadshot({ url, name }: { url?: string | null; name: string; size?: number }) {
-  if (url) {
+function FighterHeadshot({ url, name, country }: { url?: string | null; name: string; country?: string | null }) {
+  const [imgErr, setImgErr] = useState(false);
+  const flag = country ? teamFlagUrl(country, 160) : null;
+
+  if (url && !imgErr) {
     return (
       <img
         src={url}
         alt={name}
         className="h-full w-full object-cover object-top"
+        onError={() => setImgErr(true)}
       />
     );
   }
+
+  if (flag) {
+    return (
+      <img
+        src={flag}
+        alt={country ?? name}
+        className="h-full w-full object-cover object-center"
+      />
+    );
+  }
+
   const initials = name.split(" ").map((s) => s[0]).slice(0, 2).join("");
   return (
     <div className="grid h-full w-full place-items-center bg-[var(--surface-3)] font-display text-sm font-semibold text-[var(--color-ink-muted)]">
