@@ -978,7 +978,10 @@ function NextFightCard({ fight, now }: { fight: NonNullable<NextUfcFight>; now: 
     >
       <div className="relative p-4">
         <div className="flex items-center justify-between text-[11px] font-semibold">
-          <span className="text-[var(--ink-muted)]">{whenLabel(fight.commence_time, now)}</span>
+          <span className="flex items-center gap-1.5 text-[var(--ink-muted)]">
+            <UfcBadge size={16} />
+            {whenLabel(fight.commence_time, now)}
+          </span>
           <span className="text-[var(--ink-muted)]">
             {lastName(fight.fighter_a)} vs {lastName(fight.fighter_b)}
           </span>
