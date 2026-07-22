@@ -938,10 +938,11 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
     .maybeSingle();
   if (!event) return { ok: true, skipped: "no active event" };
 
-  // Cost guard: only hit API within ±3 days of event start (or force).
+  // Cost guard: only hit API within ±5 days of event start (or force).
   const startsAt = new Date(event.starts_at).getTime();
-  const withinWindow = Math.abs(startsAt - Date.now()) < 3 * 24 * 60 * 60 * 1000;
+  const withinWindow = Math.abs(startsAt - Date.now()) < 5 * 24 * 60 * 60 * 1000;
   if (!opts.force && !withinWindow) return { ok: true, skipped: "outside event window" };
+
 
   const allFights = await findEventFights(event.starts_at);
   if (!allFights.length) return { ok: true, skipped: "no UFC fights found near event date" };

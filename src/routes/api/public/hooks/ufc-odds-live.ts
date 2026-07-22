@@ -6,17 +6,20 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/hooks/ufc-odds-live")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
         try {
+          const url = new URL(request.url);
+          const force = url.searchParams.get("force") === "1";
           const { runUfcOddsSync, runUfcAutoSettle, runUfcEventDiscovery } = await import("@/lib/ufc-odds.server");
           const discovery = await runUfcEventDiscovery();
           const settle = await runUfcAutoSettle();
-          const odds = settle.checked > 0
+          const odds = !force && settle.checked > 0
             ? { ok: true, skipped: "settlement check in progress" }
-            : await runUfcOddsSync();
+            : await runUfcOddsSync({ force });
           return new Response(JSON.stringify({ discovery, odds, settle }), {
             headers: { "content-type": "application/json" },
           });
+
         } catch (e) {
           return new Response(
             JSON.stringify({ ok: false, error: (e as Error).message }),
