@@ -74,9 +74,12 @@ function moneylinePct(markets: Market[]) {
   return { a: Math.round((ia / s) * 100), b: Math.round((ib / s) * 100), oddsA: Number(a.odds), oddsB: Number(b.odds) };
 }
 
-/* Fighter portrait — falls back to country flag when there's no photo. */
+/* Fighter portrait — falls back to country flag when there's no photo or the photo fails to load. */
 function FighterPortrait({ url, name, country, size = 56 }: { url?: string | null; name: string; country?: string | null; size?: number }) {
-  if (url) {
+  const [imgErr, setImgErr] = useState(false);
+  const flag = country ? teamFlagUrl(country, 160) : null;
+
+  if (url && !imgErr) {
     return (
       <img
         src={url}
@@ -84,10 +87,11 @@ function FighterPortrait({ url, name, country, size = 56 }: { url?: string | nul
         className="rounded-lg border border-[var(--color-surface-border)] bg-[var(--surface-3)] object-cover"
         style={{ width: size, height: size }}
         loading="lazy"
+        onError={() => setImgErr(true)}
       />
     );
   }
-  const flag = country ? teamFlagUrl(country, 160) : null;
+
   if (flag) {
     return (
       <img
@@ -99,6 +103,7 @@ function FighterPortrait({ url, name, country, size = 56 }: { url?: string | nul
       />
     );
   }
+
   const initials = name.split(" ").map((s) => s[0]).slice(0, 2).join("");
   return (
     <div
