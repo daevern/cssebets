@@ -287,15 +287,21 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       const before = raw.filter((p) => p.t < cutoff).at(-1);
       const anchor = range !== "ALL" && before ? [{ t: cutoff, y: before.y }] : [];
 
-      // Always end at "now" with the latest observed value (or current price if no history at all).
+      // Always end at "now" (or at settled_at for finished races) with the final observed value.
       const latest = inWin.at(-1) ?? before ?? { t: now, y: s.currentPct };
-      const tail = { t: now, y: latest.y };
+      const finalY = isFinished && s.id in winnerByMarketId
+        ? (winnerByMarketId[s.id] ? 100 : 0)
+        : latest.y;
+      const tailT = isFinished && race?.settled_at ? new Date(race.settled_at).getTime() : now;
+      const tail = { t: tailT, y: finalY };
 
       const merged = [...anchor, ...inWin];
-      if (merged.length === 0) merged.push({ t: cutoff === -Infinity ? now - 3600_000 : cutoff, y: s.currentPct });
-      if (merged[merged.length - 1].t < now) merged.push(tail);
+      if (merged.length === 0) merged.push({ t: cutoff === -Infinity ? tailT - 3600_000 : cutoff, y: s.currentPct });
+      if (merged[merged.length - 1].t < tailT) merged.push(tail);
+      else merged[merged.length - 1] = tail;
       perSeries[s.id] = merged;
     }
+
 
     // Merge on a shared timeline with forward-fill.
     const times = new Set<number>();
