@@ -340,7 +340,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       domain = [Math.max(0, Math.floor(min - pad)), Math.min(100, Math.ceil(max + pad))];
     }
     return { chartData: rows, yDomain: domain };
-  }, [chartQ.data, seriesMeta, range]);
+  }, [chartQ.data, seriesMeta, range, isFinished, winnerByMarketId, race?.settled_at]);
 
   const visibleSeries = seriesMeta.filter((s) => !hidden[s.id]);
   const scrubIdx = activeIndex != null ? activeIndex : Math.max(0, chartData.length - 1);
