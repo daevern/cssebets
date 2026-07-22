@@ -333,9 +333,9 @@ function FeaturedFightCard({ fight, now, eventName }: { fight: Fight; now: numbe
 }
 
 function FighterRow({
-  name, logo, pct, mult, tone,
+  name, logo, country, pct, mult, tone,
 }: {
-  name: string; logo?: string | null; pct: number | null; mult: number | null; tone: "home" | "away";
+  name: string; logo?: string | null; country?: string | null; pct: number | null; mult: number | null; tone: "home" | "away";
 }) {
   const color = tone === "home" ? "text-rose-400" : "text-[var(--neon)]";
   const borderColor = tone === "home" ? "border-rose-400/40" : "border-[var(--neon)]/40";
@@ -344,7 +344,7 @@ function FighterRow({
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="flex min-w-0 flex-1 items-center gap-3">
-        <FighterPortrait url={logo} name={name} size={44} />
+        <FighterPortrait url={logo} country={country} name={name} size={44} />
         <span className="truncate text-[15px] font-bold tracking-tight text-[var(--ink)]">{name}</span>
       </div>
       {pct != null && (
