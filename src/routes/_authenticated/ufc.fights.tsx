@@ -113,16 +113,20 @@ function UfcFightsPage() {
 
   const { live, upcoming, completed } = useMemo(() => {
     const l: Fight[] = []; const u: Fight[] = []; const c: Fight[] = [];
+    // Any fight whose scheduled start is more than 3 hours ago is treated as
+    // completed even if the DB status hasn't been reconciled yet.
+    const staleCutoff = now - 3 * 60 * 60 * 1000;
     for (const f of fights) {
+      const t = new Date(f.commence_time).getTime();
+      if (f.status === "finished" || t < staleCutoff) { c.push(f); continue; }
       if (f.status === "live") { l.push(f); continue; }
-      if (f.status === "finished") { c.push(f); continue; }
       u.push(f);
     }
     const asc = (a: Fight, b: Fight) => new Date(a.commence_time).getTime() - new Date(b.commence_time).getTime();
     l.sort(asc); u.sort(asc);
     c.sort((a, b) => new Date(b.commence_time).getTime() - new Date(a.commence_time).getTime());
     return { live: l, upcoming: u, completed: c };
-  }, [fights]);
+  }, [fights, now]);
 
   const list = tab === "live" ? live : tab === "upcoming" ? upcoming : completed;
 
