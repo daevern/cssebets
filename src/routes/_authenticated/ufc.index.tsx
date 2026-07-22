@@ -7,6 +7,7 @@ import { listUfcFights } from "@/lib/ufc.functions";
 import { ArrowUpRight, Loader2 } from "lucide-react";
 import { PageFooter } from "@/components/ui/page-footer";
 import { teamFlagUrl } from "@/lib/country-flags";
+import { UfcBadge } from "@/components/brand/SportBadge";
 
 export const Route = createFileRoute("/_authenticated/ufc/")({
   component: UfcPage,
@@ -235,6 +236,7 @@ function FightChip({ fight, now }: { fight: Fight; now: number }) {
       style={{ width: 172 }}
     >
       <div className="flex items-center gap-1.5">
+        <UfcBadge size={14} />
         <FighterPortrait url={fight.fighter_a_logo} country={fight.fighter_a_country} name={fight.fighter_a} size={30} />
         <span className="text-[10px] font-bold text-[var(--ink-muted)]">·</span>
         <FighterPortrait url={fight.fighter_b_logo} country={fight.fighter_b_country} name={fight.fighter_b} size={30} />
@@ -292,12 +294,14 @@ function FeaturedFightCard({ fight, now, eventName }: { fight: Fight; now: numbe
 
       <div className="relative p-4">
         <div className="flex items-center justify-between text-[11px] font-semibold">
-          <span className={live ? "flex items-center gap-1.5 text-rose-400" : "text-[var(--ink-muted)]"}>
-            {live && (
+          <span className={live ? "flex items-center gap-1.5 text-rose-400" : "flex items-center gap-1.5 text-[var(--ink-muted)]"}>
+            {live ? (
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-75" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
               </span>
+            ) : (
+              <UfcBadge size={16} />
             )}
             {statusLabel(fight, now)}
           </span>

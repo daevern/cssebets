@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, ChevronRight, Loader2 } from "lucide-react";
 import { PageFooter } from "@/components/ui/page-footer";
+import { F1Badge } from "@/components/brand/SportBadge";
 import { listF1Races, getF1Race } from "@/features/f1/f1.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 
@@ -202,12 +203,14 @@ function RaceCard({ race, now }: { race: RaceRow; now: number }) {
       )}
       <div className="relative p-4">
         <div className="flex items-center justify-between text-[11px] font-semibold">
-          <span className={live ? "flex items-center gap-1.5 text-rose-400" : "text-[var(--color-ink-muted)]"}>
-            {live && (
+          <span className={live ? "flex items-center gap-1.5 text-rose-400" : "flex items-center gap-1.5 text-[var(--color-ink-muted)]"}>
+            {live ? (
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-70" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
               </span>
+            ) : (
+              <F1Badge size={16} />
             )}
             {timeChip(race.starts_at, race.status, now)}
           </span>

@@ -6,6 +6,7 @@ import { ArrowUpRight, ChevronRight, Loader2 } from "lucide-react";
 import { PageFooter } from "@/components/ui/page-footer";
 import { listUfcFightsAll } from "@/lib/ufc.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
+import { UfcBadge } from "@/components/brand/SportBadge";
 
 export const Route = createFileRoute("/_authenticated/ufc/fights")({
   head: () => ({ meta: [{ title: "UFC Fights — CSSEBets" }] }),
@@ -213,12 +214,14 @@ function FightCard({ fight, now }: { fight: Fight; now: number }) {
       )}
       <div className="relative p-4">
         <div className="flex items-center justify-between text-[11px] font-semibold">
-          <span className={live ? "flex items-center gap-1.5 text-rose-400" : "text-[var(--color-ink-muted)]"}>
-            {live && (
+          <span className={live ? "flex items-center gap-1.5 text-rose-400" : "flex items-center gap-1.5 text-[var(--color-ink-muted)]"}>
+            {live ? (
               <span className="relative flex h-1.5 w-1.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-70" />
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
               </span>
+            ) : (
+              <UfcBadge size={16} />
             )}
             {timeChip(fight.commence_time, fight.status, now)}
           </span>

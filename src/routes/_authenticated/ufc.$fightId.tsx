@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Customized } from "recharts";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 import { teamFlagUrl } from "@/lib/country-flags";
+import { UfcBadge } from "@/components/brand/SportBadge";
 
 export const Route = createFileRoute("/_authenticated/ufc/$fightId")({
   head: () => ({
@@ -244,8 +245,9 @@ function FightHero({
     <article className="relative flex flex-col gap-6">
       {/* Title + status — mirrors football hero title */}
       <div className="flex flex-col gap-3">
-        <h1 className="font-display text-[26px] font-semibold leading-[1.05] tracking-tight text-[var(--color-ink)] md:text-4xl">
-          {fight.fighter_a} <span className="text-[var(--color-ink-muted)]/70">vs</span> {fight.fighter_b}
+        <h1 className="flex flex-wrap items-center gap-3 font-display text-[26px] font-semibold leading-[1.05] tracking-tight text-[var(--color-ink)] md:text-4xl">
+          <UfcBadge size={26} />
+          <span>{fight.fighter_a} <span className="text-[var(--color-ink-muted)]/70">vs</span> {fight.fighter_b}</span>
         </h1>
         <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.02em]">
           {isLive ? (
