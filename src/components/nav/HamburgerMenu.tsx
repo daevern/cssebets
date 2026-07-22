@@ -224,16 +224,19 @@ export function HamburgerMenu() {
                 {/* Referral code display */}
                 <div className="mt-3 bg-black/10 px-4 py-3">
                   <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">
-                    Your referral code
+                    {isGuest ? "Referrals" : "Your referral code"}
                   </div>
-                  <div className="mt-1 flex items-center justify-between gap-2">
+                  <p className="mt-1 text-[11px] font-medium leading-snug text-black/70">
+                    Earn tokens by referring friends. Share your code and get rewarded when they join and play.
+                  </p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
                     <span className="font-mono text-2xl font-bold tracking-[0.24em] text-black">
-                      {refCode || "—"}
+                      {displayCode || "—"}
                     </span>
                     <button
                       type="button"
                       onClick={copyCode}
-                      disabled={!refCode}
+                      disabled={isGuest || !refCode}
                       aria-label="Copy referral code"
                       className="grid h-9 w-9 place-items-center bg-black text-[var(--neon)] transition-opacity hover:opacity-90 disabled:opacity-40"
                     >
