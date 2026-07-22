@@ -14,6 +14,7 @@ export const Route = createFileRoute("/")({
           "Trade live markets on every match, goal, lineup, and key moment with dynamic, community-driven pricing.",
       },
       { property: "og:title", content: "CSSEBets – The FIFA World Cup 2026 Prediction Market" },
+      { property: "og:type", content: "website" },
       {
         property: "og:description",
         content:
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/")({
       { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:image", content: "https://cssebets.com/og-image.jpg" },
     ],
     links: [{ rel: "canonical", href: "https://cssebets.com/" }],
@@ -45,27 +47,27 @@ export const Route = createFileRoute("/")({
  * identity to an anonymous user via `updateUser`).
  */
 function GuestGate() {
-  const startedRef = useRef(false);
+  const flowRef = useRef(0);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
-
-    let cancelled = false;
+    const flowId = flowRef.current + 1;
+    flowRef.current = flowId;
+    let active = true;
+    const isCurrent = () => active && flowRef.current === flowId;
 
     // Hard-navigate so _authenticated's beforeLoad re-reads localStorage
     // with the freshly-persisted anonymous session (router.navigate can
     // race the session write and bounce back to /auth).
     const goto = (path: string) => {
-      if (cancelled) return;
+      if (!isCurrent()) return;
       window.location.replace(path);
     };
 
     (async () => {
       try {
         const { data: sessionData } = await supabase.auth.getSession();
-        if (cancelled) return;
+        if (!isCurrent()) return;
 
         if (sessionData.session) {
           goto("/dashboard");
@@ -74,7 +76,7 @@ function GuestGate() {
 
         const { data: signInData, error: signInErr } =
           await supabase.auth.signInAnonymously();
-        if (cancelled) return;
+        if (!isCurrent()) return;
         if (signInErr) throw signInErr;
         if (!signInData.session) throw new Error("no session returned");
 
@@ -83,7 +85,7 @@ function GuestGate() {
         await new Promise((r) => setTimeout(r, 50));
         goto("/dashboard");
       } catch (err: any) {
-        if (cancelled) return;
+        if (!isCurrent()) return;
         console.error("[guest-gate] anon sign-in failed:", err);
         setError(err?.message ?? "Could not start guest session");
         goto("/auth");
@@ -91,7 +93,7 @@ function GuestGate() {
     })();
 
     return () => {
-      cancelled = true;
+      active = false;
     };
   }, []);
 
