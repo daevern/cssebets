@@ -150,6 +150,17 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const teamByKey = useMemo(() => Object.fromEntries(teams.map((t) => [t.team_key, t])), [teams]);
   const driverByKey = useMemo(() => Object.fromEntries(drivers.map((d) => [d.driver_key, d])), [drivers]);
 
+  // Post-race: fetch classification so we can pin the final chart value to the actual outcome.
+  const isFinished = race?.status === "finished";
+  const analyticsFn = useServerFn(getF1RaceAnalytics);
+  const analyticsQ = useQuery({
+    queryKey: ["f1-race-analytics", raceId],
+    queryFn: () => analyticsFn({ data: { raceId } }),
+    enabled: isFinished,
+    staleTime: 60_000,
+  });
+
+
   const grouped = useMemo(() => {
     const g: Record<SubTab, any[]> = {
       top_5_finish: [],
