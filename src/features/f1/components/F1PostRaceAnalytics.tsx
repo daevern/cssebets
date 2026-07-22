@@ -80,24 +80,53 @@ export function F1PostRaceAnalytics({ raceId }: { raceId: string }) {
       )}
 
       {/* Fastest lap */}
-      {fastestLap && (
-        <div className="flex items-center gap-3 rounded-xl border border-purple-500/40 bg-purple-500/10 p-3">
-          <div className="grid h-10 w-10 place-items-center rounded-full bg-purple-500/20">
-            <Zap className="h-5 w-5 text-purple-300" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-purple-300">
-              Fastest lap
+      {fastestLap && (() => {
+        const flName = fastestLap.driver?.name ?? "";
+        const norm = (s: string) => (s ?? "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const match = classification.find((r) => norm(r.driver?.name ?? "") === norm(flName));
+        const image = fastestLap.driver?.image ?? match?.driver?.image ?? null;
+        const team = match?.team;
+        return (
+          <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-r from-purple-500/10 via-purple-500/[0.04] to-transparent p-4">
+            <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-purple-500/10 blur-2xl" />
+            <div className="relative flex items-center gap-4">
+              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full bg-[var(--surface-3)] ring-2 ring-purple-500/50">
+                {image ? (
+                  <img src={image} alt={flName} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="grid h-full w-full place-items-center text-xs font-bold text-purple-200">
+                    {flName.slice(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <div className="absolute -bottom-0.5 -right-0.5 grid h-6 w-6 place-items-center rounded-full bg-purple-500 shadow-lg">
+                  <Zap className="h-3.5 w-3.5 text-white" />
+                </div>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-purple-300">
+                  Fastest lap
+                </div>
+                <div className="mt-0.5 truncate text-[15px] font-bold text-[var(--color-ink)]">
+                  {flName || "—"}
+                </div>
+                {team?.name && (
+                  <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[var(--color-ink-muted)]">
+                    {team.logo && <img src={team.logo} alt="" className="h-3 w-3 object-contain" />}
+                    <span className="truncate">{team.name}</span>
+                  </div>
+                )}
+              </div>
+              <div className="text-right">
+                <div className="text-[9px] font-semibold uppercase tracking-[0.16em] text-purple-300/80">Time</div>
+                <div className="font-display text-xl font-black tabular-nums text-purple-100">
+                  {fastestLap.time ?? "—"}
+                </div>
+              </div>
             </div>
-            <div className="truncate text-sm font-semibold text-[var(--color-ink)]">
-              {fastestLap.driver?.name ?? "—"}
-            </div>
           </div>
-          <div className="font-display text-lg font-bold tabular-nums text-purple-200">
-            {fastestLap.time ?? "—"}
-          </div>
-        </div>
-      )}
+        );
+      })()}
+
 
       {/* Full classification */}
       <div>
