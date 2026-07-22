@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useHasSession } from "@/hooks/use-staff-session";
 
 export const Route = createFileRoute("/management/admin/predictions")({
   component: AdminPredictionsPage,
