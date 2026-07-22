@@ -9,6 +9,7 @@ import { Loader2, ArrowUpRight, X, Activity, Users, History } from "lucide-react
 import { toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Customized } from "recharts";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
+import { teamFlagUrl } from "@/lib/country-flags";
 
 export const Route = createFileRoute("/_authenticated/ufc/$fightId")({
   head: () => ({
@@ -174,16 +175,31 @@ function AnalysisSection({ kicker, meta, children }: { kicker?: ReactNode; meta?
 
 /* ---------- Hero — mirrors football MatchHero article layout ---------- */
 
-function FighterHeadshot({ url, name }: { url?: string | null; name: string; size?: number }) {
-  if (url) {
+function FighterHeadshot({ url, name, country }: { url?: string | null; name: string; country?: string | null }) {
+  const [imgErr, setImgErr] = useState(false);
+  const flag = country ? teamFlagUrl(country, 160) : null;
+
+  if (url && !imgErr) {
     return (
       <img
         src={url}
         alt={name}
         className="h-full w-full object-cover object-top"
+        onError={() => setImgErr(true)}
       />
     );
   }
+
+  if (flag) {
+    return (
+      <img
+        src={flag}
+        alt={country ?? name}
+        className="h-full w-full object-cover object-center"
+      />
+    );
+  }
+
   const initials = name.split(" ").map((s) => s[0]).slice(0, 2).join("");
   return (
     <div className="grid h-full w-full place-items-center bg-[var(--surface-3)] font-display text-sm font-semibold text-[var(--color-ink-muted)]">
@@ -262,7 +278,7 @@ function FightHero({
 
       {/* Scoreboard — headshots + VS, mirrors football's centered flag scoreboard */}
       <div className="flex items-center justify-center gap-5 sm:gap-8 md:gap-12">
-        <ScoreFighter name={fight.fighter_a} logo={fight.fighter_a_logo || fighterA?.photo_url} record={recordA} />
+        <ScoreFighter name={fight.fighter_a} logo={fight.fighter_a_logo || fighterA?.photo_url} country={fighterA?.country} record={recordA} />
         <div className="flex flex-col items-center">
           {isFinished && fight.winner ? (
             <span className="font-display text-4xl font-semibold tabular-nums text-[var(--color-ink)] sm:text-5xl md:text-6xl">
@@ -277,7 +293,7 @@ function FightHero({
             {fight.scheduled_rounds} rounds
           </span>
         </div>
-        <ScoreFighter name={fight.fighter_b} logo={fight.fighter_b_logo || fighterB?.photo_url} record={recordB} />
+        <ScoreFighter name={fight.fighter_b} logo={fight.fighter_b_logo || fighterB?.photo_url} country={fighterB?.country} record={recordB} />
       </div>
 
       {/* Divider before graph */}
@@ -286,11 +302,11 @@ function FightHero({
   );
 }
 
-function ScoreFighter({ name, logo, record }: { name: string; logo?: string | null; record: string | null }) {
+function ScoreFighter({ name, logo, country, record }: { name: string; logo?: string | null; country?: string | null; record: string | null }) {
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)] sm:h-20 sm:w-20 md:h-24 md:w-24">
-        <FighterHeadshot url={logo} name={name} size={96} />
+        <FighterHeadshot url={logo} name={name} country={country} />
       </div>
       <div className="text-center">
         <div className="max-w-[10ch] truncate font-display text-[11px] font-semibold text-[var(--color-ink)] sm:max-w-[16ch] sm:text-xs">{name}</div>
