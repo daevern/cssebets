@@ -36,9 +36,15 @@ export interface CsseMarkProps extends React.SVGAttributes<SVGSVGElement> {
  * Built on a 32-unit grid with a 3.25-unit stroke so the silhouette
  * stays crisp at 16px favicon size up through 256px hero size.
  */
-export function CsseMark({ className, variant = "default", title, ...rest }: CsseMarkProps) {
+export function CsseMark({ className, variant = "default", title, outline, ...rest }: CsseMarkProps) {
   const wedgeColor = variant === "inverse" ? SURFACE : "currentColor";
   const accentColor = variant === "mono" ? "currentColor" : ACCENT;
+  const outlineStroke = {
+    stroke: "#000000",
+    strokeWidth: "4.75",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+  } as const;
 
   return (
     <svg
@@ -53,6 +59,9 @@ export function CsseMark({ className, variant = "default", title, ...rest }: Css
     >
 
       {title ? <title>{title}</title> : null}
+      {outline ? (
+        <path d="M24 7 L11 7 L4 16 L11 25 L24 25" {...outlineStroke} />
+      ) : null}
       <path
         d="M24 7 L11 7 L4 16 L11 25 L24 25"
         stroke={wedgeColor}
@@ -60,6 +69,9 @@ export function CsseMark({ className, variant = "default", title, ...rest }: Css
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      {outline ? (
+        <path d="M15 21 L21 14 L27 21" {...outlineStroke} />
+      ) : null}
       <path
         d="M15 21 L21 14 L27 21"
         stroke={accentColor}
