@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CsseLogoLoader } from "@/components/brand/CsseLogoAnimated";
@@ -45,7 +45,6 @@ export const Route = createFileRoute("/")({
  * identity to an anonymous user via `updateUser`).
  */
 function GuestGate() {
-  const router = useRouter();
   const startedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,31 +54,46 @@ function GuestGate() {
 
     let cancelled = false;
 
+    // Hard-navigate so _authenticated's beforeLoad re-reads localStorage
+    // with the freshly-persisted anonymous session (router.navigate can
+    // race the session write and bounce back to /auth).
+    const goto = (path: string) => {
+      if (cancelled) return;
+      window.location.replace(path);
+    };
+
     (async () => {
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         if (cancelled) return;
 
-        if (!sessionData.session) {
-          const { error: signInErr } = await supabase.auth.signInAnonymously();
-          if (cancelled) return;
-          if (signInErr) throw signInErr;
+        if (sessionData.session) {
+          goto("/dashboard");
+          return;
         }
 
-        router.navigate({ to: "/dashboard", replace: true });
+        const { data: signInData, error: signInErr } =
+          await supabase.auth.signInAnonymously();
+        if (cancelled) return;
+        if (signInErr) throw signInErr;
+        if (!signInData.session) throw new Error("no session returned");
+
+        // Give supabase-js a tick to write the session to localStorage before
+        // the destination route calls getUser().
+        await new Promise((r) => setTimeout(r, 50));
+        goto("/dashboard");
       } catch (err: any) {
         if (cancelled) return;
-        // If anonymous sign-in is disabled or the network fails, fall back to /auth.
         console.error("[guest-gate] anon sign-in failed:", err);
         setError(err?.message ?? "Could not start guest session");
-        router.navigate({ to: "/auth", replace: true });
+        goto("/auth");
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, []);
 
   return (
     <div className="grid min-h-screen place-items-center bg-[var(--surface)] text-[var(--ink)]">
