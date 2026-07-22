@@ -102,12 +102,12 @@ export interface CsseWordmarkProps {
  */
 export function CsseWordmark({ className, size = 20, inverse = false, outline = false }: CsseWordmarkProps) {
   const betsOutline = outline
-    ? "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000"
+    ? "0 0 0 1px #000, 0 0 0 1px #000"
     : undefined;
 
   return (
     <span
-      className={cn("inline-flex items-baseline leading-none select-none", className)}
+      className={cn("inline-flex items-center leading-none select-none", className)}
       style={{
         fontFamily: BRAND_FONT,
         fontWeight: 700,
@@ -117,8 +117,8 @@ export function CsseWordmark({ className, size = 20, inverse = false, outline = 
       }}
       aria-label="CSSEBets"
     >
-      <span style={{ color: inverse ? SURFACE : "var(--foreground, #fff)" }}>CSSE</span>
-      <span style={{ color: ACCENT, textShadow: betsOutline }}>Bets</span>
+      <span className="inline-block" style={{ color: inverse ? SURFACE : "var(--foreground, #fff)" }}>CSSE</span>
+      <span className="inline-block" style={{ color: ACCENT, textShadow: betsOutline }}>Bets</span>
     </span>
   );
 }
