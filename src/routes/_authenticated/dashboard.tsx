@@ -290,7 +290,7 @@ function HomePage() {
               <p className="mx-auto mt-1.5 max-w-xs text-center text-sm text-[var(--ink-muted)]">
                 Get on the team sheet now.
               </p>
-              <Link to="/bets" className="mt-4 block">
+              <Link to="/matches" className="mt-4 block">
                 <button
                   type="button"
                   className="flex w-full items-center justify-between rounded-xl border border-[var(--neon)]/40 bg-[var(--neon)]/5 px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--neon)] transition-colors hover:bg-[var(--neon)]/10"
@@ -424,7 +424,7 @@ function BenchSlider({ historyCount }: { historyCount: number }) {
             <p className="mx-auto mt-1.5 max-w-xs text-center text-sm text-[var(--ink-muted)]">
               Get on the team sheet now.
             </p>
-            <Link to="/bets" className="mt-4 block">
+            <Link to="/matches" className="mt-4 block">
               <button
                 type="button"
                 className="flex w-full items-center justify-between rounded-xl border border-[var(--neon)]/40 bg-[var(--neon)]/5 px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--neon)] transition-colors hover:bg-[var(--neon)]/10"
