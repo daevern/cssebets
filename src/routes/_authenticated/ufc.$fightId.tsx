@@ -246,7 +246,7 @@ function FightHero({
       {/* Title + status — mirrors football hero title */}
       <div className="flex flex-col gap-3">
         <h1 className="flex flex-wrap items-center gap-3 font-display text-[26px] font-semibold leading-[1.05] tracking-tight text-[var(--color-ink)] md:text-4xl">
-          <UfcBadge size={26} />
+          <UfcBadge size={52} />
           <span>{fight.fighter_a} <span className="text-[var(--color-ink-muted)]/70">vs</span> {fight.fighter_b}</span>
         </h1>
         <div className="flex items-center gap-2 text-[11px] font-medium tracking-[0.02em]">

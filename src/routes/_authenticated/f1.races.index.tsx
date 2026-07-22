@@ -210,7 +210,7 @@ function RaceCard({ race, now }: { race: RaceRow; now: number }) {
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
               </span>
             ) : (
-              <F1Badge size={16} />
+              <F1Badge size={32} />
             )}
             {timeChip(race.starts_at, race.status, now)}
           </span>

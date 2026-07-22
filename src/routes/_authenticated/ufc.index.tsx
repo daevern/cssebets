@@ -236,7 +236,7 @@ function FightChip({ fight, now }: { fight: Fight; now: number }) {
       style={{ width: 172 }}
     >
       <div className="flex items-center gap-1.5">
-        <UfcBadge size={14} />
+        <UfcBadge size={28} />
         <FighterPortrait url={fight.fighter_a_logo} country={fight.fighter_a_country} name={fight.fighter_a} size={30} />
         <span className="text-[10px] font-bold text-[var(--ink-muted)]">·</span>
         <FighterPortrait url={fight.fighter_b_logo} country={fight.fighter_b_country} name={fight.fighter_b} size={30} />
@@ -301,7 +301,7 @@ function FeaturedFightCard({ fight, now, eventName }: { fight: Fight; now: numbe
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
               </span>
             ) : (
-              <UfcBadge size={16} />
+              <UfcBadge size={32} />
             )}
             {statusLabel(fight, now)}
           </span>

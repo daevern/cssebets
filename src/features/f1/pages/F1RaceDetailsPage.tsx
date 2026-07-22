@@ -416,7 +416,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       {/* Header */}
       <div className="mb-4">
         <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-ink-muted)]">
-          <F1Badge size={16} />
+          <F1Badge size={32} />
           <span>F1 · Round {race.round}</span>
         </div>
         <h1 className="font-display text-3xl font-black leading-[1.05] tracking-tight text-[var(--color-ink)]">

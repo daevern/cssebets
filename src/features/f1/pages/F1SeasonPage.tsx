@@ -209,7 +209,7 @@ function RaceChip({ race }: { race: RaceRow }) {
       style={{ width: 184 }}
     >
       <div className="flex items-center gap-1.5">
-        <F1Badge size={14} />
+        <F1Badge size={28} />
         <CountryFlag country={race.country} w={22} h={14} />
         <span className="text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
           R{race.round}
@@ -281,7 +281,7 @@ function FeaturedRaceCard({ race }: { race: RaceRow }) {
                 <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
               </span>
             ) : (
-              <F1Badge size={16} />
+              <F1Badge size={32} />
             )}
             {statusLabel(race.starts_at, race.status)}
           </span>
