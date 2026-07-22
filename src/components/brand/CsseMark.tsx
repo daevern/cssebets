@@ -101,10 +101,6 @@ export interface CsseWordmarkProps {
  * geometric sans used by enterprise SaaS brands (Linear, Notion).
  */
 export function CsseWordmark({ className, size = 20, inverse = false, outline = false }: CsseWordmarkProps) {
-  const betsShadow = outline
-    ? "-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, -1px 0 0 #000, 1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000"
-    : undefined;
-
   return (
     <span
       className={cn("inline-flex items-baseline leading-none select-none", className)}
@@ -117,8 +113,22 @@ export function CsseWordmark({ className, size = 20, inverse = false, outline = 
       }}
       aria-label="CSSEBets"
     >
-      <span style={{ color: inverse ? SURFACE : "var(--foreground, #fff)" }}>CSSE</span>
-      <span style={{ color: ACCENT, textShadow: betsShadow }}>Bets</span>
+      <span
+        style={{
+          color: inverse ? SURFACE : "var(--foreground, #fff)",
+          WebkitTextStroke: outline ? "1px #000" : undefined,
+        }}
+      >
+        CSSE
+      </span>
+      <span
+        style={{
+          color: ACCENT,
+          WebkitTextStroke: outline ? "1px #000" : undefined,
+        }}
+      >
+        Bets
+      </span>
     </span>
   );
 }
