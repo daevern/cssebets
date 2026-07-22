@@ -54,21 +54,88 @@ export const listUfcFights = createServerFn({ method: "GET" }).handler(async () 
     fighterIds.length
       ? (supabaseAdmin as any)
           .from("ufc_fighters")
-          .select("apimma_id, photo_url")
+          .select("apimma_id, photo_url, country")
           .in("apimma_id", fighterIds)
       : Promise.resolve({ data: [] as any[] }),
   ]);
   const photoBy = new Map<number, string>();
-  for (const f of (fighters ?? [])) if (f?.apimma_id && f.photo_url) photoBy.set(f.apimma_id, f.photo_url);
+  const countryBy = new Map<number, string>();
+  for (const f of (fighters ?? [])) {
+    if (f?.apimma_id && f.photo_url) photoBy.set(f.apimma_id, f.photo_url);
+    if (f?.apimma_id && f.country) countryBy.set(f.apimma_id, f.country);
+  }
 
   const withMarkets = (fights ?? []).map((f: any) => ({
     ...f,
     fighter_a_logo: f.fighter_a_logo || photoBy.get(f.apimma_fighter_a_id) || null,
     fighter_b_logo: f.fighter_b_logo || photoBy.get(f.apimma_fighter_b_id) || null,
+    fighter_a_country: countryBy.get(f.apimma_fighter_a_id) || null,
+    fighter_b_country: countryBy.get(f.apimma_fighter_b_id) || null,
     markets: (markets ?? []).filter((m: any) => m.fight_id === f.id),
   }));
 
   return { event, fights: withMarkets };
+});
+
+export const listUfcFightsAll = createServerFn({ method: "GET" }).handler(async () => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const nowIso = new Date().toISOString();
+  const past = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
+  const future = new Date(Date.now() + 120 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: fights } = await (supabaseAdmin as any)
+    .from("ufc_fights")
+    .select("id, event_id, fighter_a, fighter_b, fighter_a_logo, fighter_b_logo, apimma_fighter_a_id, apimma_fighter_b_id, commence_time, card_position, scheduled_rounds, status, weight_class, is_title_fight")
+    .gte("commence_time", past)
+    .lte("commence_time", future)
+    .in("card_position", ["main", "co_main"])
+    .order("commence_time", { ascending: true });
+
+  const fightIds = (fights ?? []).map((f: any) => f.id);
+  const eventIds = Array.from(new Set((fights ?? []).map((f: any) => f.event_id).filter(Boolean)));
+  const fighterIds = Array.from(new Set(
+    (fights ?? []).flatMap((f: any) => [f.apimma_fighter_a_id, f.apimma_fighter_b_id]).filter(Boolean),
+  ));
+
+  const [{ data: markets }, { data: events }, { data: fighters }] = await Promise.all([
+    fightIds.length
+      ? (supabaseAdmin as any)
+          .from("ufc_fight_markets")
+          .select("fight_id, market_type, selection_key, odds, is_active")
+          .eq("market_type", "moneyline")
+          .in("fight_id", fightIds)
+      : Promise.resolve({ data: [] as any[] }),
+    eventIds.length
+      ? (supabaseAdmin as any).from("ufc_events").select("id, name, starts_at").in("id", eventIds)
+      : Promise.resolve({ data: [] as any[] }),
+    fighterIds.length
+      ? (supabaseAdmin as any).from("ufc_fighters").select("apimma_id, photo_url, country").in("apimma_id", fighterIds)
+      : Promise.resolve({ data: [] as any[] }),
+  ]);
+
+  const eventBy = new Map<string, any>();
+  for (const e of (events ?? [])) eventBy.set(e.id, e);
+  const photoBy = new Map<number, string>();
+  const countryBy = new Map<number, string>();
+  for (const f of (fighters ?? [])) {
+    if (f?.apimma_id && f.photo_url) photoBy.set(f.apimma_id, f.photo_url);
+    if (f?.apimma_id && f.country) countryBy.set(f.apimma_id, f.country);
+  }
+
+  const out = (fights ?? []).map((f: any) => {
+    const ev = eventBy.get(f.event_id);
+    return {
+      ...f,
+      event_name: ev?.name ?? null,
+      fighter_a_logo: f.fighter_a_logo || photoBy.get(f.apimma_fighter_a_id) || null,
+      fighter_b_logo: f.fighter_b_logo || photoBy.get(f.apimma_fighter_b_id) || null,
+      fighter_a_country: countryBy.get(f.apimma_fighter_a_id) || null,
+      fighter_b_country: countryBy.get(f.apimma_fighter_b_id) || null,
+      markets: (markets ?? []).filter((m: any) => m.fight_id === f.id),
+    };
+  });
+
+  return { fights: out, now: nowIso };
 });
 
 export const getUfcMarketHistory = createServerFn({ method: "GET" })
