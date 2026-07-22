@@ -230,9 +230,9 @@ function FightChip({ fight, now }: { fight: Fight; now: number }) {
       style={{ width: 172 }}
     >
       <div className="flex items-center gap-1.5">
-        <FighterPortrait url={fight.fighter_a_logo} name={fight.fighter_a} size={30} />
+        <FighterPortrait url={fight.fighter_a_logo} country={fight.fighter_a_country} name={fight.fighter_a} size={30} />
         <span className="text-[10px] font-bold text-[var(--ink-muted)]">·</span>
-        <FighterPortrait url={fight.fighter_b_logo} name={fight.fighter_b} size={30} />
+        <FighterPortrait url={fight.fighter_b_logo} country={fight.fighter_b_country} name={fight.fighter_b} size={30} />
       </div>
       <div className="mt-2 text-[12px] font-bold tracking-tight text-[var(--ink)]">
         {lastName(fight.fighter_a)} vs {lastName(fight.fighter_b)}
