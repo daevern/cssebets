@@ -86,6 +86,14 @@ export function HamburgerMenu() {
     { key: "tokens", label: "Tokens", Icon: TokenMark, onClick: () => pick(() => setTokensOpen(true)) },
     { key: "notifications", label: "Alerts", Icon: Bell, onClick: () => pick(() => navigate({ to: "/notifications" })) },
     { key: "profile", label: "Profile", Icon: User, onClick: () => pick(() => navigate({ to: "/settings" })) },
+    ...(isGuest
+      ? [
+          { key: "about", label: "About", Icon: Info, onClick: () => pick(() => navigate({ to: "/about" })) },
+          { key: "community", label: "Community", Icon: Users, onClick: () => pick(() => navigate({ to: "/community" })) },
+          { key: "performance", label: "Performance", Icon: Activity, onClick: () => pick(() => navigate({ to: "/performance" })) },
+          { key: "help", label: "Help", Icon: HelpCircle, onClick: () => pick(() => navigate({ to: "/faq" })) },
+        ]
+      : []),
   ] as const;
 
   return (
