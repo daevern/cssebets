@@ -41,6 +41,7 @@ export function HamburgerMenu() {
   });
 
   const tokens = tokensQ.data?.tokens.balance ?? 0;
+  const refCode = refQ.data?.referralCode ?? "";
   const isGuest = !user || (user as any)?.is_anonymous === true;
   const displayCode = isGuest ? "XXXXXXX" : refCode;
 
