@@ -791,6 +791,8 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
           F1 races settle after the FIA posts the Final Race Classification.
         </span>
       </div>
+      </>)}
+
 
       {/* Your position — always mounted so the stake input never remounts mid-typing. */}
       <F1BetSlip
