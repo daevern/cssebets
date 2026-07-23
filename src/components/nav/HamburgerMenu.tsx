@@ -157,10 +157,13 @@ export function HamburgerMenu() {
             {/* Backdrop */}
             <div
               onClick={() => setOpen(false)}
-              className={`fixed inset-0 z-[55] bg-black/40 transition-opacity duration-300 md:hidden ${
+              className={`fixed inset-x-0 bottom-0 z-[55] bg-black/40 transition-opacity duration-300 md:hidden ${
                 open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
               }`}
-              style={{ backdropFilter: "blur(2px)" }}
+              style={{
+                top: "calc(env(safe-area-inset-top) + 56px)",
+                backdropFilter: "blur(2px)",
+              }}
               aria-hidden
             />
 
@@ -226,7 +229,7 @@ export function HamburgerMenu() {
                       <WalletIcon className="h-4 w-4 text-black/60" />
                     </div>
                     <div className="mt-1 flex items-baseline gap-2">
-                      <span className="font-mono text-[72px] font-black leading-none text-black tabular-nums">
+                      <span className="font-mono text-[52px] font-black leading-none text-black tabular-nums">
                         {walletQ.isLoading
                           ? "…"
                           : walletBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
