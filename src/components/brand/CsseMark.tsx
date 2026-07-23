@@ -103,7 +103,7 @@ export interface CsseWordmarkProps {
  * Uses Space Grotesk 600 with tight tracking — same family of
  * geometric sans used by enterprise SaaS brands (Linear, Notion).
  */
-export function CsseWordmark({ className, size = 20, inverse = false, outline = false }: CsseWordmarkProps) {
+export function CsseWordmark({ className, size = 20, inverse = false, outline = false, dark = false }: CsseWordmarkProps) {
   return (
     <span
       className={cn("inline-flex items-center leading-none select-none", className)}
@@ -116,11 +116,11 @@ export function CsseWordmark({ className, size = 20, inverse = false, outline = 
       }}
       aria-label="CSSEBets"
     >
-      <span className="inline-block" style={{ color: inverse ? SURFACE : "var(--foreground, #fff)" }}>CSSE</span>
+      <span className="inline-block" style={{ color: dark ? SURFACE : (inverse ? SURFACE : "var(--foreground, #fff)") }}>CSSE</span>
       <span
         className="inline-block"
         style={{
-          color: ACCENT,
+          color: dark ? SURFACE : ACCENT,
           WebkitTextStroke: outline ? "0.75px #000" : undefined,
         }}
       >
@@ -129,6 +129,7 @@ export function CsseWordmark({ className, size = 20, inverse = false, outline = 
     </span>
   );
 }
+
 
 /**
  * Inline brand name for use INSIDE sentences/captions. Inherits the
