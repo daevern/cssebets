@@ -16,9 +16,10 @@ import { Wallet as WalletIcon } from "lucide-react";
 
 /**
  * Mobile-only condensed menu.
- * Trigger: 3-line hamburger (2 white, 1 green).
- * Panel: SVG-goo liquid-drop expansion into a full-height, 3/4-width green overlay.
+ * Trigger: 3-line hamburger (2 white, 1 green) that morphs into an X.
+ * Panel: fast slide-in green overlay, no liquid animation.
  */
+
 export function HamburgerMenu() {
   const [open, setOpen] = useState(false);
   const [tokensOpen, setTokensOpen] = useState(false);
