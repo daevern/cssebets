@@ -417,6 +417,24 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       }
     }
 
+    // --- Football sports_bets (Bonus + EPL/La Liga/Serie A/UCL) ---
+    const sportsBetRows: any[] = [];
+    if (data.sport === "all" || data.sport === "football") {
+      const uiToOpen: Record<string, string> = { pending: "open", won: "won", lost: "lost", void: "void" };
+      let sq = (supabaseAdmin as any)
+        .from("sports_bets")
+        .select("id, user_id, sports_event_id, market_key, selection_key, stake, accepted_odds, potential_payout, actual_payout, status, placed_at, settled_at, sports_events!inner(home_name, away_name, competition_code)")
+        .eq("sport_code", "football")
+        .order("placed_at", { ascending: false });
+      if (data.userId) sq = sq.eq("user_id", data.userId);
+      if (data.fixtureId) sq = sq.eq("sports_event_id", data.fixtureId);
+      if (data.market) sq = sq.eq("market_key", data.market);
+      if (data.status) sq = sq.eq("status", uiToOpen[data.status] ?? data.status);
+      const { data: sBets, error: sErr } = await sq;
+      if (sErr) throw new Error(sErr.message);
+      sportsBetRows.push(...(sBets ?? []));
+    }
+
 
     // --- UFC bets (normalized to prediction row shape) ---
     const ufcRows: any[] = [];
