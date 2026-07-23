@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { useAuth } from "@/hooks/use-auth";
-import { getDashboardMotorAndUfc, type NextF1Race, type NextUfcFight, type NextBonusMatch } from "@/lib/dashboard-extras.functions";
+import { getDashboardMotorAndUfc, type NextF1Race, type NextUfcFight } from "@/lib/dashboard-extras.functions";
 import { F1Badge, UfcBadge } from "@/components/brand/SportBadge";
 
 
@@ -205,7 +205,7 @@ function HomePage() {
 
 
       {/* Next on the card — featured football fixture + F1 race + UFC fight */}
-      {(featured || extras?.nextRace || extras?.nextFight || extras?.nextBonusMatch) && (
+      {(featured || extras?.nextRace || extras?.nextFight) && (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
@@ -217,7 +217,6 @@ function HomePage() {
             {featured && <FeaturedMarketCard match={featured} now={now} />}
             {extras?.nextRace && <NextRaceCard race={extras.nextRace} now={now} />}
             {extras?.nextFight && <NextFightCard fight={extras.nextFight} now={now} />}
-            {extras?.nextBonusMatch && <NextBonusMatchCard match={extras.nextBonusMatch} now={now} />}
           </div>
         </section>
       )}
@@ -1022,80 +1021,4 @@ function NextFightCard({ fight, now }: { fight: NonNullable<NextUfcFight>; now: 
     </Link>
   );
 }
-
-function NextBonusMatchCard({ match, now }: { match: NonNullable<NextBonusMatch>; now: number }) {
-  const oH = match.odds_home ?? 0;
-  const oD = match.odds_draw ?? 0;
-  const oA = match.odds_away ?? 0;
-  const invH = oH > 0 ? 1 / oH : 0;
-  const invD = oD > 0 ? 1 / oD : 0;
-  const invA = oA > 0 ? 1 / oA : 0;
-  const total = invH + invD + invA;
-  const pct = (v: number) => (total > 0 ? Math.round((v / total) * 100) : 0);
-  return (
-    <Link
-      to="/bonus/$matchId"
-      params={{ matchId: match.id }}
-      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] transition-colors hover:border-[var(--neon)]/40 next-fixture-corner"
-    >
-      <div className="relative p-4">
-        <div className="flex items-center justify-between text-[11px] font-semibold">
-          <span className="flex items-center gap-1.5 text-[var(--ink-muted)]">
-            <span className="rounded-md bg-[var(--neon)]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--neon)]">
-              Bonus · {match.competition_name}
-            </span>
-            {whenLabel(match.kickoff_at, now)}
-          </span>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <div className="flex flex-1 items-center gap-2">
-            {match.home_logo ? (
-              <img src={match.home_logo} alt="" className="h-8 w-8 object-contain" />
-            ) : null}
-            <div className="min-w-0">
-              <div className="truncate text-sm font-semibold text-[var(--ink)]">{match.home_name}</div>
-              <div className="text-[10px] uppercase tracking-wider text-[var(--ink-muted)]">Home</div>
-            </div>
-          </div>
-          <div className="text-xs font-medium text-[var(--ink-muted)]">vs</div>
-          <div className="flex flex-1 items-center justify-end gap-2">
-            <div className="min-w-0 text-right">
-              <div className="truncate text-sm font-semibold text-[var(--ink)]">{match.away_name}</div>
-              <div className="text-[10px] uppercase tracking-wider text-[var(--ink-muted)]">Away</div>
-            </div>
-            {match.away_logo ? (
-              <img src={match.away_logo} alt="" className="h-8 w-8 object-contain" />
-            ) : null}
-          </div>
-        </div>
-
-        {total > 0 && (
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            <OddChip label="Home" pct={pct(invH)} odds={oH} />
-            <OddChip label="Draw" pct={pct(invD)} odds={oD} />
-            <OddChip label="Away" pct={pct(invA)} odds={oA} />
-          </div>
-        )}
-
-        <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)]/5 py-3.5 text-[14px] font-bold tracking-tight text-[var(--neon)] transition-transform group-hover:translate-y-[-1px] group-hover:bg-[var(--neon)]/10">
-          Open Market <ArrowUpRight className="h-4 w-4" />
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function OddChip({ label, pct, odds }: { label: string; pct: number; odds: number }) {
-  return (
-    <div className="rounded-lg border border-[var(--color-surface-border)] bg-[var(--surface-3)]/60 px-2 py-1.5 text-center">
-      <div className="text-[9px] uppercase tracking-wider text-[var(--ink-muted)]">{label}</div>
-      <div className="text-[13px] font-bold text-[var(--ink)]">{pct}%</div>
-      {odds > 0 && (
-        <div className="text-[10px] tabular-nums text-[var(--ink-muted)]">{odds.toFixed(2)}x</div>
-      )}
-    </div>
-  );
-}
-
 

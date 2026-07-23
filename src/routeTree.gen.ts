@@ -46,13 +46,11 @@ import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/h
 import { Route as AuthenticatedF1RouteImport } from './routes/_authenticated/f1'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChangelogRouteImport } from './routes/_authenticated/changelog'
-import { Route as AuthenticatedBonusRouteImport } from './routes/_authenticated/bonus'
 import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/bets'
 import { Route as ManagementAdminIndexRouteImport } from './routes/management/admin.index'
 import { Route as AuthenticatedUfcIndexRouteImport } from './routes/_authenticated/ufc.index'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
 import { Route as AuthenticatedF1IndexRouteImport } from './routes/_authenticated/f1.index'
-import { Route as AuthenticatedBonusIndexRouteImport } from './routes/_authenticated/bonus.index'
 import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
 import { Route as ManagementAdminWalletAdjustmentsRouteImport } from './routes/management/admin.wallet-adjustments'
 import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
@@ -100,7 +98,6 @@ import { Route as AuthenticatedFootballUclRouteImport } from './routes/_authenti
 import { Route as AuthenticatedFootballSerieARouteImport } from './routes/_authenticated/football/serie-a'
 import { Route as AuthenticatedFootballLaLigaRouteImport } from './routes/_authenticated/football/la-liga'
 import { Route as AuthenticatedFootballEplRouteImport } from './routes/_authenticated/football/epl'
-import { Route as AuthenticatedBonusMatchIdRouteImport } from './routes/_authenticated/bonus.$matchId'
 import { Route as AuthenticatedF1RacesIndexRouteImport } from './routes/_authenticated/f1.races.index'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -314,11 +311,6 @@ const AuthenticatedChangelogRoute = AuthenticatedChangelogRouteImport.update({
   path: '/changelog',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedBonusRoute = AuthenticatedBonusRouteImport.update({
-  id: '/bonus',
-  path: '/bonus',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedBetsRoute = AuthenticatedBetsRouteImport.update({
   id: '/bets',
   path: '/bets',
@@ -344,11 +336,6 @@ const AuthenticatedF1IndexRoute = AuthenticatedF1IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedF1Route,
-} as any)
-const AuthenticatedBonusIndexRoute = AuthenticatedBonusIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedBonusRoute,
 } as any)
 const ManagementAdminWalletLedgerRoute =
   ManagementAdminWalletLedgerRouteImport.update({
@@ -614,12 +601,6 @@ const AuthenticatedFootballEplRoute =
     path: '/football/epl',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedBonusMatchIdRoute =
-  AuthenticatedBonusMatchIdRouteImport.update({
-    id: '/$matchId',
-    path: '/$matchId',
-    getParentRoute: () => AuthenticatedBonusRoute,
-  } as any)
 const AuthenticatedF1RacesIndexRoute =
   AuthenticatedF1RacesIndexRouteImport.update({
     id: '/races/',
@@ -765,7 +746,6 @@ export interface FileRoutesByFullPath {
   '/performance': typeof PerformanceRoute
   '/register': typeof RegisterRoute
   '/bets': typeof AuthenticatedBetsRoute
-  '/bonus': typeof AuthenticatedBonusRouteWithChildren
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/f1': typeof AuthenticatedF1RouteWithChildren
@@ -793,7 +773,6 @@ export interface FileRoutesByFullPath {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
-  '/bonus/$matchId': typeof AuthenticatedBonusMatchIdRoute
   '/football/epl': typeof AuthenticatedFootballEplRoute
   '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -841,7 +820,6 @@ export interface FileRoutesByFullPath {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
-  '/bonus/': typeof AuthenticatedBonusIndexRoute
   '/f1/': typeof AuthenticatedF1IndexRoute
   '/matches/': typeof AuthenticatedMatchesIndexRoute
   '/ufc/': typeof AuthenticatedUfcIndexRoute
@@ -904,7 +882,6 @@ export interface FileRoutesByTo {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
-  '/bonus/$matchId': typeof AuthenticatedBonusMatchIdRoute
   '/football/epl': typeof AuthenticatedFootballEplRoute
   '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -952,7 +929,6 @@ export interface FileRoutesByTo {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
-  '/bonus': typeof AuthenticatedBonusIndexRoute
   '/f1': typeof AuthenticatedF1IndexRoute
   '/matches': typeof AuthenticatedMatchesIndexRoute
   '/ufc': typeof AuthenticatedUfcIndexRoute
@@ -994,7 +970,6 @@ export interface FileRoutesById {
   '/performance': typeof PerformanceRoute
   '/register': typeof RegisterRoute
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
-  '/_authenticated/bonus': typeof AuthenticatedBonusRouteWithChildren
   '/_authenticated/changelog': typeof AuthenticatedChangelogRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/f1': typeof AuthenticatedF1RouteWithChildren
@@ -1022,7 +997,6 @@ export interface FileRoutesById {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
-  '/_authenticated/bonus/$matchId': typeof AuthenticatedBonusMatchIdRoute
   '/_authenticated/football/epl': typeof AuthenticatedFootballEplRoute
   '/_authenticated/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/_authenticated/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -1070,7 +1044,6 @@ export interface FileRoutesById {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
-  '/_authenticated/bonus/': typeof AuthenticatedBonusIndexRoute
   '/_authenticated/f1/': typeof AuthenticatedF1IndexRoute
   '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
   '/_authenticated/ufc/': typeof AuthenticatedUfcIndexRoute
@@ -1112,7 +1085,6 @@ export interface FileRouteTypes {
     | '/performance'
     | '/register'
     | '/bets'
-    | '/bonus'
     | '/changelog'
     | '/dashboard'
     | '/f1'
@@ -1140,7 +1112,6 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
-    | '/bonus/$matchId'
     | '/football/epl'
     | '/football/la-liga'
     | '/football/serie-a'
@@ -1188,7 +1159,6 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
-    | '/bonus/'
     | '/f1/'
     | '/matches/'
     | '/ufc/'
@@ -1251,7 +1221,6 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
-    | '/bonus/$matchId'
     | '/football/epl'
     | '/football/la-liga'
     | '/football/serie-a'
@@ -1299,7 +1268,6 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
-    | '/bonus'
     | '/f1'
     | '/matches'
     | '/ufc'
@@ -1340,7 +1308,6 @@ export interface FileRouteTypes {
     | '/performance'
     | '/register'
     | '/_authenticated/bets'
-    | '/_authenticated/bonus'
     | '/_authenticated/changelog'
     | '/_authenticated/dashboard'
     | '/_authenticated/f1'
@@ -1368,7 +1335,6 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
-    | '/_authenticated/bonus/$matchId'
     | '/_authenticated/football/epl'
     | '/_authenticated/football/la-liga'
     | '/_authenticated/football/serie-a'
@@ -1416,7 +1382,6 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
-    | '/_authenticated/bonus/'
     | '/_authenticated/f1/'
     | '/_authenticated/matches/'
     | '/_authenticated/ufc/'
@@ -1742,13 +1707,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChangelogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/bonus': {
-      id: '/_authenticated/bonus'
-      path: '/bonus'
-      fullPath: '/bonus'
-      preLoaderRoute: typeof AuthenticatedBonusRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/bets': {
       id: '/_authenticated/bets'
       path: '/bets'
@@ -1783,13 +1741,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/f1/'
       preLoaderRoute: typeof AuthenticatedF1IndexRouteImport
       parentRoute: typeof AuthenticatedF1Route
-    }
-    '/_authenticated/bonus/': {
-      id: '/_authenticated/bonus/'
-      path: '/'
-      fullPath: '/bonus/'
-      preLoaderRoute: typeof AuthenticatedBonusIndexRouteImport
-      parentRoute: typeof AuthenticatedBonusRoute
     }
     '/management/admin/wallet-ledger': {
       id: '/management/admin/wallet-ledger'
@@ -2120,13 +2071,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFootballEplRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/bonus/$matchId': {
-      id: '/_authenticated/bonus/$matchId'
-      path: '/$matchId'
-      fullPath: '/bonus/$matchId'
-      preLoaderRoute: typeof AuthenticatedBonusMatchIdRouteImport
-      parentRoute: typeof AuthenticatedBonusRoute
-    }
     '/_authenticated/f1/races/': {
       id: '/_authenticated/f1/races/'
       path: '/races'
@@ -2291,19 +2235,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedBonusRouteChildren {
-  AuthenticatedBonusMatchIdRoute: typeof AuthenticatedBonusMatchIdRoute
-  AuthenticatedBonusIndexRoute: typeof AuthenticatedBonusIndexRoute
-}
-
-const AuthenticatedBonusRouteChildren: AuthenticatedBonusRouteChildren = {
-  AuthenticatedBonusMatchIdRoute: AuthenticatedBonusMatchIdRoute,
-  AuthenticatedBonusIndexRoute: AuthenticatedBonusIndexRoute,
-}
-
-const AuthenticatedBonusRouteWithChildren =
-  AuthenticatedBonusRoute._addFileChildren(AuthenticatedBonusRouteChildren)
-
 interface AuthenticatedF1RouteChildren {
   AuthenticatedF1IndexRoute: typeof AuthenticatedF1IndexRoute
   AuthenticatedF1RacesRaceIdRoute: typeof AuthenticatedF1RacesRaceIdRoute
@@ -2362,7 +2293,6 @@ const AuthenticatedWalletRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBetsRoute: typeof AuthenticatedBetsRoute
-  AuthenticatedBonusRoute: typeof AuthenticatedBonusRouteWithChildren
   AuthenticatedChangelogRoute: typeof AuthenticatedChangelogRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedF1Route: typeof AuthenticatedF1RouteWithChildren
@@ -2390,7 +2320,6 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBetsRoute: AuthenticatedBetsRoute,
-  AuthenticatedBonusRoute: AuthenticatedBonusRouteWithChildren,
   AuthenticatedChangelogRoute: AuthenticatedChangelogRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedF1Route: AuthenticatedF1RouteWithChildren,

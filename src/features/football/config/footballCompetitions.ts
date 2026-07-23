@@ -1,15 +1,7 @@
 // Central football competition config. Runtime `enabled` state comes from the
 // sports_feature_flags table; this file is the immutable metadata catalog.
 
-export type FootballCompetitionCode =
-  | "EPL"
-  | "LA_LIGA"
-  | "SERIE_A"
-  | "UCL"
-  | "MLS"
-  | "BRA_A";
-
-export type FootballCompetitionGroup = "domestic" | "european" | "bonus";
+export type FootballCompetitionCode = "EPL" | "LA_LIGA" | "SERIE_A" | "UCL";
 
 export type FootballCompetitionConfig = {
   code: FootballCompetitionCode;
@@ -23,11 +15,8 @@ export type FootballCompetitionConfig = {
     | "epl_enabled"
     | "la_liga_enabled"
     | "serie_a_enabled"
-    | "ucl_enabled"
-    | "mls_enabled"
-    | "brasileirao_enabled";
+    | "ucl_enabled";
   routePath: string;
-  group: FootballCompetitionGroup;
 };
 
 export const FOOTBALL_COMPETITIONS: Record<
@@ -44,7 +33,6 @@ export const FOOTBALL_COMPETITIONS: Record<
     currentSeason: 2025,
     featureFlagKey: "epl_enabled",
     routePath: "/football/epl",
-    group: "domestic",
   },
   LA_LIGA: {
     code: "LA_LIGA",
@@ -56,7 +44,6 @@ export const FOOTBALL_COMPETITIONS: Record<
     currentSeason: 2025,
     featureFlagKey: "la_liga_enabled",
     routePath: "/football/la-liga",
-    group: "domestic",
   },
   SERIE_A: {
     code: "SERIE_A",
@@ -68,7 +55,6 @@ export const FOOTBALL_COMPETITIONS: Record<
     currentSeason: 2025,
     featureFlagKey: "serie_a_enabled",
     routePath: "/football/serie-a",
-    group: "domestic",
   },
   UCL: {
     code: "UCL",
@@ -80,36 +66,7 @@ export const FOOTBALL_COMPETITIONS: Record<
     currentSeason: 2025,
     featureFlagKey: "ucl_enabled",
     routePath: "/football/ucl",
-    group: "european",
-  },
-  MLS: {
-    code: "MLS",
-    displayName: "Major League Soccer",
-    shortName: "MLS",
-    country: "USA",
-    apiFootballLeagueId: 253,
-    oddsApiSportKey: "soccer_usa_mls",
-    currentSeason: 2026,
-    featureFlagKey: "mls_enabled",
-    routePath: "/bonus/mls",
-    group: "bonus",
-  },
-  BRA_A: {
-    code: "BRA_A",
-    displayName: "Brasileirão Série A",
-    shortName: "Brasileirão",
-    country: "Brazil",
-    apiFootballLeagueId: 71,
-    oddsApiSportKey: "soccer_brazil_campeonato",
-    currentSeason: 2026,
-    featureFlagKey: "brasileirao_enabled",
-    routePath: "/bonus/brasileirao",
-    group: "bonus",
   },
 };
 
 export const ALL_FOOTBALL_COMPETITIONS = Object.values(FOOTBALL_COMPETITIONS);
-
-export const BONUS_COMPETITIONS = ALL_FOOTBALL_COMPETITIONS.filter(
-  (c) => c.group === "bonus",
-);

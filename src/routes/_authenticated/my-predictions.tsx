@@ -141,25 +141,6 @@ function MyPredictionsPage() {
     },
   });
 
-  // Sports_bets = new football pipeline (Bonus + EPL/La Liga/Serie A/UCL bets).
-  const { data: sportsBets } = useQuery({
-    queryKey: ["my-sports-bets", uid],
-    enabled: !!uid,
-    refetchOnWindowFocus: true,
-    refetchOnMount: "always",
-    staleTime: 0,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("sports_bets")
-        .select("*, sports_events(home_name, away_name, competition_code, scheduled_at, status)")
-        .eq("user_id", uid!)
-        .eq("sport_code", "football")
-        .order("placed_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as any[];
-    },
-  });
-
   const { data: f1DriversMap } = useQuery({
     queryKey: ["my-f1-drivers-map"],
     staleTime: 5 * 60_000,
@@ -216,14 +197,11 @@ function MyPredictionsPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "f1_championship_bets", filter: `user_id=eq.${uid}` }, () => {
         qc.invalidateQueries({ queryKey: ["my-f1-champ-bets", uid] });
       })
-      .on("postgres_changes", { event: "*", schema: "public", table: "sports_bets", filter: `user_id=eq.${uid}` }, () => {
-        qc.invalidateQueries({ queryKey: ["my-sports-bets", uid] });
-      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [qc, uid]);
 
-  const hasAny = (data?.length ?? 0) + (ufcBets?.length ?? 0) + (f1Bets?.length ?? 0) + (f1ChampBets?.length ?? 0) + (sportsBets?.length ?? 0) > 0;
+  const hasAny = (data?.length ?? 0) + (ufcBets?.length ?? 0) + (f1Bets?.length ?? 0) + (f1ChampBets?.length ?? 0) > 0;
 
 
   return (
@@ -251,93 +229,12 @@ function MyPredictionsPage() {
           {(f1Bets ?? []).map((b) => <F1BetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
           {(f1ChampBets ?? []).map((b) => <F1ChampBetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
           {(ufcBets ?? []).map((b) => <UfcBetRow key={b.id} b={b} />)}
-          {(sportsBets ?? []).map((b) => <SportsBetRow key={b.id} b={b} />)}
           {(data ?? []).map((p) => <PredictionRow key={p.id} p={p} />)}
         </div>
 
       )}
     </PageShell>
 
-  );
-}
-
-const SPORTS_STATUS_STYLES: Record<string, string> = {
-  pending: "bg-white/10 text-[var(--color-ink-muted)]",
-  open: "bg-white/10 text-[var(--color-ink-muted)]",
-  won: "bg-[var(--color-neon)]/20 text-[var(--color-neon)]",
-  lost: "bg-red-500/20 text-red-400",
-  void: "bg-yellow-500/20 text-yellow-300",
-  refunded: "bg-yellow-500/20 text-yellow-300",
-};
-
-const BONUS_COMP_LABEL: Record<string, string> = {
-  MLS: "MLS",
-  BRA_A: "Brasileirão",
-  EPL: "Premier League",
-  LA_LIGA: "La Liga",
-  SERIE_A: "Serie A",
-  UCL: "UCL",
-};
-
-function SportsBetRow({ b }: { b: any }) {
-  const ev = b.sports_events ?? {};
-  const comp = ev.competition_code ?? "";
-  const compLabel = BONUS_COMP_LABEL[comp] ?? comp ?? "Football";
-  const isBonus = comp === "MLS" || comp === "BRA_A";
-  const stake = Number(b.stake ?? 0);
-  const potential = Number(b.potential_payout ?? 0);
-  const payout = b.actual_payout != null ? Number(b.actual_payout) : null;
-  const odds = Number(b.accepted_odds ?? 0);
-  const statusStyle = SPORTS_STATUS_STYLES[b.status] ?? "bg-white/10 text-[var(--color-ink-muted)]";
-  const kickoff = ev.scheduled_at ? new Date(ev.scheduled_at) : null;
-  return (
-    <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)]/60 p-4">
-      <div className="mb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span
-            className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-              isBonus
-                ? "bg-[var(--color-neon)]/15 text-[var(--color-neon)]"
-                : "bg-white/10 text-[var(--color-ink-muted)]"
-            }`}
-          >
-            {isBonus ? "Bonus · " : ""}{compLabel}
-          </span>
-          {kickoff && (
-            <span className="text-[11px] text-[var(--color-ink-muted)]">
-              {kickoff.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
-            </span>
-          )}
-        </div>
-        <span className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${statusStyle}`}>
-          {b.status}
-        </span>
-      </div>
-      <div className="text-sm font-semibold text-[var(--color-ink)]">
-        {ev.home_name ?? "Home"} <span className="text-[var(--color-ink-muted)]">vs</span> {ev.away_name ?? "Away"}
-      </div>
-      <div className="mt-1 text-xs text-[var(--color-ink-muted)]">
-        {b.market_key} · <span className="text-[var(--color-ink)]">{b.selection_key}</span>
-      </div>
-      <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
-        <div>
-          <div className="uppercase tracking-wider text-[var(--color-ink-muted)]">Stake</div>
-          <div className="font-bold text-[var(--color-ink)]">{stake.toLocaleString()} pts</div>
-        </div>
-        <div>
-          <div className="uppercase tracking-wider text-[var(--color-ink-muted)]">Odds</div>
-          <div className="font-bold text-[var(--color-ink)]">{odds.toFixed(2)}x</div>
-        </div>
-        <div>
-          <div className="uppercase tracking-wider text-[var(--color-ink-muted)]">
-            {payout != null ? "Payout" : "Potential"}
-          </div>
-          <div className="font-bold text-[var(--color-neon)]">
-            {(payout ?? potential).toLocaleString()} pts
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }
 
