@@ -29,6 +29,7 @@ export function HamburgerMenu() {
 
   const eFn = useServerFn(getMyEngagementSummary);
   const rFn = useServerFn(getMyReferralOverview);
+  const wFn = useServerFn(getMyWallet);
   const tokensQ = useQuery({
     queryKey: ["engagement-summary", uid],
     queryFn: () => eFn(),
@@ -41,8 +42,15 @@ export function HamburgerMenu() {
     staleTime: 60_000,
     enabled: !!user && open,
   });
+  const walletQ = useQuery({
+    queryKey: ["my-wallet", uid],
+    queryFn: () => wFn(),
+    staleTime: 30_000,
+    enabled: !!user && open,
+  });
 
   const tokens = tokensQ.data?.tokens.balance ?? 0;
+  const walletBalance = walletQ.data?.balance ?? 0;
   const refCode = refQ.data?.referralCode ?? "";
   const isGuest = !user || (user as any)?.is_anonymous === true;
   const displayCode = isGuest ? "XXXXXXX" : refCode;
