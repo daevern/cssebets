@@ -37,8 +37,26 @@ export type NextUfcFight = {
   odds_b: number | null;
 } | null;
 
+export type NextBonusMatch = {
+  id: string;
+  competition_code: string;
+  competition_name: string;
+  home_name: string;
+  away_name: string;
+  home_logo: string | null;
+  away_logo: string | null;
+  kickoff_at: string;
+  odds_home: number | null;
+  odds_draw: number | null;
+  odds_away: number | null;
+} | null;
+
 export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler(
-  async (): Promise<{ nextRace: NextF1Race; nextFight: NextUfcFight }> => {
+  async (): Promise<{
+    nextRace: NextF1Race;
+    nextFight: NextUfcFight;
+    nextBonusMatch: NextBonusMatch;
+  }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
 
