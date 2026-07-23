@@ -1,81 +1,69 @@
-# Guest/Demo Landing Page
+# Bonus Leagues (MLS + Brasileirão) — full World Cup clone
 
-Turn `/` into a full demo experience: users can browse Football, F1, and UFC freely, and are only prompted to sign up when they attempt a bet action. Wallet is added to the bottom nav with a simplified top-up/cash-out info popup.
+Goal: ship a self-contained "Bonus" section for MLS and Brasileirão Série A that mirrors the World Cup `/matches` experience to the pixel, with its own data pipeline (API-Football), admin risk tools, picks integration, and dashboard cards. The existing World Cup section stays untouched.
 
-## 1. Landing page (`src/routes/index.tsx`)
+## 1. Data model (new tables, isolated from `matches`)
 
-Replace the current single-fixture preview with a tabbed guest shell:
+New Supabase tables (kept separate from `matches`, `predictions`, `sports_events` so nothing about the World Cup flow changes):
 
-- Keep existing header (logo + Log in + Register) and `CategoryRail`.
-- Below the header, add sport tabs: **Football / F1 / UFC** (default: Football).
-- Each tab renders the same list components used in the authenticated app but in "guest mode":
-  - Football → reuse `FootballCompetitionPage` content (World Cup by default; league switcher optional — start with World Cup only) OR the matches list from `/matches`.
-  - F1 → reuse `F1SeasonPage` content (upcoming races grid).
-  - UFC → reuse the current UFC fights list from `/ufc/fights`.
-- Clicking a fixture/race/fight opens the full detail page in guest mode (see §2).
+- `bonus_leagues` — catalog row per league (`code` MLS / BRA_A, display name, API-Football `league_id`, `season`, `enabled`).
+- `bonus_matches` — fixture rows (external_id from API-Football, league_code, teams, crests, kickoff, status, scores incl. HT/FT, reference_odds JSON, odds_updated_at, odds_status, margin_disabled).
+- `bonus_match_market_odds` — per-market odds rows (same shape as `match_market_odds`, keyed by `bonus_match_id`).
+- `bonus_match_odds_snapshots` — history for the market-movement graph.
+- `bonus_predictions` — user picks (mirrors columns/statuses of `predictions`).
+- `bonus_wallet_transactions` are NOT introduced — reuse existing `wallets` / `wallet_transactions` with `context = 'bonus'`.
 
-## 2. Guest-mode detail pages
+Migration adds: GRANTS (authenticated CRUD, service_role all), RLS (owner-only on `bonus_predictions`, read-only on the rest for authenticated), settlement RPC `settle_bonus_predictions_for_match`, and a `regenerate_bonus_match_market_odds` RPC parallel to the existing one.
 
-The detail pages (`matches/$matchId`, `f1/races/$raceId`, `ufc/$fightId`) already accept a `publicMode` / visitor prop pattern (landing already uses `<MatchAnalyticsScreen publicMode />`). Extend the same pattern to F1 and UFC detail screens so they render without a session:
+## 2. Sync pipeline (API-Football, server-only)
 
-- Show all odds, charts, analytics, live stats — read-only.
-- Replace every "Place bet" / stake action button with a `RequireAuthGate` wrapper. Clicking it opens a small modal: "Create a free account to place this bet" with Register + Log in buttons (links to `/register` and `/auth`).
-- No changes to server-fns; the analytics/read fns used here are already public or already gracefully return null without a session.
+New folder `src/features/bonus/` mirroring `src/features/football/`:
 
-New public routes to host the guest detail views (so they don't require the `_authenticated` gate):
-- `src/routes/demo/match.$matchId.tsx`
-- `src/routes/demo/race.$raceId.tsx`
-- `src/routes/demo/fight.$fightId.tsx`
+- `config/bonusLeagues.ts` — MLS (league 253, season 2026) and Brasileirão Série A (league 71, season 2026).
+- `services/bonusSync.server.ts` — `syncAllBonusFixtures`, `syncBonusOddsBatch`, `syncBonusLiveScores` using the existing `apiFootballAdapter.server.ts` helpers (rate-limited, throttled, `sports_sync_runs` audit rows).
+- `services/bonusSettlement.server.ts` — reuses `decideWinningKeys` + adapter for goal/BTTS/CS/HT-FT markets on the new tables.
+- `services/oddsFreshness.server.ts` — suspends stale bonus markets.
+- Public hooks under `src/routes/api/public/hooks/`: `bonus-sync.ts`, `bonus-live.ts`, `bonus-settle.ts`. pg_cron entries added in the migration (sync every 15 min, live every 1 min while any match is live, settle every 5 min).
 
-From the guest tabs, fixture cards link into `/demo/...`. Signed-in users continue to use the existing `_authenticated` routes (nothing changes for them).
+## 3. UI clone (World Cup template, forked verbatim)
 
-## 3. Bottom nav — add Wallet
+Fork the World Cup files into a new `bonus` namespace so nothing on `/matches` changes:
 
-`LandingBottomNav` in `src/routes/index.tsx` currently has: About, Community, Performance, Help.
+- `src/routes/_authenticated/bonus.tsx` (layout with `<Outlet />`).
+- `src/routes/_authenticated/bonus.index.tsx` — clone of `matches.index.tsx`, adds a league toggle (MLS | Brasileirão). Reads from `bonus_matches`.
+- `src/routes/_authenticated/bonus.$matchId.tsx` — clone of `matches.$matchId.tsx` (1685 lines), swapped to new server fns and tables. Keeps every tab, chart, analytics, live tape, market card and bet slip identical.
+- `src/lib/bonus.functions.ts` — server fns mirroring `matches.functions.ts` / `predictions.functions.ts` (list, detail, place bet with duplicate-bet guard, cash-out, market history).
+- Category rail (`src/components/nav/CategoryRail.tsx`) gets a "Bonus" chip routing to `/bonus`; top-nav breadcrumbs updated.
 
-Change to 5 items: **Wallet, About, Community, Performance, Help** (or drop one — recommend keeping all 5 in the grid).
+Duplicate-bet prevention, live suspension, keyboard-focus fix, and "no-picks" summary state all carry over from the fork.
 
-Clicking Wallet opens the guest wallet popup (§4), not a route.
+## 4. Picks integration
 
-## 4. Guest Wallet popup
+`src/routes/_authenticated/my-predictions.tsx` gains a `bonus` source alongside football/ufc/f1: new `listBonusPicks` server fn plus a `BonusTicketShell` component (clone of `F1TicketShell`) so bets appear immediately in "My Picks" and settle into the same wallet ledger.
 
-New component `src/components/wallet/GuestWalletSheet.tsx`. Shown as a bottom sheet / dialog. Contents:
+## 5. Admin
 
-- Title: "Wallet"
-- Two buttons: **Top up** and **Cash out**
-- **Top up** opens an info panel listing methods + processing time (no form, no auth). Example content:
-  - Bank transfer (FPX / DuitNow) — ~5 minutes
-  - Touch 'n Go eWallet — instant
-  - Manual review deposits — up to 1 hour
-- **Cash out** opens an info panel listing conversion + duration:
-  - 100 points = 1 MYR (or existing rate — check `platform-settings` if a rate exists)
-  - Payout via bank transfer — 1–3 business days
-  - Minimum cash-out: 500 points
-- Below both panels: "Create an account to top up or cash out" with Register button.
+New admin routes cloned from the football/f1 pattern:
 
-Content is static/informational only — no server calls.
+- `src/routes/management/admin.bonus.tsx` — fixture list, force sync, resettle, void, market-suspend/resume, margin toggle, per-match risk exposure (uses existing `match_exposure_scenarios` shape wired to `bonus_matches`).
+- `src/routes/management/admin.bonus-risk.tsx` — correlated exposure + bankroll view scoped to Bonus.
+- `admin.predictions.tsx` — add `bonus` source filter and columns so staff can see and manually place/void Bonus predictions (mirrors the F1 addition done recently).
+- Nav entry added in `admin.tsx` sidebar.
 
-## 5. Auth-gate modal
+## 6. Dashboard
 
-Small reusable component `src/components/auth/GuestAuthPrompt.tsx`:
-- Trigger: any bet button in guest mode.
-- Body: "Sign up to place this bet — it's free and takes 10 seconds."
-- Buttons: Register (primary, → `/register`) and Log in (→ `/auth`).
+`src/routes/_authenticated/dashboard.tsx` — extend the "Next on the card" strip with a `NextBonusMatchCard` (clone of the F1/UFC card styling) that shows the next kickoff across enabled Bonus leagues, driven by a new `nextBonusMatch` field returned from `dashboard-extras.functions.ts`.
 
-## 6. Files touched
+## 7. Verification
 
-- `src/routes/index.tsx` — rewrite as tabbed guest shell + wallet button in bottom nav.
-- `src/routes/demo/match.$matchId.tsx` — new, wraps `MatchAnalyticsScreen` in `publicMode`.
-- `src/routes/demo/race.$raceId.tsx` — new, wraps F1 race page in guest mode.
-- `src/routes/demo/fight.$fightId.tsx` — new, wraps UFC fight page in guest mode.
-- `src/features/f1/pages/F1RaceDetailsPage.tsx` — accept `publicMode` prop; gate bet actions.
-- `src/routes/_authenticated/ufc.$fightId.tsx` — extract fight detail into a component that accepts `publicMode`, reuse for guest route.
-- `src/features/football/pages/FootballMatchDetailsPage.tsx` — accept `publicMode` prop; gate bet actions (analytics already public).
-- `src/components/wallet/GuestWalletSheet.tsx` — new.
-- `src/components/auth/GuestAuthPrompt.tsx` — new.
+- Run `bunx tsgo --noEmit`.
+- Vitest for `decideWinningKeys` reused; add a smoke test for `bonusSync` mapping.
+- Playwright: load `/bonus`, open a fixture, place a guarded bet, verify it lands in `/my-predictions`, verify admin sees it in `admin.predictions` filtered to Bonus.
 
-## 7. Notes / trade-offs
+## Technical notes
 
-- Guest bet-gating is UI-only; server-fns already require auth, so security isn't affected — the modal is a UX improvement so users don't get a 401 toast.
-- Live/realtime subscriptions on detail pages will fire without a session; where they require auth they'll no-op silently (existing `useHasSession` guard already handles this).
-- If you'd rather keep only one code path per detail screen (no `/demo/*` duplicates) I can instead lift the current `_authenticated/matches.$matchId.tsx` etc. out of the auth gate and add per-action gating inside. That's cleaner long-term but a bigger refactor — say the word and I'll do it that way instead.
+- API-Football league IDs: MLS = 253, Brasileirão Série A = 71. Season string `2026`.
+- Reuses existing `FOOTBALL_DATA_API_KEY` is NOT applicable — API-Football key already stored as `APIFOOTBALL_KEY` (used by `apifootball.server.ts`); reuse it.
+- Odds provider inside API-Football: bookmaker aggregate; same margin pipeline (`apply3WayMargin`) as `/matches`.
+- All new tables get `GRANT ... TO authenticated`, `GRANT ALL ... TO service_role`, RLS on, and policies scoped to `auth.uid()` on `bonus_predictions`. Snapshot tables are NOT added to the realtime publication (matches the security stance we set for `market_odds_snapshots`).
+- No changes to `matches`, `predictions`, `match_market_odds`, or the World Cup routes.
