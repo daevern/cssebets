@@ -260,18 +260,14 @@ export function HamburgerMenu() {
                           <button
                             type="button"
                             onClick={it.onClick}
-                            className={`flex w-full items-center gap-3 px-3 py-3.5 text-left text-[15px] font-bold uppercase tracking-[0.16em] text-black transition-all duration-300 hover:bg-black/10 active:scale-[0.98] ${
-                              open ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
-                            }`}
-                            style={{
-                              transitionDelay: open ? `${260 + i * 60}ms` : "0ms",
-                            }}
+                            className="flex w-full items-center gap-3 px-3 py-3.5 text-left text-[15px] font-bold uppercase tracking-[0.16em] text-black transition-colors hover:bg-black/10 active:scale-[0.98]"
                           >
                             <span className="grid h-9 w-9 place-items-center bg-black/10">
                               <Icon className="h-4 w-4 text-black" />
                             </span>
                             {it.label}
                           </button>
+
                         </li>
                       );
                     })}
