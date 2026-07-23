@@ -93,7 +93,10 @@ export interface CsseWordmarkProps {
   inverse?: boolean;
   /** Add a black outline around the green "Bets" letters so it pops on green backgrounds. */
   outline?: boolean;
+  /** Render the entire wordmark in the dark surface color (for use on neon/green backgrounds). */
+  dark?: boolean;
 }
+
 
 /**
  * Custom wordmark: "CSSE" in foreground + "Bets" in brand green.
