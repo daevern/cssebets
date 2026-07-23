@@ -278,11 +278,9 @@ export function HamburgerMenu() {
                     <button
                       type="button"
                       onClick={isGuest ? () => pick(() => navigate({ to: "/auth" })) : handleSignOut}
-                      className={`flex w-full items-center justify-center gap-2 bg-black px-4 py-3.5 text-[13px] font-bold uppercase tracking-[0.2em] text-[var(--neon)] transition-all duration-300 hover:bg-black/85 active:scale-[0.98] ${
-                        open ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-                      }`}
-                      style={{ transitionDelay: open ? "500ms" : "0ms" }}
+                      className="flex w-full items-center justify-center gap-2 bg-black px-4 py-3.5 text-[13px] font-bold uppercase tracking-[0.2em] text-[var(--neon)] transition-colors hover:bg-black/85 active:scale-[0.98]"
                     >
+
                       {isGuest ? (
                         <>
                           <User className="h-4 w-4" />
