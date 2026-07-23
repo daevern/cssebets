@@ -229,7 +229,7 @@ export function HamburgerMenu() {
                       <WalletIcon className="h-4 w-4 text-black/60" />
                     </div>
                     <div className="mt-1 flex items-baseline gap-2">
-                      <span className="font-mono text-[72px] font-black leading-none text-black tabular-nums">
+                      <span className="font-mono text-[52px] font-black leading-none text-black tabular-nums">
                         {walletQ.isLoading
                           ? "…"
                           : walletBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
