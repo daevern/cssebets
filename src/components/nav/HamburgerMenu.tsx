@@ -153,62 +153,27 @@ export function HamburgerMenu() {
               aria-hidden
             />
 
-            {/* Liquid stage — sits fully below the top bar so nothing overlaps it.
-                Goo filter merges the drop + blob into one organic shape as it expands. */}
+            {/* Slide-out panel — sits fully below the top bar */}
             <div
-              className={`fixed right-0 z-[58] w-3/4 md:hidden ${
-                open ? "pointer-events-auto" : "pointer-events-none"
+              className={`fixed right-0 z-[58] w-3/4 md:hidden transition-transform duration-200 ease-out ${
+                open ? "translate-x-0" : "translate-x-full"
               }`}
               style={{
-                filter: "url(#csse-goo)",
                 top: "calc(env(safe-area-inset-top) + 60px)",
                 height: "calc(100dvh - env(safe-area-inset-top) - 60px)",
               }}
             >
-              {/* Seed droplet — a small green ball at the top-right (under the hamburger)
-                  that appears first, then the blob catches up and merges into it. */}
-              <span
-                aria-hidden
-                className={`absolute right-2 top-0 block rounded-full bg-[var(--neon)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                  open
-                    ? "h-10 w-10 opacity-100 duration-[500ms]"
-                    : "h-3 w-3 opacity-0 duration-[300ms]"
-                }`}
-              />
-
-              {/* Trailing droplet — slightly lower/left, gives the goo something to bridge to */}
-              <span
-                aria-hidden
-                className={`absolute right-8 top-4 block rounded-full bg-[var(--neon)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                  open
-                    ? "h-8 w-8 opacity-100 duration-[650ms] delay-[120ms]"
-                    : "h-3 w-3 opacity-0 duration-[300ms]"
-                }`}
-              />
-
-              {/* Main blob — grows from the droplet at top-right into the full panel.
-                  Long duration + smooth expo ease-out for a clearly-visible liquid flow. */}
-              <div
-                className={`absolute inset-0 origin-top-right bg-[var(--neon)] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                  open
-                    ? "opacity-100 scale-100 duration-[850ms] delay-[200ms]"
-                    : "opacity-0 scale-[0.05] duration-[350ms]"
-                }`}
-              />
-
-
+              <div className="absolute inset-0 bg-[var(--neon)] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)]" />
 
               {/* Content layer — fixed header block, scrollable list block */}
               <div
-                className={`relative flex h-full flex-col px-6 transition-opacity duration-300 ${
-                  open ? "opacity-100 delay-200" : "opacity-0"
-                }`}
+                className="relative flex h-full flex-col px-6"
                 style={{
                   paddingTop: "20px",
                   paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)",
-                  filter: "none",
                 }}
               >
+
                 {/* ===== Fixed (non-scrolling) top block ===== */}
                 <div className="shrink-0">
                   {/* Brand */}
