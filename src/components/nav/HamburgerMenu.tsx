@@ -157,10 +157,13 @@ export function HamburgerMenu() {
             {/* Backdrop */}
             <div
               onClick={() => setOpen(false)}
-              className={`fixed inset-0 z-[55] bg-black/40 transition-opacity duration-300 md:hidden ${
+              className={`fixed inset-x-0 bottom-0 z-[55] bg-black/40 transition-opacity duration-300 md:hidden ${
                 open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
               }`}
-              style={{ backdropFilter: "blur(2px)" }}
+              style={{
+                top: "calc(env(safe-area-inset-top) + 56px)",
+                backdropFilter: "blur(2px)",
+              }}
               aria-hidden
             />
 
