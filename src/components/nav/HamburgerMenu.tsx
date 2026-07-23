@@ -218,7 +218,7 @@ export function HamburgerMenu() {
                   open ? "opacity-100 delay-200" : "opacity-0"
                 }`}
                 style={{
-                  paddingTop: "44px",
+                  paddingTop: "20px",
                   paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)",
                   filter: "none",
                 }}
