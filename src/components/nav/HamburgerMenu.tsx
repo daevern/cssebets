@@ -164,157 +164,178 @@ export function HamburgerMenu() {
               aria-hidden
             />
 
-            {/* Liquid panel — full height, 3/4 width, right-anchored */}
+            {/* Liquid panel — starts below hamburger so the X trigger stays visible */}
             <div
-              className={`fixed right-0 top-0 z-[58] h-[100dvh] w-3/4 md:hidden ${
+              className={`fixed right-0 z-[58] w-3/4 md:hidden ${
                 open ? "pointer-events-auto" : "pointer-events-none"
               }`}
-              style={{ filter: "url(#csse-goo)" }}
+              style={{
+                filter: "url(#csse-goo)",
+                top: "calc(env(safe-area-inset-top) + 56px)",
+                height: "calc(100dvh - env(safe-area-inset-top) - 56px)",
+              }}
             >
-              {/* Drip drops */}
+              {/* Drip drops emanating from the hamburger position (top-right) */}
               <span
                 aria-hidden
-                className={`absolute right-4 top-4 block h-10 w-10 rounded-full bg-[var(--neon)] transition-all duration-300 ${
+                className={`absolute right-2 -top-6 block h-10 w-10 rounded-full bg-[var(--neon)] transition-all duration-300 ${
                   open ? "scale-100 opacity-100" : "scale-0 opacity-0"
                 }`}
               />
               <span
                 aria-hidden
-                className={`absolute right-8 top-16 block h-8 w-8 rounded-full bg-[var(--neon)] transition-all duration-500 ${
+                className={`absolute right-6 top-4 block h-8 w-8 rounded-full bg-[var(--neon)] transition-all duration-500 ${
                   open ? "scale-100 opacity-100 delay-75" : "scale-0 opacity-0"
                 }`}
               />
 
-              {/* Main blob — no rounded edges */}
+              {/* Main blob — origin at top-right (near hamburger) */}
               <div
                 className={`absolute inset-0 origin-top-right bg-[var(--neon)] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)] transition-all duration-500 ease-[cubic-bezier(0.34,1.4,0.64,1)] ${
                   open ? "opacity-100 scale-100" : "opacity-0 scale-[0.15]"
                 }`}
               />
 
-              {/* Content layer */}
+              {/* Content layer — fixed header block, scrollable list block */}
               <div
-                className={`relative flex h-full flex-col overflow-y-auto px-6 transition-opacity duration-300 ${
+                className={`relative flex h-full flex-col px-6 transition-opacity duration-300 ${
                   open ? "opacity-100 delay-200" : "opacity-0"
                 }`}
                 style={{
-                  paddingTop: "calc(env(safe-area-inset-top) + 20px)",
-                  paddingBottom: "calc(env(safe-area-inset-bottom) + 20px)",
+                  paddingTop: "16px",
+                  paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)",
                   filter: "none",
                 }}
               >
-                {/* Header: brand + close */}
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-baseline">
-                    <CsseMark className="mr-1.5 h-5 w-5 self-center text-black" outline />
-                    <CsseWordmark size={16} inverse outline />
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setOpen(false)}
-                    aria-label="Close menu"
-                    className="grid h-9 w-9 place-items-center bg-black/10 text-black transition-colors hover:bg-black/20"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-
-                {/* Token balance display (read-only, wallet-style) */}
-                <div className="mt-5 flex items-center justify-between bg-black/10 px-4 py-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="grid h-8 w-8 place-items-center rounded-full bg-black text-[var(--neon)]">
-                      <CsseMark className="h-4 w-4" outline />
+                {/* ===== Fixed (non-scrolling) top block ===== */}
+                <div className="shrink-0">
+                  {/* Brand */}
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center">
+                      <CsseMark className="mr-1.5 h-5 w-5 text-black" outline />
+                      <CsseWordmark size={16} inverse outline />
                     </span>
-                    <div className="flex flex-col leading-tight">
-                      <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">
-                        Tokens
+                  </div>
+
+                  {/* Wallet balance — large, prominent */}
+                  <div className="mt-4 bg-black/10 px-4 py-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-black/60">
+                        Wallet
                       </span>
-                      <span className="font-mono text-lg font-bold text-black tabular-nums">
-                        {tokensQ.isLoading ? "…" : tokens.toLocaleString()}
+                      <WalletIcon className="h-4 w-4 text-black/60" />
+                    </div>
+                    <div className="mt-1 flex items-baseline gap-2">
+                      <span className="font-mono text-[72px] font-black leading-none text-black tabular-nums">
+                        {walletQ.isLoading
+                          ? "…"
+                          : walletBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.24em] text-black/60">
+                        pts
                       </span>
                     </div>
                   </div>
-                  <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">
-                    CSSE
-                  </span>
+
+                  {/* Token balance */}
+                  <div className="mt-3 flex items-center justify-between bg-black/10 px-4 py-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="grid h-8 w-8 place-items-center rounded-full bg-black text-[var(--neon)]">
+                        <CsseMark className="h-4 w-4" outline />
+                      </span>
+                      <div className="flex flex-col leading-tight">
+                        <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">
+                          Tokens
+                        </span>
+                        <span className="font-mono text-lg font-bold text-black tabular-nums">
+                          {tokensQ.isLoading ? "…" : tokens.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">
+                      CSSE
+                    </span>
+                  </div>
+
+                  {/* Referral code */}
+                  <div className="mt-3 bg-black/10 px-4 py-3">
+                    <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">
+                      {isGuest ? "Referrals" : "Your referral code"}
+                    </div>
+                    <p className="mt-1 text-[11px] font-medium leading-snug text-black/70">
+                      Earn tokens by referring friends. Share your code and get rewarded when they join and play.
+                    </p>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <span className="font-mono text-2xl font-bold tracking-[0.24em] text-black">
+                        {displayCode || "—"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={copyCode}
+                        disabled={isGuest || !refCode}
+                        aria-label="Copy referral code"
+                        className="grid h-9 w-9 place-items-center bg-black text-[var(--neon)] transition-opacity hover:opacity-90 disabled:opacity-40"
+                      >
+                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Referral code display */}
-                <div className="mt-3 bg-black/10 px-4 py-3">
-                  <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">
-                    {isGuest ? "Referrals" : "Your referral code"}
-                  </div>
-                  <p className="mt-1 text-[11px] font-medium leading-snug text-black/70">
-                    Earn tokens by referring friends. Share your code and get rewarded when they join and play.
-                  </p>
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <span className="font-mono text-2xl font-bold tracking-[0.24em] text-black">
-                      {displayCode || "—"}
-                    </span>
+                {/* ===== Scrollable block — Store onwards ===== */}
+                <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
+                  <ul className="flex flex-col gap-1.5">
+                    {items.map((it, i) => {
+                      const Icon = it.Icon;
+                      return (
+                        <li key={it.key}>
+                          <button
+                            type="button"
+                            onClick={it.onClick}
+                            className={`flex w-full items-center gap-3 px-3 py-3.5 text-left text-[15px] font-bold uppercase tracking-[0.16em] text-black transition-all duration-300 hover:bg-black/10 active:scale-[0.98] ${
+                              open ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
+                            }`}
+                            style={{
+                              transitionDelay: open ? `${260 + i * 60}ms` : "0ms",
+                            }}
+                          >
+                            <span className="grid h-9 w-9 place-items-center bg-black/10">
+                              <Icon className="h-4 w-4 text-black" />
+                            </span>
+                            {it.label}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  {/* Sign out / Register */}
+                  <div className="mt-auto pt-4">
                     <button
                       type="button"
-                      onClick={copyCode}
-                      disabled={isGuest || !refCode}
-                      aria-label="Copy referral code"
-                      className="grid h-9 w-9 place-items-center bg-black text-[var(--neon)] transition-opacity hover:opacity-90 disabled:opacity-40"
+                      onClick={isGuest ? () => pick(() => navigate({ to: "/auth" })) : handleSignOut}
+                      className={`flex w-full items-center justify-center gap-2 bg-black px-4 py-3.5 text-[13px] font-bold uppercase tracking-[0.2em] text-[var(--neon)] transition-all duration-300 hover:bg-black/85 active:scale-[0.98] ${
+                        open ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
+                      }`}
+                      style={{ transitionDelay: open ? "500ms" : "0ms" }}
                     >
-                      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                      {isGuest ? (
+                        <>
+                          <User className="h-4 w-4" />
+                          Register / Log in
+                        </>
+                      ) : (
+                        <>
+                          <LogOut className="h-4 w-4" />
+                          Sign out
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
-
-                {/* Nav items */}
-                <ul className="mt-5 flex flex-col gap-1.5">
-                  {items.map((it, i) => {
-                    const Icon = it.Icon;
-                    return (
-                      <li key={it.key}>
-                        <button
-                          type="button"
-                          onClick={it.onClick}
-                          className={`flex w-full items-center gap-3 px-3 py-3.5 text-left text-[15px] font-bold uppercase tracking-[0.16em] text-black transition-all duration-300 hover:bg-black/10 active:scale-[0.98] ${
-                            open ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
-                          }`}
-                          style={{
-                            transitionDelay: open ? `${260 + i * 60}ms` : "0ms",
-                          }}
-                        >
-                          <span className="grid h-9 w-9 place-items-center bg-black/10">
-                            <Icon className="h-4 w-4 text-black" />
-                          </span>
-                          {it.label}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-
-                {/* Sign out / Register */}
-                <div className="mt-auto">
-                  <button
-                    type="button"
-                    onClick={isGuest ? () => pick(() => navigate({ to: "/auth" })) : handleSignOut}
-                    className={`flex w-full items-center justify-center gap-2 bg-black px-4 py-3.5 text-[13px] font-bold uppercase tracking-[0.2em] text-[var(--neon)] transition-all duration-300 hover:bg-black/85 active:scale-[0.98] ${
-                      open ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-                    }`}
-                    style={{ transitionDelay: open ? "500ms" : "0ms" }}
-                  >
-                    {isGuest ? (
-                      <>
-                        <User className="h-4 w-4" />
-                        Register / Log in
-                      </>
-                    ) : (
-                      <>
-                        <LogOut className="h-4 w-4" />
-                        Sign out
-                      </>
-                    )}
-                  </button>
-                </div>
               </div>
             </div>
-          </>,
+
           document.body,
         )}
 
