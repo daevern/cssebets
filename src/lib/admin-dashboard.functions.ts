@@ -417,6 +417,24 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       }
     }
 
+    // --- Football sports_bets (Bonus + EPL/La Liga/Serie A/UCL) ---
+    const sportsBetRows: any[] = [];
+    if (data.sport === "all" || data.sport === "football") {
+      const uiToOpen: Record<string, string> = { pending: "open", won: "won", lost: "lost", void: "void" };
+      let sq = (supabaseAdmin as any)
+        .from("sports_bets")
+        .select("id, user_id, sports_event_id, market_key, selection_key, stake, accepted_odds, potential_payout, actual_payout, status, placed_at, settled_at, sports_events!inner(home_name, away_name, competition_code)")
+        .eq("sport_code", "football")
+        .order("placed_at", { ascending: false });
+      if (data.userId) sq = sq.eq("user_id", data.userId);
+      if (data.fixtureId) sq = sq.eq("sports_event_id", data.fixtureId);
+      if (data.market) sq = sq.eq("market_key", data.market);
+      if (data.status) sq = sq.eq("status", uiToOpen[data.status] ?? data.status);
+      const { data: sBets, error: sErr } = await sq;
+      if (sErr) throw new Error(sErr.message);
+      sportsBetRows.push(...(sBets ?? []));
+    }
+
 
     // --- UFC bets (normalized to prediction row shape) ---
     const ufcRows: any[] = [];
@@ -473,6 +491,7 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
         ...footballRows.map((r: any) => r.user_id),
         ...ufcRows.map((r: any) => r.user_id),
         ...f1Rows.map((r: any) => r.user_id),
+        ...sportsBetRows.map((r: any) => r.user_id),
       ].filter(Boolean),
     ));
     const mids = Array.from(new Set(footballRows.map((r: any) => r.match_id).filter(Boolean)));
@@ -592,7 +611,39 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       };
     });
 
-    const combined = [...normalizedFootball, ...normalizedUfc, ...normalizedF1]
+    const normalizedSportsBets = sportsBetRows.map((r: any) => {
+      const ev = r.sports_events ?? {};
+      const comp = ev.competition_code ?? "";
+      const isBonus = comp === "MLS" || comp === "BRA_A";
+      const label = ev.home_name && ev.away_name
+        ? `${isBonus ? "Bonus · " : ""}${comp} · ${ev.home_name} vs ${ev.away_name}`
+        : "Football match";
+      return {
+        id: r.id,
+        user_id: r.user_id,
+        match_id: null,
+        sport: "football" as const,
+        fixture_id: r.sports_event_id,
+        fixture_label: label,
+        match: label,
+        market: r.market_key,
+        outcome: r.selection_key,
+        virtual_stake: r.stake,
+        reference_odds: r.accepted_odds,
+        potential_return: r.potential_payout,
+        points: 0,
+        status: ufcStatusForUi[r.status] ?? r.status,
+        created_at: r.placed_at,
+        settled_at: r.settled_at,
+        flagged_for_review: false,
+        flagged_reason: null,
+        display_name: profileById.get(r.user_id)?.display_name ?? r.user_id.slice(0, 8),
+        _source: "sports_bets" as const,
+        competition_code: comp,
+      };
+    });
+
+    const combined = [...normalizedFootball, ...normalizedSportsBets, ...normalizedUfc, ...normalizedF1]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     return { total: combined.length, predictions: combined };

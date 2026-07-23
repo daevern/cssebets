@@ -37,8 +37,26 @@ export type NextUfcFight = {
   odds_b: number | null;
 } | null;
 
+export type NextBonusMatch = {
+  id: string;
+  competition_code: string;
+  competition_name: string;
+  home_name: string;
+  away_name: string;
+  home_logo: string | null;
+  away_logo: string | null;
+  kickoff_at: string;
+  odds_home: number | null;
+  odds_draw: number | null;
+  odds_away: number | null;
+} | null;
+
 export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler(
-  async (): Promise<{ nextRace: NextF1Race; nextFight: NextUfcFight }> => {
+  async (): Promise<{
+    nextRace: NextF1Race;
+    nextFight: NextUfcFight;
+    nextBonusMatch: NextBonusMatch;
+  }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
 
@@ -149,6 +167,47 @@ export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler
       }
     }
 
+    // ---------- Next bonus (MLS / Brasileirão) match ----------
+    let nextBonusMatch: NextBonusMatch = null;
+    const { data: bonusEv } = await (supabaseAdmin as any)
+      .from("sports_events")
+      .select("id, competition_code, home_name, away_name, home_logo, away_logo, scheduled_at, is_enabled, status")
+      .eq("sport_code", "football")
+      .in("competition_code", ["MLS", "BRA_A"])
+      .eq("is_enabled", true)
+      .in("status", ["scheduled", "live"])
+      .gte("scheduled_at", nowIso)
+      .order("scheduled_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (bonusEv) {
+      const { data: mkt } = await (supabaseAdmin as any)
+        .from("sports_markets")
+        .select("id, market_key, sports_market_selections(selection_key, decimal_odds)")
+        .eq("sports_event_id", bonusEv.id)
+        .eq("market_key", "match_result")
+        .eq("status", "open")
+        .maybeSingle();
+      const sels: any[] = (mkt as any)?.sports_market_selections ?? [];
+      const pick = (k: string) => {
+        const s = sels.find((x) => x.selection_key === k);
+        return s ? Number(s.decimal_odds) : null;
+      };
+      nextBonusMatch = {
+        id: bonusEv.id,
+        competition_code: bonusEv.competition_code,
+        competition_name: bonusEv.competition_code === "MLS" ? "MLS" : "Brasileirão",
+        home_name: bonusEv.home_name ?? "TBD",
+        away_name: bonusEv.away_name ?? "TBD",
+        home_logo: bonusEv.home_logo ?? null,
+        away_logo: bonusEv.away_logo ?? null,
+        kickoff_at: bonusEv.scheduled_at,
+        odds_home: pick("home"),
+        odds_draw: pick("draw"),
+        odds_away: pick("away"),
+      };
+    }
+
     return {
       nextRace: race
         ? {
@@ -163,6 +222,7 @@ export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler
           }
         : null,
       nextFight: fight,
+      nextBonusMatch,
     };
   },
 );

@@ -1,69 +1,51 @@
-# Bonus Leagues (MLS + Brasileirão) — full World Cup clone
+# Bonus leagues (MLS + Brasileirão Série A)
 
-Goal: ship a self-contained "Bonus" section for MLS and Brasileirão Série A that mirrors the World Cup `/matches` experience to the pixel, with its own data pipeline (API-Football), admin risk tools, picks integration, and dashboard cards. The existing World Cup section stays untouched.
+Ship a new **Bonus** category powered by the same API-Football sports pipeline the EPL/La Liga/UCL routes already use — reusing `sports_events` / `sports_markets` / `sports_bets` end-to-end. **World Cup code paths (`matches` table, `predictions` table, `/matches/*` routes) are not modified.**
 
-## 1. Data model (new tables, isolated from `matches`)
+Why this shape: `sports_events` + `syncAllFootballFixtures` + odds sync + settlement + `place_sports_bet_atomic` already work for any league in `FOOTBALL_COMPETITIONS` that has a feature flag enabled. Duplicating the 1,685-line World Cup match-detail page byte-for-byte would fork three data stores; instead we reuse the proven `FootballMatchDetailsPage` (same market cards, bet slip, odds-history graph, live trade tape as EPL) and give the section a **World Cup–styled landing page**.
 
-New Supabase tables (kept separate from `matches`, `predictions`, `sports_events` so nothing about the World Cup flow changes):
+## What ships
 
-- `bonus_leagues` — catalog row per league (`code` MLS / BRA_A, display name, API-Football `league_id`, `season`, `enabled`).
-- `bonus_matches` — fixture rows (external_id from API-Football, league_code, teams, crests, kickoff, status, scores incl. HT/FT, reference_odds JSON, odds_updated_at, odds_status, margin_disabled).
-- `bonus_match_market_odds` — per-market odds rows (same shape as `match_market_odds`, keyed by `bonus_match_id`).
-- `bonus_match_odds_snapshots` — history for the market-movement graph.
-- `bonus_predictions` — user picks (mirrors columns/statuses of `predictions`).
-- `bonus_wallet_transactions` are NOT introduced — reuse existing `wallets` / `wallet_transactions` with `context = 'bonus'`.
+**1. Config**
+- `src/features/football/config/footballCompetitions.ts`: extend `FootballCompetitionCode` union with `MLS` and `BRA_A`; add entries (leagueIds 253 + 71, season 2026, `routePath: "/bonus/mls" | "/bonus/brasileirao"`, flags `mls_enabled` / `brasileirao_enabled`, new field `group: "world_cup" | "domestic" | "bonus"`).
+- `src/features/football/football.functions.ts`: extend the zod `COMPETITION_CODES` tuple to include the two new codes.
 
-Migration adds: GRANTS (authenticated CRUD, service_role all), RLS (owner-only on `bonus_predictions`, read-only on the rest for authenticated), settlement RPC `settle_bonus_predictions_for_match`, and a `regenerate_bonus_match_market_odds` RPC parallel to the existing one.
+**2. Migration** (single call)
+- Insert two rows into `sports_feature_flags` (`mls_enabled`, `brasileirao_enabled`, both enabled).
 
-## 2. Sync pipeline (API-Football, server-only)
+**3. Routes** (new files, World-Cup-styled)
+- `src/routes/_authenticated/bonus.tsx` — layout w/ `<Outlet />`.
+- `src/routes/_authenticated/bonus.index.tsx` — league switcher tabs (MLS / Brasileirão), Live / Upcoming / Recently finished sections. Reads via `listFootballMatches`. Card visual language mirrors `matches.index.tsx` (stencil header, kick-off chips, odds triple w/ implied %). Own head() metadata.
+- `src/routes/_authenticated/bonus.$matchId.tsx` — renders the existing `FootballMatchDetailsPage` (same UX every EPL match already uses: market cards, bet slip, odds graph, trade tape).
+- Update the football match card link path helper so cards under `/bonus` navigate to `/bonus/{matchId}` rather than `/football/{code}/matches/{matchId}` when rendered inside the bonus route (small conditional via a new `linkBasePath` prop on `FootballMatchCard`).
 
-New folder `src/features/bonus/` mirroring `src/features/football/`:
+**4. Nav**
+- `src/components/nav/CategoryRail.tsx`: add a "Bonus" chip pointing to `/bonus` gated on `mls_enabled || brasileirao_enabled`.
 
-- `config/bonusLeagues.ts` — MLS (league 253, season 2026) and Brasileirão Série A (league 71, season 2026).
-- `services/bonusSync.server.ts` — `syncAllBonusFixtures`, `syncBonusOddsBatch`, `syncBonusLiveScores` using the existing `apiFootballAdapter.server.ts` helpers (rate-limited, throttled, `sports_sync_runs` audit rows).
-- `services/bonusSettlement.server.ts` — reuses `decideWinningKeys` + adapter for goal/BTTS/CS/HT-FT markets on the new tables.
-- `services/oddsFreshness.server.ts` — suspends stale bonus markets.
-- Public hooks under `src/routes/api/public/hooks/`: `bonus-sync.ts`, `bonus-live.ts`, `bonus-settle.ts`. pg_cron entries added in the migration (sync every 15 min, live every 1 min while any match is live, settle every 5 min).
+**5. Dashboard "Next on the card"**
+- `src/lib/dashboard-extras.functions.ts`: add `nextBonusMatch` field — earliest scheduled `sports_events` row where `sport_code='football'` and `competition_code IN ('MLS','BRA_A')`, plus its 1x2 odds from `sports_markets`.
+- `src/routes/_authenticated/dashboard.tsx`: render a `NextBonusMatchCard` in the "Next on the card" strip, styled to match `NextRaceCard` / `NextFightCard` (same rounded card, sport badge, implied % row).
 
-## 3. UI clone (World Cup template, forked verbatim)
+**6. My Picks integration**
+- `src/routes/_authenticated/my-predictions.tsx`: add a new query calling `listMyFootballBets` (already exists) and render bonus/EPL/etc bets in the existing ticket-shell style. Filter to bets whose `sports_event.competition_code` is MLS/BRA_A for a "Bonus" section header; other football sports_bets slot into their own section so nothing else disappears.
 
-Fork the World Cup files into a new `bonus` namespace so nothing on `/matches` changes:
+**7. Admin**
+- `src/lib/admin-dashboard.functions.ts` `listPredictionsAdmin`: when `sport === 'football' | 'all'`, also fetch from `sports_bets` (already indexed by `sport_code='football'`), joined to `sports_events` for the fixture label + competition. Normalize to the same row shape (id/user_id/market/selection/stake/odds/status). This surfaces MLS + Brasileirão bets (and any other API-Football league bets) in admin predictions.
+- `src/routes/management/admin.football.tsx` needs no changes — it iterates `ALL_FOOTBALL_COMPETITIONS` and will auto-list the new leagues.
 
-- `src/routes/_authenticated/bonus.tsx` (layout with `<Outlet />`).
-- `src/routes/_authenticated/bonus.index.tsx` — clone of `matches.index.tsx`, adds a league toggle (MLS | Brasileirão). Reads from `bonus_matches`.
-- `src/routes/_authenticated/bonus.$matchId.tsx` — clone of `matches.$matchId.tsx` (1685 lines), swapped to new server fns and tables. Keeps every tab, chart, analytics, live tape, market card and bet slip identical.
-- `src/lib/bonus.functions.ts` — server fns mirroring `matches.functions.ts` / `predictions.functions.ts` (list, detail, place bet with duplicate-bet guard, cash-out, market history).
-- Category rail (`src/components/nav/CategoryRail.tsx`) gets a "Bonus" chip routing to `/bonus`; top-nav breadcrumbs updated.
+**8. Cron / sync** — no changes.
+- `syncAllFootballFixtures` already loops every entry in `FOOTBALL_COMPETITIONS` and syncs the ones whose flag is enabled.
+- `/api/public/hooks/football-sync|live|settle` cron endpoints already cover the new leagues.
+- Settlement (`settleFinishedFootballEvents`) is competition-agnostic and pays out through `place_sports_bet_atomic`'s ledger.
 
-Duplicate-bet prevention, live suspension, keyboard-focus fix, and "no-picks" summary state all carry over from the fork.
+## Explicitly NOT touched
 
-## 4. Picks integration
+- `matches`, `predictions`, `match_market_odds` tables and any `/matches/*` route.
+- `src/lib/sync.server.ts` (World Cup football-data.org sync).
+- `src/lib/matches.functions.ts`.
+- The existing EPL/La Liga/Serie A/UCL routes and their behavior.
 
-`src/routes/_authenticated/my-predictions.tsx` gains a `bonus` source alongside football/ufc/f1: new `listBonusPicks` server fn plus a `BonusTicketShell` component (clone of `F1TicketShell`) so bets appear immediately in "My Picks" and settle into the same wallet ledger.
+## Risks / notes
 
-## 5. Admin
-
-New admin routes cloned from the football/f1 pattern:
-
-- `src/routes/management/admin.bonus.tsx` — fixture list, force sync, resettle, void, market-suspend/resume, margin toggle, per-match risk exposure (uses existing `match_exposure_scenarios` shape wired to `bonus_matches`).
-- `src/routes/management/admin.bonus-risk.tsx` — correlated exposure + bankroll view scoped to Bonus.
-- `admin.predictions.tsx` — add `bonus` source filter and columns so staff can see and manually place/void Bonus predictions (mirrors the F1 addition done recently).
-- Nav entry added in `admin.tsx` sidebar.
-
-## 6. Dashboard
-
-`src/routes/_authenticated/dashboard.tsx` — extend the "Next on the card" strip with a `NextBonusMatchCard` (clone of the F1/UFC card styling) that shows the next kickoff across enabled Bonus leagues, driven by a new `nextBonusMatch` field returned from `dashboard-extras.functions.ts`.
-
-## 7. Verification
-
-- Run `bunx tsgo --noEmit`.
-- Vitest for `decideWinningKeys` reused; add a smoke test for `bonusSync` mapping.
-- Playwright: load `/bonus`, open a fixture, place a guarded bet, verify it lands in `/my-predictions`, verify admin sees it in `admin.predictions` filtered to Bonus.
-
-## Technical notes
-
-- API-Football league IDs: MLS = 253, Brasileirão Série A = 71. Season string `2026`.
-- Reuses existing `FOOTBALL_DATA_API_KEY` is NOT applicable — API-Football key already stored as `APIFOOTBALL_KEY` (used by `apifootball.server.ts`); reuse it.
-- Odds provider inside API-Football: bookmaker aggregate; same margin pipeline (`apply3WayMargin`) as `/matches`.
-- All new tables get `GRANT ... TO authenticated`, `GRANT ALL ... TO service_role`, RLS on, and policies scoped to `auth.uid()` on `bonus_predictions`. Snapshot tables are NOT added to the realtime publication (matches the security stance we set for `market_odds_snapshots`).
-- No changes to `matches`, `predictions`, `match_market_odds`, or the World Cup routes.
+- The World Cup match-detail page is much richer than `FootballMatchDetailsPage` (1,685 vs 197 lines). Reusing the football detail page means Bonus matches get the same UX as EPL matches — not the World Cup one. If a byte-for-byte World Cup clone is required, that's a separate ~2k-line duplication project that would also fork data storage; call it out and we can plan phase 2.
+- API-Football's free tier is 100 req/day. MLS + Brasileirão will consume additional quota during fixture + odds sync windows; the existing throttling in `apifootball_quota` protects the pool.

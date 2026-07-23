@@ -15,6 +15,7 @@ type Category = {
 
 const CATEGORIES: Category[] = [
   { key: "world-cup-2026", label: "World Cup 2026", to: "/matches" },
+  { key: "bonus", label: "Bonus", to: "/bonus", matchPathPrefix: "/bonus" },
   { key: "premier-league", label: "Premier League", to: "/football/epl", flag: "epl_enabled", matchPathPrefix: "/football/epl" },
   { key: "la-liga", label: "La Liga", to: "/football/la-liga", flag: "la_liga_enabled", matchPathPrefix: "/football/la-liga" },
   { key: "serie-a", label: "Serie A", to: "/football/serie-a", flag: "serie_a_enabled", matchPathPrefix: "/football/serie-a" },

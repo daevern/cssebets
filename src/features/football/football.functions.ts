@@ -7,7 +7,7 @@ import { supabase as browserPublishable } from "@/integrations/supabase/client";
 import type { FootballCompetitionCode } from "./config/footballCompetitions";
 import type { FootballMatch, FootballMarket, FootballBet } from "./types/football";
 
-const COMPETITION_CODES = ["EPL", "LA_LIGA", "SERIE_A", "UCL"] as const;
+const COMPETITION_CODES = ["EPL", "LA_LIGA", "SERIE_A", "UCL", "MLS", "BRA_A"] as const;
 
 // ---------- Public lists ----------
 
