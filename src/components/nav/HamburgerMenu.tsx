@@ -11,6 +11,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyEngagementSummary } from "@/lib/engagement.functions";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
+import { getMyWallet } from "@/lib/wallet.functions";
+import { Wallet as WalletIcon } from "lucide-react";
 
 /**
  * Mobile-only condensed menu.
