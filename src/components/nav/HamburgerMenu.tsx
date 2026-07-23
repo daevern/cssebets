@@ -253,7 +253,7 @@ export function HamburgerMenu() {
                 {/* ===== Scrollable block — Store onwards ===== */}
                 <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
                   <ul className="flex flex-col gap-1.5">
-                    {items.map((it, i) => {
+                    {items.map((it) => {
                       const Icon = it.Icon;
                       return (
                         <li key={it.key}>
