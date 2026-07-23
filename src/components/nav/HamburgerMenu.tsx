@@ -167,48 +167,49 @@ export function HamburgerMenu() {
               aria-hidden
             />
 
-            {/* Liquid stage — extends above the panel top so the drip visually connects
-                to the green bar of the hamburger. The goo filter merges every shape below. */}
+            {/* Liquid stage — sits fully below the top bar so nothing overlaps it.
+                Goo filter merges the drop + blob into one organic shape as it expands. */}
             <div
               className={`fixed right-0 z-[58] w-3/4 md:hidden ${
                 open ? "pointer-events-auto" : "pointer-events-none"
               }`}
               style={{
                 filter: "url(#csse-goo)",
-                top: "calc(env(safe-area-inset-top) + 28px)",
-                height: "calc(100dvh - env(safe-area-inset-top) - 28px)",
+                top: "calc(env(safe-area-inset-top) + 60px)",
+                height: "calc(100dvh - env(safe-area-inset-top) - 60px)",
               }}
             >
-              {/* Stem — a thin vertical strip that grows down from the hamburger's green bar,
-                  then thickens; goo blur turns it into a molten thread feeding the blob. */}
+              {/* Seed droplet — a small green ball at the top-right (under the hamburger)
+                  that appears first, then the blob catches up and merges into it. */}
               <span
                 aria-hidden
-                className={`absolute right-3 top-0 block origin-top rounded-b-full bg-[var(--neon)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                className={`absolute right-2 top-0 block rounded-full bg-[var(--neon)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
                   open
-                    ? "h-16 w-6 opacity-100 duration-[450ms] delay-[40ms]"
-                    : "h-2 w-6 opacity-0 duration-200"
+                    ? "h-10 w-10 opacity-100 duration-[500ms]"
+                    : "h-3 w-3 opacity-0 duration-[300ms]"
                 }`}
               />
 
-              {/* Falling droplet — pinches off the stem as the blob catches it */}
+              {/* Trailing droplet — slightly lower/left, gives the goo something to bridge to */}
               <span
                 aria-hidden
-                className={`absolute right-4 block rounded-full bg-[var(--neon)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                className={`absolute right-8 top-4 block rounded-full bg-[var(--neon)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
                   open
-                    ? "top-10 h-9 w-9 opacity-100 duration-[520ms] delay-[80ms]"
-                    : "top-2 h-4 w-4 opacity-0 duration-200"
+                    ? "h-8 w-8 opacity-100 duration-[650ms] delay-[120ms]"
+                    : "h-3 w-3 opacity-0 duration-[300ms]"
                 }`}
               />
 
-              {/* Main blob — origin at top-right so it grows out of the stem/droplet.
-                  Smooth expo-ease-out, no overshoot, so the merge reads as liquid, not spring. */}
+              {/* Main blob — grows from the droplet at top-right into the full panel.
+                  Long duration + smooth expo ease-out for a clearly-visible liquid flow. */}
               <div
                 className={`absolute inset-0 origin-top-right bg-[var(--neon)] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
                   open
-                    ? "opacity-100 scale-100 duration-[600ms] delay-[120ms]"
-                    : "opacity-0 scale-[0.08] duration-300"
+                    ? "opacity-100 scale-100 duration-[850ms] delay-[200ms]"
+                    : "opacity-0 scale-[0.05] duration-[350ms]"
                 }`}
               />
+
 
 
               {/* Content layer — fixed header block, scrollable list block */}
