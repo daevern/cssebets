@@ -109,21 +109,6 @@ export function HamburgerMenu() {
 
   return (
     <>
-      {/* SVG goo filter — higher blur = more organic merging */}
-      <svg aria-hidden width="0" height="0" className="absolute">
-        <defs>
-          <filter id="csse-goo">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur" />
-            <feColorMatrix
-              in="blur"
-              mode="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 26 -13"
-              result="goo"
-            />
-            <feBlend in="SourceGraphic" in2="goo" />
-          </filter>
-        </defs>
-      </svg>
 
       {/* Trigger — 3 line hamburger (2 white, 1 green) */}
       <button
