@@ -180,9 +180,10 @@ export function HamburgerMenu() {
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center">
                       <CsseMark className="mr-1.5 h-5 w-5 text-black" outline />
-                      <CsseWordmark size={16} inverse outline />
+                      <CsseWordmark size={16} dark />
                     </span>
                   </div>
+
 
                   {/* Wallet balance — large, prominent */}
                   <div className="mt-4 bg-black/10 px-4 py-4">
