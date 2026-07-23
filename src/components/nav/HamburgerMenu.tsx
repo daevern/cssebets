@@ -16,9 +16,10 @@ import { Wallet as WalletIcon } from "lucide-react";
 
 /**
  * Mobile-only condensed menu.
- * Trigger: 3-line hamburger (2 white, 1 green).
- * Panel: SVG-goo liquid-drop expansion into a full-height, 3/4-width green overlay.
+ * Trigger: 3-line hamburger (2 white, 1 green) that morphs into an X.
+ * Panel: fast slide-in green overlay, no liquid animation.
  */
+
 export function HamburgerMenu() {
   const [open, setOpen] = useState(false);
   const [tokensOpen, setTokensOpen] = useState(false);
@@ -108,21 +109,6 @@ export function HamburgerMenu() {
 
   return (
     <>
-      {/* SVG goo filter — higher blur = more organic merging */}
-      <svg aria-hidden width="0" height="0" className="absolute">
-        <defs>
-          <filter id="csse-goo">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur" />
-            <feColorMatrix
-              in="blur"
-              mode="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 26 -13"
-              result="goo"
-            />
-            <feBlend in="SourceGraphic" in2="goo" />
-          </filter>
-        </defs>
-      </svg>
 
       {/* Trigger — 3 line hamburger (2 white, 1 green) */}
       <button
@@ -167,71 +153,37 @@ export function HamburgerMenu() {
               aria-hidden
             />
 
-            {/* Liquid stage — sits fully below the top bar so nothing overlaps it.
-                Goo filter merges the drop + blob into one organic shape as it expands. */}
+            {/* Slide-out panel — sits fully below the top bar */}
             <div
-              className={`fixed right-0 z-[58] w-3/4 md:hidden ${
-                open ? "pointer-events-auto" : "pointer-events-none"
+              className={`fixed right-0 z-[58] w-3/4 md:hidden transition-transform duration-200 ease-out ${
+                open ? "translate-x-0" : "translate-x-full"
               }`}
               style={{
-                filter: "url(#csse-goo)",
                 top: "calc(env(safe-area-inset-top) + 60px)",
                 height: "calc(100dvh - env(safe-area-inset-top) - 60px)",
               }}
             >
-              {/* Seed droplet — a small green ball at the top-right (under the hamburger)
-                  that appears first, then the blob catches up and merges into it. */}
-              <span
-                aria-hidden
-                className={`absolute right-2 top-0 block rounded-full bg-[var(--neon)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                  open
-                    ? "h-10 w-10 opacity-100 duration-[500ms]"
-                    : "h-3 w-3 opacity-0 duration-[300ms]"
-                }`}
-              />
-
-              {/* Trailing droplet — slightly lower/left, gives the goo something to bridge to */}
-              <span
-                aria-hidden
-                className={`absolute right-8 top-4 block rounded-full bg-[var(--neon)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                  open
-                    ? "h-8 w-8 opacity-100 duration-[650ms] delay-[120ms]"
-                    : "h-3 w-3 opacity-0 duration-[300ms]"
-                }`}
-              />
-
-              {/* Main blob — grows from the droplet at top-right into the full panel.
-                  Long duration + smooth expo ease-out for a clearly-visible liquid flow. */}
-              <div
-                className={`absolute inset-0 origin-top-right bg-[var(--neon)] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                  open
-                    ? "opacity-100 scale-100 duration-[850ms] delay-[200ms]"
-                    : "opacity-0 scale-[0.05] duration-[350ms]"
-                }`}
-              />
-
-
+              <div className="absolute inset-0 bg-[var(--neon)] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)]" />
 
               {/* Content layer — fixed header block, scrollable list block */}
               <div
-                className={`relative flex h-full flex-col px-6 transition-opacity duration-300 ${
-                  open ? "opacity-100 delay-200" : "opacity-0"
-                }`}
+                className="relative flex h-full flex-col px-6"
                 style={{
                   paddingTop: "20px",
                   paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)",
-                  filter: "none",
                 }}
               >
+
                 {/* ===== Fixed (non-scrolling) top block ===== */}
                 <div className="shrink-0">
                   {/* Brand */}
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center">
                       <CsseMark className="mr-1.5 h-5 w-5 text-black" outline />
-                      <CsseWordmark size={16} inverse outline />
+                      <CsseWordmark size={16} dark />
                     </span>
                   </div>
+
 
                   {/* Wallet balance — large, prominent */}
                   <div className="mt-4 bg-black/10 px-4 py-4">
@@ -301,25 +253,21 @@ export function HamburgerMenu() {
                 {/* ===== Scrollable block — Store onwards ===== */}
                 <div className="mt-4 flex min-h-0 flex-1 flex-col overflow-y-auto">
                   <ul className="flex flex-col gap-1.5">
-                    {items.map((it, i) => {
+                    {items.map((it) => {
                       const Icon = it.Icon;
                       return (
                         <li key={it.key}>
                           <button
                             type="button"
                             onClick={it.onClick}
-                            className={`flex w-full items-center gap-3 px-3 py-3.5 text-left text-[15px] font-bold uppercase tracking-[0.16em] text-black transition-all duration-300 hover:bg-black/10 active:scale-[0.98] ${
-                              open ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"
-                            }`}
-                            style={{
-                              transitionDelay: open ? `${260 + i * 60}ms` : "0ms",
-                            }}
+                            className="flex w-full items-center gap-3 px-3 py-3.5 text-left text-[15px] font-bold uppercase tracking-[0.16em] text-black transition-colors hover:bg-black/10 active:scale-[0.98]"
                           >
                             <span className="grid h-9 w-9 place-items-center bg-black/10">
                               <Icon className="h-4 w-4 text-black" />
                             </span>
                             {it.label}
                           </button>
+
                         </li>
                       );
                     })}
@@ -330,11 +278,9 @@ export function HamburgerMenu() {
                     <button
                       type="button"
                       onClick={isGuest ? () => pick(() => navigate({ to: "/auth" })) : handleSignOut}
-                      className={`flex w-full items-center justify-center gap-2 bg-black px-4 py-3.5 text-[13px] font-bold uppercase tracking-[0.2em] text-[var(--neon)] transition-all duration-300 hover:bg-black/85 active:scale-[0.98] ${
-                        open ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
-                      }`}
-                      style={{ transitionDelay: open ? "500ms" : "0ms" }}
+                      className="flex w-full items-center justify-center gap-2 bg-black px-4 py-3.5 text-[13px] font-bold uppercase tracking-[0.2em] text-[var(--neon)] transition-colors hover:bg-black/85 active:scale-[0.98]"
                     >
+
                       {isGuest ? (
                         <>
                           <User className="h-4 w-4" />
