@@ -108,15 +108,15 @@ export function HamburgerMenu() {
 
   return (
     <>
-      {/* SVG goo filter */}
+      {/* SVG goo filter — higher blur = more organic merging */}
       <svg aria-hidden width="0" height="0" className="absolute">
         <defs>
           <filter id="csse-goo">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+            <feGaussianBlur in="SourceGraphic" stdDeviation="14" result="blur" />
             <feColorMatrix
               in="blur"
               mode="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -11"
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 26 -13"
               result="goo"
             />
             <feBlend in="SourceGraphic" in2="goo" />
@@ -134,17 +134,17 @@ export function HamburgerMenu() {
       >
         <span className="relative block h-3.5 w-4">
           <span
-            className={`absolute left-0 h-[2px] w-full rounded-full bg-white transition-all duration-300 ${
+            className={`absolute left-0 h-[2px] w-full rounded-full bg-white transition-all duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
               open ? "top-1/2 -translate-y-1/2 rotate-45" : "top-0"
             }`}
           />
           <span
-            className={`absolute left-0 top-1/2 h-[2px] w-full -translate-y-1/2 rounded-full bg-white transition-all duration-200 ${
+            className={`absolute left-0 top-1/2 h-[2px] w-full -translate-y-1/2 rounded-full bg-white transition-opacity duration-150 ${
               open ? "opacity-0" : "opacity-100"
             }`}
           />
           <span
-            className={`absolute left-0 h-[2px] w-full rounded-full bg-[var(--neon)] transition-all duration-300 ${
+            className={`absolute left-0 h-[2px] w-full rounded-full bg-[var(--neon)] transition-all duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
               open ? "top-1/2 -translate-y-1/2 -rotate-45 bg-white" : "bottom-0"
             }`}
           />
@@ -167,37 +167,49 @@ export function HamburgerMenu() {
               aria-hidden
             />
 
-            {/* Liquid panel — starts below hamburger so the X trigger stays visible */}
+            {/* Liquid stage — extends above the panel top so the drip visually connects
+                to the green bar of the hamburger. The goo filter merges every shape below. */}
             <div
               className={`fixed right-0 z-[58] w-3/4 md:hidden ${
                 open ? "pointer-events-auto" : "pointer-events-none"
               }`}
               style={{
                 filter: "url(#csse-goo)",
-                top: "calc(env(safe-area-inset-top) + 56px)",
-                height: "calc(100dvh - env(safe-area-inset-top) - 56px)",
+                top: "calc(env(safe-area-inset-top) + 28px)",
+                height: "calc(100dvh - env(safe-area-inset-top) - 28px)",
               }}
             >
-              {/* Drip drops emanating from the hamburger position (top-right) */}
+              {/* Stem — a thin vertical strip that grows down from the hamburger's green bar,
+                  then thickens; goo blur turns it into a molten thread feeding the blob. */}
               <span
                 aria-hidden
-                className={`absolute right-2 -top-6 block h-10 w-10 rounded-full bg-[var(--neon)] transition-all duration-300 ${
-                  open ? "scale-100 opacity-100" : "scale-0 opacity-0"
-                }`}
-              />
-              <span
-                aria-hidden
-                className={`absolute right-6 top-4 block h-8 w-8 rounded-full bg-[var(--neon)] transition-all duration-500 ${
-                  open ? "scale-100 opacity-100 delay-75" : "scale-0 opacity-0"
+                className={`absolute right-3 top-0 block origin-top rounded-b-full bg-[var(--neon)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  open
+                    ? "h-16 w-6 opacity-100 duration-[450ms] delay-[40ms]"
+                    : "h-2 w-6 opacity-0 duration-200"
                 }`}
               />
 
-              {/* Main blob — origin at top-right (near hamburger) */}
-              <div
-                className={`absolute inset-0 origin-top-right bg-[var(--neon)] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)] transition-all duration-500 ease-[cubic-bezier(0.34,1.4,0.64,1)] ${
-                  open ? "opacity-100 scale-100" : "opacity-0 scale-[0.15]"
+              {/* Falling droplet — pinches off the stem as the blob catches it */}
+              <span
+                aria-hidden
+                className={`absolute right-4 block rounded-full bg-[var(--neon)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  open
+                    ? "top-10 h-9 w-9 opacity-100 duration-[520ms] delay-[80ms]"
+                    : "top-2 h-4 w-4 opacity-0 duration-200"
                 }`}
               />
+
+              {/* Main blob — origin at top-right so it grows out of the stem/droplet.
+                  Smooth expo-ease-out, no overshoot, so the merge reads as liquid, not spring. */}
+              <div
+                className={`absolute inset-0 origin-top-right bg-[var(--neon)] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)] transition-all ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  open
+                    ? "opacity-100 scale-100 duration-[600ms] delay-[120ms]"
+                    : "opacity-0 scale-[0.08] duration-300"
+                }`}
+              />
+
 
               {/* Content layer — fixed header block, scrollable list block */}
               <div
