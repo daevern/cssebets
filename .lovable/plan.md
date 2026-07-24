@@ -1,81 +1,114 @@
-# Guest/Demo Landing Page
 
-Turn `/` into a full demo experience: users can browse Football, F1, and UFC freely, and are only prompted to sign up when they attempt a bet action. Wallet is added to the bottom nav with a simplified top-up/cash-out info popup.
+## Goal
 
-## 1. Landing page (`src/routes/index.tsx`)
+Kill the "wait for admin approval" step. A user becomes **ACTIVE** the moment they finish email + phone verification (or Google + phone verification). Admin only gets involved when the signup looks suspicious (`SECURITY_REVIEW`) or for suspend/ban actions.
 
-Replace the current single-fixture preview with a tabbed guest shell:
+## Account status model
 
-- Keep existing header (logo + Log in + Register) and `CategoryRail`.
-- Below the header, add sport tabs: **Football / F1 / UFC** (default: Football).
-- Each tab renders the same list components used in the authenticated app but in "guest mode":
-  - Football → reuse `FootballCompetitionPage` content (World Cup by default; league switcher optional — start with World Cup only) OR the matches list from `/matches`.
-  - F1 → reuse `F1SeasonPage` content (upcoming races grid).
-  - UFC → reuse the current UFC fights list from `/ufc/fights`.
-- Clicking a fixture/race/fight opens the full detail page in guest mode (see §2).
+Add an `account_status` enum + column on `profiles`:
 
-## 2. Guest-mode detail pages
+```text
+REGISTRATION_INCOMPLETE
+EMAIL_VERIFICATION_REQUIRED
+PHONE_VERIFICATION_REQUIRED
+ACTIVE
+SECURITY_REVIEW
+SUSPENDED
+BANNED
+```
 
-The detail pages (`matches/$matchId`, `f1/races/$raceId`, `ufc/$fightId`) already accept a `publicMode` / visitor prop pattern (landing already uses `<MatchAnalyticsScreen publicMode />`). Extend the same pattern to F1 and UFC detail screens so they render without a session:
+Also add: `username` (unique, citext), `email_verified_at`, `phone_verified_at`, `google_linked_at`, `signup_ip`, `signup_device_fp`, `security_review_reason`.
 
-- Show all odds, charts, analytics, live stats — read-only.
-- Replace every "Place bet" / stake action button with a `RequireAuthGate` wrapper. Clicking it opens a small modal: "Create a free account to place this bet" with Register + Log in buttons (links to `/register` and `/auth`).
-- No changes to server-fns; the analytics/read fns used here are already public or already gracefully return null without a session.
+Role assignment changes: on new signup we no longer create a `pending` role. Once status flips to `ACTIVE`, a DB trigger inserts the `member` role. `SUSPENDED` / `BANNED` / `SECURITY_REVIEW` gate the app via a new `has_active_status(uid)` SQL function used in RLS + the `_authenticated` gate.
 
-New public routes to host the guest detail views (so they don't require the `_authenticated` gate):
-- `src/routes/demo/match.$matchId.tsx`
-- `src/routes/demo/race.$raceId.tsx`
-- `src/routes/demo/fight.$fightId.tsx`
+## Verification codes
 
-From the guest tabs, fixture cards link into `/demo/...`. Signed-in users continue to use the existing `_authenticated` routes (nothing changes for them).
+New table `verification_codes(id, user_id, channel [email|phone], destination, code_hash, expires_at, attempts, consumed_at, ip, created_at)`. Codes are 6 digits, hashed with `crypt()`, TTL 10 min, max 5 attempts, max 5 sends per hour per destination (reuses existing `rate_limits`).
 
-## 3. Bottom nav — add Wallet
+Server functions in `src/lib/verification.functions.ts`:
+- `sendEmailCode` — validates rate-limit + Turnstile token, generates code, sends via existing Lovable Emails (new template `verification-code.tsx`).
+- `verifyEmailCode` — checks hash, marks `email_verified_at`, advances status.
+- `sendPhoneCode` — validates rate-limit + Turnstile, sends SMS via **Twilio** connector gateway.
+- `verifyPhoneCode` — checks hash, marks `phone_verified_at`, advances status; when both verified → `ACTIVE` (or `SECURITY_REVIEW` if any heuristic fires).
 
-`LandingBottomNav` in `src/routes/index.tsx` currently has: About, Community, Performance, Help.
+## Registration flow (email/password)
 
-Change to 5 items: **Wallet, About, Community, Performance, Help** (or drop one — recommend keeping all 5 in the grid).
+Rewrite `src/routes/register.tsx` as a 3-step stepper:
 
-Clicking Wallet opens the guest wallet popup (§4), not a route.
+1. **Details** — username (live-check uniqueness), email, password. On submit: Turnstile → `supabase.auth.signUp` (no `emailRedirectTo`; we handle verification ourselves) → create profile with status `EMAIL_VERIFICATION_REQUIRED` → `sendEmailCode`.
+2. **Email code** — 6-digit input; resend button (rate-limited).
+3. **Phone** — E.164 input → `sendPhoneCode` → 6-digit input → on success, status flips to `ACTIVE`, redirect to `/dashboard` with toast "Your account has been verified successfully. Welcome to CSSEBets."
 
-## 4. Guest Wallet popup
+## Registration flow (Google)
 
-New component `src/components/wallet/GuestWalletSheet.tsx`. Shown as a bottom sheet / dialog. Contents:
+Add "Continue with Google" button on `/auth` and `/register`. Enable Google via `supabase--configure_social_auth`. Flow:
 
-- Title: "Wallet"
-- Two buttons: **Top up** and **Cash out**
-- **Top up** opens an info panel listing methods + processing time (no form, no auth). Example content:
-  - Bank transfer (FPX / DuitNow) — ~5 minutes
-  - Touch 'n Go eWallet — instant
-  - Manual review deposits — up to 1 hour
-- **Cash out** opens an info panel listing conversion + duration:
-  - 100 points = 1 MYR (or existing rate — check `platform-settings` if a rate exists)
-  - Payout via bank transfer — 1–3 business days
-  - Minimum cash-out: 500 points
-- Below both panels: "Create an account to top up or cash out" with Register button.
+1. `lovable.auth.signInWithOAuth("google", { redirect_uri: `${origin}/auth/callback` })`.
+2. New route `/auth/callback` waits for session, then loads profile:
+   - If username missing → show username step.
+   - Mark `email_verified_at = now()` (Google-verified).
+   - Show phone step → SMS code → `ACTIVE`.
+3. If a profile already exists with the same verified email, link Google to it (`google_linked_at`) instead of creating a new one.
 
-Content is static/informational only — no server calls.
+## Twilio SMS
 
-## 5. Auth-gate modal
+- Prompt the user to link the **Twilio** connector (`standard_connectors--connect twilio`) during build.
+- Server-side: `sendSms(to, body)` in `src/lib/sms.server.ts` posts to `https://connector-gateway.lovable.dev/twilio/Messages.json` with `LOVABLE_API_KEY` + `TWILIO_API_KEY`, `From` from a new secret `TWILIO_FROM_NUMBER`.
+- Never expose Twilio creds to the browser.
 
-Small reusable component `src/components/auth/GuestAuthPrompt.tsx`:
-- Trigger: any bet button in guest mode.
-- Body: "Sign up to place this bet — it's free and takes 10 seconds."
-- Buttons: Register (primary, → `/register`) and Log in (→ `/auth`).
+## Cloudflare Turnstile
 
-## 6. Files touched
+- New workspace/runtime secret pair: `TURNSTILE_SITE_KEY` (public via `VITE_TURNSTILE_SITE_KEY`) and `TURNSTILE_SECRET_KEY` (server).
+- Add `<Turnstile />` widget on register + phone-send step. Server functions verify the token against `https://challenges.cloudflare.com/turnstile/v0/siteverify` before sending any code.
 
-- `src/routes/index.tsx` — rewrite as tabbed guest shell + wallet button in bottom nav.
-- `src/routes/demo/match.$matchId.tsx` — new, wraps `MatchAnalyticsScreen` in `publicMode`.
-- `src/routes/demo/race.$raceId.tsx` — new, wraps F1 race page in guest mode.
-- `src/routes/demo/fight.$fightId.tsx` — new, wraps UFC fight page in guest mode.
-- `src/features/f1/pages/F1RaceDetailsPage.tsx` — accept `publicMode` prop; gate bet actions.
-- `src/routes/_authenticated/ufc.$fightId.tsx` — extract fight detail into a component that accepts `publicMode`, reuse for guest route.
-- `src/features/football/pages/FootballMatchDetailsPage.tsx` — accept `publicMode` prop; gate bet actions (analytics already public).
-- `src/components/wallet/GuestWalletSheet.tsx` — new.
-- `src/components/auth/GuestAuthPrompt.tsx` — new.
+## Duplicate / abuse heuristics → SECURITY_REVIEW
 
-## 7. Notes / trade-offs
+At the point of finalising a signup (status flip to ACTIVE), a SQL function `evaluate_signup_risk(uid)` checks:
 
-- Guest bet-gating is UI-only; server-fns already require auth, so security isn't affected — the modal is a UX improvement so users don't get a 401 toast.
-- Live/realtime subscriptions on detail pages will fire without a session; where they require auth they'll no-op silently (existing `useHasSession` guard already handles this).
-- If you'd rather keep only one code path per detail screen (no `/demo/*` duplicates) I can instead lift the current `_authenticated/matches.$matchId.tsx` etc. out of the auth gate and add per-action gating inside. That's cleaner long-term but a bigger refactor — say the word and I'll do it that way instead.
+- another verified profile shares the same normalised email
+- another verified profile shares the same phone
+- ≥ 3 signups from the same IP in the last 24 h
+- ≥ 3 signups from the same device fingerprint in the last 24 h
+- ≥ 10 failed code attempts in the last hour
+- referral code was already redeemed by this device/IP
+
+If any hit, status → `SECURITY_REVIEW` instead of `ACTIVE`. Users see a "Your account is under review" screen; admins see them in the admin dashboard.
+
+## RLS / gate
+
+- `_authenticated/route.tsx` beforeLoad: after `getUser`, load profile; if status ∈ {`REGISTRATION_INCOMPLETE`,`EMAIL_VERIFICATION_REQUIRED`,`PHONE_VERIFICATION_REQUIRED`} → redirect to `/register?step=…`. If `SECURITY_REVIEW` → `/account/under-review`. If `SUSPENDED`/`BANNED` → `/account/suspended`.
+- Bets/wallet server fns already require role `member`; role is only granted on ACTIVE, so no separate check needed.
+
+## Admin dashboard
+
+`src/routes/management/admin.users.tsx` gets:
+- Status column + filter (all new statuses).
+- Email / phone verified badges.
+- Signup IP + device fingerprint.
+- Verification attempt log drawer.
+- Actions: **Suspend**, **Ban**, **Restore**, **Clear security review → ACTIVE**. No more "Approve" button (dead-code removed).
+- New "Security Review Queue" tile on `admin.index.tsx` linking to filtered users view.
+
+Existing `notifyAdminsOfRegistration` is repurposed to only fire when status = `SECURITY_REVIEW`.
+
+## Migrations (single migration, in order)
+
+1. Create enum `account_status`, add columns to `profiles` (with defaults + backfill: existing users with any role → `ACTIVE`, pending-only → `EMAIL_VERIFICATION_REQUIRED`).
+2. Create `verification_codes` + grants + RLS (`service_role` only) + indexes.
+3. Add `evaluate_signup_risk`, `finalize_active_account`, `has_active_status` functions.
+4. Trigger on `profiles.account_status` → auto-insert `member` role when it becomes `ACTIVE`.
+5. Update `_authenticated` RLS-supporting policies to require `has_active_status`.
+
+## Files touched
+
+Create: `src/lib/verification.functions.ts`, `src/lib/sms.server.ts`, `src/lib/turnstile.server.ts`, `src/lib/email-templates/verification-code.tsx`, `src/routes/auth.callback.tsx`, `src/routes/account.under-review.tsx`, `src/routes/account.suspended.tsx`, `src/components/auth/OtpInput.tsx`, `src/components/auth/TurnstileWidget.tsx`.
+
+Rewrite: `src/routes/register.tsx`, `src/routes/auth.tsx` (add Google + link to new flow), `src/routes/_authenticated/route.tsx`, `src/routes/management/admin.users.tsx`, `src/lib/notifications.functions.ts` (only notify on SECURITY_REVIEW).
+
+Config: `supabase--configure_social_auth` for Google, `standard_connectors--connect` Twilio, add secrets `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `TWILIO_FROM_NUMBER`.
+
+## Out of scope
+
+- Migrating already-approved users (they stay `ACTIVE`).
+- Password-reset flow rework (unchanged).
+- Removing anonymous guest sessions (untouched).
