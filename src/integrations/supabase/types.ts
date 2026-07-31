@@ -7254,6 +7254,22 @@ export type Database = {
         }
         Relationships: []
       }
+      v_accounting_plinko_reconciliation: {
+        Row: {
+          checked_at: string | null
+          journalled_games: number | null
+          ledger_house_margin: number | null
+          ledger_payouts: number | null
+          ledger_stakes: number | null
+          legacy_payouts: number | null
+          legacy_stakes: number | null
+          payout_variance: number | null
+          reconciled: boolean | null
+          stake_variance: number | null
+          unposted_games_since_cutover: number | null
+        }
+        Relationships: []
+      }
       v_accounting_reconciliation_summary: {
         Row: {
           classification: string | null
@@ -7428,6 +7444,10 @@ export type Database = {
         }
         Returns: Json
       }
+      accounting_post_plinko_game: {
+        Args: { p_game_id: string }
+        Returns: Json
+      }
       accounting_reverse_journal: {
         Args: {
           p_approved_by?: string
@@ -7436,6 +7456,10 @@ export type Database = {
           p_journal_id: string
           p_reason: string
         }
+        Returns: Json
+      }
+      accounting_reverse_plinko_game: {
+        Args: { p_game_id: string; p_reason: string }
         Returns: Json
       }
       adjust_correct_score_odds: {
