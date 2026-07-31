@@ -11,12 +11,24 @@
 
 ## 1. Product Overview
 
-CSSEBets is a **points-based prediction market** for football (soccer). It
-looks and feels like a sportsbook, but every stake is denominated in
-**points** rather than fiat. Points are issued to approved users by staff
-after off-platform value transfer (proof-of-payment uploaded to a "point
+CSSEBets is a **points-based prediction market** covering **football
+(soccer), Formula 1, UFC/MMA and a house-banked arcade**. It looks and
+feels like a sportsbook, but every stake is denominated in **points**
+rather than fiat. Points are issued to approved users by staff after
+off-platform value transfer (proof-of-payment uploaded to a "point
 request"), and users can request **payouts** back out through the same
 staff-mediated flow.
+
+All odds are derived from live paid data providers — **API-Football**,
+**API-F1** and **API-MMA** — repriced through the house margin model.
+No odds are synthetically generated. Arcade games are provably fair with
+server-side RNG and per-round verification.
+
+Every money movement — sports bets, arcade rounds, wallet operations —
+is posted to a double-entry accounting ledger with liability
+reservations, a 2-decimal half-up rounding policy and automated
+invariant tests (see §7.6).
+
 
 Two independent worlds run inside one codebase:
 
@@ -96,11 +108,25 @@ across the two — the simulation must never influence live decisions.
   "Take a position" flow. Placement itself gates behind a sign-in
   modal for anonymous visitors.
 
-### 3.2 Authenticated app (`_authenticated/`)
+### 3.2 Guest mode
+
+Anonymous Supabase sign-in is enabled. Visitors landing on `/` are
+auto-minted a guest session (with a timeout fallback so the page never
+hangs) and get full read access to the app — fixtures, markets,
+analytics, arcade previews. Any money action (place a bet, top up,
+cash out) opens `GuestAuthPrompt` / a login modal instead. In guest
+mode the hamburger nav shows a **Register / Log in** button rather than
+sign-out, the referral code is masked (`XXXXXXX`), and the tour and
+PWA install prompts are suppressed.
+
+### 3.3 Authenticated app (`_authenticated/`)
 
 | Route | Purpose |
 |---|---|
-| `/dashboard` | Home for signed-in users: next fixture, engagement tiles, wallet snapshot, referral panel. |
+| `/dashboard` | Home: next fixture, next race (F1) and next fight (UFC) cards, engagement tiles, wallet snapshot, referral panel. |
+| `/f1`, `/f1/races`, `/f1/races/:raceId` | F1 season hub, race index and race markets/analytics. |
+| `/ufc`, `/ufc/fights`, `/ufc/:fightId` | UFC event hub, full card index and fight markets. |
+| `/arcade` + `/arcade/{plinko,roulette,treasure,blackjack}` | House-banked arcade games. |
 | `/matches` | List of upcoming/live fixtures grouped by day. |
 | `/matches/:matchId` | Full market grid (`MarketTabs.tsx`), analytics card, free-bet redemption, prediction placement. |
 | `/my-predictions` | Every ticket the user has placed with status (pending / won / lost / void) and payout. |
@@ -119,10 +145,15 @@ across the two — the simulation must never influence live decisions.
 | `/help` | Tour / onboarding help entrypoint. |
 | `/settings` | Profile, avatar, email prefs, sign-out. |
 
-Global UI pieces: `BottomNav`, `TopBar` (badge counts), `WinDetector`
-(polls for newly settled winning tickets and pops `WinTicketModal`),
-`TourProvider` (walkthroughs configured in `tours.config.ts`),
-`WelcomeModal` (first-run).
+Global UI pieces: `BottomNav` (Home · Matches · F1 · UFC · Wallet —
+Payout and Markets were removed; the F1/UFC tabs deep-link to the
+fixture indexes), `TopBar` (badge counts, guest "Log in" pill),
+`HamburgerMenu` (liquid-drop expansion holding wallet balance, token
+balance, referral code, store, info pages and sign-out),
+`SportBadge` (official F1/UFC marks), `WinDetector` (polls for newly
+settled winning tickets and pops `WinTicketModal`), `TourProvider`
+(walkthroughs in `tours.config.ts`, completion persisted so it shows
+once), `WelcomeModal` (first-run, hidden for guests).
 
 ---
 
@@ -208,6 +239,51 @@ Every odds refresh writes a row to `market_odds_snapshots` /
 a delta line so users can see how the house re-priced the match. Public
 mode disables realtime subscriptions and reads the same data via the
 anon-safe `getMarketHistoryPublic`.
+
+---
+
+### 4.5 Formula 1 (`src/features/f1/`)
+
+Sourced live from the **paid API-F1** subscription (no generated odds).
+
+- Sync: `f1Sync.server.ts` (season, races, drivers, constructors),
+  odds built by `f1OddsBuilder.server.ts` through the same fair-odds +
+  house-margin pipeline as football.
+- Markets: race winner, podium, points finish, **top 5 finishers**,
+  teammate head-to-head (rendered as "Will X beat Y?" yes/no cards with
+  decimal odds), fastest lap, top constructor in race.
+- Pages: `/f1` (season hub), `/f1/races` (fixture index, mirrors
+  `/matches`), `/f1/races/:raceId` (markets, movement chart with a
+  driver-filter dropdown defaulting to the top 3 favourites,
+  `StakeSlip` bet slip, live race stats, post-race analytics).
+
+### 4.6 UFC / MMA
+
+Sourced from **API-MMA** via `src/lib/apimma.server.ts` and
+`ufc-odds.server.ts`.
+
+- `runUfcEventDiscovery` + `runUfcOddsSync` keep the active event and its
+  **full card** (main + co-main + prelims) current; fights upsert on
+  `ufc_fights.apimma_fight_id`.
+- Markets: fight winner, method of victory, round groups, total rounds.
+- Pages: `/ufc`, `/ufc/fights` (Live / Upcoming / Completed),
+  `/ufc/:fightId`.
+
+### 4.7 Arcade (`src/lib/arcade/`, `src/components/arcade/`)
+
+House-banked instant games, all provably fair (server-side seeded
+shuffle/RNG with a verify dialog per game):
+
+| Game | Server fns | Notes |
+|---|---|---|
+| Plinko | `plinko.functions.ts` | Cosmetics + configurable risk rows |
+| Roulette | `roulette.functions.ts`, `roulette-math.ts` | European wheel |
+| Treasure Grid | `treasure.functions.ts`, `treasure-math.ts` | Mines-style grid |
+| Blackjack | `blackjack.functions.ts`, `blackjack-math.ts` | Insurance, splits, pre-deal exposure ceiling (Phase 7) |
+
+Every round debits/credits the real wallet atomically and posts to the
+accounting journals with a liability reservation held for the maximum
+payout until the round resolves.
 
 ---
 
@@ -358,6 +434,25 @@ settlements page and can be scheduled via the reconciliation hook.
 
 ---
 
+### 6.6 F1, UFC and arcade settlement
+
+- **F1** — `src/features/f1/services/f1Settlement.server.ts` grades from
+  the API-F1 classification (race winner, podium, points finish,
+  top 5 finishers, teammate H2H, fastest lap, top constructor).
+  `runF1AutoSettle` picks up races with `settled_at IS NULL`; markets are
+  suspended automatically once the race goes live
+  (`f1_live_race_state` + a pg_cron suspension job).
+- **UFC** — `src/lib/ufc-odds.server.ts` handles sync/settlement.
+  `runUfcEventDiscovery` rotates the active event so the app always shows
+  the next card; markets close one minute before walk-outs. A sweep in
+  `runUfcAutoSettle` voids and refunds markets whose API-MMA result is
+  still missing 12 h after the event.
+- **Arcade** — settles instantly and atomically inside its RPC
+  (`arcade_*_settle`), posting stake, payout and house P/L to the
+  accounting journals in the same transaction as the wallet movement.
+
+---
+
 ## 7. Risk Management (Admin)
 
 ### 7.1 Platform settings
@@ -443,6 +538,46 @@ Runs manually from `/management/admin/reconciliation` or via the
 
 ---
 
+### 7.6 Accounting core (Phases 1–10)
+
+The platform runs a double-entry accounting layer over every money
+movement (sports bets, arcade rounds, wallet ops). Each phase has its
+own spec in [`docs/accounting/`](./accounting/) and its own SQL
+self-test function.
+
+| Phase | Scope | Self-test |
+|---|---|---|
+| 1 | Ledger verification baseline | `phase1_verification.sql` |
+| 2 | Wallet ↔ ledger reconciliation | `run_reconciliation_check` |
+| 3 / 3.1 | Journal foundation + hardening (balanced debits/credits) | — |
+| 4 / 4.1 | Arcade (Plinko) posting + unified house bankroll | — |
+| 5 | Arcade migration onto the ledger + production controls | — |
+| 6 / 6.1 | Liability reservation (`accounting_liability_reservations`), versioning, `liability_enforced` flag | 13/13 |
+| 7 | Blackjack payout cap — no silent truncation, pre-deal exposure ceiling | `arcade_bj_phase7_selftest()` 9/9 |
+| 8 | Global monetary rounding policy (2dp, half-up; liability rounds up) | `accounting_phase8_selftest()` 14/14 |
+| 9 | Unified P/L reporting from posted journals | `accounting_pl_report()` |
+| 10 | Automated invariant + lifecycle test suite | 40/40 |
+
+Key rules:
+
+- **Money scale** is exactly 2 decimals everywhere; money columns are
+  `numeric(_,2)`. Rounding is half-up, except liability/exposure which
+  always rounds **up** so reservations never under-cover. DB helpers:
+  `acct_round_money/stake/payout/liability`; the TS mirror is
+  `src/lib/accounting/money.ts` (`roundMoney`, `roundPayout`,
+  `roundLiability`, `potentialPayout`, `formatPoints`).
+- **Liability reservations** are taken at placement/deal time and handed
+  off atomically to payable at settlement. Available bankroll =
+  bankroll − active reservations − outstanding payables.
+- **Environments** (`PRODUCTION` / `SIMULATION` / `TEST`) are tagged on
+  every journal so real and simulated exposure never mix.
+- **P/L reporting**: `public.accounting_pl_report()` (settlement or
+  placement basis, filterable by product/game/sport/user/date) backs the
+  admin page `/management/admin/pl-report`. Pending liability is
+  computed historically "as of" the report end date.
+
+---
+
 ## 8. User Management (Staff)
 
 ### 8.1 Roles
@@ -515,6 +650,8 @@ Every file `src/routes/management/admin.*.tsx` corresponds to a page:
 | `admin.audit` | Full `audit_log` explorer. |
 | `admin.analytics` | Traffic/product analytics. |
 | `admin.reconciliation` | Wallet-ledger drift checker. |
+| `admin.pl-report` | Unified P/L report (Phase 9) — settlement or placement basis, filterable by product/game/sport/user/date. |
+| `admin.predictions` | Includes football, F1 and UFC tickets. |
 | `admin.support-ops` | Support KPIs. |
 | `admin.onboarding` | Tour/onboarding config. |
 | `admin.settings` | Platform settings other than risk. |
@@ -683,6 +820,10 @@ when `referrals.stage` advances to `rewarded`.
 
 ## 16. Cross-References
 
+- [`docs/accounting/`](./accounting/) — phase-by-phase accounting
+  specifications (`phase1-verification.md` … `phase10-automated-tests.md`).
+
+
 - [`RUNBOOK.md`](./RUNBOOK.md) — operational procedures (approving
   payouts, handling stuck settlements, rotating API keys).
 - [`BACKUP_RECOVERY.md`](./BACKUP_RECOVERY.md) — DB backup schedule,
@@ -691,5 +832,6 @@ when `referrals.stage` advances to `rewarded`.
 
 ---
 
-*Document generated 2026-07-06. When behavior changes, update this
+*Document last updated 2026-07-31 (multi-vertical: football, F1, UFC,
+arcade + accounting phases 1–10). When behavior changes, update this
 file in the same PR that changes the code.*
