@@ -17,7 +17,7 @@ import {
 
 export const Route = createFileRoute("/management/admin/blackjack")({
   head: () => ({ meta: [{ title: "Blackjack — Admin | cssebets" }] }),
-  component: AdminBlackjackPage;
+  component: AdminBlackjackPage,
 });
 
 function Card({ label, value }: { label: string; value: string }) {

@@ -230,3 +230,84 @@ export function TreasureArt() {
     </svg>
   );
 }
+
+export function BlackjackArt() {
+  const cards = [
+    { x: 46, y: 74, rot: -14, label: "A", suit: "\u2660", red: false },
+    { x: 92, y: 66, rot: -4, label: "K", suit: "\u2665", red: true },
+    { x: 138, y: 74, rot: 8, label: "?", suit: "", red: false },
+  ];
+  return (
+    <svg viewBox="0 0 240 170" className="h-full w-full" role="img" aria-label="Blackjack table">
+      <defs>
+        <radialGradient id="bjGlow" cx="50%" cy="12%" r="80%">
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="240" height="170" fill="url(#bjGlow)" />
+
+      {/* felt arc */}
+      <path
+        d="M8 150 A 120 96 0 0 1 232 150"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        opacity="0.35"
+      />
+      <text
+        x="120"
+        y="34"
+        textAnchor="middle"
+        fontSize="11"
+        fontWeight="900"
+        letterSpacing="3"
+        fill="currentColor"
+        opacity="0.75"
+      >
+        BLACKJACK 21
+      </text>
+
+      {cards.map((c, i) => (
+        <g key={c.x} transform={`rotate(${c.rot} ${c.x + 22} ${c.y + 30})`}>
+          <rect
+            x={c.x}
+            y={c.y}
+            width="44"
+            height="60"
+            rx="6"
+            fill={c.label === "?" ? "#0b1620" : "#f7f7f2"}
+            stroke="currentColor"
+            strokeWidth="1.2"
+          />
+          {c.label === "?" ? (
+            <rect x={c.x + 5} y={c.y + 5} width="34" height="50" rx="4" fill="none" stroke="currentColor" opacity="0.5" />
+          ) : (
+            <>
+              <text x={c.x + 8} y={c.y + 20} fontSize="14" fontWeight="900" fill={c.red ? "#d92b3a" : "#101418"}>
+                {c.label}
+              </text>
+              <text
+                x={c.x + 22}
+                y={c.y + 44}
+                textAnchor="middle"
+                fontSize="18"
+                fill={c.red ? "#d92b3a" : "#101418"}
+              >
+                {c.suit}
+              </text>
+            </>
+          )}
+          <animateTransform
+            attributeName="transform"
+            type="translate"
+            values="0 -6; 0 0; 0 -6"
+            dur={`${3 + i * 0.4}s`}
+            repeatCount="indefinite"
+            additive="sum"
+          />
+        </g>
+      ))}
+    </svg>
+  );
+}
