@@ -100,6 +100,7 @@ import { Route as AuthenticatedFootballUclRouteImport } from './routes/_authenti
 import { Route as AuthenticatedFootballSerieARouteImport } from './routes/_authenticated/football/serie-a'
 import { Route as AuthenticatedFootballLaLigaRouteImport } from './routes/_authenticated/football/la-liga'
 import { Route as AuthenticatedFootballEplRouteImport } from './routes/_authenticated/football/epl'
+import { Route as AuthenticatedArcadeTreasureRouteImport } from './routes/_authenticated/arcade.treasure'
 import { Route as AuthenticatedArcadeRouletteRouteImport } from './routes/_authenticated/arcade.roulette'
 import { Route as AuthenticatedArcadePlinkoRouteImport } from './routes/_authenticated/arcade.plinko'
 import { Route as AuthenticatedF1RacesIndexRouteImport } from './routes/_authenticated/f1.races.index'
@@ -616,6 +617,12 @@ const AuthenticatedFootballEplRoute =
     path: '/football/epl',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedArcadeTreasureRoute =
+  AuthenticatedArcadeTreasureRouteImport.update({
+    id: '/treasure',
+    path: '/treasure',
+    getParentRoute: () => AuthenticatedArcadeRoute,
+  } as any)
 const AuthenticatedArcadeRouletteRoute =
   AuthenticatedArcadeRouletteRouteImport.update({
     id: '/roulette',
@@ -803,6 +810,7 @@ export interface FileRoutesByFullPath {
   '/management/users': typeof ManagementUsersRoute
   '/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
   '/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
+  '/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
   '/football/epl': typeof AuthenticatedFootballEplRoute
   '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -915,6 +923,7 @@ export interface FileRoutesByTo {
   '/management/users': typeof ManagementUsersRoute
   '/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
   '/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
+  '/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
   '/football/epl': typeof AuthenticatedFootballEplRoute
   '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -1034,6 +1043,7 @@ export interface FileRoutesById {
   '/management/users': typeof ManagementUsersRoute
   '/_authenticated/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
   '/_authenticated/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
+  '/_authenticated/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
   '/_authenticated/football/epl': typeof AuthenticatedFootballEplRoute
   '/_authenticated/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/_authenticated/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -1153,6 +1163,7 @@ export interface FileRouteTypes {
     | '/management/users'
     | '/arcade/plinko'
     | '/arcade/roulette'
+    | '/arcade/treasure'
     | '/football/epl'
     | '/football/la-liga'
     | '/football/serie-a'
@@ -1265,6 +1276,7 @@ export interface FileRouteTypes {
     | '/management/users'
     | '/arcade/plinko'
     | '/arcade/roulette'
+    | '/arcade/treasure'
     | '/football/epl'
     | '/football/la-liga'
     | '/football/serie-a'
@@ -1383,6 +1395,7 @@ export interface FileRouteTypes {
     | '/management/users'
     | '/_authenticated/arcade/plinko'
     | '/_authenticated/arcade/roulette'
+    | '/_authenticated/arcade/treasure'
     | '/_authenticated/football/epl'
     | '/_authenticated/football/la-liga'
     | '/_authenticated/football/serie-a'
@@ -2134,6 +2147,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFootballEplRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/arcade/treasure': {
+      id: '/_authenticated/arcade/treasure'
+      path: '/treasure'
+      fullPath: '/arcade/treasure'
+      preLoaderRoute: typeof AuthenticatedArcadeTreasureRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
     '/_authenticated/arcade/roulette': {
       id: '/_authenticated/arcade/roulette'
       path: '/roulette'
@@ -2315,12 +2335,14 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedArcadeRouteChildren {
   AuthenticatedArcadePlinkoRoute: typeof AuthenticatedArcadePlinkoRoute
   AuthenticatedArcadeRouletteRoute: typeof AuthenticatedArcadeRouletteRoute
+  AuthenticatedArcadeTreasureRoute: typeof AuthenticatedArcadeTreasureRoute
   AuthenticatedArcadeIndexRoute: typeof AuthenticatedArcadeIndexRoute
 }
 
 const AuthenticatedArcadeRouteChildren: AuthenticatedArcadeRouteChildren = {
   AuthenticatedArcadePlinkoRoute: AuthenticatedArcadePlinkoRoute,
   AuthenticatedArcadeRouletteRoute: AuthenticatedArcadeRouletteRoute,
+  AuthenticatedArcadeTreasureRoute: AuthenticatedArcadeTreasureRoute,
   AuthenticatedArcadeIndexRoute: AuthenticatedArcadeIndexRoute,
 }
 
