@@ -73,6 +73,7 @@ import { Route as ManagementAdminReconciliationRouteImport } from './routes/mana
 import { Route as ManagementAdminPricingBreakdownRouteImport } from './routes/management/admin.pricing-breakdown'
 import { Route as ManagementAdminPredictionsRouteImport } from './routes/management/admin.predictions'
 import { Route as ManagementAdminPointsRouteImport } from './routes/management/admin.points'
+import { Route as ManagementAdminPlReportRouteImport } from './routes/management/admin.pl-report'
 import { Route as ManagementAdminPayoutsRouteImport } from './routes/management/admin.payouts'
 import { Route as ManagementAdminOperationsRouteImport } from './routes/management/admin.operations'
 import { Route as ManagementAdminOnboardingRouteImport } from './routes/management/admin.onboarding'
@@ -468,6 +469,11 @@ const ManagementAdminPointsRoute = ManagementAdminPointsRouteImport.update({
   path: '/points',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
+const ManagementAdminPlReportRoute = ManagementAdminPlReportRouteImport.update({
+  id: '/pl-report',
+  path: '/pl-report',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
 const ManagementAdminPayoutsRoute = ManagementAdminPayoutsRouteImport.update({
   id: '/payouts',
   path: '/payouts',
@@ -854,6 +860,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/onboarding': typeof ManagementAdminOnboardingRoute
   '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
+  '/management/admin/pl-report': typeof ManagementAdminPlReportRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
@@ -969,6 +976,7 @@ export interface FileRoutesByTo {
   '/management/admin/onboarding': typeof ManagementAdminOnboardingRoute
   '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
+  '/management/admin/pl-report': typeof ManagementAdminPlReportRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
@@ -1091,6 +1099,7 @@ export interface FileRoutesById {
   '/management/admin/onboarding': typeof ManagementAdminOnboardingRoute
   '/management/admin/operations': typeof ManagementAdminOperationsRoute
   '/management/admin/payouts': typeof ManagementAdminPayoutsRoute
+  '/management/admin/pl-report': typeof ManagementAdminPlReportRoute
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
@@ -1213,6 +1222,7 @@ export interface FileRouteTypes {
     | '/management/admin/onboarding'
     | '/management/admin/operations'
     | '/management/admin/payouts'
+    | '/management/admin/pl-report'
     | '/management/admin/points'
     | '/management/admin/predictions'
     | '/management/admin/pricing-breakdown'
@@ -1328,6 +1338,7 @@ export interface FileRouteTypes {
     | '/management/admin/onboarding'
     | '/management/admin/operations'
     | '/management/admin/payouts'
+    | '/management/admin/pl-report'
     | '/management/admin/points'
     | '/management/admin/predictions'
     | '/management/admin/pricing-breakdown'
@@ -1449,6 +1460,7 @@ export interface FileRouteTypes {
     | '/management/admin/onboarding'
     | '/management/admin/operations'
     | '/management/admin/payouts'
+    | '/management/admin/pl-report'
     | '/management/admin/points'
     | '/management/admin/predictions'
     | '/management/admin/pricing-breakdown'
@@ -1982,6 +1994,13 @@ declare module '@tanstack/react-router' {
       path: '/points'
       fullPath: '/management/admin/points'
       preLoaderRoute: typeof ManagementAdminPointsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/pl-report': {
+      id: '/management/admin/pl-report'
+      path: '/pl-report'
+      fullPath: '/management/admin/pl-report'
+      preLoaderRoute: typeof ManagementAdminPlReportRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
     '/management/admin/payouts': {
@@ -2526,6 +2545,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminOnboardingRoute: typeof ManagementAdminOnboardingRoute
   ManagementAdminOperationsRoute: typeof ManagementAdminOperationsRoute
   ManagementAdminPayoutsRoute: typeof ManagementAdminPayoutsRoute
+  ManagementAdminPlReportRoute: typeof ManagementAdminPlReportRoute
   ManagementAdminPointsRoute: typeof ManagementAdminPointsRoute
   ManagementAdminPredictionsRoute: typeof ManagementAdminPredictionsRoute
   ManagementAdminPricingBreakdownRoute: typeof ManagementAdminPricingBreakdownRoute
@@ -2568,6 +2588,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminOnboardingRoute: ManagementAdminOnboardingRoute,
   ManagementAdminOperationsRoute: ManagementAdminOperationsRoute,
   ManagementAdminPayoutsRoute: ManagementAdminPayoutsRoute,
+  ManagementAdminPlReportRoute: ManagementAdminPlReportRoute,
   ManagementAdminPointsRoute: ManagementAdminPointsRoute,
   ManagementAdminPredictionsRoute: ManagementAdminPredictionsRoute,
   ManagementAdminPricingBreakdownRoute: ManagementAdminPricingBreakdownRoute,
