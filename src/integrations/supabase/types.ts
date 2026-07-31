@@ -1020,12 +1020,14 @@ export type Database = {
           idempotency_key: string
           last_action_at: string
           nonce: number
+          payout_ceiling_breached: boolean
           resolution_reason: string | null
           resolved_by: string | null
           result: Database["public"]["Enums"]["bj_result"] | null
           result_reason: string | null
           rule_config_id: string
           rule_version: number
+          score_cap_delta: number
           score_config_id: string
           score_version: number
           server_seed_hash: string
@@ -1036,11 +1038,13 @@ export type Database = {
           status: Database["public"]["Enums"]["bj_hand_status"]
           total_payout: number
           total_score_awarded: number
+          total_score_uncapped: number | null
           total_stake: number
           updated_at: string
           user_id: string
           user_net: number
           verification_id: string
+          worst_case_gross: number | null
         }
         Insert: {
           action_sequence?: number
@@ -1056,12 +1060,14 @@ export type Database = {
           idempotency_key: string
           last_action_at?: string
           nonce: number
+          payout_ceiling_breached?: boolean
           resolution_reason?: string | null
           resolved_by?: string | null
           result?: Database["public"]["Enums"]["bj_result"] | null
           result_reason?: string | null
           rule_config_id: string
           rule_version: number
+          score_cap_delta?: number
           score_config_id: string
           score_version: number
           server_seed_hash: string
@@ -1072,11 +1078,13 @@ export type Database = {
           status?: Database["public"]["Enums"]["bj_hand_status"]
           total_payout?: number
           total_score_awarded?: number
+          total_score_uncapped?: number | null
           total_stake?: number
           updated_at?: string
           user_id: string
           user_net?: number
           verification_id?: string
+          worst_case_gross?: number | null
         }
         Update: {
           action_sequence?: number
@@ -1092,12 +1100,14 @@ export type Database = {
           idempotency_key?: string
           last_action_at?: string
           nonce?: number
+          payout_ceiling_breached?: boolean
           resolution_reason?: string | null
           resolved_by?: string | null
           result?: Database["public"]["Enums"]["bj_result"] | null
           result_reason?: string | null
           rule_config_id?: string
           rule_version?: number
+          score_cap_delta?: number
           score_config_id?: string
           score_version?: number
           server_seed_hash?: string
@@ -1108,11 +1118,13 @@ export type Database = {
           status?: Database["public"]["Enums"]["bj_hand_status"]
           total_payout?: number
           total_score_awarded?: number
+          total_score_uncapped?: number | null
           total_stake?: number
           updated_at?: string
           user_id?: string
           user_net?: number
           verification_id?: string
+          worst_case_gross?: number | null
         }
         Relationships: [
           {
@@ -7921,6 +7933,7 @@ export type Database = {
         Args: { p_status: Database["public"]["Enums"]["bj_hand_status"] }
         Returns: boolean
       }
+      arcade_bj_phase7_selftest: { Args: never; Returns: Json }
       arcade_bj_publish_rule_config: {
         Args: { p_admin: string; p_patch: Json; p_reason: string }
         Returns: string
@@ -7928,6 +7941,10 @@ export type Database = {
       arcade_bj_publish_score_config: {
         Args: { p_admin: string; p_patch: Json; p_reason: string }
         Returns: string
+      }
+      arcade_bj_resync_reservation: {
+        Args: { p_hand: string }
+        Returns: undefined
       }
       arcade_bj_reveal_shoe: {
         Args: { p_hand: string; p_user: string }
