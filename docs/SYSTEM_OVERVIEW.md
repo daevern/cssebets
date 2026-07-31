@@ -345,9 +345,6 @@ payout until the round resolves.
 
 - `wallets`: one row per `(user_id, is_simulation)`, holds current
   `balance` (points, integer-ish DECIMAL).
-- `wallet_transactions`: append-only ledger with
-  `type` ∈ {`credit`, `debit`}, `reference_type`
-  ∈ {`bet_placement`, `bet_settlement`, `bet_void`, `point_request`,
 - `wallet_transactions`: append-only ledger. The DB enums are the
   authority:
   - `wallet_txn_type` ∈ {`credit`, `debit`, `refund`, `adjustment`}.
