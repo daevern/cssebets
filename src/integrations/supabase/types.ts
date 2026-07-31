@@ -468,11 +468,78 @@ export type Database = {
           },
         ]
       }
+      accounting_liability_reservations: {
+        Row: {
+          config_version: string | null
+          counts_toward_available: boolean
+          created_at: string
+          environment: Database["public"]["Enums"]["acct_environment"]
+          game: string | null
+          id: string
+          max_gross_payout: number
+          max_net_liability: number
+          metadata: Json
+          product: string
+          reference_id: string
+          reference_type: string
+          release_reason: string | null
+          released_at: string | null
+          reserved_amount: number
+          stake_collected: number
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          config_version?: string | null
+          counts_toward_available?: boolean
+          created_at?: string
+          environment: Database["public"]["Enums"]["acct_environment"]
+          game?: string | null
+          id?: string
+          max_gross_payout: number
+          max_net_liability: number
+          metadata?: Json
+          product: string
+          reference_id: string
+          reference_type: string
+          release_reason?: string | null
+          released_at?: string | null
+          reserved_amount: number
+          stake_collected?: number
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          config_version?: string | null
+          counts_toward_available?: boolean
+          created_at?: string
+          environment?: Database["public"]["Enums"]["acct_environment"]
+          game?: string | null
+          id?: string
+          max_gross_payout?: number
+          max_net_liability?: number
+          metadata?: Json
+          product?: string
+          reference_id?: string
+          reference_type?: string
+          release_reason?: string | null
+          released_at?: string | null
+          reserved_amount?: number
+          stake_collected?: number
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       accounting_migration_flags: {
         Row: {
           created_at: string
           dual_write: boolean
           journal_enabled: boolean
+          liability_enforced: boolean
           notes: string | null
           product: string
           updated_at: string
@@ -481,6 +548,7 @@ export type Database = {
           created_at?: string
           dual_write?: boolean
           journal_enabled?: boolean
+          liability_enforced?: boolean
           notes?: string | null
           product: string
           updated_at?: string
@@ -489,6 +557,7 @@ export type Database = {
           created_at?: string
           dual_write?: boolean
           journal_enabled?: boolean
+          liability_enforced?: boolean
           notes?: string | null
           product?: string
           updated_at?: string
@@ -7290,6 +7359,18 @@ export type Database = {
         }
         Relationships: []
       }
+      v_accounting_open_liability: {
+        Row: {
+          environment: Database["public"]["Enums"]["acct_environment"] | null
+          max_net_liability: number | null
+          max_potential_payout: number | null
+          open_positions: number | null
+          open_stakes: number | null
+          product: string | null
+          reserved_against_bankroll: number | null
+        }
+        Relationships: []
+      }
       v_accounting_platform_pl: {
         Row: {
           environment: Database["public"]["Enums"]["acct_environment"] | null
@@ -7498,7 +7579,12 @@ export type Database = {
         Returns: Json
       }
       accounting_arcade_assert_capacity: {
-        Args: { p_max_gross: number; p_product: string; p_user: string }
+        Args: {
+          p_max_gross: number
+          p_product: string
+          p_stake?: number
+          p_user: string
+        }
         Returns: undefined
       }
       accounting_arcade_hook: {
@@ -7535,6 +7621,7 @@ export type Database = {
       accounting_internal_ctx: { Args: never; Returns: boolean }
       accounting_phase5_final_selftest: { Args: never; Returns: Json }
       accounting_phase5_treasure_expiry_test: { Args: never; Returns: Json }
+      accounting_phase6_selftest: { Args: never; Returns: Json }
       accounting_plinko_selftest: { Args: never; Returns: Json }
       accounting_post_arcade_settlement: {
         Args: {
@@ -7578,6 +7665,33 @@ export type Database = {
         Args: { p_game_id: string }
         Returns: Json
       }
+      accounting_release_liability: {
+        Args: {
+          p_reason?: string
+          p_reference_id: string
+          p_reference_type: string
+        }
+        Returns: undefined
+      }
+      accounting_reserve_liability: {
+        Args: {
+          p_config_version?: string
+          p_game: string
+          p_max_gross: number
+          p_metadata?: Json
+          p_product: string
+          p_reference_id: string
+          p_reference_type: string
+          p_settled?: boolean
+          p_stake: number
+          p_user: string
+        }
+        Returns: string
+      }
+      accounting_reserved_liability: {
+        Args: { p_env: Database["public"]["Enums"]["acct_environment"] }
+        Returns: number
+      }
       accounting_reverse_arcade_settlement: {
         Args: { p_product: string; p_reason: string; p_ref_id: string }
         Returns: Json
@@ -7597,6 +7711,10 @@ export type Database = {
         Returns: Json
       }
       accounting_run_phase5_final_selftest: { Args: never; Returns: undefined }
+      accounting_user_env: {
+        Args: { p_user: string }
+        Returns: Database["public"]["Enums"]["acct_environment"]
+      }
       adjust_correct_score_odds: {
         Args: {
           p_match_id: string
