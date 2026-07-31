@@ -6945,6 +6945,10 @@ export type Database = {
       }
       wallet_transactions: {
         Row: {
+          accounting_journal_id: string | null
+          accounting_sync_error: string | null
+          accounting_sync_status: string
+          accounting_synced_at: string | null
           admin_action_id: string | null
           amount: number
           balance_after: number
@@ -6964,6 +6968,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          accounting_journal_id?: string | null
+          accounting_sync_error?: string | null
+          accounting_sync_status?: string
+          accounting_synced_at?: string | null
           admin_action_id?: string | null
           amount: number
           balance_after: number
@@ -6983,6 +6991,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          accounting_journal_id?: string | null
+          accounting_sync_error?: string | null
+          accounting_sync_status?: string
+          accounting_synced_at?: string | null
           admin_action_id?: string | null
           amount?: number
           balance_after?: number
@@ -7151,6 +7163,15 @@ export type Database = {
         }
         Relationships: []
       }
+      v_accounting_bridge_status: {
+        Row: {
+          newest: string | null
+          oldest: string | null
+          status: string | null
+          transactions: number | null
+        }
+        Relationships: []
+      }
       v_accounting_cutover_status: {
         Row: {
           account_count: number | null
@@ -7218,6 +7239,21 @@ export type Database = {
           },
         ]
       }
+      v_accounting_migration_readiness: {
+        Row: {
+          checked_at: string | null
+          drift_total: number | null
+          drift_users: number | null
+          error_tx: number | null
+          mixed_journals: number | null
+          pending_tx: number | null
+          ready_for_product_migration: boolean | null
+          reserved_payout_liability: number | null
+          trial_balance_imbalance: number | null
+          unclassified_reserved_liability: number | null
+        }
+        Relationships: []
+      }
       v_accounting_reconciliation_summary: {
         Row: {
           classification: string | null
@@ -7237,6 +7273,16 @@ export type Database = {
           credit_total: number | null
           debit_total: number | null
           environment: Database["public"]["Enums"]["acct_environment"] | null
+        }
+        Relationships: []
+      }
+      v_accounting_wallet_drift: {
+        Row: {
+          drift: number | null
+          environment: string | null
+          ledger_balance: number | null
+          legacy_balance: number | null
+          user_id: string | null
         }
         Relationships: []
       }
@@ -7349,6 +7395,11 @@ export type Database = {
       }
       accounting_apply_correction_proposal: {
         Args: { p_id: string }
+        Returns: Json
+      }
+      accounting_bridge_sync: { Args: { p_limit?: number }; Returns: Json }
+      accounting_bridge_wallet_transaction: {
+        Args: { p_tx_id: string }
         Returns: Json
       }
       accounting_caller_authorised: { Args: never; Returns: boolean }
