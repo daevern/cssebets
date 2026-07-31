@@ -348,16 +348,22 @@ payout until the round resolves.
 - `wallet_transactions`: append-only ledger with
   `type` ∈ {`credit`, `debit`}, `reference_type`
   ∈ {`bet_placement`, `bet_settlement`, `bet_void`, `point_request`,
-  `payout`, `free_bet_grant`, `store_purchase`, `token_conversion`,
-  `admin_adjustment`}, plus foreign keys to the referenced row.
+- `wallet_transactions`: append-only ledger. The DB enums are the
+  authority:
+  - `wallet_txn_type` ∈ {`credit`, `debit`, `refund`, `adjustment`}.
+  - `wallet_ref_type` ∈ {`bet_placement`, `bet_settlement`,
+    `point_request`, `payout`, `admin_adjustment`, `house_bankroll`}.
 
-Every write to `wallets.balance` is paired with a `wallet_transactions`
-row inside a Postgres RPC — the ledger is the source of truth and
-`reconciliation.functions.ts` verifies drift.
+  Voids/refunds are `type='refund'` with `reference_type='bet_settlement'`
+  (there is no `bet_void` reference type). Free bets, store purchases and
+  token movements do **not** create wallet rows — free bets live in
+  `csse_free_bets`, tokens in `csse_token_transactions`; only the points
+  effect of a settled free bet reaches the wallet.
 
-### 5.2 Placement flow (`submitPrediction`)
-
-Defined in `src/lib/predictions.functions.ts`. Order of checks:
+`wallets.balance` is a cache. The ledger is the source of truth
+(§0.2), and `reconciliation.functions.ts` proves they agree. Every
+write to `wallets.balance` is paired with a `wallet_transactions` row
+inside a single Postgres RPC.
 
 1. **Role gate** — user must have `member` or `admin` role in
    `user_roles`. New sign-ups start without a role and must be approved
