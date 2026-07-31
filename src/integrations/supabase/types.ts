@@ -468,6 +468,33 @@ export type Database = {
           },
         ]
       }
+      accounting_lock_probe: {
+        Row: {
+          acquired_at: string | null
+          id: number
+          label: string
+          released_at: string | null
+          reserve: number | null
+          started_at: string
+        }
+        Insert: {
+          acquired_at?: string | null
+          id?: number
+          label: string
+          released_at?: string | null
+          reserve?: number | null
+          started_at?: string
+        }
+        Update: {
+          acquired_at?: string | null
+          id?: number
+          label?: string
+          released_at?: string | null
+          reserve?: number | null
+          started_at?: string
+        }
+        Relationships: []
+      }
       accounting_migration_flags: {
         Row: {
           created_at: string
@@ -7453,6 +7480,10 @@ export type Database = {
       accounting_caller_authorised: { Args: never; Returns: boolean }
       accounting_integrity_scan: { Args: never; Returns: Json }
       accounting_internal_ctx: { Args: never; Returns: boolean }
+      accounting_lock_probe_run: {
+        Args: { p_hold_seconds: number; p_label: string }
+        Returns: undefined
+      }
       accounting_plinko_selftest: { Args: never; Returns: Json }
       accounting_post_journal: {
         Args: {
