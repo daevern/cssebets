@@ -180,7 +180,7 @@ PWA install prompts are suppressed.
 | `/my-predictions` | Every ticket the user has placed with status (pending / won / lost / void) and payout. |
 | `/bets` | Alias for the tickets ledger with filters. |
 | `/wallet` | Balance, transactions, point-request submission (with proof upload to `point-request-proofs` storage bucket). |
-| `/payout` | Payout request lifecycle (pending → approved → proof_uploaded → paid). |
+| `/payout` | Payout request lifecycle (pending → approved → proof_uploaded → completed). |
 | `/free-bets/place` | Redeem free-bet tokens issued by staff or the store. |
 | `/store` | Redeem CSSE tokens for store items (`csse_store_items`). |
 | `/referrals` | User's referral code, share link, referral history and rewards. |
