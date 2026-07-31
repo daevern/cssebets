@@ -14,69 +14,131 @@ Everything in this report is derived from **posted accounting journals**
 SELECT public.accounting_pl_report(
   p_environment    := 'PRODUCTION',   -- PRODUCTION | SIMULATION | TEST
   p_from           := NULL,
-  p_to             := NULL,
+  p_to             := NULL,           -- report boundary; also the "as of" date
   p_basis          := 'settlement',   -- 'settlement' | 'placement'
-  p_products       := NULL,           -- text[] product filter
+  p_products       := NULL,
   p_game           := NULL,
   p_sport          := NULL,           -- 'sports' | 'arcade'
-  p_user           := NULL,           -- uuid
+  p_user           := NULL,
   p_config_version := NULL
 );
 ```
 
-## Date basis
+## Available bankroll (Phase 6 authoritative formula)
 
-Each journal is attributed to a reporting date before filtering:
+```
+available_bankroll = closing_house_bankroll
+                   − outstanding payouts payable
+                   − active enforced reserved liability
+```
 
-- **Settlement basis (default)** — a stake journal is attributed to the date its
-  position settled. A stake with no settlement journal yet has no realised date
-  and is excluded from realised P/L entirely; it appears only under pending.
-- **Placement basis** — every journal for a position is attributed to the date
-  the stake was placed.
+All four values are reported separately: `closing_bankroll`,
+`payouts_payable_outstanding`, `active_reserved_liability`,
+`available_bankroll`.
 
-## Platform block
+When the report has no `p_to` (a live report), the same
+`public.accounting_available_reserve(env)` used by placement capacity checks is
+called and cross-checked:
+`checks.available_bankroll_matches_authoritative`. For a historical boundary the
+figure is recomputed **as of** that timestamp with the identical formula (the
+live function has no time argument), and
+`platform.available_bankroll_basis = 'as_of'`.
 
-Opening bankroll, closing bankroll, total stakes, gross payouts, refunds,
-adjustments, realised P/L, open liability, available bankroll, actual hold %.
+## As-of liability and payables
 
-- Opening/closing bankroll read the `HOUSE_BANKROLL` running balance at the edges
-  of the range.
-- `realised_pl` = sum of product P/L + disclosed adjustments
-  (`ADMIN_ADJUSTMENT`, `MIGRATION_ADJUSTMENT`, `ROUNDING_ADJUSTMENT`,
-  `BONUS_EXPENSE`, `POINTS_EXPIRY`).
-- `available_bankroll` = closing bankroll − active reserved liability.
-- Actual hold % = product P/L ÷ stakes.
+Pending liability is never read from *current* reservation status. Reservations
+are treated as open at the boundary when:
 
-## Product blocks
+```sql
+coalesce(reserved_at, created_at) <= as_of
+AND (LEAST(released_at, superseded_at) IS NULL
+     OR LEAST(released_at, superseded_at) > as_of)
+```
 
-Grouped into **sports** (football, UFC/MMA, F1, basketball, generic sports) and
-**arcade** (Plinko, Mini Roulette, Treasure Grid, Blackjack). Products are read
-from `accounting_migration_flags`, so a future game appears automatically once
-its flag row exists.
+`superseded_at` is included so re-reserved (versioned) positions are counted
+exactly once at any point in time. A position that was active on 20 July and
+settled on 21 July therefore still shows as open liability in a report through
+20 July.
 
-Per product and per group total: stakes, gross payouts, refunds, realised P/L,
-hold %, settled positions.
+Payables use the same principle: `PAYOUTS_PAYABLE` is read from the balance
+chain at the last journal posted on or before `p_to`, not the balance today.
 
-Per settled position: realised P/L = stake − gross payout. Voids and pushes
-contribute 0 realised P/L — their refunds are reported in the refunds column,
-not in P/L.
+`platform.pending.as_of` echoes the timestamp used.
 
-## Pending shown separately
+## Two different, both-valid measures
 
-Open stakes, reserved liability, maximum potential payout and pending position
-count come from active rows in `accounting_liability_reservations`. They never
-touch realised P/L.
+Under settlement basis a stake journal is attributed to the settlement date,
+while the bankroll movement physically happened on the placement date. The
+report never asserts they are equal. It labels both and bridges them.
 
-## Journal coverage
+**Bankroll by journal posting date**
 
-`checks.products_not_yet_journal_backed` lists products still on the legacy path
-(currently football, UFC, F1 and generic sports). Their realised columns read 0
-and the UI tags them `legacy`, so a zero is never mistaken for "no activity".
-Those figures populate automatically as each product's `journal_enabled` flag is
-switched on.
+```
+opening_bankroll + physical_bankroll_movement = closing_bankroll
+```
+(`reconciliation.bankroll_by_posting_date.identity_ok`)
 
-## Consistency check
+**Timing bridge**
 
-`checks.platform_pl_equals_products_plus_adjustments` asserts the Phase 9
-formula: platform P/L = Σ product P/L + disclosed adjustments. The Phase 10
-suite (`accounting_phase10_selftest`) covers the same identity over live data.
+```
+realised P/L by reporting attribution
+− opening-position timing adjustment   (attributed into the range, posted before/after it)
++ closing-position timing adjustment   (posted in the range, attributed outside it)
++ out-of-scope house movement          (opening balances, reversals, filtered-out journals)
+= actual bankroll movement
+```
+(`reconciliation.timing_bridge.bridge_ok`, plus
+`pl_equals_attributed_house_movement`, which asserts realised P/L equals the
+house-bankroll movement of the attributed journal set.)
+
+The balance chain includes `REVERSED` journals as well as `POSTED` ones, because
+a reversal posts its own entry and the original movement really did occur.
+
+## Hold percentage
+
+```
+hold_pct = realised_product_pl / net_settled_stakes
+net_settled_stakes = gross_stakes − refunded/void stakes
+```
+
+Voided and refunded stakes are excluded from the denominator, so heavy void
+activity no longer depresses hold. `gross_stakes`, `refunded_stakes`,
+`net_settled_stakes` and `gross_hold_pct` (hold on gross stakes) are all
+disclosed alongside it.
+
+## Refund classification
+
+Each payout-expense line is classified exactly once by the journal type that
+produced it:
+
+| Journal type | Column |
+| --- | --- |
+| `PAYOUT_SETTLED` | gross payouts |
+| `REFUND` / `VOID` | refunds |
+
+A void therefore reads stake 10, refund 10, gross payout 0, realised P/L 0, and
+its stake is removed from the hold denominator. Pushes are classified the same
+way. `checks.refunds_not_double_counted` asserts
+`gross_payouts + refunds = total payout expense`.
+
+## Product discovery
+
+Products come from the union of migration flags, journal activity in the range,
+posted journals in the environment, and reservations — so a product that was
+once journal-enabled and later disabled still appears in historical reports.
+Migration flags supply only the current status label:
+
+- `journal-enabled` — posting to the unified journal now
+- `shadow` — dual-write, not yet authoritative
+- `disabled` — has historical journal activity, currently off
+- `legacy` — never journal-backed
+
+## Checks returned
+
+`platform_pl_equals_products_plus_adjustments`,
+`available_bankroll_matches_authoritative` (live reports only),
+`bankroll_identity_ok`, `timing_bridge_ok`, `refunds_not_double_counted`,
+`products_not_yet_journal_backed`.
+
+Phase 7 should consume `accounting_available_reserve` and the as-of reservation
+predicate above rather than reimplementing either.
