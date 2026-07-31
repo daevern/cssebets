@@ -11,12 +11,24 @@
 
 ## 1. Product Overview
 
-CSSEBets is a **points-based prediction market** for football (soccer). It
-looks and feels like a sportsbook, but every stake is denominated in
-**points** rather than fiat. Points are issued to approved users by staff
-after off-platform value transfer (proof-of-payment uploaded to a "point
+CSSEBets is a **points-based prediction market** covering **football
+(soccer), Formula 1, UFC/MMA and a house-banked arcade**. It looks and
+feels like a sportsbook, but every stake is denominated in **points**
+rather than fiat. Points are issued to approved users by staff after
+off-platform value transfer (proof-of-payment uploaded to a "point
 request"), and users can request **payouts** back out through the same
 staff-mediated flow.
+
+All odds are derived from live paid data providers — **API-Football**,
+**API-F1** and **API-MMA** — repriced through the house margin model.
+No odds are synthetically generated. Arcade games are provably fair with
+server-side RNG and per-round verification.
+
+Every money movement — sports bets, arcade rounds, wallet operations —
+is posted to a double-entry accounting ledger with liability
+reservations, a 2-decimal half-up rounding policy and automated
+invariant tests (see §7.6).
+
 
 Two independent worlds run inside one codebase:
 
