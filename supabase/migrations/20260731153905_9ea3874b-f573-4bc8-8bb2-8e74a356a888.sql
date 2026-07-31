@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.accounting_phase8_selftest() TO PUBLIC;
