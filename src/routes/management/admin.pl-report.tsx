@@ -411,7 +411,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "pos" | "neg" }) {
+function Stat({
+  label,
+  value,
+  tone,
+  sub,
+}: {
+  label: string;
+  value: string;
+  tone?: "pos" | "neg";
+  sub?: string;
+}) {
   return (
     <div className="rounded-lg border p-3">
       <div className="text-xs text-muted-foreground">{label}</div>
@@ -422,6 +432,26 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: "po
       >
         {value}
       </div>
+      {sub && <div className="text-[11px] text-muted-foreground mt-0.5">{sub}</div>}
     </div>
   );
 }
+
+function Line({ label, v, bold }: { label: string; v: unknown; bold?: boolean }) {
+  return (
+    <div className={`flex justify-between gap-3 ${bold ? "font-semibold border-t pt-1" : ""}`}>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="tabular-nums">{fmt(v)}</span>
+    </div>
+  );
+}
+
+function Flag({ ok, label }: { ok: boolean | null | undefined; label: string }) {
+  if (ok === null || ok === undefined) return null;
+  return (
+    <div className={`text-[11px] ${ok ? "text-emerald-500" : "text-destructive"}`}>
+      {ok ? `✓ ${label} reconciles` : `✕ ${label} does not reconcile`}
+    </div>
+  );
+}
+
