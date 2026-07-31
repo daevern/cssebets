@@ -188,6 +188,7 @@ export type Database = {
           idempotency_key: string | null
           player_hand_id: string | null
           source: string
+          stake_delta: number
           state_version_after: number
           state_version_before: number
           total_after: number | null
@@ -204,6 +205,7 @@ export type Database = {
           idempotency_key?: string | null
           player_hand_id?: string | null
           source?: string
+          stake_delta?: number
           state_version_after: number
           state_version_before: number
           total_after?: number | null
@@ -220,6 +222,7 @@ export type Database = {
           idempotency_key?: string | null
           player_hand_id?: string | null
           source?: string
+          stake_delta?: number
           state_version_after?: number
           state_version_before?: number
           total_after?: number | null
@@ -320,84 +323,6 @@ export type Database = {
           },
         ]
       }
-      arcade_bj_entry_balances: {
-        Row: {
-          bonus_available: number
-          created_at: string
-          daily_available: number
-          daily_reset_date: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          bonus_available?: number
-          created_at?: string
-          daily_available?: number
-          daily_reset_date?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          bonus_available?: number
-          created_at?: string
-          daily_available?: number
-          daily_reset_date?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      arcade_bj_entry_ledger: {
-        Row: {
-          admin_id: string | null
-          balance_after: number
-          balance_before: number
-          created_at: string
-          entry_type: Database["public"]["Enums"]["bj_entry_txn"]
-          expires_at: string | null
-          game: string
-          hand_id: string | null
-          id: string
-          idempotency_key: string | null
-          quantity: number
-          reason: string | null
-          source: string | null
-          user_id: string
-        }
-        Insert: {
-          admin_id?: string | null
-          balance_after: number
-          balance_before: number
-          created_at?: string
-          entry_type: Database["public"]["Enums"]["bj_entry_txn"]
-          expires_at?: string | null
-          game?: string
-          hand_id?: string | null
-          id?: string
-          idempotency_key?: string | null
-          quantity: number
-          reason?: string | null
-          source?: string | null
-          user_id: string
-        }
-        Update: {
-          admin_id?: string | null
-          balance_after?: number
-          balance_before?: number
-          created_at?: string
-          entry_type?: Database["public"]["Enums"]["bj_entry_txn"]
-          expires_at?: string | null
-          game?: string
-          hand_id?: string | null
-          id?: string
-          idempotency_key?: string | null
-          quantity?: number
-          reason?: string | null
-          source?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       arcade_bj_errors: {
         Row: {
           correlation_id: string | null
@@ -469,9 +394,12 @@ export type Database = {
           started_at: string
           state_version: number
           status: Database["public"]["Enums"]["bj_hand_status"]
+          total_payout: number
           total_score_awarded: number
+          total_stake: number
           updated_at: string
           user_id: string
+          user_net: number
           verification_id: string
         }
         Insert: {
@@ -502,9 +430,12 @@ export type Database = {
           started_at?: string
           state_version?: number
           status?: Database["public"]["Enums"]["bj_hand_status"]
+          total_payout?: number
           total_score_awarded?: number
+          total_stake?: number
           updated_at?: string
           user_id: string
+          user_net?: number
           verification_id?: string
         }
         Update: {
@@ -535,9 +466,12 @@ export type Database = {
           started_at?: string
           state_version?: number
           status?: Database["public"]["Enums"]["bj_hand_status"]
+          total_payout?: number
           total_score_awarded?: number
+          total_stake?: number
           updated_at?: string
           user_id?: string
+          user_net?: number
           verification_id?: string
         }
         Relationships: [
@@ -578,9 +512,11 @@ export type Database = {
           is_split: boolean
           is_split_ace: boolean
           parent_player_hand_id: string | null
+          payout: number
           result: Database["public"]["Enums"]["bj_result"] | null
           score_awarded: number
           settled_at: string | null
+          stake: number
           status: Database["public"]["Enums"]["bj_ph_status"]
         }
         Insert: {
@@ -596,9 +532,11 @@ export type Database = {
           is_split?: boolean
           is_split_ace?: boolean
           parent_player_hand_id?: string | null
+          payout?: number
           result?: Database["public"]["Enums"]["bj_result"] | null
           score_awarded?: number
           settled_at?: string | null
+          stake?: number
           status?: Database["public"]["Enums"]["bj_ph_status"]
         }
         Update: {
@@ -614,9 +552,11 @@ export type Database = {
           is_split?: boolean
           is_split_ace?: boolean
           parent_player_hand_id?: string | null
+          payout?: number
           result?: Database["public"]["Enums"]["bj_result"] | null
           score_awarded?: number
           settled_at?: string | null
+          stake?: number
           status?: Database["public"]["Enums"]["bj_ph_status"]
         }
         Relationships: [
@@ -693,10 +633,11 @@ export type Database = {
           announcement: string | null
           approved_by: string | null
           auto_stand_on_21: boolean
+          blackjack_payout: number
           change_reason: string | null
+          chip_values: number[]
           created_at: string
           created_by: string | null
-          daily_entry_allocation: number
           daily_hand_limit: number
           dealer_hits_soft_17: boolean
           dealer_peek: boolean
@@ -708,7 +649,10 @@ export type Database = {
           hit_split_aces: boolean
           id: string
           maintenance_mode: boolean
+          max_payout: number
           max_split_hands: number
+          max_stake: number
+          min_stake: number
           name: string
           penetration: number
           resplit_aces: boolean
@@ -723,10 +667,11 @@ export type Database = {
           announcement?: string | null
           approved_by?: string | null
           auto_stand_on_21?: boolean
+          blackjack_payout?: number
           change_reason?: string | null
+          chip_values?: number[]
           created_at?: string
           created_by?: string | null
-          daily_entry_allocation?: number
           daily_hand_limit?: number
           dealer_hits_soft_17?: boolean
           dealer_peek?: boolean
@@ -738,7 +683,10 @@ export type Database = {
           hit_split_aces?: boolean
           id?: string
           maintenance_mode?: boolean
+          max_payout?: number
           max_split_hands?: number
+          max_stake?: number
+          min_stake?: number
           name: string
           penetration?: number
           resplit_aces?: boolean
@@ -753,10 +701,11 @@ export type Database = {
           announcement?: string | null
           approved_by?: string | null
           auto_stand_on_21?: boolean
+          blackjack_payout?: number
           change_reason?: string | null
+          chip_values?: number[]
           created_at?: string
           created_by?: string | null
-          daily_entry_allocation?: number
           daily_hand_limit?: number
           dealer_hits_soft_17?: boolean
           dealer_peek?: boolean
@@ -768,7 +717,10 @@ export type Database = {
           hit_split_aces?: boolean
           id?: string
           maintenance_mode?: boolean
+          max_payout?: number
           max_split_hands?: number
+          max_stake?: number
+          min_stake?: number
           name?: string
           penetration?: number
           resplit_aces?: boolean
@@ -6657,23 +6609,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      arcade_bj_ensure_entries: {
-        Args: { p_user: string }
-        Returns: {
-          bonus_available: number
-          created_at: string
-          daily_available: number
-          daily_reset_date: string
-          updated_at: string
-          user_id: string
-        }
-        SetofOptions: {
-          from: "*"
-          to: "arcade_bj_entry_balances"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
       arcade_bj_expire_hands: { Args: never; Returns: number }
       arcade_bj_hit: {
         Args: {
@@ -6731,6 +6666,7 @@ export type Database = {
         Args: {
           p_client_seed: string
           p_idempotency_key: string
+          p_stake: number
           p_user: string
         }
         Returns: string

@@ -110,8 +110,9 @@ function AdminBlackjackPage() {
               Maintenance mode
             </div>
             <p className="text-xs text-[var(--color-ink-muted)]">
-              Rule version {rules?.version ?? "—"} · {rules?.daily_entry_allocation ?? "—"} free hands/day ·
-              limit {rules?.daily_hand_limit ?? "—"}/day
+              Rule version {rules?.version ?? "—"} · stakes {rules?.min_stake ?? "—"}–
+              {rules?.max_stake ?? "—"} pts · limit {rules?.daily_hand_limit ?? "—"} hands/day
+
             </p>
           </div>
           <Button
