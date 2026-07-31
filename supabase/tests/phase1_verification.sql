@@ -163,5 +163,32 @@ BEGIN
   RAISE NOTICE 'PASS T6 all 8 products have settlement journal guards';
 END $$;
 
+-- ---------------------------------------------------------------------------
+-- T7. COVERAGE MATRIX: every product guard must journal a losing terminal
+--     state and a void/abandoned terminal state, plus a reversal path.
+-- ---------------------------------------------------------------------------
+DO $$
+DECLARE r record; d text; term text; open_ text; rev text; bad text := '';
+BEGIN
+  FOR r IN
+    SELECT t.tgrelid::regclass::text AS tbl, pg_get_triggerdef(t.oid) AS def
+    FROM pg_trigger t
+    WHERE NOT t.tgisinternal AND t.tgfoid = 'public.settlement_journal_guard'::regproc
+  LOOP
+    d := r.def;
+    term  := split_part(d, '''', 6);
+    open_ := split_part(d, '''', 8);
+    rev   := split_part(d, '''', 10);
+    IF NOT (term ILIKE '%los%') THEN bad := bad || r.tbl || ' (no losing state); '; END IF;
+    IF NOT (term ILIKE '%void%' OR term ILIKE '%expired%' OR term ILIKE '%refunded%')
+      THEN bad := bad || r.tbl || ' (no void/abandoned state); '; END IF;
+    IF COALESCE(open_,'') = '' AND COALESCE(rev,'') = ''
+      THEN bad := bad || r.tbl || ' (no reversal path); '; END IF;
+    RAISE NOTICE 'coverage % -> terminal[%] open[%] reversed[%]', r.tbl, term, open_, rev;
+  END LOOP;
+  IF bad <> '' THEN RAISE EXCEPTION 'FAIL T7: %', bad; END IF;
+  RAISE NOTICE 'PASS T7 coverage matrix: loss, void/abandoned and reversal covered for all products';
+END $$;
+
 ROLLBACK;
 \echo 'Phase 1 extended verification: all blocks passed (transaction rolled back)'
