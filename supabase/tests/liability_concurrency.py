@@ -163,9 +163,18 @@ SELECT count(*) FROM pg_stat_activity
     C.send("BEGIN;")
     C.send(f"SELECT 'MID|' || (SELECT status FROM public.accounting_liability_reservations "
            f"WHERE reference_type='arcade_treasure_round' AND reference_id='{round_id}');")
-    C.send(f"""CREATE TEMP TABLE p6settle AS SELECT public.arcade_treasure_collect('{user}','{round_id}',
-      (SELECT state_version FROM public.arcade_treasure_rounds WHERE id='{round_id}'),
-      'p6-collect-{uuid.uuid4()}') AS r;""")
+    C.send(f"""DO $p6$
+DECLARE v_status text; v_ver int;
+BEGIN
+  SELECT status, state_version INTO v_status, v_ver
+    FROM public.arcade_treasure_rounds WHERE id='{round_id}';
+  PERFORM public.arcade_treasure_reveal_tile('{user}','{round_id}', 0, v_ver, 'p6-reveal-{uuid.uuid4()}');
+  SELECT status, state_version INTO v_status, v_ver
+    FROM public.arcade_treasure_rounds WHERE id='{round_id}';
+  IF v_status IN ('ACTIVE','COLLECTING') THEN
+    PERFORM public.arcade_treasure_collect('{user}','{round_id}', v_ver, 'p6-collect-{uuid.uuid4()}');
+  END IF;
+END $p6$;""")
     C.send(f"""SELECT 'HANDOFF|'
       || (SELECT status FROM public.accounting_liability_reservations
            WHERE reference_type='arcade_treasure_round' AND reference_id='{round_id}')
