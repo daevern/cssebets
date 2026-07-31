@@ -683,6 +683,10 @@ when `referrals.stage` advances to `rewarded`.
 
 ## 16. Cross-References
 
+- [`docs/accounting/`](./accounting/) — phase-by-phase accounting
+  specifications (`phase1-verification.md` … `phase10-automated-tests.md`).
+
+
 - [`RUNBOOK.md`](./RUNBOOK.md) — operational procedures (approving
   payouts, handling stuck settlements, rotating API keys).
 - [`BACKUP_RECOVERY.md`](./BACKUP_RECOVERY.md) — DB backup schedule,
