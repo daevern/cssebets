@@ -9,6 +9,46 @@
 
 ---
 
+## 0. Document Authority & Status Conventions
+
+This document is descriptive, not normative. Where this file and the
+code/database disagree, **the code and database win** — and the
+disagreement is a bug in this file, to be fixed in the same PR.
+
+### 0.1 Status legend
+
+Every capability below is tagged with one of:
+
+| Tag | Meaning |
+|---|---|
+| **LIVE** | Running in production and authoritative for real money. |
+| **SHADOW** | Running and writing data, but not yet authoritative; a legacy path still decides. |
+| **LEGACY** | Still authoritative today, but scheduled for replacement. |
+| **PLANNED** | Specified and/or scaffolded, not in effect. |
+
+Untagged text is LIVE.
+
+### 0.2 Canonical source for every financial and risk value
+
+Exactly one source per value. Anything else that appears to hold the
+same number is a derived cache or a display convenience and must never
+be used for a decision.
+
+| Value | Canonical source | Notes |
+|---|---|---|
+| User points balance | `wallet_transactions` (append-only ledger) | `wallets.balance` is a maintained cache; `run_reconciliation_check` proves the two agree. |
+| House bankroll | `platform_bankroll` row `kind='live'`, `is_active=true` (id=1) | id=2 is `kind='simulation'`. Never summed together. |
+| House P/L | `accounting_pl_report()` over posted journals | Only covers journal-enabled products (§7.6). `platform_bankroll.total_stakes_collected / total_payouts_paid` are LEGACY lifetime counters. |
+| Reserved liability (arcade) | `accounting_liability_reservations` (active, `liability_enforced`) | Authoritative for placement capacity. |
+| Worst-case exposure (sports) | `getRiskDashboard` recomputation from pending `predictions` | LEGACY. `matches.worst_case_exposure` / `*_liability` are denormalised caches refreshed on placement. |
+| Available bankroll | `accounting_available_reserve(env)` | `bankroll − active enforced reservations − outstanding payables`. See §7.3 for the older sports-only figure. |
+| Displayed odds | `match_market_odds` (football), `f1_race_markets`, `ufc_fight_markets` | `matches.reference_odds` is the drift-check copy used at placement only. |
+| Price a ticket was struck at | `predictions.odds` + bound `match_odds_snapshots.id` | Immutable after placement. |
+| Risk limits / kill switches | `platform_settings` row `id=1` | Live values, not code defaults (§7.1). |
+| Monetary rounding | `acct_round_money/stake/payout/liability` (DB) | `src/lib/accounting/money.ts` is a mirror for display; the DB decides. |
+
+---
+
 ## 1. Product Overview
 
 CSSEBets is a **points-based prediction market** covering **football
