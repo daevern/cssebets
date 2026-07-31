@@ -8,6 +8,9 @@ export const RATE_LIMITS = {
   proof_upload: { max: 5, windowSeconds: 3600 },
   support_message: { max: 20, windowSeconds: 600 },
   auth_attempt: { max: 10, windowSeconds: 600 },
+  arcade_drop: { max: 30, windowSeconds: 60 },
+  arcade_spin: { max: 30, windowSeconds: 60 },
+  arcade_treasure: { max: 60, windowSeconds: 60 },
 } as const;
 
 export type RateLimitAction = keyof typeof RATE_LIMITS;
