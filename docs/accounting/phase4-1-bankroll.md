@@ -103,3 +103,71 @@ drift 0.00, pending/error 0, trial-balance imbalance 0.00,
 - Control view: `v_accounting_plinko_bankroll_control` (service-role only).
 
 Other products remain on legacy logic with their flags disabled.
+
+## 7. Phase 4.1 closure controls
+
+### 7.1 Liability formula (documented, intentionally conservative)
+
+The exact economic bound is
+
+```
+max net liability = max(0, max gross payout − stake) <= available reserve before stake
+```
+
+equivalently `max gross payout <= reserve after stake collection`.
+
+`arcade_place_plinko_drop` deliberately enforces the stricter
+
+```
+max gross payout <= available reserve before stake
+```
+
+which **understates available capacity by exactly the stake** (a 50-stake / 3x board is
+rejected at a 100 reserve even though it is economically covered). Kept as a conservative
+risk policy; the comment in the function records the exact bound so it can be relaxed
+later without re-deriving it.
+
+### 7.2 Concurrent exposure locking — verified
+
+`accounting_available_reserve(env)` was a `STABLE` read with no locking, so two
+simultaneous drops could both pass on the same reserve. Replaced in the drop path by
+`accounting_available_reserve_locked(env)` (VOLATILE, service-role only), which:
+
+1. takes `pg_advisory_xact_lock('accounting_reserve:<env>')`, and
+2. takes `FOR UPDATE` on the `HOUSE_BANKROLL` / `PAYOUTS_PAYABLE` balance rows —
+   the same rows `accounting_post_journal` updates,
+
+both held until the drop transaction commits (accept **and** settle). The second
+request therefore evaluates the reserve *after* the first has committed its stake and
+payout journals, and is rejected if the remaining reserve is insufficient. No negative
+reserve or overcommitted payout is reachable.
+
+Verified with two genuinely concurrent backend sessions (both fired at the same second):
+
+| Session | started | acquired | released | wait |
+| --- | --- | --- | --- | --- |
+| B | 13:24:00.241 | 13:24:00.304 | 13:24:05.306 | 0.06 s |
+| A | 13:24:00.243 | 13:24:05.312 | 13:24:10.315 | **5.07 s** |
+
+A blocked for the full hold of B and only then read the reserve — serialised, not
+racing. The probe table and probe function were dropped after the test.
+
+### 7.3 `PLINKO_PL_TO_RESERVE` excluded from P/L
+
+It is an `EQUITY` closing/clearing account, never revenue or expense. New view
+`v_accounting_platform_pl` (service-role only) computes
+
+```
+platform_pl = REVENUE − EXPENSE
+```
+
+and explicitly excludes `PLINKO_PL_TO_RESERVE`, exposing its balance only as
+`excluded_transfer_clearing` for control purposes. Current state:
+
+| Env | revenue | expense | platform P/L | Δ HOUSE_BANKROLL |
+| --- | --- | --- | --- | --- |
+| SIMULATION | 1.00 | 0.40 | 0.60 | +0.60 ✓ |
+| PRODUCTION | 101.00 | 98.90 | 2.10 | +2.10 ✓ |
+
+The invariant `REVENUE − EXPENSE = Δ HOUSE_BANKROLL` holds in both live environments,
+and the transfer account cannot be double counted.
