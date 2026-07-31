@@ -94,6 +94,7 @@ export function HamburgerMenu() {
 
   const items = [
     { key: "store", label: "Store", Icon: ShoppingBag, onClick: () => pick(() => navigate({ to: "/store" })) },
+    { key: "arcade", label: "Arcade", Icon: Gamepad2, onClick: () => pick(() => navigate({ to: "/arcade/plinko" })) },
     { key: "tokens", label: "Tokens", Icon: TokenMark, onClick: () => pick(() => setTokensOpen(true)) },
     { key: "notifications", label: "Alerts", Icon: Bell, onClick: () => pick(() => navigate({ to: "/notifications" })) },
     { key: "profile", label: "Profile", Icon: User, onClick: () => pick(() => navigate({ to: "/settings" })) },
