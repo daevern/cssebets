@@ -522,21 +522,24 @@ settlements page and can be scheduled via the reconciliation hook.
 
 ### 7.1 Platform settings
 
-Row `id=1` in `platform_settings`:
+Row `id=1` in `platform_settings` is the **only** authority for risk
+limits. Code defaults exist purely as a fallback if the row can't be
+read, and they are not the operating values. The "Live" column below is
+a snapshot taken 2026-07-31 — re-read the row rather than trusting it.
 
-| Field | Default | Purpose |
-|---|---|---|
-| `margin_pct` | 25 | House overround target |
-| `apply_margin_to_real` | true | Off = raw fair odds |
-| `exposure_cap_pct` | 0.6 | `worst_case_liability ≤ bankroll × this` |
-| `max_stake_per_bet` | 5000 | Hard cap per ticket (0 = off) |
-| `max_potential_payout` | 50000 | Hard cap on stake × odds |
-| `bets_paused` | false | Global kill switch |
-| `correct_score_disabled` | false | Retail-abuse market kill |
-| `high_odds_disabled` | false | Reject longshots |
-| `high_odds_threshold` | 50 | Threshold for above |
-| `disabled_markets` | `{}` | Per-market kill switch (text[]) |
-| `max_bets_per_user_per_match` | 0 | 0 = unlimited |
+| Field | Code fallback | Live (2026-07-31) | Purpose |
+|---|---|---|---|
+| `margin_pct` | 25 | 25 | House overround target |
+| `apply_margin_to_real` | true | **false** | False = raw fair odds, zero house edge |
+| `exposure_cap_pct` | 0.6 | 0.6 | `worst_case_liability ≤ bankroll × this` |
+| `max_stake_per_bet` | 5000 | **50000** | Hard cap per ticket (0 = off) |
+| `max_potential_payout` | 50000 | **100000** | Hard cap on stake × odds |
+| `bets_paused` | false | false | Global kill switch |
+| `correct_score_disabled` | false | false | Retail-abuse market kill |
+| `high_odds_disabled` | false | false | Reject longshots |
+| `high_odds_threshold` | 50 | 50 | Threshold for above |
+| `disabled_markets` | `{}` | `{}` | Per-market kill switch (text[]) |
+| `max_bets_per_user_per_match` | 0 | 0 | 0 = unlimited |
 
 All controls live on **`/management/admin/risk-settings`**
 (`admin.risk-settings.tsx`), which also surfaces the last 24 h of
