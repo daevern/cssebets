@@ -200,9 +200,8 @@ SELECT count(*) FROM pg_stat_activity
 
 finally:
     # ------------------------------------------------------------ teardown --
-    psql(f"DELETE FROM public.accounting_liability_reservations WHERE reference_type='p6_concurrency_squeeze'")
-    if round_id:
-        psql(f"UPDATE public.arcade_treasure_rounds SET status='VOID' WHERE id='{round_id}' AND status<>'VOID'")
+    psql("SELECT public.accounting_liability_test_cleanup('p6_concurrency_squeeze'"
+         + (f", '{round_id}')" if round_id else ", NULL)"))
 
 bal_end = psql(f"SELECT balance FROM public.wallets WHERE user_id='{user}'")
 avail_end = float(psql(f"SELECT public.accounting_available_reserve('{ENV}')"))
