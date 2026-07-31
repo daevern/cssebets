@@ -31,17 +31,7 @@ function ArcadeLayout() {
   const { pathname } = useLocation();
   return (
     <div className="mx-auto w-full max-w-4xl px-3 pb-24 pt-3 md:px-6 md:pt-6">
-      <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Trophy className="h-4 w-4 text-[var(--color-neon)]" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
-            Arcade
-          </span>
-          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-            / Provably fair
-          </span>
-        </div>
-      </header>
+
 
       <nav
         aria-label="Arcade sections"
