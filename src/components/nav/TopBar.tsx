@@ -74,8 +74,11 @@ function MobileBar({ balance: _balance, loading: _loading }: { balance?: number 
 
 function DesktopBar({ balance, loading }: { balance?: number | null; loading?: boolean }) {
   const { pathname } = useLocation();
+  const { user } = useAuth();
+  const isGuest = !user || (user as any)?.is_anonymous === true;
   return (
     <div className="mx-auto hidden h-16 w-full max-w-7xl items-center gap-8 px-8 md:flex lg:h-[68px] lg:px-10">
+
       {/* Brand */}
       <Link
         to="/dashboard"
@@ -139,7 +142,19 @@ function DesktopBar({ balance, loading }: { balance?: number | null; loading?: b
         >
           <User className="h-[18px] w-[18px]" />
         </Link>
+
+        {isGuest && (
+          <Link
+            to="/auth"
+            className="flex h-10 items-center justify-center rounded-full border border-[var(--neon)]/60 bg-[var(--neon)]/10 px-4 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--neon)] transition-colors hover:bg-[var(--neon)]/20"
+          >
+            Log in
+          </Link>
+        )}
+
+        <HamburgerMenu />
       </div>
     </div>
   );
 }
+
