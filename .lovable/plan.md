@@ -1,136 +1,115 @@
-## Arcade-Only Transfer Plan (v2.3 → Match Predictor Pro)
+# Blackjack-only transfer plan (v2.3 → Match Predictor Pro)
 
-Match Predictor Pro (MPP) stays the source of truth. Nothing existing is replaced; only additive Arcade files plus a handful of surgical one-line edits.
+## Critical conflict found (must be resolved during transfer)
 
-The Arcade in v2.3 is three virtual-points games — **Plinko**, **Roulette**, **Treasure** — plus history, stats, achievements, challenges, cosmetics, leaderboards, events, and an admin console.
+The v2.3 Blackjack build **stakes real wallet points**: `startBlackjackHand` takes a `stake`, the RPC debits `wallets`, and hands carry `total_stake` / `total_payout` / `user_net`, with error codes `INSUFFICIENT_BALANCE`, `BELOW_MIN_STAKE`, `EXPOSURE_LIMIT`. That contradicts requirement 7 (non-monetary, score-only).
 
----
+Resolution used throughout this plan: transfer the game engine, state machine, provable-fairness and UI, but **strip every wallet path**. Blackjack in MPP will run on a **free daily attempt allowance** (configurable, e.g. 25 hands/day) tracked in its own ledger, and award only non-redeemable Blackjack score. `wallets` and `wallet_transactions` are never touched. Stake/payout columns are dropped in favour of `attempts_used` + `score_awarded`.
 
-### 1. Arcade files to ADD (copied verbatim, no MPP file overwritten)
+## 1. Blackjack files to add (copied, then monetised)
 
-**Routes — player (`src/routes/_authenticated/`)**
-`arcade.tsx` (layout + sub-nav), `arcade.index.tsx`, `arcade.plinko.tsx`, `arcade.roulette.tsx`, `arcade.treasure.tsx`, `arcade.history.tsx`, `arcade.roulette-history.tsx`, `arcade.stats.tsx`, `arcade.roulette-stats.tsx`, `arcade.treasure-stats.tsx`, `arcade.achievements.tsx`, `arcade.challenges.tsx`, `arcade.cosmetics.tsx`, `arcade.leaderboards.tsx`
+- `src/lib/arcade/blackjack-math.ts` — hand value engine, card labels (pure, no deps)
+- `src/lib/arcade/blackjack.functions.ts` — player server fns
+- `src/lib/arcade/blackjack-phase2.functions.ts` — verify / history / stats
+- `src/lib/arcade/blackjack-admin.functions.ts` — admin overview, hand list, risk flags, resolve, publish configs
+- `src/lib/arcade/__tests__/blackjack-math.test.ts` — engine tests
+- `src/components/arcade/PlayingCard.tsx`
+- `src/components/arcade/BlackjackTable.tsx`
+- `src/components/arcade/BlackjackVerifyDialog.tsx`
+- `src/components/arcade/CasinoChip.tsx` — only if kept; with no stakes the chip rail becomes a "free hand" indicator, so this may be dropped
+- `src/routes/_authenticated/arcade.blackjack.tsx` — the table (`/arcade/blackjack`)
+- `src/routes/_authenticated/arcade.blackjack-stats.tsx` — stats + history (`/arcade/blackjack-stats`)
+- `src/routes/management/admin.blackjack.tsx` — admin console (MPP has no `admin.arcade.*` shell, so this is a standalone admin page rather than v2.3's `admin.arcade.blackjack.tsx`)
 
-**Routes — admin (`src/routes/management/`)**
-`admin.arcade.tsx`, `admin.arcade.index.tsx`, `admin.arcade.profiles.tsx`, `admin.arcade.roulette.tsx`, `admin.arcade.treasure.tsx`, `admin.arcade.cosmetics.tsx`, `admin.arcade.events.tsx`, `admin.arcade.grants.tsx`
+## 2. Existing MPP files needing small, additive edits
 
-**Components (`src/components/arcade/`)**
-`PlinkoBoard.tsx`, `RouletteBoard.tsx`, `RouletteWheel.tsx`, `TreasureGrid.tsx`, `VerifyDialog.tsx`, `RouletteVerifyDialog.tsx`, `TreasureVerifyDialog.tsx`, `HowItWorksDialog.tsx`, `types.ts`
+- `src/routes/_authenticated/arcade.tsx` — add a "Blackjack" tab to the existing tab array (Lobby / Plinko / Roulette / Treasure)
+- `src/routes/_authenticated/arcade.index.tsx` — add a fourth lobby card with Play + How to play
+- `src/components/arcade/HowToPlayDialog.tsx` — add the `blackjack` instruction block
+- `src/components/arcade/GameArt.tsx` — add a `BlackjackArt` SVG scene for the lobby tile
+- `src/lib/rate-limit.functions.ts` — add `blackjack_action: { max: 60, windowSeconds: 60 }`
+- `src/components/nav/TopBar.tsx` — desktop nav: Blackjack entry (Arcade stays)
+- `src/components/nav/HamburgerMenu.tsx` — Blackjack entry
+- `src/routes/management/admin.tsx` — admin nav link to Blackjack
+- `src/integrations/supabase/types.ts` — regenerated automatically after migration (not hand-edited)
 
-**Server functions / utils (`src/lib/arcade/`)**
-`plinko.functions.ts`, `plinko-phase2.functions.ts`, `plinko-admin.functions.ts`, `plinko-cosmetics.functions.ts`, `roulette.functions.ts`, `roulette-phase2.functions.ts`, `roulette-admin.functions.ts`, `roulette-math.ts`, `treasure.functions.ts`, `treasure-phase2.functions.ts`, `treasure-admin.functions.ts`, `treasure-math.ts`
+`src/components/nav/BottomNav.tsx` is **not** touched.
 
-**Tests (`src/lib/arcade/__tests__/`)**
-`roulette-math.test.ts`, `treasure-math.test.ts`
+## 3. Shared arcade modules — copy only what Blackjack needs
 
-Each copied file is reviewed on the way in so imports resolve against MPP's existing modules (auth middleware, wallet helpers, UI kit, rate limiter) rather than pulling extra v2.3 files.
+Blackjack reuses only already-present MPP infrastructure: `requireSupabaseAuth`, `enforceRateLimit`, `has_role` / `user_roles`, `audit_log` / `create_audit_log`, `CsseMark`, sonner, shadcn dialog. No Plinko/Roulette/Treasure module is imported. `arcade_randomness_seeds`, `arcade_score_*`, `arcade_achievements`, `arcade_challenges` already exist in MPP; Blackjack achievements/challenges are added as **rows/handlers keyed to blackjack**, not new frameworks. `src/components/arcade/types.ts` gets Blackjack types appended only if needed.
 
----
+## 4. Explicitly excluded
 
-### 2. Existing MPP files needing SMALL, targeted edits
+Plinko, Roulette, Treasure files and admin pages; `arcade.achievements/challenges/cosmetics/history/leaderboards/stats/roulette-*/treasure-*` routes; `admin.arcade.*` shell, cosmetics, events, grants, profiles pages; `README.md`; `.lovable/plan.md`; all DEV env vars, Supabase project ids, secrets; DEV users, gameplay rows, hard-coded ids, test balances; the DEV 1,000-point top-up migration; the full v2.3 migration sequence.
 
+## 5. Routes
 
-| File                                   | Edit                                                                                                    |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `src/components/nav/BottomNav.tsx`     | Append one Arcade entry at the end of the existing items array. Existing order untouched.               |
-| `src/components/nav/TopBar.tsx`        | Append one Arcade link at the end of the desktop nav array.                                             |
-| `src/components/nav/HamburgerMenu.tsx` | Add a single Arcade item to the scrollable section (placed after existing items).                       |
-| `src/routes/management/admin.tsx`      | Add one Arcade link to the admin sidebar/menu list.                                                     |
-| `src/lib/rate-limit.functions.ts`      | Add `arcade_drop` / `arcade_spin` / `arcade_dig` windows to the limits map. No existing limits changed. |
-| `src/integrations/supabase/types.ts`   | Regenerated automatically after the Arcade migrations — additive only.                                  |
-| `src/routeTree.gen.ts`                 | Regenerated by the router plugin — never hand-edited.                                                   |
+- `/arcade/blackjack` (authenticated)
+- `/arcade/blackjack-stats` (authenticated — history + stats)
+- `/management/admin/blackjack` (admin + super_admin)
 
+## 6. Database (single fresh consolidated migration, additive only)
 
-MPP's homepage, dashboard, landing page, wallet, auth, and admin layouts are otherwise untouched.
+Enums: `bj_hand_status`, `bj_ph_status`, `bj_result`, `bj_action`, `bj_config_status`.
 
----
+Tables (all `public`, each with GRANTs → RLS → policies):
 
-### 3. Dependencies
+- `arcade_bj_rule_configs` — versioned rules (deck_count, penetration, dealer_hits_soft_17, peek, double/split rules, action_timeout, **daily_hand_limit / free attempt allowance**, maintenance_mode, announcement). Stake/payout/exposure columns removed. `SELECT` to authenticated where `status='active'` or admin.
+- `arcade_bj_score_configs` — natural blackjack / win / five-card / double / split / push / loss scores, `max_score_per_round`. Same policy.
+- `arcade_bj_shoes` — server seed, seed hash, client seed, nonce, `card_order`, current_index, status. **service_role only**, no authenticated grant.
+- `arcade_bj_hands` — user, shoe, status, result, dealer totals/flags, `total_score_awarded`, config ids/versions, `state_version`, `action_sequence`, `idempotency_key`, `expires_at`. `UNIQUE (user_id, idempotency_key)`; partial unique index enforcing one active hand per user. Own-row SELECT + admin.
+- `arcade_bj_player_hands` — hand_index, parent split id, status/result, totals, soft/bust/blackjack/doubled/split-ace flags, score.
+- `arcade_bj_cards` — shoe position, deal_sequence, owner_type, rank/suit/value, `face_up`. RLS exposes only own `face_up = true` rows; hole card flips at settlement (server fns also mask via `supabaseAdmin` reads).
+- `arcade_bj_actions` — action, sequence, state_version before/after, card drawn, totals, idempotency key. Own-row read.
+- `arcade_bj_attempts` — free-attempt ledger (daily grant, consume, admin grant/revoke) replacing v2.3's wallet debit.
+- `arcade_bj_score_balances` — non-redeemable per-user total score.
+- `arcade_bj_errors` — server error log, admin/service only.
 
-**None to install.** MPP's `package.json` already matches v2.3 exactly, including `framer-motion`, `recharts`, `html-to-image`, `vitest`, and `zod`. No `package.json` change is required.
+No existing table is altered, dropped, truncated or reseeded. Two config seed rows (`standard` v1 rules + scoring) are the only inserts.
 
----
+## 7. RPCs (SECURITY DEFINER, `SET search_path = public`) and server functions
 
-### 4. Routes & navigation added
+RPCs: `arcade_bj_touch_updated_at`, `arcade_bj_build_shoe` (HMAC-SHA256 + Fisher–Yates in Postgres — no `Math.random()` anywhere authoritative), `arcade_bj_start_hand`, `arcade_bj_hit`, `arcade_bj_stand`, `arcade_bj_double`, `arcade_bj_split`, `arcade_bj_settle`, `arcade_bj_expire_hands`, `arcade_bj_reveal_shoe`, `arcade_bj_admin_resolve_hand`, `arcade_bj_publish_rule_config`, `arcade_bj_publish_score_config`, `arcade_bj_ensure_daily_attempts`.
 
-```text
-/arcade                     hub
-/arcade/plinko  /arcade/roulette  /arcade/treasure
-/arcade/history /arcade/roulette-history
-/arcade/stats   /arcade/roulette-stats  /arcade/treasure-stats
-/arcade/achievements  /arcade/challenges
-/arcade/cosmetics     /arcade/leaderboards
-/management/admin/arcade  (+ index, profiles, roulette, treasure, cosmetics, events, grants)
-```
+Every action RPC takes `(p_user, p_hand, p_player_hand, p_state_version, p_idempotency_key)` and is idempotent: replaying an idempotency key returns the existing state, and a stale `state_version` raises `STALE_STATE`. Illegal transitions raise `ACTION_NOT_ALLOWED`.
 
-All player routes live under the existing `_authenticated` gate; all admin routes under the existing `management` gate. Arcade is appended last in every menu.
+Server functions (all `.middleware([requireSupabaseAuth])`, Zod-validated, rate-limited): `getBlackjackConfig`, `getBlackjackProfile`, `getActiveBlackjackHand`, `getBlackjackHand`, `startBlackjackHand` (no stake argument), `hitBlackjack`, `standBlackjack`, `doubleBlackjack`, `splitBlackjack`, `revealBlackjackShoe`, `getBlackjackHistory`, `getBlackjackStats`; admin: `getBlackjackAdminOverview`, `listBlackjackHands`, `getBlackjackRiskFlags`, `resolveBlackjackHand`, `publishBlackjackRules`, `publishBlackjackScoring`.
 
----
+The client may submit only: hand id, player-hand id, action, state version, client seed, idempotency key. Never cards, totals or results.
 
-### 5. Database migrations (new, additive, PROD-safe)
+## 8. Admin functionality
 
-v2.3's Arcade schema is spread over ~14 dev migrations that iterate on each other (the Plinko drop RPC was rewritten four times). Rather than replay that history, I'll write **3–4 fresh consolidated migrations** representing only the final state:
+Overview (hands today, active hands, result mix, score awarded, live rule/score version, maintenance toggle); hand explorer with filters and full action trail; risk flags (abnormal win rate, stale-state spam, rapid actions); void/reverse a hand (claws back score, never money); publish new rule and score config versions with `change_reason`, written to `audit_log`.
 
-1. **Core** — enums (`arcade_risk_mode`, `arcade_outcome`, `arcade_score_band`, `arcade_drop_txn_type`, `arcade_profile_status`, `arcade_roulette_status`, `arcade_cosmetic_unlock`, treasure enums); tables `arcade_score_profiles`, `arcade_score_profile_slots`, `arcade_randomness_seeds`, `arcade_plinko_games`, `arcade_drop_balances`, `arcade_drop_transactions`, `arcade_score_transactions`; provably-fair helpers (`arcade_generate_path`, `arcade_score_band_for`, `arcade_ensure_daily`) and the final stake-based `arcade_place_plinko_drop` RPC.
-2. **Roulette** — `arcade_roulette_configurations`, `arcade_roulette_spins`, `arcade_roulette_bets` + spin RPC.
-3. **Treasure** — `arcade_treasure_configurations`, games/tiles tables + dig RPC.
-4. **Progression** — `arcade_challenges`, `arcade_challenge_progress`, `arcade_achievements`, `arcade_achievement_unlocks`, `arcade_cosmetics`, `arcade_user_cosmetics`, `arcade_events`, the `arcade_progress_on_drop` trigger, leaderboard indexes.
+## 9. Dependencies
 
-Every table follows CREATE → GRANT → ENABLE RLS → POLICY, reusing MPP's `has_role()` and `update_updated_at_column()`. Game RPCs are `SECURITY DEFINER`, `EXECUTE` revoked from `anon`/`authenticated`, granted to `service_role` only. Server seeds stay unreadable pre-reveal.
+None new — `zod`, `@tanstack/react-query`, `@tanstack/react-start`, `sonner`, `lucide-react`, `recharts` (stats chart) and shadcn dialog are already installed.
 
-Seed rows: only **configuration** rows (score profiles/slots, roulette + treasure configs, challenge/achievement/cosmetic catalogs). **No user rows, no balances, no point grants.**
+## 10. Conflicts between v2.3 and MPP
 
-No existing MPP migration is edited. No existing table is altered destructively.
+1. **Wallet staking** (above) — de-monetised.
+2. MPP has no `admin.arcade.*` shell → standalone `admin.blackjack.tsx`.
+3. `RATE_LIMITS` in MPP lacks `blackjack_action` → additive key.
+4. v2.3 `arcade.tsx` tab list and lobby differ from MPP's → merge tabs, do not overwrite files.
+5. v2.3 `CsseMark` / `HowToPlayDialog` / `GameArt` differ → MPP versions win, Blackjack additions merged in.
+6. `types.ts` is generated per project → never copied.
 
----
+## 11. Testing checklist
 
-### 6. Existing PROD systems reused (not duplicated)
+- Unit: `blackjack-math` totals, soft/hard aces, blackjack detection, split/double eligibility, dealer soft-17.
+- Deal → hit → bust; deal → stand → dealer play → settle; double; split incl. split aces; natural blackjack; push.
+- Idempotency: replay the same key on deal/hit/stand/double/split → no duplicate card, no duplicate score.
+- Stale `state_version` → rejected with a clean toast, UI refreshes.
+- Hole card: confirm the network payload contains `rank: null` until settlement; direct PostgREST read of `arcade_bj_cards` / `arcade_bj_shoes` as another user returns nothing.
+- Free attempts: allowance decrements, exhaustion blocks a new deal, daily reset works; `wallets` and `wallet_transactions` show **zero** rows created by Blackjack.
+- Rate limit trips at the configured threshold.
+- Admin: void a hand → score clawed back, audit row written; publish rule/score version → new active version, old archived.
+- Regression: dashboard, /matches, /f1, /ufc, picks, wallet, payouts, existing arcade games, management console all unchanged; mobile bottom nav unchanged; SEO heads intact.
+- Mobile-first check of the table at ~390px width.
 
-Supabase auth + `requireSupabaseAuth` middleware · `user_roles` / `has_role()` / admin gate · `profiles` · `wallets` + `wallet_transactions` (Arcade stakes/scores go through MPP's existing points wallet) · `audit_log` · `rate_limits` · shadcn UI kit + neon branding · `platform_settings` for timezone/allocation.
+## 12. Rollback procedure
 
----
-
-### 7. Conflicts between v2.3 and MPP, and how each is resolved
-
-1. **Bottom nav is full (4 slots).** v2.3 replaced a slot. MPP keeps its current 4 and gets Arcade appended —  Arcade becomes a 5th bottom-nav slot and also lives in the hamburger + top bar.
-2. **Wallet coupling.** v2.3's final Plinko RPC debits its points wallet directly. It will be re-pointed at MPP's `wallets` / `wallet_transactions` with a new `arcade` `wallet_ref_type` value rather than a parallel ledger.
-3. `**arcade_ensure_daily` has two conflicting signatures in dev history.** Only the final 2-arg version ships.
-4. **Terminology.** Arcade uses "drop / spin / dig / score" — never "bet/stake/payout" — to keep it clearly non-monetary.
-5. `**platform_settings` column additions** for arcade config: added as new nullable columns with defaults, no existing column touched.
-6. `**src/routes/brand.tsx**` in MPP contains the word "arcade" in copy only — unrelated, untouched.
-
----
-
-### 8. Explicitly EXCLUDED
-
-`README.md` · `.lovable/plan.md` · `.env` and all DEV env values · DEV Supabase project id/keys/secrets · all 271 v2.3 migrations (referenced only, never copied) · the DEV 1,000-point top-up migration · any migration touching football/F1/UFC/wallet/email/auth · DEV user rows, wallets, bets, test records, hard-coded user IDs · v2.3 versions of `dashboard.tsx`, `index.tsx`, `route.tsx`, `__root.tsx`, `start.ts`, `vite.config.ts`, `package.json`, `supabase/config.toml`, `src/integrations/*` · v2.3 sports/wallet/admin files.
-
----
-
-### 9. Testing checklist
-
-- Typecheck + `vitest run` (roulette & treasure math tests pass).
-- Every existing route still renders: `/`, `/dashboard`, `/matches`, `/f1/races`, `/ufc/fights`, `/wallet`, `/my-predictions`, `/management/admin`.
-- Existing nav order unchanged; Arcade appears last.
-- Guest (anonymous) user: Arcade is browsable/gated per MPP's existing guest rules, no crash.
-- Plinko/Roulette/Treasure: stake debits wallet once, result deterministic from server path, verify dialog reproduces the outcome, idempotency key blocks double-submit.
-- Insufficient balance and rate-limit paths return clean errors.
-- Challenges/achievements progress after a game; leaderboards populate; cosmetics unlock.
-- Admin: arcade overview, profile CRUD, void/reverse, grants — all blocked for non-admins.
-- Security linter clean on new tables; confirm no `anon` read on seed/game tables.
-- Wallet ledger reconciles: sum of arcade transactions matches balance delta.
-- Mobile viewport pass on every Arcade page (project is mobile-first).
-
----
-
-### 10. Rollback procedure
-
-1. **Code:** revert via chat History to the pre-transfer version — Arcade files are all new, so removal is clean.
-2. **Nav/rate-limit edits:** single-line reverts in 5 files.
-3. **Database:** a prepared `arcade_rollback.sql` drops only `arcade_*` tables/functions/triggers/types in dependency order, plus the added `wallet_ref_type` enum value usage guard. No existing table, row, or policy is referenced.
-4. **Wallet safety:** if any Arcade transactions exist at rollback time, they remain in `wallet_transactions` as historical records (never deleted); only the arcade tables drop.
-5. Publishing/custom domain config is never touched, so rollback needs no re-publish beyond a normal deploy.
-
----
-
-**One decision needed before I start:** should Arcade take a 5th slot in the bottom nav, or appear only in the hamburger menu + desktop top bar (leaving the bottom nav exactly as it is today)?
+- Code: revert the Blackjack files and the small additive edits (nav entries, tab, rate-limit key) — no existing file is replaced, so reverting restores prior behaviour exactly.
+- Feature kill switch without a deploy: set `maintenance_mode = true` on the active rule config; the route shows a maintenance state and all RPCs refuse new hands.
+- Database: a companion down-migration drops only `arcade_bj_*` tables, enums and `arcade_bj_*` functions. Nothing else is dropped and no existing production data is touched, so rollback cannot affect wallets, predictions or accounts.

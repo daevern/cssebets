@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, Link, useLocation } from "@tanstack/react-router";
-import { Gamepad2, Trophy, Target, Gem } from "lucide-react";
+import { Gamepad2, Trophy, Target, Gem, Spade } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/arcade")({
@@ -25,6 +25,7 @@ const TABS = [
   { to: "/arcade/plinko", label: "Plinko", Icon: Gamepad2 },
   { to: "/arcade/roulette", label: "Roulette", Icon: Target },
   { to: "/arcade/treasure", label: "Treasure", Icon: Gem },
+  { to: "/arcade/blackjack", label: "Blackjack", Icon: Spade },
 ] as const;
 
 function ArcadeLayout() {

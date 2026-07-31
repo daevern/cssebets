@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Play, HelpCircle, Zap, Flame, Gem } from "lucide-react";
+import { Play, HelpCircle, Zap, Flame, Gem, Spade } from "lucide-react";
 import { HowToPlayDialog, HOW_TO_PLAY } from "@/components/arcade/HowToPlayDialog";
-import { PlinkoArt, RouletteArt, TreasureArt } from "@/components/arcade/GameArt";
+import { PlinkoArt, RouletteArt, TreasureArt, BlackjackArt } from "@/components/arcade/GameArt";
 
 export const Route = createFileRoute("/_authenticated/arcade/")({
   head: () => ({
@@ -64,6 +64,19 @@ const GAMES = [
     frame: "from-amber-400/20 via-[var(--color-surface)]/0 to-transparent",
     ring: "hover:border-amber-400/70",
     cta: "bg-amber-400 text-[#2a1500]",
+  },
+  {
+    key: "blackjack" as const,
+    to: "/arcade/blackjack",
+    label: "Blackjack",
+    blurb: "Free daily hands against the dealer. Hit 21, bank arcade score.",
+    tag: "Free to play",
+    TagIcon: Spade,
+    Art: BlackjackArt,
+    art: "text-sky-200",
+    frame: "from-sky-400/20 via-[var(--color-surface)]/0 to-transparent",
+    ring: "hover:border-sky-400/70",
+    cta: "bg-sky-400 text-[#04121c]",
   },
 ];
 

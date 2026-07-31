@@ -177,6 +177,815 @@ export type Database = {
         }
         Relationships: []
       }
+      arcade_bj_actions: {
+        Row: {
+          action: Database["public"]["Enums"]["bj_action"]
+          action_sequence: number
+          card_id: string | null
+          created_at: string
+          hand_id: string
+          id: string
+          idempotency_key: string | null
+          player_hand_id: string | null
+          source: string
+          state_version_after: number
+          state_version_before: number
+          total_after: number | null
+          total_before: number | null
+          user_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["bj_action"]
+          action_sequence: number
+          card_id?: string | null
+          created_at?: string
+          hand_id: string
+          id?: string
+          idempotency_key?: string | null
+          player_hand_id?: string | null
+          source?: string
+          state_version_after: number
+          state_version_before: number
+          total_after?: number | null
+          total_before?: number | null
+          user_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["bj_action"]
+          action_sequence?: number
+          card_id?: string | null
+          created_at?: string
+          hand_id?: string
+          id?: string
+          idempotency_key?: string | null
+          player_hand_id?: string | null
+          source?: string
+          state_version_after?: number
+          state_version_before?: number
+          total_after?: number | null
+          total_before?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_bj_actions_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_bj_cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arcade_bj_actions_hand_id_fkey"
+            columns: ["hand_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_bj_hands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arcade_bj_actions_player_hand_id_fkey"
+            columns: ["player_hand_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_bj_player_hands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arcade_bj_cards: {
+        Row: {
+          card_value: number
+          deal_sequence: number
+          dealt_at: string
+          face_up: boolean
+          hand_id: string
+          id: string
+          owner_type: string
+          player_hand_id: string | null
+          rank: number
+          revealed_at: string | null
+          shoe_id: string
+          shoe_position: number
+          suit: number
+        }
+        Insert: {
+          card_value: number
+          deal_sequence: number
+          dealt_at?: string
+          face_up?: boolean
+          hand_id: string
+          id?: string
+          owner_type: string
+          player_hand_id?: string | null
+          rank: number
+          revealed_at?: string | null
+          shoe_id: string
+          shoe_position: number
+          suit: number
+        }
+        Update: {
+          card_value?: number
+          deal_sequence?: number
+          dealt_at?: string
+          face_up?: boolean
+          hand_id?: string
+          id?: string
+          owner_type?: string
+          player_hand_id?: string | null
+          rank?: number
+          revealed_at?: string | null
+          shoe_id?: string
+          shoe_position?: number
+          suit?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_bj_cards_hand_id_fkey"
+            columns: ["hand_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_bj_hands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arcade_bj_cards_player_hand_id_fkey"
+            columns: ["player_hand_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_bj_player_hands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arcade_bj_cards_shoe_id_fkey"
+            columns: ["shoe_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_bj_shoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arcade_bj_entry_balances: {
+        Row: {
+          bonus_available: number
+          created_at: string
+          daily_available: number
+          daily_reset_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bonus_available?: number
+          created_at?: string
+          daily_available?: number
+          daily_reset_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bonus_available?: number
+          created_at?: string
+          daily_available?: number
+          daily_reset_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      arcade_bj_entry_ledger: {
+        Row: {
+          admin_id: string | null
+          balance_after: number
+          balance_before: number
+          created_at: string
+          entry_type: Database["public"]["Enums"]["bj_entry_txn"]
+          expires_at: string | null
+          game: string
+          hand_id: string | null
+          id: string
+          idempotency_key: string | null
+          quantity: number
+          reason: string | null
+          source: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          balance_after: number
+          balance_before: number
+          created_at?: string
+          entry_type: Database["public"]["Enums"]["bj_entry_txn"]
+          expires_at?: string | null
+          game?: string
+          hand_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          quantity: number
+          reason?: string | null
+          source?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          balance_after?: number
+          balance_before?: number
+          created_at?: string
+          entry_type?: Database["public"]["Enums"]["bj_entry_txn"]
+          expires_at?: string | null
+          game?: string
+          hand_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          quantity?: number
+          reason?: string | null
+          source?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      arcade_bj_errors: {
+        Row: {
+          correlation_id: string | null
+          created_at: string
+          details: Json
+          error_type: string
+          hand_id: string | null
+          id: string
+          message: string | null
+          resolution_status: string
+          severity: string
+          shoe_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          correlation_id?: string | null
+          created_at?: string
+          details?: Json
+          error_type: string
+          hand_id?: string | null
+          id?: string
+          message?: string | null
+          resolution_status?: string
+          severity?: string
+          shoe_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          correlation_id?: string | null
+          created_at?: string
+          details?: Json
+          error_type?: string
+          hand_id?: string | null
+          id?: string
+          message?: string | null
+          resolution_status?: string
+          severity?: string
+          shoe_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      arcade_bj_hands: {
+        Row: {
+          action_sequence: number
+          active_hand_index: number
+          client_seed: string
+          created_at: string
+          dealer_blackjack: boolean
+          dealer_bust: boolean
+          dealer_soft: boolean
+          dealer_total: number | null
+          expires_at: string
+          id: string
+          idempotency_key: string
+          last_action_at: string
+          nonce: number
+          resolution_reason: string | null
+          resolved_by: string | null
+          result: Database["public"]["Enums"]["bj_result"] | null
+          result_reason: string | null
+          rule_config_id: string
+          rule_version: number
+          score_config_id: string
+          score_version: number
+          server_seed_hash: string
+          settled_at: string | null
+          shoe_id: string
+          started_at: string
+          state_version: number
+          status: Database["public"]["Enums"]["bj_hand_status"]
+          total_score_awarded: number
+          updated_at: string
+          user_id: string
+          verification_id: string
+        }
+        Insert: {
+          action_sequence?: number
+          active_hand_index?: number
+          client_seed: string
+          created_at?: string
+          dealer_blackjack?: boolean
+          dealer_bust?: boolean
+          dealer_soft?: boolean
+          dealer_total?: number | null
+          expires_at?: string
+          id?: string
+          idempotency_key: string
+          last_action_at?: string
+          nonce: number
+          resolution_reason?: string | null
+          resolved_by?: string | null
+          result?: Database["public"]["Enums"]["bj_result"] | null
+          result_reason?: string | null
+          rule_config_id: string
+          rule_version: number
+          score_config_id: string
+          score_version: number
+          server_seed_hash: string
+          settled_at?: string | null
+          shoe_id: string
+          started_at?: string
+          state_version?: number
+          status?: Database["public"]["Enums"]["bj_hand_status"]
+          total_score_awarded?: number
+          updated_at?: string
+          user_id: string
+          verification_id?: string
+        }
+        Update: {
+          action_sequence?: number
+          active_hand_index?: number
+          client_seed?: string
+          created_at?: string
+          dealer_blackjack?: boolean
+          dealer_bust?: boolean
+          dealer_soft?: boolean
+          dealer_total?: number | null
+          expires_at?: string
+          id?: string
+          idempotency_key?: string
+          last_action_at?: string
+          nonce?: number
+          resolution_reason?: string | null
+          resolved_by?: string | null
+          result?: Database["public"]["Enums"]["bj_result"] | null
+          result_reason?: string | null
+          rule_config_id?: string
+          rule_version?: number
+          score_config_id?: string
+          score_version?: number
+          server_seed_hash?: string
+          settled_at?: string | null
+          shoe_id?: string
+          started_at?: string
+          state_version?: number
+          status?: Database["public"]["Enums"]["bj_hand_status"]
+          total_score_awarded?: number
+          updated_at?: string
+          user_id?: string
+          verification_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_bj_hands_rule_config_id_fkey"
+            columns: ["rule_config_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_bj_rule_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arcade_bj_hands_score_config_id_fkey"
+            columns: ["score_config_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_bj_score_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arcade_bj_hands_shoe_id_fkey"
+            columns: ["shoe_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_bj_shoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arcade_bj_player_hands: {
+        Row: {
+          created_at: string
+          final_total: number | null
+          hand_id: string
+          hand_index: number
+          id: string
+          is_blackjack: boolean
+          is_bust: boolean
+          is_doubled: boolean
+          is_soft: boolean
+          is_split: boolean
+          is_split_ace: boolean
+          parent_player_hand_id: string | null
+          result: Database["public"]["Enums"]["bj_result"] | null
+          score_awarded: number
+          settled_at: string | null
+          status: Database["public"]["Enums"]["bj_ph_status"]
+        }
+        Insert: {
+          created_at?: string
+          final_total?: number | null
+          hand_id: string
+          hand_index: number
+          id?: string
+          is_blackjack?: boolean
+          is_bust?: boolean
+          is_doubled?: boolean
+          is_soft?: boolean
+          is_split?: boolean
+          is_split_ace?: boolean
+          parent_player_hand_id?: string | null
+          result?: Database["public"]["Enums"]["bj_result"] | null
+          score_awarded?: number
+          settled_at?: string | null
+          status?: Database["public"]["Enums"]["bj_ph_status"]
+        }
+        Update: {
+          created_at?: string
+          final_total?: number | null
+          hand_id?: string
+          hand_index?: number
+          id?: string
+          is_blackjack?: boolean
+          is_bust?: boolean
+          is_doubled?: boolean
+          is_soft?: boolean
+          is_split?: boolean
+          is_split_ace?: boolean
+          parent_player_hand_id?: string | null
+          result?: Database["public"]["Enums"]["bj_result"] | null
+          score_awarded?: number
+          settled_at?: string | null
+          status?: Database["public"]["Enums"]["bj_ph_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_bj_player_hands_hand_id_fkey"
+            columns: ["hand_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_bj_hands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arcade_bj_player_hands_parent_player_hand_id_fkey"
+            columns: ["parent_player_hand_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_bj_player_hands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arcade_bj_risk_flags: {
+        Row: {
+          assigned_admin: string | null
+          confidence: number
+          created_at: string
+          evidence: Json
+          flag_type: string
+          hand_id: string | null
+          id: string
+          notes: string | null
+          resolution: string | null
+          review_status: string
+          severity: string
+          shoe_id: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          assigned_admin?: string | null
+          confidence?: number
+          created_at?: string
+          evidence?: Json
+          flag_type: string
+          hand_id?: string | null
+          id?: string
+          notes?: string | null
+          resolution?: string | null
+          review_status?: string
+          severity?: string
+          shoe_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          assigned_admin?: string | null
+          confidence?: number
+          created_at?: string
+          evidence?: Json
+          flag_type?: string
+          hand_id?: string | null
+          id?: string
+          notes?: string | null
+          resolution?: string | null
+          review_status?: string
+          severity?: string
+          shoe_id?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      arcade_bj_rule_configs: {
+        Row: {
+          action_timeout_seconds: number
+          announcement: string | null
+          approved_by: string | null
+          auto_stand_on_21: boolean
+          change_reason: string | null
+          created_at: string
+          created_by: string | null
+          daily_entry_allocation: number
+          daily_hand_limit: number
+          dealer_hits_soft_17: boolean
+          dealer_peek: boolean
+          deck_count: number
+          double_after_split: boolean
+          double_allowed: boolean
+          effective_from: string
+          effective_to: string | null
+          hit_split_aces: boolean
+          id: string
+          maintenance_mode: boolean
+          max_split_hands: number
+          name: string
+          penetration: number
+          resplit_aces: boolean
+          resplit_allowed: boolean
+          status: Database["public"]["Enums"]["bj_config_status"]
+          strategy_table_version: number
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          action_timeout_seconds?: number
+          announcement?: string | null
+          approved_by?: string | null
+          auto_stand_on_21?: boolean
+          change_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          daily_entry_allocation?: number
+          daily_hand_limit?: number
+          dealer_hits_soft_17?: boolean
+          dealer_peek?: boolean
+          deck_count?: number
+          double_after_split?: boolean
+          double_allowed?: boolean
+          effective_from?: string
+          effective_to?: string | null
+          hit_split_aces?: boolean
+          id?: string
+          maintenance_mode?: boolean
+          max_split_hands?: number
+          name: string
+          penetration?: number
+          resplit_aces?: boolean
+          resplit_allowed?: boolean
+          status?: Database["public"]["Enums"]["bj_config_status"]
+          strategy_table_version?: number
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          action_timeout_seconds?: number
+          announcement?: string | null
+          approved_by?: string | null
+          auto_stand_on_21?: boolean
+          change_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          daily_entry_allocation?: number
+          daily_hand_limit?: number
+          dealer_hits_soft_17?: boolean
+          dealer_peek?: boolean
+          deck_count?: number
+          double_after_split?: boolean
+          double_allowed?: boolean
+          effective_from?: string
+          effective_to?: string | null
+          hit_split_aces?: boolean
+          id?: string
+          maintenance_mode?: boolean
+          max_split_hands?: number
+          name?: string
+          penetration?: number
+          resplit_aces?: boolean
+          resplit_allowed?: boolean
+          status?: Database["public"]["Enums"]["bj_config_status"]
+          strategy_table_version?: number
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      arcade_bj_score_balances: {
+        Row: {
+          created_at: string
+          total_score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          total_score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          total_score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      arcade_bj_score_configs: {
+        Row: {
+          approved_by: string | null
+          change_reason: string | null
+          created_at: string
+          created_by: string | null
+          double_win_score: number
+          effective_from: string
+          effective_to: string | null
+          five_card_win_score: number
+          id: string
+          loss_score: number
+          max_score_per_round: number
+          name: string
+          natural_blackjack_score: number
+          push_score: number
+          split_win_score: number
+          status: Database["public"]["Enums"]["bj_config_status"]
+          updated_at: string
+          version: number
+          win_score: number
+        }
+        Insert: {
+          approved_by?: string | null
+          change_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          double_win_score?: number
+          effective_from?: string
+          effective_to?: string | null
+          five_card_win_score?: number
+          id?: string
+          loss_score?: number
+          max_score_per_round?: number
+          name: string
+          natural_blackjack_score?: number
+          push_score?: number
+          split_win_score?: number
+          status?: Database["public"]["Enums"]["bj_config_status"]
+          updated_at?: string
+          version: number
+          win_score?: number
+        }
+        Update: {
+          approved_by?: string | null
+          change_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          double_win_score?: number
+          effective_from?: string
+          effective_to?: string | null
+          five_card_win_score?: number
+          id?: string
+          loss_score?: number
+          max_score_per_round?: number
+          name?: string
+          natural_blackjack_score?: number
+          push_score?: number
+          split_win_score?: number
+          status?: Database["public"]["Enums"]["bj_config_status"]
+          updated_at?: string
+          version?: number
+          win_score?: number
+        }
+        Relationships: []
+      }
+      arcade_bj_score_ledger: {
+        Row: {
+          admin_id: string | null
+          created_at: string
+          hand_id: string | null
+          id: string
+          idempotency_key: string | null
+          player_hand_id: string | null
+          reason: string | null
+          score_amount: number
+          score_config_version: number
+          score_type: Database["public"]["Enums"]["bj_score_txn"]
+          total_after: number
+          total_before: number
+          user_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string
+          hand_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          player_hand_id?: string | null
+          reason?: string | null
+          score_amount: number
+          score_config_version: number
+          score_type: Database["public"]["Enums"]["bj_score_txn"]
+          total_after: number
+          total_before: number
+          user_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string
+          hand_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          player_hand_id?: string | null
+          reason?: string | null
+          score_amount?: number
+          score_config_version?: number
+          score_type?: Database["public"]["Enums"]["bj_score_txn"]
+          total_after?: number
+          total_before?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_bj_score_ledger_hand_id_fkey"
+            columns: ["hand_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_bj_hands"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arcade_bj_shoes: {
+        Row: {
+          card_order: number[]
+          client_seed: string
+          created_at: string
+          current_index: number
+          cut_index: number
+          deck_count: number
+          id: string
+          nonce: number
+          retired_at: string | null
+          revealed_at: string | null
+          rule_version: number
+          server_seed: string
+          server_seed_hash: string
+          shuffle_version: number
+          status: Database["public"]["Enums"]["bj_shoe_status"]
+          total_cards: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_order: number[]
+          client_seed: string
+          created_at?: string
+          current_index?: number
+          cut_index: number
+          deck_count?: number
+          id?: string
+          nonce: number
+          retired_at?: string | null
+          revealed_at?: string | null
+          rule_version: number
+          server_seed: string
+          server_seed_hash: string
+          shuffle_version?: number
+          status?: Database["public"]["Enums"]["bj_shoe_status"]
+          total_cards?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_order?: number[]
+          client_seed?: string
+          created_at?: string
+          current_index?: number
+          cut_index?: number
+          deck_count?: number
+          id?: string
+          nonce?: number
+          retired_at?: string | null
+          revealed_at?: string | null
+          rule_version?: number
+          server_seed?: string
+          server_seed_hash?: string
+          shuffle_version?: number
+          status?: Database["public"]["Enums"]["bj_shoe_status"]
+          total_cards?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       arcade_challenge_progress: {
         Row: {
           challenge_id: string
@@ -5800,6 +6609,133 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      arcade_bj_admin_resolve_hand: {
+        Args: {
+          p_action: string
+          p_admin: string
+          p_hand: string
+          p_reason: string
+        }
+        Returns: undefined
+      }
+      arcade_bj_double: {
+        Args: {
+          p_hand: string
+          p_idempotency_key: string
+          p_player_hand: string
+          p_state_version: number
+          p_user: string
+        }
+        Returns: undefined
+      }
+      arcade_bj_draw: {
+        Args: {
+          p_face_up: boolean
+          p_hand: string
+          p_owner: string
+          p_player_hand: string
+        }
+        Returns: {
+          card_value: number
+          deal_sequence: number
+          dealt_at: string
+          face_up: boolean
+          hand_id: string
+          id: string
+          owner_type: string
+          player_hand_id: string | null
+          rank: number
+          revealed_at: string | null
+          shoe_id: string
+          shoe_position: number
+          suit: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_bj_cards"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_bj_ensure_entries: {
+        Args: { p_user: string }
+        Returns: {
+          bonus_available: number
+          created_at: string
+          daily_available: number
+          daily_reset_date: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_bj_entry_balances"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_bj_expire_hands: { Args: never; Returns: number }
+      arcade_bj_hit: {
+        Args: {
+          p_hand: string
+          p_idempotency_key: string
+          p_player_hand: string
+          p_state_version: number
+          p_user: string
+        }
+        Returns: undefined
+      }
+      arcade_bj_publish_rule_config: {
+        Args: { p_admin: string; p_patch: Json; p_reason: string }
+        Returns: string
+      }
+      arcade_bj_publish_score_config: {
+        Args: { p_admin: string; p_patch: Json; p_reason: string }
+        Returns: string
+      }
+      arcade_bj_reveal_shoe: {
+        Args: { p_hand: string; p_user: string }
+        Returns: Json
+      }
+      arcade_bj_settle: { Args: { p_hand: string }; Returns: undefined }
+      arcade_bj_shuffle: {
+        Args: {
+          p_client_seed: string
+          p_n: number
+          p_nonce: number
+          p_server_seed: string
+        }
+        Returns: number[]
+      }
+      arcade_bj_split: {
+        Args: {
+          p_hand: string
+          p_idempotency_key: string
+          p_player_hand: string
+          p_state_version: number
+          p_user: string
+        }
+        Returns: undefined
+      }
+      arcade_bj_stand: {
+        Args: {
+          p_hand: string
+          p_idempotency_key: string
+          p_player_hand: string
+          p_state_version: number
+          p_user: string
+        }
+        Returns: undefined
+      }
+      arcade_bj_start_hand: {
+        Args: {
+          p_client_seed: string
+          p_idempotency_key: string
+          p_user: string
+        }
+        Returns: string
+      }
+      arcade_bj_value: { Args: { p_ranks: number[] }; Returns: number[] }
       arcade_ensure_daily: {
         Args: { p_daily_alloc: number; p_user: string }
         Returns: {
@@ -6766,6 +7702,82 @@ export type Database = {
         | "REVERSED"
         | "EXPIRED"
         | "ERROR"
+      bj_action:
+        | "DEAL"
+        | "HIT"
+        | "STAND"
+        | "DOUBLE"
+        | "SPLIT"
+        | "TIMEOUT_STAND"
+        | "DEALER_DRAW"
+        | "SETTLE"
+      bj_config_status:
+        | "draft"
+        | "review"
+        | "approved"
+        | "scheduled"
+        | "active"
+        | "retired"
+      bj_entry_txn:
+        | "daily_allocation"
+        | "bonus_grant"
+        | "challenge_reward"
+        | "achievement_reward"
+        | "consume"
+        | "void_return"
+        | "admin_correction"
+        | "expiry"
+      bj_hand_status:
+        | "CREATED"
+        | "DEALING"
+        | "PLAYER_TURN"
+        | "DEALER_CHECK"
+        | "DEALER_TURN"
+        | "SETTLING"
+        | "COMPLETED"
+        | "VOID"
+        | "REVERSED"
+        | "EXPIRED"
+        | "ERROR"
+      bj_ph_status:
+        | "ACTIVE"
+        | "STOOD"
+        | "DOUBLED"
+        | "BLACKJACK"
+        | "BUST"
+        | "SPLIT_ACE_LOCKED"
+        | "WON"
+        | "LOST"
+        | "PUSH"
+        | "VOID"
+        | "REVERSED"
+      bj_result:
+        | "BLACKJACK"
+        | "WIN"
+        | "LOSS"
+        | "PUSH"
+        | "BUST"
+        | "MIXED"
+        | "VOID"
+        | "REVERSED"
+      bj_score_txn:
+        | "blackjack_result"
+        | "win_result"
+        | "push_result"
+        | "double_result"
+        | "split_result"
+        | "challenge_bonus"
+        | "achievement_bonus"
+        | "void_reversal"
+        | "admin_correction"
+      bj_shoe_status:
+        | "ACTIVE"
+        | "NEAR_CUT"
+        | "RETIRED"
+        | "AWAITING_REVEAL"
+        | "VERIFIED"
+        | "VERIFICATION_FAILED"
+        | "SUSPENDED"
       match_status:
         | "scheduled"
         | "live"
@@ -7012,6 +8024,90 @@ export const Constants = {
         "REVERSED",
         "EXPIRED",
         "ERROR",
+      ],
+      bj_action: [
+        "DEAL",
+        "HIT",
+        "STAND",
+        "DOUBLE",
+        "SPLIT",
+        "TIMEOUT_STAND",
+        "DEALER_DRAW",
+        "SETTLE",
+      ],
+      bj_config_status: [
+        "draft",
+        "review",
+        "approved",
+        "scheduled",
+        "active",
+        "retired",
+      ],
+      bj_entry_txn: [
+        "daily_allocation",
+        "bonus_grant",
+        "challenge_reward",
+        "achievement_reward",
+        "consume",
+        "void_return",
+        "admin_correction",
+        "expiry",
+      ],
+      bj_hand_status: [
+        "CREATED",
+        "DEALING",
+        "PLAYER_TURN",
+        "DEALER_CHECK",
+        "DEALER_TURN",
+        "SETTLING",
+        "COMPLETED",
+        "VOID",
+        "REVERSED",
+        "EXPIRED",
+        "ERROR",
+      ],
+      bj_ph_status: [
+        "ACTIVE",
+        "STOOD",
+        "DOUBLED",
+        "BLACKJACK",
+        "BUST",
+        "SPLIT_ACE_LOCKED",
+        "WON",
+        "LOST",
+        "PUSH",
+        "VOID",
+        "REVERSED",
+      ],
+      bj_result: [
+        "BLACKJACK",
+        "WIN",
+        "LOSS",
+        "PUSH",
+        "BUST",
+        "MIXED",
+        "VOID",
+        "REVERSED",
+      ],
+      bj_score_txn: [
+        "blackjack_result",
+        "win_result",
+        "push_result",
+        "double_result",
+        "split_result",
+        "challenge_bonus",
+        "achievement_bonus",
+        "void_reversal",
+        "admin_correction",
+      ],
+      bj_shoe_status: [
+        "ACTIVE",
+        "NEAR_CUT",
+        "RETIRED",
+        "AWAITING_REVEAL",
+        "VERIFIED",
+        "VERIFICATION_FAILED",
+        "SUSPENDED",
       ],
       match_status: ["scheduled", "live", "finished", "postponed", "cancelled"],
       payout_request_status: [

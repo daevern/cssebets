@@ -27,6 +27,7 @@ import {
   BookOpen,
   Radio,
   Database,
+  Gamepad2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
@@ -87,6 +88,7 @@ const GROUPS: NavGroup[] = [
       { to: "/management/admin/referred-users", label: "Referred users", icon: Users },
       { to: "/management/admin/staff", label: "Staff", icon: Shield },
       { to: "/management/admin/support-ops", label: "Support ops", icon: Activity },
+      { to: "/management/admin/blackjack", label: "Blackjack", icon: Gamepad2 },
       { to: "/management/admin/onboarding", label: "Onboarding", icon: BookOpen },
     ],
   },

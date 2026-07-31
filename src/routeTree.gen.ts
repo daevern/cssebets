@@ -86,6 +86,7 @@ import { Route as ManagementAdminHealthRouteImport } from './routes/management/a
 import { Route as ManagementAdminFootballRouteImport } from './routes/management/admin.football'
 import { Route as ManagementAdminF1RouteImport } from './routes/management/admin.f1'
 import { Route as ManagementAdminCorrelatedRiskRouteImport } from './routes/management/admin.correlated-risk'
+import { Route as ManagementAdminBlackjackRouteImport } from './routes/management/admin.blackjack'
 import { Route as ManagementAdminBankrollRouteImport } from './routes/management/admin.bankroll'
 import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
 import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
@@ -103,6 +104,7 @@ import { Route as AuthenticatedFootballEplRouteImport } from './routes/_authenti
 import { Route as AuthenticatedArcadeTreasureRouteImport } from './routes/_authenticated/arcade.treasure'
 import { Route as AuthenticatedArcadeRouletteRouteImport } from './routes/_authenticated/arcade.roulette'
 import { Route as AuthenticatedArcadePlinkoRouteImport } from './routes/_authenticated/arcade.plinko'
+import { Route as AuthenticatedArcadeBlackjackRouteImport } from './routes/_authenticated/arcade.blackjack'
 import { Route as AuthenticatedF1RacesIndexRouteImport } from './routes/_authenticated/f1.races.index'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -539,6 +541,12 @@ const ManagementAdminCorrelatedRiskRoute =
     path: '/correlated-risk',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminBlackjackRoute =
+  ManagementAdminBlackjackRouteImport.update({
+    id: '/blackjack',
+    path: '/blackjack',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminBankrollRoute = ManagementAdminBankrollRouteImport.update({
   id: '/bankroll',
   path: '/bankroll',
@@ -633,6 +641,12 @@ const AuthenticatedArcadePlinkoRoute =
   AuthenticatedArcadePlinkoRouteImport.update({
     id: '/plinko',
     path: '/plinko',
+    getParentRoute: () => AuthenticatedArcadeRoute,
+  } as any)
+const AuthenticatedArcadeBlackjackRoute =
+  AuthenticatedArcadeBlackjackRouteImport.update({
+    id: '/blackjack',
+    path: '/blackjack',
     getParentRoute: () => AuthenticatedArcadeRoute,
   } as any)
 const AuthenticatedF1RacesIndexRoute =
@@ -808,6 +822,7 @@ export interface FileRoutesByFullPath {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/arcade/blackjack': typeof AuthenticatedArcadeBlackjackRoute
   '/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
   '/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
   '/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
@@ -825,6 +840,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/blackjack': typeof ManagementAdminBlackjackRoute
   '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
   '/management/admin/f1': typeof ManagementAdminF1Route
   '/management/admin/football': typeof ManagementAdminFootballRoute
@@ -921,6 +937,7 @@ export interface FileRoutesByTo {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/arcade/blackjack': typeof AuthenticatedArcadeBlackjackRoute
   '/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
   '/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
   '/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
@@ -938,6 +955,7 @@ export interface FileRoutesByTo {
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/blackjack': typeof ManagementAdminBlackjackRoute
   '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
   '/management/admin/f1': typeof ManagementAdminF1Route
   '/management/admin/football': typeof ManagementAdminFootballRoute
@@ -1041,6 +1059,7 @@ export interface FileRoutesById {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/_authenticated/arcade/blackjack': typeof AuthenticatedArcadeBlackjackRoute
   '/_authenticated/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
   '/_authenticated/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
   '/_authenticated/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
@@ -1058,6 +1077,7 @@ export interface FileRoutesById {
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/blackjack': typeof ManagementAdminBlackjackRoute
   '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
   '/management/admin/f1': typeof ManagementAdminF1Route
   '/management/admin/football': typeof ManagementAdminFootballRoute
@@ -1161,6 +1181,7 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/arcade/blackjack'
     | '/arcade/plinko'
     | '/arcade/roulette'
     | '/arcade/treasure'
@@ -1178,6 +1199,7 @@ export interface FileRouteTypes {
     | '/management/admin/analytics'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
+    | '/management/admin/blackjack'
     | '/management/admin/correlated-risk'
     | '/management/admin/f1'
     | '/management/admin/football'
@@ -1274,6 +1296,7 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/arcade/blackjack'
     | '/arcade/plinko'
     | '/arcade/roulette'
     | '/arcade/treasure'
@@ -1291,6 +1314,7 @@ export interface FileRouteTypes {
     | '/management/admin/analytics'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
+    | '/management/admin/blackjack'
     | '/management/admin/correlated-risk'
     | '/management/admin/f1'
     | '/management/admin/football'
@@ -1393,6 +1417,7 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/_authenticated/arcade/blackjack'
     | '/_authenticated/arcade/plinko'
     | '/_authenticated/arcade/roulette'
     | '/_authenticated/arcade/treasure'
@@ -1410,6 +1435,7 @@ export interface FileRouteTypes {
     | '/management/admin/analytics'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
+    | '/management/admin/blackjack'
     | '/management/admin/correlated-risk'
     | '/management/admin/f1'
     | '/management/admin/football'
@@ -2049,6 +2075,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminCorrelatedRiskRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/blackjack': {
+      id: '/management/admin/blackjack'
+      path: '/blackjack'
+      fullPath: '/management/admin/blackjack'
+      preLoaderRoute: typeof ManagementAdminBlackjackRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/bankroll': {
       id: '/management/admin/bankroll'
       path: '/bankroll'
@@ -2166,6 +2199,13 @@ declare module '@tanstack/react-router' {
       path: '/plinko'
       fullPath: '/arcade/plinko'
       preLoaderRoute: typeof AuthenticatedArcadePlinkoRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
+    '/_authenticated/arcade/blackjack': {
+      id: '/_authenticated/arcade/blackjack'
+      path: '/blackjack'
+      fullPath: '/arcade/blackjack'
+      preLoaderRoute: typeof AuthenticatedArcadeBlackjackRouteImport
       parentRoute: typeof AuthenticatedArcadeRoute
     }
     '/_authenticated/f1/races/': {
@@ -2333,6 +2373,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedArcadeRouteChildren {
+  AuthenticatedArcadeBlackjackRoute: typeof AuthenticatedArcadeBlackjackRoute
   AuthenticatedArcadePlinkoRoute: typeof AuthenticatedArcadePlinkoRoute
   AuthenticatedArcadeRouletteRoute: typeof AuthenticatedArcadeRouletteRoute
   AuthenticatedArcadeTreasureRoute: typeof AuthenticatedArcadeTreasureRoute
@@ -2340,6 +2381,7 @@ interface AuthenticatedArcadeRouteChildren {
 }
 
 const AuthenticatedArcadeRouteChildren: AuthenticatedArcadeRouteChildren = {
+  AuthenticatedArcadeBlackjackRoute: AuthenticatedArcadeBlackjackRoute,
   AuthenticatedArcadePlinkoRoute: AuthenticatedArcadePlinkoRoute,
   AuthenticatedArcadeRouletteRoute: AuthenticatedArcadeRouletteRoute,
   AuthenticatedArcadeTreasureRoute: AuthenticatedArcadeTreasureRoute,
@@ -2470,6 +2512,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminAnalyticsRoute: typeof ManagementAdminAnalyticsRoute
   ManagementAdminAuditRoute: typeof ManagementAdminAuditRoute
   ManagementAdminBankrollRoute: typeof ManagementAdminBankrollRoute
+  ManagementAdminBlackjackRoute: typeof ManagementAdminBlackjackRoute
   ManagementAdminCorrelatedRiskRoute: typeof ManagementAdminCorrelatedRiskRoute
   ManagementAdminF1Route: typeof ManagementAdminF1Route
   ManagementAdminFootballRoute: typeof ManagementAdminFootballRoute
@@ -2511,6 +2554,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminAnalyticsRoute: ManagementAdminAnalyticsRoute,
   ManagementAdminAuditRoute: ManagementAdminAuditRoute,
   ManagementAdminBankrollRoute: ManagementAdminBankrollRoute,
+  ManagementAdminBlackjackRoute: ManagementAdminBlackjackRoute,
   ManagementAdminCorrelatedRiskRoute: ManagementAdminCorrelatedRiskRoute,
   ManagementAdminF1Route: ManagementAdminF1Route,
   ManagementAdminFootballRoute: ManagementAdminFootballRoute,
@@ -2618,13 +2662,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
