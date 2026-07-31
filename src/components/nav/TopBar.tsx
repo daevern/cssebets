@@ -12,6 +12,7 @@ import { HamburgerMenu } from "@/components/nav/HamburgerMenu";
 const DESKTOP_NAV = [
   { to: "/dashboard", label: "Home", icon: Home, exact: true },
   { to: "/my-predictions", label: "Picks", icon: Activity, exact: false },
+  { to: "/arcade", label: "Arcade", icon: Gamepad2, exact: false },
   { to: "/payout", label: "Payout", icon: Coins, exact: false },
   { to: "/support", label: "Support", icon: Headphones, exact: false },
 ] as const;
