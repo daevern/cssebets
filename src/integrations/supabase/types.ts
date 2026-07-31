@@ -7254,6 +7254,17 @@ export type Database = {
         }
         Relationships: []
       }
+      v_accounting_platform_pl: {
+        Row: {
+          environment: Database["public"]["Enums"]["acct_environment"] | null
+          excluded_transfer_clearing: number | null
+          expense: number | null
+          house_bankroll: number | null
+          platform_pl: number | null
+          revenue: number | null
+        }
+        Relationships: []
+      }
       v_accounting_plinko_bankroll_control: {
         Row: {
           available_reserve: number | null
@@ -7427,6 +7438,10 @@ export type Database = {
         Returns: Json
       }
       accounting_available_reserve: {
+        Args: { p_env: Database["public"]["Enums"]["acct_environment"] }
+        Returns: number
+      }
+      accounting_available_reserve_locked: {
         Args: { p_env: Database["public"]["Enums"]["acct_environment"] }
         Returns: number
       }
