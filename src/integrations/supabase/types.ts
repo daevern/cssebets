@@ -7641,6 +7641,20 @@ export type Database = {
       accounting_phase5_final_selftest: { Args: never; Returns: Json }
       accounting_phase5_treasure_expiry_test: { Args: never; Returns: Json }
       accounting_phase6_selftest: { Args: never; Returns: Json }
+      accounting_pl_report: {
+        Args: {
+          p_basis?: string
+          p_config_version?: string
+          p_environment?: Database["public"]["Enums"]["acct_environment"]
+          p_from?: string
+          p_game?: string
+          p_products?: string[]
+          p_sport?: string
+          p_to?: string
+          p_user?: string
+        }
+        Returns: Json
+      }
       accounting_plinko_selftest: { Args: never; Returns: Json }
       accounting_post_arcade_settlement: {
         Args: {
