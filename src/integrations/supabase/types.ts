@@ -549,6 +549,30 @@ export type Database = {
         }
         Relationships: []
       }
+      accounting_selftest_runs: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          label: string
+          report: Json | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          label: string
+          report?: Json | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          label?: string
+          report?: Json | null
+        }
+        Relationships: []
+      }
       admin_reauth: {
         Row: {
           expires_at: string
@@ -7509,6 +7533,8 @@ export type Database = {
       accounting_caller_authorised: { Args: never; Returns: boolean }
       accounting_integrity_scan: { Args: never; Returns: Json }
       accounting_internal_ctx: { Args: never; Returns: boolean }
+      accounting_phase5_final_selftest: { Args: never; Returns: Json }
+      accounting_phase5_treasure_expiry_test: { Args: never; Returns: Json }
       accounting_plinko_selftest: { Args: never; Returns: Json }
       accounting_post_arcade_settlement: {
         Args: {
@@ -7570,6 +7596,7 @@ export type Database = {
         Args: { p_game_id: string; p_reason: string }
         Returns: Json
       }
+      accounting_run_phase5_final_selftest: { Args: never; Returns: undefined }
       adjust_correct_score_odds: {
         Args: {
           p_match_id: string
@@ -7799,6 +7826,10 @@ export type Database = {
         Returns: string
       }
       arcade_bj_value: { Args: { p_ranks: number[] }; Returns: number[] }
+      arcade_bj_worst_case_gross: {
+        Args: { p_rule_config: string; p_stake: number }
+        Returns: number
+      }
       arcade_ensure_daily: {
         Args: { p_daily_alloc: number; p_user: string }
         Returns: {

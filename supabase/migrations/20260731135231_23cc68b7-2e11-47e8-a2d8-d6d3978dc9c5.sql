@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.accounting_phase5_final_selftest() TO postgres, service_role;
