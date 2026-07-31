@@ -576,15 +576,28 @@ Recommendations per match: `accept`, `limit_stake`, `reduce_odds`,
 
 `platform_bankroll` singleton per `kind`:
 
-| Column | Meaning |
-|---|---|
-| `balance` | Current chips available to pay winners |
-| `total_stakes_collected` | Lifetime sum of debits from wallets on placement |
-| `total_payouts_paid` | Lifetime sum of credits back to wallets on win |
-| `house_user_id` | Wallet that receives/pays for the house |
+| Column | Meaning | Authority |
+|---|---|---|
+| `balance` | Current chips available to pay winners | **Canonical** house balance |
+| `total_stakes_collected` | Lifetime sum of stakes debited on placement | LEGACY counter — use `accounting_pl_report()` for P/L |
+| `total_payouts_paid` | Lifetime sum of payouts credited on win | LEGACY counter — same |
+| `house_user_id` | Wallet that receives/pays for the house | Canonical |
 
 `platform_transactions` mirrors every bankroll change. Admin operators
 adjust via `/management/admin/bankroll`.
+
+**Two "available bankroll" figures exist. They are not the same number
+and must not be swapped:**
+
+| Figure | Formula | Source | Use |
+|---|---|---|---|
+| Sports available balance (LEGACY) | `balance − Σ matches.worst_case_exposure` (scheduled/live) | `getBankrollOverview` in `src/lib/bankroll.functions.ts` | Admin bankroll page display only |
+| Available reserve (**canonical**) | `balance − active enforced reservations − outstanding payables` | `public.accounting_available_reserve(env)` | Placement capacity checks, arcade exposure ceilings, Phase 9 reporting |
+
+The legacy figure ignores journal payables and arcade reservations; the
+canonical one ignores nothing. Any new capacity decision must use
+`accounting_available_reserve`. Convergence happens when sports moves
+onto the journal (§7.6).
 
 ### 7.4 Correlated exposure
 
