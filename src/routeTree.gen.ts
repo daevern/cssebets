@@ -86,6 +86,7 @@ import { Route as ManagementAdminHealthRouteImport } from './routes/management/a
 import { Route as ManagementAdminFootballRouteImport } from './routes/management/admin.football'
 import { Route as ManagementAdminF1RouteImport } from './routes/management/admin.f1'
 import { Route as ManagementAdminCorrelatedRiskRouteImport } from './routes/management/admin.correlated-risk'
+import { Route as ManagementAdminBlackjackRouteImport } from './routes/management/admin.blackjack'
 import { Route as ManagementAdminBankrollRouteImport } from './routes/management/admin.bankroll'
 import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
 import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
@@ -540,6 +541,12 @@ const ManagementAdminCorrelatedRiskRoute =
     path: '/correlated-risk',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminBlackjackRoute =
+  ManagementAdminBlackjackRouteImport.update({
+    id: '/blackjack',
+    path: '/blackjack',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
 const ManagementAdminBankrollRoute = ManagementAdminBankrollRouteImport.update({
   id: '/bankroll',
   path: '/bankroll',
@@ -833,6 +840,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/blackjack': typeof ManagementAdminBlackjackRoute
   '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
   '/management/admin/f1': typeof ManagementAdminF1Route
   '/management/admin/football': typeof ManagementAdminFootballRoute
@@ -947,6 +955,7 @@ export interface FileRoutesByTo {
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/blackjack': typeof ManagementAdminBlackjackRoute
   '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
   '/management/admin/f1': typeof ManagementAdminF1Route
   '/management/admin/football': typeof ManagementAdminFootballRoute
@@ -1068,6 +1077,7 @@ export interface FileRoutesById {
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
+  '/management/admin/blackjack': typeof ManagementAdminBlackjackRoute
   '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
   '/management/admin/f1': typeof ManagementAdminF1Route
   '/management/admin/football': typeof ManagementAdminFootballRoute
@@ -1189,6 +1199,7 @@ export interface FileRouteTypes {
     | '/management/admin/analytics'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
+    | '/management/admin/blackjack'
     | '/management/admin/correlated-risk'
     | '/management/admin/f1'
     | '/management/admin/football'
@@ -1303,6 +1314,7 @@ export interface FileRouteTypes {
     | '/management/admin/analytics'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
+    | '/management/admin/blackjack'
     | '/management/admin/correlated-risk'
     | '/management/admin/f1'
     | '/management/admin/football'
@@ -1423,6 +1435,7 @@ export interface FileRouteTypes {
     | '/management/admin/analytics'
     | '/management/admin/audit'
     | '/management/admin/bankroll'
+    | '/management/admin/blackjack'
     | '/management/admin/correlated-risk'
     | '/management/admin/f1'
     | '/management/admin/football'
@@ -2062,6 +2075,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminCorrelatedRiskRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/blackjack': {
+      id: '/management/admin/blackjack'
+      path: '/blackjack'
+      fullPath: '/management/admin/blackjack'
+      preLoaderRoute: typeof ManagementAdminBlackjackRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/bankroll': {
       id: '/management/admin/bankroll'
       path: '/bankroll'
@@ -2492,6 +2512,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminAnalyticsRoute: typeof ManagementAdminAnalyticsRoute
   ManagementAdminAuditRoute: typeof ManagementAdminAuditRoute
   ManagementAdminBankrollRoute: typeof ManagementAdminBankrollRoute
+  ManagementAdminBlackjackRoute: typeof ManagementAdminBlackjackRoute
   ManagementAdminCorrelatedRiskRoute: typeof ManagementAdminCorrelatedRiskRoute
   ManagementAdminF1Route: typeof ManagementAdminF1Route
   ManagementAdminFootballRoute: typeof ManagementAdminFootballRoute
@@ -2533,6 +2554,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminAnalyticsRoute: ManagementAdminAnalyticsRoute,
   ManagementAdminAuditRoute: ManagementAdminAuditRoute,
   ManagementAdminBankrollRoute: ManagementAdminBankrollRoute,
+  ManagementAdminBlackjackRoute: ManagementAdminBlackjackRoute,
   ManagementAdminCorrelatedRiskRoute: ManagementAdminCorrelatedRiskRoute,
   ManagementAdminF1Route: ManagementAdminF1Route,
   ManagementAdminFootballRoute: ManagementAdminFootballRoute,
