@@ -9,6 +9,46 @@
 
 ---
 
+## 0. Document Authority & Status Conventions
+
+This document is descriptive, not normative. Where this file and the
+code/database disagree, **the code and database win** — and the
+disagreement is a bug in this file, to be fixed in the same PR.
+
+### 0.1 Status legend
+
+Every capability below is tagged with one of:
+
+| Tag | Meaning |
+|---|---|
+| **LIVE** | Running in production and authoritative for real money. |
+| **SHADOW** | Running and writing data, but not yet authoritative; a legacy path still decides. |
+| **LEGACY** | Still authoritative today, but scheduled for replacement. |
+| **PLANNED** | Specified and/or scaffolded, not in effect. |
+
+Untagged text is LIVE.
+
+### 0.2 Canonical source for every financial and risk value
+
+Exactly one source per value. Anything else that appears to hold the
+same number is a derived cache or a display convenience and must never
+be used for a decision.
+
+| Value | Canonical source | Notes |
+|---|---|---|
+| User points balance | `wallet_transactions` (append-only ledger) | `wallets.balance` is a maintained cache; `run_reconciliation_check` proves the two agree. |
+| House bankroll | `platform_bankroll` row `kind='live'`, `is_active=true` (id=1) | id=2 is `kind='simulation'`. Never summed together. |
+| House P/L | `accounting_pl_report()` over posted journals | Only covers journal-enabled products (§7.6). `platform_bankroll.total_stakes_collected / total_payouts_paid` are LEGACY lifetime counters. |
+| Reserved liability (arcade) | `accounting_liability_reservations` (active, `liability_enforced`) | Authoritative for placement capacity. |
+| Worst-case exposure (sports) | `getRiskDashboard` recomputation from pending `predictions` | LEGACY. `matches.worst_case_exposure` / `*_liability` are denormalised caches refreshed on placement. |
+| Available bankroll | `accounting_available_reserve(env)` | `bankroll − active enforced reservations − outstanding payables`. See §7.3 for the older sports-only figure. |
+| Displayed odds | `match_market_odds` (football), `f1_race_markets`, `ufc_fight_markets` | `matches.reference_odds` is the drift-check copy used at placement only. |
+| Price a ticket was struck at | `predictions.odds` + bound `match_odds_snapshots.id` | Immutable after placement. |
+| Risk limits / kill switches | `platform_settings` row `id=1` | Live values, not code defaults (§7.1). |
+| Monetary rounding | `acct_round_money/stake/payout/liability` (DB) | `src/lib/accounting/money.ts` is a mirror for display; the DB decides. |
+
+---
+
 ## 1. Product Overview
 
 CSSEBets is a **points-based prediction market** covering **football
@@ -19,15 +59,23 @@ off-platform value transfer (proof-of-payment uploaded to a "point
 request"), and users can request **payouts** back out through the same
 staff-mediated flow.
 
-All odds are derived from live paid data providers — **API-Football**,
-**API-F1** and **API-MMA** — repriced through the house margin model.
-No odds are synthetically generated. Arcade games are provably fair with
-server-side RNG and per-round verification.
+All **real-world** odds are derived from live paid data providers —
+**API-Football**, **API-F1** and **API-MMA** — repriced through the
+house margin model; none are invented. The one exception is the
+**Simulation** world (§11), whose fixtures, odds moves and results are
+generated deterministically and are flagged `is_simulation=true`
+everywhere. Arcade games are house-priced by design (fixed paytables)
+and provably fair via server-side seeded RNG with per-round
+verification.
 
-Every money movement — sports bets, arcade rounds, wallet operations —
-is posted to a double-entry accounting ledger with liability
-reservations, a 2-decimal half-up rounding policy and automated
-invariant tests (see §7.6).
+Money movement is being migrated onto a double-entry accounting ledger
+with liability reservations, a 2-decimal half-up rounding policy and
+automated invariant tests (§7.6). **Status today: arcade (Plinko,
+Roulette, Treasure Grid, Blackjack) is LIVE on the journal; football,
+F1 and UFC are LEGACY** — they move money through the wallet RPCs and
+`platform_bankroll` only, and are not yet journal-backed.
+
+
 
 
 Two independent worlds run inside one codebase:
@@ -132,7 +180,7 @@ PWA install prompts are suppressed.
 | `/my-predictions` | Every ticket the user has placed with status (pending / won / lost / void) and payout. |
 | `/bets` | Alias for the tickets ledger with filters. |
 | `/wallet` | Balance, transactions, point-request submission (with proof upload to `point-request-proofs` storage bucket). |
-| `/payout` | Payout request lifecycle (pending → approved → proof_uploaded → paid). |
+| `/payout` | Payout request lifecycle (pending → approved → proof_uploaded → completed). |
 | `/free-bets/place` | Redeem free-bet tokens issued by staff or the store. |
 | `/store` | Redeem CSSE tokens for store items (`csse_store_items`). |
 | `/referrals` | User's referral code, share link, referral history and rewards. |
@@ -226,9 +274,13 @@ The CSSEBets house does **not** copy bookmaker odds. Steps
    capped at `0.999`.
 4. Convert back: `display_odds = max(1.01, round(1 / p_house_i, 2))`.
 
-Default margin is **25 %** (stored in `platform_settings.margin_pct`).
-`apply_margin_to_real` can be toggled off, in which case raw fair
-probabilities are used — zero house edge.
+Margin is **not** a code constant — the canonical value is
+`platform_settings.margin_pct` (currently **25**), and
+`apply_margin_to_real` gates whether it is applied to the real world at
+all. **Status: `apply_margin_to_real` is currently `false`**, i.e. real
+markets are priced at raw fair probabilities with zero house edge; the
+25 % figure only takes effect when the flag is switched back on. Always
+read the live row (§7.1) before quoting a margin anywhere.
 
 Same algorithm applies to N-way outrights (`applyOutrightMargin`).
 
@@ -293,23 +345,32 @@ payout until the round resolves.
 
 - `wallets`: one row per `(user_id, is_simulation)`, holds current
   `balance` (points, integer-ish DECIMAL).
-- `wallet_transactions`: append-only ledger with
-  `type` ∈ {`credit`, `debit`}, `reference_type`
-  ∈ {`bet_placement`, `bet_settlement`, `bet_void`, `point_request`,
-  `payout`, `free_bet_grant`, `store_purchase`, `token_conversion`,
-  `admin_adjustment`}, plus foreign keys to the referenced row.
+- `wallet_transactions`: append-only ledger. The DB enums are the
+  authority:
+  - `wallet_txn_type` ∈ {`credit`, `debit`, `refund`, `adjustment`}.
+  - `wallet_ref_type` ∈ {`bet_placement`, `bet_settlement`,
+    `point_request`, `payout`, `admin_adjustment`, `house_bankroll`}.
 
-Every write to `wallets.balance` is paired with a `wallet_transactions`
-row inside a Postgres RPC — the ledger is the source of truth and
-`reconciliation.functions.ts` verifies drift.
+  Voids/refunds are `type='refund'` with `reference_type='bet_settlement'`
+  (there is no `bet_void` reference type). Free bets, store purchases and
+  token movements do **not** create wallet rows — free bets live in
+  `csse_free_bets`, tokens in `csse_token_transactions`; only the points
+  effect of a settled free bet reaches the wallet.
+
+`wallets.balance` is a cache. The ledger is the source of truth
+(§0.2), and `reconciliation.functions.ts` proves they agree. Every
+write to `wallets.balance` is paired with a `wallet_transactions` row
+inside a single Postgres RPC.
 
 ### 5.2 Placement flow (`submitPrediction`)
 
 Defined in `src/lib/predictions.functions.ts`. Order of checks:
 
-1. **Role gate** — user must have `member` or `admin` role in
-   `user_roles`. New sign-ups start without a role and must be approved
-   by staff.
+1. **Role gate** — user must hold `member`, `admin` or `super_admin` in
+   `user_roles`. New sign-ups (and guest sessions, §3.2) have no
+   betting role and must be approved by staff, so a guest hits the
+   sign-in prompt before this check is ever reached.
+
 2. **Rate limit** — `enforceRateLimit(user:${uid}, 'bet_placement')` via
    `rate_limits`. Exceeding it writes an `audit_log`
    `rate_limit_triggered` entry visible on the risk-settings page.
@@ -359,12 +420,16 @@ Three-step flow to keep proof upload atomic:
 
 ### 5.5 Payouts (deposit-out)
 
-`payout_requests` lifecycle:
+`payout_requests` lifecycle. The authority is the DB enum
+`payout_request_status` ∈ {`pending`, `approved`, `proof_uploaded`,
+`completed`, `rejected_by_admin`, `rejected_by_user`}:
 
 ```
 pending  ──admin approve──▶  approved  ──staff pays off-platform──▶
-proof_uploaded  ──user confirms receipt──▶  paid
+proof_uploaded  ──user confirms receipt──▶  completed
+        └── rejected_by_admin / rejected_by_user (debit reversed)
 ```
+
 
 - Only one active payout per user at a time.
 - Requested amount is validated against wallet balance at request time
@@ -420,8 +485,8 @@ corners settle reliably after admin edits to the match row.
 ### 6.4 Void conditions
 
 - Match `status='cancelled'` or `status='postponed'` → `void_match_atomic`
-  refunds every stake, wallet transactions of type `credit` with
-  `reference_type='bet_void'`.
+  refunds every stake, writing wallet rows with `type='refund'` and
+  `reference_type='bet_settlement'` (§5.1).
 - Individual prediction voided when settling that market is impossible
   (e.g. no card stats) — stake refunded, others in the same match still
   settle.
@@ -457,21 +522,24 @@ settlements page and can be scheduled via the reconciliation hook.
 
 ### 7.1 Platform settings
 
-Row `id=1` in `platform_settings`:
+Row `id=1` in `platform_settings` is the **only** authority for risk
+limits. Code defaults exist purely as a fallback if the row can't be
+read, and they are not the operating values. The "Live" column below is
+a snapshot taken 2026-07-31 — re-read the row rather than trusting it.
 
-| Field | Default | Purpose |
-|---|---|---|
-| `margin_pct` | 25 | House overround target |
-| `apply_margin_to_real` | true | Off = raw fair odds |
-| `exposure_cap_pct` | 0.6 | `worst_case_liability ≤ bankroll × this` |
-| `max_stake_per_bet` | 5000 | Hard cap per ticket (0 = off) |
-| `max_potential_payout` | 50000 | Hard cap on stake × odds |
-| `bets_paused` | false | Global kill switch |
-| `correct_score_disabled` | false | Retail-abuse market kill |
-| `high_odds_disabled` | false | Reject longshots |
-| `high_odds_threshold` | 50 | Threshold for above |
-| `disabled_markets` | `{}` | Per-market kill switch (text[]) |
-| `max_bets_per_user_per_match` | 0 | 0 = unlimited |
+| Field | Code fallback | Live (2026-07-31) | Purpose |
+|---|---|---|---|
+| `margin_pct` | 25 | 25 | House overround target |
+| `apply_margin_to_real` | true | **false** | False = raw fair odds, zero house edge |
+| `exposure_cap_pct` | 0.6 | 0.6 | `worst_case_liability ≤ bankroll × this` |
+| `max_stake_per_bet` | 5000 | **50000** | Hard cap per ticket (0 = off) |
+| `max_potential_payout` | 50000 | **100000** | Hard cap on stake × odds |
+| `bets_paused` | false | false | Global kill switch |
+| `correct_score_disabled` | false | false | Retail-abuse market kill |
+| `high_odds_disabled` | false | false | Reject longshots |
+| `high_odds_threshold` | 50 | 50 | Threshold for above |
+| `disabled_markets` | `{}` | `{}` | Per-market kill switch (text[]) |
+| `max_bets_per_user_per_match` | 0 | 0 | 0 = unlimited |
 
 All controls live on **`/management/admin/risk-settings`**
 (`admin.risk-settings.tsx`), which also surfaces the last 24 h of
@@ -494,6 +562,12 @@ Then aggregates across matches to a platform total, compared against
 `is_active=true`. If that row is missing or nulled, the dashboard
 refuses to compute and raises a critical alert.
 
+Authority note: this recomputation from pending `predictions` is the
+canonical sports exposure figure. `matches.worst_case_exposure` and
+`matches.<home|draw|away>_liability` are denormalised caches written at
+placement — fine for sorting and display, never for a limit decision.
+
+
 Alert types:
 - `outcome_dominance` — one outcome carries > `userExposurePct` of match
   liability.
@@ -508,15 +582,28 @@ Recommendations per match: `accept`, `limit_stake`, `reduce_odds`,
 
 `platform_bankroll` singleton per `kind`:
 
-| Column | Meaning |
-|---|---|
-| `balance` | Current chips available to pay winners |
-| `total_stakes_collected` | Lifetime sum of debits from wallets on placement |
-| `total_payouts_paid` | Lifetime sum of credits back to wallets on win |
-| `house_user_id` | Wallet that receives/pays for the house |
+| Column | Meaning | Authority |
+|---|---|---|
+| `balance` | Current chips available to pay winners | **Canonical** house balance |
+| `total_stakes_collected` | Lifetime sum of stakes debited on placement | LEGACY counter — use `accounting_pl_report()` for P/L |
+| `total_payouts_paid` | Lifetime sum of payouts credited on win | LEGACY counter — same |
+| `house_user_id` | Wallet that receives/pays for the house | Canonical |
 
 `platform_transactions` mirrors every bankroll change. Admin operators
 adjust via `/management/admin/bankroll`.
+
+**Two "available bankroll" figures exist. They are not the same number
+and must not be swapped:**
+
+| Figure | Formula | Source | Use |
+|---|---|---|---|
+| Sports available balance (LEGACY) | `balance − Σ matches.worst_case_exposure` (scheduled/live) | `getBankrollOverview` in `src/lib/bankroll.functions.ts` | Admin bankroll page display only |
+| Available reserve (**canonical**) | `balance − active enforced reservations − outstanding payables` | `public.accounting_available_reserve(env)` | Placement capacity checks, arcade exposure ceilings, Phase 9 reporting |
+
+The legacy figure ignores journal payables and arcade reservations; the
+canonical one ignores nothing. Any new capacity decision must use
+`accounting_available_reserve`. Convergence happens when sports moves
+onto the journal (§7.6).
 
 ### 7.4 Correlated exposure
 
@@ -540,10 +627,32 @@ Runs manually from `/management/admin/reconciliation` or via the
 
 ### 7.6 Accounting core (Phases 1–10)
 
-The platform runs a double-entry accounting layer over every money
-movement (sports bets, arcade rounds, wallet ops). Each phase has its
-own spec in [`docs/accounting/`](./accounting/) and its own SQL
-self-test function.
+The platform is migrating every money movement onto a double-entry
+accounting layer. Each phase has its own spec in
+[`docs/accounting/`](./accounting/) and its own SQL self-test function.
+The infrastructure (Phases 1–10) is complete; **product coverage is
+not** — see the status table below before treating the journal as a
+complete picture of house P/L.
+
+**Per-product journal status** (authority: `accounting_migration_flags`,
+snapshot 2026-07-31):
+
+| Product | `journal_enabled` | `liability_enforced` | Status |
+|---|---|---|---|
+| Plinko | yes | yes | **LIVE** |
+| Roulette | yes | yes | **LIVE** |
+| Treasure Grid | yes | yes | **LIVE** |
+| Blackjack | yes | yes | **LIVE** |
+| Football | no | no | **LEGACY** — wallet RPC + `platform_bankroll` only |
+| F1 | no | no | **LEGACY** |
+| UFC | no | no | **LEGACY** |
+| `sports_generic` | no | no | **PLANNED** — shared sports posting path |
+
+Consequences while sports is LEGACY: `accounting_pl_report()` covers
+arcade only, and `accounting_available_reserve()` reserves arcade
+exposure only. Sports exposure is still governed by §7.2 / §7.3.
+
+
 
 | Phase | Scope | Self-test |
 |---|---|---|
@@ -567,14 +676,18 @@ Key rules:
   `src/lib/accounting/money.ts` (`roundMoney`, `roundPayout`,
   `roundLiability`, `potentialPayout`, `formatPoints`).
 - **Liability reservations** are taken at placement/deal time and handed
-  off atomically to payable at settlement. Available bankroll =
-  bankroll − active reservations − outstanding payables.
+  off atomically to payable at settlement. Canonical available bankroll
+  = bankroll − active enforced reservations − outstanding payables,
+  exposed by `accounting_available_reserve(env)` (§7.3). Currently
+  reserves arcade positions only.
 - **Environments** (`PRODUCTION` / `SIMULATION` / `TEST`) are tagged on
   every journal so real and simulated exposure never mix.
 - **P/L reporting**: `public.accounting_pl_report()` (settlement or
   placement basis, filterable by product/game/sport/user/date) backs the
   admin page `/management/admin/pl-report`. Pending liability is
-  computed historically "as of" the report end date.
+  computed historically "as of" the report end date. It labels each
+  product `journal-enabled` / `shadow` / `disabled` / `legacy`, matching
+  the status table above.
 
 ---
 
@@ -583,18 +696,22 @@ Key rules:
 ### 8.1 Roles
 
 Stored in `user_roles` (separate table — never on `profiles`).
-Enum `app_role`: `user`, `member`, `moderator`, `admin`,
-`super_admin`, `viewer`.
+Authority is the DB enum `app_role`: `pending`, `member`, `viewer`,
+`customer_support`, `admin`, `super_admin`. (There is no `user` or
+`moderator` value — earlier drafts of this doc listed them in error.)
 
 Access is checked via `has_role(_user_id, _role)` (security-definer,
 avoids RLS recursion). Codepaths use `requireTier(...)` helpers.
 
-- `user` — signed up, no play.
+- `pending` — signed up / awaiting staff approval; no play.
 - `member` — approved user; can place bets.
-- `moderator` — support & chat only.
+- `customer_support` — support & chat only.
 - `viewer` — read-only admin dashboards.
 - `admin` — full admin console (users, risk, payouts, bankroll, etc.).
 - `super_admin` — plus staff management, secrets, destructive ops.
+
+A guest (anonymous) session has **no** row in `user_roles` at all,
+which is what blocks betting in §5.2.
 
 ### 8.2 Staff portal (`/management/*`)
 
@@ -628,7 +745,7 @@ Every file `src/routes/management/admin.*.tsx` corresponds to a page:
 | `admin.wallet-adjustments` | Manual wallet credits/debits (audited). |
 | `admin.wallet-ledger` / `admin.token-ledger` | Ledger explorers. |
 | `admin.payouts` | Approve payouts, mark proof uploaded/paid. |
-| `admin.predictions` | Search tickets, force-settle, void. |
+| `admin.predictions` | Search tickets (football, F1 and UFC), force-settle, void. |
 | `admin.settlements` | Trigger settlement or catch-up per match. |
 | `admin.matches` | Manual match CRUD, status overrides. |
 | `admin.match-pools` | Per-match liability + stake pool. |
@@ -651,7 +768,7 @@ Every file `src/routes/management/admin.*.tsx` corresponds to a page:
 | `admin.analytics` | Traffic/product analytics. |
 | `admin.reconciliation` | Wallet-ledger drift checker. |
 | `admin.pl-report` | Unified P/L report (Phase 9) — settlement or placement basis, filterable by product/game/sport/user/date. |
-| `admin.predictions` | Includes football, F1 and UFC tickets. |
+
 | `admin.support-ops` | Support KPIs. |
 | `admin.onboarding` | Tour/onboarding config. |
 | `admin.settings` | Platform settings other than risk. |
@@ -750,7 +867,11 @@ Cron schedule (pg_cron → public API hooks):
 
 ## 14. Key Calculations Cheat Sheet
 
-**Odds pricing (1X2, per selection):**
+Each formula names its single canonical input (§0.2).
+
+**Odds pricing (1X2, per selection)** — only when
+`platform_settings.apply_margin_to_real = true`; otherwise
+`p_house = p_fair`:
 
 ```
 p_raw   = 1 / api_odds
@@ -759,20 +880,31 @@ p_house = min(0.999, p_fair × (1 + margin_pct/100))
 final   = max(1.01, round(1 / p_house, 2))
 ```
 
-**Potential return:** `potential_return = stake × decimal_odds`.
+**Potential return:**
+`potential_return = acct_round_payout(stake × decimal_odds)`
+— 2dp, half-up. Liability derived from it rounds **up**
+(`acct_round_liability`). The DB helpers are canonical;
+`src/lib/accounting/money.ts` mirrors them for display.
 
-**Per-bet caps:** ticket rejected if any of:
+**Per-bet caps** (values from `platform_settings` id=1, not code):
+ticket rejected if any of:
 - `stake > max_stake_per_bet` (when > 0)
 - `stake × odds > max_potential_payout`
 - `odds ≥ high_odds_threshold` and `high_odds_disabled`
 
-**Platform exposure limit:**
-`max_acceptable_liability = bankroll × exposure_cap_pct`
+**Platform exposure limit (sports, LEGACY path):**
+`max_acceptable_liability = platform_bankroll.balance × exposure_cap_pct`
 Risk dashboard `bankroll_breach` fires when
-`total_worst_case_liability > max_acceptable_liability`.
+`total_worst_case_liability > max_acceptable_liability`, where the
+liability is recomputed from pending `predictions` (§7.2), not read
+from `matches.worst_case_exposure`.
+
+**Placement capacity (arcade, LIVE journal path):**
+`accounting_available_reserve(env) ≥ worst-case payout of this round`,
+checked inside the placement RPC.
 
 **Bankroll coverage ratio:**
-`coverage = bankroll / total_worst_case_liability`.
+`coverage = platform_bankroll.balance / total_worst_case_liability`.
 Displayed to users on `/trust-center` when > 1 (safe).
 
 **Referral reward:** `reward_amount` from `onboarding_settings`, credited
@@ -822,8 +954,8 @@ when `referrals.stage` advances to `rewarded`.
 
 - [`docs/accounting/`](./accounting/) — phase-by-phase accounting
   specifications (`phase1-verification.md` … `phase10-automated-tests.md`).
-
-
+  These are the authority for journal, reservation and rounding
+  behaviour; §7.6 here is a summary only.
 - [`RUNBOOK.md`](./RUNBOOK.md) — operational procedures (approving
   payouts, handling stuck settlements, rotating API keys).
 - [`BACKUP_RECOVERY.md`](./BACKUP_RECOVERY.md) — DB backup schedule,
@@ -832,6 +964,10 @@ when `referrals.stage` advances to `rewarded`.
 
 ---
 
-*Document last updated 2026-07-31 (multi-vertical: football, F1, UFC,
-arcade + accounting phases 1–10). When behavior changes, update this
-file in the same PR that changes the code.*
+*Document last updated 2026-07-31 — consistency & authority pass:
+canonical source table (§0.2), LIVE/SHADOW/LEGACY/PLANNED status tags,
+corrected role, wallet and payout enums, live vs fallback risk settings,
+and the two distinct "available bankroll" figures. Live values quoted
+here are snapshots; the database is the authority. When behaviour
+changes, update this file in the same PR that changes the code.*
+
