@@ -7254,6 +7254,19 @@ export type Database = {
         }
         Relationships: []
       }
+      v_accounting_plinko_bankroll_control: {
+        Row: {
+          available_reserve: number | null
+          bankroll_movement: number | null
+          closed_to_reserve: number | null
+          environment: Database["public"]["Enums"]["acct_environment"] | null
+          payout_expense: number | null
+          plinko_pl: number | null
+          reconciled: boolean | null
+          stake_revenue: number | null
+        }
+        Relationships: []
+      }
       v_accounting_plinko_reconciliation: {
         Row: {
           checked_at: string | null
@@ -7413,6 +7426,10 @@ export type Database = {
         Args: { p_id: string }
         Returns: Json
       }
+      accounting_available_reserve: {
+        Args: { p_env: Database["public"]["Enums"]["acct_environment"] }
+        Returns: number
+      }
       accounting_bridge_sync: { Args: { p_limit?: number }; Returns: Json }
       accounting_bridge_wallet_transaction: {
         Args: { p_tx_id: string }
@@ -7421,6 +7438,7 @@ export type Database = {
       accounting_caller_authorised: { Args: never; Returns: boolean }
       accounting_integrity_scan: { Args: never; Returns: Json }
       accounting_internal_ctx: { Args: never; Returns: boolean }
+      accounting_plinko_selftest: { Args: never; Returns: Json }
       accounting_post_journal: {
         Args: {
           p_allow_negative?: boolean
