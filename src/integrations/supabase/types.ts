@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounting_correction_proposals: {
+        Row: {
+          amount: number
+          applied_at: string | null
+          applied_result: Json | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          direction: string
+          id: string
+          proposed_by: string | null
+          proposed_txn_type:
+            | Database["public"]["Enums"]["platform_txn_type"]
+            | null
+          rationale: string
+          reconciliation_item_id: string | null
+          scope: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          applied_at?: string | null
+          applied_result?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          direction: string
+          id?: string
+          proposed_by?: string | null
+          proposed_txn_type?:
+            | Database["public"]["Enums"]["platform_txn_type"]
+            | null
+          rationale: string
+          reconciliation_item_id?: string | null
+          scope?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          applied_at?: string | null
+          applied_result?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          direction?: string
+          id?: string
+          proposed_by?: string | null
+          proposed_txn_type?:
+            | Database["public"]["Enums"]["platform_txn_type"]
+            | null
+          rationale?: string
+          reconciliation_item_id?: string | null
+          scope?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_correction_proposals_reconciliation_item_id_fkey"
+            columns: ["reconciliation_item_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_reconciliation_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       accounting_migration_flags: {
         Row: {
           created_at: string
@@ -38,6 +106,60 @@ export type Database = {
           notes?: string | null
           product?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      accounting_reconciliation_items: {
+        Row: {
+          affected_user_id: string | null
+          classification: string
+          created_at: string
+          evidence: Json
+          id: string
+          is_variance_component: boolean
+          narrative: string
+          occurred_at: string
+          requires_balance_correction: boolean
+          requires_ledger_backfill: boolean
+          requires_reporting_fix: boolean
+          resolution_status: string
+          scope: string
+          updated_at: string
+          variance_amount: number
+        }
+        Insert: {
+          affected_user_id?: string | null
+          classification: string
+          created_at?: string
+          evidence?: Json
+          id?: string
+          is_variance_component?: boolean
+          narrative: string
+          occurred_at: string
+          requires_balance_correction?: boolean
+          requires_ledger_backfill?: boolean
+          requires_reporting_fix?: boolean
+          resolution_status?: string
+          scope?: string
+          updated_at?: string
+          variance_amount: number
+        }
+        Update: {
+          affected_user_id?: string | null
+          classification?: string
+          created_at?: string
+          evidence?: Json
+          id?: string
+          is_variance_component?: boolean
+          narrative?: string
+          occurred_at?: string
+          requires_balance_correction?: boolean
+          requires_ledger_backfill?: boolean
+          requires_reporting_fix?: boolean
+          resolution_status?: string
+          scope?: string
+          updated_at?: string
+          variance_amount?: number
         }
         Relationships: []
       }
@@ -4227,6 +4349,39 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_bankroll_write_log: {
+        Row: {
+          app_context: string | null
+          balance_after: number | null
+          balance_before: number | null
+          bankroll_id: number
+          created_at: string
+          db_user: string
+          id: number
+          txid: number
+        }
+        Insert: {
+          app_context?: string | null
+          balance_after?: number | null
+          balance_before?: number | null
+          bankroll_id: number
+          created_at?: string
+          db_user: string
+          id?: number
+          txid: number
+        }
+        Update: {
+          app_context?: string | null
+          balance_after?: number | null
+          balance_before?: number | null
+          bankroll_id?: number
+          created_at?: string
+          db_user?: string
+          id?: number
+          txid?: number
+        }
+        Relationships: []
+      }
       platform_settings: {
         Row: {
           admin_alert_emails: string[]
@@ -4338,6 +4493,7 @@ export type Database = {
           created_at: string
           id: string
           is_simulation: boolean
+          ledger_seq: number | null
           match_id: string | null
           note: string | null
           transaction_type: Database["public"]["Enums"]["platform_txn_type"]
@@ -4350,6 +4506,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_simulation?: boolean
+          ledger_seq?: number | null
           match_id?: string | null
           note?: string | null
           transaction_type: Database["public"]["Enums"]["platform_txn_type"]
@@ -4362,6 +4519,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_simulation?: boolean
+          ledger_seq?: number | null
           match_id?: string | null
           note?: string | null
           transaction_type?: Database["public"]["Enums"]["platform_txn_type"]
@@ -6409,6 +6567,7 @@ export type Database = {
           created_at: string
           id: string
           is_simulation: boolean
+          ledger_seq: number | null
           metadata: Json
           note: string | null
           payout_request_id: string | null
@@ -6427,6 +6586,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_simulation?: boolean
+          ledger_seq?: number | null
           metadata?: Json
           note?: string | null
           payout_request_id?: string | null
@@ -6445,6 +6605,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_simulation?: boolean
+          ledger_seq?: number | null
           metadata?: Json
           note?: string | null
           payout_request_id?: string | null
@@ -6501,6 +6662,152 @@ export type Database = {
           },
         ]
       }
+      platform_transactions_signed: {
+        Row: {
+          amount_conflict: boolean | null
+          balance_after: number | null
+          balance_before: number | null
+          bet_id: string | null
+          created_at: string | null
+          direction: string | null
+          id: string | null
+          is_simulation: boolean | null
+          ledger_seq: number | null
+          match_id: string | null
+          note: string | null
+          recorded_amount: number | null
+          signed_amount: number | null
+          transaction_type:
+            | Database["public"]["Enums"]["platform_txn_type"]
+            | null
+        }
+        Insert: {
+          amount_conflict?: never
+          balance_after?: number | null
+          balance_before?: number | null
+          bet_id?: string | null
+          created_at?: string | null
+          direction?: never
+          id?: string | null
+          is_simulation?: boolean | null
+          ledger_seq?: number | null
+          match_id?: string | null
+          note?: string | null
+          recorded_amount?: number | null
+          signed_amount?: never
+          transaction_type?:
+            | Database["public"]["Enums"]["platform_txn_type"]
+            | null
+        }
+        Update: {
+          amount_conflict?: never
+          balance_after?: number | null
+          balance_before?: number | null
+          bet_id?: string | null
+          created_at?: string | null
+          direction?: never
+          id?: string | null
+          is_simulation?: boolean | null
+          ledger_seq?: number | null
+          match_id?: string | null
+          note?: string | null
+          recorded_amount?: number | null
+          signed_amount?: never
+          transaction_type?:
+            | Database["public"]["Enums"]["platform_txn_type"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_transactions_bet_id_fkey"
+            columns: ["bet_id"]
+            isOneToOne: false
+            referencedRelation: "predictions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_transactions_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_accounting_reconciliation_summary: {
+        Row: {
+          classification: string | null
+          items: number | null
+          needs_balance_correction: number | null
+          needs_ledger_backfill: number | null
+          needs_reporting_fix: number | null
+          variance_amount: number | null
+        }
+        Relationships: []
+      }
+      v_bankroll_reconstruction: {
+        Row: {
+          actual_balance: number | null
+          explained_variance: number | null
+          reconstructed_balance: number | null
+          variance: number | null
+        }
+        Relationships: []
+      }
+      wallet_transactions_signed: {
+        Row: {
+          amount_conflict: boolean | null
+          balance_after: number | null
+          balance_before: number | null
+          created_at: string | null
+          direction: string | null
+          id: string | null
+          ledger_seq: number | null
+          note: string | null
+          recorded_amount: number | null
+          reference_id: string | null
+          reference_type: Database["public"]["Enums"]["wallet_ref_type"] | null
+          signed_amount: number | null
+          type: Database["public"]["Enums"]["wallet_txn_type"] | null
+          type_direction_conflict: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_conflict?: never
+          balance_after?: number | null
+          balance_before?: number | null
+          created_at?: string | null
+          direction?: never
+          id?: string | null
+          ledger_seq?: number | null
+          note?: string | null
+          recorded_amount?: number | null
+          reference_id?: string | null
+          reference_type?: Database["public"]["Enums"]["wallet_ref_type"] | null
+          signed_amount?: never
+          type?: Database["public"]["Enums"]["wallet_txn_type"] | null
+          type_direction_conflict?: never
+          user_id?: string | null
+        }
+        Update: {
+          amount_conflict?: never
+          balance_after?: number | null
+          balance_before?: number | null
+          created_at?: string | null
+          direction?: never
+          id?: string | null
+          ledger_seq?: number | null
+          note?: string | null
+          recorded_amount?: number | null
+          reference_id?: string | null
+          reference_type?: Database["public"]["Enums"]["wallet_ref_type"] | null
+          signed_amount?: never
+          type?: Database["public"]["Enums"]["wallet_txn_type"] | null
+          type_direction_conflict?: never
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _correlation_groups_for: {
@@ -6530,6 +6837,11 @@ export type Database = {
         Args: { p_admin_id?: string }
         Returns: string
       }
+      accounting_apply_correction_proposal: {
+        Args: { p_id: string }
+        Returns: Json
+      }
+      accounting_integrity_scan: { Args: never; Returns: Json }
       adjust_correct_score_odds: {
         Args: {
           p_match_id: string
@@ -6695,6 +7007,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      arcade_bj_is_terminal: {
+        Args: { p_status: Database["public"]["Enums"]["bj_hand_status"] }
+        Returns: boolean
+      }
       arcade_bj_publish_rule_config: {
         Args: { p_admin: string; p_patch: Json; p_reason: string }
         Returns: string
@@ -6705,6 +7021,10 @@ export type Database = {
       }
       arcade_bj_reveal_shoe: {
         Args: { p_hand: string; p_user: string }
+        Returns: Json
+      }
+      arcade_bj_reverse_settlement: {
+        Args: { p_hand: string; p_reason: string }
         Returns: Json
       }
       arcade_bj_settle: { Args: { p_hand: string }; Returns: undefined }

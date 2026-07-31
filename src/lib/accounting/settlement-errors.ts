@@ -89,3 +89,16 @@ export async function runSettlement<T>(
     throw error;
   }
 }
+
+/**
+ * True when the database refused to mutate an already-settled record
+ * (e.g. `BJ_SETTLEMENT_IMMUTABLE` from the blackjack immutability triggers).
+ * Corrections must go through the audited reversal path instead.
+ */
+export function isImmutableSettlement(error: unknown): boolean {
+  return /_SETTLEMENT_IMMUTABLE/i.test(messageOf(error));
+}
+
+/** User-facing copy for a blocked mutation of a settled record. */
+export const IMMUTABLE_SETTLEMENT_MESSAGE =
+  "This round is already settled and cannot be edited. Reverse the settlement first — the reversal is recorded and audited.";
