@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounting_migration_flags: {
+        Row: {
+          created_at: string
+          dual_write: boolean
+          journal_enabled: boolean
+          notes: string | null
+          product: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dual_write?: boolean
+          journal_enabled?: boolean
+          notes?: string | null
+          product: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dual_write?: boolean
+          journal_enabled?: boolean
+          notes?: string | null
+          product?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_reauth: {
         Row: {
           expires_at: string
@@ -4741,6 +4768,54 @@ export type Database = {
         }
         Relationships: []
       }
+      settlement_journal: {
+        Row: {
+          created_at: string
+          final_status: string | null
+          gross_payout: number | null
+          id: string
+          idempotency_key: string
+          metadata: Json
+          previous_status: string | null
+          product: string
+          reference_id: string
+          settlement_action: string
+          settlement_version: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          final_status?: string | null
+          gross_payout?: number | null
+          id?: string
+          idempotency_key: string
+          metadata?: Json
+          previous_status?: string | null
+          product: string
+          reference_id: string
+          settlement_action: string
+          settlement_version?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          final_status?: string | null
+          gross_payout?: number | null
+          id?: string
+          idempotency_key?: string
+          metadata?: Json
+          previous_status?: string | null
+          product?: string
+          reference_id?: string
+          settlement_action?: string
+          settlement_version?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       sports_bets: {
         Row: {
           accepted_odds: number
@@ -7416,6 +7491,24 @@ export type Database = {
           p_round: number
           p_winner: string
         }
+        Returns: number
+      }
+      settlement_claim: {
+        Args: {
+          p_action: string
+          p_final_status?: string
+          p_gross_payout?: number
+          p_metadata?: Json
+          p_previous_status?: string
+          p_product: string
+          p_reference_id: string
+          p_user_id?: string
+          p_version?: number
+        }
+        Returns: string
+      }
+      settlement_next_version: {
+        Args: { p_product: string; p_reference_id: string }
         Returns: number
       }
       staff_approve_point_request: {
