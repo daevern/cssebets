@@ -476,6 +476,7 @@ export type Database = {
           environment: Database["public"]["Enums"]["acct_environment"]
           game: string | null
           id: string
+          initial_reserved_amount: number
           max_gross_payout: number
           max_net_liability: number
           metadata: Json
@@ -485,10 +486,13 @@ export type Database = {
           release_reason: string | null
           released_at: string | null
           reserved_amount: number
+          reserved_at: string
           stake_collected: number
           status: string
+          superseded_at: string | null
           updated_at: string
           user_id: string | null
+          version: number
         }
         Insert: {
           config_version?: string | null
@@ -497,6 +501,7 @@ export type Database = {
           environment: Database["public"]["Enums"]["acct_environment"]
           game?: string | null
           id?: string
+          initial_reserved_amount?: number
           max_gross_payout: number
           max_net_liability: number
           metadata?: Json
@@ -506,10 +511,13 @@ export type Database = {
           release_reason?: string | null
           released_at?: string | null
           reserved_amount: number
+          reserved_at?: string
           stake_collected?: number
           status?: string
+          superseded_at?: string | null
           updated_at?: string
           user_id?: string | null
+          version?: number
         }
         Update: {
           config_version?: string | null
@@ -518,6 +526,7 @@ export type Database = {
           environment?: Database["public"]["Enums"]["acct_environment"]
           game?: string | null
           id?: string
+          initial_reserved_amount?: number
           max_gross_payout?: number
           max_net_liability?: number
           metadata?: Json
@@ -527,10 +536,13 @@ export type Database = {
           release_reason?: string | null
           released_at?: string | null
           reserved_amount?: number
+          reserved_at?: string
           stake_collected?: number
           status?: string
+          superseded_at?: string | null
           updated_at?: string
           user_id?: string | null
+          version?: number
         }
         Relationships: []
       }
@@ -7619,6 +7631,10 @@ export type Database = {
       accounting_caller_authorised: { Args: never; Returns: boolean }
       accounting_integrity_scan: { Args: never; Returns: Json }
       accounting_internal_ctx: { Args: never; Returns: boolean }
+      accounting_liability_test_cleanup: {
+        Args: { p_ref_type: string; p_round?: string }
+        Returns: undefined
+      }
       accounting_phase5_final_selftest: { Args: never; Returns: Json }
       accounting_phase5_treasure_expiry_test: { Args: never; Returns: Json }
       accounting_phase6_selftest: { Args: never; Returns: Json }

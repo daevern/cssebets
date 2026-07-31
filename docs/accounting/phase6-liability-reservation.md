@@ -47,3 +47,23 @@ row as `RELEASED` while still storing the full net amount in `reserved_amount`,
 permanently inflating reserved liability for every single-shot game. Settled
 rows now store `0`, and existing rows were backfilled
 (`release_reason = 'BACKFILL_ZERO_ON_RELEASED'`).
+
+## Phase 6.1 — concurrency & handoff verification
+`supabase/tests/liability_concurrency.py` — **all checks passed** against two
+independent database sessions in the simulation environment:
+
+- **Control 1 (no over-allocation):** with availability squeezed so only one of
+  two placements fits, session B blocks on the environment advisory lock while
+  session A reserves, then recomputes availability after A commits and is
+  rejected with `EXPOSURE_LIMIT`. No hand is created and only the accepted
+  placement debits the wallet.
+- **Persistence:** A's reservation stays `ACTIVE` at its full net liability
+  across commit and reduces `accounting_available_reserve` accordingly.
+- **Control 2 (atomic handoff):** settling the round releases the reservation
+  (`RELEASED`, `reserved_amount = 0`) inside the same transaction that posts the
+  settlement journals; no `ACTIVE` row survives, and
+  `initial_reserved_amount` + `released_at` preserve the audit history.
+- **Teardown:** wallet and available reserve return to their starting values;
+  cleanup runs through the restricted `accounting_liability_test_cleanup`
+  helper, which only accepts `p6_*` test reference types.
+
