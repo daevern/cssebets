@@ -74,8 +74,11 @@ function MobileBar({ balance: _balance, loading: _loading }: { balance?: number 
 
 function DesktopBar({ balance, loading }: { balance?: number | null; loading?: boolean }) {
   const { pathname } = useLocation();
+  const { user } = useAuth();
+  const isGuest = !user || (user as any)?.is_anonymous === true;
   return (
     <div className="mx-auto hidden h-16 w-full max-w-7xl items-center gap-8 px-8 md:flex lg:h-[68px] lg:px-10">
+
       {/* Brand */}
       <Link
         to="/dashboard"
