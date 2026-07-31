@@ -330,15 +330,17 @@ function PlReportPage() {
                 </span>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[720px]">
+                <table className="w-full text-sm min-w-[900px]">
                   <thead className="text-xs text-muted-foreground">
                     <tr className="text-right">
                       <th className="text-left py-1">Product</th>
-                      <th>Stakes</th>
+                      <th>Gross stakes</th>
+                      <th>Refunded stakes</th>
+                      <th>Net settled</th>
                       <th>Gross payouts</th>
                       <th>Refunds</th>
                       <th>Realised P/L</th>
-                      <th>Hold %</th>
+                      <th>Hold % (net)</th>
                       <th>Settled</th>
                       <th>Open stakes</th>
                       <th>Reserved</th>
@@ -351,11 +353,19 @@ function PlReportPage() {
                       <tr key={p.product} className="text-right border-t">
                         <td className="text-left py-1">
                           {PRODUCT_LABELS[p.product] ?? p.product}
-                          {!p.journal_backed && (
-                            <span className="ml-1 text-[10px] text-amber-500">legacy</span>
-                          )}
+                          <span
+                            className={`ml-1 text-[10px] ${
+                              p.coverage_status === "journal-enabled"
+                                ? "text-emerald-500"
+                                : "text-amber-500"
+                            }`}
+                          >
+                            {p.coverage_status ?? (p.journal_backed ? "journal-enabled" : "legacy")}
+                          </span>
                         </td>
                         <td>{fmt(p.stakes)}</td>
+                        <td>{fmt(p.refunded_stakes)}</td>
+                        <td>{fmt(p.net_settled_stakes)}</td>
                         <td>{fmt(p.gross_payouts)}</td>
                         <td>{fmt(p.refunds)}</td>
                         <td
@@ -376,6 +386,8 @@ function PlReportPage() {
                     <tr className="text-right border-t font-medium">
                       <td className="text-left py-1">Total {g.group}</td>
                       <td>{fmt(g.totals.stakes)}</td>
+                      <td>{fmt(g.totals.refunded_stakes)}</td>
+                      <td>{fmt(g.totals.net_settled_stakes)}</td>
                       <td>{fmt(g.totals.gross_payouts)}</td>
                       <td>{fmt(g.totals.refunds)}</td>
                       <td>{fmt(g.totals.realised_pl)}</td>
@@ -388,6 +400,7 @@ function PlReportPage() {
                     </tr>
                   </tbody>
                 </table>
+
               </div>
             </Card>
           ))}
