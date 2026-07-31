@@ -14,6 +14,97 @@ export type Database = {
   }
   public: {
     Tables: {
+      accounting_account_balances: {
+        Row: {
+          account_id: string
+          balance: number
+          last_ledger_seq: number | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          account_id: string
+          balance?: number
+          last_ledger_seq?: number | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          account_id?: string
+          balance?: number
+          last_ledger_seq?: number | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_account_balances_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: true
+            referencedRelation: "accounting_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_account_balances_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: true
+            referencedRelation: "v_accounting_account_activity"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "accounting_account_balances_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: true
+            referencedRelation: "v_accounting_balance_reconstruction"
+            referencedColumns: ["account_id"]
+          },
+        ]
+      }
+      accounting_accounts: {
+        Row: {
+          account_code: string
+          account_type: Database["public"]["Enums"]["acct_account_type"]
+          closed_at: string | null
+          created_at: string
+          currency_or_unit: string
+          environment: string
+          id: string
+          metadata: Json
+          normal_balance: Database["public"]["Enums"]["acct_normal_balance"]
+          product: string | null
+          status: Database["public"]["Enums"]["acct_account_status"]
+          user_id: string | null
+        }
+        Insert: {
+          account_code: string
+          account_type: Database["public"]["Enums"]["acct_account_type"]
+          closed_at?: string | null
+          created_at?: string
+          currency_or_unit?: string
+          environment?: string
+          id?: string
+          metadata?: Json
+          normal_balance: Database["public"]["Enums"]["acct_normal_balance"]
+          product?: string | null
+          status?: Database["public"]["Enums"]["acct_account_status"]
+          user_id?: string | null
+        }
+        Update: {
+          account_code?: string
+          account_type?: Database["public"]["Enums"]["acct_account_type"]
+          closed_at?: string | null
+          created_at?: string
+          currency_or_unit?: string
+          environment?: string
+          id?: string
+          metadata?: Json
+          normal_balance?: Database["public"]["Enums"]["acct_normal_balance"]
+          product?: string | null
+          status?: Database["public"]["Enums"]["acct_account_status"]
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       accounting_correction_proposals: {
         Row: {
           amount: number
@@ -78,6 +169,271 @@ export type Database = {
             columns: ["reconciliation_item_id"]
             isOneToOne: false
             referencedRelation: "accounting_reconciliation_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounting_cutover_batches: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          cutover_timestamp: string
+          id: string
+          legacy_ledger_last_sequence: number | null
+          live_bankroll_balance: number
+          metadata: Json
+          open_arcade_stakes: number
+          open_gross_payout_exposure: number
+          open_reserved_liability: number
+          open_sports_stakes: number
+          pending_correction_amount: number
+          pending_correction_reference: string | null
+          reconstructed_bankroll_balance: number | null
+          snapshot: Json
+          snapshot_hash: string | null
+          status: Database["public"]["Enums"]["acct_cutover_status"]
+          total_user_wallet_balance: number
+          user_count: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          cutover_timestamp?: string
+          id?: string
+          legacy_ledger_last_sequence?: number | null
+          live_bankroll_balance: number
+          metadata?: Json
+          open_arcade_stakes?: number
+          open_gross_payout_exposure?: number
+          open_reserved_liability?: number
+          open_sports_stakes?: number
+          pending_correction_amount?: number
+          pending_correction_reference?: string | null
+          reconstructed_bankroll_balance?: number | null
+          snapshot?: Json
+          snapshot_hash?: string | null
+          status?: Database["public"]["Enums"]["acct_cutover_status"]
+          total_user_wallet_balance: number
+          user_count: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          cutover_timestamp?: string
+          id?: string
+          legacy_ledger_last_sequence?: number | null
+          live_bankroll_balance?: number
+          metadata?: Json
+          open_arcade_stakes?: number
+          open_gross_payout_exposure?: number
+          open_reserved_liability?: number
+          open_sports_stakes?: number
+          pending_correction_amount?: number
+          pending_correction_reference?: string | null
+          reconstructed_bankroll_balance?: number | null
+          snapshot?: Json
+          snapshot_hash?: string | null
+          status?: Database["public"]["Enums"]["acct_cutover_status"]
+          total_user_wallet_balance?: number
+          user_count?: number
+        }
+        Relationships: []
+      }
+      accounting_journal_lines: {
+        Row: {
+          account_id: string
+          balance_after: number
+          balance_before: number
+          created_at: string
+          credit: number
+          debit: number
+          id: string
+          journal_id: string
+          line_number: number
+          metadata: Json
+          signed_effect: number
+        }
+        Insert: {
+          account_id: string
+          balance_after: number
+          balance_before: number
+          created_at?: string
+          credit?: number
+          debit?: number
+          id?: string
+          journal_id: string
+          line_number: number
+          metadata?: Json
+          signed_effect: number
+        }
+        Update: {
+          account_id?: string
+          balance_after?: number
+          balance_before?: number
+          created_at?: string
+          credit?: number
+          debit?: number
+          id?: string
+          journal_id?: string
+          line_number?: number
+          metadata?: Json
+          signed_effect?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_journal_lines_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_journal_lines_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "v_accounting_account_activity"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "accounting_journal_lines_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "v_accounting_balance_reconstruction"
+            referencedColumns: ["account_id"]
+          },
+          {
+            foreignKeyName: "accounting_journal_lines_journal_id_fkey"
+            columns: ["journal_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_journals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_journal_lines_journal_id_fkey"
+            columns: ["journal_id"]
+            isOneToOne: false
+            referencedRelation: "v_accounting_journals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      accounting_journals: {
+        Row: {
+          approved_by: string | null
+          correlation_id: string | null
+          created_at: string
+          created_by: string | null
+          cutover_batch_id: string | null
+          effective_at: string
+          event_type: string | null
+          game: string | null
+          id: string
+          idempotency_key: string
+          journal_number: string
+          journal_type: Database["public"]["Enums"]["acct_journal_type"]
+          ledger_seq: number
+          metadata: Json
+          product: string | null
+          reference_id: string | null
+          reference_type: string | null
+          reversal_of_journal_id: string | null
+          reversed_by_journal_id: string | null
+          settlement_version: number | null
+          status: Database["public"]["Enums"]["acct_journal_status"]
+        }
+        Insert: {
+          approved_by?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          cutover_batch_id?: string | null
+          effective_at?: string
+          event_type?: string | null
+          game?: string | null
+          id?: string
+          idempotency_key: string
+          journal_number: string
+          journal_type: Database["public"]["Enums"]["acct_journal_type"]
+          ledger_seq: number
+          metadata?: Json
+          product?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          reversal_of_journal_id?: string | null
+          reversed_by_journal_id?: string | null
+          settlement_version?: number | null
+          status?: Database["public"]["Enums"]["acct_journal_status"]
+        }
+        Update: {
+          approved_by?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          cutover_batch_id?: string | null
+          effective_at?: string
+          event_type?: string | null
+          game?: string | null
+          id?: string
+          idempotency_key?: string
+          journal_number?: string
+          journal_type?: Database["public"]["Enums"]["acct_journal_type"]
+          ledger_seq?: number
+          metadata?: Json
+          product?: string | null
+          reference_id?: string | null
+          reference_type?: string | null
+          reversal_of_journal_id?: string | null
+          reversed_by_journal_id?: string | null
+          settlement_version?: number | null
+          status?: Database["public"]["Enums"]["acct_journal_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_journals_cutover_batch_id_fkey"
+            columns: ["cutover_batch_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_cutover_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_journals_cutover_batch_id_fkey"
+            columns: ["cutover_batch_id"]
+            isOneToOne: false
+            referencedRelation: "v_accounting_cutover_status"
+            referencedColumns: ["cutover_batch_id"]
+          },
+          {
+            foreignKeyName: "accounting_journals_reversal_of_journal_id_fkey"
+            columns: ["reversal_of_journal_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_journals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_journals_reversal_of_journal_id_fkey"
+            columns: ["reversal_of_journal_id"]
+            isOneToOne: false
+            referencedRelation: "v_accounting_journals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_journals_reversed_by_journal_id_fkey"
+            columns: ["reversed_by_journal_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_journals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_journals_reversed_by_journal_id_fkey"
+            columns: ["reversed_by_journal_id"]
+            isOneToOne: false
+            referencedRelation: "v_accounting_journals"
             referencedColumns: ["id"]
           },
         ]
@@ -6734,6 +7090,104 @@ export type Database = {
           },
         ]
       }
+      v_accounting_account_activity: {
+        Row: {
+          account_code: string | null
+          account_id: string | null
+          balance_after: number | null
+          balance_before: number | null
+          credit: number | null
+          debit: number | null
+          effective_at: string | null
+          journal_number: string | null
+          ledger_seq: number | null
+          signed_effect: number | null
+          status: Database["public"]["Enums"]["acct_journal_status"] | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      v_accounting_balance_reconstruction: {
+        Row: {
+          account_code: string | null
+          account_id: string | null
+          journal_derived_balance: number | null
+          last_journal_seq: number | null
+          last_materialised_seq: number | null
+          materialised_balance: number | null
+          reconciliation_status: string | null
+          user_id: string | null
+          variance: number | null
+        }
+        Relationships: []
+      }
+      v_accounting_cutover_status: {
+        Row: {
+          account_count: number | null
+          cutover_batch_id: string | null
+          cutover_timestamp: string | null
+          live_bankroll_balance: number | null
+          opening_journal_number: string | null
+          opening_ledger_seq: number | null
+          opening_total: number | null
+          pending_correction_amount: number | null
+          pending_correction_reference: string | null
+          reconstructed_bankroll_balance: number | null
+          reconstruction_variance: number | null
+          snapshot_hash: string | null
+          status: Database["public"]["Enums"]["acct_cutover_status"] | null
+        }
+        Relationships: []
+      }
+      v_accounting_journals: {
+        Row: {
+          effective_at: string | null
+          event_type: string | null
+          game: string | null
+          id: string | null
+          journal_number: string | null
+          journal_type: Database["public"]["Enums"]["acct_journal_type"] | null
+          ledger_seq: number | null
+          product: string | null
+          reference_id: string | null
+          reference_type: string | null
+          reversal_of_journal_id: string | null
+          reversed_by_journal_id: string | null
+          status: Database["public"]["Enums"]["acct_journal_status"] | null
+          total_credit: number | null
+          total_debit: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounting_journals_reversal_of_journal_id_fkey"
+            columns: ["reversal_of_journal_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_journals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_journals_reversal_of_journal_id_fkey"
+            columns: ["reversal_of_journal_id"]
+            isOneToOne: false
+            referencedRelation: "v_accounting_journals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_journals_reversed_by_journal_id_fkey"
+            columns: ["reversed_by_journal_id"]
+            isOneToOne: false
+            referencedRelation: "accounting_journals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_journals_reversed_by_journal_id_fkey"
+            columns: ["reversed_by_journal_id"]
+            isOneToOne: false
+            referencedRelation: "v_accounting_journals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_accounting_reconciliation_summary: {
         Row: {
           classification: string | null
@@ -6745,12 +7199,38 @@ export type Database = {
         }
         Relationships: []
       }
+      v_accounting_trial_balance: {
+        Row: {
+          account_code: string | null
+          account_type: Database["public"]["Enums"]["acct_account_type"] | null
+          closing_balance: number | null
+          credit_total: number | null
+          debit_total: number | null
+          environment: string | null
+        }
+        Relationships: []
+      }
       v_bankroll_reconstruction: {
         Row: {
           actual_balance: number | null
           explained_variance: number | null
           reconstructed_balance: number | null
           variance: number | null
+        }
+        Relationships: []
+      }
+      v_my_accounting_activity: {
+        Row: {
+          account_code: string | null
+          balance_after: number | null
+          credit: number | null
+          debit: number | null
+          effective_at: string | null
+          journal_number: string | null
+          journal_type: Database["public"]["Enums"]["acct_journal_type"] | null
+          ledger_seq: number | null
+          product: string | null
+          signed_effect: number | null
         }
         Relationships: []
       }
@@ -6841,7 +7321,41 @@ export type Database = {
         Args: { p_id: string }
         Returns: Json
       }
+      accounting_caller_authorised: { Args: never; Returns: boolean }
       accounting_integrity_scan: { Args: never; Returns: Json }
+      accounting_internal_ctx: { Args: never; Returns: boolean }
+      accounting_post_journal: {
+        Args: {
+          p_allow_negative?: boolean
+          p_approved_by?: string
+          p_correlation_id?: string
+          p_created_by?: string
+          p_cutover_batch_id?: string
+          p_effective_at?: string
+          p_event_type?: string
+          p_game?: string
+          p_idempotency_key: string
+          p_journal_type: string
+          p_lines: Json
+          p_metadata?: Json
+          p_product?: string
+          p_reference_id?: string
+          p_reference_type?: string
+          p_reversal_of?: string
+          p_settlement_version?: number
+        }
+        Returns: Json
+      }
+      accounting_reverse_journal: {
+        Args: {
+          p_approved_by?: string
+          p_created_by?: string
+          p_idempotency_key: string
+          p_journal_id: string
+          p_reason: string
+        }
+        Returns: Json
+      }
       adjust_correct_score_odds: {
         Args: {
           p_match_id: string
@@ -8032,6 +8546,37 @@ export type Database = {
       }
     }
     Enums: {
+      acct_account_status: "ACTIVE" | "CLOSED" | "SUSPENDED"
+      acct_account_type:
+        | "LIABILITY"
+        | "ASSET"
+        | "EQUITY"
+        | "REVENUE"
+        | "EXPENSE"
+        | "HOUSE_RESERVE"
+        | "SUSPENSE"
+      acct_cutover_status:
+        | "DRAFT"
+        | "VALIDATED"
+        | "APPROVED"
+        | "OPENING_POSTED"
+        | "CANCELLED"
+      acct_journal_status: "DRAFT" | "POSTED" | "REVERSED" | "REJECTED"
+      acct_journal_type:
+        | "OPENING_BALANCE"
+        | "STAKE_PLACED"
+        | "PAYOUT_SETTLED"
+        | "REFUND"
+        | "VOID"
+        | "REVERSAL"
+        | "BONUS_GRANT"
+        | "POINTS_EXPIRY"
+        | "ADMIN_CORRECTION"
+        | "MIGRATION_CORRECTION"
+        | "ROUNDING"
+        | "LEGACY_BACKFILL_REFERENCE"
+        | "TEST"
+      acct_normal_balance: "DEBIT" | "CREDIT"
       app_role:
         | "admin"
         | "member"
@@ -8357,6 +8902,40 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      acct_account_status: ["ACTIVE", "CLOSED", "SUSPENDED"],
+      acct_account_type: [
+        "LIABILITY",
+        "ASSET",
+        "EQUITY",
+        "REVENUE",
+        "EXPENSE",
+        "HOUSE_RESERVE",
+        "SUSPENSE",
+      ],
+      acct_cutover_status: [
+        "DRAFT",
+        "VALIDATED",
+        "APPROVED",
+        "OPENING_POSTED",
+        "CANCELLED",
+      ],
+      acct_journal_status: ["DRAFT", "POSTED", "REVERSED", "REJECTED"],
+      acct_journal_type: [
+        "OPENING_BALANCE",
+        "STAKE_PLACED",
+        "PAYOUT_SETTLED",
+        "REFUND",
+        "VOID",
+        "REVERSAL",
+        "BONUS_GRANT",
+        "POINTS_EXPIRY",
+        "ADMIN_CORRECTION",
+        "MIGRATION_CORRECTION",
+        "ROUNDING",
+        "LEGACY_BACKFILL_REFERENCE",
+        "TEST",
+      ],
+      acct_normal_balance: ["DEBIT", "CREDIT"],
       app_role: [
         "admin",
         "member",
