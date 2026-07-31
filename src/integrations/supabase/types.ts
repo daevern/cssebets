@@ -7507,9 +7507,37 @@ export type Database = {
         }
         Returns: string
       }
-      settlement_next_version: {
+      settlement_claim_then_fail: {
         Args: { p_product: string; p_reference_id: string }
-        Returns: number
+        Returns: undefined
+      }
+      settlement_next_version:
+        | {
+            Args: { p_product: string; p_reference_id: string }
+            Returns: number
+          }
+        | {
+            Args: {
+              p_action: string
+              p_product: string
+              p_reference_id: string
+            }
+            Returns: number
+          }
+      settlement_test_cleanup: { Args: { p_tag: string }; Returns: undefined }
+      settlement_try_claim: {
+        Args: {
+          p_action: string
+          p_final_status?: string
+          p_gross_payout?: number
+          p_metadata?: Json
+          p_previous_status?: string
+          p_product: string
+          p_reference_id: string
+          p_user_id?: string
+          p_version?: number
+        }
+        Returns: Json
       }
       staff_approve_point_request: {
         Args: { p_note?: string; p_request_id: string; p_staff_id: string }
