@@ -691,5 +691,6 @@ when `referrals.stage` advances to `rewarded`.
 
 ---
 
-*Document generated 2026-07-06. When behavior changes, update this
+*Document last updated 2026-07-31 (multi-vertical: football, F1, UFC,
+arcade + accounting phases 1–10). When behavior changes, update this
 file in the same PR that changes the code.*
