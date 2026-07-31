@@ -7653,6 +7653,14 @@ export type Database = {
       accounting_phase5_final_selftest: { Args: never; Returns: Json }
       accounting_phase5_treasure_expiry_test: { Args: never; Returns: Json }
       accounting_phase6_selftest: { Args: never; Returns: Json }
+      accounting_phase8_selftest: {
+        Args: never
+        Returns: {
+          check_name: string
+          detail: string
+          passed: boolean
+        }[]
+      }
       accounting_pl_report: {
         Args: {
           p_basis?: string
@@ -7760,6 +7768,12 @@ export type Database = {
         Args: { p_user: string }
         Returns: Database["public"]["Enums"]["acct_environment"]
       }
+      acct_money_ok: { Args: { v: number }; Returns: boolean }
+      acct_money_scale: { Args: never; Returns: number }
+      acct_round_liability: { Args: { v: number }; Returns: number }
+      acct_round_money: { Args: { v: number }; Returns: number }
+      acct_round_payout: { Args: { v: number }; Returns: number }
+      acct_round_stake: { Args: { v: number }; Returns: number }
       adjust_correct_score_odds: {
         Args: {
           p_match_id: string
