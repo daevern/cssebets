@@ -53,6 +53,8 @@ function PlReportPage() {
   const platform = report?.platform;
   const groups: any[] = report?.groups ?? [];
   const notBacked: string[] = report?.checks?.products_not_yet_journal_backed ?? [];
+  const recon: any = report?.reconciliation;
+
 
   const set = (patch: Partial<PlReportInput>) => setFilters((f) => ({ ...f, ...patch }));
   const productOptions = useMemo(
