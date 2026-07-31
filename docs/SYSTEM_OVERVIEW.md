@@ -59,15 +59,23 @@ off-platform value transfer (proof-of-payment uploaded to a "point
 request"), and users can request **payouts** back out through the same
 staff-mediated flow.
 
-All odds are derived from live paid data providers — **API-Football**,
-**API-F1** and **API-MMA** — repriced through the house margin model.
-No odds are synthetically generated. Arcade games are provably fair with
-server-side RNG and per-round verification.
+All **real-world** odds are derived from live paid data providers —
+**API-Football**, **API-F1** and **API-MMA** — repriced through the
+house margin model; none are invented. The one exception is the
+**Simulation** world (§11), whose fixtures, odds moves and results are
+generated deterministically and are flagged `is_simulation=true`
+everywhere. Arcade games are house-priced by design (fixed paytables)
+and provably fair via server-side seeded RNG with per-round
+verification.
 
-Every money movement — sports bets, arcade rounds, wallet operations —
-is posted to a double-entry accounting ledger with liability
-reservations, a 2-decimal half-up rounding policy and automated
-invariant tests (see §7.6).
+Money movement is being migrated onto a double-entry accounting ledger
+with liability reservations, a 2-decimal half-up rounding policy and
+automated invariant tests (§7.6). **Status today: arcade (Plinko,
+Roulette, Treasure Grid, Blackjack) is LIVE on the journal; football,
+F1 and UFC are LEGACY** — they move money through the wallet RPCs and
+`platform_bankroll` only, and are not yet journal-backed.
+
+
 
 
 Two independent worlds run inside one codebase:
