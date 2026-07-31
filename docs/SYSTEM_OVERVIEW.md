@@ -768,7 +768,7 @@ Every file `src/routes/management/admin.*.tsx` corresponds to a page:
 | `admin.analytics` | Traffic/product analytics. |
 | `admin.reconciliation` | Wallet-ledger drift checker. |
 | `admin.pl-report` | Unified P/L report (Phase 9) — settlement or placement basis, filterable by product/game/sport/user/date. |
-| `admin.predictions` | Includes football, F1 and UFC tickets. |
+
 | `admin.support-ops` | Support KPIs. |
 | `admin.onboarding` | Tour/onboarding config. |
 | `admin.settings` | Platform settings other than risk. |
