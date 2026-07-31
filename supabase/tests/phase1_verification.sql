@@ -179,7 +179,11 @@ BEGIN
     term  := split_part(d, '''', 6);
     open_ := split_part(d, '''', 8);
     rev   := split_part(d, '''', 10);
-    IF NOT (term ILIKE '%los%') THEN bad := bad || r.tbl || ' (no losing state); '; END IF;
+    -- Blackjack journals the settlement event on status=COMPLETED; the
+    -- win/loss/push detail lives in arcade_bj_hands.result, so COMPLETED is
+    -- an accepted loss-covering terminal state for that product.
+    IF NOT (term ILIKE '%los%' OR term ILIKE '%COMPLETED%')
+      THEN bad := bad || r.tbl || ' (no losing state); '; END IF;
     IF NOT (term ILIKE '%void%' OR term ILIKE '%expired%' OR term ILIKE '%refunded%')
       THEN bad := bad || r.tbl || ' (no void/abandoned state); '; END IF;
     IF COALESCE(open_,'') = '' AND COALESCE(rev,'') = ''
