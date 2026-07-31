@@ -867,7 +867,11 @@ Cron schedule (pg_cron → public API hooks):
 
 ## 14. Key Calculations Cheat Sheet
 
-**Odds pricing (1X2, per selection):**
+Each formula names its single canonical input (§0.2).
+
+**Odds pricing (1X2, per selection)** — only when
+`platform_settings.apply_margin_to_real = true`; otherwise
+`p_house = p_fair`:
 
 ```
 p_raw   = 1 / api_odds
@@ -876,20 +880,31 @@ p_house = min(0.999, p_fair × (1 + margin_pct/100))
 final   = max(1.01, round(1 / p_house, 2))
 ```
 
-**Potential return:** `potential_return = stake × decimal_odds`.
+**Potential return:**
+`potential_return = acct_round_payout(stake × decimal_odds)`
+— 2dp, half-up. Liability derived from it rounds **up**
+(`acct_round_liability`). The DB helpers are canonical;
+`src/lib/accounting/money.ts` mirrors them for display.
 
-**Per-bet caps:** ticket rejected if any of:
+**Per-bet caps** (values from `platform_settings` id=1, not code):
+ticket rejected if any of:
 - `stake > max_stake_per_bet` (when > 0)
 - `stake × odds > max_potential_payout`
 - `odds ≥ high_odds_threshold` and `high_odds_disabled`
 
-**Platform exposure limit:**
-`max_acceptable_liability = bankroll × exposure_cap_pct`
+**Platform exposure limit (sports, LEGACY path):**
+`max_acceptable_liability = platform_bankroll.balance × exposure_cap_pct`
 Risk dashboard `bankroll_breach` fires when
-`total_worst_case_liability > max_acceptable_liability`.
+`total_worst_case_liability > max_acceptable_liability`, where the
+liability is recomputed from pending `predictions` (§7.2), not read
+from `matches.worst_case_exposure`.
+
+**Placement capacity (arcade, LIVE journal path):**
+`accounting_available_reserve(env) ≥ worst-case payout of this round`,
+checked inside the placement RPC.
 
 **Bankroll coverage ratio:**
-`coverage = bankroll / total_worst_case_liability`.
+`coverage = platform_bankroll.balance / total_worst_case_liability`.
 Displayed to users on `/trust-center` when > 1 (safe).
 
 **Referral reward:** `reward_amount` from `onboarding_settings`, credited
