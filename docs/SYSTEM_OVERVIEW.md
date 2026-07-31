@@ -211,6 +211,51 @@ anon-safe `getMarketHistoryPublic`.
 
 ---
 
+### 4.5 Formula 1 (`src/features/f1/`)
+
+Sourced live from the **paid API-F1** subscription (no generated odds).
+
+- Sync: `f1Sync.server.ts` (season, races, drivers, constructors),
+  odds built by `f1OddsBuilder.server.ts` through the same fair-odds +
+  house-margin pipeline as football.
+- Markets: race winner, podium, points finish, **top 5 finishers**,
+  teammate head-to-head (rendered as "Will X beat Y?" yes/no cards with
+  decimal odds), fastest lap, top constructor in race.
+- Pages: `/f1` (season hub), `/f1/races` (fixture index, mirrors
+  `/matches`), `/f1/races/:raceId` (markets, movement chart with a
+  driver-filter dropdown defaulting to the top 3 favourites,
+  `StakeSlip` bet slip, live race stats, post-race analytics).
+
+### 4.6 UFC / MMA
+
+Sourced from **API-MMA** via `src/lib/apimma.server.ts` and
+`ufc-odds.server.ts`.
+
+- `runUfcEventDiscovery` + `runUfcOddsSync` keep the active event and its
+  **full card** (main + co-main + prelims) current; fights upsert on
+  `ufc_fights.apimma_fight_id`.
+- Markets: fight winner, method of victory, round groups, total rounds.
+- Pages: `/ufc`, `/ufc/fights` (Live / Upcoming / Completed),
+  `/ufc/:fightId`.
+
+### 4.7 Arcade (`src/lib/arcade/`, `src/components/arcade/`)
+
+House-banked instant games, all provably fair (server-side seeded
+shuffle/RNG with a verify dialog per game):
+
+| Game | Server fns | Notes |
+|---|---|---|
+| Plinko | `plinko.functions.ts` | Cosmetics + configurable risk rows |
+| Roulette | `roulette.functions.ts`, `roulette-math.ts` | European wheel |
+| Treasure Grid | `treasure.functions.ts`, `treasure-math.ts` | Mines-style grid |
+| Blackjack | `blackjack.functions.ts`, `blackjack-math.ts` | Insurance, splits, pre-deal exposure ceiling (Phase 7) |
+
+Every round debits/credits the real wallet atomically and posts to the
+accounting journals with a liability reservation held for the maximum
+payout until the round resolves.
+
+---
+
 ## 5. Bet Placement & Wallets
 
 ### 5.1 Wallet model
