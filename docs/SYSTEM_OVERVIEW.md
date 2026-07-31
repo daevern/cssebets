@@ -676,14 +676,18 @@ Key rules:
   `src/lib/accounting/money.ts` (`roundMoney`, `roundPayout`,
   `roundLiability`, `potentialPayout`, `formatPoints`).
 - **Liability reservations** are taken at placement/deal time and handed
-  off atomically to payable at settlement. Available bankroll =
-  bankroll − active reservations − outstanding payables.
+  off atomically to payable at settlement. Canonical available bankroll
+  = bankroll − active enforced reservations − outstanding payables,
+  exposed by `accounting_available_reserve(env)` (§7.3). Currently
+  reserves arcade positions only.
 - **Environments** (`PRODUCTION` / `SIMULATION` / `TEST`) are tagged on
   every journal so real and simulated exposure never mix.
 - **P/L reporting**: `public.accounting_pl_report()` (settlement or
   placement basis, filterable by product/game/sport/user/date) backs the
   admin page `/management/admin/pl-report`. Pending liability is
-  computed historically "as of" the report end date.
+  computed historically "as of" the report end date. It labels each
+  product `journal-enabled` / `shadow` / `disabled` / `legacy`, matching
+  the status table above.
 
 ---
 
@@ -692,18 +696,22 @@ Key rules:
 ### 8.1 Roles
 
 Stored in `user_roles` (separate table — never on `profiles`).
-Enum `app_role`: `user`, `member`, `moderator`, `admin`,
-`super_admin`, `viewer`.
+Authority is the DB enum `app_role`: `pending`, `member`, `viewer`,
+`customer_support`, `admin`, `super_admin`. (There is no `user` or
+`moderator` value — earlier drafts of this doc listed them in error.)
 
 Access is checked via `has_role(_user_id, _role)` (security-definer,
 avoids RLS recursion). Codepaths use `requireTier(...)` helpers.
 
-- `user` — signed up, no play.
+- `pending` — signed up / awaiting staff approval; no play.
 - `member` — approved user; can place bets.
-- `moderator` — support & chat only.
+- `customer_support` — support & chat only.
 - `viewer` — read-only admin dashboards.
 - `admin` — full admin console (users, risk, payouts, bankroll, etc.).
 - `super_admin` — plus staff management, secrets, destructive ops.
+
+A guest (anonymous) session has **no** row in `user_roles` at all,
+which is what blocks betting in §5.2.
 
 ### 8.2 Staff portal (`/management/*`)
 
