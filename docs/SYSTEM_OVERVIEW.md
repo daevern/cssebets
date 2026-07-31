@@ -745,7 +745,7 @@ Every file `src/routes/management/admin.*.tsx` corresponds to a page:
 | `admin.wallet-adjustments` | Manual wallet credits/debits (audited). |
 | `admin.wallet-ledger` / `admin.token-ledger` | Ledger explorers. |
 | `admin.payouts` | Approve payouts, mark proof uploaded/paid. |
-| `admin.predictions` | Search tickets, force-settle, void. |
+| `admin.predictions` | Search tickets (football, F1 and UFC), force-settle, void. |
 | `admin.settlements` | Trigger settlement or catch-up per match. |
 | `admin.matches` | Manual match CRUD, status overrides. |
 | `admin.match-pools` | Per-match liability + stake pool. |
