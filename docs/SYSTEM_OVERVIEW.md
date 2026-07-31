@@ -366,11 +366,11 @@ inside a single Postgres RPC.
 
 Defined in `src/lib/predictions.functions.ts`. Order of checks:
 
+1. **Role gate** — user must hold `member`, `admin` or `super_admin` in
+   `user_roles`. New sign-ups (and guest sessions, §3.2) have no
+   betting role and must be approved by staff, so a guest hits the
+   sign-in prompt before this check is ever reached.
 
-
-1. **Role gate** — user must have `member` or `admin` role in
-   `user_roles`. New sign-ups start without a role and must be approved
-   by staff.
 2. **Rate limit** — `enforceRateLimit(user:${uid}, 'bet_placement')` via
    `rate_limits`. Exceeding it writes an `audit_log`
    `rate_limit_triggered` entry visible on the risk-settings page.
