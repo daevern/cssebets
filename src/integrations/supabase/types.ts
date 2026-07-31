@@ -7635,6 +7635,9 @@ export type Database = {
         Args: { p_ref_type: string; p_round?: string }
         Returns: undefined
       }
+      accounting_phase10_invariants: { Args: never; Returns: Json }
+      accounting_phase10_product_tests: { Args: never; Returns: Json }
+      accounting_phase10_selftest: { Args: never; Returns: Json }
       accounting_phase5_final_selftest: { Args: never; Returns: Json }
       accounting_phase5_treasure_expiry_test: { Args: never; Returns: Json }
       accounting_phase6_selftest: { Args: never; Returns: Json }
