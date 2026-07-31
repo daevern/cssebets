@@ -133,10 +133,15 @@ PWA install prompts are suppressed.
 | `/help` | Tour / onboarding help entrypoint. |
 | `/settings` | Profile, avatar, email prefs, sign-out. |
 
-Global UI pieces: `BottomNav`, `TopBar` (badge counts), `WinDetector`
-(polls for newly settled winning tickets and pops `WinTicketModal`),
-`TourProvider` (walkthroughs configured in `tours.config.ts`),
-`WelcomeModal` (first-run).
+Global UI pieces: `BottomNav` (Home · Matches · F1 · UFC · Wallet —
+Payout and Markets were removed; the F1/UFC tabs deep-link to the
+fixture indexes), `TopBar` (badge counts, guest "Log in" pill),
+`HamburgerMenu` (liquid-drop expansion holding wallet balance, token
+balance, referral code, store, info pages and sign-out),
+`SportBadge` (official F1/UFC marks), `WinDetector` (polls for newly
+settled winning tickets and pops `WinTicketModal`), `TourProvider`
+(walkthroughs in `tours.config.ts`, completion persisted so it shows
+once), `WelcomeModal` (first-run, hidden for guests).
 
 ---
 
