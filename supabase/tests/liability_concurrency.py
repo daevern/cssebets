@@ -88,7 +88,10 @@ print(f"net liability: treasure={net_t} blackjack={net_b}")
 
 # ---- squeeze available reserve so one fits but not both -------------------
 SQUEEZE = str(uuid.uuid4())
-headroom = net_t + net_b - 0.01           # room for the first, not for both
+# the first placement's 10-point stake also flows into the bankroll, so leave
+# room for the treasure round only: after it commits, availability < blackjack net
+STAKE_T = 10
+headroom = net_t + net_b - STAKE_T - 1
 psql(f"""
 INSERT INTO public.accounting_liability_reservations(
   environment, product, game, reference_type, reference_id, user_id,
