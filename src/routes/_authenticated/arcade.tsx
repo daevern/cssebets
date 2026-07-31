@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/arcade")({
 });
 
 const TABS = [
+  { to: "/arcade", label: "Lobby", Icon: Trophy },
   { to: "/arcade/plinko", label: "Plinko", Icon: Gamepad2 },
   { to: "/arcade/roulette", label: "Roulette", Icon: Target },
   { to: "/arcade/treasure", label: "Treasure", Icon: Gem },
