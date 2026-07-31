@@ -163,7 +163,9 @@ SELECT count(*) FROM pg_stat_activity
     C.send("BEGIN;")
     C.send(f"SELECT 'MID|' || (SELECT status FROM public.accounting_liability_reservations "
            f"WHERE reference_type='arcade_treasure_round' AND reference_id='{round_id}');")
-    C.send(f"UPDATE public.arcade_treasure_rounds SET status='WON', payout=stake*2 WHERE id='{round_id}';")
+    C.send(f"""CREATE TEMP TABLE p6settle AS SELECT public.arcade_treasure_collect('{user}','{round_id}',
+      (SELECT state_version FROM public.arcade_treasure_rounds WHERE id='{round_id}'),
+      'p6-collect-{uuid.uuid4()}') AS r;""")
     C.send(f"""SELECT 'HANDOFF|'
       || (SELECT status FROM public.accounting_liability_reservations
            WHERE reference_type='arcade_treasure_round' AND reference_id='{round_id}')
