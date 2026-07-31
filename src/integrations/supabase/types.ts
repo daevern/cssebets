@@ -7354,52 +7354,29 @@ export type Database = {
       accounting_caller_authorised: { Args: never; Returns: boolean }
       accounting_integrity_scan: { Args: never; Returns: Json }
       accounting_internal_ctx: { Args: never; Returns: boolean }
-      accounting_post_journal:
-        | {
-            Args: {
-              p_allow_negative?: boolean
-              p_approved_by?: string
-              p_correlation_id?: string
-              p_created_by?: string
-              p_cutover_batch_id?: string
-              p_effective_at?: string
-              p_event_type?: string
-              p_game?: string
-              p_idempotency_key: string
-              p_journal_type: string
-              p_lines: Json
-              p_metadata?: Json
-              p_product?: string
-              p_reference_id?: string
-              p_reference_type?: string
-              p_reversal_of?: string
-              p_settlement_version?: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_allow_negative?: boolean
-              p_approved_by?: string
-              p_correlation_id?: string
-              p_created_by?: string
-              p_cutover_batch_id?: string
-              p_effective_at?: string
-              p_environment?: string
-              p_event_type?: string
-              p_game?: string
-              p_idempotency_key: string
-              p_journal_type: string
-              p_lines: Json
-              p_metadata?: Json
-              p_product?: string
-              p_reference_id?: string
-              p_reference_type?: string
-              p_reversal_of?: string
-              p_settlement_version?: number
-            }
-            Returns: Json
-          }
+      accounting_post_journal: {
+        Args: {
+          p_allow_negative?: boolean
+          p_approved_by?: string
+          p_correlation_id?: string
+          p_created_by?: string
+          p_cutover_batch_id?: string
+          p_effective_at?: string
+          p_environment?: string
+          p_event_type?: string
+          p_game?: string
+          p_idempotency_key: string
+          p_journal_type: string
+          p_lines: Json
+          p_metadata?: Json
+          p_product?: string
+          p_reference_id?: string
+          p_reference_type?: string
+          p_reversal_of?: string
+          p_settlement_version?: number
+        }
+        Returns: Json
+      }
       accounting_reverse_journal: {
         Args: {
           p_approved_by?: string
