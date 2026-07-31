@@ -362,6 +362,12 @@ payout until the round resolves.
 write to `wallets.balance` is paired with a `wallet_transactions` row
 inside a single Postgres RPC.
 
+### 5.2 Placement flow (`submitPrediction`)
+
+Defined in `src/lib/predictions.functions.ts`. Order of checks:
+
+
+
 1. **Role gate** — user must have `member` or `admin` role in
    `user_roles`. New sign-ups start without a role and must be approved
    by staff.
