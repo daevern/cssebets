@@ -116,6 +116,8 @@ export const placePlinkoDrop = createServerFn({ method: "POST" })
       if (m.includes("INSUFFICIENT_BALANCE")) throw new Error("Not enough points in your wallet.");
       if (m.includes("INVALID_STAKE")) throw new Error("Stake must be between 1 and 100 points.");
       if (m.includes("NO_ACTIVE_PROFILE")) throw new Error("Scoring temporarily unavailable.");
+      if (m.includes("EXPOSURE_LIMIT"))
+        throw new Error("Stake too large right now — the house reserve can't cover the top prize on this board. Try a smaller stake.");
       throw new Error(m || "Drop failed");
     }
     return { game };
