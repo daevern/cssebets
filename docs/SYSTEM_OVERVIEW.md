@@ -274,9 +274,13 @@ The CSSEBets house does **not** copy bookmaker odds. Steps
    capped at `0.999`.
 4. Convert back: `display_odds = max(1.01, round(1 / p_house_i, 2))`.
 
-Default margin is **25 %** (stored in `platform_settings.margin_pct`).
-`apply_margin_to_real` can be toggled off, in which case raw fair
-probabilities are used — zero house edge.
+Margin is **not** a code constant — the canonical value is
+`platform_settings.margin_pct` (currently **25**), and
+`apply_margin_to_real` gates whether it is applied to the real world at
+all. **Status: `apply_margin_to_real` is currently `false`**, i.e. real
+markets are priced at raw fair probabilities with zero house edge; the
+25 % figure only takes effect when the flag is switched back on. Always
+read the live row (§7.1) before quoting a margin anywhere.
 
 Same algorithm applies to N-way outrights (`applyOutrightMargin`).
 
