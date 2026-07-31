@@ -67,7 +67,7 @@ export type Database = {
           closed_at: string | null
           created_at: string
           currency_or_unit: string
-          environment: string
+          environment: Database["public"]["Enums"]["acct_environment"]
           id: string
           metadata: Json
           normal_balance: Database["public"]["Enums"]["acct_normal_balance"]
@@ -81,7 +81,7 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           currency_or_unit?: string
-          environment?: string
+          environment?: Database["public"]["Enums"]["acct_environment"]
           id?: string
           metadata?: Json
           normal_balance: Database["public"]["Enums"]["acct_normal_balance"]
@@ -95,7 +95,7 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           currency_or_unit?: string
-          environment?: string
+          environment?: Database["public"]["Enums"]["acct_environment"]
           id?: string
           metadata?: Json
           normal_balance?: Database["public"]["Enums"]["acct_normal_balance"]
@@ -180,6 +180,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           cutover_timestamp: string
+          environment: Database["public"]["Enums"]["acct_environment"]
           id: string
           legacy_ledger_last_sequence: number | null
           live_bankroll_balance: number
@@ -194,6 +195,9 @@ export type Database = {
           snapshot: Json
           snapshot_hash: string | null
           status: Database["public"]["Enums"]["acct_cutover_status"]
+          supersede_reason: string | null
+          superseded_at: string | null
+          superseded_by: string | null
           total_user_wallet_balance: number
           user_count: number
         }
@@ -203,6 +207,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           cutover_timestamp?: string
+          environment?: Database["public"]["Enums"]["acct_environment"]
           id?: string
           legacy_ledger_last_sequence?: number | null
           live_bankroll_balance: number
@@ -217,6 +222,9 @@ export type Database = {
           snapshot?: Json
           snapshot_hash?: string | null
           status?: Database["public"]["Enums"]["acct_cutover_status"]
+          supersede_reason?: string | null
+          superseded_at?: string | null
+          superseded_by?: string | null
           total_user_wallet_balance: number
           user_count: number
         }
@@ -226,6 +234,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           cutover_timestamp?: string
+          environment?: Database["public"]["Enums"]["acct_environment"]
           id?: string
           legacy_ledger_last_sequence?: number | null
           live_bankroll_balance?: number
@@ -240,10 +249,28 @@ export type Database = {
           snapshot?: Json
           snapshot_hash?: string | null
           status?: Database["public"]["Enums"]["acct_cutover_status"]
+          supersede_reason?: string | null
+          superseded_at?: string | null
+          superseded_by?: string | null
           total_user_wallet_balance?: number
           user_count?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "accounting_cutover_batches_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "accounting_cutover_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounting_cutover_batches_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "v_accounting_cutover_status"
+            referencedColumns: ["cutover_batch_id"]
+          },
+        ]
       }
       accounting_journal_lines: {
         Row: {
@@ -331,6 +358,7 @@ export type Database = {
           created_by: string | null
           cutover_batch_id: string | null
           effective_at: string
+          environment: Database["public"]["Enums"]["acct_environment"]
           event_type: string | null
           game: string | null
           id: string
@@ -354,6 +382,7 @@ export type Database = {
           created_by?: string | null
           cutover_batch_id?: string | null
           effective_at?: string
+          environment?: Database["public"]["Enums"]["acct_environment"]
           event_type?: string | null
           game?: string | null
           id?: string
@@ -377,6 +406,7 @@ export type Database = {
           created_by?: string | null
           cutover_batch_id?: string | null
           effective_at?: string
+          environment?: Database["public"]["Enums"]["acct_environment"]
           event_type?: string | null
           game?: string | null
           id?: string
@@ -6915,6 +6945,10 @@ export type Database = {
       }
       wallet_transactions: {
         Row: {
+          accounting_journal_id: string | null
+          accounting_sync_error: string | null
+          accounting_sync_status: string
+          accounting_synced_at: string | null
           admin_action_id: string | null
           amount: number
           balance_after: number
@@ -6934,6 +6968,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          accounting_journal_id?: string | null
+          accounting_sync_error?: string | null
+          accounting_sync_status?: string
+          accounting_synced_at?: string | null
           admin_action_id?: string | null
           amount: number
           balance_after: number
@@ -6953,6 +6991,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          accounting_journal_id?: string | null
+          accounting_sync_error?: string | null
+          accounting_sync_status?: string
+          accounting_synced_at?: string | null
           admin_action_id?: string | null
           amount?: number
           balance_after?: number
@@ -7121,6 +7163,15 @@ export type Database = {
         }
         Relationships: []
       }
+      v_accounting_bridge_status: {
+        Row: {
+          newest: string | null
+          oldest: string | null
+          status: string | null
+          transactions: number | null
+        }
+        Relationships: []
+      }
       v_accounting_cutover_status: {
         Row: {
           account_count: number | null
@@ -7188,6 +7239,21 @@ export type Database = {
           },
         ]
       }
+      v_accounting_migration_readiness: {
+        Row: {
+          checked_at: string | null
+          drift_total: number | null
+          drift_users: number | null
+          error_tx: number | null
+          mixed_journals: number | null
+          pending_tx: number | null
+          ready_for_product_migration: boolean | null
+          reserved_payout_liability: number | null
+          trial_balance_imbalance: number | null
+          unclassified_reserved_liability: number | null
+        }
+        Relationships: []
+      }
       v_accounting_reconciliation_summary: {
         Row: {
           classification: string | null
@@ -7206,7 +7272,17 @@ export type Database = {
           closing_balance: number | null
           credit_total: number | null
           debit_total: number | null
+          environment: Database["public"]["Enums"]["acct_environment"] | null
+        }
+        Relationships: []
+      }
+      v_accounting_wallet_drift: {
+        Row: {
+          drift: number | null
           environment: string | null
+          ledger_balance: number | null
+          legacy_balance: number | null
+          user_id: string | null
         }
         Relationships: []
       }
@@ -7321,6 +7397,11 @@ export type Database = {
         Args: { p_id: string }
         Returns: Json
       }
+      accounting_bridge_sync: { Args: { p_limit?: number }; Returns: Json }
+      accounting_bridge_wallet_transaction: {
+        Args: { p_tx_id: string }
+        Returns: Json
+      }
       accounting_caller_authorised: { Args: never; Returns: boolean }
       accounting_integrity_scan: { Args: never; Returns: Json }
       accounting_internal_ctx: { Args: never; Returns: boolean }
@@ -7332,6 +7413,7 @@ export type Database = {
           p_created_by?: string
           p_cutover_batch_id?: string
           p_effective_at?: string
+          p_environment?: string
           p_event_type?: string
           p_game?: string
           p_idempotency_key: string
@@ -8561,6 +8643,7 @@ export type Database = {
         | "APPROVED"
         | "OPENING_POSTED"
         | "CANCELLED"
+      acct_environment: "PRODUCTION" | "SIMULATION" | "TEST"
       acct_journal_status: "DRAFT" | "POSTED" | "REVERSED" | "REJECTED"
       acct_journal_type:
         | "OPENING_BALANCE"
@@ -8919,6 +9002,7 @@ export const Constants = {
         "OPENING_POSTED",
         "CANCELLED",
       ],
+      acct_environment: ["PRODUCTION", "SIMULATION", "TEST"],
       acct_journal_status: ["DRAFT", "POSTED", "REVERSED", "REJECTED"],
       acct_journal_type: [
         "OPENING_BALANCE",
