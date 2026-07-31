@@ -562,6 +562,12 @@ Then aggregates across matches to a platform total, compared against
 `is_active=true`. If that row is missing or nulled, the dashboard
 refuses to compute and raises a critical alert.
 
+Authority note: this recomputation from pending `predictions` is the
+canonical sports exposure figure. `matches.worst_case_exposure` and
+`matches.<home|draw|away>_liability` are denormalised caches written at
+placement — fine for sorting and display, never for a limit decision.
+
+
 Alert types:
 - `outcome_dominance` — one outcome carries > `userExposurePct` of match
   liability.
