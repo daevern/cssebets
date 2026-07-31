@@ -6,9 +6,8 @@ import { enforceRateLimit } from "@/lib/rate-limit.functions";
 /**
  * Blackjack Arcade — user-facing server functions.
  *
- * Non-monetary by design: hands cost a free daily attempt and award a
- * non-redeemable arcade score. No wallet, points balance or payout is ever
- * touched here.
+ * Hands are staked with real wallet points: the stake is debited on the deal
+ * and any payout is credited back at settlement, all inside the database.
  *
  * Every authoritative decision (shuffle, deal, hit, stand, double, split,
  * dealer play, settlement, scoring) happens inside SECURITY DEFINER Postgres
@@ -18,7 +17,11 @@ import { enforceRateLimit } from "@/lib/rate-limit.functions";
 
 function mapError(message: string): string {
   const m = message || "";
-  if (m.includes("NO_ENTRIES")) return "You've used all of today's free hands. Come back tomorrow.";
+  if (m.includes("INSUFFICIENT_BALANCE")) return "Not enough points in your wallet for that stake.";
+  if (m.includes("BELOW_MIN_STAKE")) return "That stake is below the table minimum.";
+  if (m.includes("ABOVE_MAX_STAKE")) return "That stake is above the table maximum.";
+  if (m.includes("EXPOSURE_LIMIT")) return "That stake exceeds the table payout limit.";
+
   if (m.includes("DAILY_LIMIT")) return "Daily hand limit reached.";
   if (m.includes("ACTIVE_HAND_EXISTS")) return "You already have a hand in progress.";
   if (m.includes("ACTION_NOT_ALLOWED")) return "That action isn't available right now.";
@@ -107,8 +110,9 @@ export const getBlackjackConfig = createServerFn({ method: "GET" })
         .select(
           "id, version, deck_count, penetration, dealer_hits_soft_17, dealer_peek, double_allowed, " +
             "double_after_split, max_split_hands, resplit_allowed, resplit_aces, hit_split_aces, " +
-            "auto_stand_on_21, action_timeout_seconds, daily_entry_allocation, daily_hand_limit, " +
-            "maintenance_mode, announcement",
+            "auto_stand_on_21, action_timeout_seconds, min_stake, max_stake, blackjack_payout, " +
+            "max_payout, chip_values, daily_hand_limit, maintenance_mode, announcement",
+
         )
         .eq("status", "active")
         .order("version", { ascending: false })
@@ -131,25 +135,17 @@ export const getBlackjackConfig = createServerFn({ method: "GET" })
     return { rules: rulesRes.data as any, scoring: scoreRes.data as any };
   });
 
-/** Free attempts left, arcade score and recent results. */
+/** Wallet balance, arcade score and recent results. */
 export const getBlackjackProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
 
-    // Rolls the daily allowance over if needed (write path is server-only).
-    const db = await admin();
-    await db.rpc("arcade_bj_ensure_entries", { p_user: userId });
-
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
 
-    const [entryRes, scoreRes, recentRes, todayRes] = await Promise.all([
-      supabase
-        .from("arcade_bj_entry_balances")
-        .select("daily_available, bonus_available, daily_reset_date")
-        .eq("user_id", userId)
-        .maybeSingle(),
+    const [walletRes, scoreRes, recentRes, todayRes] = await Promise.all([
+      supabase.from("wallets").select("balance").eq("user_id", userId).maybeSingle(),
       supabase
         .from("arcade_bj_score_balances")
         .select("total_score")
@@ -157,41 +153,42 @@ export const getBlackjackProfile = createServerFn({ method: "GET" })
         .maybeSingle(),
       supabase
         .from("arcade_bj_hands")
-        .select("id, result, status, total_score_awarded, dealer_total, created_at, settled_at")
+        .select(
+          "id, result, status, total_stake, total_payout, user_net, total_score_awarded, dealer_total, created_at, settled_at",
+        )
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(15),
       supabase
         .from("arcade_bj_hands")
-        .select("result, total_score_awarded")
+        .select("user_net, status")
         .eq("user_id", userId)
         .eq("status", "COMPLETED")
         .gte("created_at", startOfDay.toISOString()),
     ]);
 
     const todayRows = (todayRes.data ?? []) as any[];
-    let todayScore = 0;
+    let todayNet = 0;
     let todayWins = 0;
     let todayLosses = 0;
     for (const r of todayRows) {
-      todayScore += Number(r.total_score_awarded ?? 0);
-      if (r.result === "WIN" || r.result === "BLACKJACK") todayWins += 1;
-      else if (r.result === "LOSS" || r.result === "BUST") todayLosses += 1;
+      const net = Number(r.user_net ?? 0);
+      todayNet += net;
+      if (net > 0) todayWins += 1;
+      else if (net < 0) todayLosses += 1;
     }
 
     return {
-      entries:
-        Number(entryRes.data?.daily_available ?? 0) + Number(entryRes.data?.bonus_available ?? 0),
-      dailyEntries: Number(entryRes.data?.daily_available ?? 0),
-      bonusEntries: Number(entryRes.data?.bonus_available ?? 0),
+      balance: Number((walletRes.data as any)?.balance ?? 0),
       score: Number(scoreRes.data?.total_score ?? 0),
       recent: (recentRes.data ?? []) as any[],
-      todayScore,
+      todayNet,
       todayWins,
       todayLosses,
       todayHands: todayRows.length,
     };
   });
+
 
 /** Current in-progress hand, if any. */
 export const getActiveBlackjackHand = createServerFn({ method: "GET" })
@@ -221,12 +218,13 @@ export const getBlackjackHand = createServerFn({ method: "POST" })
     return { state: await readHandState(db, data.handId, context.userId) };
   });
 
-/** Deal a new hand — consumes one free attempt. */
+/** Deal a new hand — debits the stake from the points wallet. */
 export const startBlackjackHand = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) =>
     z
       .object({
+        stake: z.number().positive().max(100000),
         clientSeed: z.string().trim().min(4).max(128),
         idempotencyKey: z.string().trim().min(8).max(128),
       })
@@ -238,9 +236,11 @@ export const startBlackjackHand = createServerFn({ method: "POST" })
     const db = await admin();
     const { data: handId, error } = await db.rpc("arcade_bj_start_hand", {
       p_user: userId,
+      p_stake: data.stake,
       p_client_seed: data.clientSeed,
       p_idempotency_key: data.idempotencyKey,
     });
+
     if (error) throw new Error(mapError(error.message));
     return { state: await readHandState(db, handId, userId) };
   });

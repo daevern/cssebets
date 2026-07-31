@@ -18,20 +18,21 @@ export type HowToPlayContent = {
 export const HOW_TO_PLAY: Record<"plinko" | "roulette" | "treasure" | "blackjack", HowToPlayContent> = {
   blackjack: {
     title: "How to play Blackjack",
-    tagline: "Free daily hands against the dealer — get closer to 21 without going over.",
+    tagline: "Stake wallet points against the dealer — get closer to 21 without going over.",
     steps: [
-      "Press Deal. It costs one of your free daily hands — never points, never money.",
+      "Pick a chip to set your stake, then press Place bet. The stake leaves your wallet straight away.",
       "You get two cards face up; the dealer gets one up and one down.",
-      "Hit to take another card, Stand to stop. Double takes exactly one more card at double score, Split turns a pair into two hands.",
-      "Once you stand (or all hands finish), the dealer reveals and draws to 17. Beat the dealer to bank arcade score.",
+      "Hit to take another card, Stand to stop. Double doubles your stake for exactly one more card, Split turns a pair into two staked hands.",
+      "Once you stand (or all hands finish), the dealer reveals and draws to 17. Beat the dealer and the payout lands back in your wallet.",
     ],
     winning: [
-      "Bust — going over 21 — loses instantly, so stand on hard 17 or higher.",
-      "Two cards making 21 is a natural blackjack and scores the most.",
+      "Bust — going over 21 — loses your stake instantly, so stand on hard 17 or higher.",
+      "Two cards making 21 is a natural blackjack and pays 3:2.",
       "Split aces and eights; never split tens. Double when you're on 10 or 11 and the dealer shows a low card.",
     ],
     cashout:
-      "There's nothing to cash out: Blackjack is score-only. Your arcade score is a leaderboard number, not a balance, and your free hands reset every day.",
+      "Wins pay straight back into your points wallet: 1:1 on a normal win, 3:2 on a natural blackjack, and a push returns your stake.",
+
   },
 
   plinko: {

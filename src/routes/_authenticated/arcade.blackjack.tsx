@@ -3,9 +3,19 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Spade, Ticket, CopyPlus, Hand, SplitSquareHorizontal, Trophy } from "lucide-react";
+import {
+  Loader2,
+  Spade,
+  Wallet,
+  CopyPlus,
+  Hand,
+  SplitSquareHorizontal,
+  TrendingUp,
+  Trophy,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BlackjackTable, type BlackjackState } from "@/components/arcade/BlackjackTable";
+import { CasinoChip } from "@/components/arcade/CasinoChip";
 import { BlackjackVerifyDialog } from "@/components/arcade/BlackjackVerifyDialog";
 import {
   doubleBlackjack,
@@ -25,12 +35,12 @@ export const Route = createFileRoute("/_authenticated/arcade/blackjack")({
       {
         name: "description",
         content:
-          "Provably fair single-player Blackjack. Free daily hands, beat the dealer and climb the arcade score table — no stakes, no payouts.",
+          "Provably fair single-player Blackjack. Stake points straight from your wallet, beat the dealer and get paid back into your wallet.",
       },
       { property: "og:title", content: "Blackjack — Arcade | cssebets" },
       {
         property: "og:description",
-        content: "Free-to-play provably fair Blackjack for arcade score only.",
+        content: "Provably fair single-player Blackjack played with wallet points.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -42,7 +52,17 @@ export const Route = createFileRoute("/_authenticated/arcade/blackjack")({
 const newKey = () => `bj_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 const newSeed = () => Math.random().toString(36).slice(2, 14);
 
-function Stat({ label, value, Icon }: { label: string; value: string; Icon: any }) {
+function Stat({
+  label,
+  value,
+  Icon,
+  tone,
+}: {
+  label: string;
+  value: string;
+  Icon: any;
+  tone?: "up" | "down";
+}) {
   return (
     <div className="flex items-center gap-2 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-3 py-1.5">
       <Icon className="h-3.5 w-3.5 text-[var(--color-neon)]" />
@@ -50,7 +70,18 @@ function Stat({ label, value, Icon }: { label: string; value: string; Icon: any 
         <div className="text-[8px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
           {label}
         </div>
-        <div className="font-mono text-[13px] font-bold tabular-nums text-[var(--color-ink)]">{value}</div>
+        <div
+          className={cn(
+            "font-mono text-[13px] font-bold tabular-nums",
+            tone === "up"
+              ? "text-[var(--color-neon)]"
+              : tone === "down"
+                ? "text-red-400"
+                : "text-[var(--color-ink)]",
+          )}
+        >
+          {value}
+        </div>
       </div>
     </div>
   );
@@ -72,6 +103,7 @@ function BlackjackPage() {
   const activeQ = useQuery({ queryKey: ["blackjack", "active"], queryFn: () => fetchActive() });
 
   const [state, setState] = useState<BlackjackState | null>(null);
+  const [stake, setStake] = useState(10);
   const clientSeed = useRef(newSeed());
 
   useEffect(() => {
@@ -79,7 +111,17 @@ function BlackjackPage() {
   }, [activeQ.data, state]);
 
   const rules = configQ.data?.rules as any;
-  const entries = profileQ.data?.entries ?? 0;
+  const balance = profileQ.data?.balance ?? 0;
+  const minStake = Number(rules?.min_stake ?? 1);
+  const maxStake = Math.max(minStake, Number(rules?.max_stake ?? 100));
+  const chips: number[] =
+    Array.isArray(rules?.chip_values) && rules.chip_values.length
+      ? rules.chip_values.map((c: any) => Number(c))
+      : [5, 10, 25, 50, 100];
+
+  useEffect(() => {
+    setStake((s) => Math.min(Math.max(s, minStake), maxStake));
+  }, [minStake, maxStake]);
 
   const activeHand = useMemo(
     () => (state?.playerHands ?? []).find((h: any) => h.status === "ACTIVE"),
@@ -97,18 +139,21 @@ function BlackjackPage() {
     !!rules?.double_allowed &&
     activeCards.length === 2 &&
     !activeHand?.is_doubled &&
-    (!activeHand?.is_split || !!rules?.double_after_split);
+    (!activeHand?.is_split || !!rules?.double_after_split) &&
+    balance >= Number(activeHand?.stake ?? stake);
   const canSplit =
     inPlay &&
     activeCards.length === 2 &&
     activeCards[0]?.rank != null &&
     activeCards[1]?.rank != null &&
-    Math.min(activeCards[0].rank, 10) === Math.min(activeCards[1].rank, 10) &&
-    (state?.playerHands.length ?? 1) < Number(rules?.max_split_hands ?? 4);
+    Math.min(activeCards[0].rank as number, 10) === Math.min(activeCards[1].rank as number, 10) &&
+    (state?.playerHands.length ?? 1) < Number(rules?.max_split_hands ?? 4) &&
+    balance >= Number(activeHand?.stake ?? stake);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["blackjack", "profile"] });
     qc.invalidateQueries({ queryKey: ["blackjack", "active"] });
+    qc.invalidateQueries({ queryKey: ["wallet"] });
   };
 
   const onError = (e: any) => {
@@ -124,7 +169,7 @@ function BlackjackPage() {
 
   const deal = useMutation({
     mutationFn: () =>
-      startFn({ data: { clientSeed: clientSeed.current, idempotencyKey: newKey() } }),
+      startFn({ data: { stake, clientSeed: clientSeed.current, idempotencyKey: newKey() } }),
     onSuccess: applied,
     onError,
   });
@@ -142,10 +187,15 @@ function BlackjackPage() {
   const split = useMutation({ mutationFn: () => splitFn({ data: actionArgs() }), onSuccess: applied, onError });
 
   const busy = deal.isPending || hit.isPending || stand.isPending || dbl.isPending || split.isPending;
-  const canDeal = !busy && !rules?.maintenance_mode && entries > 0;
-  const lastResult = settled ? state?.hand : null;
 
-  // Size the play surface to exactly the space between the tabs and the bottom nav.
+  const canDeal =
+    !busy && !rules?.maintenance_mode && balance >= stake && stake >= minStake && stake <= maxStake;
+
+  const clampStake = (v: number) => setStake(Math.max(minStake, Math.min(maxStake, Math.round(v))));
+
+  const lastResult = settled ? state?.hand : null;
+  const todayNet = profileQ.data?.todayNet ?? 0;
+
   const shellRef = useRef<HTMLDivElement | null>(null);
   const [shellHeight, setShellHeight] = useState<number | undefined>(undefined);
   useEffect(() => {
@@ -161,7 +211,6 @@ function BlackjackPage() {
       setShellHeight(Math.max(400, window.innerHeight - top - 78));
     };
     const handleResize = () => {
-      // Mobile browsers resize on chrome collapse; ignore height-only changes.
       if (Math.abs(window.innerWidth - measuredWidth) < 24) return;
       measuredWidth = window.innerWidth;
       measure();
@@ -182,12 +231,17 @@ function BlackjackPage() {
       className="-mb-24 flex min-h-0 flex-col gap-1 overflow-hidden md:mb-0 md:h-auto md:overflow-visible md:gap-3 md:pb-4"
     >
       <div className="grid shrink-0 grid-cols-3 gap-2">
-        <Stat label="Free hands" value={entries.toLocaleString()} Icon={Ticket} />
-        <Stat label="Score today" value={(profileQ.data?.todayScore ?? 0).toLocaleString()} Icon={Trophy} />
+        <Stat label="Balance" value={balance.toLocaleString()} Icon={Wallet} />
+        <Stat
+          label="P/L today"
+          value={`${todayNet > 0 ? "+" : ""}${todayNet.toLocaleString()}`}
+          Icon={TrendingUp}
+          tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
+        />
         <Stat
           label="W / L today"
           value={`${profileQ.data?.todayWins ?? 0} / ${profileQ.data?.todayLosses ?? 0}`}
-          Icon={Spade}
+          Icon={Trophy}
         />
       </div>
 
@@ -207,8 +261,18 @@ function BlackjackPage() {
             <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
               {String(lastResult.result ?? "").replace("_", " ") || "Result"}
             </div>
-            <div className="font-mono text-[13px] font-bold tabular-nums text-[var(--color-neon)]">
-              +{Number(lastResult.total_score_awarded ?? 0).toLocaleString()} score
+            <div
+              className={cn(
+                "font-mono text-[13px] font-bold tabular-nums",
+                Number(lastResult.user_net) > 0
+                  ? "text-[var(--color-neon)]"
+                  : Number(lastResult.user_net) < 0
+                    ? "text-red-400"
+                    : "text-[var(--color-ink)]",
+              )}
+            >
+              {Number(lastResult.user_net) > 0 ? "+" : ""}
+              {Number(lastResult.user_net ?? 0).toLocaleString()} pts
             </div>
           </div>
           <BlackjackVerifyDialog
@@ -220,7 +284,6 @@ function BlackjackPage() {
         </div>
       )}
 
-      {/* Console */}
       <div className="z-20 shrink-0 space-y-1 rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 p-1.5 backdrop-blur">
         {inPlay ? (
           <div className="flex h-9 w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
@@ -243,8 +306,8 @@ function BlackjackPage() {
             ) : (
               <>
                 <Spade className="h-3.5 w-3.5" />
-                {settled ? "Deal again" : "Deal"}
-                <span className="font-mono text-[9px]">· 1 free hand</span>
+                {settled ? "Deal again" : "Place bet"}
+                <span className="font-mono text-[9px]">· {stake} pts</span>
               </>
             )}
           </button>
@@ -281,16 +344,53 @@ function BlackjackPage() {
           />
         </div>
 
-        {entries <= 0 && !inPlay && (
+        <div className="flex h-8 items-center gap-1.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2">
+          <span className="text-[9px] font-bold text-[var(--color-ink-muted)]">PTS</span>
+          <span className="flex-1 font-mono text-[13px] font-bold tabular-nums text-[var(--color-neon)]">
+            {stake.toLocaleString()}
+          </span>
+          {(
+            [
+              ["1/2", () => clampStake(stake / 2)],
+              ["2x", () => clampStake(stake * 2)],
+              ["Max", () => clampStake(Math.min(balance, maxStake))],
+            ] as const
+          ).map(([label, fn]) => (
+            <button
+              key={label}
+              type="button"
+              disabled={inPlay || busy}
+              onClick={fn}
+              className="rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)]/50 hover:text-[var(--color-neon)] disabled:opacity-40"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex min-h-10 items-center justify-between gap-1 overflow-x-auto px-1.5 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {chips.slice(0, 6).map((c) => (
+            <CasinoChip
+              key={c}
+              value={c}
+              selected={stake === c}
+              disabled={inPlay || busy || c > maxStake}
+              onClick={() => clampStake(c)}
+              size={32}
+            />
+          ))}
+        </div>
+
+        {balance < stake && !inPlay && (
           <p className="text-center text-[10px] uppercase tracking-[0.24em] text-amber-300">
-            No free hands left — your allowance resets daily
+            Not enough points for this stake
           </p>
         )}
       </div>
 
       <p className="hidden text-center text-[10px] leading-relaxed text-[var(--color-ink-muted)] md:block">
-        Blackjack is free to play for arcade score only — no stake, no wallet, no payout. Every shoe
-        is shuffled from a committed server seed and your client seed.
+        Played with wallet points. Every shoe is shuffled from a committed server seed and your
+        client seed.
       </p>
     </div>
   );
