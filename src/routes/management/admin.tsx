@@ -77,7 +77,9 @@ const GROUPS: NavGroup[] = [
       { to: "/management/admin/wallet-ledger", label: "Wallet ledger", icon: Wallet },
       { to: "/management/admin/token-ledger", label: "Token ledger", icon: Wallet },
       { to: "/management/admin/bankroll", label: "Bankroll", icon: TrendingUp },
+      { to: "/management/admin/pl-report", label: "P/L report", icon: BarChart3 },
       { to: "/management/admin/match-pools", label: "Match pools", icon: Wallet },
+
       { to: "/management/admin/risk-settings", label: "Risk settings", icon: ShieldAlert },
     ],
   },
