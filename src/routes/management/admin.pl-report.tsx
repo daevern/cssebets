@@ -199,21 +199,45 @@ function PlReportPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               <Stat label="Opening bankroll" value={fmt(platform.opening_bankroll)} />
               <Stat label="Closing bankroll" value={fmt(platform.closing_bankroll)} />
-              <Stat label="Total stakes" value={fmt(platform.total_stakes)} />
+              <Stat
+                label="Outstanding payouts payable"
+                value={fmt(platform.payouts_payable_outstanding)}
+              />
+              <Stat
+                label="Active reserved liability"
+                value={fmt(platform.active_reserved_liability)}
+              />
+              <Stat
+                label="Available bankroll"
+                value={fmt(platform.available_bankroll)}
+                sub={
+                  platform.available_bankroll_basis === "live"
+                    ? report?.checks?.available_bankroll_matches_authoritative
+                      ? "matches placement-capacity check"
+                      : "MISMATCH vs placement-capacity check"
+                    : `as of ${new Date(platform.pending?.as_of).toLocaleString()}`
+                }
+              />
+              <Stat label="Gross stakes" value={fmt(platform.gross_stakes)} />
+              <Stat label="Refunded / void stakes" value={fmt(platform.refunded_stakes)} />
+              <Stat label="Net settled stakes" value={fmt(platform.net_settled_stakes)} />
               <Stat label="Gross payouts" value={fmt(platform.gross_payouts)} />
               <Stat label="Refunds" value={fmt(platform.refunds)} />
               <Stat label="Adjustments" value={fmt(platform.adjustments)} />
               <Stat
-                label="Realised P/L"
+                label="Realised P/L (by attribution)"
                 value={fmt(platform.realised_pl)}
                 tone={Number(platform.realised_pl) >= 0 ? "pos" : "neg"}
               />
               <Stat
-                label="Actual hold"
+                label="Hold on net settled stakes"
                 value={platform.hold_pct === null ? "—" : `${fmt(platform.hold_pct)}%`}
+                sub={
+                  platform.gross_hold_pct === null
+                    ? undefined
+                    : `${fmt(platform.gross_hold_pct)}% on gross stakes`
+                }
               />
-              <Stat label="Open liability" value={fmt(platform.open_liability)} />
-              <Stat label="Available bankroll" value={fmt(platform.available_bankroll)} />
               <Stat label="Open stakes" value={fmt(platform.pending?.open_stakes)} />
               <Stat
                 label="Max potential payout"
@@ -221,10 +245,64 @@ function PlReportPage() {
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              {platform.pending?.pending_positions ?? 0} pending position(s) · reserved liability{" "}
-              {fmt(platform.pending?.reserved_liability)}
+              Available bankroll = closing bankroll − payouts payable − active reserved liability ·{" "}
+              {platform.pending?.pending_positions ?? 0} pending position(s) open as of{" "}
+              {platform.pending?.as_of ? new Date(platform.pending.as_of).toLocaleString() : "—"}
             </p>
           </Card>
+
+          {/* Reconciliation */}
+          {recon && (
+            <Card className="p-4 space-y-3">
+              <h2 className="font-semibold">Reconciliation</h2>
+              <div className="grid gap-3 lg:grid-cols-2">
+                <div className="rounded-lg border p-3 space-y-1 text-sm">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Bankroll by journal posting date
+                  </div>
+                  <Line label="Opening bankroll" v={recon.bankroll_by_posting_date?.opening_bankroll} />
+                  <Line
+                    label="+ Actual bankroll movement"
+                    v={recon.bankroll_by_posting_date?.physical_bankroll_movement}
+                  />
+                  <Line
+                    label="= Closing bankroll"
+                    v={recon.bankroll_by_posting_date?.closing_bankroll}
+                    bold
+                  />
+                  <Flag ok={recon.bankroll_by_posting_date?.identity_ok} label="identity" />
+                </div>
+                <div className="rounded-lg border p-3 space-y-1 text-sm">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Timing bridge ({applied.basis === "placement" ? "placement" : "settlement"} basis)
+                  </div>
+                  <Line
+                    label="Realised P/L by reporting attribution"
+                    v={recon.timing_bridge?.realised_pl_by_attribution}
+                  />
+                  <Line
+                    label="− Opening-position timing adjustment"
+                    v={recon.timing_bridge?.opening_position_timing_adjustment}
+                  />
+                  <Line
+                    label="+ Closing-position timing adjustment"
+                    v={recon.timing_bridge?.closing_position_timing_adjustment}
+                  />
+                  <Line
+                    label="+ Out-of-scope house movement"
+                    v={recon.timing_bridge?.out_of_scope_house_movement}
+                  />
+                  <Line
+                    label="= Actual bankroll movement"
+                    v={recon.timing_bridge?.bridged_bankroll_movement}
+                    bold
+                  />
+                  <Flag ok={recon.timing_bridge?.bridge_ok} label="bridge" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">{recon.note}</p>
+            </Card>
+          )}
 
           {notBacked.length > 0 && (
             <Card className="p-3 text-xs text-muted-foreground border-amber-500/40">
@@ -232,6 +310,7 @@ function PlReportPage() {
               {notBacked.map((p) => PRODUCT_LABELS[p] ?? p).join(", ")}.
             </Card>
           )}
+
 
           {groups.map((g) => (
             <Card key={g.group} className="p-4 space-y-3">
