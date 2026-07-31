@@ -47,10 +47,12 @@ import { Route as AuthenticatedF1RouteImport } from './routes/_authenticated/f1'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChangelogRouteImport } from './routes/_authenticated/changelog'
 import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/bets'
+import { Route as AuthenticatedArcadeRouteImport } from './routes/_authenticated/arcade'
 import { Route as ManagementAdminIndexRouteImport } from './routes/management/admin.index'
 import { Route as AuthenticatedUfcIndexRouteImport } from './routes/_authenticated/ufc.index'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
 import { Route as AuthenticatedF1IndexRouteImport } from './routes/_authenticated/f1.index'
+import { Route as AuthenticatedArcadeIndexRouteImport } from './routes/_authenticated/arcade.index'
 import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
 import { Route as ManagementAdminWalletAdjustmentsRouteImport } from './routes/management/admin.wallet-adjustments'
 import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
@@ -98,6 +100,9 @@ import { Route as AuthenticatedFootballUclRouteImport } from './routes/_authenti
 import { Route as AuthenticatedFootballSerieARouteImport } from './routes/_authenticated/football/serie-a'
 import { Route as AuthenticatedFootballLaLigaRouteImport } from './routes/_authenticated/football/la-liga'
 import { Route as AuthenticatedFootballEplRouteImport } from './routes/_authenticated/football/epl'
+import { Route as AuthenticatedArcadeTreasureRouteImport } from './routes/_authenticated/arcade.treasure'
+import { Route as AuthenticatedArcadeRouletteRouteImport } from './routes/_authenticated/arcade.roulette'
+import { Route as AuthenticatedArcadePlinkoRouteImport } from './routes/_authenticated/arcade.plinko'
 import { Route as AuthenticatedF1RacesIndexRouteImport } from './routes/_authenticated/f1.races.index'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -316,6 +321,11 @@ const AuthenticatedBetsRoute = AuthenticatedBetsRouteImport.update({
   path: '/bets',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedArcadeRoute = AuthenticatedArcadeRouteImport.update({
+  id: '/arcade',
+  path: '/arcade',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ManagementAdminIndexRoute = ManagementAdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -337,6 +347,12 @@ const AuthenticatedF1IndexRoute = AuthenticatedF1IndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedF1Route,
 } as any)
+const AuthenticatedArcadeIndexRoute =
+  AuthenticatedArcadeIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedArcadeRoute,
+  } as any)
 const ManagementAdminWalletLedgerRoute =
   ManagementAdminWalletLedgerRouteImport.update({
     id: '/wallet-ledger',
@@ -601,6 +617,24 @@ const AuthenticatedFootballEplRoute =
     path: '/football/epl',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedArcadeTreasureRoute =
+  AuthenticatedArcadeTreasureRouteImport.update({
+    id: '/treasure',
+    path: '/treasure',
+    getParentRoute: () => AuthenticatedArcadeRoute,
+  } as any)
+const AuthenticatedArcadeRouletteRoute =
+  AuthenticatedArcadeRouletteRouteImport.update({
+    id: '/roulette',
+    path: '/roulette',
+    getParentRoute: () => AuthenticatedArcadeRoute,
+  } as any)
+const AuthenticatedArcadePlinkoRoute =
+  AuthenticatedArcadePlinkoRouteImport.update({
+    id: '/plinko',
+    path: '/plinko',
+    getParentRoute: () => AuthenticatedArcadeRoute,
+  } as any)
 const AuthenticatedF1RacesIndexRoute =
   AuthenticatedF1RacesIndexRouteImport.update({
     id: '/races/',
@@ -745,6 +779,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/performance': typeof PerformanceRoute
   '/register': typeof RegisterRoute
+  '/arcade': typeof AuthenticatedArcadeRouteWithChildren
   '/bets': typeof AuthenticatedBetsRoute
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -773,6 +808,9 @@ export interface FileRoutesByFullPath {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
+  '/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
+  '/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
   '/football/epl': typeof AuthenticatedFootballEplRoute
   '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -820,6 +858,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/arcade/': typeof AuthenticatedArcadeIndexRoute
   '/f1/': typeof AuthenticatedF1IndexRoute
   '/matches/': typeof AuthenticatedMatchesIndexRoute
   '/ufc/': typeof AuthenticatedUfcIndexRoute
@@ -882,6 +921,9 @@ export interface FileRoutesByTo {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
+  '/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
+  '/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
   '/football/epl': typeof AuthenticatedFootballEplRoute
   '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -929,6 +971,7 @@ export interface FileRoutesByTo {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/arcade': typeof AuthenticatedArcadeIndexRoute
   '/f1': typeof AuthenticatedF1IndexRoute
   '/matches': typeof AuthenticatedMatchesIndexRoute
   '/ufc': typeof AuthenticatedUfcIndexRoute
@@ -969,6 +1012,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/performance': typeof PerformanceRoute
   '/register': typeof RegisterRoute
+  '/_authenticated/arcade': typeof AuthenticatedArcadeRouteWithChildren
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
   '/_authenticated/changelog': typeof AuthenticatedChangelogRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -997,6 +1041,9 @@ export interface FileRoutesById {
   '/management/super-admin': typeof ManagementSuperAdminRoute
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
+  '/_authenticated/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
+  '/_authenticated/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
+  '/_authenticated/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
   '/_authenticated/football/epl': typeof AuthenticatedFootballEplRoute
   '/_authenticated/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/_authenticated/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -1044,6 +1091,7 @@ export interface FileRoutesById {
   '/management/admin/users': typeof ManagementAdminUsersRoute
   '/management/admin/wallet-adjustments': typeof ManagementAdminWalletAdjustmentsRoute
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
+  '/_authenticated/arcade/': typeof AuthenticatedArcadeIndexRoute
   '/_authenticated/f1/': typeof AuthenticatedF1IndexRoute
   '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
   '/_authenticated/ufc/': typeof AuthenticatedUfcIndexRoute
@@ -1084,6 +1132,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/performance'
     | '/register'
+    | '/arcade'
     | '/bets'
     | '/changelog'
     | '/dashboard'
@@ -1112,6 +1161,9 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/arcade/plinko'
+    | '/arcade/roulette'
+    | '/arcade/treasure'
     | '/football/epl'
     | '/football/la-liga'
     | '/football/serie-a'
@@ -1159,6 +1211,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
+    | '/arcade/'
     | '/f1/'
     | '/matches/'
     | '/ufc/'
@@ -1221,6 +1274,9 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/arcade/plinko'
+    | '/arcade/roulette'
+    | '/arcade/treasure'
     | '/football/epl'
     | '/football/la-liga'
     | '/football/serie-a'
@@ -1268,6 +1324,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
+    | '/arcade'
     | '/f1'
     | '/matches'
     | '/ufc'
@@ -1307,6 +1364,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/performance'
     | '/register'
+    | '/_authenticated/arcade'
     | '/_authenticated/bets'
     | '/_authenticated/changelog'
     | '/_authenticated/dashboard'
@@ -1335,6 +1393,9 @@ export interface FileRouteTypes {
     | '/management/super-admin'
     | '/management/support'
     | '/management/users'
+    | '/_authenticated/arcade/plinko'
+    | '/_authenticated/arcade/roulette'
+    | '/_authenticated/arcade/treasure'
     | '/_authenticated/football/epl'
     | '/_authenticated/football/la-liga'
     | '/_authenticated/football/serie-a'
@@ -1382,6 +1443,7 @@ export interface FileRouteTypes {
     | '/management/admin/users'
     | '/management/admin/wallet-adjustments'
     | '/management/admin/wallet-ledger'
+    | '/_authenticated/arcade/'
     | '/_authenticated/f1/'
     | '/_authenticated/matches/'
     | '/_authenticated/ufc/'
@@ -1714,6 +1776,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/arcade': {
+      id: '/_authenticated/arcade'
+      path: '/arcade'
+      fullPath: '/arcade'
+      preLoaderRoute: typeof AuthenticatedArcadeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/management/admin/': {
       id: '/management/admin/'
       path: '/'
@@ -1741,6 +1810,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/f1/'
       preLoaderRoute: typeof AuthenticatedF1IndexRouteImport
       parentRoute: typeof AuthenticatedF1Route
+    }
+    '/_authenticated/arcade/': {
+      id: '/_authenticated/arcade/'
+      path: '/'
+      fullPath: '/arcade/'
+      preLoaderRoute: typeof AuthenticatedArcadeIndexRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
     }
     '/management/admin/wallet-ledger': {
       id: '/management/admin/wallet-ledger'
@@ -2071,6 +2147,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFootballEplRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/arcade/treasure': {
+      id: '/_authenticated/arcade/treasure'
+      path: '/treasure'
+      fullPath: '/arcade/treasure'
+      preLoaderRoute: typeof AuthenticatedArcadeTreasureRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
+    '/_authenticated/arcade/roulette': {
+      id: '/_authenticated/arcade/roulette'
+      path: '/roulette'
+      fullPath: '/arcade/roulette'
+      preLoaderRoute: typeof AuthenticatedArcadeRouletteRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
+    '/_authenticated/arcade/plinko': {
+      id: '/_authenticated/arcade/plinko'
+      path: '/plinko'
+      fullPath: '/arcade/plinko'
+      preLoaderRoute: typeof AuthenticatedArcadePlinkoRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
     '/_authenticated/f1/races/': {
       id: '/_authenticated/f1/races/'
       path: '/races'
@@ -2235,6 +2332,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedArcadeRouteChildren {
+  AuthenticatedArcadePlinkoRoute: typeof AuthenticatedArcadePlinkoRoute
+  AuthenticatedArcadeRouletteRoute: typeof AuthenticatedArcadeRouletteRoute
+  AuthenticatedArcadeTreasureRoute: typeof AuthenticatedArcadeTreasureRoute
+  AuthenticatedArcadeIndexRoute: typeof AuthenticatedArcadeIndexRoute
+}
+
+const AuthenticatedArcadeRouteChildren: AuthenticatedArcadeRouteChildren = {
+  AuthenticatedArcadePlinkoRoute: AuthenticatedArcadePlinkoRoute,
+  AuthenticatedArcadeRouletteRoute: AuthenticatedArcadeRouletteRoute,
+  AuthenticatedArcadeTreasureRoute: AuthenticatedArcadeTreasureRoute,
+  AuthenticatedArcadeIndexRoute: AuthenticatedArcadeIndexRoute,
+}
+
+const AuthenticatedArcadeRouteWithChildren =
+  AuthenticatedArcadeRoute._addFileChildren(AuthenticatedArcadeRouteChildren)
+
 interface AuthenticatedF1RouteChildren {
   AuthenticatedF1IndexRoute: typeof AuthenticatedF1IndexRoute
   AuthenticatedF1RacesRaceIdRoute: typeof AuthenticatedF1RacesRaceIdRoute
@@ -2292,6 +2406,7 @@ const AuthenticatedWalletRouteWithChildren =
   AuthenticatedWalletRoute._addFileChildren(AuthenticatedWalletRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedArcadeRoute: typeof AuthenticatedArcadeRouteWithChildren
   AuthenticatedBetsRoute: typeof AuthenticatedBetsRoute
   AuthenticatedChangelogRoute: typeof AuthenticatedChangelogRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -2319,6 +2434,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedArcadeRoute: AuthenticatedArcadeRouteWithChildren,
   AuthenticatedBetsRoute: AuthenticatedBetsRoute,
   AuthenticatedChangelogRoute: AuthenticatedChangelogRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
