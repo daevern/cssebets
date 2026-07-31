@@ -358,6 +358,25 @@ settlements page and can be scheduled via the reconciliation hook.
 
 ---
 
+### 6.6 F1, UFC and arcade settlement
+
+- **F1** — `src/features/f1/services/f1Settlement.server.ts` grades from
+  the API-F1 classification (race winner, podium, points finish,
+  top 5 finishers, teammate H2H, fastest lap, top constructor).
+  `runF1AutoSettle` picks up races with `settled_at IS NULL`; markets are
+  suspended automatically once the race goes live
+  (`f1_live_race_state` + a pg_cron suspension job).
+- **UFC** — `src/lib/ufc-odds.server.ts` handles sync/settlement.
+  `runUfcEventDiscovery` rotates the active event so the app always shows
+  the next card; markets close one minute before walk-outs. A sweep in
+  `runUfcAutoSettle` voids and refunds markets whose API-MMA result is
+  still missing 12 h after the event.
+- **Arcade** — settles instantly and atomically inside its RPC
+  (`arcade_*_settle`), posting stake, payout and house P/L to the
+  accounting journals in the same transaction as the wallet movement.
+
+---
+
 ## 7. Risk Management (Admin)
 
 ### 7.1 Platform settings
