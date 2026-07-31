@@ -954,8 +954,8 @@ when `referrals.stage` advances to `rewarded`.
 
 - [`docs/accounting/`](./accounting/) — phase-by-phase accounting
   specifications (`phase1-verification.md` … `phase10-automated-tests.md`).
-
-
+  These are the authority for journal, reservation and rounding
+  behaviour; §7.6 here is a summary only.
 - [`RUNBOOK.md`](./RUNBOOK.md) — operational procedures (approving
   payouts, handling stuck settlements, rotating API keys).
 - [`BACKUP_RECOVERY.md`](./BACKUP_RECOVERY.md) — DB backup schedule,
@@ -964,6 +964,10 @@ when `referrals.stage` advances to `rewarded`.
 
 ---
 
-*Document last updated 2026-07-31 (multi-vertical: football, F1, UFC,
-arcade + accounting phases 1–10). When behavior changes, update this
-file in the same PR that changes the code.*
+*Document last updated 2026-07-31 — consistency & authority pass:
+canonical source table (§0.2), LIVE/SHADOW/LEGACY/PLANNED status tags,
+corrected role, wallet and payout enums, live vs fallback risk settings,
+and the two distinct "available bankroll" figures. Live values quoted
+here are snapshots; the database is the authority. When behaviour
+changes, update this file in the same PR that changes the code.*
+
