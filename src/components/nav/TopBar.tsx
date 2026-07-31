@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Bell, User, Home, Activity, Coins, Headphones } from "lucide-react";
+import { Bell, User, Home, Activity, Coins, Headphones, Gamepad2 } from "lucide-react";
 
 import { CsseLogo } from "@/components/brand/CsseMark";
 import { useAuth } from "@/hooks/use-auth";
