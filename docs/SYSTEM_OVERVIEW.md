@@ -627,10 +627,32 @@ Runs manually from `/management/admin/reconciliation` or via the
 
 ### 7.6 Accounting core (Phases 1–10)
 
-The platform runs a double-entry accounting layer over every money
-movement (sports bets, arcade rounds, wallet ops). Each phase has its
-own spec in [`docs/accounting/`](./accounting/) and its own SQL
-self-test function.
+The platform is migrating every money movement onto a double-entry
+accounting layer. Each phase has its own spec in
+[`docs/accounting/`](./accounting/) and its own SQL self-test function.
+The infrastructure (Phases 1–10) is complete; **product coverage is
+not** — see the status table below before treating the journal as a
+complete picture of house P/L.
+
+**Per-product journal status** (authority: `accounting_migration_flags`,
+snapshot 2026-07-31):
+
+| Product | `journal_enabled` | `liability_enforced` | Status |
+|---|---|---|---|
+| Plinko | yes | yes | **LIVE** |
+| Roulette | yes | yes | **LIVE** |
+| Treasure Grid | yes | yes | **LIVE** |
+| Blackjack | yes | yes | **LIVE** |
+| Football | no | no | **LEGACY** — wallet RPC + `platform_bankroll` only |
+| F1 | no | no | **LEGACY** |
+| UFC | no | no | **LEGACY** |
+| `sports_generic` | no | no | **PLANNED** — shared sports posting path |
+
+Consequences while sports is LEGACY: `accounting_pl_report()` covers
+arcade only, and `accounting_available_reserve()` reserves arcade
+exposure only. Sports exposure is still governed by §7.2 / §7.3.
+
+
 
 | Phase | Scope | Self-test |
 |---|---|---|
