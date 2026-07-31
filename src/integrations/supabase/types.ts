@@ -7621,6 +7621,7 @@ export type Database = {
       accounting_internal_ctx: { Args: never; Returns: boolean }
       accounting_phase5_final_selftest: { Args: never; Returns: Json }
       accounting_phase5_treasure_expiry_test: { Args: never; Returns: Json }
+      accounting_phase6_selftest: { Args: never; Returns: Json }
       accounting_plinko_selftest: { Args: never; Returns: Json }
       accounting_post_arcade_settlement: {
         Args: {
