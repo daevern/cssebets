@@ -91,6 +91,633 @@ export type Database = {
         }
         Relationships: []
       }
+      arcade_achievement_unlocks: {
+        Row: {
+          achievement_id: string
+          created_at: string
+          id: string
+          progress: number
+          reward_granted: boolean
+          unlocked_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          created_at?: string
+          id?: string
+          progress?: number
+          reward_granted?: boolean
+          unlocked_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          created_at?: string
+          id?: string
+          progress?: number
+          reward_granted?: boolean
+          unlocked_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_achievement_unlocks_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arcade_achievements: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          metric: string
+          name: string
+          reward_bonus_drops: number
+          sort_order: number
+          target_value: number
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          is_active?: boolean
+          metric: string
+          name: string
+          reward_bonus_drops?: number
+          sort_order?: number
+          target_value: number
+          tier?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          metric?: string
+          name?: string
+          reward_bonus_drops?: number
+          sort_order?: number
+          target_value?: number
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      arcade_challenge_progress: {
+        Row: {
+          challenge_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          period_bucket: string
+          progress: number
+          reward_granted: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          period_bucket: string
+          progress?: number
+          reward_granted?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          period_bucket?: string
+          progress?: number
+          reward_granted?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_challenge_progress_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arcade_challenges: {
+        Row: {
+          code: string
+          created_at: string
+          description: string
+          id: string
+          is_active: boolean
+          metric: string
+          name: string
+          period: string
+          reward_bonus_drops: number
+          sort_order: number
+          target_value: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description: string
+          id?: string
+          is_active?: boolean
+          metric: string
+          name: string
+          period: string
+          reward_bonus_drops?: number
+          sort_order?: number
+          target_value: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string
+          id?: string
+          is_active?: boolean
+          metric?: string
+          name?: string
+          period?: string
+          reward_bonus_drops?: number
+          sort_order?: number
+          target_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      arcade_cosmetics: {
+        Row: {
+          achievement_code: string | null
+          code: string
+          cosmetic_type: Database["public"]["Enums"]["arcade_cosmetic_type"]
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          preview_accent: string | null
+          preview_color: string | null
+          rarity: Database["public"]["Enums"]["arcade_cosmetic_rarity"]
+          unlock_type: Database["public"]["Enums"]["arcade_cosmetic_unlock"]
+          updated_at: string
+        }
+        Insert: {
+          achievement_code?: string | null
+          code: string
+          cosmetic_type: Database["public"]["Enums"]["arcade_cosmetic_type"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          preview_accent?: string | null
+          preview_color?: string | null
+          rarity?: Database["public"]["Enums"]["arcade_cosmetic_rarity"]
+          unlock_type?: Database["public"]["Enums"]["arcade_cosmetic_unlock"]
+          updated_at?: string
+        }
+        Update: {
+          achievement_code?: string | null
+          code?: string
+          cosmetic_type?: Database["public"]["Enums"]["arcade_cosmetic_type"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          preview_accent?: string | null
+          preview_color?: string | null
+          rarity?: Database["public"]["Enums"]["arcade_cosmetic_rarity"]
+          unlock_type?: Database["public"]["Enums"]["arcade_cosmetic_unlock"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      arcade_drop_balances: {
+        Row: {
+          bonus_available: number
+          created_at: string
+          daily_available: number
+          daily_reset_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bonus_available?: number
+          created_at?: string
+          daily_available?: number
+          daily_reset_date?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bonus_available?: number
+          created_at?: string
+          daily_available?: number
+          daily_reset_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      arcade_drop_transactions: {
+        Row: {
+          admin_id: string | null
+          bonus_after: number
+          bonus_before: number
+          created_at: string
+          daily_after: number
+          daily_before: number
+          expires_at: string | null
+          id: string
+          quantity: number
+          reason: string | null
+          related_game_id: string | null
+          source: string | null
+          type: Database["public"]["Enums"]["arcade_drop_txn_type"]
+          user_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          bonus_after: number
+          bonus_before: number
+          created_at?: string
+          daily_after: number
+          daily_before: number
+          expires_at?: string | null
+          id?: string
+          quantity: number
+          reason?: string | null
+          related_game_id?: string | null
+          source?: string | null
+          type: Database["public"]["Enums"]["arcade_drop_txn_type"]
+          user_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          bonus_after?: number
+          bonus_before?: number
+          created_at?: string
+          daily_after?: number
+          daily_before?: number
+          expires_at?: string | null
+          id?: string
+          quantity?: number
+          reason?: string | null
+          related_game_id?: string | null
+          source?: string | null
+          type?: Database["public"]["Enums"]["arcade_drop_txn_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_drop_transactions_related_game_id_fkey"
+            columns: ["related_game_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_plinko_games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arcade_events: {
+        Row: {
+          bonus_drops_per_day: number
+          code: string
+          created_at: string
+          description: string | null
+          ends_at: string
+          id: string
+          is_active: boolean
+          name: string
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          bonus_drops_per_day?: number
+          code: string
+          created_at?: string
+          description?: string | null
+          ends_at: string
+          id?: string
+          is_active?: boolean
+          name: string
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          bonus_drops_per_day?: number
+          code?: string
+          created_at?: string
+          description?: string | null
+          ends_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      arcade_plinko_games: {
+        Row: {
+          client_seed: string
+          completed_at: string
+          created_at: string
+          drop_type: string
+          id: string
+          idempotency_key: string
+          landing_slot: number
+          multiplier: number
+          nonce: number
+          outcome: Database["public"]["Enums"]["arcade_outcome"]
+          path: number[]
+          payout: number
+          profile_id: string
+          risk_mode: Database["public"]["Enums"]["arcade_risk_mode"]
+          rows: number
+          score: number
+          score_band: Database["public"]["Enums"]["arcade_score_band"]
+          seed_id: string
+          server_seed_hash: string
+          stake_per_ball: number
+          user_id: string
+          verification_id: string
+        }
+        Insert: {
+          client_seed: string
+          completed_at?: string
+          created_at?: string
+          drop_type?: string
+          id?: string
+          idempotency_key: string
+          landing_slot: number
+          multiplier?: number
+          nonce: number
+          outcome: Database["public"]["Enums"]["arcade_outcome"]
+          path: number[]
+          payout?: number
+          profile_id: string
+          risk_mode: Database["public"]["Enums"]["arcade_risk_mode"]
+          rows: number
+          score: number
+          score_band: Database["public"]["Enums"]["arcade_score_band"]
+          seed_id: string
+          server_seed_hash: string
+          stake_per_ball?: number
+          user_id: string
+          verification_id: string
+        }
+        Update: {
+          client_seed?: string
+          completed_at?: string
+          created_at?: string
+          drop_type?: string
+          id?: string
+          idempotency_key?: string
+          landing_slot?: number
+          multiplier?: number
+          nonce?: number
+          outcome?: Database["public"]["Enums"]["arcade_outcome"]
+          path?: number[]
+          payout?: number
+          profile_id?: string
+          risk_mode?: Database["public"]["Enums"]["arcade_risk_mode"]
+          rows?: number
+          score?: number
+          score_band?: Database["public"]["Enums"]["arcade_score_band"]
+          seed_id?: string
+          server_seed_hash?: string
+          stake_per_ball?: number
+          user_id?: string
+          verification_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_plinko_games_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_score_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arcade_plinko_games_seed_id_fkey"
+            columns: ["seed_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_randomness_seeds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arcade_randomness_seeds: {
+        Row: {
+          client_seed: string
+          created_at: string
+          id: string
+          nonce: number
+          revealed_at: string | null
+          server_seed: string
+          server_seed_hash: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          client_seed: string
+          created_at?: string
+          id?: string
+          nonce?: number
+          revealed_at?: string | null
+          server_seed: string
+          server_seed_hash: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          client_seed?: string
+          created_at?: string
+          id?: string
+          nonce?: number
+          revealed_at?: string | null
+          server_seed?: string
+          server_seed_hash?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      arcade_score_profile_slots: {
+        Row: {
+          created_at: string
+          id: string
+          multiplier: number
+          profile_id: string
+          score: number
+          slot_index: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          multiplier?: number
+          profile_id: string
+          score: number
+          slot_index: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          multiplier?: number
+          profile_id?: string
+          score?: number
+          slot_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_score_profile_slots_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_score_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arcade_score_profiles: {
+        Row: {
+          approved_by: string | null
+          change_reason: string | null
+          created_at: string
+          created_by: string | null
+          effective_from: string | null
+          effective_to: string | null
+          id: string
+          risk_mode: Database["public"]["Enums"]["arcade_risk_mode"]
+          rows: number
+          status: Database["public"]["Enums"]["arcade_profile_status"]
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          approved_by?: string | null
+          change_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string | null
+          effective_to?: string | null
+          id?: string
+          risk_mode: Database["public"]["Enums"]["arcade_risk_mode"]
+          rows: number
+          status?: Database["public"]["Enums"]["arcade_profile_status"]
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          approved_by?: string | null
+          change_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          effective_from?: string | null
+          effective_to?: string | null
+          id?: string
+          risk_mode?: Database["public"]["Enums"]["arcade_risk_mode"]
+          rows?: number
+          status?: Database["public"]["Enums"]["arcade_profile_status"]
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      arcade_score_transactions: {
+        Row: {
+          balance_after: number
+          created_at: string
+          delta: number
+          game_id: string | null
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          balance_after: number
+          created_at?: string
+          delta: number
+          game_id?: string | null
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          balance_after?: number
+          created_at?: string
+          delta?: number
+          game_id?: string | null
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_score_transactions_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_plinko_games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arcade_user_cosmetics: {
+        Row: {
+          cosmetic_id: string
+          cosmetic_type: Database["public"]["Enums"]["arcade_cosmetic_type"]
+          equipped: boolean
+          id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          cosmetic_id: string
+          cosmetic_type: Database["public"]["Enums"]["arcade_cosmetic_type"]
+          equipped?: boolean
+          id?: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          cosmetic_id?: string
+          cosmetic_type?: Database["public"]["Enums"]["arcade_cosmetic_type"]
+          equipped?: boolean
+          id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_user_cosmetics_cosmetic_id_fkey"
+            columns: ["cosmetic_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_cosmetics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -4528,6 +5155,80 @@ export type Database = {
         }
         Returns: Json
       }
+      arcade_ensure_daily: {
+        Args: { p_daily_alloc: number; p_user: string }
+        Returns: {
+          bonus_available: number
+          created_at: string
+          daily_available: number
+          daily_reset_date: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_drop_balances"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_generate_path: {
+        Args: {
+          p_client_seed: string
+          p_nonce: number
+          p_rows: number
+          p_server_seed: string
+        }
+        Returns: number[]
+      }
+      arcade_period_bucket: {
+        Args: { p_period: string; p_ts: string }
+        Returns: string
+      }
+      arcade_place_plinko_drop: {
+        Args: {
+          p_client_seed: string
+          p_idempotency_key: string
+          p_risk: Database["public"]["Enums"]["arcade_risk_mode"]
+          p_rows: number
+          p_stake: number
+          p_user: string
+        }
+        Returns: {
+          client_seed: string
+          completed_at: string
+          created_at: string
+          drop_type: string
+          id: string
+          idempotency_key: string
+          landing_slot: number
+          multiplier: number
+          nonce: number
+          outcome: Database["public"]["Enums"]["arcade_outcome"]
+          path: number[]
+          payout: number
+          profile_id: string
+          risk_mode: Database["public"]["Enums"]["arcade_risk_mode"]
+          rows: number
+          score: number
+          score_band: Database["public"]["Enums"]["arcade_score_band"]
+          seed_id: string
+          server_seed_hash: string
+          stake_per_ball: number
+          user_id: string
+          verification_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_plinko_games"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_score_band_for: {
+        Args: { p_score: number }
+        Returns: Database["public"]["Enums"]["arcade_score_band"]
+      }
       assert_bet_within_liability_caps: {
         Args: {
           p_market: string
@@ -5205,6 +5906,27 @@ export type Database = {
         | "super_admin"
         | "viewer"
         | "customer_support"
+      arcade_cosmetic_rarity: "common" | "rare" | "epic" | "legendary"
+      arcade_cosmetic_type: "ball" | "board"
+      arcade_cosmetic_unlock: "free" | "achievement" | "admin"
+      arcade_drop_txn_type:
+        | "daily_grant"
+        | "bonus_grant"
+        | "consume"
+        | "refund"
+        | "expiry"
+        | "admin_grant"
+        | "admin_revoke"
+      arcade_outcome: "WIN" | "LOSS" | "VOID" | "REVERSED" | "PENDING" | "ERROR"
+      arcade_profile_status: "draft" | "active" | "retired"
+      arcade_risk_mode: "low" | "medium" | "high"
+      arcade_score_band:
+        | "ZERO"
+        | "LOW"
+        | "STANDARD"
+        | "HIGH"
+        | "RARE"
+        | "JACKPOT"
       match_status:
         | "scheduled"
         | "live"
@@ -5415,6 +6137,22 @@ export const Constants = {
         "viewer",
         "customer_support",
       ],
+      arcade_cosmetic_rarity: ["common", "rare", "epic", "legendary"],
+      arcade_cosmetic_type: ["ball", "board"],
+      arcade_cosmetic_unlock: ["free", "achievement", "admin"],
+      arcade_drop_txn_type: [
+        "daily_grant",
+        "bonus_grant",
+        "consume",
+        "refund",
+        "expiry",
+        "admin_grant",
+        "admin_revoke",
+      ],
+      arcade_outcome: ["WIN", "LOSS", "VOID", "REVERSED", "PENDING", "ERROR"],
+      arcade_profile_status: ["draft", "active", "retired"],
+      arcade_risk_mode: ["low", "medium", "high"],
+      arcade_score_band: ["ZERO", "LOW", "STANDARD", "HIGH", "RARE", "JACKPOT"],
       match_status: ["scheduled", "live", "finished", "postponed", "cancelled"],
       payout_request_status: [
         "pending",
