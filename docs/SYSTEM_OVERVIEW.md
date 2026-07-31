@@ -443,6 +443,46 @@ Runs manually from `/management/admin/reconciliation` or via the
 
 ---
 
+### 7.6 Accounting core (Phases 1–10)
+
+The platform runs a double-entry accounting layer over every money
+movement (sports bets, arcade rounds, wallet ops). Each phase has its
+own spec in [`docs/accounting/`](./accounting/) and its own SQL
+self-test function.
+
+| Phase | Scope | Self-test |
+|---|---|---|
+| 1 | Ledger verification baseline | `phase1_verification.sql` |
+| 2 | Wallet ↔ ledger reconciliation | `run_reconciliation_check` |
+| 3 / 3.1 | Journal foundation + hardening (balanced debits/credits) | — |
+| 4 / 4.1 | Arcade (Plinko) posting + unified house bankroll | — |
+| 5 | Arcade migration onto the ledger + production controls | — |
+| 6 / 6.1 | Liability reservation (`accounting_liability_reservations`), versioning, `liability_enforced` flag | 13/13 |
+| 7 | Blackjack payout cap — no silent truncation, pre-deal exposure ceiling | `arcade_bj_phase7_selftest()` 9/9 |
+| 8 | Global monetary rounding policy (2dp, half-up; liability rounds up) | `accounting_phase8_selftest()` 14/14 |
+| 9 | Unified P/L reporting from posted journals | `accounting_pl_report()` |
+| 10 | Automated invariant + lifecycle test suite | 40/40 |
+
+Key rules:
+
+- **Money scale** is exactly 2 decimals everywhere; money columns are
+  `numeric(_,2)`. Rounding is half-up, except liability/exposure which
+  always rounds **up** so reservations never under-cover. DB helpers:
+  `acct_round_money/stake/payout/liability`; the TS mirror is
+  `src/lib/accounting/money.ts` (`roundMoney`, `roundPayout`,
+  `roundLiability`, `potentialPayout`, `formatPoints`).
+- **Liability reservations** are taken at placement/deal time and handed
+  off atomically to payable at settlement. Available bankroll =
+  bankroll − active reservations − outstanding payables.
+- **Environments** (`PRODUCTION` / `SIMULATION` / `TEST`) are tagged on
+  every journal so real and simulated exposure never mix.
+- **P/L reporting**: `public.accounting_pl_report()` (settlement or
+  placement basis, filterable by product/game/sport/user/date) backs the
+  admin page `/management/admin/pl-report`. Pending liability is
+  computed historically "as of" the report end date.
+
+---
+
 ## 8. User Management (Staff)
 
 ### 8.1 Roles
