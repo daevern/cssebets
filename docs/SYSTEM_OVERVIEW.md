@@ -420,12 +420,16 @@ Three-step flow to keep proof upload atomic:
 
 ### 5.5 Payouts (deposit-out)
 
-`payout_requests` lifecycle:
+`payout_requests` lifecycle. The authority is the DB enum
+`payout_request_status` ∈ {`pending`, `approved`, `proof_uploaded`,
+`completed`, `rejected_by_admin`, `rejected_by_user`}:
 
 ```
 pending  ──admin approve──▶  approved  ──staff pays off-platform──▶
-proof_uploaded  ──user confirms receipt──▶  paid
+proof_uploaded  ──user confirms receipt──▶  completed
+        └── rejected_by_admin / rejected_by_user (debit reversed)
 ```
+
 
 - Only one active payout per user at a time.
 - Requested amount is validated against wallet balance at request time
