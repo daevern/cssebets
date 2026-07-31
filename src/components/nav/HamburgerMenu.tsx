@@ -144,11 +144,10 @@ export function HamburgerMenu() {
             {/* Backdrop */}
             <div
               onClick={() => setOpen(false)}
-              className={`fixed inset-x-0 bottom-0 z-[55] bg-black/40 transition-opacity duration-300 md:hidden ${
+              className={`fixed inset-x-0 bottom-0 z-[55] bg-black/40 transition-opacity duration-300 top-[calc(env(safe-area-inset-top)+56px)] md:top-[calc(env(safe-area-inset-top)+68px)] ${
                 open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
               }`}
               style={{
-                top: "calc(env(safe-area-inset-top) + 56px)",
                 backdropFilter: "blur(2px)",
               }}
               aria-hidden
@@ -156,14 +155,11 @@ export function HamburgerMenu() {
 
             {/* Slide-out panel — sits fully below the top bar */}
             <div
-              className={`fixed right-0 z-[58] w-3/4 md:hidden transition-transform duration-200 ease-out ${
+              className={`fixed right-0 z-[58] w-3/4 md:w-[360px] transition-transform duration-200 ease-out top-[calc(env(safe-area-inset-top)+60px)] h-[calc(100dvh-env(safe-area-inset-top)-60px)] md:top-[calc(env(safe-area-inset-top)+72px)] md:h-[calc(100dvh-env(safe-area-inset-top)-72px)] ${
                 open ? "translate-x-0" : "translate-x-full"
               }`}
-              style={{
-                top: "calc(env(safe-area-inset-top) + 60px)",
-                height: "calc(100dvh - env(safe-area-inset-top) - 60px)",
-              }}
             >
+
               <div className="absolute inset-0 bg-[var(--neon)] shadow-[0_20px_60px_-10px_rgba(0,0,0,0.6)]" />
 
               {/* Content layer — fixed header block, scrollable list block */}
