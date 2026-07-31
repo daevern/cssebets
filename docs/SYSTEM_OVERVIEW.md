@@ -96,11 +96,25 @@ across the two — the simulation must never influence live decisions.
   "Take a position" flow. Placement itself gates behind a sign-in
   modal for anonymous visitors.
 
-### 3.2 Authenticated app (`_authenticated/`)
+### 3.2 Guest mode
+
+Anonymous Supabase sign-in is enabled. Visitors landing on `/` are
+auto-minted a guest session (with a timeout fallback so the page never
+hangs) and get full read access to the app — fixtures, markets,
+analytics, arcade previews. Any money action (place a bet, top up,
+cash out) opens `GuestAuthPrompt` / a login modal instead. In guest
+mode the hamburger nav shows a **Register / Log in** button rather than
+sign-out, the referral code is masked (`XXXXXXX`), and the tour and
+PWA install prompts are suppressed.
+
+### 3.3 Authenticated app (`_authenticated/`)
 
 | Route | Purpose |
 |---|---|
-| `/dashboard` | Home for signed-in users: next fixture, engagement tiles, wallet snapshot, referral panel. |
+| `/dashboard` | Home: next fixture, next race (F1) and next fight (UFC) cards, engagement tiles, wallet snapshot, referral panel. |
+| `/f1`, `/f1/races`, `/f1/races/:raceId` | F1 season hub, race index and race markets/analytics. |
+| `/ufc`, `/ufc/fights`, `/ufc/:fightId` | UFC event hub, full card index and fight markets. |
+| `/arcade` + `/arcade/{plinko,roulette,treasure,blackjack}` | House-banked arcade games. |
 | `/matches` | List of upcoming/live fixtures grouped by day. |
 | `/matches/:matchId` | Full market grid (`MarketTabs.tsx`), analytics card, free-bet redemption, prediction placement. |
 | `/my-predictions` | Every ticket the user has placed with status (pending / won / lost / void) and payout. |
