@@ -485,8 +485,8 @@ corners settle reliably after admin edits to the match row.
 ### 6.4 Void conditions
 
 - Match `status='cancelled'` or `status='postponed'` → `void_match_atomic`
-  refunds every stake, wallet transactions of type `credit` with
-  `reference_type='bet_void'`.
+  refunds every stake, writing wallet rows with `type='refund'` and
+  `reference_type='bet_settlement'` (§5.1).
 - Individual prediction voided when settling that market is impossible
   (e.g. no card stats) — stake refunded, others in the same match still
   settle.
