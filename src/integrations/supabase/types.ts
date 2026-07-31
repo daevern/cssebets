@@ -7473,6 +7473,25 @@ export type Database = {
         Args: { p_id: string }
         Returns: Json
       }
+      accounting_arcade_assert_capacity: {
+        Args: { p_max_gross: number; p_product: string; p_user: string }
+        Returns: undefined
+      }
+      accounting_arcade_hook: {
+        Args: {
+          p_effective: string
+          p_meta: Json
+          p_payout: number
+          p_product: string
+          p_ref_id: string
+          p_ref_type: string
+          p_stake: number
+          p_user: string
+          p_wallet_category: string
+          p_wallet_idem?: string
+        }
+        Returns: undefined
+      }
       accounting_available_reserve: {
         Args: { p_env: Database["public"]["Enums"]["acct_environment"] }
         Returns: number
@@ -7663,6 +7682,10 @@ export type Database = {
           p_hand: string
           p_reason: string
         }
+        Returns: undefined
+      }
+      arcade_bj_assert_capacity: {
+        Args: { p_max_payout: number; p_stake: number; p_user: string }
         Returns: undefined
       }
       arcade_bj_double: {
