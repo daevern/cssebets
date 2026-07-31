@@ -7163,6 +7163,18 @@ export type Database = {
         }
         Relationships: []
       }
+      v_accounting_blackjack_reconciliation: {
+        Row: {
+          hands: number | null
+          ledger_payouts: number | null
+          ledger_stakes: number | null
+          legacy_payouts: number | null
+          legacy_stakes: number | null
+          payout_variance: number | null
+          stake_variance: number | null
+        }
+        Relationships: []
+      }
       v_accounting_bridge_status: {
         Row: {
           newest: string | null
@@ -7305,6 +7317,30 @@ export type Database = {
         }
         Relationships: []
       }
+      v_accounting_roulette_reconciliation: {
+        Row: {
+          ledger_payouts: number | null
+          ledger_stakes: number | null
+          legacy_payouts: number | null
+          legacy_stakes: number | null
+          payout_variance: number | null
+          spins: number | null
+          stake_variance: number | null
+        }
+        Relationships: []
+      }
+      v_accounting_treasure_reconciliation: {
+        Row: {
+          ledger_payouts: number | null
+          ledger_stakes: number | null
+          legacy_payouts: number | null
+          legacy_stakes: number | null
+          payout_variance: number | null
+          settled_rounds: number | null
+          stake_variance: number | null
+        }
+        Relationships: []
+      }
       v_accounting_trial_balance: {
         Row: {
           account_code: string | null
@@ -7437,6 +7473,26 @@ export type Database = {
         Args: { p_id: string }
         Returns: Json
       }
+      accounting_arcade_assert_capacity: {
+        Args: { p_max_gross: number; p_product: string; p_user: string }
+        Returns: undefined
+      }
+      accounting_arcade_hook: {
+        Args: {
+          p_effective: string
+          p_meta: Json
+          p_payout: number
+          p_product: string
+          p_ref_id: string
+          p_ref_type: string
+          p_stake: number
+          p_user: string
+          p_wallet_category: string
+          p_wallet_idem?: string
+        }
+        Returns: undefined
+      }
+      accounting_arcade_selftest: { Args: never; Returns: Json }
       accounting_available_reserve: {
         Args: { p_env: Database["public"]["Enums"]["acct_environment"] }
         Returns: number
@@ -7454,6 +7510,21 @@ export type Database = {
       accounting_integrity_scan: { Args: never; Returns: Json }
       accounting_internal_ctx: { Args: never; Returns: boolean }
       accounting_plinko_selftest: { Args: never; Returns: Json }
+      accounting_post_arcade_settlement: {
+        Args: {
+          p_effective: string
+          p_meta?: Json
+          p_payout: number
+          p_product: string
+          p_ref_id: string
+          p_ref_type: string
+          p_stake: number
+          p_user: string
+          p_wallet_category?: string
+          p_wallet_idem?: string
+        }
+        Returns: Json
+      }
       accounting_post_journal: {
         Args: {
           p_allow_negative?: boolean
@@ -7479,6 +7550,10 @@ export type Database = {
       }
       accounting_post_plinko_game: {
         Args: { p_game_id: string }
+        Returns: Json
+      }
+      accounting_reverse_arcade_settlement: {
+        Args: { p_product: string; p_reason: string; p_ref_id: string }
         Returns: Json
       }
       accounting_reverse_journal: {
@@ -7608,6 +7683,10 @@ export type Database = {
           p_hand: string
           p_reason: string
         }
+        Returns: undefined
+      }
+      arcade_bj_assert_capacity: {
+        Args: { p_max_payout: number; p_stake: number; p_user: string }
         Returns: undefined
       }
       arcade_bj_double: {
