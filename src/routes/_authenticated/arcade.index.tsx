@@ -69,7 +69,7 @@ const GAMES = [
     key: "blackjack" as const,
     to: "/arcade/blackjack",
     label: "Blackjack",
-    blurb: "Free daily hands against the dealer. Hit 21, bank arcade score.",
+    blurb: "Stake your points against the dealer. Hit 21, get paid 3:2.",
     tag: "Free to play",
     TagIcon: Spade,
     Art: BlackjackArt,
