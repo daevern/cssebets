@@ -388,31 +388,6 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="flex items-center gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {chips.map((c) => (
-          <CasinoChip key={c} value={c} selected={chip === c} onClick={() => setChip(c)} size={40} />
-        ))}
-        <div className="ml-auto flex shrink-0 gap-1">
-          <IconBtn onClick={undo} disabled={spinning || !history.length} title="Undo">
-            <Undo2 className="h-3.5 w-3.5" />
-          </IconBtn>
-          <IconBtn onClick={clearAll} disabled={spinning || !positions.length} title="Clear all">
-            <Trash2 className="h-3.5 w-3.5" />
-          </IconBtn>
-          <IconBtn onClick={repeat} disabled={spinning || !lastConfirmed.length} title="Repeat bets">
-            <RotateCcw className="h-3.5 w-3.5" />
-          </IconBtn>
-          <button
-            type="button"
-            onClick={doubleBets}
-            disabled={spinning || !positions.length || totalStake * 2 > balance}
-            className="rounded-full border border-[var(--color-surface-border)] px-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)] disabled:opacity-40"
-          >
-            2×
-          </button>
-        </div>
-      </div>
-
       <RouletteBoard stakes={stakesByKey} onPlace={place} disabled={spinning} />
 
       <RouletteVerifyDialog
@@ -454,6 +429,31 @@ function RoulettePage() {
               })}
             </div>
           )}
+
+        <div className="flex items-center gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {chips.map((c) => (
+            <CasinoChip key={c} value={c} selected={chip === c} onClick={() => setChip(c)} size={40} />
+          ))}
+          <div className="ml-auto flex shrink-0 gap-1">
+            <IconBtn onClick={undo} disabled={spinning || !history.length} title="Undo">
+              <Undo2 className="h-3.5 w-3.5" />
+            </IconBtn>
+            <IconBtn onClick={clearAll} disabled={spinning || !positions.length} title="Clear all">
+              <Trash2 className="h-3.5 w-3.5" />
+            </IconBtn>
+            <IconBtn onClick={repeat} disabled={spinning || !lastConfirmed.length} title="Repeat bets">
+              <RotateCcw className="h-3.5 w-3.5" />
+            </IconBtn>
+            <button
+              type="button"
+              onClick={doubleBets}
+              disabled={spinning || !positions.length || totalStake * 2 > balance}
+              className="rounded-full border border-[var(--color-surface-border)] px-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)] disabled:opacity-40"
+            >
+              2×
+            </button>
+          </div>
+        </div>
 
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
             <button
