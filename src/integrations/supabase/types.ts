@@ -7635,6 +7635,7 @@ export type Database = {
         Args: { p_env: Database["public"]["Enums"]["acct_environment"] }
         Returns: number
       }
+      accounting_bankroll_drift_alert: { Args: never; Returns: Json }
       accounting_bankroll_reconciliation: {
         Args: {
           p_environment?: Database["public"]["Enums"]["acct_environment"]
