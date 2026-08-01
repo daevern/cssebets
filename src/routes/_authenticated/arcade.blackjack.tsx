@@ -285,87 +285,11 @@ function BlackjackPage() {
       )}
 
       <div className="z-20 mx-auto w-full max-w-xl shrink-0 space-y-1.5 px-0 pt-1 md:space-y-2 md:pt-3">
-        {inPlay && (
+        {inPlay ? (
           <div className="flex h-9 md:h-12 w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[9px] md:text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
             Your move
           </div>
-        )}
-
-        {inPlay && (
-          <div className="grid grid-cols-4 gap-1 md:gap-2">
-            <ActionTile
-              label="Double"
-              glyph="x2"
-              disabled={!inPlay || busy || !canDouble}
-              loading={dbl.isPending}
-              onClick={() => dbl.mutate()}
-            />
-            <ActionTile
-              label="Hit"
-              Icon={CopyPlus}
-              disabled={!inPlay || busy}
-              loading={hit.isPending}
-              onClick={() => hit.mutate()}
-            />
-            <ActionTile
-              label="Stand"
-              Icon={Hand}
-              disabled={!inPlay || busy}
-              loading={stand.isPending}
-              onClick={() => stand.mutate()}
-            />
-            <ActionTile
-              label="Split"
-              Icon={SplitSquareHorizontal}
-              disabled={!inPlay || busy || !canSplit}
-              loading={split.isPending}
-              onClick={() => split.mutate()}
-            />
-          </div>
-        )}
-
-        {!inPlay && (
-          <div className="flex h-8 md:h-10 items-center gap-1.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2">
-            <span className="text-[9px] font-bold text-[var(--color-ink-muted)]">PTS</span>
-            <span className="flex-1 font-mono text-[13px] font-bold tabular-nums text-[var(--color-neon)]">
-              {stake.toLocaleString()}
-            </span>
-            {(
-              [
-                ["1/2", () => clampStake(stake / 2)],
-                ["2x", () => clampStake(stake * 2)],
-                ["Max", () => clampStake(Math.min(balance, maxStake))],
-              ] as const
-            ).map(([label, fn]) => (
-              <button
-                key={label}
-                type="button"
-                disabled={inPlay || busy}
-                onClick={fn}
-                className="rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)]/50 hover:text-[var(--color-neon)] disabled:opacity-40"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {!inPlay && (
-          <div className="flex shrink-0 items-center justify-between gap-1 overflow-x-auto overflow-y-visible px-1.5 pb-1 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {chips.slice(0, 6).map((c) => (
-              <CasinoChip
-                key={c}
-                value={c}
-                selected={stake === c}
-                disabled={inPlay || busy || c > maxStake}
-                onClick={() => clampStake(c)}
-                size={36}
-              />
-            ))}
-          </div>
-        )}
-
-        {!inPlay && (
+        ) : (
           <button
             type="button"
             disabled={!canDeal}
@@ -388,6 +312,74 @@ function BlackjackPage() {
             )}
           </button>
         )}
+
+        <div className="grid grid-cols-4 gap-1 md:gap-2">
+          <ActionTile
+            label="Double"
+            glyph="x2"
+            disabled={!inPlay || busy || !canDouble}
+            loading={dbl.isPending}
+            onClick={() => dbl.mutate()}
+          />
+          <ActionTile
+            label="Hit"
+            Icon={CopyPlus}
+            disabled={!inPlay || busy}
+            loading={hit.isPending}
+            onClick={() => hit.mutate()}
+          />
+          <ActionTile
+            label="Stand"
+            Icon={Hand}
+            disabled={!inPlay || busy}
+            loading={stand.isPending}
+            onClick={() => stand.mutate()}
+          />
+          <ActionTile
+            label="Split"
+            Icon={SplitSquareHorizontal}
+            disabled={!inPlay || busy || !canSplit}
+            loading={split.isPending}
+            onClick={() => split.mutate()}
+          />
+        </div>
+
+        <div className="flex h-8 md:h-10 items-center gap-1.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2">
+          <span className="text-[9px] font-bold text-[var(--color-ink-muted)]">PTS</span>
+          <span className="flex-1 font-mono text-[13px] font-bold tabular-nums text-[var(--color-neon)]">
+            {stake.toLocaleString()}
+          </span>
+          {(
+            [
+              ["1/2", () => clampStake(stake / 2)],
+              ["2x", () => clampStake(stake * 2)],
+              ["Max", () => clampStake(Math.min(balance, maxStake))],
+            ] as const
+          ).map(([label, fn]) => (
+            <button
+              key={label}
+              type="button"
+              disabled={inPlay || busy}
+              onClick={fn}
+              className="rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)]/50 hover:text-[var(--color-neon)] disabled:opacity-40"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex shrink-0 items-center justify-between gap-1 overflow-x-auto overflow-y-visible px-1.5 pb-1 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {chips.slice(0, 6).map((c) => (
+            <CasinoChip
+              key={c}
+              value={c}
+              selected={stake === c}
+              disabled={inPlay || busy || c > maxStake}
+              onClick={() => clampStake(c)}
+              size={36}
+            />
+          ))}
+        </div>
 
         {balance < stake && !inPlay && (
           <p className="text-center text-[10px] uppercase tracking-[0.24em] text-amber-300">
