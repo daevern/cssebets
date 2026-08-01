@@ -174,7 +174,7 @@ export function RouletteBoard({
                     style={{
                       background: colour === "red" ? RED_CELL_BG : BLACK_CELL_BG,
                       borderColor: colour === "red" ? RED_CELL_BORDER : BLACK_CELL_BORDER,
-                      color: colour === "red" ? "#ffd9dd" : "var(--color-ink)",
+                      color: colour === "red" ? RED_INK : "var(--color-ink)",
                     }}
                   >
                     <span className={cn(selected && "underline underline-offset-4")}>{n}</span>
