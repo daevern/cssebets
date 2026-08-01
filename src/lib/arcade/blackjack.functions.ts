@@ -53,7 +53,8 @@ export type BjCard = {
 
 const HAND_FIELDS =
   "id, status, result, result_reason, dealer_total, dealer_soft, dealer_bust, dealer_blackjack, " +
-  "total_score_awarded, state_version, action_sequence, client_seed, server_seed_hash, nonce, " +
+  "total_score_awarded, total_stake, total_payout, user_net, " +
+  "state_version, action_sequence, client_seed, server_seed_hash, nonce, " +
   "rule_version, score_version, expires_at, created_at, settled_at";
 
 /** Reads the full hand state, masking any face-down card. */
