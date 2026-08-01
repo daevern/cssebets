@@ -150,7 +150,7 @@ export function RouletteBoard({
           onClick={() => handleNumber(0)}
           className={cn(
             cellBase,
-            "w-12 shrink-0 rounded-2xl border-[var(--color-neon)]/60 text-lg text-[var(--color-neon)]",
+            "w-12 shrink-0 rounded-[5px] border-[var(--color-neon)]/60 text-lg text-[var(--color-neon)]",
           )}
           style={{ background: "rgba(60, 220, 150, 0.06)" }}
         >
@@ -179,7 +179,7 @@ export function RouletteBoard({
                   >
                     <span className={cn(selected && "underline underline-offset-4")}>{n}</span>
                     {selected && (
-                      <span className="pointer-events-none absolute inset-0 rounded-xl ring-2 ring-[var(--color-neon)]" />
+                      <span className="pointer-events-none absolute inset-0 rounded-[5px] ring-2 ring-[var(--color-neon)]" />
                     )}
                     <Stack amount={amt(`straight:${n}`)} />
                   </button>
