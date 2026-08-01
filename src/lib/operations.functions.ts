@@ -86,7 +86,12 @@ export const getOperationsDashboard = createServerFn({ method: "GET" })
     const activeUsers = new Set((activeRowsDay.data ?? []).map((r: any) => r.user_id)).size;
 
     const s: any = settings.data ?? {};
-    const b: any = bankroll.data ?? {};
+    // Bankroll figures come from the accounting journal, not platform_bankroll.
+    const { readAuthoritativeBankroll } = await import("@/lib/accounting/bankroll-source.server");
+    const authBankroll = await readAuthoritativeBankroll(supabaseAdmin);
+    const b: any = authBankroll.ok
+      ? { ...(bankroll.data ?? {}), balance: authBankroll.balance, updated_at: authBankroll.generatedAt }
+      : (bankroll.data ?? {});
     const lastSettleAt = (lastSettleRows.data ?? [])[0]?.settled_at ?? null;
 
     return {
