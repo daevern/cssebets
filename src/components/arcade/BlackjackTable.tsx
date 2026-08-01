@@ -86,9 +86,9 @@ function FeltArt() {
       />
       <text
         fill={neon}
-        fontSize="46"
+        fontSize="34"
         fontWeight="700"
-        letterSpacing="4"
+        letterSpacing="1"
         style={{ fontFamily: "var(--font-display, inherit)" }}
       >
         <textPath href="#bj-arc-banner" startOffset="50%" textAnchor="middle">
@@ -97,12 +97,12 @@ function FeltArt() {
       </text>
 
       {/* Side rules */}
-      <text fill={neon} fillOpacity="0.45" fontSize="27" fontWeight="700" letterSpacing="3">
+      <text fill={neon} fillOpacity="0.45" fontSize="22" fontWeight="700" letterSpacing="1">
         <textPath href="#bj-arc-left" startOffset="42%" textAnchor="middle">
           DEALER HITS SOFT 17
         </textPath>
       </text>
-      <text fill={neon} fillOpacity="0.45" fontSize="27" fontWeight="700" letterSpacing="3">
+      <text fill={neon} fillOpacity="0.45" fontSize="22" fontWeight="700" letterSpacing="1">
         <textPath href="#bj-arc-right" startOffset="58%" textAnchor="middle">
           INSURANCE PAYS 2 TO 1
         </textPath>
