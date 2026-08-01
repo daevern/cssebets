@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { BlackjackTable, type BlackjackState } from "@/components/arcade/BlackjackTable";
 import { CasinoChip } from "@/components/arcade/CasinoChip";
 import { BlackjackVerifyDialog } from "@/components/arcade/BlackjackVerifyDialog";
+import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import {
   doubleBlackjack,
   getActiveBlackjackHand,
@@ -104,6 +105,8 @@ function BlackjackPage() {
 
   const [state, setState] = useState<BlackjackState | null>(null);
   const [stake, setStake] = useState(10);
+  const [resultOpen, setResultOpen] = useState(false);
+  const shownResultRef = useRef<string | null>(null);
   const clientSeed = useRef(newSeed());
 
   useEffect(() => {
@@ -129,6 +132,14 @@ function BlackjackPage() {
   );
   const inPlay = state?.hand?.status === "PLAYER_TURN" && !!activeHand;
   const settled = state?.hand?.status === "COMPLETED";
+
+  useEffect(() => {
+    const h = state?.hand;
+    if (!h || h.status !== "COMPLETED") return;
+    if (shownResultRef.current === h.id) return;
+    shownResultRef.current = h.id;
+    setResultOpen(true);
+  }, [state?.hand?.id, state?.hand?.status]);
 
   const activeCards = useMemo(
     () => (state?.cards ?? []).filter((c: any) => c.playerHandId === activeHand?.id),
@@ -208,7 +219,9 @@ function BlackjackPage() {
         return;
       }
       const top = el.getBoundingClientRect().top + window.scrollY;
-      setShellHeight(Math.max(400, window.innerHeight - top - 78));
+      const nav = document.querySelector('nav[aria-label="Primary"]');
+      const navH = nav ? nav.getBoundingClientRect().height : 64;
+      setShellHeight(Math.max(400, window.innerHeight - top - navH));
     };
     const handleResize = () => {
       if (Math.abs(window.innerWidth - measuredWidth) < 24) return;
@@ -284,7 +297,7 @@ function BlackjackPage() {
         </div>
       )}
 
-      <div className="z-20 mx-auto w-full max-w-xl shrink-0 space-y-1.5 px-0 pt-1 md:space-y-2 md:pt-3">
+      <div className="z-20 mx-auto w-full max-w-xl shrink-0 space-y-1.5 bg-[var(--color-surface)] px-0 pb-[env(safe-area-inset-bottom)] pt-1 md:space-y-2 md:bg-transparent md:pb-0 md:pt-3">
         <div className="grid grid-cols-4 gap-1 md:gap-2">
           <ActionTile
             label="Double"
