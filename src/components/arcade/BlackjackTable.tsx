@@ -187,23 +187,10 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
           </div>
         </div>
 
-        {/* Center: result banner (felt rules live in the art layer) */}
-        <div className="flex shrink-0 flex-col items-center justify-center gap-1">
-          {settled && result ? (
-            <div
-              className={cn(
-                "rounded-full border px-4 py-1 text-[10px] font-bold uppercase tracking-[0.28em]",
-                result === "LOSS" || result === "BUST"
-                  ? "border-red-500/40 bg-red-500/10 text-red-300"
-                  : result === "PUSH"
-                    ? "border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]"
-                    : "border-[var(--color-neon)]/50 bg-[var(--color-neon)]/10 text-[var(--color-neon)]",
-              )}
-            >
-              {RESULT_COPY[result] ?? result}
-            </div>
-          ) : null}
-        </div>
+        {/* Center spacer — the outcome is shown in the result pop-up. */}
+        <div className="h-2 shrink-0" />
+
+
 
 
         {/* Player */}
