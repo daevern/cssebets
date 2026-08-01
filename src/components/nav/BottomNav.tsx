@@ -4,10 +4,10 @@ import { Home, Activity, Wallet, Headphones, Gamepad2 } from "lucide-react";
 import { WalletCardSheet } from "@/components/wallet/WalletCard";
 
 const items = [
-  { to: "/dashboard", label: "Home", icon: Home, exact: true },
-  { to: "/my-predictions", label: "Picks", icon: Activity, exact: false },
-  { to: "/arcade", label: "Arcade", icon: Gamepad2, exact: false },
-  { to: "/support", label: "Support", icon: Headphones, exact: false },
+  { to: "/dashboard", label: "Home", icon: Home, exact: true, glow: false },
+  { to: "/my-predictions", label: "Picks", icon: Activity, exact: false, glow: false },
+  { to: "/arcade", label: "Arcade", icon: Gamepad2, exact: false, glow: true },
+  { to: "/support", label: "Support", icon: Headphones, exact: false, glow: false },
 ] as const;
 
 export function BottomNav() {
@@ -41,6 +41,14 @@ export function BottomNav() {
 function renderLink(it: (typeof items)[number], pathname: string) {
   const Icon = it.icon;
   const active = it.exact ? pathname === it.to : pathname === it.to || pathname.startsWith(it.to + "/");
+  const iconMarkup = it.glow ? (
+    <span className="relative flex h-[22px] w-[22px] items-center justify-center">
+      <span className="arcade-icon-glow" aria-hidden />
+      <Icon className={`h-[22px] w-[22px] ${active ? "stroke-[2.2]" : ""}`} />
+    </span>
+  ) : (
+    <Icon className={`h-[22px] w-[22px] ${active ? "stroke-[2.2]" : ""}`} />
+  );
   return (
     <Link
       key={it.to}
@@ -49,7 +57,7 @@ function renderLink(it: (typeof items)[number], pathname: string) {
         active ? "text-[var(--neon)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"
       }`}
     >
-      <Icon className={`h-[22px] w-[22px] ${active ? "stroke-[2.2]" : ""}`} />
+      {iconMarkup}
       <span>{it.label}</span>
     </Link>
   );

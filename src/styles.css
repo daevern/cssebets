@@ -96,6 +96,9 @@
   --neon: #22E06B;
   --neon-glow: rgba(34, 224, 107, 0.25);
   --neon-glow-rgb: 34, 224, 107;
+  --neon-red: #ef4444;
+  --neon-red-glow: rgba(239, 68, 68, 0.22);
+  --neon-red-glow-rgb: 239, 68, 68;
   --ink: #E9F5EE;
   --ink-muted: #7A8A82;
   --ink-dim: #4B5A54;
@@ -123,6 +126,15 @@
 
 @utility safe-bottom-lg {
   padding-bottom: calc(180px + env(safe-area-inset-bottom));
+}
+
+@utility arcade-icon-glow {
+  position: absolute;
+  inset: -10px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at center, var(--neon-red-glow) 0%, transparent 70%);
+  filter: blur(3px);
+  opacity: 0.65;
 }
 
 @layer components {
