@@ -49,12 +49,10 @@ export function RouletteWheel({
   className?: string;
 }) {
   const [rotation, setRotation] = useState(0);
-  const [ballRotation, setBallRotation] = useState(0);
-  const [ballSeated, setBallSeated] = useState(false);
+  const [ballAngle, setBallAngle] = useState(0);
+  const [ballRadius, setBallRadius] = useState(82);
   const [settledPocket, setSettledPocket] = useState<number | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const seatTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const spins = useRef(0);
+  const raf = useRef<number | null>(null);
 
   const targetIndex = useMemo(
     () => (winningPocket == null ? 0 : WHEEL_ORDER.indexOf(winningPocket as any)),
@@ -64,27 +62,68 @@ export function RouletteWheel({
   useEffect(() => {
     if (!spinToken || winningPocket == null) return;
     setSettledPocket(null);
-    setBallSeated(false);
-    spins.current += 1;
-    const base = -(targetIndex * SEG) - SEG / 2;
-    const next =
-      base - 360 * (reducedMotion ? 0 : 5) - 360 * (reducedMotion ? 0 : spins.current % 2);
-    setRotation(next);
-    setBallRotation((r) => {
-      const whole = Math.round(r / 360) * 360;
-      return whole + 360 * (reducedMotion ? 1 : 8);
-    });
-    const duration = reducedMotion ? 200 : 4200;
-    if (timer.current) clearTimeout(timer.current);
-    if (seatTimer.current) clearTimeout(seatTimer.current);
-    seatTimer.current = setTimeout(() => setBallSeated(true), Math.max(0, duration - 900));
-    timer.current = setTimeout(() => {
+
+    // Pocket centre in wheel-local degrees.
+    const pocketMid = targetIndex * SEG + SEG / 2;
+
+    const wheelStart = rotation;
+    const ballStart = ballAngle;
+
+    if (reducedMotion) {
+      const wheelEnd = wheelStart + 360;
+      setRotation(wheelEnd);
+      setBallAngle(wheelEnd + pocketMid);
+      setBallRadius(66);
       setSettledPocket(winningPocket);
       onSettled?.();
-    }, duration);
+      return;
+    }
+
+    // Wheel keeps turning clockwise and stops at an arbitrary angle — the
+    // winning pocket can end up anywhere around the rim, not under the marker.
+    const wheelEnd = wheelStart + 360 * 4 + Math.random() * 360;
+
+    // Ball orbits the opposite way and must finish sitting on the winning
+    // pocket, wherever the wheel happens to leave it.
+    const desired = wheelEnd + pocketMid;
+    const roughEnd = ballStart - (360 * 7 + Math.random() * 360);
+    // Snap the rough counter-rotating end angle onto the exact pocket angle.
+    const ballEnd = desired - Math.ceil((desired - roughEnd) / 360) * 360;
+
+    const duration = 6400;
+    const dropStart = 0.62; // ball leaves the outer track and spirals in
+    const t0 = performance.now();
+
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3.2);
+
+    const step = (now: number) => {
+      const t = Math.min(1, (now - t0) / duration);
+      const e = easeOut(t);
+      setRotation(wheelStart + (wheelEnd - wheelStart) * easeOut(Math.min(1, t * 1.05)));
+      setBallAngle(ballStart + (ballEnd - ballStart) * e);
+
+      if (t < dropStart) {
+        setBallRadius(82);
+      } else {
+        const d = (t - dropStart) / (1 - dropStart);
+        // spiral inward with a couple of decaying hops off the frets
+        const hop = Math.abs(Math.sin(d * Math.PI * 2.6)) * 5 * (1 - d);
+        setBallRadius(82 - 16 * easeOut(d) + hop);
+      }
+
+      if (t < 1) {
+        raf.current = requestAnimationFrame(step);
+      } else {
+        setBallRadius(66);
+        setSettledPocket(winningPocket);
+        onSettled?.();
+      }
+    };
+
+    if (raf.current) cancelAnimationFrame(raf.current);
+    raf.current = requestAnimationFrame(step);
     return () => {
-      if (timer.current) clearTimeout(timer.current);
-      if (seatTimer.current) clearTimeout(seatTimer.current);
+      if (raf.current) cancelAnimationFrame(raf.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spinToken]);
@@ -131,11 +170,9 @@ export function RouletteWheel({
           style={{
             transform: `rotate(${rotation}deg)`,
             transformOrigin: "100px 100px",
-            transition: reducedMotion
-              ? "transform 200ms linear"
-              : "transform 4200ms cubic-bezier(0.12, 0.7, 0.12, 1)",
           }}
         >
+
           {WHEEL_ORDER.map((n, i) => {
             const start = i * SEG;
             const end = start + SEG;
@@ -192,22 +229,19 @@ export function RouletteWheel({
         {/* Ball track + ball */}
         <g
           style={{
-            transform: `rotate(${ballRotation}deg)`,
+            transform: `rotate(${ballAngle}deg)`,
             transformOrigin: "100px 100px",
-            transition: reducedMotion
-              ? "transform 200ms linear"
-              : "transform 4200ms cubic-bezier(0.08, 0.8, 0.1, 1)",
           }}
         >
           <circle
             cx={cx}
-            cy={cy - (ballSeated ? 66 : 82)}
+            cy={cy - ballRadius}
             r="4.5"
             fill="#ffffff"
             filter="url(#rw-glow)"
-            style={{ transition: reducedMotion ? "none" : "cy 900ms cubic-bezier(0.3, 0.8, 0.2, 1)" }}
           />
         </g>
+
 
         {/* Top marker */}
         <path d="M 100 6 L 106 18 L 94 18 Z" fill="var(--color-neon)" />
