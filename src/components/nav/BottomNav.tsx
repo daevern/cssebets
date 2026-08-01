@@ -41,6 +41,14 @@ export function BottomNav() {
 function renderLink(it: (typeof items)[number], pathname: string) {
   const Icon = it.icon;
   const active = it.exact ? pathname === it.to : pathname === it.to || pathname.startsWith(it.to + "/");
+  const iconMarkup = it.glow ? (
+    <span className="relative flex h-[22px] w-[22px] items-center justify-center">
+      <span className="arcade-icon-glow" aria-hidden />
+      <Icon className={`h-[22px] w-[22px] ${active ? "stroke-[2.2]" : ""}`} />
+    </span>
+  ) : (
+    <Icon className={`h-[22px] w-[22px] ${active ? "stroke-[2.2]" : ""}`} />
+  );
   return (
     <Link
       key={it.to}
@@ -49,7 +57,7 @@ function renderLink(it: (typeof items)[number], pathname: string) {
         active ? "text-[var(--neon)]" : "text-[var(--ink-muted)] hover:text-[var(--ink)]"
       }`}
     >
-      <Icon className={`h-[22px] w-[22px] ${active ? "stroke-[2.2]" : ""}`} />
+      {iconMarkup}
       <span>{it.label}</span>
     </Link>
   );
