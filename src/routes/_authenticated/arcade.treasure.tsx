@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Gem, ShieldCheck, Wallet, TrendingUp, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TreasureGrid } from "@/components/arcade/TreasureGrid";
+import { CasinoChip } from "@/components/arcade/CasinoChip";
 import { TreasureVerifyDialog } from "@/components/arcade/TreasureVerifyDialog";
 import {
   collectTreasureRound,
@@ -319,19 +320,14 @@ function TreasurePage() {
 
               <div className="flex items-center gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {chips.map((c) => (
-                  <button
+                  <CasinoChip
                     key={c}
-                    type="button"
+                    value={c}
+                    selected={stake === c}
+                    disabled={c > maxStake}
                     onClick={() => setStake(Math.min(Math.max(c, minStake), maxStake))}
-                    className={cn(
-                      "grid h-9 w-9 shrink-0 place-items-center rounded-full border font-display text-[11px] font-bold tabular-nums",
-                      stake === c
-                        ? "border-[var(--color-neon)] bg-[var(--color-neon)] text-black"
-                        : "border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]",
-                    )}
-                  >
-                    {c}
-                  </button>
+                    size={38}
+                  />
                 ))}
                 <div className="ml-auto shrink-0 text-right">
                   <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
