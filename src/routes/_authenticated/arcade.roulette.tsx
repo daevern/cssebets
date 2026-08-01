@@ -284,7 +284,7 @@ function RoulettePage() {
   }
 
   return (
-    <div className="space-y-3 pb-40">
+    <div className="space-y-3 pb-28">
       {cfg?.announcement && (
         <div className="rounded-xl border border-[var(--color-neon)]/30 bg-[var(--color-neon)]/8 px-3 py-2 text-[11px] text-[var(--color-ink)]">
           {cfg.announcement}
@@ -413,23 +413,7 @@ function RoulettePage() {
         </div>
       </div>
 
-      <div className="relative overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-3">
-        <Corner pos="tr" />
-        <RouletteBoard stakes={stakesByKey} onPlace={place} disabled={spinning} />
-      </div>
-
-      <p className="flex items-start gap-1.5 px-1 text-[9px] uppercase leading-relaxed tracking-[0.14em] text-[var(--color-ink-muted)]">
-        <ShieldCheck className="mt-[1px] h-3 w-3 shrink-0 text-[var(--color-neon)]" />
-        Virtual points only · every pocket has an equal 1-in-13 chance · each spin is independent ·
-        theoretical house edge 7.69%
-      </p>
-
-      <Link
-        to="/arcade/treasure"
-        className="inline-flex items-center gap-1.5 px-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]"
-      >
-        Treasure grid
-      </Link>
+      <RouletteBoard stakes={stakesByKey} onPlace={place} disabled={spinning} />
 
       <RouletteVerifyDialog
         open={!!verifyId}
