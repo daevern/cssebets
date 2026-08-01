@@ -14,6 +14,7 @@ import { RouletteVerifyDialog } from "@/components/arcade/RouletteVerifyDialog";
 import { RouletteWheel } from "@/components/arcade/RouletteWheel";
 import { RouletteBoard } from "@/components/arcade/RouletteBoard";
 import { CasinoChip } from "@/components/arcade/CasinoChip";
+import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import {
   positionKey,
   returnMultiplier,
@@ -93,6 +94,7 @@ function RoulettePage() {
   const [reduced, setReduced] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [verifyId, setVerifyId] = useState<string | null>(null);
+  const [resultOpen, setResultOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -265,9 +267,7 @@ function RoulettePage() {
     if (cooldownSeconds > 0) setCooldown(cooldownSeconds);
     const spinRow = result?.spin;
     if (!spinRow) return;
-    const net = Number(spinRow.user_net ?? 0);
-    if (net > 0) toast.success(`${spinRow.winning_pocket} · +${fmt(net)} pts`);
-    else if (net === 0) toast.info(`${spinRow.winning_pocket} · stake returned`);
+    setResultOpen(true);
   };
 
   const winningPocket = result?.spin ? Number(result.spin.winning_pocket) : null;
@@ -284,7 +284,7 @@ function RoulettePage() {
   }
 
   return (
-    <div className="space-y-3 pb-28">
+    <div className="space-y-3 pb-64 md:pb-40">
       {cfg?.announcement && (
         <div className="rounded-xl border border-[var(--color-neon)]/30 bg-[var(--color-neon)]/8 px-3 py-2 text-[11px] text-[var(--color-ink)]">
           {cfg.announcement}
@@ -359,34 +359,51 @@ function RoulettePage() {
         </div>
       </div>
 
-      {result?.spin && settled && (
-        <div
-          className={cn(
-            "rounded-2xl border px-3 py-2 text-[11px]",
+      {result?.spin && (
+        <ArcadeResultDialog
+          open={resultOpen && settled}
+          onOpenChange={setResultOpen}
+          tone={
             Number(result.spin.user_net) > 0
-              ? "border-[var(--color-neon)]/40 bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
+              ? "win"
               : Number(result.spin.user_net) === 0
-                ? "border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]"
-                : "border-destructive/40 bg-destructive/10 text-destructive",
-          )}
-        >
-          <span className="font-bold uppercase tracking-[0.2em]">{result.spin.status}</span> · pocket{" "}
-          {result.spin.winning_pocket} ({pocketColour(Number(result.spin.winning_pocket))}) · staked{" "}
-          {fmt(Number(result.spin.total_stake))} · returned {fmt(Number(result.spin.total_return))} ·
-          net {Number(result.spin.user_net) >= 0 ? "+" : ""}
-          {fmt(Number(result.spin.user_net))} pts
-          <span className="ml-2 font-mono text-[9px] opacity-70">
-            #{result.spin.verification_id}
-          </span>
-          <button
-            type="button"
-            onClick={() => setVerifyId(result.spin.id)}
-            className="ml-2 inline-flex items-center gap-1 rounded-full border border-current/40 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
-          >
-            <ShieldCheck className="h-3 w-3" /> Verify
-          </button>
-        </div>
+                ? "push"
+                : "loss"
+          }
+          headline={
+            Number(result.spin.user_net) > 0
+              ? "You win"
+              : Number(result.spin.user_net) === 0
+                ? "Stake returned"
+                : "No win this spin"
+          }
+          net={Number(result.spin.user_net ?? 0)}
+          detail={
+            <>
+              Pocket {result.spin.winning_pocket} (
+              {pocketColour(Number(result.spin.winning_pocket))}) · staked{" "}
+              {fmt(Number(result.spin.total_stake))} · returned{" "}
+              {fmt(Number(result.spin.total_return))}
+              <div className="mt-1 font-mono text-[9px] opacity-70">
+                #{result.spin.verification_id}
+              </div>
+            </>
+          }
+          footer={
+            <button
+              type="button"
+              onClick={() => {
+                setResultOpen(false);
+                setVerifyId(result.spin.id);
+              }}
+              className="inline-flex h-9 items-center justify-center gap-1 rounded-full border border-[var(--color-surface-border)] px-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]"
+            >
+              <ShieldCheck className="h-3 w-3" /> Verify
+            </button>
+          }
+        />
       )}
+
 
       <RouletteBoard stakes={stakesByKey} onPlace={place} disabled={spinning} />
 
@@ -397,7 +414,7 @@ function RoulettePage() {
       />
 
       {/* Sticky bet slip + spin */}
-      <div className="fixed inset-x-0 bottom-[64px] z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-0">
         <div className="mx-auto w-full max-w-4xl space-y-2 px-3 py-2">
           {slipOpen && positions.length > 0 && (
             <div className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-2">
