@@ -180,7 +180,7 @@ function AdminOverview() {
           />
         </div>
         <p className="mt-2 text-[9px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-          bankroll source: platform_bankroll id=1 · kind=live · is_active=true · updated{" "}
+          bankroll source: accounting journal · HOUSE_BANKROLL (production) · as of{" "}
           {d.bankroll.updatedAt ? new Date(d.bankroll.updatedAt).toLocaleString() : "—"}
         </p>
       </Section>
