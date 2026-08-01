@@ -25,15 +25,15 @@ const RESULT_COPY: Record<string, string> = {
 function Totals({ label, value, tone }: { label: string; value: string; tone?: "neon" | "muted" }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+      <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink)]">
         {label}
       </span>
       <span
         className={cn(
-          "min-w-9 rounded-full border px-2.5 py-0.5 text-center font-mono text-[12px] font-bold tabular-nums",
+          "min-w-10 rounded-full border px-3 py-1 text-center font-mono text-[12px] font-bold tabular-nums",
           tone === "neon"
             ? "border-[var(--color-neon)]/50 bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
-            : "border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-ink)]",
+            : "border-[var(--color-surface-border)] bg-[#0b1a12] text-[var(--color-ink)]",
         )}
       >
         {value}
@@ -41,6 +41,88 @@ function Totals({ label, value, tone }: { label: string; value: string; tone?: "
     </div>
   );
 }
+
+/** Decorative casino felt: arcs, curved rule banners and a card shoe. */
+function FeltArt() {
+  const neon = "var(--color-neon)";
+  return (
+    <svg
+      viewBox="0 0 1180 600"
+      preserveAspectRatio="xMidYMid slice"
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      aria-hidden="true"
+    >
+      <defs>
+        <path id="bj-arc-left" d="M150,300 C185,430 350,500 590,500" fill="none" />
+        <path id="bj-arc-right" d="M590,500 C830,500 995,430 1030,300" fill="none" />
+        <path id="bj-arc-banner" d="M300,268 C420,352 760,352 880,268" fill="none" />
+      </defs>
+
+      {/* Main table arc */}
+      <path
+        d="M62,-40 C62,340 300,520 590,520 C880,520 1118,340 1118,-40"
+        fill="none"
+        stroke={neon}
+        strokeOpacity="0.5"
+        strokeWidth="2.5"
+      />
+      {/* Inner arc */}
+      <path
+        d="M118,-40 C118,320 320,472 590,472 C860,472 1062,320 1062,-40"
+        fill="none"
+        stroke={neon}
+        strokeOpacity="0.28"
+        strokeWidth="2"
+      />
+
+      {/* Curved rule banner */}
+      <path
+        d="M292,240 C420,332 760,332 888,240 L916,300 C775,398 405,398 264,300 Z"
+        fill="none"
+        stroke={neon}
+        strokeOpacity="0.75"
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+      />
+      <text
+        fill={neon}
+        fontSize="46"
+        fontWeight="700"
+        letterSpacing="4"
+        style={{ fontFamily: "var(--font-display, inherit)" }}
+      >
+        <textPath href="#bj-arc-banner" startOffset="50%" textAnchor="middle">
+          BLACKJACK PAYS 3 TO 2
+        </textPath>
+      </text>
+
+      {/* Side rules */}
+      <text fill={neon} fillOpacity="0.45" fontSize="27" fontWeight="700" letterSpacing="3">
+        <textPath href="#bj-arc-left" startOffset="42%" textAnchor="middle">
+          DEALER HITS SOFT 17
+        </textPath>
+      </text>
+      <text fill={neon} fillOpacity="0.45" fontSize="27" fontWeight="700" letterSpacing="3">
+        <textPath href="#bj-arc-right" startOffset="58%" textAnchor="middle">
+          INSURANCE PAYS 2 TO 1
+        </textPath>
+      </text>
+
+      {/* Card shoe */}
+      <g
+        transform="translate(1058,352) rotate(9)"
+        fill="none"
+        stroke={neon}
+        strokeOpacity="0.55"
+        strokeWidth="2.5"
+      >
+        <rect x="0" y="0" width="78" height="140" rx="12" />
+        <rect x="9" y="10" width="60" height="104" rx="8" strokeOpacity="0.35" />
+      </g>
+    </svg>
+  );
+}
+
 
 export function BlackjackTable({ state }: { state: BlackjackState | null }) {
   // Cards scale to whatever vertical space the table gets so nothing is ever
