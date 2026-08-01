@@ -234,7 +234,7 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
               );
             })}
             {!playerHands.length && (
-              <div className="flex items-center text-[10px] uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+              <div className="flex items-center text-[11px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
                 No cards yet
               </div>
             )}
@@ -245,17 +245,3 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
   );
 }
 
-/** Classic felt ribbon used for table rules. */
-function FeltBanner({ text }: { text: string }) {
-  return (
-    <div
-      className="px-6 py-1 text-[9px] font-bold uppercase tracking-[0.3em] text-[var(--color-ink-muted)]"
-      style={{
-        clipPath: "polygon(4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%, 0 50%)",
-        background: "color-mix(in srgb, var(--color-neon) 8%, transparent)",
-      }}
-    >
-      {text}
-    </div>
-  );
-}
