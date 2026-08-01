@@ -37,7 +37,7 @@ function FeltArt() {
   const neon = "var(--color-neon)";
   return (
     <svg
-      viewBox="0 0 1180 600"
+      viewBox="0 -70 1180 670"
       preserveAspectRatio="xMidYMid meet"
       className="pointer-events-none absolute inset-0 h-full w-full"
       aria-hidden="true"
