@@ -13,6 +13,7 @@ import { getRouletteSession } from "@/lib/arcade/roulette-phase2.functions";
 import { RouletteVerifyDialog } from "@/components/arcade/RouletteVerifyDialog";
 import { RouletteWheel } from "@/components/arcade/RouletteWheel";
 import { RouletteBoard } from "@/components/arcade/RouletteBoard";
+import { CasinoChip } from "@/components/arcade/CasinoChip";
 import {
   positionKey,
   returnMultiplier,
