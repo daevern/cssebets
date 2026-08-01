@@ -266,9 +266,7 @@ function RoulettePage() {
     if (cooldownSeconds > 0) setCooldown(cooldownSeconds);
     const spinRow = result?.spin;
     if (!spinRow) return;
-    const net = Number(spinRow.user_net ?? 0);
-    if (net > 0) toast.success(`${spinRow.winning_pocket} · +${fmt(net)} pts`);
-    else if (net === 0) toast.info(`${spinRow.winning_pocket} · stake returned`);
+    setResultOpen(true);
   };
 
   const winningPocket = result?.spin ? Number(result.spin.winning_pocket) : null;
