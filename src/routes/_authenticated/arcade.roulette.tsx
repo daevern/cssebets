@@ -14,6 +14,7 @@ import { RouletteVerifyDialog } from "@/components/arcade/RouletteVerifyDialog";
 import { RouletteWheel } from "@/components/arcade/RouletteWheel";
 import { RouletteBoard } from "@/components/arcade/RouletteBoard";
 import { CasinoChip } from "@/components/arcade/CasinoChip";
+import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import {
   positionKey,
   returnMultiplier,
@@ -283,7 +284,7 @@ function RoulettePage() {
   }
 
   return (
-    <div className="space-y-3 pb-28">
+    <div className="space-y-3 pb-64 md:pb-40">
       {cfg?.announcement && (
         <div className="rounded-xl border border-[var(--color-neon)]/30 bg-[var(--color-neon)]/8 px-3 py-2 text-[11px] text-[var(--color-ink)]">
           {cfg.announcement}
@@ -413,7 +414,7 @@ function RoulettePage() {
       />
 
       {/* Sticky bet slip + spin */}
-      <div className="fixed inset-x-0 bottom-[64px] z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-0">
         <div className="mx-auto w-full max-w-4xl space-y-2 px-3 py-2">
           {slipOpen && positions.length > 0 && (
             <div className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-2">
