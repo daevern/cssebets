@@ -7649,6 +7649,7 @@ export type Database = {
       accounting_caller_authorised: { Args: never; Returns: boolean }
       accounting_integrity_scan: { Args: never; Returns: Json }
       accounting_internal_ctx: { Args: never; Returns: boolean }
+      accounting_liability_integrity_alert: { Args: never; Returns: Json }
       accounting_liability_test_cleanup: {
         Args: { p_ref_type: string; p_round?: string }
         Returns: undefined
@@ -7682,6 +7683,16 @@ export type Database = {
         Returns: Json
       }
       accounting_plinko_selftest: { Args: never; Returns: Json }
+      accounting_position_state: {
+        Args: { p_reference_id: string; p_reference_type: string }
+        Returns: {
+          is_terminal: boolean
+          outcome: string
+          product: string
+          settled_at: string
+          status: string
+        }[]
+      }
       accounting_post_arcade_settlement: {
         Args: {
           p_effective: string
@@ -7732,6 +7743,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      accounting_repair_terminal_reservation: {
+        Args: {
+          p_reason: string
+          p_reference_id: string
+          p_reference_type: string
+        }
+        Returns: Json
+      }
       accounting_reserve_liability: {
         Args: {
           p_config_version?: string
@@ -7770,6 +7789,21 @@ export type Database = {
         Returns: Json
       }
       accounting_run_phase5_final_selftest: { Args: never; Returns: undefined }
+      accounting_terminal_reservation_violations: {
+        Args: never
+        Returns: {
+          environment: string
+          position_outcome: string
+          position_status: string
+          product: string
+          reference_id: string
+          reference_type: string
+          reservation_id: string
+          reserved_amount: number
+          reserved_at: string
+          settled_at: string
+        }[]
+      }
       accounting_user_env: {
         Args: { p_user: string }
         Returns: Database["public"]["Enums"]["acct_environment"]
