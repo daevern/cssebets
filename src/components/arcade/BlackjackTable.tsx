@@ -11,26 +11,15 @@ export type BlackjackState = {
   cards: BjCard[];
 };
 
-const RESULT_COPY: Record<string, string> = {
-  BLACKJACK: "Blackjack!",
-  WIN: "You win",
-  PUSH: "Push",
-  LOSS: "Dealer wins",
-  BUST: "Bust",
-  MIXED: "Split result",
-  VOID: "Void",
-  REVERSED: "Reversed",
-};
-
 function Totals({ label, value, tone }: { label: string; value: string; tone?: "neon" | "muted" }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink)]">
+      <span className="flex h-7 items-center text-[9px] font-bold uppercase leading-none tracking-[0.32em] text-[var(--color-ink)]">
         {label}
       </span>
       <span
         className={cn(
-          "min-w-10 rounded-full border px-3 py-1 text-center font-mono text-[12px] font-bold tabular-nums",
+          "flex h-7 min-w-11 items-center justify-center rounded-full border px-3 text-center font-mono text-[12px] font-bold leading-none tabular-nums",
           tone === "neon"
             ? "border-[var(--color-neon)]/50 bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
             : "border-[var(--color-surface-border)] bg-[#0b1a12] text-[var(--color-ink)]",
@@ -41,6 +30,7 @@ function Totals({ label, value, tone }: { label: string; value: string; tone?: "
     </div>
   );
 }
+
 
 /** Decorative casino felt: arcs, curved rule banners and a card shoe. */
 function FeltArt() {
