@@ -186,7 +186,7 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
           </div>
         </div>
 
-        {/* Center: felt legend or result banner */}
+        {/* Center: result banner (felt rules live in the art layer) */}
         <div className="flex shrink-0 flex-col items-center justify-center gap-1">
           {settled && result ? (
             <div
@@ -201,15 +201,9 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
             >
               {RESULT_COPY[result] ?? result}
             </div>
-          ) : (
-            <>
-              <FeltBanner text="Blackjack scores 150" />
-              <span className="hidden md:block">
-                <FeltBanner text="Dealer stands on 17" />
-              </span>
-            </>
-          )}
+          ) : null}
         </div>
+
 
         {/* Player */}
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1">
