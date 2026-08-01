@@ -57,6 +57,34 @@ function Diamond({ tone }: { tone: "red" | "black" }) {
   );
 }
 
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="my-3 flex items-center gap-2">
+      <span className="h-px flex-1" style={{ background: FELT_BORDER }} />
+      <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
+        {children}
+      </span>
+      <span className="h-px flex-1" style={{ background: FELT_BORDER }} />
+    </div>
+  );
+}
+
+function ChipIcon({ tone }: { tone?: "red" | "black" }) {
+  const fill =
+    tone === "red"
+      ? "radial-gradient(circle at 35% 30%, #d94152, #8d1c2a)"
+      : tone === "black"
+        ? "radial-gradient(circle at 35% 30%, #3a3d42, #131518)"
+        : "radial-gradient(circle at 35% 30%, #2b3a34, #101a16)";
+  return (
+    <span
+      aria-hidden
+      className="grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 border-dashed"
+      style={{ background: fill, borderColor: "rgba(255,255,255,0.55)" }}
+    />
+  );
+}
+
 export function RouletteBoard({
   stakes,
   onPlace,
