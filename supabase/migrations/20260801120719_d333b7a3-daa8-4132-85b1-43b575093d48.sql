@@ -1,0 +1,1 @@
+UPDATE public.arcade_roulette_configurations SET daily_spin_limit = 1000000 WHERE status = 'active';

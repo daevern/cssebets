@@ -297,37 +297,37 @@ function RoulettePage() {
           label="Today"
           value={`${(profile.data?.todayNet ?? 0) >= 0 ? "+" : ""}${fmt(profile.data?.todayNet ?? 0)}`}
         />
-        <Stat label="Spins today" value={String(profile.data?.todaySpins ?? 0)} />
-        <Stat label="Wins" value={String(profile.data?.totalWins ?? 0)} />
-        <Stat label="Losses" value={String(profile.data?.totalLosses ?? 0)} />
-        <Stat label="House edge" value={`${(THEORETICAL_HOUSE_EDGE * 100).toFixed(2)}%`} />
+        <Stat
+          label="W / L"
+          value={`${profile.data?.totalWins ?? 0} / ${profile.data?.totalLosses ?? 0}`}
+        />
       </div>
 
-      {(cooldownSeconds > 0 || dailyLimit > 0) && (
+      {cooldownSeconds > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
-          {dailyLimit > 0 && (
-            <span className={cn(dailyLimitReached && "text-destructive")}>
-              Daily spins {spinsToday}/{dailyLimit}
-            </span>
-          )}
-          {cooldownSeconds > 0 && (
-            <span className={cn("ml-auto", cooldown > 0 && "text-[var(--color-neon)]")}>
-              {cooldown > 0 ? `Cooldown ${cooldown}s` : "Ready to spin"}
-            </span>
-          )}
-          {cooldownSeconds > 0 && (
-            <span className="h-1 w-full overflow-hidden rounded-full bg-[var(--color-surface-border)]">
-              <span
-                className="block h-full rounded-full bg-[var(--color-neon)] transition-[width] duration-1000 ease-linear"
-                style={{ width: `${Math.max(0, 100 - (cooldown / cooldownSeconds) * 100)}%` }}
-              />
-            </span>
-          )}
+          <span className={cn("ml-auto", cooldown > 0 && "text-[var(--color-neon)]")}>
+            {cooldown > 0 ? `Cooldown ${cooldown}s` : "Ready to spin"}
+          </span>
+          <span className="h-1 w-full overflow-hidden rounded-full bg-[var(--color-surface-border)]">
+            <span
+              className="block h-full rounded-full bg-[var(--color-neon)] transition-[width] duration-1000 ease-linear"
+              style={{ width: `${Math.max(0, 100 - (cooldown / cooldownSeconds) * 100)}%` }}
+            />
+          </span>
         </div>
       )}
 
       <div className="relative overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-3">
         <Corner pos="tr" />
+        <div className="absolute right-2 top-2 z-10 rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/90 px-2 py-1 text-right">
+          <div className="text-[7px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+            House edge
+          </div>
+          <div className="font-display text-[11px] font-bold tabular-nums text-[var(--color-ink)]">
+            {(THEORETICAL_HOUSE_EDGE * 100).toFixed(2)}%
+          </div>
+        </div>
+
         <RouletteWheel
           winningPocket={winningPocket}
           spinToken={spinToken}
