@@ -376,7 +376,25 @@ function PlReportPage() {
                           {fmt(p.realised_pl)}
                         </td>
                         <td>{p.hold_pct === null ? "—" : `${fmt(p.hold_pct)}%`}</td>
-                        <td>{p.settled_positions}</td>
+                        <td
+                          title={
+                            p.settled_outcomes
+                              ? Object.entries(p.settled_outcomes)
+                                  .map(([k, v]) => `${k}: ${v}`)
+                                  .join(" · ")
+                              : undefined
+                          }
+                        >
+                          {p.settled_positions}
+                          {Number(p.unclassified_positions ?? 0) > 0 && (
+                            <span
+                              className="ml-1 text-[10px] text-amber-500"
+                              title="Finished positions whose outcome could not be classified — excluded from realised losses"
+                            >
+                              +{p.unclassified_positions}?
+                            </span>
+                          )}
+                        </td>
                         <td>{fmt(p.open_stakes)}</td>
                         <td>{fmt(p.reserved_liability)}</td>
                         <td>{fmt(p.max_potential_payout)}</td>
