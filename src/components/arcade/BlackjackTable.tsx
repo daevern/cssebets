@@ -137,7 +137,8 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
       const w = el.clientWidth;
       const byHeight = (h - 96) / 2;
       const byWidth = w / 6 / 0.7;
-      setCardH(Math.max(46, Math.min(104, Math.floor(Math.min(byHeight, byWidth)))));
+      const cap = w >= 700 ? 150 : 104;
+      setCardH(Math.max(46, Math.min(cap, Math.floor(Math.min(byHeight, byWidth)))));
     });
     ro.observe(el);
     return () => ro.disconnect();
