@@ -231,22 +231,19 @@ export function RouletteWheel({
         {/* Ball track + ball */}
         <g
           style={{
-            transform: `rotate(${ballRotation}deg)`,
+            transform: `rotate(${ballAngle}deg)`,
             transformOrigin: "100px 100px",
-            transition: reducedMotion
-              ? "transform 200ms linear"
-              : "transform 4200ms cubic-bezier(0.08, 0.8, 0.1, 1)",
           }}
         >
           <circle
             cx={cx}
-            cy={cy - (ballSeated ? 66 : 82)}
+            cy={cy - ballRadius}
             r="4.5"
             fill="#ffffff"
             filter="url(#rw-glow)"
-            style={{ transition: reducedMotion ? "none" : "cy 900ms cubic-bezier(0.3, 0.8, 0.2, 1)" }}
           />
         </g>
+
 
         {/* Top marker */}
         <path d="M 100 6 L 106 18 L 94 18 Z" fill="var(--color-neon)" />
