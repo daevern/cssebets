@@ -368,7 +368,7 @@ function BlackjackPage() {
           ))}
         </div>
 
-        <div className="flex min-h-10 items-center justify-between gap-1 overflow-x-auto px-1.5 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex shrink-0 items-center justify-between gap-1 overflow-x-auto overflow-y-visible px-1.5 pb-1 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {chips.slice(0, 6).map((c) => (
             <CasinoChip
               key={c}
