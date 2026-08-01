@@ -96,6 +96,9 @@
   --neon: #22E06B;
   --neon-glow: rgba(34, 224, 107, 0.25);
   --neon-glow-rgb: 34, 224, 107;
+  --neon-red: #ef4444;
+  --neon-red-glow: rgba(239, 68, 68, 0.22);
+  --neon-red-glow-rgb: 239, 68, 68;
   --ink: #E9F5EE;
   --ink-muted: #7A8A82;
   --ink-dim: #4B5A54;
