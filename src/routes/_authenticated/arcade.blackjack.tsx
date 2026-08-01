@@ -251,7 +251,7 @@ function BlackjackPage() {
         </div>
       )}
 
-      <div className="relative mx-[calc(50%-50vw)] min-h-[240px] w-screen flex-1 md:h-[520px] md:min-h-0 md:flex-none">
+      <div className="relative mx-[calc(50%-50vw)] min-h-[150px] w-screen flex-1 md:h-[520px] md:min-h-0 md:flex-none">
         <BlackjackTable state={state} />
       </div>
 
