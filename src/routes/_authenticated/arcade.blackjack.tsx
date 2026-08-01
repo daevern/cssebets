@@ -284,7 +284,7 @@ function BlackjackPage() {
         </div>
       )}
 
-      <div className="z-20 shrink-0 space-y-1 rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 p-1.5 backdrop-blur">
+      <div className="z-20 mx-auto w-full max-w-xl shrink-0 space-y-1.5 px-0 pt-1 md:space-y-2 md:pt-3">
         {inPlay ? (
           <div className="flex h-9 w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
             Your move
