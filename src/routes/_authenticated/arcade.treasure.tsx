@@ -207,7 +207,7 @@ function TreasurePage() {
   }
 
   return (
-    <div className="flex flex-col gap-3 pb-[150px]">
+    <div className="-mb-24 flex flex-col gap-3 pb-[150px]">
       <div className="grid grid-cols-3 gap-1.5">
         <Stat icon={Wallet} label="Balance" value={`${fmt(balance)}`} />
         <Stat
@@ -269,13 +269,8 @@ function TreasurePage() {
         })}
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-        <p className="flex items-start gap-1.5 text-[9px] uppercase leading-relaxed tracking-[0.14em] text-[var(--color-ink-muted)]">
-          <ShieldCheck className="mt-[1px] h-3 w-3 shrink-0 text-[var(--color-neon)]" />
-          Virtual points only · trap positions are fixed at round start and provably fair · published
-          RTP {(Number(config?.target_rtp ?? 0.96) * 100).toFixed(0)}%
-        </p>
-        {settled && (
+      {settled && (
+        <div className="flex justify-end px-1">
           <button
             type="button"
             onClick={() => setVerifyId(round.id)}
@@ -283,8 +278,8 @@ function TreasurePage() {
           >
             Verify round
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       <TreasureVerifyDialog
         open={Boolean(verifyId)}
