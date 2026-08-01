@@ -251,7 +251,7 @@ function BlackjackPage() {
         </div>
       )}
 
-      <div className="min-h-[220px] flex-1 md:h-auto md:min-h-[480px]">
+      <div className="relative mx-[calc(50%-50vw)] min-h-[240px] w-screen flex-1 md:h-[520px] md:min-h-0 md:flex-none">
         <BlackjackTable state={state} />
       </div>
 
@@ -284,9 +284,9 @@ function BlackjackPage() {
         </div>
       )}
 
-      <div className="z-20 shrink-0 space-y-1 rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 p-1.5 backdrop-blur">
+      <div className="z-20 mx-auto w-full max-w-xl shrink-0 space-y-1.5 px-0 pt-1 md:space-y-2 md:pt-3">
         {inPlay ? (
-          <div className="flex h-9 w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
+          <div className="flex h-9 md:h-12 w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[9px] md:text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
             Your move
           </div>
         ) : (
@@ -295,7 +295,7 @@ function BlackjackPage() {
             disabled={!canDeal}
             onClick={() => deal.mutate()}
             className={cn(
-              "flex h-9 w-full items-center justify-center gap-1.5 rounded-full font-display text-[10px] font-bold uppercase tracking-[0.16em] transition-all",
+              "flex h-9 md:h-12 w-full items-center justify-center gap-1.5 rounded-full font-display text-[10px] md:text-[12px] font-bold uppercase tracking-[0.16em] transition-all",
               canDeal
                 ? "bg-[var(--color-neon)] text-black shadow-[0_0_24px_rgba(var(--neon-glow-rgb),0.45)] active:brightness-95"
                 : "border border-[var(--color-surface-border)] bg-[var(--color-surface)] text-[var(--color-ink-muted)]",
@@ -313,7 +313,7 @@ function BlackjackPage() {
           </button>
         )}
 
-        <div className="grid grid-cols-4 gap-1">
+        <div className="grid grid-cols-4 gap-1 md:gap-2">
           <ActionTile
             label="Double"
             glyph="x2"
@@ -344,7 +344,7 @@ function BlackjackPage() {
           />
         </div>
 
-        <div className="flex h-8 items-center gap-1.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2">
+        <div className="flex h-8 md:h-10 items-center gap-1.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2">
           <span className="text-[9px] font-bold text-[var(--color-ink-muted)]">PTS</span>
           <span className="flex-1 font-mono text-[13px] font-bold tabular-nums text-[var(--color-neon)]">
             {stake.toLocaleString()}
@@ -376,7 +376,7 @@ function BlackjackPage() {
               selected={stake === c}
               disabled={inPlay || busy || c > maxStake}
               onClick={() => clampStake(c)}
-              size={32}
+              size={36}
             />
           ))}
         </div>

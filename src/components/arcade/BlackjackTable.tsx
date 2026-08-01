@@ -48,7 +48,7 @@ function FeltArt() {
   return (
     <svg
       viewBox="0 0 1180 600"
-      preserveAspectRatio="xMidYMid slice"
+      preserveAspectRatio="xMidYMid meet"
       className="pointer-events-none absolute inset-0 h-full w-full"
       aria-hidden="true"
     >
@@ -86,9 +86,9 @@ function FeltArt() {
       />
       <text
         fill={neon}
-        fontSize="46"
+        fontSize="34"
         fontWeight="700"
-        letterSpacing="4"
+        letterSpacing="1"
         style={{ fontFamily: "var(--font-display, inherit)" }}
       >
         <textPath href="#bj-arc-banner" startOffset="50%" textAnchor="middle">
@@ -97,12 +97,12 @@ function FeltArt() {
       </text>
 
       {/* Side rules */}
-      <text fill={neon} fillOpacity="0.45" fontSize="27" fontWeight="700" letterSpacing="3">
+      <text fill={neon} fillOpacity="0.45" fontSize="22" fontWeight="700" letterSpacing="1">
         <textPath href="#bj-arc-left" startOffset="42%" textAnchor="middle">
           DEALER HITS SOFT 17
         </textPath>
       </text>
-      <text fill={neon} fillOpacity="0.45" fontSize="27" fontWeight="700" letterSpacing="3">
+      <text fill={neon} fillOpacity="0.45" fontSize="22" fontWeight="700" letterSpacing="1">
         <textPath href="#bj-arc-right" startOffset="58%" textAnchor="middle">
           INSURANCE PAYS 2 TO 1
         </textPath>
@@ -137,7 +137,8 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
       const w = el.clientWidth;
       const byHeight = (h - 96) / 2;
       const byWidth = w / 6 / 0.7;
-      setCardH(Math.max(46, Math.min(104, Math.floor(Math.min(byHeight, byWidth)))));
+      const cap = w >= 700 ? 150 : 104;
+      setCardH(Math.max(46, Math.min(cap, Math.floor(Math.min(byHeight, byWidth)))));
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -162,7 +163,7 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
   return (
     <div
       ref={boxRef}
-      className="relative h-full overflow-hidden rounded-2xl border border-[var(--color-neon)]/25 bg-[radial-gradient(120%_100%_at_50%_0%,color-mix(in_srgb,var(--color-neon)_12%,#04120b),#04120b)]"
+      className="relative h-full overflow-hidden bg-[radial-gradient(130%_105%_at_50%_-5%,color-mix(in_srgb,var(--color-neon)_14%,#04120b),#04120b_62%,#020a06)]"
     >
       <style>{`@keyframes bj-deal{from{opacity:0;transform:translateY(-18px) scale(.92)}to{opacity:1;transform:none}}`}</style>
 
