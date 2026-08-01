@@ -172,9 +172,9 @@ export function RouletteBoard({
                     onClick={() => handleNumber(n)}
                     className={cn(cellBase, "h-12 flex-1 text-xl")}
                     style={{
-                      background: CELL_BG,
-                      borderColor: FELT_BORDER,
-                      color: colour === "red" ? RED_INK : "var(--color-ink)",
+                      background: colour === "red" ? RED_CELL_BG : BLACK_CELL_BG,
+                      borderColor: colour === "red" ? RED_CELL_BORDER : BLACK_CELL_BORDER,
+                      color: colour === "red" ? "#ffd9dd" : "var(--color-ink)",
                     }}
                   >
                     <span className={cn(selected && "underline underline-offset-4")}>{n}</span>
