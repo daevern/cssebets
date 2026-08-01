@@ -162,23 +162,18 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
   return (
     <div
       ref={boxRef}
-      className="relative h-full overflow-hidden rounded-2xl bg-[radial-gradient(120%_90%_at_50%_0%,color-mix(in_srgb,var(--color-neon)_10%,transparent),transparent_70%),var(--color-surface)]"
+      className="relative h-full overflow-hidden rounded-2xl border border-[var(--color-neon)]/25 bg-[radial-gradient(120%_100%_at_50%_0%,color-mix(in_srgb,var(--color-neon)_12%,#04120b),#04120b)]"
     >
       <style>{`@keyframes bj-deal{from{opacity:0;transform:translateY(-18px) scale(.92)}to{opacity:1;transform:none}}`}</style>
 
-      {/* Felt oval */}
-      <div className="pointer-events-none absolute left-1/2 top-4 bottom-4 w-[132%] -translate-x-1/2 rounded-[999px] border border-[var(--color-neon)]/15 bg-[radial-gradient(80%_70%_at_50%_20%,color-mix(in_srgb,var(--color-neon)_7%,transparent),transparent_75%)]" />
+      <FeltArt />
 
-      {/* Watermark is deliberately low contrast so cards remain the focus. */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 text-[var(--color-neon)] opacity-[0.09]">
-        <CsseMark variant="mono" className="h-14 w-14 md:h-20 md:w-20" />
+      {/* Brand watermark replaces the plain wordmark in the reference felt. */}
+      <div className="pointer-events-none absolute left-1/2 top-[26%] flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 text-[var(--color-neon)] opacity-[0.16]">
+        <CsseMark variant="mono" className="h-8 w-8 md:h-12 md:w-12" />
+        <span className="font-display text-lg font-bold tracking-tight md:text-3xl">CSSEBets</span>
       </div>
 
-      {/* Card shoe */}
-      <div className="pointer-events-none absolute right-2 top-1/2 h-[64px] w-[24px] -translate-y-1/2 rotate-[8deg] rounded-[4px] border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)] shadow-[0_8px_18px_rgba(0,0,0,.5)] md:right-6 md:h-[112px] md:w-[38px]">
-        <div className="absolute inset-[4px] rounded-[3px] border border-[var(--color-neon)]/25" />
-        <div className="absolute inset-[9px] rounded-[2px] border border-[var(--color-neon)]/15" />
-      </div>
 
       <div className="relative flex h-full flex-col items-stretch gap-1 px-3 py-2 md:gap-2 md:px-6 md:py-4">
         {/* Dealer */}
