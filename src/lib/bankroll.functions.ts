@@ -216,14 +216,24 @@ export const getHouseBankrollSummary = createServerFn({ method: "GET" })
       (supabaseAdmin as any).from("platform_bankroll").select("balance, total_stakes_collected, total_payouts_paid, updated_at").eq("id", 1).maybeSingle(),
       (supabaseAdmin as any).from("platform_bankroll").select("balance, total_stakes_collected, total_payouts_paid, updated_at").eq("id", 2).maybeSingle(),
     ]);
-    const toRow = (r: any) => ({
-      balance: Number(r?.balance ?? 0),
+    const { readAuthoritativeBankroll } = await import("@/lib/accounting/bankroll-source.server");
+    const [authReal, authSim] = await Promise.all([
+      readAuthoritativeBankroll(supabaseAdmin, "PRODUCTION"),
+      readAuthoritativeBankroll(supabaseAdmin, "SIMULATION"),
+    ]);
+    const toRow = (r: any, auth: { ok: boolean; balance: number; generatedAt: string | null }) => ({
+      // Balance comes from the journal; stake/payout totals remain the legacy
+      // sports counters until those products are journal-backed.
+      balance: auth.ok ? auth.balance : Number(r?.balance ?? 0),
+      legacyBalance: Number(r?.balance ?? 0),
+      source: auth.ok ? "accounting_journal" : "platform_bankroll",
       totalStakes: Number(r?.total_stakes_collected ?? 0),
       totalPayouts: Number(r?.total_payouts_paid ?? 0),
       netPL: Number(r?.total_stakes_collected ?? 0) - Number(r?.total_payouts_paid ?? 0),
-      updatedAt: r?.updated_at ?? null,
+      updatedAt: auth.ok ? auth.generatedAt : (r?.updated_at ?? null),
+      legacyUpdatedAt: r?.updated_at ?? null,
     });
-    return { real: toRow(real), simulation: toRow(sim) };
+    return { real: toRow(real, authReal), simulation: toRow(sim, authSim) };
   });
 
 export const listPlatformTransactions = createServerFn({ method: "GET" })
