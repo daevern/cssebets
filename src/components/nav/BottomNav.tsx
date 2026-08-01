@@ -4,10 +4,10 @@ import { Home, Activity, Wallet, Headphones, Gamepad2 } from "lucide-react";
 import { WalletCardSheet } from "@/components/wallet/WalletCard";
 
 const items = [
-  { to: "/dashboard", label: "Home", icon: Home, exact: true },
-  { to: "/my-predictions", label: "Picks", icon: Activity, exact: false },
+  { to: "/dashboard", label: "Home", icon: Home, exact: true, glow: false },
+  { to: "/my-predictions", label: "Picks", icon: Activity, exact: false, glow: false },
   { to: "/arcade", label: "Arcade", icon: Gamepad2, exact: false, glow: true },
-  { to: "/support", label: "Support", icon: Headphones, exact: false },
+  { to: "/support", label: "Support", icon: Headphones, exact: false, glow: false },
 ] as const;
 
 export function BottomNav() {
