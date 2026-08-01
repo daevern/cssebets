@@ -25,15 +25,15 @@ const RESULT_COPY: Record<string, string> = {
 function Totals({ label, value, tone }: { label: string; value: string; tone?: "neon" | "muted" }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+      <span className="text-[9px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink)]">
         {label}
       </span>
       <span
         className={cn(
-          "min-w-9 rounded-full border px-2.5 py-0.5 text-center font-mono text-[12px] font-bold tabular-nums",
+          "min-w-10 rounded-full border px-3 py-1 text-center font-mono text-[12px] font-bold tabular-nums",
           tone === "neon"
             ? "border-[var(--color-neon)]/50 bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
-            : "border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-ink)]",
+            : "border-[var(--color-surface-border)] bg-[#0b1a12] text-[var(--color-ink)]",
         )}
       >
         {value}
@@ -41,6 +41,88 @@ function Totals({ label, value, tone }: { label: string; value: string; tone?: "
     </div>
   );
 }
+
+/** Decorative casino felt: arcs, curved rule banners and a card shoe. */
+function FeltArt() {
+  const neon = "var(--color-neon)";
+  return (
+    <svg
+      viewBox="0 0 1180 600"
+      preserveAspectRatio="xMidYMid slice"
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      aria-hidden="true"
+    >
+      <defs>
+        <path id="bj-arc-left" d="M150,300 C185,430 350,500 590,500" fill="none" />
+        <path id="bj-arc-right" d="M590,500 C830,500 995,430 1030,300" fill="none" />
+        <path id="bj-arc-banner" d="M300,268 C420,352 760,352 880,268" fill="none" />
+      </defs>
+
+      {/* Main table arc */}
+      <path
+        d="M62,-40 C62,340 300,520 590,520 C880,520 1118,340 1118,-40"
+        fill="none"
+        stroke={neon}
+        strokeOpacity="0.5"
+        strokeWidth="2.5"
+      />
+      {/* Inner arc */}
+      <path
+        d="M118,-40 C118,320 320,472 590,472 C860,472 1062,320 1062,-40"
+        fill="none"
+        stroke={neon}
+        strokeOpacity="0.28"
+        strokeWidth="2"
+      />
+
+      {/* Curved rule banner */}
+      <path
+        d="M292,240 C420,332 760,332 888,240 L916,300 C775,398 405,398 264,300 Z"
+        fill="none"
+        stroke={neon}
+        strokeOpacity="0.75"
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+      />
+      <text
+        fill={neon}
+        fontSize="46"
+        fontWeight="700"
+        letterSpacing="4"
+        style={{ fontFamily: "var(--font-display, inherit)" }}
+      >
+        <textPath href="#bj-arc-banner" startOffset="50%" textAnchor="middle">
+          BLACKJACK PAYS 3 TO 2
+        </textPath>
+      </text>
+
+      {/* Side rules */}
+      <text fill={neon} fillOpacity="0.45" fontSize="27" fontWeight="700" letterSpacing="3">
+        <textPath href="#bj-arc-left" startOffset="42%" textAnchor="middle">
+          DEALER HITS SOFT 17
+        </textPath>
+      </text>
+      <text fill={neon} fillOpacity="0.45" fontSize="27" fontWeight="700" letterSpacing="3">
+        <textPath href="#bj-arc-right" startOffset="58%" textAnchor="middle">
+          INSURANCE PAYS 2 TO 1
+        </textPath>
+      </text>
+
+      {/* Card shoe */}
+      <g
+        transform="translate(1058,352) rotate(9)"
+        fill="none"
+        stroke={neon}
+        strokeOpacity="0.55"
+        strokeWidth="2.5"
+      >
+        <rect x="0" y="0" width="78" height="140" rx="12" />
+        <rect x="9" y="10" width="60" height="104" rx="8" strokeOpacity="0.35" />
+      </g>
+    </svg>
+  );
+}
+
 
 export function BlackjackTable({ state }: { state: BlackjackState | null }) {
   // Cards scale to whatever vertical space the table gets so nothing is ever
@@ -80,23 +162,18 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
   return (
     <div
       ref={boxRef}
-      className="relative h-full overflow-hidden rounded-2xl bg-[radial-gradient(120%_90%_at_50%_0%,color-mix(in_srgb,var(--color-neon)_10%,transparent),transparent_70%),var(--color-surface)]"
+      className="relative h-full overflow-hidden rounded-2xl border border-[var(--color-neon)]/25 bg-[radial-gradient(120%_100%_at_50%_0%,color-mix(in_srgb,var(--color-neon)_12%,#04120b),#04120b)]"
     >
       <style>{`@keyframes bj-deal{from{opacity:0;transform:translateY(-18px) scale(.92)}to{opacity:1;transform:none}}`}</style>
 
-      {/* Felt oval */}
-      <div className="pointer-events-none absolute left-1/2 top-4 bottom-4 w-[132%] -translate-x-1/2 rounded-[999px] border border-[var(--color-neon)]/15 bg-[radial-gradient(80%_70%_at_50%_20%,color-mix(in_srgb,var(--color-neon)_7%,transparent),transparent_75%)]" />
+      <FeltArt />
 
-      {/* Watermark is deliberately low contrast so cards remain the focus. */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 text-[var(--color-neon)] opacity-[0.09]">
-        <CsseMark variant="mono" className="h-14 w-14 md:h-20 md:w-20" />
+      {/* Brand watermark replaces the plain wordmark in the reference felt. */}
+      <div className="pointer-events-none absolute left-1/2 top-[26%] flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 text-[var(--color-neon)] opacity-[0.16]">
+        <CsseMark variant="mono" className="h-8 w-8 md:h-12 md:w-12" />
+        <span className="font-display text-lg font-bold tracking-tight md:text-3xl">CSSEBets</span>
       </div>
 
-      {/* Card shoe */}
-      <div className="pointer-events-none absolute right-2 top-1/2 h-[64px] w-[24px] -translate-y-1/2 rotate-[8deg] rounded-[4px] border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)] shadow-[0_8px_18px_rgba(0,0,0,.5)] md:right-6 md:h-[112px] md:w-[38px]">
-        <div className="absolute inset-[4px] rounded-[3px] border border-[var(--color-neon)]/25" />
-        <div className="absolute inset-[9px] rounded-[2px] border border-[var(--color-neon)]/15" />
-      </div>
 
       <div className="relative flex h-full flex-col items-stretch gap-1 px-3 py-2 md:gap-2 md:px-6 md:py-4">
         {/* Dealer */}
@@ -109,7 +186,7 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
           </div>
         </div>
 
-        {/* Center: felt legend or result banner */}
+        {/* Center: result banner (felt rules live in the art layer) */}
         <div className="flex shrink-0 flex-col items-center justify-center gap-1">
           {settled && result ? (
             <div
@@ -124,15 +201,9 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
             >
               {RESULT_COPY[result] ?? result}
             </div>
-          ) : (
-            <>
-              <FeltBanner text="Blackjack scores 150" />
-              <span className="hidden md:block">
-                <FeltBanner text="Dealer stands on 17" />
-              </span>
-            </>
-          )}
+          ) : null}
         </div>
+
 
         {/* Player */}
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1">
@@ -163,7 +234,7 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
               );
             })}
             {!playerHands.length && (
-              <div className="flex items-center text-[10px] uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+              <div className="flex items-center text-[11px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
                 No cards yet
               </div>
             )}
@@ -174,17 +245,3 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
   );
 }
 
-/** Classic felt ribbon used for table rules. */
-function FeltBanner({ text }: { text: string }) {
-  return (
-    <div
-      className="px-6 py-1 text-[9px] font-bold uppercase tracking-[0.3em] text-[var(--color-ink-muted)]"
-      style={{
-        clipPath: "polygon(4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%, 0 50%)",
-        background: "color-mix(in srgb, var(--color-neon) 8%, transparent)",
-      }}
-    >
-      {text}
-    </div>
-  );
-}
