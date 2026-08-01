@@ -162,7 +162,7 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
   return (
     <div
       ref={boxRef}
-      className="relative h-full overflow-hidden rounded-2xl border border-[var(--color-neon)]/25 bg-[radial-gradient(120%_100%_at_50%_0%,color-mix(in_srgb,var(--color-neon)_12%,#04120b),#04120b)]"
+      className="relative h-full overflow-hidden bg-[radial-gradient(130%_105%_at_50%_-5%,color-mix(in_srgb,var(--color-neon)_14%,#04120b),#04120b_62%,#020a06)]"
     >
       <style>{`@keyframes bj-deal{from{opacity:0;transform:translateY(-18px) scale(.92)}to{opacity:1;transform:none}}`}</style>
 
