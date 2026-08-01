@@ -226,27 +226,7 @@ export function RouletteBoard({
         </div>
       </div>
 
-      {/* Four-number groups */}
-      <div className="mt-1.5 flex gap-1.5">
-        {FOUR_GROUPS.map((g) => (
-          <button
-            key={g.label}
-            type="button"
-            disabled={disabled}
-            onClick={() => onPlace("four_group", g.label, g.pockets)}
-            className={cn(
-              cellBase,
-              "h-10 flex-1 text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]",
-            )}
-            style={{ background: CELL_BG, borderColor: FELT_BORDER }}
-          >
-            {g.label} · 3×
-            <Stack amount={amt(`four_group:${g.pockets.join("-")}`)} />
-          </button>
-        ))}
-      </div>
-
-      {/* Outside bets */}
+      {/* Outside bets strip */}
       <div className="mt-1.5 grid grid-cols-3 gap-1.5 sm:grid-cols-6">
         {outside.map((o) => (
           <button
@@ -271,11 +251,67 @@ export function RouletteBoard({
             }}
           >
             {o.icon ? <Diamond tone={o.icon} /> : <span>{o.label}</span>}
-            <span className="text-[9px] tracking-[0.14em] opacity-70">2×</span>
             <Stack amount={amt(`${o.key}:${[...o.pockets].sort((a, b) => a - b).join("-")}`)} />
           </button>
         ))}
       </div>
+
+      {/* Neighbor bets */}
+      <SectionLabel>Neighbor bets</SectionLabel>
+      <div className="grid grid-cols-4 gap-1.5">
+        {FOUR_GROUPS.map((g) => (
+          <button
+            key={g.label}
+            type="button"
+            disabled={disabled}
+            onClick={() => onPlace("four_group", g.label, g.pockets)}
+            className={cn(
+              cellBase,
+              "h-12 flex-col rounded-full text-[9px] uppercase tracking-[0.18em] text-[var(--color-ink)]",
+            )}
+            style={{ background: CELL_BG, borderColor: FELT_BORDER }}
+          >
+            <span>{g.label}</span>
+            <span className="text-[8px] tracking-[0.14em] text-[var(--color-ink-muted)]">
+              {g.pockets.length} numbers
+            </span>
+            <Stack amount={amt(`four_group:${g.pockets.join("-")}`)} />
+          </button>
+        ))}
+      </div>
+
+      {/* Special bets */}
+      <SectionLabel>Special bets</SectionLabel>
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+        {outside.map((o) => (
+          <button
+            key={`special-${o.key}`}
+            type="button"
+            disabled={disabled}
+            onClick={() => onPlace(o.key, o.label, o.pockets)}
+            className={cn(
+              cellBase,
+              "h-14 grid-flow-col items-center justify-start gap-2.5 rounded-[8px] px-3",
+            )}
+            style={{ background: CELL_BG, borderColor: FELT_BORDER }}
+          >
+            <ChipIcon tone={o.icon} />
+            <span className="grid justify-items-start">
+              <span
+                className="text-[11px] uppercase tracking-[0.22em]"
+                style={{ color: o.ink ?? "var(--color-ink)" }}
+              >
+                {o.label}
+              </span>
+              <span className="text-[9px] tracking-[0.18em] text-[var(--color-ink-muted)]">
+                {returnMultiplier(o.pockets.length).toFixed(2)}×
+              </span>
+            </span>
+            <Stack amount={amt(`${o.key}:${[...o.pockets].sort((a, b) => a - b).join("-")}`)} />
+          </button>
+        ))}
+      </div>
+
 
       {/* Footer */}
       <div
