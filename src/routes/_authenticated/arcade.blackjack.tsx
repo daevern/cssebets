@@ -297,6 +297,39 @@ function BlackjackPage() {
         </div>
       )}
 
+      {lastResult && (
+        <ArcadeResultDialog
+          open={resultOpen}
+          onOpenChange={setResultOpen}
+          tone={
+            Number(lastResult.user_net) > 0
+              ? "win"
+              : Number(lastResult.user_net) < 0
+                ? "loss"
+                : "push"
+          }
+          headline={
+            Number(lastResult.user_net) > 0
+              ? String(lastResult.result) === "BLACKJACK"
+                ? "Blackjack!"
+                : "You win"
+              : Number(lastResult.user_net) < 0
+                ? "Dealer wins"
+                : "Push"
+          }
+          net={Number(lastResult.user_net ?? 0)}
+          detail={String(lastResult.result ?? "").replace("_", " ")}
+          footer={
+            <BlackjackVerifyDialog
+              handId={lastResult.id}
+              serverSeedHash={lastResult.server_seed_hash}
+              clientSeed={lastResult.client_seed}
+              nonce={lastResult.nonce}
+            />
+          }
+        />
+      )}
+
       <div className="z-20 mx-auto w-full max-w-xl shrink-0 space-y-1.5 bg-[var(--color-surface)] px-0 pb-[env(safe-area-inset-bottom)] pt-1 md:space-y-2 md:bg-transparent md:pb-0 md:pt-3">
         <div className="grid grid-cols-4 gap-1 md:gap-2">
           <ActionTile
