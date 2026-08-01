@@ -25,10 +25,10 @@ const FELT_BG = "linear-gradient(160deg, #071310 0%, #04100d 45%, #020a08 100%)"
 const FELT_BORDER = "rgba(90, 200, 150, 0.16)";
 const CELL_BG = "rgba(255,255,255,0.035)";
 const RED_INK = "#ef5061";
-/* Slight tints so red/black pockets read as red/black felt cells. */
-const RED_CELL_BG = "linear-gradient(180deg, rgba(190,40,55,0.42), rgba(140,25,38,0.30))";
-const RED_CELL_BORDER = "rgba(239,80,97,0.35)";
-const BLACK_CELL_BG = "linear-gradient(180deg, rgba(10,12,14,0.85), rgba(4,6,7,0.7))";
+/* CSSEBets theme: red numbers show only the red outline, black numbers sit on dark gray. */
+const RED_CELL_BG = "transparent";
+const RED_CELL_BORDER = "rgba(239,80,97,0.75)";
+const BLACK_CELL_BG = "linear-gradient(180deg, rgba(45,48,52,0.85), rgba(30,32,36,0.75))";
 const BLACK_CELL_BORDER = "rgba(255,255,255,0.14)";
 
 const cellBase =
@@ -174,7 +174,7 @@ export function RouletteBoard({
                     style={{
                       background: colour === "red" ? RED_CELL_BG : BLACK_CELL_BG,
                       borderColor: colour === "red" ? RED_CELL_BORDER : BLACK_CELL_BORDER,
-                      color: colour === "red" ? "#ffd9dd" : "var(--color-ink)",
+                      color: colour === "red" ? RED_INK : "var(--color-ink)",
                     }}
                   >
                     <span className={cn(selected && "underline underline-offset-4")}>{n}</span>
