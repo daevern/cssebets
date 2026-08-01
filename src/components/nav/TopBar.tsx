@@ -27,6 +27,8 @@ export function TopBar({
   loading?: boolean;
   onSignOut?: () => void;
 }) {
+  const { pathname } = useLocation();
+  const isArcade = pathname === "/arcade" || pathname.startsWith("/arcade/");
   return (
     <header
       className="sticky top-0 z-30 overflow-hidden border-b border-[var(--color-surface-border)]/60 bg-[var(--surface)]/95 backdrop-blur-md"
