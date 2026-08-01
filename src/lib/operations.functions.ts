@@ -86,7 +86,12 @@ export const getOperationsDashboard = createServerFn({ method: "GET" })
     const activeUsers = new Set((activeRowsDay.data ?? []).map((r: any) => r.user_id)).size;
 
     const s: any = settings.data ?? {};
-    const b: any = bankroll.data ?? {};
+    // Bankroll figures come from the accounting journal, not platform_bankroll.
+    const { readAuthoritativeBankroll } = await import("@/lib/accounting/bankroll-source.server");
+    const authBankroll = await readAuthoritativeBankroll(supabaseAdmin);
+    const b: any = authBankroll.ok
+      ? { ...(bankroll.data ?? {}), balance: authBankroll.balance, updated_at: authBankroll.generatedAt }
+      : (bankroll.data ?? {});
     const lastSettleAt = (lastSettleRows.data ?? [])[0]?.settled_at ?? null;
 
     return {
@@ -334,7 +339,9 @@ export const generateAlerts = createServerFn({ method: "POST" })
       `${pointSpike.count} pending point requests in last 24h`, { count: pointSpike.count });
     if ((rateSpike.count ?? 0) > 100) add("warning","security","Rate-limit spike",
       `${rateSpike.count} rate-limit events in last 24h`, { count: rateSpike.count });
-    const bal = Number(bankroll.data?.balance ?? 0);
+    const { readAuthoritativeBankroll: readAuthBankroll } = await import("@/lib/accounting/bankroll-source.server");
+    const authBal = await readAuthBankroll(supabaseAdmin);
+    const bal = authBal.ok ? authBal.balance : Number(bankroll.data?.balance ?? 0);
     if (bal > 0 && bal < 50000) add("warning","bankroll","Bankroll below threshold",
       `Platform bankroll is ${bal.toFixed(2)} (threshold 50,000)`, { balance: bal });
     if ((support.count ?? 0) > 25) add("warning","support","Support backlog",
@@ -488,7 +495,11 @@ export const getPlatformAnalytics = createServerFn({ method: "GET" })
       .reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
 
     const activeUsers = new Set((activeRows.data ?? []).map((r: any) => r.user_id)).size;
-    const b: any = bankroll.data ?? {};
+    const { readAuthoritativeBankroll: readAuthBankrollSummary } = await import("@/lib/accounting/bankroll-source.server");
+    const authSummary = await readAuthBankrollSummary(supabaseAdmin);
+    const b: any = authSummary.ok
+      ? { ...(bankroll.data ?? {}), balance: authSummary.balance }
+      : (bankroll.data ?? {});
 
     return {
       range_days: data.days,

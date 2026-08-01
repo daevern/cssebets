@@ -7635,6 +7635,12 @@ export type Database = {
         Args: { p_env: Database["public"]["Enums"]["acct_environment"] }
         Returns: number
       }
+      accounting_bankroll_reconciliation: {
+        Args: {
+          p_environment?: Database["public"]["Enums"]["acct_environment"]
+        }
+        Returns: Json
+      }
       accounting_bridge_sync: { Args: { p_limit?: number }; Returns: Json }
       accounting_bridge_wallet_transaction: {
         Args: { p_tx_id: string }

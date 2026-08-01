@@ -127,8 +127,14 @@ export const getRiskDashboard = createServerFn({ method: "GET" })
       return empty;
     }
 
-    const bankroll = Number(bankrollRow.balance);
-    const bankrollUpdatedAt = bankrollRow.updated_at ?? null;
+    // Authoritative bankroll = accounting journal (HOUSE_BANKROLL); the legacy
+    // platform_bankroll row above is only a configuration/availability gate.
+    const { readAuthoritativeBankroll } = await import("@/lib/accounting/bankroll-source.server");
+    const authBankroll = await readAuthoritativeBankroll(supabaseAdmin);
+    const bankroll = authBankroll.ok ? authBankroll.balance : Number(bankrollRow.balance);
+    const bankrollUpdatedAt = authBankroll.ok
+      ? authBankroll.generatedAt
+      : (bankrollRow.updated_at ?? null);
 
     const { data: preds } = await supabaseAdmin
       .from("predictions")

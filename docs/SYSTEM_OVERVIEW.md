@@ -37,8 +37,8 @@ be used for a decision.
 | Value | Canonical source | Notes |
 |---|---|---|
 | User points balance | `wallet_transactions` (append-only ledger) | `wallets.balance` is a maintained cache; `run_reconciliation_check` proves the two agree. |
-| House bankroll | `platform_bankroll` row `kind='live'`, `is_active=true` (id=1) | id=2 is `kind='simulation'`. Never summed together. |
-| House P/L | `accounting_pl_report()` over posted journals | Only covers journal-enabled products (§7.6). `platform_bankroll.total_stakes_collected / total_payouts_paid` are LEGACY lifetime counters. |
+| House bankroll | **`accounting_account_balances.HOUSE_BANKROLL`** (per `environment`) | **LIVE / authoritative.** `platform_bankroll` id=1 is **LEGACY**: only legacy sports settlement (`place_bet_atomic`, `platform_apply_change`) writes it, so it does *not* move for arcade play. Admin UI reads the journal via `readAuthoritativeBankroll()`; compare the two with `accounting_bankroll_reconciliation(env)`. |
+| House P/L | `accounting_pl_report()` over posted journals | Only covers journal-enabled products (§7.6). Losing rounds have no `PAYOUT_SETTLED` journal (a zero-amount journal line is forbidden by `acct_line_one_side`), so settlement basis realises them at their liability-reservation release time. `platform_bankroll.total_stakes_collected / total_payouts_paid` are LEGACY lifetime counters. |
 | Reserved liability (arcade) | `accounting_liability_reservations` (active, `liability_enforced`) | Authoritative for placement capacity. |
 | Worst-case exposure (sports) | `getRiskDashboard` recomputation from pending `predictions` | LEGACY. `matches.worst_case_exposure` / `*_liability` are denormalised caches refreshed on placement. |
 | Available bankroll | `accounting_available_reserve(env)` | `bankroll − active enforced reservations − outstanding payables`. See §7.3 for the older sports-only figure. |

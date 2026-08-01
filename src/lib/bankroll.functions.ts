@@ -66,7 +66,13 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
       };
     }
 
-    const balance = Number((bankroll as any)?.balance ?? 0);
+    // Authoritative bankroll = accounting journal (HOUSE_BANKROLL). The legacy
+    // platform_bankroll row only moves for legacy sports settlement and is kept
+    // here purely for reconciliation display.
+    const { readAuthoritativeBankroll } = await import("@/lib/accounting/bankroll-source.server");
+    const auth = await readAuthoritativeBankroll(supabaseAdmin);
+
+    const balance = auth.ok ? auth.balance : Number((bankroll as any)?.balance ?? 0);
     const totalStakes = Number((bankroll as any)?.total_stakes_collected ?? 0);
     const totalPayouts = Number((bankroll as any)?.total_payouts_paid ?? 0);
     const netPL = totalStakes - totalPayouts;
@@ -76,7 +82,8 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
     );
     const pendingMatchPools = (poolRows ?? []).reduce((s: number, p: any) => s + Number(p.total_pool || 0), 0);
     const totalIssuance = (issuanceRows ?? []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
-    const availableBalance = balance - globalExposure;
+    // Journal-aware capacity: reserve already nets payables + liability holds.
+    const availableBalance = (auth.ok ? auth.availableReserve : balance) - globalExposure;
     const safetyRatio = globalExposure > 0 ? balance / globalExposure : null;
 
     // ---- Full-market liability breakdown across all pending predictions ----
@@ -174,7 +181,14 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
         available: availableBalance,
         pendingMatchPools,
         totalIssuance,
-        updatedAt: (bankroll as any)?.updated_at ?? null,
+        updatedAt: auth.ok ? auth.generatedAt : ((bankroll as any)?.updated_at ?? null),
+        source: auth.ok ? "accounting_journal" : "platform_bankroll",
+        payable: auth.payable,
+        reservedLiability: auth.reservedLiability,
+        availableReserve: auth.availableReserve,
+        legacyBalance: auth.legacyBalance,
+        legacyUpdatedAt: auth.legacyUpdatedAt,
+        legacyDelta: auth.delta,
       },
       house,
       bets: { open: openBets ?? 0, settled: settledBets ?? 0, void: voidBets ?? 0 },
@@ -202,14 +216,24 @@ export const getHouseBankrollSummary = createServerFn({ method: "GET" })
       (supabaseAdmin as any).from("platform_bankroll").select("balance, total_stakes_collected, total_payouts_paid, updated_at").eq("id", 1).maybeSingle(),
       (supabaseAdmin as any).from("platform_bankroll").select("balance, total_stakes_collected, total_payouts_paid, updated_at").eq("id", 2).maybeSingle(),
     ]);
-    const toRow = (r: any) => ({
-      balance: Number(r?.balance ?? 0),
+    const { readAuthoritativeBankroll } = await import("@/lib/accounting/bankroll-source.server");
+    const [authReal, authSim] = await Promise.all([
+      readAuthoritativeBankroll(supabaseAdmin, "PRODUCTION"),
+      readAuthoritativeBankroll(supabaseAdmin, "SIMULATION"),
+    ]);
+    const toRow = (r: any, auth: { ok: boolean; balance: number; generatedAt: string | null }) => ({
+      // Balance comes from the journal; stake/payout totals remain the legacy
+      // sports counters until those products are journal-backed.
+      balance: auth.ok ? auth.balance : Number(r?.balance ?? 0),
+      legacyBalance: Number(r?.balance ?? 0),
+      source: auth.ok ? "accounting_journal" : "platform_bankroll",
       totalStakes: Number(r?.total_stakes_collected ?? 0),
       totalPayouts: Number(r?.total_payouts_paid ?? 0),
       netPL: Number(r?.total_stakes_collected ?? 0) - Number(r?.total_payouts_paid ?? 0),
-      updatedAt: r?.updated_at ?? null,
+      updatedAt: auth.ok ? auth.generatedAt : (r?.updated_at ?? null),
+      legacyUpdatedAt: r?.updated_at ?? null,
     });
-    return { real: toRow(real), simulation: toRow(sim) };
+    return { real: toRow(real, authReal), simulation: toRow(sim, authSim) };
   });
 
 export const listPlatformTransactions = createServerFn({ method: "GET" })
