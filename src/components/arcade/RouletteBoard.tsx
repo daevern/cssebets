@@ -259,8 +259,14 @@ export function RouletteBoard({
               "h-12 gap-1 text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]",
             )}
             style={{
-              background: CELL_BG,
-              borderColor: FELT_BORDER,
+              background:
+                o.icon === "red" ? RED_CELL_BG : o.icon === "black" ? BLACK_CELL_BG : CELL_BG,
+              borderColor:
+                o.icon === "red"
+                  ? RED_CELL_BORDER
+                  : o.icon === "black"
+                    ? BLACK_CELL_BORDER
+                    : FELT_BORDER,
               color: o.ink ?? undefined,
             }}
           >
