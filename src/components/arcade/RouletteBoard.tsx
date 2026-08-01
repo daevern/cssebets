@@ -27,7 +27,7 @@ const CELL_BG = "rgba(255,255,255,0.035)";
 const RED_INK = "#ef5061";
 /* CSSEBets theme: red numbers show only the red outline, black numbers sit on dark gray. */
 const RED_CELL_BG = "transparent";
-const RED_CELL_BORDER = "rgba(239,80,97,0.75)";
+const RED_CELL_BORDER = "rgba(239,80,97,0.45)";
 const BLACK_CELL_BG = "linear-gradient(180deg, rgba(45,48,52,0.85), rgba(30,32,36,0.75))";
 const BLACK_CELL_BORDER = "rgba(255,255,255,0.14)";
 
@@ -69,18 +69,14 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ChipIcon({ tone }: { tone?: "red" | "black" }) {
-  const fill =
-    tone === "red"
-      ? "radial-gradient(circle at 35% 30%, #d94152, #8d1c2a)"
-      : tone === "black"
-        ? "radial-gradient(circle at 35% 30%, #3a3d42, #131518)"
-        : "radial-gradient(circle at 35% 30%, #2b3a34, #101a16)";
+function SpecialIcon({ tone }: { tone?: "red" | "black" }) {
+  const colour =
+    tone === "red" ? RED_INK : tone === "black" ? "rgba(255,255,255,0.65)" : "rgba(90,200,150,0.7)";
   return (
     <span
       aria-hidden
-      className="grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 border-dashed"
-      style={{ background: fill, borderColor: "rgba(255,255,255,0.55)" }}
+      className="inline-block h-4 w-4 shrink-0 rotate-45 rounded-[3px] border"
+      style={{ borderColor: colour, background: "transparent" }}
     />
   );
 }
@@ -323,7 +319,7 @@ export function RouletteBoard({
             )}
             style={{ background: CELL_BG, borderColor: FELT_BORDER }}
           >
-            <ChipIcon tone={o.icon} />
+            <SpecialIcon tone={o.icon} />
             <span className="grid justify-items-start">
               <span
                 className="text-[11px] uppercase tracking-[0.22em]"
