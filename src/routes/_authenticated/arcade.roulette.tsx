@@ -389,19 +389,7 @@ function RoulettePage() {
 
       <div className="flex items-center gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {chips.map((c) => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => setChip(c)}
-            className={cn(
-              "grid h-10 w-10 shrink-0 place-items-center rounded-full border font-display text-[11px] font-bold tabular-nums transition-all",
-              chip === c
-                ? "border-[var(--color-neon)] bg-[var(--color-neon)] text-black shadow-[0_0_16px_rgba(var(--neon-glow-rgb),0.5)]"
-                : "border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]",
-            )}
-          >
-            {c}
-          </button>
+          <CasinoChip key={c} value={c} selected={chip === c} onClick={() => setChip(c)} size={40} />
         ))}
         <div className="ml-auto flex shrink-0 gap-1">
           <IconBtn onClick={undo} disabled={spinning || !history.length} title="Undo">
