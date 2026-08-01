@@ -93,6 +93,7 @@ function RoulettePage() {
   const [reduced, setReduced] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [verifyId, setVerifyId] = useState<string | null>(null);
+  const [resultOpen, setResultOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
