@@ -207,7 +207,7 @@ function TreasurePage() {
   }
 
   return (
-    <div className="flex flex-col gap-3 pb-[150px]">
+    <div className="-mb-24 flex flex-col gap-3 pb-[150px]">
       <div className="grid grid-cols-3 gap-1.5">
         <Stat icon={Wallet} label="Balance" value={`${fmt(balance)}`} />
         <Stat
