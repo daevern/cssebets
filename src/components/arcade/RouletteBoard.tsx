@@ -25,9 +25,14 @@ const FELT_BG = "linear-gradient(160deg, #071310 0%, #04100d 45%, #020a08 100%)"
 const FELT_BORDER = "rgba(90, 200, 150, 0.16)";
 const CELL_BG = "rgba(255,255,255,0.035)";
 const RED_INK = "#ef5061";
+/* Slight tints so red/black pockets read as red/black felt cells. */
+const RED_CELL_BG = "linear-gradient(180deg, rgba(190,40,55,0.42), rgba(140,25,38,0.30))";
+const RED_CELL_BORDER = "rgba(239,80,97,0.35)";
+const BLACK_CELL_BG = "linear-gradient(180deg, rgba(10,12,14,0.85), rgba(4,6,7,0.7))";
+const BLACK_CELL_BORDER = "rgba(255,255,255,0.14)";
 
 const cellBase =
-  "relative grid place-items-center rounded-xl border font-display font-bold tabular-nums transition-all active:scale-[0.97] disabled:opacity-40";
+  "relative grid place-items-center rounded-[5px] border font-display font-bold tabular-nums transition-all active:scale-[0.97] disabled:opacity-40";
 
 function Stack({ amount }: { amount?: number }) {
   if (!amount) return null;
