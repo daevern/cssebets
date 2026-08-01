@@ -48,7 +48,7 @@ function FeltArt() {
   return (
     <svg
       viewBox="0 0 1180 600"
-      preserveAspectRatio="xMidYMid slice"
+      preserveAspectRatio="xMidYMid meet"
       className="pointer-events-none absolute inset-0 h-full w-full"
       aria-hidden="true"
     >
