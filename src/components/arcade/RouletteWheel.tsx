@@ -170,11 +170,9 @@ export function RouletteWheel({
           style={{
             transform: `rotate(${rotation}deg)`,
             transformOrigin: "100px 100px",
-            transition: reducedMotion
-              ? "transform 200ms linear"
-              : "transform 4200ms cubic-bezier(0.12, 0.7, 0.12, 1)",
           }}
         >
+
           {WHEEL_ORDER.map((n, i) => {
             const start = i * SEG;
             const end = start + SEG;
