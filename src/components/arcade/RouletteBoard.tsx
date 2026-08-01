@@ -25,9 +25,14 @@ const FELT_BG = "linear-gradient(160deg, #071310 0%, #04100d 45%, #020a08 100%)"
 const FELT_BORDER = "rgba(90, 200, 150, 0.16)";
 const CELL_BG = "rgba(255,255,255,0.035)";
 const RED_INK = "#ef5061";
+/* Slight tints so red/black pockets read as red/black felt cells. */
+const RED_CELL_BG = "linear-gradient(180deg, rgba(190,40,55,0.42), rgba(140,25,38,0.30))";
+const RED_CELL_BORDER = "rgba(239,80,97,0.35)";
+const BLACK_CELL_BG = "linear-gradient(180deg, rgba(10,12,14,0.85), rgba(4,6,7,0.7))";
+const BLACK_CELL_BORDER = "rgba(255,255,255,0.14)";
 
 const cellBase =
-  "relative grid place-items-center rounded-xl border font-display font-bold tabular-nums transition-all active:scale-[0.97] disabled:opacity-40";
+  "relative grid place-items-center rounded-[5px] border font-display font-bold tabular-nums transition-all active:scale-[0.97] disabled:opacity-40";
 
 function Stack({ amount }: { amount?: number }) {
   if (!amount) return null;
@@ -145,7 +150,7 @@ export function RouletteBoard({
           onClick={() => handleNumber(0)}
           className={cn(
             cellBase,
-            "w-12 shrink-0 rounded-2xl border-[var(--color-neon)]/60 text-lg text-[var(--color-neon)]",
+            "w-12 shrink-0 rounded-[5px] border-[var(--color-neon)]/60 text-lg text-[var(--color-neon)]",
           )}
           style={{ background: "rgba(60, 220, 150, 0.06)" }}
         >
@@ -167,14 +172,14 @@ export function RouletteBoard({
                     onClick={() => handleNumber(n)}
                     className={cn(cellBase, "h-12 flex-1 text-xl")}
                     style={{
-                      background: CELL_BG,
-                      borderColor: FELT_BORDER,
-                      color: colour === "red" ? RED_INK : "var(--color-ink)",
+                      background: colour === "red" ? RED_CELL_BG : BLACK_CELL_BG,
+                      borderColor: colour === "red" ? RED_CELL_BORDER : BLACK_CELL_BORDER,
+                      color: colour === "red" ? "#ffd9dd" : "var(--color-ink)",
                     }}
                   >
                     <span className={cn(selected && "underline underline-offset-4")}>{n}</span>
                     {selected && (
-                      <span className="pointer-events-none absolute inset-0 rounded-xl ring-2 ring-[var(--color-neon)]" />
+                      <span className="pointer-events-none absolute inset-0 rounded-[5px] ring-2 ring-[var(--color-neon)]" />
                     )}
                     <Stack amount={amt(`straight:${n}`)} />
                   </button>
@@ -254,8 +259,14 @@ export function RouletteBoard({
               "h-12 gap-1 text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]",
             )}
             style={{
-              background: CELL_BG,
-              borderColor: FELT_BORDER,
+              background:
+                o.icon === "red" ? RED_CELL_BG : o.icon === "black" ? BLACK_CELL_BG : CELL_BG,
+              borderColor:
+                o.icon === "red"
+                  ? RED_CELL_BORDER
+                  : o.icon === "black"
+                    ? BLACK_CELL_BORDER
+                    : FELT_BORDER,
               color: o.ink ?? undefined,
             }}
           >
