@@ -285,34 +285,6 @@ function BlackjackPage() {
       )}
 
       <div className="z-20 mx-auto w-full max-w-xl shrink-0 space-y-1.5 px-0 pt-1 md:space-y-2 md:pt-3">
-        {inPlay ? (
-          <div className="flex h-9 md:h-12 w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[9px] md:text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
-            Your move
-          </div>
-        ) : (
-          <button
-            type="button"
-            disabled={!canDeal}
-            onClick={() => deal.mutate()}
-            className={cn(
-              "flex h-9 md:h-12 w-full items-center justify-center gap-1.5 rounded-full font-display text-[10px] md:text-[12px] font-bold uppercase tracking-[0.16em] transition-all",
-              canDeal
-                ? "bg-[var(--color-neon)] text-black shadow-[0_0_24px_rgba(var(--neon-glow-rgb),0.45)] active:brightness-95"
-                : "border border-[var(--color-surface-border)] bg-[var(--color-surface)] text-[var(--color-ink-muted)]",
-            )}
-          >
-            {deal.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <>
-                <Spade className="h-3.5 w-3.5" />
-                {settled ? "Deal again" : "Place bet"}
-                <span className="font-mono text-[9px]">· {stake} pts</span>
-              </>
-            )}
-          </button>
-        )}
-
         <div className="grid grid-cols-4 gap-1 md:gap-2">
           <ActionTile
             label="Double"
@@ -380,6 +352,34 @@ function BlackjackPage() {
             />
           ))}
         </div>
+
+        {!inPlay ? (
+          <button
+            type="button"
+            disabled={!canDeal}
+            onClick={() => deal.mutate()}
+            className={cn(
+              "flex h-9 md:h-12 w-full items-center justify-center gap-1.5 rounded-full font-display text-[10px] md:text-[12px] font-bold uppercase tracking-[0.16em] transition-all",
+              canDeal
+                ? "bg-[var(--color-neon)] text-black shadow-[0_0_24px_rgba(var(--neon-glow-rgb),0.45)] active:brightness-95"
+                : "border border-[var(--color-surface-border)] bg-[var(--color-surface)] text-[var(--color-ink-muted)]",
+            )}
+          >
+            {deal.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <>
+                <Spade className="h-3.5 w-3.5" />
+                {settled ? "Deal again" : "Place bet"}
+                <span className="font-mono text-[9px]">· {stake} pts</span>
+              </>
+            )}
+          </button>
+        ) : (
+          <div className="flex h-9 md:h-12 w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[9px] md:text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
+            Your move
+          </div>
+        )}
 
         {balance < stake && !inPlay && (
           <p className="text-center text-[10px] uppercase tracking-[0.24em] text-amber-300">
