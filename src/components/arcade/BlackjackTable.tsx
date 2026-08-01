@@ -157,9 +157,6 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
     return hidden ? `${v.total}+` : formatTotal(v);
   }, [dealerCards]);
 
-  const result = state?.hand?.result as string | undefined;
-  const settled = state?.hand?.status === "COMPLETED";
-
   return (
     <div
       ref={boxRef}
@@ -169,17 +166,18 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
 
       <FeltArt />
 
-      {/* Brand watermark replaces the plain wordmark in the reference felt. */}
-      <div className="pointer-events-none absolute left-1/2 top-[26%] flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 text-[var(--color-neon)] opacity-[0.16]">
-        <CsseMark variant="mono" className="h-8 w-8 md:h-12 md:w-12" />
-        <span className="font-display text-lg font-bold tracking-tight md:text-3xl">CSSEBets</span>
+      {/* Brand watermark sits below the dealer pill so the two never overlap. */}
+      <div className="pointer-events-none absolute left-1/2 top-[38%] flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 text-[var(--color-neon)] opacity-[0.14]">
+        <CsseMark variant="mono" className="h-7 w-7 md:h-11 md:w-11" />
+        <span className="font-display text-base font-bold tracking-tight md:text-2xl">CSSEBets</span>
       </div>
 
 
-      <div className="relative flex h-full flex-col items-stretch gap-1 px-3 py-2 md:gap-2 md:px-6 md:py-4">
+      <div className="relative flex h-full flex-col items-stretch gap-1 px-3 pb-2 pt-3 md:gap-2 md:px-6 md:pb-4 md:pt-5">
         {/* Dealer */}
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-start gap-2">
           <Totals label="Dealer" value={dealerCards.length ? dealerTotal : "—"} />
+
           <div className="flex max-w-full flex-wrap items-center justify-center gap-1.5 md:gap-2">
             {dealerCards.map((c, i) => (
               <PlayingCard key={c.id} rank={c.rank} suit={c.suit} faceUp={c.faceUp} index={i} height={cardH} />
