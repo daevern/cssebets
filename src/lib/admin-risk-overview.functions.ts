@@ -47,8 +47,13 @@ export const getAdminRiskOverview = createServerFn({ method: "GET" })
       .eq("kind", "live")
       .eq("is_active", true)
       .maybeSingle();
-    const bankroll = Number(bankrollRow?.balance ?? 0);
-    const bankrollUpdatedAt = bankrollRow?.updated_at ?? null;
+    // Authoritative bankroll = accounting journal (HOUSE_BANKROLL).
+    const { readAuthoritativeBankroll } = await import("@/lib/accounting/bankroll-source.server");
+    const authBankroll = await readAuthoritativeBankroll(supabaseAdmin);
+    const bankroll = authBankroll.ok ? authBankroll.balance : Number(bankrollRow?.balance ?? 0);
+    const bankrollUpdatedAt = authBankroll.ok
+      ? authBankroll.generatedAt
+      : (bankrollRow?.updated_at ?? null);
 
     const [
       { data: preds },
