@@ -66,7 +66,13 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
       };
     }
 
-    const balance = Number((bankroll as any)?.balance ?? 0);
+    // Authoritative bankroll = accounting journal (HOUSE_BANKROLL). The legacy
+    // platform_bankroll row only moves for legacy sports settlement and is kept
+    // here purely for reconciliation display.
+    const { readAuthoritativeBankroll } = await import("@/lib/accounting/bankroll-source.server");
+    const auth = await readAuthoritativeBankroll(supabaseAdmin);
+
+    const balance = auth.ok ? auth.balance : Number((bankroll as any)?.balance ?? 0);
     const totalStakes = Number((bankroll as any)?.total_stakes_collected ?? 0);
     const totalPayouts = Number((bankroll as any)?.total_payouts_paid ?? 0);
     const netPL = totalStakes - totalPayouts;
@@ -76,7 +82,8 @@ export const getBankrollOverview = createServerFn({ method: "GET" })
     );
     const pendingMatchPools = (poolRows ?? []).reduce((s: number, p: any) => s + Number(p.total_pool || 0), 0);
     const totalIssuance = (issuanceRows ?? []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
-    const availableBalance = balance - globalExposure;
+    // Journal-aware capacity: reserve already nets payables + liability holds.
+    const availableBalance = (auth.ok ? auth.availableReserve : balance) - globalExposure;
     const safetyRatio = globalExposure > 0 ? balance / globalExposure : null;
 
     // ---- Full-market liability breakdown across all pending predictions ----
