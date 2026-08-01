@@ -319,7 +319,7 @@ export function RouletteBoard({
             )}
             style={{ background: CELL_BG, borderColor: FELT_BORDER }}
           >
-            <ChipIcon tone={o.icon} />
+            <SpecialIcon tone={o.icon} />
             <span className="grid justify-items-start">
               <span
                 className="text-[11px] uppercase tracking-[0.22em]"
