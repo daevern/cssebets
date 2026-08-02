@@ -393,7 +393,7 @@ function Stat({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">>
+    <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">
       <div className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
         <Icon className="h-3 w-3" />
         {label}
