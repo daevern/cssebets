@@ -390,29 +390,17 @@ export function PlinkoBoard({
                 x={cx - slotWidth / 2}
                 y={slotY}
                 width={slotWidth}
-                height={34}
-                rx={8}
+                height={28}
+                rx={6}
                 fill={c.fill}
-                style={{
-                  filter: isFlash
-                    ? `drop-shadow(0 0 14px ${c.glow}) drop-shadow(0 0 4px ${c.glow})`
-                    : `drop-shadow(0 3px 0 rgba(0,0,0,0.35))`,
-                }}
-              />
-              <rect
-                x={cx - slotWidth / 2 + 2}
-                y={slotY + 2}
-                width={slotWidth - 4}
-                height={9}
-                rx={5}
-                fill="rgba(255,255,255,0.22)"
+                opacity={isFlash ? 1 : 0.92}
               />
               <text
                 x={cx}
-                y={slotY + 23}
+                y={slotY + 19}
                 textAnchor="middle"
                 fontSize={slotFontSize}
-                fontWeight={800}
+                fontWeight={700}
                 fill={c.text}
                 textLength={
                   label.length * slotFontSize * 0.62 > slotWidth - 4 ? slotWidth - 6 : undefined
@@ -424,6 +412,7 @@ export function PlinkoBoard({
               </text>
             </g>
           );
+
         })}
 
         {liveBalls.map((rb) => (
