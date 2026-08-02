@@ -533,7 +533,7 @@ function RoulettePage() {
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2 py-1.5">
+    <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">
       <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
         {label}
       </div>
