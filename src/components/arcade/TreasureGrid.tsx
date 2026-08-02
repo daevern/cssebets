@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Gem, Bomb, HelpCircle } from "lucide-react";
+import { Gem, Bomb } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type TileState = "hidden" | "safe" | "trap" | "revealed-safe" | "revealed-trap";

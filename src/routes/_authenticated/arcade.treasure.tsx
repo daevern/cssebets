@@ -250,12 +250,12 @@ function TreasurePage() {
             <div
               key={m.safe_reveals}
               className={cn(
-                "shrink-0 rounded-lg border px-2.5 py-1 text-center",
+                "shrink-0 rounded-[4px] px-2.5 py-1 text-center",
                 reached
-                  ? "border-[var(--color-neon)] bg-[var(--color-neon)]/15 text-[var(--color-neon)]"
+                  ? "bg-[var(--color-neon)]/15 text-[var(--color-neon)]"
                   : next
-                    ? "border-[var(--color-neon)]/40 text-[var(--color-ink)]"
-                    : "border-[var(--color-surface-border)] text-[var(--color-ink-muted)]",
+                    ? "bg-[var(--color-surface-2)] text-[var(--color-ink)]"
+                    : "bg-[var(--color-surface-2)]/50 text-[var(--color-ink-muted)]",
               )}
             >
               <div className="text-[8px] font-bold uppercase tracking-[0.18em] opacity-70">
