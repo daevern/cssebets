@@ -323,12 +323,6 @@ function PlinkoPage() {
               disabled={locked}
               onChange={(v) => setRiskMode(v as RiskMode)}
             />
-            <Seg
-              options={ROW_OPTIONS.map((r) => ({ key: String(r), label: String(r) }))}
-              value={String(rows)}
-              disabled={locked}
-              onChange={(v) => setRows(Number(v) as RowsCount)}
-            />
             <div className="ml-auto shrink-0">
               <Seg
                 options={[
