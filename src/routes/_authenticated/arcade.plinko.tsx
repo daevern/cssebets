@@ -311,14 +311,6 @@ function PlinkoPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 px-1">
-        <HowItWorksDialog
-          rows={rows}
-          riskMode={riskMode}
-          slots={slots}
-          configVersion={currentProfile?.version}
-        />
-      </div>
 
       <VerifyDialog open={verifyOpen} onOpenChange={setVerifyOpen} gameId={lastGame?.id ?? null} />
 
