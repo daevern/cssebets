@@ -35,7 +35,7 @@ export function PlayingCard({ rank, suit, faceUp, index = 0, className, height }
         {/* Face */}
         <div
           className={cn(
-            "absolute inset-0 flex flex-col justify-between rounded-[6px] border border-white/15 bg-[#f7f7f2] px-1.5 py-1 shadow-[0_6px_14px_rgba(0,0,0,0.45)] [backface-visibility:hidden]",
+            "absolute inset-0 flex flex-col justify-between rounded-[4px] border border-black/10 bg-[#f7f7f2] px-1.5 py-1 [backface-visibility:hidden]",
             red ? "text-[#d92b3a]" : "text-[#101418]",
           )}
         >
@@ -52,15 +52,15 @@ export function PlayingCard({ rank, suit, faceUp, index = 0, className, height }
 
         {/* Back */}
         <div
-          className="absolute inset-0 rounded-[6px] border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)] [backface-visibility:hidden] [transform:rotateY(180deg)]"
+          className="absolute inset-0 rounded-[4px] border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)] [backface-visibility:hidden] [transform:rotateY(180deg)]"
           style={{
             backgroundImage:
               "repeating-linear-gradient(45deg, color-mix(in srgb, var(--color-neon) 22%, transparent) 0 4px, transparent 4px 8px)",
           }}
         >
-          <div className="absolute inset-[5px] rounded-[3px] border border-[var(--color-neon)]/30" />
+          <div className="absolute inset-[5px] rounded-[2px] border border-[var(--color-neon)]/30" />
           <div className="absolute inset-0 grid place-items-center text-[var(--color-neon)]">
-            <CsseMark variant="mono" className="h-[42%] w-[42%] drop-shadow-[0_1px_4px_rgba(0,0,0,.65)]" />
+            <CsseMark variant="mono" className="h-[42%] w-[42%]" />
           </div>
         </div>
       </div>
