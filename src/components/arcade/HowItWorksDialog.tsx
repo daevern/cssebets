@@ -45,11 +45,12 @@ export function HowItWorksDialog({
       <DialogTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-1 border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]"
+          className="inline-flex w-full flex-col items-center gap-0.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-1 py-1.5 text-center text-[8px] font-bold uppercase leading-tight tracking-[0.12em] text-[var(--color-ink-muted)] hover:text-[var(--color-neon)]"
         >
           <Info className="h-3 w-3" />
           How it works
         </button>
+
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
