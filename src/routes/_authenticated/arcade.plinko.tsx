@@ -286,12 +286,6 @@ function PlinkoPage() {
           slots={slots}
           configVersion={currentProfile?.version}
         />
-        <Link
-          to="/arcade/roulette"
-          className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]"
-        >
-          Mini roulette
-        </Link>
       </div>
 
       <VerifyDialog open={verifyOpen} onOpenChange={setVerifyOpen} gameId={lastGame?.id ?? null} />
