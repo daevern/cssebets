@@ -65,7 +65,7 @@ function FeltArt() {
         strokeWidth="2"
       />
 
-      {/* Curved rule banner */}
+      {/* Curved banner (decorative) */}
       <path
         d="M292,240 C420,332 760,332 888,240 L916,300 C775,398 405,398 264,300 Z"
         fill="none"
@@ -74,29 +74,6 @@ function FeltArt() {
         strokeWidth="2.5"
         strokeLinejoin="round"
       />
-      <text
-        fill={neon}
-        fontSize="34"
-        fontWeight="700"
-        letterSpacing="1"
-        style={{ fontFamily: "var(--font-display, inherit)" }}
-      >
-        <textPath href="#bj-arc-banner" startOffset="50%" textAnchor="middle">
-          BLACKJACK PAYS 3 TO 2
-        </textPath>
-      </text>
-
-      {/* Side rules */}
-      <text fill={neon} fillOpacity="0.45" fontSize="22" fontWeight="700" letterSpacing="1">
-        <textPath href="#bj-arc-left" startOffset="42%" textAnchor="middle">
-          DEALER HITS SOFT 17
-        </textPath>
-      </text>
-      <text fill={neon} fillOpacity="0.45" fontSize="22" fontWeight="700" letterSpacing="1">
-        <textPath href="#bj-arc-right" startOffset="58%" textAnchor="middle">
-          INSURANCE PAYS 2 TO 1
-        </textPath>
-      </text>
 
       {/* Card shoe */}
       <g
