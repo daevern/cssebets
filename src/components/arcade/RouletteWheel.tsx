@@ -135,13 +135,6 @@ export function RouletteWheel({
     <div className={cn("relative mx-auto aspect-square w-full max-w-[320px]", className)}>
       <svg viewBox="0 0 200 200" className="h-full w-full">
         <defs>
-          <filter id="rw-glow" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="2.4" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
         </defs>
 
         <circle
@@ -190,7 +183,6 @@ export function RouletteWheel({
                     fill="none"
                     stroke="var(--color-neon)"
                     strokeWidth="2"
-                    filter="url(#rw-glow)"
                   />
                 )}
                 <text
@@ -208,7 +200,6 @@ export function RouletteWheel({
               </g>
             );
           })}
-          <circle cx={cx} cy={cy} r="88" fill="url(#rw-face)" pointerEvents="none" />
         </g>
 
         {/* Hub */}
@@ -233,7 +224,6 @@ export function RouletteWheel({
             cy={cy - ballRadius}
             r="4.5"
             fill="#ffffff"
-            filter="url(#rw-glow)"
           />
         </g>
 
