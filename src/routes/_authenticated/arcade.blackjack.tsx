@@ -243,7 +243,7 @@ function BlackjackPage() {
       style={shellHeight ? { height: shellHeight } : undefined}
       className="-mb-24 flex min-h-0 flex-col gap-1 overflow-hidden md:mb-0 md:h-auto md:overflow-visible md:gap-3 md:pb-4"
     >
-      <div className="grid shrink-0 grid-cols-3 gap-2">
+      <div className="grid shrink-0 grid-cols-3 gap-1.5">
         <Stat label="Balance" value={balance.toLocaleString()} Icon={Wallet} />
         <Stat
           label="P/L today"
