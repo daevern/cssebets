@@ -407,7 +407,7 @@ function BlackjackPage() {
             className={cn(
               "flex h-9 md:h-12 w-full items-center justify-center gap-1.5 rounded-full font-display text-[10px] md:text-[12px] font-bold uppercase tracking-[0.16em] transition-all",
               canDeal
-                ? "bg-[var(--color-neon)] text-black shadow-[0_0_24px_rgba(var(--neon-glow-rgb),0.45)] active:brightness-95"
+                ? "bg-[var(--color-neon)] text-black active:opacity-90"
                 : "border border-[var(--color-surface-border)] bg-[var(--color-surface)] text-[var(--color-ink-muted)]",
             )}
           >
