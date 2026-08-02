@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { listMatchesForUsers } from "@/lib/matches.functions";
+import { useHasSession, withSession } from "@/hooks/use-staff-session";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { ArrowUpRight, Loader2 } from "lucide-react";
 import { PageFooter } from "@/components/ui/page-footer";
@@ -72,12 +73,14 @@ function timeChip(m: Match, now: number) {
 function MatchesPage() {
   const qc = useQueryClient();
   const listFn = useServerFn(listMatchesForUsers);
+  const hasSession = useHasSession();
   const now = useTicker(30_000);
   const [tab, setTab] = useState<Tab>("upcoming");
 
   const { data, isLoading } = useQuery({
     queryKey: ["matches"],
-    queryFn: async () => (await listFn()) as Match[],
+    queryFn: async () => (await withSession(() => listFn())) as Match[] | null,
+    enabled: hasSession === true,
     refetchInterval: 60_000,
   });
 
