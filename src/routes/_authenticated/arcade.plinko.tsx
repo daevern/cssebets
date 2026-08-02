@@ -236,27 +236,6 @@ function PlinkoPage() {
             slots={slots}
             configVersion={currentProfile?.version}
           />
-          <div className="flex flex-col gap-0.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-0.5">
-            {ROW_OPTIONS.map((r) => {
-              const active = r === rows;
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  disabled={locked}
-                  onClick={() => setRows(r as RowsCount)}
-                  className={cn(
-                    "rounded-lg py-1 text-[10px] font-bold tabular-nums transition-colors disabled:opacity-40",
-                    active
-                      ? "bg-[var(--color-neon)] text-black"
-                      : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]",
-                  )}
-                >
-                  {r}
-                </button>
-              );
-            })}
-          </div>
         </div>
       </div>
 
