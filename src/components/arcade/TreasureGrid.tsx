@@ -35,7 +35,7 @@ function TreasureGridImpl({
 
   return (
     <div
-      className="grid w-full gap-1.5 sm:gap-2"
+      className="grid w-full gap-1"
       style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
       role="grid"
       aria-label="Treasure grid"
@@ -59,29 +59,20 @@ function TreasureGridImpl({
             disabled={disabled || isOpen || pending}
             onClick={() => onReveal(i)}
             className={cn(
-              "group relative aspect-square select-none rounded-xl border transition-all duration-200",
+              "group relative aspect-square select-none rounded-[4px] transition-colors duration-150",
               "grid place-items-center",
-              !isOpen &&
-                "border-[var(--color-surface-border)] bg-[var(--color-surface-2)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]",
-              !isOpen &&
-                !disabled &&
-                "hover:-translate-y-[2px] hover:border-[var(--color-neon)]/60 active:translate-y-0",
-              mine === "SAFE" &&
-                "border-[var(--color-neon)] bg-[var(--color-neon)]/15 shadow-[0_0_18px_rgba(var(--neon-glow-rgb),0.35)]",
-              mine === "TRAP" && "border-destructive bg-destructive/20",
-              exposed && "border-destructive/40 bg-destructive/10 opacity-70",
-              pending && "animate-pulse border-[var(--color-neon)]/70",
+              !isOpen && "bg-[var(--color-surface-2)]",
+              !isOpen && !disabled && "hover:bg-[var(--color-surface-2)]/60",
+              mine === "SAFE" && "bg-[var(--color-neon)]/20",
+              mine === "TRAP" && "bg-destructive/25",
+              exposed && "bg-destructive/10 opacity-60",
+              pending && "animate-pulse bg-[var(--color-surface-2)]/70",
               disabled && !isOpen && "opacity-60",
             )}
           >
-            {mine === "SAFE" && (
-              <Gem className="h-[45%] w-[45%] text-[var(--color-neon)] drop-shadow-[0_0_6px_rgba(var(--neon-glow-rgb),0.7)]" />
-            )}
+            {mine === "SAFE" && <Gem className="h-[42%] w-[42%] text-[var(--color-neon)]" />}
             {(mine === "TRAP" || exposed) && (
-              <Bomb className={cn("h-[45%] w-[45%] text-destructive", exposed && "opacity-60")} />
-            )}
-            {!isOpen && (
-              <HelpCircle className="h-[32%] w-[32%] text-[var(--color-ink-muted)]/35 transition-colors group-hover:text-[var(--color-ink-muted)]/60" />
+              <Bomb className={cn("h-[42%] w-[42%] text-destructive", exposed && "opacity-60")} />
             )}
           </button>
         );
