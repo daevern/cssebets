@@ -236,46 +236,50 @@ function PlinkoPage() {
             slots={slots}
             configVersion={currentProfile?.version}
           />
-          <div className="flex flex-col gap-0.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-0.5">
-            {ROW_OPTIONS.map((r) => {
-              const active = r === rows;
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  disabled={locked}
-                  onClick={() => setRows(r as RowsCount)}
-                  className={cn(
-                    "rounded-lg py-1 text-[10px] font-bold tabular-nums transition-colors disabled:opacity-40",
-                    active
-                      ? "bg-[var(--color-neon)] text-black"
-                      : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]",
-                  )}
-                >
-                  {r}
-                </button>
-              );
-            })}
-          </div>
         </div>
       </div>
 
 
       <div className="relative flex flex-1 flex-col justify-center">
-        <PlinkoBoard
-          rows={rows}
-          slots={slots}
-          activeBalls={activeBalls}
-          onBallLanded={onBallLanded}
-          reducedMotion={
-            typeof window !== "undefined" &&
-            window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          }
-          ballColor={equipped.data?.ball?.preview_color ?? null}
-          ballAccent={equipped.data?.ball?.preview_accent ?? null}
-          boardColor={equipped.data?.board?.preview_color ?? null}
-          boardAccent={equipped.data?.board?.preview_accent ?? null}
-        />
+        <div className="relative w-full">
+          <PlinkoBoard
+            rows={rows}
+            slots={slots}
+            activeBalls={activeBalls}
+            onBallLanded={onBallLanded}
+            reducedMotion={
+              typeof window !== "undefined" &&
+              window.matchMedia("(prefers-reduced-motion: reduce)").matches
+            }
+            ballColor={equipped.data?.ball?.preview_color ?? null}
+            ballAccent={equipped.data?.ball?.preview_accent ?? null}
+            boardColor={equipped.data?.board?.preview_color ?? null}
+            boardAccent={equipped.data?.board?.preview_accent ?? null}
+          />
+          <div className="pointer-events-none absolute inset-0">
+            <div className="pointer-events-auto absolute right-2 top-2 z-10 flex flex-col gap-0.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/95 p-0.5 backdrop-blur">
+              {ROW_OPTIONS.map((r) => {
+                const active = r === rows;
+                return (
+                  <button
+                    key={r}
+                    type="button"
+                    disabled={locked}
+                    onClick={() => setRows(r as RowsCount)}
+                    className={cn(
+                      "rounded-lg py-1 text-[10px] font-bold tabular-nums transition-colors disabled:opacity-40",
+                      active
+                        ? "bg-[var(--color-neon)] text-black"
+                        : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]",
+                    )}
+                  >
+                    {r}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
         <div className="mt-2 flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {recent.length === 0 ? (
