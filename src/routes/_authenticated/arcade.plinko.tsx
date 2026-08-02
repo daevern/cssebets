@@ -214,20 +214,52 @@ function PlinkoPage() {
 
   return (
     <div className="flex min-h-[calc(100dvh-190px)] flex-col gap-2 pb-2">
-      <div className="grid grid-cols-3 gap-1.5">
-        <Stat label="Balance" value={fmt(balance)} accent />
-        <Stat label="Max win" value={`${maxMult.toFixed(maxMult >= 100 ? 0 : 1)}×`} />
-        <Stat
-          label="Last"
-          value={
-            lastGame && !busy
-              ? `${Number(lastGame.multiplier ?? 0).toFixed(2)}×`
-              : busy
-                ? "In play"
-                : "—"
-          }
-        />
+      <div className="flex items-start gap-1.5">
+        <div className="grid flex-1 grid-cols-3 gap-1.5">
+          <Stat label="Balance" value={fmt(balance)} accent />
+          <Stat label="Max win" value={`${maxMult.toFixed(maxMult >= 100 ? 0 : 1)}×`} />
+          <Stat
+            label="Last"
+            value={
+              lastGame && !busy
+                ? `${Number(lastGame.multiplier ?? 0).toFixed(2)}×`
+                : busy
+                  ? "In play"
+                  : "—"
+            }
+          />
+        </div>
+        <div className="flex w-14 shrink-0 flex-col items-stretch gap-1">
+          <HowItWorksDialog
+            rows={rows}
+            riskMode={riskMode}
+            slots={slots}
+            configVersion={currentProfile?.version}
+          />
+          <div className="flex flex-col gap-0.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-0.5">
+            {ROW_OPTIONS.map((r) => {
+              const active = r === rows;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  disabled={locked}
+                  onClick={() => setRows(r as RowsCount)}
+                  className={cn(
+                    "rounded-lg py-1 text-[10px] font-bold tabular-nums transition-colors disabled:opacity-40",
+                    active
+                      ? "bg-[var(--color-neon)] text-black"
+                      : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]",
+                  )}
+                >
+                  {r}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
+
 
       <div className="relative flex flex-1 flex-col justify-center">
         <PlinkoBoard
@@ -279,14 +311,6 @@ function PlinkoPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 px-1">
-        <HowItWorksDialog
-          rows={rows}
-          riskMode={riskMode}
-          slots={slots}
-          configVersion={currentProfile?.version}
-        />
-      </div>
 
       <VerifyDialog open={verifyOpen} onOpenChange={setVerifyOpen} gameId={lastGame?.id ?? null} />
 
@@ -298,12 +322,6 @@ function PlinkoPage() {
               value={riskMode}
               disabled={locked}
               onChange={(v) => setRiskMode(v as RiskMode)}
-            />
-            <Seg
-              options={ROW_OPTIONS.map((r) => ({ key: String(r), label: String(r) }))}
-              value={String(rows)}
-              disabled={locked}
-              onChange={(v) => setRows(Number(v) as RowsCount)}
             />
             <div className="ml-auto shrink-0">
               <Seg
