@@ -21,23 +21,23 @@ import { cn } from "@/lib/utils";
 export type PlaceBet = (betType: BetTypeKey, label: string, pockets: number[]) => void;
 
 /* Felt table palette — a physical casino artifact, kept local to this board. */
-const FELT_BG = "linear-gradient(160deg, #071310 0%, #04100d 45%, #020a08 100%)";
-const FELT_BORDER = "rgba(90, 200, 150, 0.16)";
-const CELL_BG = "rgba(255,255,255,0.035)";
+const FELT_BG = "#0a1512";
+const FELT_BORDER = "rgba(255,255,255,0.07)";
+const CELL_BG = "rgba(255,255,255,0.05)";
 const RED_INK = "#ef5061";
-/* CSSEBets theme: red numbers show only the red outline, black numbers sit on dark gray. */
-const RED_CELL_BG = "transparent";
-const RED_CELL_BORDER = "rgba(239,80,97,0.45)";
-const BLACK_CELL_BG = "linear-gradient(180deg, rgba(45,48,52,0.85), rgba(30,32,36,0.75))";
-const BLACK_CELL_BORDER = "rgba(255,255,255,0.14)";
+/* Flat 2D palette — solid fills, no gradients or shadows. */
+const RED_CELL_BG = "rgba(239,80,97,0.14)";
+const RED_CELL_BORDER = "rgba(239,80,97,0.35)";
+const BLACK_CELL_BG = "rgba(255,255,255,0.05)";
+const BLACK_CELL_BORDER = "rgba(255,255,255,0.10)";
 
 const cellBase =
-  "relative grid place-items-center rounded-[5px] border font-display font-bold tabular-nums transition-all active:scale-[0.97] disabled:opacity-40";
+  "relative grid place-items-center rounded-[3px] border font-display font-bold tabular-nums transition-colors disabled:opacity-40";
 
 function Stack({ amount }: { amount?: number }) {
   if (!amount) return null;
   return (
-    <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--color-neon)] px-1 text-[9px] font-bold text-black shadow-[0_0_10px_rgba(var(--neon-glow-rgb),0.6)]">
+    <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[var(--color-neon)] px-1 text-[9px] font-bold text-black">
       {amount}
     </span>
   );
@@ -47,12 +47,8 @@ function Diamond({ tone }: { tone: "red" | "black" }) {
   return (
     <span
       aria-hidden
-      className="inline-block h-4 w-4 rotate-45 rounded-[3px] border"
-      style={{
-        borderColor: tone === "red" ? RED_INK : "rgba(255,255,255,0.75)",
-        background:
-          tone === "red" ? "rgba(239,80,97,0.22)" : "rgba(255,255,255,0.06)",
-      }}
+      className="inline-block h-4 w-4 rotate-45 rounded-[2px]"
+      style={{ background: tone === "red" ? RED_INK : "rgba(255,255,255,0.75)" }}
     />
   );
 }
@@ -135,7 +131,7 @@ export function RouletteBoard({
 
   return (
     <div
-      className="rounded-2xl border p-3"
+      className="rounded-[6px] border p-2"
       style={{ background: FELT_BG, borderColor: FELT_BORDER }}
     >
       {/* Header */}
@@ -150,7 +146,7 @@ export function RouletteBoard({
             setSplitFirst(null);
           }}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.22em] transition-colors",
+            "inline-flex items-center gap-1 rounded-[3px] border px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.22em] transition-colors",
             splitMode
               ? "border-[var(--color-neon)] bg-[var(--color-neon)]/12 text-[var(--color-neon)]"
               : "text-[var(--color-ink-muted)]",
@@ -167,16 +163,16 @@ export function RouletteBoard({
       </div>
 
       {/* Main grid: 0 | numbers | streets */}
-      <div className="flex gap-1.5">
+      <div className="flex gap-1">
         <button
           type="button"
           disabled={disabled}
           onClick={() => handleNumber(0)}
           className={cn(
             cellBase,
-            "w-12 shrink-0 rounded-[5px] border-[var(--color-neon)]/60 text-lg text-[var(--color-neon)]",
+            "w-12 shrink-0 rounded-[3px] border-[var(--color-neon)]/60 text-lg text-[var(--color-neon)]",
           )}
-          style={{ background: "rgba(60, 220, 150, 0.06)" }}
+          style={{ background: "rgba(60, 220, 150, 0.10)" }}
         >
           0
           <Stack amount={amt("straight:0")} />
@@ -184,7 +180,7 @@ export function RouletteBoard({
 
         <div className="flex-1 space-y-1.5">
           {BOARD_GRID.map((row, ri) => (
-            <div key={ri} className="flex gap-1.5">
+            <div key={ri} className="flex gap-1">
               {row.map((n) => {
                 const colour = pocketColour(n);
                 const selected = splitFirst === n;
@@ -203,7 +199,7 @@ export function RouletteBoard({
                   >
                     <span className={cn(selected && "underline underline-offset-4")}>{n}</span>
                     {selected && (
-                      <span className="pointer-events-none absolute inset-0 rounded-[5px] ring-2 ring-[var(--color-neon)]" />
+                      <span className="pointer-events-none absolute inset-0 rounded-[3px] ring-2 ring-[var(--color-neon)]" />
                     )}
                     <Stack amount={amt(`straight:${n}`)} />
                   </button>
@@ -228,7 +224,7 @@ export function RouletteBoard({
           ))}
 
           {/* Columns row */}
-          <div className="flex gap-1.5">
+          <div className="flex gap-1">
             {COLUMNS.map((c) => (
               <button
                 key={c.label}
@@ -251,7 +247,7 @@ export function RouletteBoard({
       </div>
 
       {/* Outside bets strip */}
-      <div className="mt-1.5 grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+      <div className="mt-1.5 grid grid-cols-3 gap-1 sm:grid-cols-6">
         {outside.map((o) => (
           <button
             key={o.key}
@@ -282,7 +278,7 @@ export function RouletteBoard({
 
       {/* Neighbor bets */}
       <SectionLabel>Neighbor bets</SectionLabel>
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-4 gap-1">
         {FOUR_GROUPS.map((g) => (
           <button
             key={g.label}
@@ -291,7 +287,7 @@ export function RouletteBoard({
             onClick={() => onPlace("four_group", g.label, g.pockets)}
             className={cn(
               cellBase,
-              "h-12 flex-col rounded-full text-[9px] uppercase tracking-[0.18em] text-[var(--color-ink)]",
+              "h-12 flex-col rounded-[3px] text-[9px] uppercase tracking-[0.18em] text-[var(--color-ink)]",
             )}
             style={{ background: CELL_BG, borderColor: FELT_BORDER }}
           >
@@ -306,7 +302,7 @@ export function RouletteBoard({
 
       {/* Special bets */}
       <SectionLabel>Special bets</SectionLabel>
-      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
         {outside.map((o) => (
           <button
             key={`special-${o.key}`}
@@ -315,7 +311,7 @@ export function RouletteBoard({
             onClick={() => onPlace(o.key, o.label, o.pockets)}
             className={cn(
               cellBase,
-              "h-14 grid-flow-col items-center justify-start gap-2.5 rounded-[8px] px-3",
+              "h-14 grid-flow-col items-center justify-start gap-2.5 rounded-[3px] px-3",
             )}
             style={{ background: CELL_BG, borderColor: FELT_BORDER }}
           >
@@ -343,7 +339,7 @@ export function RouletteBoard({
         style={{ borderColor: FELT_BORDER }}
       >
         <div
-          className="flex items-center gap-2 rounded-xl border px-2.5 py-1.5"
+          className="flex items-center gap-2 rounded-[3px] border px-2.5 py-1.5"
           style={{ borderColor: FELT_BORDER }}
         >
           <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
