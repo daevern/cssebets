@@ -65,15 +65,15 @@ function Stat({
   tone?: "up" | "down";
 }) {
   return (
-    <div className="flex items-center gap-2 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-3 py-1.5">
-      <Icon className="h-3.5 w-3.5 text-[var(--color-neon)]" />
+    <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">
       <div className="leading-tight">
-        <div className="text-[8px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+        <div className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+          <Icon className="h-3 w-3" />
           {label}
         </div>
         <div
           className={cn(
-            "font-mono text-[13px] font-bold tabular-nums",
+            "font-display text-sm font-bold tabular-nums",
             tone === "up"
               ? "text-[var(--color-neon)]"
               : tone === "down"
