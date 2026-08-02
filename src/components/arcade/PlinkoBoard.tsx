@@ -293,13 +293,8 @@ export function PlinkoBoard({
           <circle
             cx={pegX(r, i)}
             cy={pegY(r)}
-            r={3.6}
-            fill={isHit ? "#ffffff" : "url(#pegGrad)"}
-            style={{
-              filter: isHit
-                ? "drop-shadow(0 0 6px rgba(255,255,255,0.9))"
-                : "drop-shadow(0 1px 1px rgba(0,0,0,0.6))",
-            }}
+            r={3.2}
+            fill={isHit ? "#ffffff" : "rgba(255,255,255,0.34)"}
           />
         </g>,
       );
@@ -322,7 +317,7 @@ export function PlinkoBoard({
     <div className="relative w-full overflow-hidden" style={{ background: boardBg ?? "transparent" }}>
       <style>{`
         @keyframes pegFlash { 0%{opacity:.9;transform:scale(.4)} 100%{opacity:0;transform:scale(1.6)} }
-        @keyframes slotPop { 0%{transform:translateY(0) scale(1)} 40%{transform:translateY(-3px) scale(1.04)} 100%{transform:translateY(0) scale(1)} }
+        @keyframes slotPop { 0%{transform:translateY(0)} 40%{transform:translateY(-3px)} 100%{transform:translateY(0)} }
         .slot-pop { animation: slotPop 600ms cubic-bezier(.2,.9,.3,1.2); transform-origin: center; transform-box: fill-box; }
       `}</style>
 
@@ -333,30 +328,13 @@ export function PlinkoBoard({
         aria-label="Plinko board"
       >
         <defs>
-          <radialGradient id="ballGrad" cx="35%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="45%" stopColor={ballFill} />
-            <stop offset="100%" stopColor={ballStroke} />
-          </radialGradient>
-          <radialGradient id="pegGrad" cx="35%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#ffffff" />
-            <stop offset="60%" stopColor="#c8d2d6" />
-            <stop offset="100%" stopColor="#5a6a70" />
-          </radialGradient>
-          <linearGradient id="funnelGrad" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0%" stopColor="rgba(64,255,140,0.25)" />
-            <stop offset="100%" stopColor="rgba(64,255,140,0)" />
-          </linearGradient>
-          <filter id="ballShadow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="1.6" />
-          </filter>
         </defs>
 
         <path
           d={`M ${W / 2 - 26} ${PADDING_TOP - 20} L ${W / 2 + 26} ${PADDING_TOP - 20} L ${W / 2 + 8} ${PADDING_TOP - 4} L ${W / 2 - 8} ${PADDING_TOP - 4} Z`}
-          fill="url(#funnelGrad)"
-          stroke="rgba(64,255,140,0.35)"
-          strokeWidth={0.6}
+          fill="none"
+          stroke="rgba(64,255,140,0.28)"
+          strokeWidth={1}
         />
 
         {pegs}
@@ -391,7 +369,7 @@ export function PlinkoBoard({
                 y={slotY}
                 width={slotWidth}
                 height={28}
-                rx={6}
+                rx={3}
                 fill={c.fill}
                 opacity={isFlash ? 1 : 0.92}
               />
@@ -417,24 +395,7 @@ export function PlinkoBoard({
 
         {liveBalls.map((rb) => (
           <g key={`ball-${rb.id}`}>
-            <ellipse
-              cx={rb.x}
-              cy={rb.y + 8}
-              rx={6}
-              ry={2}
-              fill="rgba(0,0,0,0.45)"
-              filter="url(#ballShadow)"
-            />
-            <circle
-              cx={rb.x}
-              cy={rb.y}
-              r={7}
-              fill="url(#ballGrad)"
-              stroke={ballStroke}
-              strokeWidth={0.8}
-              style={{ filter: `drop-shadow(0 0 6px ${ballStroke}80)` }}
-            />
-            <circle cx={rb.x - 2} cy={rb.y - 2.4} r={1.6} fill="rgba(255,255,255,0.9)" />
+            <circle cx={rb.x} cy={rb.y} r={6.5} fill={ballFill} stroke={ballStroke} strokeWidth={1} />
           </g>
         ))}
       </svg>

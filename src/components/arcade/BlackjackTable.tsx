@@ -19,7 +19,7 @@ function Totals({ label, value, tone }: { label: string; value: string; tone?: "
       </span>
       <span
         className={cn(
-          "flex h-7 min-w-11 items-center justify-center rounded-full border px-3 text-center font-mono text-[12px] font-bold leading-none tabular-nums",
+          "flex h-7 min-w-11 items-center justify-center rounded-[3px] border px-3 text-center font-mono text-[12px] font-bold leading-none tabular-nums",
           tone === "neon"
             ? "border-[var(--color-neon)]/50 bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
             : "border-[var(--color-surface-border)] bg-[#0b1a12] text-[var(--color-ink)]",
@@ -53,16 +53,16 @@ function FeltArt() {
         d="M62,-40 C62,340 300,520 590,520 C880,520 1118,340 1118,-40"
         fill="none"
         stroke={neon}
-        strokeOpacity="0.5"
-        strokeWidth="2.5"
+        strokeOpacity="0.28"
+        strokeWidth="1.5"
       />
       {/* Inner arc */}
       <path
         d="M118,-40 C118,320 320,472 590,472 C860,472 1062,320 1062,-40"
         fill="none"
         stroke={neon}
-        strokeOpacity="0.28"
-        strokeWidth="2"
+        strokeOpacity="0.16"
+        strokeWidth="1.5"
       />
 
       {/* Curved banner (decorative) */}
@@ -70,8 +70,8 @@ function FeltArt() {
         d="M292,240 C420,332 760,332 888,240 L916,300 C775,398 405,398 264,300 Z"
         fill="none"
         stroke={neon}
-        strokeOpacity="0.75"
-        strokeWidth="2.5"
+        strokeOpacity="0.35"
+        strokeWidth="1.5"
         strokeLinejoin="round"
       />
 
@@ -80,11 +80,11 @@ function FeltArt() {
         transform="translate(1058,352) rotate(9)"
         fill="none"
         stroke={neon}
-        strokeOpacity="0.55"
-        strokeWidth="2.5"
+        strokeOpacity="0.3"
+        strokeWidth="1.5"
       >
-        <rect x="0" y="0" width="78" height="140" rx="12" />
-        <rect x="9" y="10" width="60" height="104" rx="8" strokeOpacity="0.35" />
+        <rect x="0" y="0" width="78" height="140" rx="4" />
+        <rect x="9" y="10" width="60" height="104" rx="3" strokeOpacity="0.2" />
       </g>
     </svg>
   );
@@ -127,9 +127,9 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
   return (
     <div
       ref={boxRef}
-      className="relative h-full overflow-hidden bg-[radial-gradient(130%_105%_at_50%_-5%,color-mix(in_srgb,var(--color-neon)_14%,#04120b),#04120b_62%,#020a06)]"
+      className="relative h-full overflow-hidden bg-[#07130d]"
     >
-      <style>{`@keyframes bj-deal{from{opacity:0;transform:translateY(-18px) scale(.92)}to{opacity:1;transform:none}}`}</style>
+      <style>{`@keyframes bj-deal{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}`}</style>
 
       <FeltArt />
 

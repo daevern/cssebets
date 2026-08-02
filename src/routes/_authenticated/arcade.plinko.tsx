@@ -410,7 +410,7 @@ function PlinkoPage() {
             className={cn(
               "flex h-11 w-full items-center justify-center rounded-full font-display text-xs font-bold uppercase tracking-[0.2em] transition-all",
               canDrop
-                ? "bg-[var(--color-neon)] text-black shadow-[0_0_24px_rgba(var(--neon-glow-rgb),0.45)] active:brightness-95"
+                ? "bg-[var(--color-neon)] text-black active:opacity-90"
                 : "border border-[var(--color-surface-border)] bg-[var(--color-surface)] text-[var(--color-ink-muted)]",
             )}
           >

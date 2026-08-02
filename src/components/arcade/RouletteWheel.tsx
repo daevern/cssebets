@@ -28,7 +28,7 @@ function sector(
 const COLOUR_FILL: Record<string, string> = {
   green: "var(--color-neon)",
   red: "#e0374a",
-  black: "#161c22",
+  black: "#1a1f25",
 };
 
 export function RouletteWheel({
@@ -135,18 +135,6 @@ export function RouletteWheel({
     <div className={cn("relative mx-auto aspect-square w-full max-w-[320px]", className)}>
       <svg viewBox="0 0 200 200" className="h-full w-full">
         <defs>
-          <radialGradient id="rw-face" cx="50%" cy="35%" r="75%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.10)" />
-            <stop offset="70%" stopColor="rgba(0,0,0,0.25)" />
-            <stop offset="100%" stopColor="rgba(0,0,0,0.55)" />
-          </radialGradient>
-          <filter id="rw-glow" x="-40%" y="-40%" width="180%" height="180%">
-            <feGaussianBlur stdDeviation="2.4" result="b" />
-            <feMerge>
-              <feMergeNode in="b" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
         </defs>
 
         <circle
@@ -195,7 +183,6 @@ export function RouletteWheel({
                     fill="none"
                     stroke="var(--color-neon)"
                     strokeWidth="2"
-                    filter="url(#rw-glow)"
                   />
                 )}
                 <text
@@ -213,7 +200,6 @@ export function RouletteWheel({
               </g>
             );
           })}
-          <circle cx={cx} cy={cy} r="88" fill="url(#rw-face)" pointerEvents="none" />
         </g>
 
         {/* Hub */}
@@ -238,7 +224,6 @@ export function RouletteWheel({
             cy={cy - ballRadius}
             r="4.5"
             fill="#ffffff"
-            filter="url(#rw-glow)"
           />
         </g>
 

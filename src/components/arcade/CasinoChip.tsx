@@ -43,31 +43,21 @@ export function CasinoChip({
       onClick={onClick}
       aria-label={`Stake ${value} points`}
       className={cn(
-        "relative shrink-0 rounded-full transition-[filter] duration-150 disabled:opacity-40",
-        selected ? "brightness-110" : "hover:brightness-105",
+        "relative shrink-0 rounded-full transition-opacity duration-150 disabled:opacity-40",
+        selected ? "opacity-100" : "opacity-90 hover:opacity-100",
       )}
       style={{ width: size, height: size }}
     >
       <span
         className="absolute inset-0 rounded-full"
         style={{
-          background: `radial-gradient(circle at 50% 35%, ${p.face} 0 52%, ${p.edge} 53% 100%)`,
-          boxShadow: selected
-            ? "0 0 0 2px var(--color-neon), 0 6px 14px rgba(0,0,0,.55)"
-            : "0 4px 10px rgba(0,0,0,.5)",
+          background: p.face,
+          boxShadow: selected ? "0 0 0 2px var(--color-neon)" : "none",
         }}
       />
       <span
-        className="absolute inset-0 rounded-full opacity-80"
-        style={{
-          background: `repeating-conic-gradient(${p.face} 0deg 14deg, transparent 14deg 30deg)`,
-          WebkitMask: "radial-gradient(circle, transparent 0 68%, #000 69% 100%)",
-          mask: "radial-gradient(circle, transparent 0 68%, #000 69% 100%)",
-        }}
-      />
-      <span
-        className="absolute inset-[7px] rounded-full border"
-        style={{ borderColor: "rgba(255,255,255,.35)" }}
+        className="absolute inset-[6px] rounded-full border-2 border-dashed"
+        style={{ borderColor: p.edge }}
       />
       <span
         className="absolute inset-0 grid place-items-center font-mono font-black tabular-nums"
