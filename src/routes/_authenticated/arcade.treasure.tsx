@@ -250,12 +250,12 @@ function TreasurePage() {
             <div
               key={m.safe_reveals}
               className={cn(
-                "shrink-0 rounded-lg border px-2.5 py-1 text-center",
+                "shrink-0 rounded-[4px] px-2.5 py-1 text-center",
                 reached
-                  ? "border-[var(--color-neon)] bg-[var(--color-neon)]/15 text-[var(--color-neon)]"
+                  ? "bg-[var(--color-neon)]/15 text-[var(--color-neon)]"
                   : next
-                    ? "border-[var(--color-neon)]/40 text-[var(--color-ink)]"
-                    : "border-[var(--color-surface-border)] text-[var(--color-ink-muted)]",
+                    ? "bg-[var(--color-surface-2)] text-[var(--color-ink)]"
+                    : "bg-[var(--color-surface-2)]/50 text-[var(--color-ink-muted)]",
               )}
             >
               <div className="text-[8px] font-bold uppercase tracking-[0.18em] opacity-70">
@@ -301,10 +301,10 @@ function TreasurePage() {
                       type="button"
                       onClick={() => setDifficulty(d)}
                       className={cn(
-                        "flex-1 rounded-lg border py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors",
+                        "flex-1 rounded-[4px] py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors",
                         difficulty === d
-                          ? "border-[var(--color-neon)] bg-[var(--color-neon)] text-black"
-                          : "border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]",
+                          ? "bg-[var(--color-neon)] text-black"
+                          : "bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]",
                       )}
                     >
                       {d} · {c?.trap_count ?? "-"}
@@ -393,7 +393,7 @@ function Stat({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2.5 py-1.5">
+    <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">
       <div className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
         <Icon className="h-3 w-3" />
         {label}
