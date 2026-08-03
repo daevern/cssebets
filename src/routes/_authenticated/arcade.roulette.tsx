@@ -567,7 +567,7 @@ function IconBtn({
       disabled={disabled}
       title={title}
       aria-label={title}
-      className="grid h-9 w-9 place-items-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)] disabled:opacity-40"
+      className="grid h-9 w-9 place-items-center rounded-[4px] bg-[var(--color-surface-2)] text-[var(--color-ink)] transition-colors hover:bg-[var(--color-surface-2)]/70 disabled:opacity-35"
     >
       {children}
     </button>
