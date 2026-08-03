@@ -439,8 +439,8 @@ function RoulettePage() {
       )}
 
 
-      <div className="-mx-3 overflow-x-auto px-3 pb-1 [-ms-overflow-style:none] [scrollbar-width:thin]">
-        <div className="min-w-[320px]">
+      <div className="-mx-3 overflow-x-auto snap-x snap-center px-3 pb-1 [-ms-overflow-style:none] [scrollbar-width:thin]">
+        <div className="min-w-[360px]">
           <RouletteBoard stakes={stakesByKey} onPlace={place} disabled={spinning} />
         </div>
       </div>
