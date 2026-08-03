@@ -109,6 +109,7 @@ function RpsPage() {
   const [round, setRound] = useState<any>(null);
   const [resultOpen, setResultOpen] = useState(false);
   const [verifyId, setVerifyId] = useState<string | null>(null);
+  const [commitmentVersion, setCommitmentVersion] = useState(0);
 
   const clientSeed = useRef(newSeed());
   /** The live commitment the player is about to play against. */
@@ -135,6 +136,7 @@ function RpsPage() {
         serverSeedHash: res.serverSeedHash,
         nonce: res.nonce,
       };
+      setCommitmentVersion((version) => version + 1);
     },
     onError: (e: any) => toast.error(e?.message ?? "Could not start a round."),
   });
@@ -211,7 +213,7 @@ function RpsPage() {
   });
 
   const busy = settle.isPending || phase === "LOCKED" || phase === "REVEALING";
-  const ready = Boolean(commitment.current) && !prepare.isPending;
+  const ready = Boolean(commitment.current) && !prepare.isPending && commitmentVersion >= 0;
   const canPlay =
     ready &&
     !busy &&
