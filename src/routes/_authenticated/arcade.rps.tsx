@@ -111,6 +111,8 @@ function RpsPage() {
     Array<{ id: string; player: RpsMove | null; server: RpsMove | null; outcome: string }>
   >([]);
   const [resultOpen, setResultOpen] = useState(false);
+  /** Amount shown in the collect pop-up. */
+  const [collected, setCollected] = useState(0);
   const [verifyId, setVerifyId] = useState<string | null>(null);
   const [commitmentVersion, setCommitmentVersion] = useState(0);
   /** Net points banked in the current run, cleared on collect. */
