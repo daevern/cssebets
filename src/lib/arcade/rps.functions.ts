@@ -124,10 +124,10 @@ export const prepareRpsRound = createServerFn({ method: "POST" })
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) throw new Error("Could not prepare a round.");
     return {
-      roundId: String(row.round_id),
-      serverSeedHash: String(row.server_seed_hash),
-      nonce: Number(row.nonce),
-      expiresAt: String(row.expires_at),
+      roundId: String(row.out_round_id ?? row.round_id),
+      serverSeedHash: String(row.out_server_seed_hash ?? row.server_seed_hash),
+      nonce: Number(row.out_nonce ?? row.nonce),
+      expiresAt: String(row.out_expires_at ?? row.expires_at),
     };
   });
 
