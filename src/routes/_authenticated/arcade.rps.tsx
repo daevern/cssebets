@@ -115,6 +115,9 @@ function RpsPage() {
   const [resultOpen, setResultOpen] = useState(false);
   /** Amount shown in the collect pop-up. */
   const [collected, setCollected] = useState(0);
+  /** Total pot returned by the run (base stake + profit). */
+  const [collectedPot, setCollectedPot] = useState(0);
+
   const [verifyId, setVerifyId] = useState<string | null>(null);
   const [commitmentVersion, setCommitmentVersion] = useState(0);
   /** Net points banked in the current run, cleared on collect. */
