@@ -188,12 +188,13 @@ function RpsPage() {
           roundId: c.roundId,
           playerChoice: move,
           clientSeed: clientSeed.current,
-          stake,
+          stake: wagerStake,
           idempotencyKey: idemKey.current!,
           clientRevealMs: Date.now() - lockedAt.current,
         },
       });
     },
+
     onSuccess: (res: any) => applySettled(res.round),
     onError: async (e: any) => {
       // The round may have settled server-side even though the response was
