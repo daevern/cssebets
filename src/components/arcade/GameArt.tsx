@@ -311,3 +311,67 @@ export function BlackjackArt() {
     </svg>
   );
 }
+
+export function RpsArt() {
+  const hands: { x: number; kind: "rock" | "paper" | "scissors" }[] = [
+    { x: 52, kind: "rock" },
+    { x: 120, kind: "paper" },
+    { x: 188, kind: "scissors" },
+  ];
+  return (
+    <svg viewBox="0 0 240 170" className="h-full w-full" role="img" aria-label="Rock paper scissors">
+      <defs>
+        <radialGradient id="rpsGlow" cx="50%" cy="45%" r="65%">
+          <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="#22d3ee" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="240" height="170" fill="url(#rpsGlow)" />
+
+      {hands.map(({ x, kind }) => (
+        <g key={kind} transform={`translate(${x - 26} 46)`}>
+          <rect width="52" height="52" rx="6" fill="#0f1419" stroke="currentColor" strokeOpacity="0.25" />
+          <g
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {kind === "rock" && (
+              <>
+                <rect x="12" y="18" width="28" height="20" rx="8" />
+                <path d="M18 25h18M18 31h18" strokeWidth="2" />
+              </>
+            )}
+            {kind === "paper" && (
+              <>
+                <rect x="15" y="12" width="22" height="28" rx="3" />
+                <path d="M20 20h12M20 26h12M20 32h7" strokeWidth="2" />
+              </>
+            )}
+            {kind === "scissors" && (
+              <>
+                <path d="M18 12l14 22M34 12L20 34" />
+                <circle cx="19" cy="40" r="4" />
+                <circle cx="33" cy="40" r="4" />
+              </>
+            )}
+          </g>
+        </g>
+      ))}
+
+      <text
+        x="120"
+        y="130"
+        textAnchor="middle"
+        fontSize="10"
+        fontWeight="900"
+        fill="currentColor"
+        opacity="0.75"
+      >
+        COMMITTED BEFORE YOU PICK
+      </text>
+    </svg>
+  );
+}

@@ -2202,6 +2202,177 @@ export type Database = {
           },
         ]
       }
+      arcade_rps_configurations: {
+        Row: {
+          announcement: string | null
+          chip_values: number[]
+          cooldown_seconds: number
+          created_at: string
+          daily_round_limit: number
+          draw_multiplier: number
+          id: string
+          maintenance_mode: boolean
+          max_stake: number
+          min_stake: number
+          round_ttl_seconds: number
+          status: string
+          updated_at: string
+          version: number
+          win_multiplier: number
+        }
+        Insert: {
+          announcement?: string | null
+          chip_values?: number[]
+          cooldown_seconds?: number
+          created_at?: string
+          daily_round_limit?: number
+          draw_multiplier?: number
+          id?: string
+          maintenance_mode?: boolean
+          max_stake?: number
+          min_stake?: number
+          round_ttl_seconds?: number
+          status?: string
+          updated_at?: string
+          version?: number
+          win_multiplier?: number
+        }
+        Update: {
+          announcement?: string | null
+          chip_values?: number[]
+          cooldown_seconds?: number
+          created_at?: string
+          daily_round_limit?: number
+          draw_multiplier?: number
+          id?: string
+          maintenance_mode?: boolean
+          max_stake?: number
+          min_stake?: number
+          round_ttl_seconds?: number
+          status?: string
+          updated_at?: string
+          version?: number
+          win_multiplier?: number
+        }
+        Relationships: []
+      }
+      arcade_rps_rounds: {
+        Row: {
+          client_reveal_ms: number | null
+          client_seed: string | null
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string
+          gross_return: number | null
+          hmac_input: string | null
+          house_net: number | null
+          id: string
+          idempotency_key: string | null
+          multiplier: number | null
+          nonce: number
+          outcome: string | null
+          player_choice: string | null
+          prepared_at: string
+          processing_ms: number | null
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_choice: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number | null
+          status: string
+          updated_at: string
+          user_id: string
+          user_net: number | null
+          verification_id: string
+        }
+        Insert: {
+          client_reveal_ms?: number | null
+          client_seed?: string | null
+          config_id: string
+          config_version: number
+          created_at?: string
+          expires_at: string
+          gross_return?: number | null
+          hmac_input?: string | null
+          house_net?: number | null
+          id?: string
+          idempotency_key?: string | null
+          multiplier?: number | null
+          nonce: number
+          outcome?: string | null
+          player_choice?: string | null
+          prepared_at?: string
+          processing_ms?: number | null
+          random_hex?: string | null
+          result_reason?: string | null
+          seed_id?: string | null
+          server_choice?: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at?: string | null
+          settled_at?: string | null
+          stake?: number | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          user_net?: number | null
+          verification_id?: string
+        }
+        Update: {
+          client_reveal_ms?: number | null
+          client_seed?: string | null
+          config_id?: string
+          config_version?: number
+          created_at?: string
+          expires_at?: string
+          gross_return?: number | null
+          hmac_input?: string | null
+          house_net?: number | null
+          id?: string
+          idempotency_key?: string | null
+          multiplier?: number | null
+          nonce?: number
+          outcome?: string | null
+          player_choice?: string | null
+          prepared_at?: string
+          processing_ms?: number | null
+          random_hex?: string | null
+          result_reason?: string | null
+          seed_id?: string | null
+          server_choice?: string | null
+          server_seed?: string
+          server_seed_hash?: string
+          server_seed_revealed_at?: string | null
+          settled_at?: string | null
+          stake?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          user_net?: number | null
+          verification_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_rps_rounds_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_rps_configurations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arcade_rps_rounds_seed_id_fkey"
+            columns: ["seed_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_randomness_seeds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       arcade_score_profile_slots: {
         Row: {
           created_at: string
@@ -8211,6 +8382,73 @@ export type Database = {
       arcade_roulette_draw: {
         Args: { p_client_seed: string; p_nonce: number; p_server_seed: string }
         Returns: Record<string, unknown>
+      }
+      arcade_rps_draw: {
+        Args: { p_hmac_input: string; p_server_seed: string }
+        Returns: {
+          choice: string
+          random_hex: string
+        }[]
+      }
+      arcade_rps_expire_rounds: { Args: never; Returns: number }
+      arcade_rps_prepare_round: {
+        Args: { p_user: string }
+        Returns: {
+          expires_at: string
+          nonce: number
+          round_id: string
+          server_seed_hash: string
+        }[]
+      }
+      arcade_rps_settle: {
+        Args: {
+          p_client_reveal_ms?: number
+          p_client_seed: string
+          p_idempotency_key: string
+          p_player_choice: string
+          p_round_id: string
+          p_stake: number
+          p_user: string
+        }
+        Returns: {
+          client_reveal_ms: number | null
+          client_seed: string | null
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string
+          gross_return: number | null
+          hmac_input: string | null
+          house_net: number | null
+          id: string
+          idempotency_key: string | null
+          multiplier: number | null
+          nonce: number
+          outcome: string | null
+          player_choice: string | null
+          prepared_at: string
+          processing_ms: number | null
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_choice: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number | null
+          status: string
+          updated_at: string
+          user_id: string
+          user_net: number | null
+          verification_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_rps_rounds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       arcade_score_band_for: {
         Args: { p_score: number }
