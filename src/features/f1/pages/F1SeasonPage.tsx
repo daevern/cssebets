@@ -106,7 +106,7 @@ export function F1SeasonPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 px-4 pt-5 pb-24 text-[var(--color-ink)]">
+    <div className="flex flex-col gap-8 px-4 pt-5 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-6 text-[var(--color-ink)]">
       <header className="space-y-2">
         <nav
           aria-label="Breadcrumb"

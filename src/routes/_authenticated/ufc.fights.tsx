@@ -135,7 +135,7 @@ function UfcFightsPage() {
   const list = tab === "live" ? live : tab === "upcoming" ? upcoming : completed;
 
   return (
-    <div className="flex w-full min-w-0 max-w-full flex-col gap-5 overflow-x-hidden bg-[var(--surface)] px-4 pt-5 pb-24">
+    <div className="flex w-full min-w-0 max-w-full flex-col gap-5 overflow-x-hidden bg-[var(--surface)] px-4 pt-5 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-6">
       <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs font-semibold tracking-tight text-[var(--color-ink-muted)]">
         <Link to="/matches" className="hover:text-[var(--color-ink)]">Sports</Link>
         <ChevronRight className="h-3 w-3 opacity-60" />

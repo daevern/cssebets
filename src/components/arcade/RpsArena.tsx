@@ -6,70 +6,67 @@ import { CsseMark } from "@/components/brand/CsseMark";
 export type ArenaPhase = "IDLE" | "LOCKED" | "REVEALING" | "SETTLED";
 
 /**
- * 8-bit pixel-art hands. Each map is a 12x12 grid of "#" (filled) cells so the
- * glyphs stay crisp and blocky at any size — no emoji, no gradients.
+ * Smooth vector hands in the Stake style: solid single-colour silhouettes with
+ * rounded knuckles and fingers, no outlines, no emoji.
  */
-const PIXELS: Record<RpsMove, string[]> = {
-  ROCK: [
-    "............",
-    "............",
-    "...#####....",
-    "..#######...",
-    ".#########..",
-    ".#########..",
-    "##########..",
-    ".#########..",
-    "..#######...",
-    "...#####....",
-    "............",
-    "............",
-  ],
-  PAPER: [
-    "............",
-    "..#..#..#...",
-    "..#..#..#...",
-    "..#..#..#...",
-    "..#..#..#...",
-    "#.########..",
-    "##########..",
-    ".#########..",
-    "..#######...",
-    "...#####....",
-    "............",
-    "............",
-  ],
-  SCISSORS: [
-    ".#........#.",
-    ".#........#.",
-    "..#......#..",
-    "..#......#..",
-    "...#....#...",
-    "....####....",
-    "...######...",
-    "..########..",
-    "..########..",
-    "...######...",
-    "............",
-    "............",
-  ],
-};
-
 function HandGlyph({ move, className }: { move: RpsMove | null; className?: string }) {
   if (!move) {
     return (
-      <svg viewBox="0 0 12 12" className={className} shapeRendering="crispEdges" aria-hidden>
-        <rect x={5} y={2} width={2} height={5} fill="currentColor" />
-        <rect x={5} y={8} width={2} height={2} fill="currentColor" />
+      <svg viewBox="0 0 64 64" className={className} aria-hidden>
+        <circle cx="32" cy="46" r="4" fill="currentColor" />
+        <rect x="28" y="14" width="8" height="22" rx="4" fill="currentColor" />
       </svg>
     );
   }
-  const rows = PIXELS[move];
+
   return (
-    <svg viewBox="0 0 12 12" className={className} shapeRendering="crispEdges" aria-hidden>
-      {rows.map((row, y) =>
-        row.split("").map((c, x) =>
-          c === "#" ? <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} fill="currentColor" /> : null,
-        ),
+    <svg viewBox="0 0 64 64" className={className} fill="currentColor" aria-hidden>
+      {move === "ROCK" && (
+        <g>
+          {/* fist body */}
+          <rect x="14" y="24" width="38" height="28" rx="13" />
+          {/* knuckles */}
+          <circle cx="22" cy="26" r="7" />
+          <circle cx="32" cy="24" r="7.5" />
+          <circle cx="42" cy="25" r="7" />
+          <circle cx="50" cy="30" r="6" />
+          {/* thumb */}
+          <rect x="10" y="33" width="17" height="11" rx="5.5" />
+        </g>
+      )}
+
+      {move === "PAPER" && (
+        <g>
+          {/* palm */}
+          <rect x="18" y="30" width="30" height="24" rx="12" />
+          {/* fingers */}
+          <rect x="21" y="12" width="8" height="26" rx="4" />
+          <rect x="30" y="8" width="8" height="30" rx="4" />
+          <rect x="39" y="12" width="8" height="26" rx="4" />
+          <rect x="47" y="18" width="8" height="22" rx="4" />
+          {/* thumb */}
+          <rect
+            x="9"
+            y="30"
+            width="8"
+            height="18"
+            rx="4"
+            transform="rotate(-28 13 39)"
+          />
+        </g>
+      )}
+
+      {move === "SCISSORS" && (
+        <g>
+          {/* fist body */}
+          <rect x="18" y="32" width="32" height="22" rx="11" />
+          <circle cx="46" cy="38" r="7" />
+          {/* two extended fingers in a V */}
+          <rect x="19" y="6" width="8" height="30" rx="4" transform="rotate(-18 23 21)" />
+          <rect x="33" y="6" width="8" height="30" rx="4" transform="rotate(14 37 21)" />
+          {/* thumb */}
+          <rect x="13" y="36" width="15" height="10" rx="5" />
+        </g>
       )}
     </svg>
   );

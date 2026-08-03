@@ -214,10 +214,6 @@ export function RouletteWheel({
             fill="#ffffff"
           />
         </g>
-
-
-        {/* Top marker */}
-        <path d="M 100 6 L 106 18 L 94 18 Z" fill="var(--color-neon)" />
       </svg>
 
       <div className="pointer-events-none absolute inset-0 grid place-items-center">
