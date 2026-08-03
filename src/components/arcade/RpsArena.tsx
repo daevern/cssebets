@@ -279,6 +279,7 @@ function RpsArenaImpl({
 @keyframes rps-pop{0%{transform:scale(1)}45%{transform:scale(1.14)}100%{transform:scale(1)}}
 @keyframes rps-drop{0%{transform:translateY(-10px);opacity:0}100%{transform:translateY(0);opacity:1}}
 @keyframes rps-slide-in{0%{transform:translateX(46px) scale(.9);opacity:0}100%{transform:translateX(0) scale(1);opacity:1}}
+@keyframes rps-badge-shake{0%,100%{transform:translateX(0) scale(1.2)}20%{transform:translateX(-3px) scale(1.2)}40%{transform:translateX(3px) scale(1.2)}60%{transform:translateX(-2px) scale(1.2)}80%{transform:translateX(2px) scale(1.2)}}
 `}</style>
 
       {/* Rail — the active column is centred; history drifts left, next waits right. */}
