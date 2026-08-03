@@ -202,7 +202,7 @@ function PlinkoPage() {
     <div className="flex flex-col gap-2">
       <div className="flex items-start gap-1.5">
         <div className="grid flex-1 grid-cols-3 gap-1.5">
-          <Stat label="Balance" value={fmt(balance)} accent />
+          <Stat label="Balance" value={fmt(balance)} />
           <Stat label="Max win" value={`${maxMult.toFixed(maxMult >= 100 ? 0 : 1)}×`} />
           <Stat
             label="Last"
