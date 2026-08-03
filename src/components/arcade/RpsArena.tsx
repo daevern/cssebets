@@ -68,7 +68,7 @@ function CardBack({ dim }: { dim?: boolean }) {
     <div
       className={cn(
         "relative h-full w-full rounded-[4px] border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)]",
-        dim && "opacity-30",
+        dim && "opacity-75",
       )}
       style={{
         backgroundImage:
