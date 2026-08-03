@@ -122,12 +122,12 @@ export function RouletteBoard({
     icon?: "red" | "black";
     ink?: string;
   }[] = [
-    { key: "low", label: "1–6", pockets: LOW },
+    { key: "low", label: "1–18", pockets: LOW },
     { key: "even", label: "Even", pockets: EVEN },
     { key: "red", label: "Red", pockets: RED_POCKETS, icon: "red", ink: RED_INK },
     { key: "black", label: "Black", pockets: BLACK_POCKETS, icon: "black" },
     { key: "odd", label: "Odd", pockets: ODD },
-    { key: "high", label: "7–12", pockets: HIGH },
+    { key: "high", label: "19–36", pockets: HIGH },
   ];
 
   return (
