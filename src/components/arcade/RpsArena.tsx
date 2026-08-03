@@ -283,9 +283,16 @@ function RpsArenaImpl({
   const nextMultipliers = Array.from({ length: 6 }, (_, i) => winMultiplier ** Math.max(runStep + 1 + i, 1));
 
   const pastRef = useRef<HTMLDivElement>(null);
+  const lastCount = useRef(0);
   useEffect(() => {
     const el = pastRef.current;
-    if (el) el.scrollLeft = el.scrollWidth;
+    const count = historyWithMultipliers.length;
+    // Only snap to the newest result when a round is actually added — never
+    // while the player is scrolling back through earlier rounds.
+    if (el && count !== lastCount.current) {
+      lastCount.current = count;
+      el.scrollLeft = el.scrollWidth;
+    }
   }, [historyWithMultipliers.length]);
 
   return (
@@ -297,6 +304,8 @@ function RpsArenaImpl({
 @keyframes rps-slide-in{0%{transform:translateX(46px) scale(.9);opacity:0}100%{transform:translateX(0) scale(1);opacity:1}}
 @keyframes rps-badge-shake{0%,100%{transform:translateX(0) scale(1.2)}20%{transform:translateX(-3px) scale(1.2)}40%{transform:translateX(3px) scale(1.2)}60%{transform:translateX(-2px) scale(1.2)}80%{transform:translateX(2px) scale(1.2)}}
 .rps-rail::-webkit-scrollbar{height:0}
+.rps-rail{overflow-anchor:none;overscroll-behavior-x:contain;touch-action:pan-x;scroll-behavior:auto}
+.rps-rail *{overflow-anchor:none}
 `}</style>
 
       {/* Rail — the active column is centred; history drifts left, next waits right. */}
