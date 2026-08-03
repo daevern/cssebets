@@ -1,8 +1,14 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Play, HelpCircle, Zap, Flame, Gem, Spade } from "lucide-react";
+import { Play, HelpCircle, Zap, Flame, Gem, Spade, Swords } from "lucide-react";
 import { HowToPlayDialog, HOW_TO_PLAY } from "@/components/arcade/HowToPlayDialog";
-import { PlinkoArt, RouletteArt, TreasureArt, BlackjackArt } from "@/components/arcade/GameArt";
+import {
+  PlinkoArt,
+  RouletteArt,
+  TreasureArt,
+  BlackjackArt,
+  RpsArt,
+} from "@/components/arcade/GameArt";
 
 export const Route = createFileRoute("/_authenticated/arcade/")({
   head: () => ({
@@ -77,6 +83,19 @@ const GAMES = [
     frame: "from-sky-400/20 via-[var(--color-surface)]/0 to-transparent",
     ring: "hover:border-sky-400/70",
     cta: "bg-sky-400 text-[#04121c]",
+  },
+  {
+    key: "rps" as const,
+    to: "/arcade/rps",
+    label: "Rock–Paper–Scissors",
+    blurb: "The computer commits its move first. Pick yours, both reveal at once.",
+    tag: "Simultaneous reveal",
+    TagIcon: Swords,
+    Art: RpsArt,
+    art: "text-cyan-200",
+    frame: "from-cyan-400/20 via-[var(--color-surface)]/0 to-transparent",
+    ring: "hover:border-cyan-400/70",
+    cta: "bg-cyan-400 text-[#04161c]",
   },
 ];
 

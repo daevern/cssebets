@@ -15,7 +15,28 @@ export type HowToPlayContent = {
   cashout: string;
 };
 
-export const HOW_TO_PLAY: Record<"plinko" | "roulette" | "treasure" | "blackjack", HowToPlayContent> = {
+export const HOW_TO_PLAY: Record<
+  "plinko" | "roulette" | "treasure" | "blackjack" | "rps",
+  HowToPlayContent
+> = {
+  rps: {
+    title: "How to play Rock–Paper–Scissors",
+    tagline: "The computer locks its move before you pick — both hands reveal at the same moment.",
+    steps: [
+      "Pick a chip to set your stake. The computer's move is already committed and its fingerprint is shown on screen.",
+      "Choose Rock, Paper or Scissors. Your choice locks instantly and cannot be changed.",
+      "Both hands reveal together — the computer's move was fixed before you touched a button.",
+      "Wins and draws pay straight back into your points wallet.",
+    ],
+    winning: [
+      "Rock beats Scissors, Scissors beats Paper, Paper beats Rock.",
+      "A draw returns your stake, so only a loss costs you points.",
+      "Every round is independent — the computer has no memory of your last pick.",
+    ],
+    cashout:
+      "There is nothing to cash out: each round settles the moment both hands reveal. Tap Verify to re-derive the computer's move in your own browser from the published fingerprint.",
+  },
+
   blackjack: {
     title: "How to play Blackjack",
     tagline: "Stake wallet points against the dealer — get closer to 21 without going over.",
