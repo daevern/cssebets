@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { HandCoins, Loader2, ShieldCheck, Swords, TrendingUp, Trophy, Wallet } from "lucide-react";
+import { HandCoins, Loader2, Swords, TrendingUp, Trophy, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CasinoChip } from "@/components/arcade/CasinoChip";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
@@ -111,6 +111,8 @@ function RpsPage() {
     Array<{ id: string; player: RpsMove | null; server: RpsMove | null; outcome: string }>
   >([]);
   const [resultOpen, setResultOpen] = useState(false);
+  /** Amount shown in the collect pop-up. */
+  const [collected, setCollected] = useState(0);
   const [verifyId, setVerifyId] = useState<string | null>(null);
   const [commitmentVersion, setCommitmentVersion] = useState(0);
   /** Net points banked in the current run, cleared on collect. */
@@ -171,7 +173,6 @@ function RpsPage() {
       setRound(r);
       setRunNet((n) => n + Number(r?.userNet ?? 0));
       setPhase("SETTLED");
-      setResultOpen(true);
       commitment.current = null;
       idemKey.current = null;
       refresh();
@@ -272,12 +273,12 @@ function RpsPage() {
     const banked = runNet;
     setLadderHistory([]);
     setRunNet(0);
-    setResultOpen(false);
+    setCollected(banked);
+    setResultOpen(true);
     setPhase("IDLE");
     setPlayerMove(null);
     setRound(null);
     clientSeed.current = newSeed();
-    toast.success(`Collected +${fmt(banked)} pts`);
   };
 
   /** Only a run that is currently in profit can be banked. */
@@ -286,11 +287,6 @@ function RpsPage() {
 
   const todayNet = profileQ.data?.todayNet ?? 0;
   const recent = profileQ.data?.recent ?? [];
-
-  const outcomeTone = useMemo(() => {
-    const n = Number(round?.userNet ?? 0);
-    return n > 0 ? "win" : n < 0 ? "loss" : "push";
-  }, [round]);
 
   return (
     <div className="flex flex-col gap-2 md:gap-3">
@@ -349,33 +345,15 @@ function RpsPage() {
         </div>
       )}
 
-      {round && (
-        <ArcadeResultDialog
-          open={resultOpen}
-          onOpenChange={(v) => {
-            setResultOpen(v);
-            if (!v) nextRound();
-          }}
-          tone={outcomeTone as any}
-          headline={
-            round.outcome === "WIN" ? "You win" : round.outcome === "LOSS" ? "Computer wins" : "Draw"
-          }
-          net={Number(round.userNet ?? 0)}
-          detail={`${round.playerChoice} vs ${round.serverChoice} · staked ${fmt(Number(round.stake ?? 0))} pts`}
-          footer={
-            <button
-              type="button"
-              onClick={() => {
-                setResultOpen(false);
-                setVerifyId(round.id);
-              }}
-              className="inline-flex h-9 items-center justify-center gap-1 rounded-full border border-[var(--color-surface-border)] px-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]"
-            >
-              <ShieldCheck className="h-3 w-3" /> Verify
-            </button>
-          }
-        />
-      )}
+      <ArcadeResultDialog
+        open={resultOpen}
+        onOpenChange={setResultOpen}
+        tone="win"
+        headline="Collected"
+        net={collected}
+        detail="Banked to your balance."
+      />
+
 
       <RpsVerifyDialog
         open={Boolean(verifyId)}
