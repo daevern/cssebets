@@ -73,7 +73,6 @@ function PlinkoPage() {
   const [rows, setRows] = useState<RowsCount>(10);
   const [riskMode, setRiskMode] = useState<RiskMode>("medium");
   const [stakePerBall, setStakePerBall] = useState<number>(1);
-  const [stakeInput, setStakeInput] = useState<string>("1");
   const [ballCount, setBallCount] = useState<number>(1);
   const [ballCountInput, setBallCountInput] = useState<string>("1");
   const [mode, setMode] = useState<BetMode>("manual");
@@ -87,9 +86,6 @@ function PlinkoPage() {
   const [recent, setRecent] = useState<number[]>([]);
   const inflightKey = useRef<string | null>(null);
 
-  useEffect(() => {
-    setStakeInput(String(stakePerBall));
-  }, [stakePerBall]);
   useEffect(() => {
     setBallCountInput(String(ballCount));
   }, [ballCount]);
@@ -115,18 +111,6 @@ function PlinkoPage() {
   const canAfford = balance >= totalCost;
   const busy = activeBalls.length > 0;
 
-  const commitStake = (raw: string) => {
-    const n = Math.round(Number(raw));
-    if (!Number.isFinite(n)) return setStakePerBall(1);
-    setStakePerBall(Math.min(STAKE_MAX, Math.max(STAKE_MIN, n)));
-  };
-  const scaleStake = (factor: number) =>
-    setStakePerBall((v) => Math.min(STAKE_MAX, Math.max(STAKE_MIN, Math.round(v * factor))));
-  const maxStake = () => {
-    if (!balance) return;
-    const per = Math.floor(Math.min(STAKE_MAX, balance / Math.max(1, ballCount)));
-    setStakePerBall(Math.max(STAKE_MIN, per));
-  };
 
   const adjustBalance = (delta: number) => {
     qc.setQueryData(["plinko-profile"], (prev: any) => {
@@ -483,23 +467,3 @@ function Seg({
   );
 }
 
-function TinyBtn({
-  children,
-  onClick,
-  disabled,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="grid h-6 shrink-0 place-items-center rounded-md border border-[var(--color-surface-border)] px-1.5 text-[10px] font-bold text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)] disabled:opacity-40"
-    >
-      {children}
-    </button>
-  );
-}
