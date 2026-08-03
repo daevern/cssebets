@@ -357,14 +357,6 @@ function RoulettePage() {
                 </span>
               )}
             </div>
-            <div className="shrink-0 rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/90 px-2 py-1 text-right">
-              <div className="text-[7px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                House edge
-              </div>
-              <div className="font-display text-[11px] font-bold tabular-nums text-[var(--color-ink)]">
-                {(THEORETICAL_HOUSE_EDGE * 100).toFixed(2)}%
-              </div>
-            </div>
           </div>
 
           <div className="flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
