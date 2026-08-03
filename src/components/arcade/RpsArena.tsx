@@ -177,8 +177,8 @@ function RailCell({
       className={cn(
         "flex shrink-0 flex-col items-center gap-1.5 transition-all duration-500",
         width,
-        scale === "past" && "opacity-70",
-        scale === "next" && "opacity-40",
+        scale === "past" && "opacity-90",
+        scale === "next" && "opacity-75",
       )}
     >
       <FlipCard
