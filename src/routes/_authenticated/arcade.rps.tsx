@@ -241,7 +241,8 @@ function RpsPage() {
   };
 
   const nextRound = () => {
-    if (round?.outcome === "WIN") {
+    if (round) {
+      // Every settled round is kept on the rail — wins, draws and losses.
       setLadderHistory((current) =>
         [
           ...current,
@@ -249,18 +250,36 @@ function RpsPage() {
             id: String(round.id),
             player: (round.playerChoice as RpsMove) ?? null,
             server: (round.serverChoice as RpsMove) ?? null,
-            outcome: "WIN",
+            outcome: String(round.outcome ?? "DRAW"),
           },
         ].slice(-6),
       );
-    } else if (round?.outcome === "LOSS") {
-      setLadderHistory([]);
     }
     setPhase("IDLE");
     setPlayerMove(null);
     setRound(null);
     clientSeed.current = newSeed();
   };
+
+  /** Bank the run: clears the rail and the running tally. */
+  const collectRun = () => {
+    const banked = runNet;
+    setLadderHistory([]);
+    setRunNet(0);
+    setResultOpen(false);
+    setPhase("IDLE");
+    setPlayerMove(null);
+    setRound(null);
+    clientSeed.current = newSeed();
+    toast.success(
+      banked > 0
+        ? `Collected +${fmt(banked)} pts`
+        : banked < 0
+          ? `Run closed · ${fmt(banked)} pts`
+          : "Run closed",
+    );
+  };
+
 
   const todayNet = profileQ.data?.todayNet ?? 0;
   const recent = profileQ.data?.recent ?? [];
