@@ -376,9 +376,9 @@ export function RouletteBoard({
           </span>
         </div>
         <p className="text-right text-[9px] uppercase leading-relaxed tracking-[0.16em] text-[var(--color-ink-muted)]">
-          Covers 12 numbers
+          Covers 36 numbers + 0
           <br />
-          Total return = 12 ÷ pockets covered
+          Total return = 36 ÷ pockets covered
         </p>
         <Info className="h-4 w-4 shrink-0 text-[var(--color-ink-muted)]" aria-hidden />
       </div>
