@@ -277,15 +277,15 @@ export function RouletteBoard({
         ))}
       </div>
 
-      {/* Neighbor bets */}
-      <SectionLabel>Neighbor bets</SectionLabel>
-      <div className="grid grid-cols-4 gap-1">
-        {FOUR_GROUPS.map((g) => (
+      {/* Dozens */}
+      <SectionLabel>Dozens</SectionLabel>
+      <div className="grid grid-cols-3 gap-1">
+        {DOZENS.map((g) => (
           <button
             key={g.label}
             type="button"
             disabled={disabled}
-            onClick={() => onPlace("four_group", g.label, g.pockets)}
+            onClick={() => onPlace("dozen", g.label, g.pockets)}
             className={cn(
               cellBase,
               "h-12 flex-col rounded-[3px] text-[9px] uppercase tracking-[0.18em] text-[var(--color-ink)]",
@@ -294,12 +294,37 @@ export function RouletteBoard({
           >
             <span>{g.label}</span>
             <span className="text-[8px] tracking-[0.14em] text-[var(--color-ink-muted)]">
-              {g.pockets.length} numbers
+              {returnMultiplier(g.pockets.length).toFixed(2)}×
             </span>
-            <Stack amount={amt(`four_group:${g.pockets.join("-")}`)} />
+            <Stack amount={amt(`dozen:${[...g.pockets].sort((a, b) => a - b).join("-")}`)} />
           </button>
         ))}
       </div>
+
+      {/* Six lines */}
+      <SectionLabel>Six lines</SectionLabel>
+      <div className="grid grid-cols-3 gap-1 sm:grid-cols-6">
+        {SIX_LINES.map((g) => (
+          <button
+            key={g.label}
+            type="button"
+            disabled={disabled}
+            onClick={() => onPlace("six_line", `Line ${g.label}`, g.pockets)}
+            className={cn(
+              cellBase,
+              "h-12 flex-col rounded-[3px] text-[9px] uppercase tracking-[0.18em] text-[var(--color-ink)]",
+            )}
+            style={{ background: CELL_BG, borderColor: FELT_BORDER }}
+          >
+            <span>{g.label}</span>
+            <span className="text-[8px] tracking-[0.14em] text-[var(--color-ink-muted)]">
+              {returnMultiplier(g.pockets.length).toFixed(2)}×
+            </span>
+            <Stack amount={amt(`six_line:${[...g.pockets].sort((a, b) => a - b).join("-")}`)} />
+          </button>
+        ))}
+      </div>
+
 
       {/* Special bets */}
       <SectionLabel>Special bets</SectionLabel>
