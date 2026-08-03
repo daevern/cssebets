@@ -11,6 +11,7 @@ import { HowItWorksDialog } from "@/components/arcade/HowItWorksDialog";
 import { VerifyDialog } from "@/components/arcade/VerifyDialog";
 import type { PlinkoGame, RiskMode, RowsCount } from "@/components/arcade/types";
 import { Minus, Plus, ShieldCheck } from "lucide-react";
+import { CasinoChip } from "@/components/arcade/CasinoChip";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/arcade/plinko")({
@@ -41,6 +42,7 @@ const STAKE_MIN = 1;
 const STAKE_MAX = 100;
 const BALLS_MIN = 1;
 const BALLS_MAX = 100;
+const CHIP_VALUES = [1, 5, 10, 25, 50, 100];
 type BetMode = "manual" | "auto";
 
 function randHex(bytes = 8) {
@@ -340,67 +342,59 @@ function PlinkoPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-1.5">
-            <label className="flex min-w-0 items-center gap-1 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2 py-1 focus-within:border-[var(--color-neon)]/50">
-              <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                Stake
-              </span>
-              <input
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={stakeInput}
-                onChange={(e) => setStakeInput(e.target.value.replace(/[^0-9]/g, ""))}
-                onBlur={(e) => commitStake(e.target.value || "1")}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                }}
+          <div className="flex items-center gap-2 overflow-x-auto px-1 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {CHIP_VALUES.filter((c) => c <= STAKE_MAX).map((c) => (
+              <CasinoChip
+                key={c}
+                value={c}
+                selected={stakePerBall === c}
                 disabled={locked}
-                className="min-w-0 flex-1 bg-transparent text-right font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none"
+                onClick={() => setStakePerBall(c)}
+                size={44}
               />
-              <TinyBtn onClick={() => scaleStake(0.5)} disabled={locked}>
-                ½
-              </TinyBtn>
-              <TinyBtn onClick={() => scaleStake(2)} disabled={locked}>
-                2×
-              </TinyBtn>
-              <TinyBtn onClick={maxStake} disabled={locked || balance <= 0}>
-                Max
-              </TinyBtn>
-            </label>
-
-            <div className="flex min-w-0 items-center gap-1 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2 py-1">
-              <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                {mode === "auto" ? "Bets" : "Balls"}
-              </span>
-              <button
-                type="button"
-                onClick={() => setBallCount((v) => Math.max(BALLS_MIN, v - 1))}
-                disabled={locked}
-                className="ml-auto grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
-              >
-                <Minus className="h-3 w-3" />
-              </button>
-              <input
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={ballCountInput}
-                onChange={(e) => setBallCountInput(e.target.value.replace(/[^0-9]/g, ""))}
-                onBlur={(e) => commitBallCount(e.target.value || "1")}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                }}
-                disabled={locked}
-                className="w-9 bg-transparent text-center font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => setBallCount((v) => Math.min(BALLS_MAX, v + 1))}
-                disabled={locked}
-                className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
-              >
-                <Plus className="h-3 w-3" />
-              </button>
+            ))}
+            <div className="ml-auto shrink-0 text-right">
+              <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+                Stake / ball
+              </div>
+              <div className="font-display text-xs font-bold tabular-nums text-[var(--color-ink)]">
+                {fmt(stakePerBall)} pts
+              </div>
             </div>
+          </div>
+
+          <div className="flex min-w-0 items-center gap-1 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2 py-1">
+            <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+              {mode === "auto" ? "Bets" : "Balls"}
+            </span>
+            <button
+              type="button"
+              onClick={() => setBallCount((v) => Math.max(BALLS_MIN, v - 1))}
+              disabled={locked}
+              className="ml-auto grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
+            >
+              <Minus className="h-3 w-3" />
+            </button>
+            <input
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={ballCountInput}
+              onChange={(e) => setBallCountInput(e.target.value.replace(/[^0-9]/g, ""))}
+              onBlur={(e) => commitBallCount(e.target.value || "1")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+              }}
+              disabled={locked}
+              className="w-9 bg-transparent text-center font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setBallCount((v) => Math.min(BALLS_MAX, v + 1))}
+              disabled={locked}
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
+            >
+              <Plus className="h-3 w-3" />
+            </button>
           </div>
 
           <button
