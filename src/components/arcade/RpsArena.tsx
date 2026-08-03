@@ -62,6 +62,77 @@ function CardBack({ dim }: { dim?: boolean }) {
   );
 }
 
+type Tone = "WIN" | "LOSS" | "DRAW" | null;
+
+const toneText = (t: Tone) =>
+  t === "WIN"
+    ? "text-[var(--color-neon)]"
+    : t === "LOSS"
+      ? "text-red-400"
+      : t === "DRAW"
+        ? "text-amber-300"
+        : "text-[var(--color-ink)]";
+
+const toneRing = (t: Tone) =>
+  t === "WIN"
+    ? "ring-2 ring-[var(--color-neon)]"
+    : t === "LOSS"
+      ? "ring-2 ring-red-500"
+      : t === "DRAW"
+        ? "ring-2 ring-amber-400"
+        : "";
+
+/**
+ * A single ladder card that physically flips on its Y axis when it reveals.
+ * Face-down = card back; face-up = the hand that was played.
+ */
+function FlipCard({
+  faceUp,
+  move,
+  tone,
+  active,
+  shaking,
+}: {
+  faceUp: boolean;
+  move: RpsMove | null;
+  tone: Tone;
+  active: boolean;
+  shaking: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "aspect-[3/4] w-full rounded-[6px] [perspective:700px]",
+        active && shaking && "animate-[rps-shake_0.36s_ease-in-out_infinite]",
+      )}
+    >
+      <div
+        className="relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d]"
+        style={{ transform: faceUp ? "rotateY(180deg)" : "rotateY(0deg)" }}
+      >
+        {/* Back */}
+        <div
+          className={cn(
+            "absolute inset-0 overflow-hidden rounded-[6px] [backface-visibility:hidden]",
+            active && "ring-2 ring-[var(--color-neon)]",
+          )}
+        >
+          <CardBack dim={!active} />
+        </div>
+        {/* Face */}
+        <div
+          className={cn(
+            "absolute inset-0 grid place-items-center overflow-hidden rounded-[6px] bg-[var(--color-surface-2)] [backface-visibility:hidden] [transform:rotateY(180deg)]",
+            toneRing(tone),
+          )}
+        >
+          <HandGlyph move={move} className={cn("h-[62%] w-[62%]", toneText(tone))} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const LADDER_LENGTH = 7;
 
 /**
@@ -103,7 +174,11 @@ function RpsArenaImpl({
 
   return (
     <div className="rounded-[6px] bg-[var(--color-surface)] p-3">
-      <style>{`@keyframes rps-shake{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}`}</style>
+      <style>{`
+@keyframes rps-shake{0%,100%{transform:translateY(0) rotate(0deg)}25%{transform:translateY(-8px) rotate(-4deg)}75%{transform:translateY(-8px) rotate(4deg)}}
+@keyframes rps-pop{0%{transform:scale(1)}45%{transform:scale(1.14)}100%{transform:scale(1)}}
+@keyframes rps-drop{0%{transform:translateY(-10px);opacity:0}100%{transform:translateY(0);opacity:1}}
+`}</style>
 
       {/* Server / algorithm ladder */}
       <div className="mb-1 font-display text-[8px] font-black uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
@@ -113,43 +188,38 @@ function RpsArenaImpl({
         {Array.from({ length: LADDER_LENGTH }).map((_, i) => {
           const done = past[i];
           const isActive = i === activeIndex;
+          const revealedHere = isActive && !concealed;
+          const tone: Tone = done
+            ? (done.outcome as Tone)
+            : revealedHere
+              ? (outcome as Tone)
+              : null;
+          const badgeTone = done
+            ? done.outcome
+            : revealedHere
+              ? outcome
+              : null;
           return (
             <div key={i} className="flex flex-col items-center gap-1">
+              <FlipCard
+                faceUp={Boolean(done) || revealedHere}
+                move={done ? done.server : serverMove}
+                tone={tone}
+                active={isActive}
+                shaking={shaking}
+              />
               <div
                 className={cn(
-                  "aspect-[3/4] w-full overflow-hidden rounded-[6px] bg-[var(--color-surface-2)]",
-                  isActive && "ring-2 ring-[var(--color-neon)]",
-                  isActive && shaking && "animate-[rps-shake_0.36s_ease-in-out_infinite]",
-                )}
-              >
-                {done ? (
-                  <div className="grid h-full w-full place-items-center">
-                    <HandGlyph
-                      move={done.server}
-                      className={cn(
-                        "h-[62%] w-[62%]",
-                        done.outcome === "WIN"
-                          ? "text-[var(--color-neon)]"
-                          : done.outcome === "LOSS"
-                            ? "text-red-400"
-                            : "text-[var(--color-ink-muted)]",
-                      )}
-                    />
-                  </div>
-                ) : isActive && !concealed ? (
-                  <div className="grid h-full w-full place-items-center">
-                    <HandGlyph move={serverMove} className="h-[62%] w-[62%] text-[var(--color-neon)]" />
-                  </div>
-                ) : (
-                  <CardBack dim={!isActive} />
-                )}
-              </div>
-              <div
-                className={cn(
-                  "rounded-[3px] px-1 font-mono text-[8px] font-bold tabular-nums",
-                  isActive
-                    ? "bg-[var(--color-neon)] text-black"
-                    : "text-[var(--color-ink-muted)] opacity-60",
+                  "rounded-[3px] px-1 font-mono text-[8px] font-bold tabular-nums transition-colors",
+                  badgeTone === "WIN"
+                    ? "bg-[var(--color-neon)] text-black animate-[rps-pop_0.35s_ease-out]"
+                    : badgeTone === "LOSS"
+                      ? "bg-red-500 text-white animate-[rps-pop_0.35s_ease-out]"
+                      : badgeTone === "DRAW"
+                        ? "bg-amber-400 text-black animate-[rps-pop_0.35s_ease-out]"
+                        : isActive
+                          ? "bg-[var(--color-ink)] text-black"
+                          : "text-[var(--color-ink-muted)] opacity-60",
                 )}
               >
                 {(winMultiplier ** (i + 1)).toFixed(2)}×
@@ -167,18 +237,30 @@ function RpsArenaImpl({
         {Array.from({ length: LADDER_LENGTH }).map((_, i) => {
           const done = past[i];
           const isActive = i === activeIndex;
-          const show = done ? done.player : isActive && !concealed ? playerMove : null;
+          const revealedHere = isActive && !concealed;
+          const show = done ? done.player : revealedHere ? playerMove : null;
+          const tone: Tone = done
+            ? (done.outcome as Tone)
+            : revealedHere
+              ? (outcome as Tone)
+              : null;
           return (
             <div
               key={i}
               className={cn(
-                "grid aspect-square w-full place-items-center rounded-[6px] bg-[var(--color-surface-2)]",
-                isActive && "ring-2 ring-[var(--color-neon)]/60",
+                "grid aspect-square w-full place-items-center rounded-[6px] bg-[var(--color-surface-2)] transition-all duration-300",
+                tone ? toneRing(tone) : isActive ? "ring-2 ring-[var(--color-neon)]/60" : "",
                 isActive && shaking && "animate-[rps-shake_0.36s_ease-in-out_infinite]",
               )}
             >
               {show ? (
-                <HandGlyph move={show} className="h-[60%] w-[60%] text-[var(--color-ink)]" />
+                <HandGlyph
+                  move={show}
+                  className={cn(
+                    "h-[60%] w-[60%] animate-[rps-drop_0.3s_ease-out]",
+                    toneText(tone),
+                  )}
+                />
               ) : (
                 <span className="font-mono text-[9px] text-[var(--color-ink-muted)]">—</span>
               )}
@@ -188,7 +270,12 @@ function RpsArenaImpl({
       </div>
 
       {/* Status line */}
-      <div className="mt-3 text-center font-display text-[10px] font-black uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+      <div
+        className={cn(
+          "mt-3 text-center font-display text-[10px] font-black uppercase tracking-[0.28em] transition-colors",
+          phase === "SETTLED" ? toneText(outcome as Tone) : "text-[var(--color-ink-muted)]",
+        )}
+      >
         {phase === "IDLE"
           ? "Pick your hand"
           : phase === "SETTLED"
@@ -218,23 +305,30 @@ function RpsArenaImpl({
                 disabled={!canPlay}
                 onClick={() => onChoose(m)}
                 className={cn(
-                  "flex flex-col items-center gap-1 rounded-[6px] bg-[var(--color-surface-2)] px-2 pb-2 pt-3 transition-colors disabled:opacity-40",
+                  "flex flex-col items-center gap-1 rounded-[6px] bg-[var(--color-surface-2)] px-2 pb-2 pt-3 transition-all duration-150 active:translate-y-[2px] active:scale-[0.97] disabled:opacity-40",
                   selected
-                    ? "ring-2 ring-[var(--color-neon)]"
-                    : "ring-1 ring-[var(--color-surface-border)]",
+                    ? "-translate-y-[2px] ring-2 ring-[var(--color-neon)]"
+                    : "ring-1 ring-[var(--color-surface-border)] hover:ring-[var(--color-neon)]/50",
                 )}
               >
                 <HandGlyph
                   move={m}
                   className={cn(
-                    "h-9 w-9",
-                    selected ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]",
+                    "h-9 w-9 transition-transform duration-150",
+                    selected
+                      ? "scale-110 text-[var(--color-neon)] animate-[rps-pop_0.3s_ease-out]"
+                      : "text-[var(--color-ink)]",
                   )}
                 />
                 <span className="font-display text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
                   {m}
                 </span>
-                <span className="h-1 w-8 rounded-[2px] bg-[var(--color-surface-border)]" />
+                <span
+                  className={cn(
+                    "h-1 w-8 rounded-[2px] transition-colors",
+                    selected ? "bg-[var(--color-neon)]" : "bg-[var(--color-surface-border)]",
+                  )}
+                />
               </button>
             );
           })}
