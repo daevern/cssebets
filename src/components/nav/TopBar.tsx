@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Wallet, Home, Activity, Headphones, Gamepad2 } from "lucide-react";
 
@@ -5,6 +6,7 @@ import { CsseLogo } from "@/components/brand/CsseMark";
 import { useAuth } from "@/hooks/use-auth";
 import { CategoryRail } from "@/components/nav/CategoryRail";
 import { HamburgerMenu } from "@/components/nav/HamburgerMenu";
+import { WalletCardSheet } from "@/components/wallet/WalletCard";
 
 
 const DESKTOP_NAV = [
@@ -74,6 +76,7 @@ function MobileBar({ balance: _balance, loading: _loading }: { balance?: number 
 function DesktopBar({ balance, loading }: { balance?: number | null; loading?: boolean }) {
   const { pathname } = useLocation();
   const { user } = useAuth();
+  const [walletOpen, setWalletOpen] = useState(false);
   const isGuest = !user || (user as any)?.is_anonymous === true;
   return (
     <div className="mx-auto hidden h-16 w-full max-w-7xl items-center gap-8 px-8 md:flex lg:h-[68px] lg:px-10">
@@ -129,8 +132,9 @@ function DesktopBar({ balance, loading }: { balance?: number | null; loading?: b
 
       {/* Actions */}
       <div className="flex shrink-0 items-center gap-3">
-        <Link
-          to="/wallet"
+        <button
+          type="button"
+          onClick={() => setWalletOpen(true)}
           aria-label="Wallet"
           className="flex h-10 items-center gap-2 rounded-full border border-[var(--color-surface-border)]/70 bg-[var(--color-surface-2)]/40 px-3 py-1.5 text-[var(--ink)] transition-colors hover:border-[var(--neon)]/40"
         >
@@ -140,7 +144,8 @@ function DesktopBar({ balance, loading }: { balance?: number | null; loading?: b
           <span className="font-display text-[13px] font-bold tabular-nums">
             {loading ? "..." : (balance ?? 0).toLocaleString()}
           </span>
-        </Link>
+        </button>
+        <WalletCardSheet open={walletOpen} onOpenChange={setWalletOpen} />
 
         {isGuest && (
           <Link
