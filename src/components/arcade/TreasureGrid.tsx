@@ -59,7 +59,7 @@ function TreasureGridImpl({
             disabled={disabled || isOpen || pending}
             onClick={() => onReveal(i)}
             className={cn(
-              "group relative aspect-square select-none overflow-hidden rounded-[4px] transition-colors duration-150",
+              "group relative aspect-square select-none overflow-hidden rounded-[4px] transition-colors duration-150 [contain:paint]",
               "grid place-items-center",
               !isOpen && "bg-white/12",
               !isOpen && !disabled && "hover:bg-white/20",
@@ -72,14 +72,14 @@ function TreasureGridImpl({
           >
             {mine === "SAFE" && (
               <>
-                <span className="pointer-events-none absolute inset-0 rounded-[4px] bg-[var(--color-neon)]/40 animate-[treasure-flash_600ms_ease-out_forwards]" />
-                <Gem className="relative h-[42%] w-[42%] text-[var(--color-neon)] animate-[treasure-pop_320ms_cubic-bezier(0.34,1.56,0.64,1)]" />
+                <span className="pointer-events-none absolute inset-0 rounded-[4px] bg-[var(--color-neon)]/40 will-change-[transform,opacity] animate-[treasure-flash_450ms_ease-out_forwards]" />
+                <Gem className="relative h-[42%] w-[42%] text-[var(--color-neon)] will-change-transform animate-[treasure-pop_300ms_cubic-bezier(0.34,1.56,0.64,1)]" />
               </>
             )}
             {mine === "TRAP" && (
               <>
-                <span className="pointer-events-none absolute inset-0 rounded-[4px] bg-destructive/70 animate-[treasure-blast_600ms_ease-out_forwards]" />
-                <Bomb className="relative h-[42%] w-[42%] text-destructive animate-[treasure-shake_420ms_ease-in-out]" />
+                <span className="pointer-events-none absolute inset-0 rounded-[4px] bg-destructive/70 will-change-[transform,opacity] animate-[treasure-blast_520ms_ease-out_forwards]" />
+                <Bomb className="relative h-[42%] w-[42%] text-destructive will-change-transform animate-[treasure-shake_420ms_ease-in-out]" />
               </>
             )}
             {exposed && <Bomb className="h-[42%] w-[42%] text-destructive opacity-60" />}
