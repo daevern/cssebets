@@ -11,7 +11,7 @@ import { HowItWorksDialog } from "@/components/arcade/HowItWorksDialog";
 import { VerifyDialog } from "@/components/arcade/VerifyDialog";
 import type { PlinkoGame, RiskMode, RowsCount } from "@/components/arcade/types";
 import { Minus, Plus, ShieldCheck } from "lucide-react";
-import { CasinoChip } from "@/components/arcade/CasinoChip";
+import { ChipRack } from "@/components/arcade/ChipRack";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/arcade/plinko")({
@@ -202,7 +202,7 @@ function PlinkoPage() {
     <div className="flex flex-col gap-2">
       <div className="flex items-start gap-1.5">
         <div className="grid flex-1 grid-cols-3 gap-1.5">
-          <Stat label="Balance" value={fmt(balance)} accent />
+          <Stat label="Balance" value={fmt(balance)} />
           <Stat label="Max win" value={`${maxMult.toFixed(maxMult >= 100 ? 0 : 1)}×`} />
           <Stat
             label="Last"
@@ -327,16 +327,14 @@ function PlinkoPage() {
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto px-1 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {CHIP_VALUES.filter((c) => c <= STAKE_MAX).map((c) => (
-              <CasinoChip
-                key={c}
-                value={c}
-                selected={stakePerBall === c}
-                disabled={locked}
-                onClick={() => setStakePerBall(c)}
-                size={44}
-              />
-            ))}
+            <ChipRack
+              values={CHIP_VALUES}
+              max={STAKE_MAX}
+              value={stakePerBall}
+              disabled={locked}
+              onSelect={(c: number) => setStakePerBall(c)}
+              size={44}
+            />
             <div className="ml-auto shrink-0 text-right">
               <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
                 Stake / ball

@@ -13,13 +13,12 @@ import { getRouletteSession } from "@/lib/arcade/roulette-phase2.functions";
 import { RouletteVerifyDialog } from "@/components/arcade/RouletteVerifyDialog";
 import { RouletteWheel } from "@/components/arcade/RouletteWheel";
 import { RouletteBoard } from "@/components/arcade/RouletteBoard";
-import { CasinoChip } from "@/components/arcade/CasinoChip";
+import { ChipRack } from "@/components/arcade/ChipRack";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import {
   positionKey,
   returnMultiplier,
   pocketColour,
-  THEORETICAL_HOUSE_EDGE,
   type BetPosition,
   type BetTypeKey,
 } from "@/lib/arcade/roulette-math";
@@ -291,7 +290,7 @@ function RoulettePage() {
       )}
 
       <div className="grid grid-cols-3 gap-1">
-        <Stat label="Balance" value={`${fmt(balance)}`} accent />
+        <Stat label="Balance" value={`${fmt(balance)}`} />
         <Stat
           label="Today"
           value={`${(profile.data?.todayNet ?? 0) >= 0 ? "+" : ""}${fmt(profile.data?.todayNet ?? 0)}`}
@@ -356,14 +355,6 @@ function RoulettePage() {
                   )}
                 </span>
               )}
-            </div>
-            <div className="shrink-0 rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/90 px-2 py-1 text-right">
-              <div className="text-[7px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                House edge
-              </div>
-              <div className="font-display text-[11px] font-bold tabular-nums text-[var(--color-ink)]">
-                {(THEORETICAL_HOUSE_EDGE * 100).toFixed(2)}%
-              </div>
             </div>
           </div>
 
@@ -486,9 +477,7 @@ function RoulettePage() {
           )}
 
         <div className="flex items-center gap-2 overflow-x-auto overflow-y-visible px-1 py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {chips.map((c) => (
-            <CasinoChip key={c} value={c} selected={chip === c} onClick={() => setChip(c)} size={44} />
-          ))}
+          <ChipRack values={chips} value={chip} onSelect={(c) => setChip(c)} size={44} />
           <div className="ml-auto flex shrink-0 gap-1">
             <IconBtn onClick={undo} disabled={spinning || !history.length} title="Undo">
               <Undo2 className="h-3.5 w-3.5" />

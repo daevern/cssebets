@@ -3,9 +3,13 @@ import { cn } from "@/lib/utils";
 import { CasinoChip } from "@/components/arcade/CasinoChip";
 import { CsseMark } from "@/components/brand/CsseMark";
 
+/** Standard denominations offered by every arcade table. */
+export const CHIP_LADDER = [1, 5, 10, 25, 50, 100, 500, 1000];
+
 /**
- * CSSEBets house chip — same physical chip aesthetic as CasinoChip
- * (face + dashed edge ring) but branded: green / white / black, logo only.
+ * CSSEBets house chip — identical physical aesthetic to CasinoChip
+ * (flat face + dashed edge ring) but branded: black face, white edge,
+ * green mark. Logo only, no wordmark.
  */
 export function BrandChip({
   size = 44,
@@ -43,10 +47,7 @@ export function BrandChip({
         style={{ borderColor: "#f4f6f5" }}
       />
       <span className="absolute inset-0 grid place-items-center">
-        <CsseMark
-          className="text-white"
-          style={{ width: size * 0.42, height: size * 0.42 }}
-        />
+        <CsseMark style={{ width: size * 0.44, height: size * 0.44 }} />
       </span>
     </button>
   );
@@ -54,26 +55,33 @@ export function BrandChip({
 
 /**
  * Expandable stake rack: one branded chip that unfolds into the real
- * denominations. Keeps every arcade console compact on mobile.
+ * denominations, keeping every arcade console compact on mobile.
  */
 export function ChipRack({
   values,
   value,
   onSelect,
   size = 44,
+  max,
   disabled,
   isChipDisabled,
   className,
 }: {
-  values: number[];
+  values?: number[];
   value: number;
   onSelect: (v: number) => void;
   size?: number;
+  /** Hide denominations above the table limit. */
+  max?: number;
   disabled?: boolean;
   isChipDisabled?: (v: number) => boolean;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
+
+  const denominations = Array.from(new Set([...(values ?? []), ...CHIP_LADDER]))
+    .filter((v) => Number.isFinite(v) && v > 0 && (max == null || v <= max))
+    .sort((a, b) => a - b);
 
   return (
     <div className={cn("flex min-w-0 items-center gap-1.5", className)}>
@@ -84,7 +92,7 @@ export function ChipRack({
           type="button"
           disabled={disabled}
           onClick={() => setOpen(true)}
-          className="shrink-0 rounded-full bg-[var(--color-surface-2)] px-2.5 py-1 text-left disabled:opacity-40"
+          className="shrink-0 rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1 text-left disabled:opacity-40"
         >
           <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
             Chip
@@ -95,7 +103,7 @@ export function ChipRack({
         </button>
       ) : (
         <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto overflow-y-visible py-1 [-ms-overflow-style:none] [overflow-anchor:none] [overscroll-behavior-x:contain] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {values.map((v) => (
+          {denominations.map((v) => (
             <span key={v} className="animate-[scale-in_0.15s_ease-out]">
               <CasinoChip
                 value={v}

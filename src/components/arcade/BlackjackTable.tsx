@@ -95,6 +95,7 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
   // Cards scale to whatever vertical space the table gets so nothing is ever
   // clipped or squashed, on any phone height.
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const shoeRef = useRef<HTMLDivElement | null>(null);
   const [cardH, setCardH] = useState(72);
   useEffect(() => {
     const el = boxRef.current;
@@ -102,10 +103,11 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
     const ro = new ResizeObserver(() => {
       const h = el.clientHeight;
       const w = el.clientWidth;
-      const byHeight = (h - 96) / 2;
-      const byWidth = w / 6 / 0.7;
-      const cap = w >= 700 ? 150 : 104;
-      setCardH(Math.max(46, Math.min(cap, Math.floor(Math.min(byHeight, byWidth)))));
+      const byHeight = (h - 104) / 2;
+      // Leave room for the shoe on the right edge.
+      const byWidth = (w - 72) / 6 / 0.7;
+      const cap = w >= 700 ? 142 : 96;
+      setCardH(Math.max(44, Math.min(cap, Math.floor(Math.min(byHeight, byWidth)))));
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -117,6 +119,9 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
   );
   const playerHands = state?.playerHands ?? [];
 
+  // The shoe re-shuffles between hands.
+  const handId = String(state?.hand?.id ?? "idle");
+
   const dealerTotal = useMemo(() => {
     const ranks = dealerCards.filter((c) => c.faceUp && c.rank).map((c) => c.rank as number);
     const hidden = dealerCards.some((c) => !c.faceUp);
@@ -124,12 +129,13 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
     return hidden ? `${v.total}+` : formatTotal(v);
   }, [dealerCards]);
 
+  const shoeW = Math.round(cardH * 0.7);
+
   return (
-    <div
-      ref={boxRef}
-      className="relative h-full overflow-hidden bg-[#07130d]"
-    >
-      <style>{`@keyframes bj-deal{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}`}</style>
+    <div ref={boxRef} className="relative h-full overflow-hidden bg-[#07130d]">
+      <style>{`
+@keyframes bj-shuffle{0%{transform:translateX(0) rotate(0deg)}25%{transform:translateX(-5px) rotate(-4deg)}50%{transform:translateX(4px) rotate(3deg)}75%{transform:translateX(-2px) rotate(-1.5deg)}100%{transform:translateX(0) rotate(0deg)}}
+`}</style>
 
       <FeltArt />
 
@@ -139,24 +145,48 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
         <span className="font-display text-base font-bold tracking-tight md:text-2xl">CSSEBets</span>
       </div>
 
+      {/* Shoe — every card is dealt out of this stack. */}
+      <div
+        key={handId}
+        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 animate-[bj-shuffle_600ms_ease-in-out] md:right-4"
+        style={{ width: shoeW, height: cardH }}
+      >
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="absolute inset-0 rounded-[4px] border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)]"
+            style={{
+              transform: `translate(${i * 1.5}px, ${-i * 1.5}px)`,
+              backgroundImage:
+                "repeating-linear-gradient(45deg, color-mix(in srgb, var(--color-neon) 22%, transparent) 0 4px, transparent 4px 8px)",
+            }}
+          />
+        ))}
+        <div ref={shoeRef} className="absolute inset-0" />
+      </div>
 
-      <div className="relative flex h-full flex-col items-stretch gap-1 px-3 pb-2 pt-3 md:gap-2 md:px-6 md:pb-4 md:pt-5">
+      <div className="relative flex h-full flex-col items-stretch gap-1 px-3 pb-2 pr-16 md:pr-24 pt-3 md:gap-2 md:px-6 md:pb-4 md:pt-5">
         {/* Dealer */}
         <div className="flex min-h-0 flex-1 flex-col items-center justify-start gap-2">
           <Totals label="Dealer" value={dealerCards.length ? dealerTotal : "—"} />
 
           <div className="flex max-w-full flex-wrap items-center justify-center gap-1.5 md:gap-2">
             {dealerCards.map((c, i) => (
-              <PlayingCard key={c.id} rank={c.rank} suit={c.suit} faceUp={c.faceUp} index={i} height={cardH} />
+              <PlayingCard
+                key={c.id}
+                rank={c.rank}
+                suit={c.suit}
+                faceUp={c.faceUp}
+                index={i}
+                height={cardH}
+                dealFrom={shoeRef}
+              />
             ))}
           </div>
         </div>
 
         {/* Center spacer — the outcome is shown in the result pop-up. */}
         <div className="h-2 shrink-0" />
-
-
-
 
         {/* Player */}
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1">
@@ -175,6 +205,7 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
                         faceUp={c.faceUp}
                         index={i}
                         height={cardH}
+                        dealFrom={shoeRef}
                       />
                     ))}
                   </div>

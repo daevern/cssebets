@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { HandCoins, Loader2, Swords } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CasinoChip } from "@/components/arcade/CasinoChip";
+import { ChipRack } from "@/components/arcade/ChipRack";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import { RpsArena, type ArenaPhase } from "@/components/arcade/RpsArena";
 import { RpsVerifyDialog } from "@/components/arcade/RpsVerifyDialog";
@@ -256,7 +256,7 @@ function RpsPage() {
     settle.mutate(move);
   };
 
-  const nextRound = () => {
+  const nextRound = useCallback(() => {
     const lost = round?.outcome === "LOSS";
     if (lost) {
       // A single loss ends the run — the whole stake stays with the house,
@@ -274,14 +274,23 @@ function RpsPage() {
             server: (round.serverChoice as RpsMove) ?? null,
             outcome: String(round.outcome ?? "DRAW"),
           },
-        ].slice(-6),
+        ].slice(-40),
       );
     }
     setPhase("IDLE");
     setPlayerMove(null);
     setRound(null);
     clientSeed.current = newSeed();
-  };
+  }, [round]);
+
+  // Wins and draws roll straight into the next round; only a loss needs the
+  // player to tap "Play again".
+  useEffect(() => {
+    if (phase !== "SETTLED" || !round || round.outcome === "LOSS") return;
+    const t = window.setTimeout(() => nextRound(), 900);
+    return () => window.clearTimeout(t);
+  }, [phase, round, nextRound]);
+
 
   /** Bank the run: the pot is already in the wallet, so this just clears the rail. */
   const collectRun = () => {
@@ -380,16 +389,14 @@ function RpsPage() {
       <div data-arcade-console className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-0">
         <div className="mx-auto w-full max-w-4xl space-y-2 px-3 py-2">
           <div className="flex items-center gap-1.5 overflow-x-auto overflow-y-visible py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {chips.map((c) => (
-              <CasinoChip
-                key={c}
-                value={c}
-                selected={stake === c}
-                disabled={busy || c > maxStake || runWins > 0 || ladderHistory.length > 0}
-                onClick={() => setStake(Math.min(Math.max(c, minStake), maxStake))}
-                size={44}
-              />
-            ))}
+            <ChipRack
+              values={chips}
+              max={maxStake}
+              value={stake}
+              disabled={busy || runWins > 0 || ladderHistory.length > 0}
+              onSelect={(c) => setStake(Math.min(Math.max(c, minStake), maxStake))}
+              size={44}
+            />
 
             <div className="ml-auto shrink-0 text-right">
               <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
@@ -404,35 +411,40 @@ function RpsPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={
-                phase === "SETTLED" ? nextRound : canCollect ? collectRun : undefined
-              }
-              disabled={phase !== "SETTLED" && !canCollect}
-              className={cn(
-                "flex h-11 flex-1 items-center justify-center gap-1.5 rounded-[4px] font-display text-xs font-bold uppercase tracking-[0.2em] transition-colors",
-                phase === "SETTLED" || canCollect
-                  ? "bg-[var(--color-neon)] text-black"
-                  : "bg-[var(--color-neon)]/25 text-[var(--color-ink-muted)]",
-              )}
-            >
-              {phase === "SETTLED" ? (
-                "Play again"
-              ) : busy ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Revealing
-                </>
-              ) : canCollect ? (
-                <>
-                  <HandCoins className="h-3.5 w-3.5" /> Collect +{fmt(runNet)}
-                </>
-              ) : (
-                <>
-                  <Swords className="h-3.5 w-3.5" /> Pick a hand above
-                </>
-              )}
-            </button>
+            {(() => {
+              // Only a loss stops the run; wins and draws auto-advance, so the
+              // button stays on "Collect".
+              const showPlayAgain = phase === "SETTLED" && round?.outcome === "LOSS";
+              return (
+                <button
+                  type="button"
+                  onClick={showPlayAgain ? nextRound : canCollect ? collectRun : undefined}
+                  disabled={!showPlayAgain && !canCollect}
+                  className={cn(
+                    "flex h-11 flex-1 items-center justify-center gap-1.5 rounded-[4px] font-display text-xs font-bold uppercase tracking-[0.2em] transition-colors",
+                    showPlayAgain || canCollect
+                      ? "bg-[var(--color-neon)] text-black"
+                      : "bg-[var(--color-neon)]/25 text-[var(--color-ink-muted)]",
+                  )}
+                >
+                  {showPlayAgain ? (
+                    "Play again"
+                  ) : busy || phase === "SETTLED" ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Revealing
+                    </>
+                  ) : canCollect ? (
+                    <>
+                      <HandCoins className="h-3.5 w-3.5" /> Collect +{fmt(runNet)}
+                    </>
+                  ) : (
+                    <>
+                      <Swords className="h-3.5 w-3.5" /> Pick a hand above
+                    </>
+                  )}
+                </button>
+              );
+            })()}
           </div>
 
 

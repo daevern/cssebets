@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TreasureGrid } from "@/components/arcade/TreasureGrid";
-import { CasinoChip } from "@/components/arcade/CasinoChip";
+import { ChipRack } from "@/components/arcade/ChipRack";
 import { TreasureVerifyDialog } from "@/components/arcade/TreasureVerifyDialog";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import {
@@ -357,16 +357,13 @@ function TreasurePage() {
               </div>
 
               <div className="flex items-center gap-1.5 overflow-x-auto overflow-y-visible py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {chips.map((c) => (
-                  <CasinoChip
-                    key={c}
-                    value={c}
-                    selected={stake === c}
-                    disabled={c > maxStake}
-                    onClick={() => setStake(Math.min(Math.max(c, minStake), maxStake))}
-                    size={44}
-                  />
-                ))}
+                <ChipRack
+                  values={chips}
+                  max={maxStake}
+                  value={stake}
+                  onSelect={(c) => setStake(Math.min(Math.max(c, minStake), maxStake))}
+                  size={44}
+                />
 
                 <div className="ml-auto shrink-0 text-right">
                   <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">

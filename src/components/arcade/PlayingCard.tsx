@@ -1,3 +1,4 @@
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { isRedSuit, rankLabel, suitSymbol } from "@/lib/arcade/blackjack-math";
 import { CsseMark } from "@/components/brand/CsseMark";
@@ -11,26 +12,71 @@ type Props = {
   className?: string;
   /** Explicit card height in px; width is derived at a 0.7 ratio. */
   height?: number;
+  /** The shoe/deck the card should appear to slide out of. */
+  dealFrom?: React.RefObject<HTMLElement | null>;
 };
 
-export function PlayingCard({ rank, suit, faceUp, index = 0, className, height }: Props) {
+const SLIDE_MS = 340;
+const STAGGER_MS = 120;
+
+export function PlayingCard({
+  rank,
+  suit,
+  faceUp,
+  index = 0,
+  className,
+  height,
+  dealFrom,
+}: Props) {
   const red = suit != null && isRedSuit(suit);
   const h = height ?? 72;
   const w = Math.round(h * 0.7);
   const corner = Math.max(9, Math.round(h * 0.17));
   const pip = Math.max(14, Math.round(h * 0.3));
+
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  /** Every card lands face-down first, then flips — never a straight reveal. */
+  const [landed, setLanded] = useState(false);
+  const delay = index * STAGGER_MS;
+
+  useLayoutEffect(() => {
+    const el = boxRef.current;
+    const shoe = dealFrom?.current;
+    if (!el) return;
+    let from = "translate(0px, -14px)";
+    if (shoe) {
+      const a = el.getBoundingClientRect();
+      const b = shoe.getBoundingClientRect();
+      from = `translate(${b.left + b.width / 2 - (a.left + a.width / 2)}px, ${
+        b.top + b.height / 2 - (a.top + a.height / 2)
+      }px) rotate(-10deg)`;
+    }
+    el.animate(
+      [
+        { transform: from, opacity: 0.85 },
+        { transform: "translate(0,0) rotate(0deg)", opacity: 1 },
+      ],
+      { duration: SLIDE_MS, delay, easing: "cubic-bezier(.2,.7,.3,1)", fill: "backwards" },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setLanded(true), SLIDE_MS + delay + 60);
+    return () => window.clearTimeout(t);
+  }, [delay]);
+
+  const showFace = faceUp && landed;
+
   return (
     <div
+      ref={boxRef}
       className={cn("relative shrink-0 select-none [perspective:800px]", className)}
-      style={{
-        height: h,
-        width: w,
-        animation: `bj-deal 280ms ease-out ${index * 90}ms both`,
-      }}
+      style={{ height: h, width: w }}
     >
       <div
         className="relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d]"
-        style={{ transform: faceUp ? "rotateY(0deg)" : "rotateY(180deg)" }}
+        style={{ transform: showFace ? "rotateY(0deg)" : "rotateY(180deg)" }}
       >
         {/* Face */}
         <div
