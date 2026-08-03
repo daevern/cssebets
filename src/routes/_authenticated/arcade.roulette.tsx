@@ -23,7 +23,6 @@ import {
   type BetPosition,
   type BetTypeKey,
 } from "@/lib/arcade/roulette-math";
-import { Corner } from "@/components/ui/page-shell";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/arcade/roulette")({
@@ -284,14 +283,14 @@ function RoulettePage() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {cfg?.announcement && (
         <div className="rounded-xl border border-[var(--color-neon)]/30 bg-[var(--color-neon)]/8 px-3 py-2 text-[11px] text-[var(--color-ink)]">
           {cfg.announcement}
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-3 gap-1">
         <Stat label="Balance" value={`${fmt(balance)}`} accent />
         <Stat
           label="Today"
@@ -317,47 +316,51 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="relative p-0">
-        <Corner pos="tr" />
-        <div className="absolute right-2 top-2 z-10 rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/90 px-2 py-1 text-right">
-          <div className="text-[7px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-            House edge
-          </div>
-          <div className="font-display text-[11px] font-bold tabular-nums text-[var(--color-ink)]">
-            {(THEORETICAL_HOUSE_EDGE * 100).toFixed(2)}%
-          </div>
+      <div className="grid grid-cols-[minmax(0,118px)_minmax(0,1fr)] items-center gap-2">
+        <div className="relative">
+          <RouletteWheel
+            winningPocket={winningPocket}
+            spinToken={spinToken}
+            spinning={spinning}
+            reducedMotion={reduced}
+            onSettled={onSettled}
+          />
         </div>
 
-        <RouletteWheel
-          winningPocket={winningPocket}
-          spinToken={spinToken}
-          spinning={spinning}
-          reducedMotion={reduced}
-          onSettled={onSettled}
-        />
-        <div className="mt-2 flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {(profile.data?.recent ?? []).map((r: any) => (
-            <span
-              key={r.id}
-              className={cn(
-                "grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10px] font-bold tabular-nums",
-                r.winning_colour === "green"
-                  ? "bg-[var(--color-neon)] text-black"
-                  : r.winning_colour === "red"
-                    ? "bg-[#e0374a] text-white"
-                    : "bg-[#161c22] text-[var(--color-ink)] ring-1 ring-[var(--color-surface-border)]",
-              )}
-            >
-              {r.winning_pocket}
-            </span>
-          ))}
-          {!(profile.data?.recent ?? []).length && (
-            <span className="text-[9px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-              No spins yet
-            </span>
-          )}
+        <div className="min-w-0 space-y-2">
+          <div className="rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/90 px-2 py-1">
+            <div className="text-[7px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+              House edge
+            </div>
+            <div className="font-display text-[11px] font-bold tabular-nums text-[var(--color-ink)]">
+              {(THEORETICAL_HOUSE_EDGE * 100).toFixed(2)}%
+            </div>
+          </div>
+          <div className="flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {(profile.data?.recent ?? []).map((r: any) => (
+              <span
+                key={r.id}
+                className={cn(
+                  "grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10px] font-bold tabular-nums",
+                  r.winning_colour === "green"
+                    ? "bg-[var(--color-neon)] text-black"
+                    : r.winning_colour === "red"
+                      ? "bg-[#e0374a] text-white"
+                      : "bg-[#161c22] text-[var(--color-ink)] ring-1 ring-[var(--color-surface-border)]",
+                )}
+              >
+                {r.winning_pocket}
+              </span>
+            ))}
+            {!(profile.data?.recent ?? []).length && (
+              <span className="text-[9px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+                No spins yet
+              </span>
+            )}
+          </div>
         </div>
       </div>
+
 
       {result?.spin && (
         <ArcadeResultDialog
