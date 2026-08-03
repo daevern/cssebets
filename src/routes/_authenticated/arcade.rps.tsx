@@ -273,12 +273,12 @@ function RpsPage() {
     const banked = runNet;
     setLadderHistory([]);
     setRunNet(0);
-    setResultOpen(false);
+    setCollected(banked);
+    setResultOpen(true);
     setPhase("IDLE");
     setPlayerMove(null);
     setRound(null);
     clientSeed.current = newSeed();
-    toast.success(`Collected +${fmt(banked)} pts`);
   };
 
   /** Only a run that is currently in profit can be banked. */
