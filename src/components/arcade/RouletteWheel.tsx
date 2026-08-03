@@ -50,7 +50,7 @@ export function RouletteWheel({
 }) {
   const [rotation, setRotation] = useState(0);
   const [ballAngle, setBallAngle] = useState(0);
-  const [ballRadius, setBallRadius] = useState(82);
+  const [ballRadius, setBallRadius] = useState(92);
   const [settledPocket, setSettledPocket] = useState<number | null>(null);
   const raf = useRef<number | null>(null);
 
@@ -103,12 +103,12 @@ export function RouletteWheel({
       setBallAngle(ballStart + (ballEnd - ballStart) * e);
 
       if (t < dropStart) {
-        setBallRadius(82);
+        setBallRadius(92);
       } else {
         const d = (t - dropStart) / (1 - dropStart);
         // spiral inward with a couple of decaying hops off the frets
         const hop = Math.abs(Math.sin(d * Math.PI * 2.6)) * 5 * (1 - d);
-        setBallRadius(82 - 16 * easeOut(d) + hop);
+        setBallRadius(92 - 26 * easeOut(d) + hop);
       }
 
       if (t < 1) {
@@ -137,22 +137,7 @@ export function RouletteWheel({
         <defs>
         </defs>
 
-        <circle
-          cx={cx}
-          cy={cy}
-          r="96"
-          fill="var(--color-surface-2)"
-          stroke="var(--color-surface-border)"
-        />
-        <circle
-          cx={cx}
-          cy={cy}
-          r="90"
-          fill="none"
-          stroke="var(--color-neon)"
-          strokeOpacity="0.25"
-          strokeWidth="1"
-        />
+        <circle cx={cx} cy={cy} r="96" fill="var(--color-surface-2)" />
 
         <g
           style={{

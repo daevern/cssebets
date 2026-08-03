@@ -447,9 +447,9 @@ function RoulettePage() {
             </div>
           )}
 
-        <div className="flex items-center gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex items-center gap-2 overflow-x-auto px-1 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {chips.map((c) => (
-            <CasinoChip key={c} value={c} selected={chip === c} onClick={() => setChip(c)} size={40} />
+            <CasinoChip key={c} value={c} selected={chip === c} onClick={() => setChip(c)} size={44} />
           ))}
           <div className="ml-auto flex shrink-0 gap-1">
             <IconBtn onClick={undo} disabled={spinning || !history.length} title="Undo">
