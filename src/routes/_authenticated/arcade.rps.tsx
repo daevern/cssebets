@@ -256,7 +256,7 @@ function RpsPage() {
     settle.mutate(move);
   };
 
-  const nextRound = () => {
+  const nextRound = useCallback(() => {
     const lost = round?.outcome === "LOSS";
     if (lost) {
       // A single loss ends the run — the whole stake stays with the house,
@@ -274,14 +274,23 @@ function RpsPage() {
             server: (round.serverChoice as RpsMove) ?? null,
             outcome: String(round.outcome ?? "DRAW"),
           },
-        ].slice(-6),
+        ].slice(-40),
       );
     }
     setPhase("IDLE");
     setPlayerMove(null);
     setRound(null);
     clientSeed.current = newSeed();
-  };
+  }, [round]);
+
+  // Wins and draws roll straight into the next round; only a loss needs the
+  // player to tap "Play again".
+  useEffect(() => {
+    if (phase !== "SETTLED" || !round || round.outcome === "LOSS") return;
+    const t = window.setTimeout(() => nextRound(), 900);
+    return () => window.clearTimeout(t);
+  }, [phase, round, nextRound]);
+
 
   /** Bank the run: the pot is already in the wallet, so this just clears the rail. */
   const collectRun = () => {
