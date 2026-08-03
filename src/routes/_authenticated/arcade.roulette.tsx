@@ -317,7 +317,7 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="relative overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-3">
+      <div className="relative p-0">
         <Corner pos="tr" />
         <div className="absolute right-2 top-2 z-10 rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/90 px-2 py-1 text-right">
           <div className="text-[7px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
