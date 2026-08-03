@@ -275,7 +275,17 @@ function RpsPage() {
         playerMove={playerMove}
         serverMove={(round?.serverChoice as RpsMove) ?? null}
         outcome={round?.outcome ?? null}
+        winMultiplier={winMult}
+        history={recent.map((r: any) => ({
+          id: r.id,
+          player: (r.player_choice as RpsMove) ?? null,
+          server: (r.server_choice as RpsMove) ?? null,
+          outcome: r.outcome,
+        }))}
+        onChoose={choose}
+        canPlay={canPlay}
       />
+
 
       {/* Commitment banner — proof the computer was locked in before you chose */}
       <div className="flex items-center justify-between gap-2 rounded-[4px] bg-[var(--color-surface-2)] px-3 py-1.5">
