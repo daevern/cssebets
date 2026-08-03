@@ -23,7 +23,6 @@ import {
   type BetPosition,
   type BetTypeKey,
 } from "@/lib/arcade/roulette-math";
-import { Corner } from "@/components/ui/page-shell";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/arcade/roulette")({
