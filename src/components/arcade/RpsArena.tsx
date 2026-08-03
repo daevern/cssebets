@@ -208,13 +208,13 @@ function RailCell({
 
       <div
         className={cn(
-          "rounded-[3px] px-1.5 font-mono text-[9px] font-bold tabular-nums transition-colors",
+          "rounded-[3px] px-2 py-[1px] font-mono text-[11px] font-bold tabular-nums transition-colors",
           tone === "WIN"
-            ? "bg-[var(--color-neon)] text-black animate-[rps-pop_0.35s_ease-out]"
+            ? "bg-[var(--color-neon)] text-black animate-[rps-badge-shake_0.5s_ease-in-out]"
             : tone === "LOSS"
-              ? "bg-red-500 text-white animate-[rps-pop_0.35s_ease-out]"
+              ? "bg-red-500 text-white animate-[rps-badge-shake_0.5s_ease-in-out]"
               : tone === "DRAW"
-                ? "bg-amber-400 text-black animate-[rps-pop_0.35s_ease-out]"
+                ? "bg-amber-400 text-black animate-[rps-badge-shake_0.5s_ease-in-out]"
                 : active && !placeholder
                   ? "bg-[var(--color-ink)] text-black"
                   : "text-[var(--color-ink-muted)] opacity-60",
@@ -222,6 +222,7 @@ function RailCell({
       >
         {multiplier.toFixed(2)}×
       </div>
+
     </div>
   );
 }
