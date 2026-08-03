@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, ShieldCheck, Swords, TrendingUp, Trophy, Wallet } from "lucide-react";
+import { HandCoins, Loader2, ShieldCheck, Swords, TrendingUp, Trophy, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CasinoChip } from "@/components/arcade/CasinoChip";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
@@ -95,7 +95,7 @@ function RpsPage() {
   const minStake = Number(cfg?.min_stake ?? 1);
   const maxStake = Math.max(minStake, Number(cfg?.max_stake ?? 100));
   const winMult = Number(cfg?.win_multiplier ?? 1.9);
-  const drawMult = Number(cfg?.draw_multiplier ?? 1);
+  
   const chips: number[] =
     Array.isArray(cfg?.chip_values) && cfg.chip_values.length
       ? cfg.chip_values.map((c: any) => Number(c))
@@ -113,6 +113,8 @@ function RpsPage() {
   const [resultOpen, setResultOpen] = useState(false);
   const [verifyId, setVerifyId] = useState<string | null>(null);
   const [commitmentVersion, setCommitmentVersion] = useState(0);
+  /** Net points banked in the current run, cleared on collect. */
+  const [runNet, setRunNet] = useState(0);
 
   const clientSeed = useRef(newSeed());
   /** The live commitment the player is about to play against. */
@@ -167,6 +169,7 @@ function RpsPage() {
         await new Promise((res) => setTimeout(res, MIN_REVEAL_MS - elapsed));
       }
       setRound(r);
+      setRunNet((n) => n + Number(r?.userNet ?? 0));
       setPhase("SETTLED");
       setResultOpen(true);
       commitment.current = null;
@@ -238,7 +241,8 @@ function RpsPage() {
   };
 
   const nextRound = () => {
-    if (round?.outcome === "WIN") {
+    if (round) {
+      // Every settled round is kept on the rail — wins, draws and losses.
       setLadderHistory((current) =>
         [
           ...current,
@@ -246,18 +250,38 @@ function RpsPage() {
             id: String(round.id),
             player: (round.playerChoice as RpsMove) ?? null,
             server: (round.serverChoice as RpsMove) ?? null,
-            outcome: "WIN",
+            outcome: String(round.outcome ?? "DRAW"),
           },
         ].slice(-6),
       );
-    } else if (round?.outcome === "LOSS") {
-      setLadderHistory([]);
     }
     setPhase("IDLE");
     setPlayerMove(null);
     setRound(null);
     clientSeed.current = newSeed();
   };
+
+  /** Bank the run: clears the rail and the running tally. */
+  const collectRun = () => {
+    const banked = runNet;
+    setLadderHistory([]);
+    setRunNet(0);
+    setResultOpen(false);
+    setPhase("IDLE");
+    setPlayerMove(null);
+    setRound(null);
+    clientSeed.current = newSeed();
+    toast.success(
+      banked > 0
+        ? `Collected +${fmt(banked)} pts`
+        : banked < 0
+          ? `Run closed · ${fmt(banked)} pts`
+          : "Run closed",
+    );
+  };
+
+
+  const runActive = ladderHistory.length > 0 || phase === "SETTLED" || runNet !== 0;
 
   const todayNet = profileQ.data?.todayNet ?? 0;
   const recent = profileQ.data?.recent ?? [];
@@ -302,46 +326,6 @@ function RpsPage() {
       />
 
 
-      {/* Commitment banner — proof the computer was locked in before you chose */}
-      <div className="flex items-center justify-between gap-2 rounded-[4px] bg-[var(--color-surface-2)] px-3 py-1.5">
-        <div className="min-w-0">
-          <div className="text-[8px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-            Committed hash
-          </div>
-          <div className="truncate font-mono text-[10px] text-[var(--color-ink)]">
-            {prepare.isPending
-              ? "committing…"
-              : (commitment.current?.serverSeedHash ?? round?.serverSeedHash ?? "—")}
-          </div>
-        </div>
-        {round && (
-          <button
-            type="button"
-            onClick={() => setVerifyId(round.id)}
-            className="inline-flex shrink-0 items-center gap-1 rounded-[4px] border border-[var(--color-neon)]/50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-neon)]"
-          >
-            <ShieldCheck className="h-3 w-3" /> Verify
-          </button>
-        )}
-      </div>
-
-      {/* Payout table */}
-      <div className="grid grid-cols-3 gap-1.5">
-        {[
-          ["Win", `${winMult.toFixed(2)}×`],
-          ["Draw", `${drawMult.toFixed(2)}×`],
-          ["Loss", "0.00×"],
-        ].map(([l, v]) => (
-          <div key={l} className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5 text-center">
-            <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-              {l}
-            </div>
-            <div className="font-display text-sm font-bold tabular-nums text-[var(--color-ink)]">
-              {v}
-            </div>
-          </div>
-        ))}
-      </div>
 
       {recent.length > 0 && (
         <div className="flex items-center gap-1 overflow-x-auto py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -420,29 +404,44 @@ function RpsPage() {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={phase === "SETTLED" ? nextRound : undefined}
-            disabled={phase !== "SETTLED"}
-            className={cn(
-              "flex h-11 w-full items-center justify-center gap-1.5 rounded-[4px] font-display text-xs font-bold uppercase tracking-[0.2em] transition-colors",
-              phase === "SETTLED"
-                ? "bg-[var(--color-neon)] text-black"
-                : "bg-[var(--color-neon)]/25 text-[var(--color-ink-muted)]",
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={phase === "SETTLED" ? nextRound : undefined}
+              disabled={phase !== "SETTLED"}
+              className={cn(
+                "flex h-11 flex-1 items-center justify-center gap-1.5 rounded-[4px] font-display text-xs font-bold uppercase tracking-[0.2em] transition-colors",
+                phase === "SETTLED"
+                  ? "bg-[var(--color-neon)] text-black"
+                  : "bg-[var(--color-neon)]/25 text-[var(--color-ink-muted)]",
+              )}
+            >
+              {phase === "SETTLED" ? (
+                "Play again"
+              ) : busy ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Revealing
+                </>
+              ) : (
+                <>
+                  <Swords className="h-3.5 w-3.5" /> Pick a hand above
+                </>
+              )}
+            </button>
+
+            {runActive && (
+              <button
+                type="button"
+                onClick={collectRun}
+                disabled={busy}
+                className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-[4px] border border-[var(--color-neon)] px-4 font-display text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-neon)] transition-colors disabled:opacity-40"
+              >
+                <HandCoins className="h-3.5 w-3.5" />
+                Collect{runNet !== 0 ? ` ${runNet > 0 ? "+" : ""}${fmt(runNet)}` : ""}
+              </button>
             )}
-          >
-            {phase === "SETTLED" ? (
-              "Play again"
-            ) : busy ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Revealing
-              </>
-            ) : (
-              <>
-                <Swords className="h-3.5 w-3.5" /> Pick a hand above
-              </>
-            )}
-          </button>
+          </div>
+
 
 
           {balance < stake && phase !== "SETTLED" && (
