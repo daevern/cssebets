@@ -438,11 +438,16 @@ function RpsPage() {
 
 
 
-          {balance < stake && phase !== "SETTLED" && (
+          {overMax && phase !== "SETTLED" ? (
+            <p className="text-center text-[10px] uppercase tracking-[0.24em] text-amber-300">
+              Pot is at the table limit — collect to bank it
+            </p>
+          ) : balance < wagerStake && phase !== "SETTLED" ? (
             <p className="text-center text-[10px] uppercase tracking-[0.24em] text-amber-300">
               Not enough points for this stake
             </p>
-          )}
+          ) : null}
+
         </div>
       </div>
     </div>
