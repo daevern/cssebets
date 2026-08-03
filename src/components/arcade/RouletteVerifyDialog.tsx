@@ -25,14 +25,14 @@ async function hmacHex(keyText: string, msg: string) {
     .join("");
 }
 
-/** Mirrors arcade_roulette_draw: rejection sampling over 32-bit words, mod 13. */
+/** Mirrors arcade_roulette_draw: rejection sampling over 32-bit words, mod 37. */
 async function recomputePocket(serverSeed: string, clientSeed: string, nonce: number) {
-  const LIMIT = 4294967287; // floor(2^32 / 13) * 13
+  const LIMIT = 4294967289; // floor(2^32 / 37) * 37
   for (let round = 0; round <= 32; round++) {
     const hex = await hmacHex(serverSeed, `${clientSeed}:${nonce}:${round}`);
     for (let i = 0; i < 8; i++) {
       const u = parseInt(hex.slice(i * 8, i * 8 + 8), 16);
-      if (u < LIMIT) return { pocket: u % 13, hex };
+      if (u < LIMIT) return { pocket: u % 37, hex };
     }
   }
   return { pocket: 0, hex: "" };
@@ -147,8 +147,8 @@ export function RouletteVerifyDialog({
             <p className="pt-1 text-[10px] leading-relaxed text-[var(--color-ink-muted)]">
               The server committed to SHA-256(server seed) before the spin. The pocket is derived
               from HMAC-SHA256(server_seed, client_seed:nonce:round), read as 32-bit words with
-              rejection sampling above {(4294967287).toLocaleString()} so all 13 pockets stay
-              exactly equally likely (1/13).
+              rejection sampling above {(4294967289).toLocaleString()} so all 37 pockets stay
+              exactly equally likely (1/37).
             </p>
           </div>
         )}

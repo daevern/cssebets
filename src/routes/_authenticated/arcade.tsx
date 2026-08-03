@@ -8,12 +8,12 @@ export const Route = createFileRoute("/_authenticated/arcade")({
       { title: "Arcade — cssebets" },
       {
         name: "description",
-        content: "Plinko drops, Mini Roulette spins and Treasure Grid rounds — provably fair.",
+        content: "Plinko drops, Roulette spins and Treasure Grid rounds — provably fair.",
       },
       { property: "og:title", content: "Arcade — cssebets" },
       {
         property: "og:description",
-        content: "Plinko drops, Mini Roulette spins and Treasure Grid rounds — provably fair.",
+        content: "Plinko drops, Roulette spins and Treasure Grid rounds — provably fair.",
       },
     ],
   }),

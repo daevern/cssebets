@@ -29,16 +29,16 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/arcade/roulette")({
   head: () => ({
     meta: [
-      { title: "Mini Roulette — cssebets Arcade" },
+      { title: "Roulette — cssebets Arcade" },
       {
         name: "description",
         content:
-          "13-pocket mini roulette played with virtual arcade points. Provably fair, every pocket equally likely.",
+          "European 37-pocket roulette played with virtual arcade points. Provably fair, every pocket equally likely.",
       },
-      { property: "og:title", content: "Mini Roulette — cssebets Arcade" },
+      { property: "og:title", content: "Roulette — cssebets Arcade" },
       {
         property: "og:description",
-        content: "13 equally likely pockets, provably fair spins, virtual points only.",
+        content: "37 equally likely pockets, provably fair spins, virtual points only.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -123,7 +123,7 @@ function RoulettePage() {
   );
   const potentialTotal = useMemo(() => {
     let best = 0;
-    for (let n = 0; n <= 12; n++) {
+    for (let n = 0; n <= 36; n++) {
       const g = positions.reduce(
         (a, p) => a + (p.pockets.includes(n) ? p.stake * returnMultiplier(p.pockets.length) : 0),
         0,
