@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { HandCoins, Loader2, ShieldCheck, Swords, TrendingUp, Trophy, Wallet } from "lucide-react";
+import { HandCoins, Loader2, Swords, TrendingUp, Trophy, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CasinoChip } from "@/components/arcade/CasinoChip";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
@@ -287,11 +287,6 @@ function RpsPage() {
 
   const todayNet = profileQ.data?.todayNet ?? 0;
   const recent = profileQ.data?.recent ?? [];
-
-  const outcomeTone = useMemo(() => {
-    const n = Number(round?.userNet ?? 0);
-    return n > 0 ? "win" : n < 0 ? "loss" : "push";
-  }, [round]);
 
   return (
     <div className="flex flex-col gap-2 md:gap-3">
