@@ -95,7 +95,7 @@ function RpsPage() {
   const minStake = Number(cfg?.min_stake ?? 1);
   const maxStake = Math.max(minStake, Number(cfg?.max_stake ?? 100));
   const winMult = Number(cfg?.win_multiplier ?? 1.9);
-  const drawMult = Number(cfg?.draw_multiplier ?? 1);
+  
   const chips: number[] =
     Array.isArray(cfg?.chip_values) && cfg.chip_values.length
       ? cfg.chip_values.map((c: any) => Number(c))
