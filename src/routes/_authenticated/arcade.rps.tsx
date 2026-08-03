@@ -302,46 +302,6 @@ function RpsPage() {
       />
 
 
-      {/* Commitment banner — proof the computer was locked in before you chose */}
-      <div className="flex items-center justify-between gap-2 rounded-[4px] bg-[var(--color-surface-2)] px-3 py-1.5">
-        <div className="min-w-0">
-          <div className="text-[8px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-            Committed hash
-          </div>
-          <div className="truncate font-mono text-[10px] text-[var(--color-ink)]">
-            {prepare.isPending
-              ? "committing…"
-              : (commitment.current?.serverSeedHash ?? round?.serverSeedHash ?? "—")}
-          </div>
-        </div>
-        {round && (
-          <button
-            type="button"
-            onClick={() => setVerifyId(round.id)}
-            className="inline-flex shrink-0 items-center gap-1 rounded-[4px] border border-[var(--color-neon)]/50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-neon)]"
-          >
-            <ShieldCheck className="h-3 w-3" /> Verify
-          </button>
-        )}
-      </div>
-
-      {/* Payout table */}
-      <div className="grid grid-cols-3 gap-1.5">
-        {[
-          ["Win", `${winMult.toFixed(2)}×`],
-          ["Draw", `${drawMult.toFixed(2)}×`],
-          ["Loss", "0.00×"],
-        ].map(([l, v]) => (
-          <div key={l} className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5 text-center">
-            <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-              {l}
-            </div>
-            <div className="font-display text-sm font-bold tabular-nums text-[var(--color-ink)]">
-              {v}
-            </div>
-          </div>
-        ))}
-      </div>
 
       {recent.length > 0 && (
         <div className="flex items-center gap-1 overflow-x-auto py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
