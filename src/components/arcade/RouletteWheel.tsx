@@ -278,20 +278,9 @@ export function RouletteWheel({
           >
             {settledPocket == null ? "—" : settledPocket}
           </div>
-          {settledPocket != null && (
-            <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
-              {pocketColour(settledPocket)}
-              {settledPocket !== 0 && (
-                <>
-                  {" "}
-                  · {settledPocket % 2 === 0 ? "Even" : "Odd"} ·{" "}
-                  {settledPocket <= 18 ? "Low" : "High"}
-                </>
-              )}
-            </div>
-          )}
         </div>
       </div>
+
     </div>
   );
 }
