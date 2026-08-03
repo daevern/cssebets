@@ -385,11 +385,12 @@ function RpsPage() {
                 key={c}
                 value={c}
                 selected={stake === c}
-                disabled={busy || c > maxStake}
+                disabled={busy || c > maxStake || runWins > 0 || ladderHistory.length > 0}
                 onClick={() => setStake(Math.min(Math.max(c, minStake), maxStake))}
                 size={44}
               />
             ))}
+
             <div className="ml-auto shrink-0 text-right">
               <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
                 {runWins > 0 ? "Pot at risk" : "Stake"}
