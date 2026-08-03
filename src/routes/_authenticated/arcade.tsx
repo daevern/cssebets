@@ -63,7 +63,7 @@ function ArcadeLayout() {
     <div className="mx-auto w-full max-w-4xl px-3 pt-3 md:px-6 md:pt-6">
       <Outlet />
 
-      <PageFooter className="!mt-2" />
+      <PageFooter className="!mt-2 !pt-2" />
 
       {/* Spacer clears the fixed console exactly — nothing more. */}
       <div style={{ height: consoleHeight }} aria-hidden />
