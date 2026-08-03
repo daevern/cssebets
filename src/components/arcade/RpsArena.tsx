@@ -408,11 +408,12 @@ function RpsArenaImpl({
                 disabled={!canPlay}
                 onClick={() => onChoose(m)}
                 className={cn(
-                  "relative flex min-h-[58px] flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[4px] border bg-[var(--color-surface-2)] px-1.5 py-1.5 transition-[transform,border-color,background-color] duration-100 active:translate-y-[3px] active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40",
+                  "relative mb-[6px] flex min-h-[58px] flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[6px] border bg-[var(--color-surface-2)] px-1.5 py-1.5 transition-[transform,box-shadow,border-color,background-color] duration-100 active:translate-y-[5px] active:shadow-[0_1px_0_0_var(--color-surface-border)] disabled:pointer-events-none disabled:opacity-40",
                   selected
-                    ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 shadow-[inset_0_0_0_1px_var(--color-neon)]"
-                    : "border-[var(--color-surface-border)] hover:border-[var(--color-neon)]/60",
+                    ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 shadow-[0_5px_0_0_color-mix(in_srgb,var(--color-neon)_45%,black),inset_0_1px_0_0_color-mix(in_srgb,white_18%,transparent)]"
+                    : "border-[var(--color-surface-border)] shadow-[0_5px_0_0_var(--color-surface-border),inset_0_1px_0_0_color-mix(in_srgb,white_10%,transparent)] hover:border-[var(--color-neon)]/60",
                 )}
+
               >
                 <HandGlyph
                   move={m}
