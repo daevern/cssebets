@@ -165,7 +165,7 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
         <div ref={shoeRef} className="absolute inset-0" />
       </div>
 
-      <div className="relative flex h-full flex-col items-stretch gap-1 px-3 pb-2 pr-[calc(var(--bj-shoe,64px)+12px)] pt-3 md:gap-2 md:px-6 md:pb-4 md:pt-5">
+      <div className="relative flex h-full flex-col items-stretch gap-1 px-3 pb-2 pr-16 md:pr-24 pt-3 md:gap-2 md:px-6 md:pb-4 md:pt-5">
         {/* Dealer */}
         <div className="flex min-h-0 flex-1 flex-col items-center justify-start gap-2">
           <Totals label="Dealer" value={dealerCards.length ? dealerTotal : "—"} />
