@@ -281,10 +281,15 @@ function RpsArenaImpl({
     else if (round.outcome === "WIN") runStep += 1;
     return { ...round, multiplier };
   });
-  const visiblePast = historyWithMultipliers.slice(-3);
   const animationKey = history.length;
   const liveMultiplier = winMultiplier ** Math.max(runStep + (outcome === "WIN" || phase !== "SETTLED" ? 1 : 0), 1);
-  const nextMultiplier = winMultiplier ** Math.max(runStep + 1, 1);
+  const nextMultipliers = Array.from({ length: 6 }, (_, i) => winMultiplier ** Math.max(runStep + 1 + i, 1));
+
+  const pastRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = pastRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [historyWithMultipliers.length]);
 
   return (
     <div className="overflow-hidden rounded-[6px] bg-[var(--color-surface)] p-3">
@@ -294,25 +299,31 @@ function RpsArenaImpl({
 @keyframes rps-drop{0%{transform:translateY(-10px);opacity:0}100%{transform:translateY(0);opacity:1}}
 @keyframes rps-slide-in{0%{transform:translateX(46px) scale(.9);opacity:0}100%{transform:translateX(0) scale(1);opacity:1}}
 @keyframes rps-badge-shake{0%,100%{transform:translateX(0) scale(1.2)}20%{transform:translateX(-3px) scale(1.2)}40%{transform:translateX(3px) scale(1.2)}60%{transform:translateX(-2px) scale(1.2)}80%{transform:translateX(2px) scale(1.2)}}
+.rps-rail::-webkit-scrollbar{height:0}
 `}</style>
 
       {/* Rail — the active column is centred; history drifts left, next waits right. */}
       <div className="relative flex items-start justify-center gap-2 pb-1 pt-4">
-        {/* Left: settled results, most recent closest to the centre. */}
-        <div className="flex flex-1 items-start justify-end gap-2 overflow-hidden">
-          {visiblePast.map((h) => (
-            <RailCell
-              key={h.id}
-              scale="past"
-              faceUp
-              serverMove={h.server}
-              playerMove={h.player}
-              tone={h.outcome as Tone}
-              active={false}
-              shaking={false}
-              multiplier={h.multiplier}
-            />
-          ))}
+        {/* Left: settled results — scrollable, most recent closest to the centre. */}
+        <div
+          ref={pastRef}
+          className="rps-rail flex flex-1 items-start justify-start gap-2 overflow-x-auto overflow-y-hidden [scrollbar-width:none]"
+        >
+          <div className="flex min-w-full items-start justify-end gap-2">
+            {historyWithMultipliers.map((h) => (
+              <RailCell
+                key={h.id}
+                scale="past"
+                faceUp
+                serverMove={h.server}
+                playerMove={h.player}
+                tone={h.outcome as Tone}
+                active={false}
+                shaking={false}
+                multiplier={h.multiplier}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Centre: the live card. */}
@@ -329,21 +340,25 @@ function RpsArenaImpl({
           />
         </div>
 
-        {/* Right: the next card, still asleep. */}
+        {/* Right: the endless string of sleeping cards. */}
         <div className="flex flex-1 items-start justify-start gap-2 overflow-hidden">
-          <RailCell
-            scale="next"
-            faceUp={false}
-            serverMove={null}
-            playerMove={null}
-            tone={null}
-            active={false}
-            shaking={false}
-            multiplier={nextMultiplier}
-            placeholder
-          />
+          {nextMultipliers.map((m, i) => (
+            <RailCell
+              key={i}
+              scale="next"
+              faceUp={false}
+              serverMove={null}
+              playerMove={null}
+              tone={null}
+              active={false}
+              shaking={false}
+              multiplier={m}
+              placeholder
+            />
+          ))}
         </div>
       </div>
+
 
 
       {/* Status line */}
