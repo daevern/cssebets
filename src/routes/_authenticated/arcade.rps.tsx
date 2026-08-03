@@ -10,6 +10,8 @@ import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import { RpsArena, type ArenaPhase } from "@/components/arcade/RpsArena";
 import { RpsVerifyDialog } from "@/components/arcade/RpsVerifyDialog";
 import { type RpsMove } from "@/lib/arcade/rps-math";
+import { roundMoney } from "@/lib/accounting/money";
+
 import {
   getRpsConfig,
   getRpsProfile,
@@ -113,6 +115,9 @@ function RpsPage() {
   const [resultOpen, setResultOpen] = useState(false);
   /** Amount shown in the collect pop-up. */
   const [collected, setCollected] = useState(0);
+  /** Total pot returned by the run (base stake + profit). */
+  const [collectedPot, setCollectedPot] = useState(0);
+
   const [verifyId, setVerifyId] = useState<string | null>(null);
   const [commitmentVersion, setCommitmentVersion] = useState(0);
   /** Net points banked in the current run, cleared on collect. */
@@ -188,12 +193,13 @@ function RpsPage() {
           roundId: c.roundId,
           playerChoice: move,
           clientSeed: clientSeed.current,
-          stake,
+          stake: wagerStake,
           idempotencyKey: idemKey.current!,
           clientRevealMs: Date.now() - lockedAt.current,
         },
       });
     },
+
     onSuccess: (res: any) => applySettled(res.round),
     onError: async (e: any) => {
       // The round may have settled server-side even though the response was
@@ -221,13 +227,25 @@ function RpsPage() {
 
   const busy = settle.isPending || phase === "LOCKED" || phase === "REVEALING";
   const ready = Boolean(commitment.current) && !prepare.isPending && commitmentVersion >= 0;
+
+  // The ladder compounds: each win rolls the whole pot into the next round, so
+  // the amount at risk is base stake x winMultiplier^(wins so far). Draws hold
+  // the pot steady, a loss ends the run and the pot stays with the house.
+  const runWins = ladderHistory.filter((h) => h.outcome === "WIN").length;
+  const wagerStake = roundMoney(stake * winMult ** runWins);
+  /** What the player takes home if the next round wins. */
+  const nextPayout = roundMoney(wagerStake * winMult);
+  const overMax = wagerStake > maxStake;
+
   const canPlay =
     ready &&
     !busy &&
     !cfg?.maintenance_mode &&
-    balance >= stake &&
+    balance >= wagerStake &&
+    !overMax &&
     stake >= minStake &&
     stake <= maxStake;
+
 
   const choose = (move: RpsMove) => {
     if (!canPlay) return;
@@ -268,18 +286,19 @@ function RpsPage() {
     clientSeed.current = newSeed();
   };
 
-  /** Bank the run: clears the rail and the running tally. */
+  /** Bank the run: the pot is already in the wallet, so this just clears the rail. */
   const collectRun = () => {
-    const banked = runNet;
+    setCollectedPot(wagerStake);
+    setCollected(runNet);
     setLadderHistory([]);
     setRunNet(0);
-    setCollected(banked);
     setResultOpen(true);
     setPhase("IDLE");
     setPlayerMove(null);
     setRound(null);
     clientSeed.current = newSeed();
   };
+
 
   /** Only a run that is currently in profit can be banked. */
   const canCollect = phase === "IDLE" && !busy && runNet > 0 && ladderHistory.length > 0;
@@ -350,9 +369,10 @@ function RpsPage() {
         onOpenChange={setResultOpen}
         tone="win"
         headline="Collected"
-        net={collected}
-        detail="Banked to your balance."
+        net={collectedPot}
+        detail={`Pot banked to your balance — profit +${fmt(collected)} pts.`}
       />
+
 
 
       <RpsVerifyDialog
@@ -370,17 +390,22 @@ function RpsPage() {
                 key={c}
                 value={c}
                 selected={stake === c}
-                disabled={busy || c > maxStake}
+                disabled={busy || c > maxStake || runWins > 0 || ladderHistory.length > 0}
                 onClick={() => setStake(Math.min(Math.max(c, minStake), maxStake))}
                 size={44}
               />
             ))}
+
             <div className="ml-auto shrink-0 text-right">
               <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                Stake
+                {runWins > 0 ? "Pot at risk" : "Stake"}
               </div>
-              <div className="font-display text-xs font-bold tabular-nums">{fmt(stake)} pts</div>
+              <div className="font-display text-xs font-bold tabular-nums">{fmt(wagerStake)} pts</div>
+              <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-[var(--color-neon)]">
+                Win pays {fmt(nextPayout)}
+              </div>
             </div>
+
           </div>
 
           <div className="flex items-center gap-2">
@@ -418,11 +443,16 @@ function RpsPage() {
 
 
 
-          {balance < stake && phase !== "SETTLED" && (
+          {overMax && phase !== "SETTLED" ? (
+            <p className="text-center text-[10px] uppercase tracking-[0.24em] text-amber-300">
+              Pot is at the table limit — collect to bank it
+            </p>
+          ) : balance < wagerStake && phase !== "SETTLED" ? (
             <p className="text-center text-[10px] uppercase tracking-[0.24em] text-amber-300">
               Not enough points for this stake
             </p>
-          )}
+          ) : null}
+
         </div>
       </div>
     </div>
