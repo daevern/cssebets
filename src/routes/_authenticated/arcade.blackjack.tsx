@@ -6,12 +6,9 @@ import { toast } from "sonner";
 import {
   Loader2,
   Spade,
-  Wallet,
   CopyPlus,
   Hand,
   SplitSquareHorizontal,
-  TrendingUp,
-  Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BlackjackTable, type BlackjackState } from "@/components/arcade/BlackjackTable";

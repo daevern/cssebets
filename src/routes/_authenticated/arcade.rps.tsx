@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { HandCoins, Loader2, Swords, TrendingUp, Trophy, Wallet } from "lucide-react";
+import { HandCoins, Loader2, Swords } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CasinoChip } from "@/components/arcade/CasinoChip";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
