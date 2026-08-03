@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { TreasureGrid } from "@/components/arcade/TreasureGrid";
 import { CasinoChip } from "@/components/arcade/CasinoChip";
 import { TreasureVerifyDialog } from "@/components/arcade/TreasureVerifyDialog";
+import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import {
   collectTreasureRound,
   getActiveTreasureRound,
@@ -64,6 +65,8 @@ function TreasurePage() {
   const [pendingTile, setPendingTile] = useState<number | null>(null);
   const [round, setRound] = useState<any>(null);
   const [verifyId, setVerifyId] = useState<string | null>(null);
+  const [resultOpen, setResultOpen] = useState(false);
+  const [resultRound, setResultRound] = useState<any>(null);
   const clientSeed = useRef(newSeed());
 
   // hydrate an in-flight round after refresh
@@ -144,7 +147,8 @@ function TreasurePage() {
       setPendingTile(null);
       if (res.tileType === "TRAP") {
         setTraps(res.traps ?? null);
-        toast.error(`Trap! You lost ${fmt(Number(res.round?.stake ?? 0))} pts.`);
+        setResultRound(res.round);
+        setResultOpen(true);
         refresh();
       }
     },
@@ -163,10 +167,8 @@ function TreasurePage() {
     onSuccess: (res) => {
       setRound(res.round);
       setTraps(res.traps ?? null);
-      const net = Number(res.round?.user_net ?? 0);
-      toast.success(
-        `Collected ${fmt(Number(res.round?.gross_return ?? 0))} pts · ${net >= 0 ? "+" : ""}${fmt(net)} net`,
-      );
+      setResultRound(res.round);
+      setResultOpen(true);
       refresh();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -279,6 +281,47 @@ function TreasurePage() {
             Verify round
           </button>
         </div>
+      )}
+
+      {resultRound && (
+        <ArcadeResultDialog
+          open={resultOpen}
+          onOpenChange={setResultOpen}
+          tone={
+            Number(resultRound.user_net ?? 0) > 0
+              ? "win"
+              : Number(resultRound.user_net ?? 0) < 0
+                ? "loss"
+                : "push"
+          }
+          headline={
+            resultRound.status === "WON"
+              ? "You collected"
+              : Number(resultRound.user_net ?? 0) === 0
+                ? "Stake returned"
+                : "Busted"
+          }
+          net={Number(resultRound.user_net ?? 0)}
+          detail={
+            <>
+              {resultRound.status === "WON"
+                ? `Cashed out ${fmt(Number(resultRound.gross_return ?? 0))} pts at ${Number(resultRound.current_multiplier ?? 1).toFixed(2)}× · ${resultRound.safe_reveals} safe tiles`
+                : `Trap hit after ${resultRound.safe_reveals} safe ${resultRound.safe_reveals === 1 ? "tile" : "tiles"} · staked ${fmt(Number(resultRound.stake ?? 0))} pts`}
+            </>
+          }
+          footer={
+            <button
+              type="button"
+              onClick={() => {
+                setResultOpen(false);
+                setVerifyId(resultRound.id);
+              }}
+              className="inline-flex h-9 items-center justify-center gap-1 rounded-full border border-[var(--color-surface-border)] px-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]"
+            >
+              <ShieldCheck className="h-3 w-3" /> Verify
+            </button>
+          }
+        />
       )}
 
       <TreasureVerifyDialog
