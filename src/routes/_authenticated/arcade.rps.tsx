@@ -113,6 +113,8 @@ function RpsPage() {
   const [resultOpen, setResultOpen] = useState(false);
   const [verifyId, setVerifyId] = useState<string | null>(null);
   const [commitmentVersion, setCommitmentVersion] = useState(0);
+  /** Net points banked in the current run, cleared on collect. */
+  const [runNet, setRunNet] = useState(0);
 
   const clientSeed = useRef(newSeed());
   /** The live commitment the player is about to play against. */
