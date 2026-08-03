@@ -11,7 +11,7 @@ import { HowItWorksDialog } from "@/components/arcade/HowItWorksDialog";
 import { VerifyDialog } from "@/components/arcade/VerifyDialog";
 import type { PlinkoGame, RiskMode, RowsCount } from "@/components/arcade/types";
 import { Minus, Plus, ShieldCheck } from "lucide-react";
-import { CasinoChip } from "@/components/arcade/CasinoChip";
+import { ChipRack } from "@/components/arcade/ChipRack";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/arcade/plinko")({
@@ -332,7 +332,7 @@ function PlinkoPage() {
               max={STAKE_MAX}
               value={stakePerBall}
               disabled={locked}
-              onSelect={(c) => setStakePerBall(c)}
+              onSelect={(c: number) => setStakePerBall(c)}
               size={44}
             />
             <div className="ml-auto shrink-0 text-right">

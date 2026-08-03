@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BlackjackTable, type BlackjackState } from "@/components/arcade/BlackjackTable";
-import { CasinoChip } from "@/components/arcade/CasinoChip";
+import { ChipRack } from "@/components/arcade/ChipRack";
 import { BlackjackVerifyDialog } from "@/components/arcade/BlackjackVerifyDialog";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import {

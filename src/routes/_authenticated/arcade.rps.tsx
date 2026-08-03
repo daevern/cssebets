@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { HandCoins, Loader2, Swords } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CasinoChip } from "@/components/arcade/CasinoChip";
+import { ChipRack } from "@/components/arcade/ChipRack";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import { RpsArena, type ArenaPhase } from "@/components/arcade/RpsArena";
 import { RpsVerifyDialog } from "@/components/arcade/RpsVerifyDialog";

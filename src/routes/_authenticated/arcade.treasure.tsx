@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TreasureGrid } from "@/components/arcade/TreasureGrid";
-import { CasinoChip } from "@/components/arcade/CasinoChip";
+import { ChipRack } from "@/components/arcade/ChipRack";
 import { TreasureVerifyDialog } from "@/components/arcade/TreasureVerifyDialog";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import {
