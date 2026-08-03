@@ -129,8 +129,9 @@ function DesktopBar({ balance, loading }: { balance?: number | null; loading?: b
 
       {/* Actions */}
       <div className="flex shrink-0 items-center gap-3">
-        <Link
-          to="/wallet"
+        <button
+          type="button"
+          onClick={() => setWalletOpen(true)}
           aria-label="Wallet"
           className="flex h-10 items-center gap-2 rounded-full border border-[var(--color-surface-border)]/70 bg-[var(--color-surface-2)]/40 px-3 py-1.5 text-[var(--ink)] transition-colors hover:border-[var(--neon)]/40"
         >
@@ -140,7 +141,8 @@ function DesktopBar({ balance, loading }: { balance?: number | null; loading?: b
           <span className="font-display text-[13px] font-bold tabular-nums">
             {loading ? "..." : (balance ?? 0).toLocaleString()}
           </span>
-        </Link>
+        </button>
+        <WalletCardSheet open={walletOpen} onOpenChange={setWalletOpen} />
 
         {isGuest && (
           <Link
