@@ -56,19 +56,16 @@ const newSeed = () => Math.random().toString(36).slice(2, 14);
 function Stat({
   label,
   value,
-  Icon,
   tone,
 }: {
   label: string;
   value: string;
-  Icon: any;
   tone?: "up" | "down";
 }) {
   return (
     <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">
       <div className="leading-tight">
-        <div className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-          <Icon className="h-3 w-3" />
+        <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
           {label}
         </div>
         <div
@@ -210,17 +207,15 @@ function BlackjackPage() {
   return (
     <div className="flex flex-col gap-1 md:gap-3">
       <div className="grid shrink-0 grid-cols-3 gap-1.5">
-        <Stat label="Balance" value={balance.toLocaleString()} Icon={Wallet} />
+        <Stat label="Balance" value={balance.toLocaleString()} />
         <Stat
           label="P/L today"
           value={`${todayNet > 0 ? "+" : ""}${todayNet.toLocaleString()}`}
-          Icon={TrendingUp}
           tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
         />
         <Stat
           label="W / L today"
           value={`${profileQ.data?.todayWins ?? 0} / ${profileQ.data?.todayLosses ?? 0}`}
-          Icon={Trophy}
         />
       </div>
 

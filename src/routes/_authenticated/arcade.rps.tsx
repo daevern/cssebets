@@ -50,20 +50,17 @@ const newSeed = () => Math.random().toString(36).slice(2, 16);
 const MIN_REVEAL_MS = 700;
 
 function Stat({
-  icon: Icon,
   label,
   value,
   tone,
 }: {
-  icon: any;
   label: string;
   value: string;
   tone?: "up" | "down";
 }) {
   return (
     <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">
-      <div className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-        <Icon className="h-3 w-3" />
+      <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
         {label}
       </div>
       <div
@@ -310,15 +307,13 @@ function RpsPage() {
   return (
     <div className="flex flex-col gap-2 md:gap-3">
       <div className="grid grid-cols-3 gap-1.5">
-        <Stat icon={Wallet} label="Balance" value={fmt(balance)} />
+        <Stat label="Balance" value={fmt(balance)} />
         <Stat
-          icon={TrendingUp}
           label="P/L today"
           value={`${todayNet > 0 ? "+" : ""}${fmt(todayNet)}`}
           tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
         />
         <Stat
-          icon={Trophy}
           label="W / D / L"
           value={`${profileQ.data?.todayWins ?? 0}/${profileQ.data?.todayDraws ?? 0}/${profileQ.data?.todayLosses ?? 0}`}
         />

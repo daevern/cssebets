@@ -1,10 +1,8 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Bell, User, Home, Activity, Coins, Headphones, Gamepad2 } from "lucide-react";
+import { Bell, User, Home, Activity, Headphones, Gamepad2 } from "lucide-react";
 
 import { CsseLogo } from "@/components/brand/CsseMark";
 import { useAuth } from "@/hooks/use-auth";
-import { TokenChip } from "@/components/engagement/TokenVault";
-import { WalletChip } from "@/components/wallet/WalletCard";
 import { CategoryRail } from "@/components/nav/CategoryRail";
 import { HamburgerMenu } from "@/components/nav/HamburgerMenu";
 
@@ -13,7 +11,6 @@ const DESKTOP_NAV = [
   { to: "/dashboard", label: "Home", icon: Home, exact: true },
   { to: "/my-predictions", label: "Picks", icon: Activity, exact: false },
   { to: "/arcade", label: "Arcade", icon: Gamepad2, exact: false },
-  { to: "/payout", label: "Payout", icon: Coins, exact: false },
   { to: "/support", label: "Support", icon: Headphones, exact: false },
 ] as const;
 
@@ -110,7 +107,14 @@ function DesktopBar({ balance, loading }: { balance?: number | null; loading?: b
                   : "text-[var(--ink-muted)] hover:text-[var(--ink)]"
               }`}
             >
-              <Icon className={`h-4 w-4 ${active ? "text-[var(--neon)] stroke-[2.4]" : ""}`} />
+              {it.to === "/arcade" ? (
+                <span className="relative flex h-4 w-4 items-center justify-center">
+                  <span className="arcade-icon-glow" aria-hidden />
+                  <Icon className={`h-4 w-4 ${active ? "text-[var(--neon)] stroke-[2.4]" : ""}`} />
+                </span>
+              ) : (
+                <Icon className={`h-4 w-4 ${active ? "text-[var(--neon)] stroke-[2.4]" : ""}`} />
+              )}
               <span>{it.label}</span>
               {active && (
                 <span
@@ -125,11 +129,6 @@ function DesktopBar({ balance, loading }: { balance?: number | null; loading?: b
 
       {/* Actions */}
       <div className="flex shrink-0 items-center gap-3">
-        {balance != null && <WalletChip balance={balance} loading={loading} />}
-        {balance != null && <TokenChip />}
-
-        <span aria-hidden className="h-6 w-px bg-[var(--color-surface-border)]/70" />
-
         <Link
           to="/notifications"
           aria-label="Notifications"
