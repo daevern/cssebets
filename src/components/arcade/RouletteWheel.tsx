@@ -175,7 +175,7 @@ export function RouletteWheel({
   const cy = 100;
 
   return (
-    <div className={cn("relative mx-auto aspect-square w-full max-w-[320px]", className)}>
+    <div className={cn("relative mx-auto aspect-square w-full max-w-[420px]", className)}>
       <svg viewBox="0 0 200 200" className="h-full w-full">
         <defs>
         </defs>

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Bell, User, Home, Activity, Headphones, Gamepad2 } from "lucide-react";
+import { Wallet, Home, Activity, Headphones, Gamepad2 } from "lucide-react";
 
 import { CsseLogo } from "@/components/brand/CsseMark";
 import { useAuth } from "@/hooks/use-auth";
@@ -130,18 +130,16 @@ function DesktopBar({ balance, loading }: { balance?: number | null; loading?: b
       {/* Actions */}
       <div className="flex shrink-0 items-center gap-3">
         <Link
-          to="/notifications"
-          aria-label="Notifications"
-          className="grid h-10 w-10 place-items-center rounded-full border border-[var(--color-surface-border)]/70 text-[var(--ink-muted)] transition-colors hover:border-[var(--neon)]/40 hover:text-[var(--ink)]"
+          to="/wallet"
+          aria-label="Wallet"
+          className="flex h-10 items-center gap-2 rounded-full border border-[var(--color-surface-border)]/70 bg-[var(--color-surface-2)]/40 px-3 py-1.5 text-[var(--ink)] transition-colors hover:border-[var(--neon)]/40"
         >
-          <Bell className="h-[18px] w-[18px]" />
-        </Link>
-        <Link
-          to="/settings"
-          aria-label="Profile"
-          className="grid h-10 w-10 place-items-center rounded-full border border-[var(--color-surface-border)]/70 text-[var(--ink-muted)] transition-colors hover:border-[var(--neon)]/40 hover:text-[var(--ink)]"
-        >
-          <User className="h-[18px] w-[18px]" />
+          <div className="grid h-5 w-5 place-items-center rounded-full bg-[var(--color-neon)]/10 text-[var(--color-neon)]">
+            <Wallet className="h-3 w-3" />
+          </div>
+          <span className="font-display text-[13px] font-bold tabular-nums">
+            {loading ? "..." : (balance ?? 0).toLocaleString()}
+          </span>
         </Link>
 
         {isGuest && (
