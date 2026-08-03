@@ -3,7 +3,8 @@ import { Split, Info } from "lucide-react";
 import {
   BOARD_GRID,
   COLUMNS,
-  FOUR_GROUPS,
+  DOZENS,
+  SIX_LINES,
   STREETS,
   LOW,
   HIGH,
@@ -121,12 +122,12 @@ export function RouletteBoard({
     icon?: "red" | "black";
     ink?: string;
   }[] = [
-    { key: "low", label: "1–6", pockets: LOW },
+    { key: "low", label: "1–18", pockets: LOW },
     { key: "even", label: "Even", pockets: EVEN },
     { key: "red", label: "Red", pockets: RED_POCKETS, icon: "red", ink: RED_INK },
     { key: "black", label: "Black", pockets: BLACK_POCKETS, icon: "black" },
     { key: "odd", label: "Odd", pockets: ODD },
-    { key: "high", label: "7–12", pockets: HIGH },
+    { key: "high", label: "19–36", pockets: HIGH },
   ];
 
   return (
@@ -178,7 +179,7 @@ export function RouletteBoard({
           <Stack amount={amt("straight:0")} />
         </button>
 
-        <div className="flex-1 space-y-1.5">
+        <div className="flex-1 space-y-1">
           {BOARD_GRID.map((row, ri) => (
             <div key={ri} className="flex gap-1">
               {row.map((n) => {
@@ -190,7 +191,7 @@ export function RouletteBoard({
                     type="button"
                     disabled={disabled}
                     onClick={() => handleNumber(n)}
-                    className={cn(cellBase, "h-12 flex-1 text-xl")}
+                    className={cn(cellBase, "h-10 flex-1 text-base")}
                     style={{
                       background: colour === "red" ? RED_CELL_BG : BLACK_CELL_BG,
                       borderColor: colour === "red" ? RED_CELL_BORDER : BLACK_CELL_BORDER,
@@ -213,11 +214,11 @@ export function RouletteBoard({
                 }
                 className={cn(
                   cellBase,
-                  "h-12 w-14 shrink-0 text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]",
+                  "h-10 w-14 shrink-0 text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]",
                 )}
                 style={{ background: CELL_BG, borderColor: FELT_BORDER }}
               >
-                4 to 1
+                11 to 1
                 <Stack amount={amt(`street:${STREETS[ri].join("-")}`)} />
               </button>
             </div>
@@ -276,15 +277,15 @@ export function RouletteBoard({
         ))}
       </div>
 
-      {/* Neighbor bets */}
-      <SectionLabel>Neighbor bets</SectionLabel>
-      <div className="grid grid-cols-4 gap-1">
-        {FOUR_GROUPS.map((g) => (
+      {/* Dozens */}
+      <SectionLabel>Dozens</SectionLabel>
+      <div className="grid grid-cols-3 gap-1">
+        {DOZENS.map((g) => (
           <button
             key={g.label}
             type="button"
             disabled={disabled}
-            onClick={() => onPlace("four_group", g.label, g.pockets)}
+            onClick={() => onPlace("dozen", g.label, g.pockets)}
             className={cn(
               cellBase,
               "h-12 flex-col rounded-[3px] text-[9px] uppercase tracking-[0.18em] text-[var(--color-ink)]",
@@ -293,12 +294,37 @@ export function RouletteBoard({
           >
             <span>{g.label}</span>
             <span className="text-[8px] tracking-[0.14em] text-[var(--color-ink-muted)]">
-              {g.pockets.length} numbers
+              {returnMultiplier(g.pockets.length).toFixed(2)}×
             </span>
-            <Stack amount={amt(`four_group:${g.pockets.join("-")}`)} />
+            <Stack amount={amt(`dozen:${[...g.pockets].sort((a, b) => a - b).join("-")}`)} />
           </button>
         ))}
       </div>
+
+      {/* Six lines */}
+      <SectionLabel>Six lines</SectionLabel>
+      <div className="grid grid-cols-3 gap-1 sm:grid-cols-6">
+        {SIX_LINES.map((g) => (
+          <button
+            key={g.label}
+            type="button"
+            disabled={disabled}
+            onClick={() => onPlace("six_line", `Line ${g.label}`, g.pockets)}
+            className={cn(
+              cellBase,
+              "h-12 flex-col rounded-[3px] text-[9px] uppercase tracking-[0.18em] text-[var(--color-ink)]",
+            )}
+            style={{ background: CELL_BG, borderColor: FELT_BORDER }}
+          >
+            <span>{g.label}</span>
+            <span className="text-[8px] tracking-[0.14em] text-[var(--color-ink-muted)]">
+              {returnMultiplier(g.pockets.length).toFixed(2)}×
+            </span>
+            <Stack amount={amt(`six_line:${[...g.pockets].sort((a, b) => a - b).join("-")}`)} />
+          </button>
+        ))}
+      </div>
+
 
       {/* Special bets */}
       <SectionLabel>Special bets</SectionLabel>
@@ -350,9 +376,9 @@ export function RouletteBoard({
           </span>
         </div>
         <p className="text-right text-[9px] uppercase leading-relaxed tracking-[0.16em] text-[var(--color-ink-muted)]">
-          Covers 12 numbers
+          Covers 36 numbers + 0
           <br />
-          Total return = 12 ÷ pockets covered
+          Total return = 36 ÷ pockets covered
         </p>
         <Info className="h-4 w-4 shrink-0 text-[var(--color-ink-muted)]" aria-hidden />
       </div>

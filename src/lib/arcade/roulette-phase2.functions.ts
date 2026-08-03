@@ -77,7 +77,7 @@ export const getRouletteStats = createServerFn({ method: "GET" })
     const losses = spins.filter((s) => s.status === "LOSS").length;
     const pushes = spins.filter((s) => s.status === "PUSH").length;
 
-    const pocketCounts = Array.from({ length: 13 }, (_, n) => ({
+    const pocketCounts = Array.from({ length: 37 }, (_, n) => ({
       pocket: n,
       count: spins.filter((s) => Number(s.winning_pocket) === n).length,
     }));

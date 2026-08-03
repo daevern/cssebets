@@ -155,19 +155,19 @@ export function RouletteWheel({
             const colour = pocketColour(n);
             const isWinner = settledPocket === n;
             const mid = start + SEG / 2;
-            const label = polar(cx, cy, 68, mid);
+            const label = polar(cx, cy, 76, mid);
             return (
               <g key={n}>
                 <path
-                  d={sector(cx, cy, 88, 44, start, end)}
+                  d={sector(cx, cy, 88, 56, start, end)}
                   fill={COLOUR_FILL[colour]}
                   stroke="rgba(0,0,0,0.5)"
-                  strokeWidth="0.6"
+                  strokeWidth="0.4"
                   opacity={settledPocket != null && !isWinner ? 0.55 : 1}
                 />
                 {isWinner && (
                   <path
-                    d={sector(cx, cy, 88, 44, start, end)}
+                    d={sector(cx, cy, 88, 56, start, end)}
                     fill="none"
                     stroke="var(--color-neon)"
                     strokeWidth="2"
@@ -179,7 +179,7 @@ export function RouletteWheel({
                   textAnchor="middle"
                   dominantBaseline="central"
                   transform={`rotate(${mid} ${label.x} ${label.y})`}
-                  fontSize="11"
+                  fontSize="6.5"
                   fontWeight="700"
                   fill={colour === "green" ? "#06110a" : "#f4f7f5"}
                 >
@@ -242,7 +242,7 @@ export function RouletteWheel({
                 <>
                   {" "}
                   · {settledPocket % 2 === 0 ? "Even" : "Odd"} ·{" "}
-                  {settledPocket <= 6 ? "Low" : "High"}
+                  {settledPocket <= 18 ? "Low" : "High"}
                 </>
               )}
             </div>

@@ -73,7 +73,7 @@ export const HOW_TO_PLAY: Record<
     cashout: "There is nothing to cash out mid-round — every drop settles instantly and the payout hits your wallet as soon as the ball lands.",
   },
   roulette: {
-    title: "How to play Mini Roulette",
+    title: "How to play Roulette",
     tagline: "Place chips on the layout, spin the wheel, collect on any bet the ball covers.",
     steps: [
       "Choose your chip size, then tap numbers or outside areas to place bets.",

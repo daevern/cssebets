@@ -17,12 +17,12 @@ export const Route = createFileRoute("/_authenticated/arcade/")({
       {
         name: "description",
         content:
-          "Pick a game: Plinko drops, Mini Roulette spins or Treasure Grid runs. Provably fair, instant payouts.",
+          "Pick a game: Plinko drops, Roulette spins or Treasure Grid runs. Provably fair, instant payouts.",
       },
       { property: "og:title", content: "Arcade Lobby — cssebets" },
       {
         property: "og:description",
-        content: "Pick a game: Plinko, Mini Roulette or Treasure Grid. Provably fair, instant payouts.",
+        content: "Pick a game: Plinko, Roulette or Treasure Grid. Provably fair, instant payouts.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -48,7 +48,7 @@ const GAMES = [
   {
     key: "roulette" as const,
     to: "/arcade/roulette",
-    label: "Mini Roulette",
+    label: "Roulette",
     blurb: "Stack chips across the layout, one pocket decides it all.",
     tag: "12 pockets",
     TagIcon: Flame,
