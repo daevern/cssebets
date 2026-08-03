@@ -83,7 +83,7 @@ export const revealTreasureSeed = createServerFn({ method: "GET" })
       verificationId: (round as any).verification_id as string,
       configVersion: Number((round as any).config_version ?? 0),
       rtpVersion: Number((round as any).rtp_version ?? 0),
-      trapIndices: ((tilesRes.data?.trap_indices ?? []) as number[]).map(Number),
+      trapIndices: (((tilesRes as any).data ?? []) as any[]).map((t) => Number(t.tile_index)),
       actions: (actionsRes.data ?? []) as any[],
     };
   });
