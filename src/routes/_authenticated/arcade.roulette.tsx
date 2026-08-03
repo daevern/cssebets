@@ -316,15 +316,18 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[minmax(0,256px)_minmax(0,1fr)]">
-        <div className="relative mx-auto w-full max-w-[256px]">
-          <RouletteWheel
-            winningPocket={winningPocket}
-            spinToken={spinToken}
-            spinning={spinning}
-            reducedMotion={reduced}
-            onSettled={onSettled}
-          />
+      <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+        {/* Wheel: larger and scrollable on narrow phones so the 50% larger layout never breaks */}
+        <div className="overflow-x-auto snap-x snap-center [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:overflow-visible">
+          <div className="relative mx-auto w-full min-w-[360px] max-w-[420px]">
+            <RouletteWheel
+              winningPocket={winningPocket}
+              spinToken={spinToken}
+              spinning={spinning}
+              reducedMotion={reduced}
+              onSettled={onSettled}
+            />
+          </div>
         </div>
 
         <div className="min-w-0 space-y-2">
