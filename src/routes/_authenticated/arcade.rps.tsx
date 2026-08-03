@@ -173,7 +173,6 @@ function RpsPage() {
       setRound(r);
       setRunNet((n) => n + Number(r?.userNet ?? 0));
       setPhase("SETTLED");
-      setResultOpen(true);
       commitment.current = null;
       idemKey.current = null;
       refresh();
