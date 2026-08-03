@@ -369,9 +369,10 @@ function RpsPage() {
         onOpenChange={setResultOpen}
         tone="win"
         headline="Collected"
-        net={collected}
-        detail="Banked to your balance."
+        net={collectedPot}
+        detail={`Pot banked to your balance — profit +${fmt(collected)} pts.`}
       />
+
 
 
       <RpsVerifyDialog
