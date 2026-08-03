@@ -346,16 +346,14 @@ function BlackjackPage() {
         </div>
 
         <div className="flex shrink-0 items-center justify-between gap-1 overflow-x-auto overflow-y-visible px-1.5 pb-1 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {chips.slice(0, 6).map((c) => (
-            <CasinoChip
-              key={c}
-              value={c}
-              selected={stake === c}
-              disabled={inPlay || busy || c > maxStake}
-              onClick={() => clampStake(c)}
-              size={36}
-            />
-          ))}
+          <ChipRack
+            values={chips}
+            max={maxStake}
+            value={stake}
+            disabled={inPlay || busy}
+            onSelect={(c) => clampStake(c)}
+            size={36}
+          />
         </div>
 
         {!inPlay ? (
