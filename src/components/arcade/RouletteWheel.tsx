@@ -242,7 +242,7 @@ export function RouletteWheel({
                 <>
                   {" "}
                   · {settledPocket % 2 === 0 ? "Even" : "Odd"} ·{" "}
-                  {settledPocket <= 6 ? "Low" : "High"}
+                  {settledPocket <= 18 ? "Low" : "High"}
                 </>
               )}
             </div>
