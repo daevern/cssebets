@@ -179,7 +179,7 @@ export function RouletteBoard({
           <Stack amount={amt("straight:0")} />
         </button>
 
-        <div className="flex-1 space-y-1.5">
+        <div className="flex-1 space-y-1">
           {BOARD_GRID.map((row, ri) => (
             <div key={ri} className="flex gap-1">
               {row.map((n) => {
@@ -191,7 +191,7 @@ export function RouletteBoard({
                     type="button"
                     disabled={disabled}
                     onClick={() => handleNumber(n)}
-                    className={cn(cellBase, "h-12 flex-1 text-xl")}
+                    className={cn(cellBase, "h-10 flex-1 text-base")}
                     style={{
                       background: colour === "red" ? RED_CELL_BG : BLACK_CELL_BG,
                       borderColor: colour === "red" ? RED_CELL_BORDER : BLACK_CELL_BORDER,
@@ -214,11 +214,11 @@ export function RouletteBoard({
                 }
                 className={cn(
                   cellBase,
-                  "h-12 w-14 shrink-0 text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]",
+                  "h-10 w-14 shrink-0 text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]",
                 )}
                 style={{ background: CELL_BG, borderColor: FELT_BORDER }}
               >
-                4 to 1
+                11 to 1
                 <Stack amount={amt(`street:${STREETS[ri].join("-")}`)} />
               </button>
             </div>
