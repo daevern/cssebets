@@ -160,7 +160,7 @@ function UfcPage() {
 
   if (!data?.event) {
     return (
-      <div className="flex flex-col gap-8 px-4 pt-5 pb-24 text-[var(--ink)]">
+      <div className="flex flex-col gap-8 px-4 pt-5 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-6 text-[var(--ink)]">
         <header>
           <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight text-[var(--ink)] md:text-4xl">
             UFC <span className="text-[var(--neon)]">Fight Night</span>
@@ -173,7 +173,7 @@ function UfcPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 px-4 pt-5 pb-24 text-[var(--ink)]">
+    <div className="flex flex-col gap-8 px-4 pt-5 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-6 text-[var(--ink)]">
       <header className="space-y-3">
         <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight text-[var(--ink)] md:text-4xl">
           {data.event.name}
