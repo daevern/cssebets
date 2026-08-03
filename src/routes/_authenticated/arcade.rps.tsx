@@ -9,7 +9,7 @@ import { CasinoChip } from "@/components/arcade/CasinoChip";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import { RpsArena, type ArenaPhase } from "@/components/arcade/RpsArena";
 import { RpsVerifyDialog } from "@/components/arcade/RpsVerifyDialog";
-import { RPS_MOVES, type RpsMove } from "@/lib/arcade/rps-math";
+import { type RpsMove } from "@/lib/arcade/rps-math";
 import {
   getRpsConfig,
   getRpsProfile,
