@@ -19,19 +19,18 @@ import { cn } from "@/lib/utils";
 
 export type PlaceBet = (betType: BetTypeKey, label: string, pockets: number[]) => void;
 
-/* Felt table palette — a physical casino artifact, kept local to this board. */
-const FELT_BG = "#0a1512";
-const FELT_BORDER = "rgba(255,255,255,0.07)";
-const CELL_BG = "rgba(255,255,255,0.05)";
+/* Modern minimalistic 2D felt — flat fills, hairline borders, no gradients. */
+const FELT_BG = "#0b1310";
+const FELT_BORDER = "rgba(255,255,255,0.08)";
+const CELL_BG = "rgba(255,255,255,0.035)";
 const RED_INK = "#ef5061";
-/* Flat 2D palette — solid fills, no gradients or shadows. */
-const RED_CELL_BG = "rgba(239,80,97,0.14)";
-const RED_CELL_BORDER = "rgba(239,80,97,0.35)";
-const BLACK_CELL_BG = "rgba(255,255,255,0.05)";
+const RED_CELL_BG = "rgba(239,80,97,0.16)";
+const RED_CELL_BORDER = "rgba(239,80,97,0.32)";
+const BLACK_CELL_BG = "rgba(255,255,255,0.045)";
 const BLACK_CELL_BORDER = "rgba(255,255,255,0.10)";
 
 const cellBase =
-  "relative grid place-items-center rounded-[3px] border font-display font-bold tabular-nums transition-colors disabled:opacity-40";
+  "relative grid place-items-center rounded-[4px] border font-display font-bold tabular-nums transition-colors disabled:opacity-40";
 
 function Stack({ amount }: { amount?: number }) {
   if (!amount) return null;
@@ -46,8 +45,8 @@ function Diamond({ tone }: { tone: "red" | "black" }) {
   return (
     <span
       aria-hidden
-      className="inline-block h-3 w-3 rotate-45 rounded-[2px]"
-      style={{ background: tone === "red" ? RED_INK : "rgba(255,255,255,0.75)" }}
+      className="inline-block h-2.5 w-2.5 rotate-45 rounded-[1px]"
+      style={{ background: tone === "red" ? RED_INK : "rgba(255,255,255,0.8)" }}
     />
   );
 }
@@ -106,17 +105,100 @@ export function RouletteBoard({
     { key: "high", label: "19–36", pockets: HIGH },
   ];
 
-  /* Classic horizontal felt: 3 rows × 12 columns, zero on the left. */
+  const NumberCell = ({ n, className }: { n: number; className?: string }) => {
+    const colour = pocketColour(n);
+    const selected = splitFirst === n;
+    return (
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => handleNumber(n)}
+        className={cn(cellBase, "text-[12px]", className)}
+        style={{
+          background: colour === "red" ? RED_CELL_BG : BLACK_CELL_BG,
+          borderColor: colour === "red" ? RED_CELL_BORDER : BLACK_CELL_BORDER,
+          color: colour === "red" ? RED_INK : "var(--color-ink)",
+        }}
+      >
+        <span>{n}</span>
+        {selected && (
+          <span className="pointer-events-none absolute inset-0 rounded-[4px] ring-2 ring-[var(--color-neon)]" />
+        )}
+        <Stack amount={amt(`straight:${n}`)} />
+      </button>
+    );
+  };
+
+  const ZeroCell = ({ className }: { className?: string }) => (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => handleNumber(0)}
+      className={cn(cellBase, "border-[var(--color-neon)]/50 text-[13px] text-[var(--color-neon)]", className)}
+      style={{ background: "rgba(60, 220, 150, 0.10)" }}
+    >
+      0
+      <Stack amount={amt("straight:0")} />
+    </button>
+  );
+
+  const OutsideRow = () => (
+    <div className="grid grid-cols-3 gap-[3px] sm:grid-cols-6">
+      {outside.map((o) => (
+        <button
+          key={o.key}
+          type="button"
+          disabled={disabled}
+          onClick={() => onPlace(o.key, o.label, o.pockets)}
+          className={cn(cellBase, "h-9 gap-1 text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]")}
+          style={{
+            background:
+              o.icon === "red" ? RED_CELL_BG : o.icon === "black" ? BLACK_CELL_BG : CELL_BG,
+            borderColor:
+              o.icon === "red"
+                ? RED_CELL_BORDER
+                : o.icon === "black"
+                  ? BLACK_CELL_BORDER
+                  : FELT_BORDER,
+            color: o.ink ?? undefined,
+          }}
+        >
+          {o.icon ? <Diamond tone={o.icon} /> : <span>{o.label}</span>}
+          <Stack amount={amt(key(o.key, o.pockets))} />
+        </button>
+      ))}
+    </div>
+  );
+
+  const SixLines = () => (
+    <div className="grid grid-cols-3 gap-[3px] sm:grid-cols-6">
+      {SIX_LINES.map((g) => (
+        <button
+          key={g.label}
+          type="button"
+          disabled={disabled}
+          onClick={() => onPlace("six_line", `Line ${g.label}`, g.pockets)}
+          className={cn(cellBase, "h-7 text-[9px] tracking-tight text-[var(--color-ink-muted)]")}
+          style={{ background: CELL_BG, borderColor: FELT_BORDER }}
+        >
+          {g.label}
+          <Stack amount={amt(key("six_line", g.pockets))} />
+        </button>
+      ))}
+    </div>
+  );
+
+  /* Horizontal (desktop) — 3 rows × 12 columns, zero on the left. */
   const numberRows = [2, 1, 0].map((offset) =>
     Array.from({ length: 12 }, (_, c) => c * 3 + offset + 1),
   );
 
   return (
     <div
-      className="rounded-[6px] border p-1.5"
+      className="rounded-[10px] border p-2"
       style={{ background: FELT_BG, borderColor: FELT_BORDER }}
     >
-      <div className="mb-1 flex items-center justify-between gap-2">
+      <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-[8px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
           Table
         </span>
@@ -127,7 +209,7 @@ export function RouletteBoard({
             setSplitFirst(null);
           }}
           className={cn(
-            "inline-flex items-center gap-1 rounded-[3px] border px-2 py-1 text-[8px] font-bold uppercase tracking-[0.18em] transition-colors",
+            "inline-flex items-center gap-1 rounded-[4px] border px-2 py-1 text-[8px] font-bold uppercase tracking-[0.18em] transition-colors",
             splitMode
               ? "border-[var(--color-neon)] bg-[var(--color-neon)]/12 text-[var(--color-neon)]"
               : "text-[var(--color-ink-muted)]",
@@ -143,150 +225,148 @@ export function RouletteBoard({
         </button>
       </div>
 
-      <div className="grid grid-cols-[18px_repeat(12,minmax(0,1fr))_22px] gap-[2px]">
-        {/* Streets — one per vertical trio */}
-        <div />
-        {STREETS.map((s) => (
-          <button
-            key={`street-${s[0]}`}
-            type="button"
-            disabled={disabled}
-            onClick={() => onPlace("street", `Street ${s[0]}–${s[2]}`, s)}
-            className={cn(cellBase, "h-4 text-[7px] tracking-tight text-[var(--color-ink-muted)]")}
-            style={{ background: CELL_BG, borderColor: FELT_BORDER }}
-            aria-label={`Street ${s[0]} to ${s[2]}`}
-          >
-            {s[0]}
-            <Stack amount={amt(key("street", s))} />
-          </button>
-        ))}
-        <div />
+      {/* ── Mobile: vertical table (3 columns × 12 rows) ── */}
+      <div className="space-y-[3px] sm:hidden">
+        <div className="grid grid-cols-[22px_repeat(3,minmax(0,1fr))_30px] gap-[3px]">
+          <div />
+          <ZeroCell className="col-span-3 h-9" />
+          <div />
 
-        {/* Zero spans the three number rows */}
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => handleNumber(0)}
-          className={cn(
-            cellBase,
-            "row-span-3 border-[var(--color-neon)]/60 text-sm text-[var(--color-neon)]",
-          )}
-          style={{ background: "rgba(60, 220, 150, 0.10)" }}
-        >
-          0
-          <Stack amount={amt("straight:0")} />
-        </button>
+          {Array.from({ length: 12 }, (_, r) => {
+            const street = STREETS[r];
+            const dozenIdx = Math.floor(r / 4);
+            return (
+              <Fragment key={`vrow-${r}`}>
+                <button
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onPlace("street", `Street ${street[0]}–${street[2]}`, street)}
+                  className={cn(cellBase, "h-9 text-[8px] text-[var(--color-ink-muted)]")}
+                  style={{ background: CELL_BG, borderColor: FELT_BORDER }}
+                  aria-label={`Street ${street[0]} to ${street[2]}`}
+                >
+                  {street[0]}
+                  <Stack amount={amt(key("street", street))} />
+                </button>
 
-        {numberRows.map((row, ri) => {
-          const col = COLUMNS[2 - ri];
-          return (
-            <Fragment key={`row-${ri}`}>
-              {row.map((n) => {
-                const colour = pocketColour(n);
-                const selected = splitFirst === n;
-                return (
+                {street.map((n) => (
+                  <NumberCell key={n} n={n} className="h-9" />
+                ))}
+
+                {r % 4 === 0 && (
                   <button
-                    key={n}
                     type="button"
                     disabled={disabled}
-                    onClick={() => handleNumber(n)}
-                    className={cn(cellBase, "h-7 text-[11px]")}
+                    onClick={() =>
+                      onPlace("dozen", DOZENS[dozenIdx].label, DOZENS[dozenIdx].pockets)
+                    }
+                    className={cn(
+                      cellBase,
+                      "row-span-4 text-[9px] uppercase tracking-[0.2em] text-[var(--color-ink)]",
+                    )}
                     style={{
-                      background: colour === "red" ? RED_CELL_BG : BLACK_CELL_BG,
-                      borderColor: colour === "red" ? RED_CELL_BORDER : BLACK_CELL_BORDER,
-                      color: colour === "red" ? RED_INK : "var(--color-ink)",
+                      background: CELL_BG,
+                      borderColor: FELT_BORDER,
+                      writingMode: "vertical-rl",
                     }}
                   >
-                    <span className={cn(selected && "underline underline-offset-2")}>{n}</span>
-                    {selected && (
-                      <span className="pointer-events-none absolute inset-0 rounded-[3px] ring-2 ring-[var(--color-neon)]" />
-                    )}
-                    <Stack amount={amt(`straight:${n}`)} />
+                    {DOZENS[dozenIdx].label}
+                    <Stack amount={amt(key("dozen", DOZENS[dozenIdx].pockets))} />
                   </button>
-                );
-              })}
-              <button
-                key={`col-${col.label}`}
-                type="button"
-                disabled={disabled}
-                onClick={() => onPlace("column", col.label, col.pockets)}
-                className={cn(cellBase, "h-7 text-[7px] leading-tight text-[var(--color-ink-muted)]")}
-                style={{ background: CELL_BG, borderColor: FELT_BORDER }}
-                aria-label={`${col.label} — 2 to 1`}
-              >
-                2:1
-                <Stack amount={amt(key("column", col.pockets))} />
-              </button>
-            </Fragment>
-          );
-        })}
+                )}
+              </Fragment>
+            );
+          })}
 
-        {/* Dozens */}
-        <div />
-        {DOZENS.map((g) => (
-          <button
-            key={g.label}
-            type="button"
-            disabled={disabled}
-            onClick={() => onPlace("dozen", g.label, g.pockets)}
-            className={cn(
-              cellBase,
-              "col-span-4 h-7 text-[9px] uppercase tracking-[0.18em] text-[var(--color-ink)]",
-            )}
-            style={{ background: CELL_BG, borderColor: FELT_BORDER }}
-          >
-            {g.label}
-            <Stack amount={amt(key("dozen", g.pockets))} />
-          </button>
-        ))}
-        <div />
+          <div />
+          {COLUMNS.map((col) => (
+            <button
+              key={`vcol-${col.label}`}
+              type="button"
+              disabled={disabled}
+              onClick={() => onPlace("column", col.label, col.pockets)}
+              className={cn(cellBase, "h-8 text-[9px] text-[var(--color-ink-muted)]")}
+              style={{ background: CELL_BG, borderColor: FELT_BORDER }}
+              aria-label={`${col.label} — 2 to 1`}
+            >
+              2:1
+              <Stack amount={amt(key("column", col.pockets))} />
+            </button>
+          ))}
+          <div />
+        </div>
 
-        {/* Outside even-money bets */}
-        <div />
-        {outside.map((o) => (
-          <button
-            key={o.key}
-            type="button"
-            disabled={disabled}
-            onClick={() => onPlace(o.key, o.label, o.pockets)}
-            className={cn(
-              cellBase,
-              "col-span-2 h-7 gap-1 text-[9px] uppercase tracking-[0.16em] text-[var(--color-ink-muted)]",
-            )}
-            style={{
-              background:
-                o.icon === "red" ? RED_CELL_BG : o.icon === "black" ? BLACK_CELL_BG : CELL_BG,
-              borderColor:
-                o.icon === "red"
-                  ? RED_CELL_BORDER
-                  : o.icon === "black"
-                    ? BLACK_CELL_BORDER
-                    : FELT_BORDER,
-              color: o.ink ?? undefined,
-            }}
-          >
-            {o.icon ? <Diamond tone={o.icon} /> : <span>{o.label}</span>}
-            <Stack amount={amt(key(o.key, o.pockets))} />
-          </button>
-        ))}
-        <div />
+        <OutsideRow />
+        <SixLines />
       </div>
 
-      {/* Six lines */}
-      <div className="mt-[2px] grid grid-cols-6 gap-[2px]">
-        {SIX_LINES.map((g) => (
-          <button
-            key={g.label}
-            type="button"
-            disabled={disabled}
-            onClick={() => onPlace("six_line", `Line ${g.label}`, g.pockets)}
-            className={cn(cellBase, "h-6 text-[8px] tracking-tight text-[var(--color-ink-muted)]")}
-            style={{ background: CELL_BG, borderColor: FELT_BORDER }}
-          >
-            {g.label}
-            <Stack amount={amt(key("six_line", g.pockets))} />
-          </button>
-        ))}
+      {/* ── Desktop: classic horizontal table ── */}
+      <div className="hidden space-y-[3px] sm:block">
+        <div className="grid grid-cols-[20px_repeat(12,minmax(0,1fr))_26px] gap-[3px]">
+          <div />
+          {STREETS.map((s) => (
+            <button
+              key={`street-${s[0]}`}
+              type="button"
+              disabled={disabled}
+              onClick={() => onPlace("street", `Street ${s[0]}–${s[2]}`, s)}
+              className={cn(cellBase, "h-5 text-[7px] tracking-tight text-[var(--color-ink-muted)]")}
+              style={{ background: CELL_BG, borderColor: FELT_BORDER }}
+              aria-label={`Street ${s[0]} to ${s[2]}`}
+            >
+              {s[0]}
+              <Stack amount={amt(key("street", s))} />
+            </button>
+          ))}
+          <div />
+
+          <ZeroCell className="row-span-3" />
+
+          {numberRows.map((row, ri) => {
+            const col = COLUMNS[2 - ri];
+            return (
+              <Fragment key={`row-${ri}`}>
+                {row.map((n) => (
+                  <NumberCell key={n} n={n} className="h-8" />
+                ))}
+                <button
+                  key={`col-${col.label}`}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onPlace("column", col.label, col.pockets)}
+                  className={cn(cellBase, "h-8 text-[8px] text-[var(--color-ink-muted)]")}
+                  style={{ background: CELL_BG, borderColor: FELT_BORDER }}
+                  aria-label={`${col.label} — 2 to 1`}
+                >
+                  2:1
+                  <Stack amount={amt(key("column", col.pockets))} />
+                </button>
+              </Fragment>
+            );
+          })}
+
+          <div />
+          {DOZENS.map((g) => (
+            <button
+              key={g.label}
+              type="button"
+              disabled={disabled}
+              onClick={() => onPlace("dozen", g.label, g.pockets)}
+              className={cn(
+                cellBase,
+                "col-span-4 h-8 text-[9px] uppercase tracking-[0.18em] text-[var(--color-ink)]",
+              )}
+              style={{ background: CELL_BG, borderColor: FELT_BORDER }}
+            >
+              {g.label}
+              <Stack amount={amt(key("dozen", g.pockets))} />
+            </button>
+          ))}
+          <div />
+        </div>
+
+        <OutsideRow />
+        <SixLines />
       </div>
     </div>
   );
