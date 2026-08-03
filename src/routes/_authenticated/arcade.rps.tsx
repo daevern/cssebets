@@ -107,6 +107,9 @@ function RpsPage() {
   const [phase, setPhase] = useState<ArenaPhase>("IDLE");
   const [playerMove, setPlayerMove] = useState<RpsMove | null>(null);
   const [round, setRound] = useState<any>(null);
+  const [ladderHistory, setLadderHistory] = useState<
+    Array<{ id: string; player: RpsMove | null; server: RpsMove | null; outcome: string }>
+  >([]);
   const [resultOpen, setResultOpen] = useState(false);
   const [verifyId, setVerifyId] = useState<string | null>(null);
   const [commitmentVersion, setCommitmentVersion] = useState(0);
@@ -235,6 +238,21 @@ function RpsPage() {
   };
 
   const nextRound = () => {
+    if (round?.outcome === "WIN") {
+      setLadderHistory((current) =>
+        [
+          ...current,
+          {
+            id: String(round.id),
+            player: (round.playerChoice as RpsMove) ?? null,
+            server: (round.serverChoice as RpsMove) ?? null,
+            outcome: "WIN",
+          },
+        ].slice(-6),
+      );
+    } else if (round?.outcome === "LOSS") {
+      setLadderHistory([]);
+    }
     setPhase("IDLE");
     setPlayerMove(null);
     setRound(null);
@@ -278,12 +296,7 @@ function RpsPage() {
         serverMove={(round?.serverChoice as RpsMove) ?? null}
         outcome={round?.outcome ?? null}
         winMultiplier={winMult}
-        history={recent.map((r: any) => ({
-          id: r.id,
-          player: (r.player_choice as RpsMove) ?? null,
-          server: (r.server_choice as RpsMove) ?? null,
-          outcome: r.outcome,
-        }))}
+        history={ladderHistory}
         onChoose={choose}
         canPlay={canPlay}
       />
