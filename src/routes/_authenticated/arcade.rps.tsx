@@ -283,18 +283,19 @@ function RpsPage() {
     clientSeed.current = newSeed();
   };
 
-  /** Bank the run: clears the rail and the running tally. */
+  /** Bank the run: the pot is already in the wallet, so this just clears the rail. */
   const collectRun = () => {
-    const banked = runNet;
+    setCollectedPot(wagerStake);
+    setCollected(runNet);
     setLadderHistory([]);
     setRunNet(0);
-    setCollected(banked);
     setResultOpen(true);
     setPhase("IDLE");
     setPlayerMove(null);
     setRound(null);
     clientSeed.current = newSeed();
   };
+
 
   /** Only a run that is currently in profit can be banked. */
   const canCollect = phase === "IDLE" && !busy && runNet > 0 && ladderHistory.length > 0;
