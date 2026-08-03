@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { RPS_MOVES, type RpsMove } from "@/lib/arcade/rps-math";
+import { CsseMark } from "@/components/brand/CsseMark";
 
 export type ArenaPhase = "IDLE" | "LOCKED" | "REVEALING" | "SETTLED";
 
@@ -61,18 +62,23 @@ function HandGlyph({ move, className }: { move: RpsMove | null; className?: stri
   );
 }
 
-/** Concealed tile — flat card back carrying the cssebets wordmark. */
+/** Concealed tile — the same striped CSSE card back used by Blackjack. */
 function CardBack({ dim }: { dim?: boolean }) {
   return (
     <div
       className={cn(
-        "grid h-full w-full place-items-center rounded-[6px] bg-[var(--color-neon)]",
+        "relative h-full w-full rounded-[4px] border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)]",
         dim && "opacity-30",
       )}
+      style={{
+        backgroundImage:
+          "repeating-linear-gradient(45deg, color-mix(in srgb, var(--color-neon) 22%, transparent) 0 4px, transparent 4px 8px)",
+      }}
     >
-      <span className="-rotate-[38deg] font-display text-[9px] font-black uppercase tracking-[0.12em] text-black">
-        csse
-      </span>
+      <div className="absolute inset-[5px] rounded-[2px] border border-[var(--color-neon)]/30" />
+      <div className="absolute inset-0 grid place-items-center text-[var(--color-neon)]">
+        <CsseMark variant="mono" className="h-[42%] w-[42%]" />
+      </div>
     </div>
   );
 }
@@ -165,8 +171,7 @@ function RailCell({
   multiplier: number;
   placeholder?: boolean;
 }) {
-  const width =
-    scale === "active" ? "w-[92px]" : scale === "next" ? "w-[62px]" : "w-[62px]";
+  const width = scale === "active" ? "w-[76px]" : "w-[52px]";
   return (
     <div
       className={cn(
@@ -251,8 +256,18 @@ function RpsArenaImpl({
   const concealed = phase !== "SETTLED";
   const shaking = phase === "LOCKED" || phase === "REVEALING";
 
-  const past = history.slice(-3);
-  const step = history.length;
+  // A loss ends the multiplier run, but remains visible on the left rail.
+  // Wins and draws keep the run moving; only rounds after the latest loss
+  // contribute to the current multiplier.
+  let runStep = 0;
+  const historyWithMultipliers = history.map((round) => {
+    const multiplier = winMultiplier ** (runStep + 1);
+    if (round.outcome === "LOSS") runStep = 0;
+    else runStep += 1;
+    return { ...round, multiplier };
+  });
+  const visiblePast = historyWithMultipliers.slice(-3);
+  const animationKey = history.length;
 
   return (
     <div className="overflow-hidden rounded-[6px] bg-[var(--color-surface)] p-3">
@@ -276,7 +291,7 @@ function RpsArenaImpl({
       <div className="relative flex items-start justify-center gap-2 py-1">
         {/* Left: settled results, most recent closest to the centre. */}
         <div className="flex flex-1 items-start justify-end gap-2 overflow-hidden">
-          {past.map((h, i) => (
+          {visiblePast.map((h) => (
             <RailCell
               key={h.id}
               scale="past"
@@ -286,13 +301,13 @@ function RpsArenaImpl({
               tone={h.outcome as Tone}
               active={false}
               shaking={false}
-              multiplier={winMultiplier ** (step - past.length + i + 1)}
+              multiplier={h.multiplier}
             />
           ))}
         </div>
 
         {/* Centre: the live card. */}
-        <div key={step} className="animate-[rps-slide-in_0.45s_ease-out]">
+        <div key={animationKey} className="animate-[rps-slide-in_0.45s_ease-out]">
           <RailCell
             scale="active"
             faceUp={!concealed}
@@ -301,7 +316,7 @@ function RpsArenaImpl({
             tone={concealed ? null : (outcome as Tone)}
             active
             shaking={shaking}
-            multiplier={winMultiplier ** (step + 1)}
+            multiplier={winMultiplier ** (runStep + 1)}
           />
         </div>
 
@@ -315,7 +330,7 @@ function RpsArenaImpl({
             tone={null}
             active={false}
             shaking={false}
-            multiplier={winMultiplier ** (step + 2)}
+            multiplier={winMultiplier ** (runStep + 2)}
             placeholder
           />
         </div>
@@ -339,12 +354,8 @@ function RpsArenaImpl({
             : "Revealing"}
       </div>
 
-      {/* Dispenser */}
-      <div className="mt-2 flex flex-col items-center">
-        <div className="h-3 w-12 rounded-t-[4px] bg-[var(--color-surface-2)]" />
-        <div className="h-2 w-28 rounded-[3px] bg-[var(--color-surface-2)]" />
-        <div className="h-4 w-px bg-[var(--color-surface-border)]" />
-
+      {/* Flat CSSE hand controls — tactile like the stake selectors. */}
+      <div className="mt-3">
         <div className="grid w-full grid-cols-3 gap-2">
           {RPS_MOVES.map((m) => {
             const selected = playerMove === m;
@@ -355,16 +366,16 @@ function RpsArenaImpl({
                 disabled={!canPlay}
                 onClick={() => onChoose(m)}
                 className={cn(
-                  "flex flex-col items-center gap-1 rounded-[6px] bg-[var(--color-surface-2)] px-2 pb-2 pt-3 transition-all duration-150 active:translate-y-[2px] active:scale-[0.97] disabled:opacity-40",
+                  "relative flex min-h-[76px] flex-col items-center justify-center gap-1 overflow-hidden rounded-[4px] border bg-[var(--color-surface-2)] px-2 py-2 transition-[transform,border-color,background-color] duration-100 active:translate-y-[3px] active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40",
                   selected
-                    ? "-translate-y-[2px] ring-2 ring-[var(--color-neon)]"
-                    : "ring-1 ring-[var(--color-surface-border)] hover:ring-[var(--color-neon)]/50",
+                    ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 shadow-[inset_0_0_0_1px_var(--color-neon)]"
+                    : "border-[var(--color-surface-border)] hover:border-[var(--color-neon)]/60",
                 )}
               >
                 <HandGlyph
                   move={m}
                   className={cn(
-                    "h-9 w-9 transition-transform duration-150",
+                    "h-9 w-9 transition-transform duration-100",
                     selected
                       ? "scale-110 text-[var(--color-neon)] animate-[rps-pop_0.3s_ease-out]"
                       : "text-[var(--color-ink)]",
@@ -373,12 +384,7 @@ function RpsArenaImpl({
                 <span className="font-display text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
                   {m}
                 </span>
-                <span
-                  className={cn(
-                    "h-1 w-8 rounded-[2px] transition-colors",
-                    selected ? "bg-[var(--color-neon)]" : "bg-[var(--color-surface-border)]",
-                  )}
-                />
+                <span className={cn("absolute inset-x-2 bottom-0 h-[3px]", selected ? "bg-[var(--color-neon)]" : "bg-[var(--color-surface-border)]")} />
               </button>
             );
           })}
