@@ -256,18 +256,20 @@ function RpsArenaImpl({
   const concealed = phase !== "SETTLED";
   const shaking = phase === "LOCKED" || phase === "REVEALING";
 
-  // A loss ends the multiplier run, but remains visible on the left rail.
-  // Wins and draws keep the run moving; only rounds after the latest loss
-  // contribute to the current multiplier.
+  // A loss ends the run. Draws hold the multiplier steady — only a win steps
+  // the ladder up, exactly like Treasure Grid safe reveals.
   let runStep = 0;
   const historyWithMultipliers = history.map((round) => {
-    const multiplier = winMultiplier ** (runStep + 1);
+    const step = round.outcome === "WIN" ? runStep + 1 : runStep;
+    const multiplier = winMultiplier ** Math.max(step, 1);
     if (round.outcome === "LOSS") runStep = 0;
-    else runStep += 1;
+    else if (round.outcome === "WIN") runStep += 1;
     return { ...round, multiplier };
   });
   const visiblePast = historyWithMultipliers.slice(-3);
   const animationKey = history.length;
+  const liveMultiplier = winMultiplier ** Math.max(runStep + (outcome === "WIN" || phase !== "SETTLED" ? 1 : 0), 1);
+  const nextMultiplier = winMultiplier ** Math.max(runStep + 1, 1);
 
   return (
     <div className="overflow-hidden rounded-[6px] bg-[var(--color-surface)] p-3">
@@ -278,17 +280,8 @@ function RpsArenaImpl({
 @keyframes rps-slide-in{0%{transform:translateX(46px) scale(.9);opacity:0}100%{transform:translateX(0) scale(1);opacity:1}}
 `}</style>
 
-      <div className="mb-1 flex items-center justify-between">
-        <span className="font-display text-[8px] font-black uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-          Server
-        </span>
-        <span className="font-display text-[8px] font-black uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-          You
-        </span>
-      </div>
-
       {/* Rail — the active column is centred; history drifts left, next waits right. */}
-      <div className="relative flex items-start justify-center gap-2 py-1">
+      <div className="relative flex items-start justify-center gap-2 pb-1 pt-4">
         {/* Left: settled results, most recent closest to the centre. */}
         <div className="flex flex-1 items-start justify-end gap-2 overflow-hidden">
           {visiblePast.map((h) => (
@@ -316,7 +309,7 @@ function RpsArenaImpl({
             tone={concealed ? null : (outcome as Tone)}
             active
             shaking={shaking}
-            multiplier={winMultiplier ** (runStep + 1)}
+            multiplier={liveMultiplier}
           />
         </div>
 
@@ -330,11 +323,12 @@ function RpsArenaImpl({
             tone={null}
             active={false}
             shaking={false}
-            multiplier={winMultiplier ** (runStep + 2)}
+            multiplier={nextMultiplier}
             placeholder
           />
         </div>
       </div>
+
 
       {/* Status line */}
       <div
