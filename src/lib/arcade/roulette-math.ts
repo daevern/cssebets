@@ -1,18 +1,26 @@
 /**
- * Mini Roulette — 13 pockets (0 + 1..12), every pocket equally likely (1/13).
- * Total-return multiplier = 12 / covered pockets  →  RTP 12/13 = 92.3077%,
- * house edge 1/13 = 7.6923% for every supported bet type.
+ * European Roulette — 37 pockets (0 + 1..36), every pocket equally likely (1/37).
+ * Total-return multiplier = 36 / covered pockets  →  RTP 36/37 = 97.2973%,
+ * house edge 1/37 = 2.7027% for every supported bet type.
  *
  * Pure, client-safe module. The server is the single source of truth for
  * outcomes; these helpers only describe the board and preview returns.
  */
 
-export const WHEEL_ORDER = [0, 1, 2, 3, 4, 5, 6, 8, 7, 10, 9, 12, 11] as const;
-export const RED_POCKETS = [1, 3, 5, 8, 10, 12];
-export const BLACK_POCKETS = [2, 4, 6, 7, 9, 11];
-export const POCKET_COUNT = 13;
-export const THEORETICAL_RTP = 12 / 13;
-export const THEORETICAL_HOUSE_EDGE = 1 / 13;
+export const WHEEL_ORDER = [
+  0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14,
+  31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26,
+] as const;
+
+export const RED_POCKETS = [
+  1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36,
+];
+export const BLACK_POCKETS = [
+  2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35,
+];
+export const POCKET_COUNT = 37;
+export const THEORETICAL_RTP = 36 / 37;
+export const THEORETICAL_HOUSE_EDGE = 1 / 37;
 
 export type PocketColour = "green" | "red" | "black";
 
@@ -25,7 +33,10 @@ export type BetTypeKey =
   | "straight"
   | "split"
   | "street"
+  | "corner"
   | "four_group"
+  | "six_line"
+  | "dozen"
   | "column"
   | "red"
   | "black"
@@ -34,13 +45,13 @@ export type BetTypeKey =
   | "low"
   | "high";
 
-export const ALLOWED_COVERAGE = [1, 2, 3, 4, 6];
+export const ALLOWED_COVERAGE = [1, 2, 3, 4, 6, 12, 18];
 
 export function returnMultiplier(coveredCount: number): number {
-  return Math.round((12 / coveredCount) * 10000) / 10000;
+  return Math.round((36 / coveredCount) * 10000) / 10000;
 }
 
-/** Net profit ratio, e.g. 11 for a straight (11:1). */
+/** Net profit ratio, e.g. 35 for a straight (35:1). */
 export function netProfitRatio(coveredCount: number): number {
   return returnMultiplier(coveredCount) - 1;
 }
@@ -49,42 +60,46 @@ export function probability(coveredCount: number): number {
   return coveredCount / POCKET_COUNT;
 }
 
-/** RTP for any bet under the formula — always 12/13. */
+/** RTP for any bet under the formula — always 36/37. */
 export function rtpFor(coveredCount: number): number {
   return probability(coveredCount) * returnMultiplier(coveredCount);
 }
 
-export const STREETS: number[][] = [
-  [1, 2, 3],
-  [4, 5, 6],
-  [7, 8, 9],
-  [10, 11, 12],
-];
+/** Board grid used for split/corner adjacency: 12 rows × 3 columns. */
+export const BOARD_GRID: number[][] = Array.from({ length: 12 }, (_, r) => [
+  r * 3 + 1,
+  r * 3 + 2,
+  r * 3 + 3,
+]);
 
-export const FOUR_GROUPS: { label: string; pockets: number[] }[] = [
-  { label: "1st Group", pockets: [1, 2, 3, 4] },
-  { label: "2nd Group", pockets: [5, 6, 7, 8] },
-  { label: "3rd Group", pockets: [9, 10, 11, 12] },
+/** Streets — the 12 horizontal rows of three. */
+export const STREETS: number[][] = BOARD_GRID.map((row) => [...row]);
+
+/** Six lines — two adjacent streets (non-overlapping presentation set). */
+export const SIX_LINES: { label: string; pockets: number[] }[] = Array.from(
+  { length: 6 },
+  (_, i) => ({
+    label: `${i * 6 + 1}–${i * 6 + 6}`,
+    pockets: Array.from({ length: 6 }, (_, k) => i * 6 + 1 + k),
+  }),
+);
+
+export const DOZENS: { label: string; pockets: number[] }[] = [
+  { label: "1st 12", pockets: Array.from({ length: 12 }, (_, i) => i + 1) },
+  { label: "2nd 12", pockets: Array.from({ length: 12 }, (_, i) => i + 13) },
+  { label: "3rd 12", pockets: Array.from({ length: 12 }, (_, i) => i + 25) },
 ];
 
 export const COLUMNS: { label: string; pockets: number[] }[] = [
-  { label: "Col 1", pockets: [1, 4, 7, 10] },
-  { label: "Col 2", pockets: [2, 5, 8, 11] },
-  { label: "Col 3", pockets: [3, 6, 9, 12] },
+  { label: "Col 1", pockets: Array.from({ length: 12 }, (_, i) => i * 3 + 1) },
+  { label: "Col 2", pockets: Array.from({ length: 12 }, (_, i) => i * 3 + 2) },
+  { label: "Col 3", pockets: Array.from({ length: 12 }, (_, i) => i * 3 + 3) },
 ];
 
-export const LOW = [1, 2, 3, 4, 5, 6];
-export const HIGH = [7, 8, 9, 10, 11, 12];
-export const ODD = [1, 3, 5, 7, 9, 11];
-export const EVEN = [2, 4, 6, 8, 10, 12];
-
-/** Board grid used for split adjacency: 4 rows × 3 columns. */
-export const BOARD_GRID: number[][] = [
-  [1, 2, 3],
-  [4, 5, 6],
-  [7, 8, 9],
-  [10, 11, 12],
-];
+export const LOW = Array.from({ length: 18 }, (_, i) => i + 1);
+export const HIGH = Array.from({ length: 18 }, (_, i) => i + 19);
+export const ODD = Array.from({ length: 18 }, (_, i) => i * 2 + 1);
+export const EVEN = Array.from({ length: 18 }, (_, i) => i * 2 + 2);
 
 export function areAdjacent(a: number, b: number): boolean {
   if (a === b) return false;
@@ -127,12 +142,14 @@ export const BET_TYPE_TABLE: {
   { key: "straight", label: "Straight number", covered: 1 },
   { key: "split", label: "Split", covered: 2 },
   { key: "street", label: "Street", covered: 3 },
-  { key: "four_group", label: "Four-number group", covered: 4 },
-  { key: "column", label: "Column", covered: 4 },
-  { key: "red", label: "Red", covered: 6 },
-  { key: "black", label: "Black", covered: 6 },
-  { key: "odd", label: "Odd", covered: 6 },
-  { key: "even", label: "Even", covered: 6 },
-  { key: "low", label: "Low (1–6)", covered: 6 },
-  { key: "high", label: "High (7–12)", covered: 6 },
+  { key: "corner", label: "Corner", covered: 4 },
+  { key: "six_line", label: "Six line", covered: 6 },
+  { key: "dozen", label: "Dozen", covered: 12 },
+  { key: "column", label: "Column", covered: 12 },
+  { key: "red", label: "Red", covered: 18 },
+  { key: "black", label: "Black", covered: 18 },
+  { key: "odd", label: "Odd", covered: 18 },
+  { key: "even", label: "Even", covered: 18 },
+  { key: "low", label: "Low (1–18)", covered: 18 },
+  { key: "high", label: "High (19–36)", covered: 18 },
 ];
