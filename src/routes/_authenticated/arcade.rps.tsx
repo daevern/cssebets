@@ -10,6 +10,8 @@ import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import { RpsArena, type ArenaPhase } from "@/components/arcade/RpsArena";
 import { RpsVerifyDialog } from "@/components/arcade/RpsVerifyDialog";
 import { type RpsMove } from "@/lib/arcade/rps-math";
+import { roundMoney } from "@/lib/accounting/money";
+
 import {
   getRpsConfig,
   getRpsProfile,
