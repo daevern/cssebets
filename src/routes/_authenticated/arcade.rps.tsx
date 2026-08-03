@@ -222,13 +222,25 @@ function RpsPage() {
 
   const busy = settle.isPending || phase === "LOCKED" || phase === "REVEALING";
   const ready = Boolean(commitment.current) && !prepare.isPending && commitmentVersion >= 0;
+
+  // The ladder compounds: each win rolls the whole pot into the next round, so
+  // the amount at risk is base stake x winMultiplier^(wins so far). Draws hold
+  // the pot steady, a loss ends the run and the pot stays with the house.
+  const runWins = ladderHistory.filter((h) => h.outcome === "WIN").length;
+  const wagerStake = roundMoney(stake * winMult ** runWins);
+  /** What the player takes home if the next round wins. */
+  const nextPayout = roundMoney(wagerStake * winMult);
+  const overMax = wagerStake > maxStake;
+
   const canPlay =
     ready &&
     !busy &&
     !cfg?.maintenance_mode &&
-    balance >= stake &&
+    balance >= wagerStake &&
+    !overMax &&
     stake >= minStake &&
     stake <= maxStake;
+
 
   const choose = (move: RpsMove) => {
     if (!canPlay) return;
