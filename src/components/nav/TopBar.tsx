@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Wallet, Home, Activity, Headphones, Gamepad2 } from "lucide-react";
 
@@ -5,6 +6,7 @@ import { CsseLogo } from "@/components/brand/CsseMark";
 import { useAuth } from "@/hooks/use-auth";
 import { CategoryRail } from "@/components/nav/CategoryRail";
 import { HamburgerMenu } from "@/components/nav/HamburgerMenu";
+import { WalletCardSheet } from "@/components/wallet/WalletCard";
 
 
 const DESKTOP_NAV = [
@@ -74,6 +76,7 @@ function MobileBar({ balance: _balance, loading: _loading }: { balance?: number 
 function DesktopBar({ balance, loading }: { balance?: number | null; loading?: boolean }) {
   const { pathname } = useLocation();
   const { user } = useAuth();
+  const [walletOpen, setWalletOpen] = useState(false);
   const isGuest = !user || (user as any)?.is_anonymous === true;
   return (
     <div className="mx-auto hidden h-16 w-full max-w-7xl items-center gap-8 px-8 md:flex lg:h-[68px] lg:px-10">
