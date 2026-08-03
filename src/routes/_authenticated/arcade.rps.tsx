@@ -405,40 +405,30 @@ function RpsPage() {
             </div>
           </div>
 
-          {phase === "SETTLED" ? (
-            <button
-              type="button"
-              onClick={nextRound}
-              className="flex h-11 w-full items-center justify-center rounded-full bg-[var(--color-neon)] font-display text-xs font-bold uppercase tracking-[0.2em] text-black"
-            >
-              Play again
-            </button>
-          ) : (
-            <div className="grid grid-cols-3 gap-1.5">
-              {RPS_MOVES.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  disabled={!canPlay}
-                  onClick={() => choose(m)}
-                  className={cn(
-                    "flex h-11 items-center justify-center gap-1.5 rounded-[4px] bg-[var(--color-surface-2)] font-display text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink)] transition-colors",
-                    "hover:bg-[var(--color-surface-2)]/70 disabled:opacity-35",
-                    playerMove === m && "bg-[var(--color-neon)] text-black",
-                  )}
-                >
-                  {busy && playerMove === m ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <>
-                      <Swords className="h-3.5 w-3.5" />
-                      {m}
-                    </>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
+          <button
+            type="button"
+            onClick={phase === "SETTLED" ? nextRound : undefined}
+            disabled={phase !== "SETTLED"}
+            className={cn(
+              "flex h-11 w-full items-center justify-center gap-1.5 rounded-[4px] font-display text-xs font-bold uppercase tracking-[0.2em] transition-colors",
+              phase === "SETTLED"
+                ? "bg-[var(--color-neon)] text-black"
+                : "bg-[var(--color-neon)]/25 text-[var(--color-ink-muted)]",
+            )}
+          >
+            {phase === "SETTLED" ? (
+              "Play again"
+            ) : busy ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Revealing
+              </>
+            ) : (
+              <>
+                <Swords className="h-3.5 w-3.5" /> Pick a hand above
+              </>
+            )}
+          </button>
+
 
           {balance < stake && phase !== "SETTLED" && (
             <p className="text-center text-[10px] uppercase tracking-[0.24em] text-amber-300">
