@@ -331,7 +331,7 @@ function TreasurePage() {
       />
 
       {/* Sticky console */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-0">
+      <div data-arcade-console className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-0">
         <div className="mx-auto w-full max-w-4xl space-y-2 px-3 py-2">
           {!active ? (
             <>

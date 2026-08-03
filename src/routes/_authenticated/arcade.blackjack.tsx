@@ -296,7 +296,7 @@ function BlackjackPage() {
         />
       )}
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-0">
+      <div data-arcade-console className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-0">
         <div className="mx-auto w-full max-w-xl space-y-1.5 px-3 py-2 md:space-y-2">
         <div className="grid grid-cols-4 gap-1 md:gap-2">
           <ActionTile
