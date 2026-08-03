@@ -6,7 +6,7 @@ import { enforceRateLimit } from "@/lib/rate-limit.functions";
 const BetSchema = z.object({
   bet_type: z.string().trim().min(2).max(24),
   label: z.string().trim().min(1).max(48),
-  pockets: z.array(z.number().int().min(0).max(12)).min(1).max(6),
+  pockets: z.array(z.number().int().min(0).max(36)).min(1).max(18),
   stake: z.number().positive().max(100000),
 });
 
@@ -96,7 +96,7 @@ export const placeRouletteSpin = createServerFn({ method: "POST" })
     for (const b of data.bets) {
       const unique = new Set(b.pockets);
       if (unique.size !== b.pockets.length) throw new Error("Invalid bet coverage.");
-      if (![1, 2, 3, 4, 6].includes(unique.size)) throw new Error("Invalid bet coverage.");
+      if (![1, 2, 3, 4, 6, 12, 18].includes(unique.size)) throw new Error("Invalid bet coverage.");
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
