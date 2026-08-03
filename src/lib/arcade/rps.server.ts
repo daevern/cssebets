@@ -1,5 +1,3 @@
-import { RATE_LIMITS } from "@/lib/rate-limit.functions";
-
 export const SETTLED_RPS_FIELDS =
   "id, status, player_choice, server_choice, outcome, stake, multiplier, gross_return, user_net, " +
   "client_seed, server_seed_hash, nonce, hmac_input, random_hex, verification_id, config_version, " +
@@ -48,13 +46,14 @@ export function publicRpsRound(r: any) {
 }
 
 export async function enforceRpsRateLimit(userId: string) {
-  const cfg = RATE_LIMITS.arcade_rps;
+  const max = 90;
+  const windowSeconds = 60;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await (supabaseAdmin as any).rpc("check_rate_limit", {
     p_scope: `rps:${userId}`,
     p_action: "arcade_rps",
-    p_max: cfg.max,
-    p_window_seconds: cfg.windowSeconds,
+    p_max: max,
+    p_window_seconds: windowSeconds,
   });
   if (error) {
     console.error("[rps] rate-limit check failed", error.message);
