@@ -68,7 +68,7 @@ function CardBack({ dim }: { dim?: boolean }) {
     <div
       className={cn(
         "relative h-full w-full rounded-[4px] border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)]",
-        dim && "opacity-30",
+        dim && "opacity-75",
       )}
       style={{
         backgroundImage:
@@ -177,8 +177,8 @@ function RailCell({
       className={cn(
         "flex shrink-0 flex-col items-center gap-1.5 transition-all duration-500",
         width,
-        scale === "past" && "opacity-70",
-        scale === "next" && "opacity-40",
+        scale === "past" && "opacity-90",
+        scale === "next" && "opacity-75",
       )}
     >
       <FlipCard
@@ -256,18 +256,20 @@ function RpsArenaImpl({
   const concealed = phase !== "SETTLED";
   const shaking = phase === "LOCKED" || phase === "REVEALING";
 
-  // A loss ends the multiplier run, but remains visible on the left rail.
-  // Wins and draws keep the run moving; only rounds after the latest loss
-  // contribute to the current multiplier.
+  // A loss ends the run. Draws hold the multiplier steady — only a win steps
+  // the ladder up, exactly like Treasure Grid safe reveals.
   let runStep = 0;
   const historyWithMultipliers = history.map((round) => {
-    const multiplier = winMultiplier ** (runStep + 1);
+    const step = round.outcome === "WIN" ? runStep + 1 : runStep;
+    const multiplier = winMultiplier ** Math.max(step, 1);
     if (round.outcome === "LOSS") runStep = 0;
-    else runStep += 1;
+    else if (round.outcome === "WIN") runStep += 1;
     return { ...round, multiplier };
   });
   const visiblePast = historyWithMultipliers.slice(-3);
   const animationKey = history.length;
+  const liveMultiplier = winMultiplier ** Math.max(runStep + (outcome === "WIN" || phase !== "SETTLED" ? 1 : 0), 1);
+  const nextMultiplier = winMultiplier ** Math.max(runStep + 1, 1);
 
   return (
     <div className="overflow-hidden rounded-[6px] bg-[var(--color-surface)] p-3">
@@ -278,17 +280,8 @@ function RpsArenaImpl({
 @keyframes rps-slide-in{0%{transform:translateX(46px) scale(.9);opacity:0}100%{transform:translateX(0) scale(1);opacity:1}}
 `}</style>
 
-      <div className="mb-1 flex items-center justify-between">
-        <span className="font-display text-[8px] font-black uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-          Server
-        </span>
-        <span className="font-display text-[8px] font-black uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-          You
-        </span>
-      </div>
-
       {/* Rail — the active column is centred; history drifts left, next waits right. */}
-      <div className="relative flex items-start justify-center gap-2 py-1">
+      <div className="relative flex items-start justify-center gap-2 pb-1 pt-4">
         {/* Left: settled results, most recent closest to the centre. */}
         <div className="flex flex-1 items-start justify-end gap-2 overflow-hidden">
           {visiblePast.map((h) => (
@@ -316,7 +309,7 @@ function RpsArenaImpl({
             tone={concealed ? null : (outcome as Tone)}
             active
             shaking={shaking}
-            multiplier={winMultiplier ** (runStep + 1)}
+            multiplier={liveMultiplier}
           />
         </div>
 
@@ -330,11 +323,12 @@ function RpsArenaImpl({
             tone={null}
             active={false}
             shaking={false}
-            multiplier={winMultiplier ** (runStep + 2)}
+            multiplier={nextMultiplier}
             placeholder
           />
         </div>
       </div>
+
 
       {/* Status line */}
       <div
@@ -354,9 +348,26 @@ function RpsArenaImpl({
             : "Revealing"}
       </div>
 
+      {/* 2D wiring — three leads running from each control up to the output box. */}
+      <svg
+        viewBox="0 0 300 34"
+        preserveAspectRatio="none"
+        className="mt-1 h-[26px] w-full text-[var(--color-surface-border)]"
+        aria-hidden
+      >
+        <path
+          d="M150 0 V10 M150 10 H50 V34 M150 10 H250 V34 M150 10 V34"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          vectorEffect="non-scaling-stroke"
+        />
+        <circle cx="150" cy="10" r="3" fill="currentColor" />
+      </svg>
+
       {/* Flat CSSE hand controls — tactile like the stake selectors. */}
-      <div className="mt-3">
-        <div className="grid w-full grid-cols-3 gap-2">
+      <div className="mx-auto w-3/4">
+        <div className="grid w-full grid-cols-3 gap-1.5">
           {RPS_MOVES.map((m) => {
             const selected = playerMove === m;
             return (
@@ -366,7 +377,7 @@ function RpsArenaImpl({
                 disabled={!canPlay}
                 onClick={() => onChoose(m)}
                 className={cn(
-                  "relative flex min-h-[76px] flex-col items-center justify-center gap-1 overflow-hidden rounded-[4px] border bg-[var(--color-surface-2)] px-2 py-2 transition-[transform,border-color,background-color] duration-100 active:translate-y-[3px] active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40",
+                  "relative flex min-h-[58px] flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[4px] border bg-[var(--color-surface-2)] px-1.5 py-1.5 transition-[transform,border-color,background-color] duration-100 active:translate-y-[3px] active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40",
                   selected
                     ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 shadow-[inset_0_0_0_1px_var(--color-neon)]"
                     : "border-[var(--color-surface-border)] hover:border-[var(--color-neon)]/60",
@@ -375,13 +386,13 @@ function RpsArenaImpl({
                 <HandGlyph
                   move={m}
                   className={cn(
-                    "h-9 w-9 transition-transform duration-100",
+                    "h-7 w-7 transition-transform duration-100",
                     selected
                       ? "scale-110 text-[var(--color-neon)] animate-[rps-pop_0.3s_ease-out]"
                       : "text-[var(--color-ink)]",
                   )}
                 />
-                <span className="font-display text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                <span className="font-display text-[8px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
                   {m}
                 </span>
                 <span className={cn("absolute inset-x-2 bottom-0 h-[3px]", selected ? "bg-[var(--color-neon)]" : "bg-[var(--color-surface-border)]")} />
@@ -390,6 +401,7 @@ function RpsArenaImpl({
           })}
         </div>
       </div>
+
     </div>
   );
 }
