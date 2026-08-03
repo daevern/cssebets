@@ -67,9 +67,8 @@ const LADDER_LENGTH = 7;
 /**
  * Stake-style RPS board.
  *
- * Row 1 — multiplier ladder: settled rounds show the hand you played, the live
- * step is highlighted, upcoming steps stay face-down.
- * Row 2 — the computer's recent hands.
+ * Row 1 — the computer's committed hands on the current win streak.
+ * Row 2 — the player's matching output for each step.
  * Row 3 — the dispenser: pick rock, paper or scissors.
  *
  * Both hands stay concealed while the round is in flight and flip in the SAME
@@ -99,14 +98,17 @@ function RpsArenaImpl({
   const concealed = phase !== "SETTLED";
   const shaking = phase === "LOCKED" || phase === "REVEALING";
 
-  const past = [...history].reverse().slice(-(LADDER_LENGTH - 1));
+  const past = history.slice(-(LADDER_LENGTH - 1));
   const activeIndex = past.length;
 
   return (
     <div className="rounded-[6px] bg-[var(--color-surface)] p-3">
       <style>{`@keyframes rps-shake{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}`}</style>
 
-      {/* Ladder */}
+      {/* Server / algorithm ladder */}
+      <div className="mb-1 font-display text-[8px] font-black uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+        Server
+      </div>
       <div className="grid grid-cols-7 gap-1.5">
         {Array.from({ length: LADDER_LENGTH }).map((_, i) => {
           const done = past[i];
@@ -123,7 +125,7 @@ function RpsArenaImpl({
                 {done ? (
                   <div className="grid h-full w-full place-items-center">
                     <HandGlyph
-                      move={done.player}
+                      move={done.server}
                       className={cn(
                         "h-[62%] w-[62%]",
                         done.outcome === "WIN"
@@ -136,7 +138,7 @@ function RpsArenaImpl({
                   </div>
                 ) : isActive && !concealed ? (
                   <div className="grid h-full w-full place-items-center">
-                    <HandGlyph move={playerMove} className="h-[62%] w-[62%] text-[var(--color-neon)]" />
+                    <HandGlyph move={serverMove} className="h-[62%] w-[62%] text-[var(--color-neon)]" />
                   </div>
                 ) : (
                   <CardBack dim={!isActive} />
@@ -157,12 +159,15 @@ function RpsArenaImpl({
         })}
       </div>
 
-      {/* Computer's recent hands */}
-      <div className="mt-2 grid grid-cols-7 gap-1.5">
+      {/* Player output */}
+      <div className="mb-1 mt-2 font-display text-[8px] font-black uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+        You
+      </div>
+      <div className="grid grid-cols-7 gap-1.5">
         {Array.from({ length: LADDER_LENGTH }).map((_, i) => {
           const done = past[i];
           const isActive = i === activeIndex;
-          const show = done ? done.server : isActive && !concealed ? serverMove : null;
+          const show = done ? done.player : isActive && !concealed ? playerMove : null;
           return (
             <div
               key={i}
