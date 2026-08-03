@@ -548,6 +548,7 @@ export type Database = {
       }
       accounting_migration_flags: {
         Row: {
+          capacity_enforced: boolean
           created_at: string
           dual_write: boolean
           journal_enabled: boolean
@@ -557,6 +558,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          capacity_enforced?: boolean
           created_at?: string
           dual_write?: boolean
           journal_enabled?: boolean
@@ -566,6 +568,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          capacity_enforced?: boolean
           created_at?: string
           dual_write?: boolean
           journal_enabled?: boolean
