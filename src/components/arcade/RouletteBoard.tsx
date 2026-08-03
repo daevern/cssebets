@@ -3,7 +3,8 @@ import { Split, Info } from "lucide-react";
 import {
   BOARD_GRID,
   COLUMNS,
-  FOUR_GROUPS,
+  DOZENS,
+  SIX_LINES,
   STREETS,
   LOW,
   HIGH,
