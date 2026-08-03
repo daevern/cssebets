@@ -91,34 +91,77 @@ export function RouletteWheel({
     const ballEnd = desired - Math.ceil((desired - roughEnd) / 360) * 360;
 
     const duration = 6400;
-    const dropStart = 0.62; // ball leaves the outer track and spirals in
+    const dropStart = 0.6; // ball leaves the outer track and hits the frets
     const t0 = performance.now();
 
     const easeOut = (t: number) => 1 - Math.pow(1 - t, 3.2);
+
+    // Deflector/fret bounces: each hop is shorter and shallower than the last.
+    const HOPS = [
+      { w: 0.2, h: 15 },
+      { w: 0.18, h: 9.5 },
+      { w: 0.16, h: 5.5 },
+      { w: 0.14, h: 3 },
+      { w: 0.12, h: 1.4 },
+      { w: 0.1, h: 0.5 },
+    ];
+    const hopTotal = HOPS.reduce((s, h) => s + h.w, 0);
+
+    const TRACK_R = 92;
+    const POCKET_R = 66;
 
     const step = (now: number) => {
       const t = Math.min(1, (now - t0) / duration);
       const e = easeOut(t);
       setRotation(wheelStart + (wheelEnd - wheelStart) * easeOut(Math.min(1, t * 1.05)));
-      setBallAngle(ballStart + (ballEnd - ballStart) * e);
 
       if (t < dropStart) {
-        setBallRadius(92);
+        // Free orbit on the outer track, still moving fast counter to the wheel.
+        setBallAngle(ballStart + (ballEnd - ballStart) * e);
+        setBallRadius(TRACK_R);
       } else {
-        const d = (t - dropStart) / (1 - dropStart);
-        // spiral inward with a couple of decaying hops off the frets
-        const hop = Math.abs(Math.sin(d * Math.PI * 2.6)) * 5 * (1 - d);
-        setBallRadius(92 - 26 * easeOut(d) + hop);
+        const d = (t - dropStart) / (1 - dropStart); // 0..1 through the bounce phase
+        // Angular travel keeps decaying but the collisions scrub speed harder,
+        // so the ball converges on the pocket rather than gliding into it.
+        const base = ballStart + (ballEnd - ballStart) * e;
+
+        // Which hop are we in?
+        let acc = 0;
+        let hopIndex = HOPS.length - 1;
+        let local = 1;
+        const dn = d * hopTotal;
+        for (let i = 0; i < HOPS.length; i++) {
+          const w = HOPS[i]!.w;
+          if (dn <= acc + w || i === HOPS.length - 1) {
+            hopIndex = i;
+            local = Math.min(1, Math.max(0, (dn - acc) / w));
+            break;
+          }
+          acc += w;
+        }
+        const hop = HOPS[hopIndex]!;
+        // Parabolic arc per bounce (radially outward off the fret, then back down).
+        const arc = 4 * local * (1 - local) * hop.h;
+        // Radial descent from the track down to the pocket ring.
+        const descent = TRACK_R + (POCKET_R - TRACK_R) * easeOut(d);
+        setBallRadius(descent + arc);
+
+        // Each collision knocks the ball slightly against its direction of
+        // travel; the wobble decays to zero so it settles in the right pocket.
+        const kick = Math.sin(local * Math.PI) * (1 - d) * (hopIndex % 2 === 0 ? 3.2 : -2.4);
+        setBallAngle(base + kick * (1 - d));
       }
 
       if (t < 1) {
         raf.current = requestAnimationFrame(step);
       } else {
-        setBallRadius(66);
+        setBallAngle(ballEnd);
+        setBallRadius(POCKET_R);
         setSettledPocket(winningPocket);
         onSettled?.();
       }
     };
+
 
     if (raf.current) cancelAnimationFrame(raf.current);
     raf.current = requestAnimationFrame(step);
@@ -235,20 +278,9 @@ export function RouletteWheel({
           >
             {settledPocket == null ? "—" : settledPocket}
           </div>
-          {settledPocket != null && (
-            <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
-              {pocketColour(settledPocket)}
-              {settledPocket !== 0 && (
-                <>
-                  {" "}
-                  · {settledPocket % 2 === 0 ? "Even" : "Odd"} ·{" "}
-                  {settledPocket <= 18 ? "Low" : "High"}
-                </>
-              )}
-            </div>
-          )}
         </div>
       </div>
+
     </div>
   );
 }

@@ -316,7 +316,7 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-[minmax(0,118px)_minmax(0,1fr)] items-center gap-2">
+      <div className="grid grid-cols-[minmax(0,171px)_minmax(0,1fr)] items-center gap-2">
         <div className="relative">
           <RouletteWheel
             winningPocket={winningPocket}
@@ -328,14 +328,42 @@ function RoulettePage() {
         </div>
 
         <div className="min-w-0 space-y-2">
-          <div className="rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/90 px-2 py-1">
-            <div className="text-[7px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-              House edge
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 text-[8px] font-bold uppercase leading-4 tracking-[0.2em] text-[var(--color-ink-muted)]">
+              {winningPocket == null ? (
+                <span>No result yet</span>
+              ) : (
+                <span
+                  className={cn(
+                    pocketColour(winningPocket) === "red"
+                      ? "text-[#ff5c6c]"
+                      : pocketColour(winningPocket) === "green"
+                        ? "text-[var(--color-neon)]"
+                        : "text-[var(--color-ink)]",
+                  )}
+                >
+                  {pocketColour(winningPocket)}
+                  {winningPocket !== 0 && (
+                    <>
+                      {" · "}
+                      {winningPocket % 2 === 0 ? "Even" : "Odd"}
+                      {" · "}
+                      {winningPocket <= 18 ? "Low" : "High"}
+                    </>
+                  )}
+                </span>
+              )}
             </div>
-            <div className="font-display text-[11px] font-bold tabular-nums text-[var(--color-ink)]">
-              {(THEORETICAL_HOUSE_EDGE * 100).toFixed(2)}%
+            <div className="shrink-0 rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/90 px-2 py-1 text-right">
+              <div className="text-[7px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+                House edge
+              </div>
+              <div className="font-display text-[11px] font-bold tabular-nums text-[var(--color-ink)]">
+                {(THEORETICAL_HOUSE_EDGE * 100).toFixed(2)}%
+              </div>
             </div>
           </div>
+
           <div className="flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {(profile.data?.recent ?? []).map((r: any) => (
               <span
