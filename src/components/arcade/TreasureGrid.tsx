@@ -59,21 +59,30 @@ function TreasureGridImpl({
             disabled={disabled || isOpen || pending}
             onClick={() => onReveal(i)}
             className={cn(
-              "group relative aspect-square select-none rounded-[4px] transition-colors duration-150",
+              "group relative aspect-square select-none overflow-hidden rounded-[4px] transition-colors duration-150",
               "grid place-items-center",
-              !isOpen && "bg-[var(--color-surface-2)]",
-              !isOpen && !disabled && "hover:bg-[var(--color-surface-2)]/60",
-              mine === "SAFE" && "bg-[var(--color-neon)]/20",
-              mine === "TRAP" && "bg-destructive/25",
-              exposed && "bg-destructive/10 opacity-60",
-              pending && "animate-pulse bg-[var(--color-surface-2)]/70",
-              disabled && !isOpen && "opacity-60",
+              !isOpen && "bg-white/12",
+              !isOpen && !disabled && "hover:bg-white/20",
+              mine === "SAFE" && "bg-[var(--color-neon)]/30",
+              mine === "TRAP" && "bg-destructive/40",
+              exposed && "bg-destructive/15 opacity-60",
+              pending && "animate-pulse bg-white/20",
+              disabled && !isOpen && "opacity-70",
             )}
           >
-            {mine === "SAFE" && <Gem className="h-[42%] w-[42%] text-[var(--color-neon)]" />}
-            {(mine === "TRAP" || exposed) && (
-              <Bomb className={cn("h-[42%] w-[42%] text-destructive", exposed && "opacity-60")} />
+            {mine === "SAFE" && (
+              <>
+                <span className="pointer-events-none absolute inset-0 rounded-[4px] bg-[var(--color-neon)]/40 animate-[treasure-flash_600ms_ease-out_forwards]" />
+                <Gem className="relative h-[42%] w-[42%] text-[var(--color-neon)] animate-[treasure-pop_320ms_cubic-bezier(0.34,1.56,0.64,1)]" />
+              </>
             )}
+            {mine === "TRAP" && (
+              <>
+                <span className="pointer-events-none absolute inset-0 rounded-[4px] bg-destructive/70 animate-[treasure-blast_600ms_ease-out_forwards]" />
+                <Bomb className="relative h-[42%] w-[42%] text-destructive animate-[treasure-shake_420ms_ease-in-out]" />
+              </>
+            )}
+            {exposed && <Bomb className="h-[42%] w-[42%] text-destructive opacity-60" />}
           </button>
         );
       })}
