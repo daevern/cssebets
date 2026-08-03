@@ -256,8 +256,6 @@ function RpsArenaImpl({
   const concealed = phase !== "SETTLED";
   const shaking = phase === "LOCKED" || phase === "REVEALING";
 
-  const past = history.slice(-3);
-
   // A loss ends the multiplier run, but remains visible on the left rail.
   // Wins and draws keep the run moving; only rounds after the latest loss
   // contribute to the current multiplier.
