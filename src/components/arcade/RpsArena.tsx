@@ -348,9 +348,26 @@ function RpsArenaImpl({
             : "Revealing"}
       </div>
 
+      {/* 2D wiring — three leads running from each control up to the output box. */}
+      <svg
+        viewBox="0 0 300 34"
+        preserveAspectRatio="none"
+        className="mt-1 h-[26px] w-full text-[var(--color-surface-border)]"
+        aria-hidden
+      >
+        <path
+          d="M150 0 V10 M150 10 H50 V34 M150 10 H250 V34 M150 10 V34"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          vectorEffect="non-scaling-stroke"
+        />
+        <circle cx="150" cy="10" r="3" fill="currentColor" />
+      </svg>
+
       {/* Flat CSSE hand controls — tactile like the stake selectors. */}
-      <div className="mt-3">
-        <div className="grid w-full grid-cols-3 gap-2">
+      <div className="mx-auto w-3/4">
+        <div className="grid w-full grid-cols-3 gap-1.5">
           {RPS_MOVES.map((m) => {
             const selected = playerMove === m;
             return (
@@ -360,7 +377,7 @@ function RpsArenaImpl({
                 disabled={!canPlay}
                 onClick={() => onChoose(m)}
                 className={cn(
-                  "relative flex min-h-[76px] flex-col items-center justify-center gap-1 overflow-hidden rounded-[4px] border bg-[var(--color-surface-2)] px-2 py-2 transition-[transform,border-color,background-color] duration-100 active:translate-y-[3px] active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40",
+                  "relative flex min-h-[58px] flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[4px] border bg-[var(--color-surface-2)] px-1.5 py-1.5 transition-[transform,border-color,background-color] duration-100 active:translate-y-[3px] active:scale-[0.96] disabled:pointer-events-none disabled:opacity-40",
                   selected
                     ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 shadow-[inset_0_0_0_1px_var(--color-neon)]"
                     : "border-[var(--color-surface-border)] hover:border-[var(--color-neon)]/60",
@@ -369,13 +386,13 @@ function RpsArenaImpl({
                 <HandGlyph
                   move={m}
                   className={cn(
-                    "h-9 w-9 transition-transform duration-100",
+                    "h-7 w-7 transition-transform duration-100",
                     selected
                       ? "scale-110 text-[var(--color-neon)] animate-[rps-pop_0.3s_ease-out]"
                       : "text-[var(--color-ink)]",
                   )}
                 />
-                <span className="font-display text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                <span className="font-display text-[8px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
                   {m}
                 </span>
                 <span className={cn("absolute inset-x-2 bottom-0 h-[3px]", selected ? "bg-[var(--color-neon)]" : "bg-[var(--color-surface-border)]")} />
@@ -384,6 +401,7 @@ function RpsArenaImpl({
           })}
         </div>
       </div>
+
     </div>
   );
 }
