@@ -316,7 +316,7 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-[minmax(0,140px)_minmax(0,1fr)] items-center gap-3">
+      <div className="grid grid-cols-[minmax(0,118px)_minmax(0,1fr)] items-center gap-2">
         <div className="relative">
           <RouletteWheel
             winningPocket={winningPocket}
