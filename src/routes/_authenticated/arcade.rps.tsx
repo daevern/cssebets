@@ -350,33 +350,15 @@ function RpsPage() {
         </div>
       )}
 
-      {round && (
-        <ArcadeResultDialog
-          open={resultOpen}
-          onOpenChange={(v) => {
-            setResultOpen(v);
-            if (!v) nextRound();
-          }}
-          tone={outcomeTone as any}
-          headline={
-            round.outcome === "WIN" ? "You win" : round.outcome === "LOSS" ? "Computer wins" : "Draw"
-          }
-          net={Number(round.userNet ?? 0)}
-          detail={`${round.playerChoice} vs ${round.serverChoice} · staked ${fmt(Number(round.stake ?? 0))} pts`}
-          footer={
-            <button
-              type="button"
-              onClick={() => {
-                setResultOpen(false);
-                setVerifyId(round.id);
-              }}
-              className="inline-flex h-9 items-center justify-center gap-1 rounded-full border border-[var(--color-surface-border)] px-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]"
-            >
-              <ShieldCheck className="h-3 w-3" /> Verify
-            </button>
-          }
-        />
-      )}
+      <ArcadeResultDialog
+        open={resultOpen}
+        onOpenChange={setResultOpen}
+        tone="win"
+        headline="Collected"
+        net={collected}
+        detail="Banked to your balance."
+      />
+
 
       <RpsVerifyDialog
         open={Boolean(verifyId)}
