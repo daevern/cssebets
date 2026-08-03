@@ -447,7 +447,7 @@ function RoulettePage() {
             </div>
           )}
 
-        <div className="flex items-center gap-2 overflow-x-auto px-1 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex items-center gap-2 overflow-x-auto overflow-y-visible px-1 py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {chips.map((c) => (
             <CasinoChip key={c} value={c} selected={chip === c} onClick={() => setChip(c)} size={44} />
           ))}
@@ -465,12 +465,13 @@ function RoulettePage() {
               type="button"
               onClick={doubleBets}
               disabled={spinning || !positions.length || totalStake * 2 > balance}
-              className="rounded-full border border-[var(--color-surface-border)] px-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)] disabled:opacity-40"
+              className="grid h-9 w-9 place-items-center rounded-[4px] bg-[var(--color-surface-2)] font-mono text-[11px] font-black text-[var(--color-neon)] transition-colors hover:bg-[var(--color-surface-2)]/70 disabled:opacity-35"
             >
               2×
             </button>
           </div>
         </div>
+
 
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
             <button
