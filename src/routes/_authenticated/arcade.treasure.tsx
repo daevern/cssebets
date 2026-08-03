@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Gem, ShieldCheck, Wallet, TrendingUp, Loader2 } from "lucide-react";
+import { ShieldCheck, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TreasureGrid } from "@/components/arcade/TreasureGrid";
 import { CasinoChip } from "@/components/arcade/CasinoChip";
@@ -148,7 +148,8 @@ function TreasurePage() {
       if (res.tileType === "TRAP") {
         setTraps(res.traps ?? null);
         setResultRound(res.round);
-        setResultOpen(true);
+        // Let the bomb blast/shake animation finish before the modal covers it.
+        window.setTimeout(() => setResultOpen(true), 900);
         refresh();
       }
     },
@@ -211,14 +212,13 @@ function TreasurePage() {
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-3 gap-1.5">
-        <Stat icon={Wallet} label="Balance" value={`${fmt(balance)}`} />
+        <Stat label="Balance" value={`${fmt(balance)}`} />
         <Stat
-          icon={TrendingUp}
           label="Multiplier"
           value={`${currentMult.toFixed(2)}×`}
           accent={safeReveals > 0}
         />
-        <Stat icon={Gem} label="Found" value={`${safeReveals}`} />
+        <Stat label="Found" value={`${safeReveals}`} />
       </div>
 
       <div className="relative">
@@ -426,20 +426,17 @@ function TreasurePage() {
 }
 
 function Stat({
-  icon: Icon,
   label,
   value,
   accent,
 }: {
-  icon: any;
   label: string;
   value: string;
   accent?: boolean;
 }) {
   return (
     <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">
-      <div className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-        <Icon className="h-3 w-3" />
+      <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
         {label}
       </div>
       <div

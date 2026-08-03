@@ -219,6 +219,12 @@
 
 
 
+@media (prefers-reduced-motion: reduce) {
+  [class*="animate-[treasure-"] {
+    animation: none !important;
+  }
+}
+
 @keyframes treasure-pop {
   0% { transform: scale(0.2); opacity: 0; }
   60% { transform: scale(1.25); opacity: 1; }

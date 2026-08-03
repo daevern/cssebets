@@ -316,8 +316,8 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-[minmax(0,171px)_minmax(0,1fr)] items-center gap-2">
-        <div className="relative">
+      <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[minmax(0,256px)_minmax(0,1fr)]">
+        <div className="relative mx-auto w-full max-w-[256px]">
           <RouletteWheel
             winningPocket={winningPocket}
             spinToken={spinToken}
@@ -436,8 +436,8 @@ function RoulettePage() {
       )}
 
 
-      <div className="-mx-3 overflow-x-auto px-3">
-        <div style={{ zoom: 1.5 as unknown as number }}>
+      <div className="-mx-3 overflow-x-auto px-3 pb-1 [-ms-overflow-style:none] [scrollbar-width:thin]">
+        <div className="min-w-[320px]">
           <RouletteBoard stakes={stakesByKey} onPlace={place} disabled={spinning} />
         </div>
       </div>
