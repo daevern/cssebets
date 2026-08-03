@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { RPS_MOVES, type RpsMove } from "@/lib/arcade/rps-math";
 import { CsseMark } from "@/components/brand/CsseMark";
@@ -6,61 +6,75 @@ import { CsseMark } from "@/components/brand/CsseMark";
 export type ArenaPhase = "IDLE" | "LOCKED" | "REVEALING" | "SETTLED";
 
 /**
- * Custom line-art hands — no emoji, no gradients. Flat 2D strokes that match
- * the arcade aesthetic and read clearly at small sizes.
+ * 8-bit pixel-art hands. Each map is a 12x12 grid of "#" (filled) cells so the
+ * glyphs stay crisp and blocky at any size — no emoji, no gradients.
  */
+const PIXELS: Record<RpsMove, string[]> = {
+  ROCK: [
+    "............",
+    "............",
+    "...#####....",
+    "..#######...",
+    ".#########..",
+    ".#########..",
+    "##########..",
+    ".#########..",
+    "..#######...",
+    "...#####....",
+    "............",
+    "............",
+  ],
+  PAPER: [
+    "............",
+    "..#..#..#...",
+    "..#..#..#...",
+    "..#..#..#...",
+    "..#..#..#...",
+    "#.########..",
+    "##########..",
+    ".#########..",
+    "..#######...",
+    "...#####....",
+    "............",
+    "............",
+  ],
+  SCISSORS: [
+    ".#........#.",
+    ".#........#.",
+    "..#......#..",
+    "..#......#..",
+    "...#....#...",
+    "....####....",
+    "...######...",
+    "..########..",
+    "..########..",
+    "...######...",
+    "............",
+    "............",
+  ],
+};
+
 function HandGlyph({ move, className }: { move: RpsMove | null; className?: string }) {
-  const s = {
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 3.2,
-    strokeLinejoin: "round" as const,
-    strokeLinecap: "round" as const,
-  };
-
-  if (move === "ROCK") {
-    // Closed fist, knuckles up, thumb folded across.
+  if (!move) {
     return (
-      <svg viewBox="0 0 64 64" className={className} aria-hidden>
-        <path d="M15 34c0-8 4-13 10-14.5 4.5-1.2 9-1.2 14 .2 6 1.7 10 6 10 14.3v5c0 7-6 12-17 12s-17-5-17-12v-5Z" {...s} />
-        <path d="M20 30.5c3-2.2 6-3.2 9-3.2s6.5 1 9.6 3.2" {...s} strokeWidth={2.6} />
-        <path d="M47 32.5c2.9.4 5 2.4 5 5.2 0 2.8-2 4.8-5 5.4" {...s} strokeWidth={2.6} />
-        <path d="M24 41h16" {...s} strokeWidth={2.6} />
+      <svg viewBox="0 0 12 12" className={className} shapeRendering="crispEdges" aria-hidden>
+        <rect x={5} y={2} width={2} height={5} fill="currentColor" />
+        <rect x={5} y={8} width={2} height={2} fill="currentColor" />
       </svg>
     );
   }
-
-  if (move === "PAPER") {
-    // Open hand, four fingers plus thumb.
-    return (
-      <svg viewBox="0 0 64 64" className={className} aria-hidden>
-        <path d="M25 33V15.5a3.5 3.5 0 1 1 7 0V31" {...s} />
-        <path d="M32 30V13a3.5 3.5 0 1 1 7 0v18" {...s} />
-        <path d="M39 31V17.5a3.5 3.5 0 1 1 7 0V36" {...s} />
-        <path d="M25 33V25a3.5 3.5 0 0 0-7 0v14c0 8.5 5.6 15 15 15h4c6.6 0 11-4.4 11-11v-7" {...s} />
-      </svg>
-    );
-  }
-
-  if (move === "SCISSORS") {
-    // Two extended fingers in a V, folded fist beneath.
-    return (
-      <svg viewBox="0 0 64 64" className={className} aria-hidden>
-        <path d="M24 34 16.5 14.8a3.5 3.5 0 0 1 6.5-2.6L32 31" {...s} />
-        <path d="m34 31 9-18.8a3.5 3.5 0 0 1 6.3 3L41 34" {...s} />
-        <path d="M41 33c4 1 6.5 4.6 6.5 9.2C47.5 49 42 54 34 54h-3c-8 0-13.5-5.4-13.5-13v-9" {...s} />
-        <path d="M24 40h8" {...s} strokeWidth={2.6} />
-      </svg>
-    );
-  }
-
+  const rows = PIXELS[move];
   return (
-    <svg viewBox="0 0 64 64" className={className} aria-hidden>
-      <circle cx="32" cy="32" r="17" {...s} strokeDasharray="6 6" />
-      <path d="M32 24v10M32 40h.01" {...s} strokeWidth={3.5} />
+    <svg viewBox="0 0 12 12" className={className} shapeRendering="crispEdges" aria-hidden>
+      {rows.map((row, y) =>
+        row.split("").map((c, x) =>
+          c === "#" ? <rect key={`${x}-${y}`} x={x} y={y} width={1} height={1} fill="currentColor" /> : null,
+        ),
+      )}
     </svg>
   );
 }
+
 
 /** Concealed tile — the same striped CSSE card back used by Blackjack. */
 function CardBack({ dim }: { dim?: boolean }) {
