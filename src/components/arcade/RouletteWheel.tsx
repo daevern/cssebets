@@ -138,6 +138,9 @@ export function RouletteWheel({
         </defs>
 
         <circle cx={cx} cy={cy} r="96" fill="var(--color-surface-2)" />
+        {/* Outer rim: grey outline + inner green track ring */}
+        <circle cx={cx} cy={cy} r="96" fill="none" stroke="#3a4249" strokeWidth="2" />
+        <circle cx={cx} cy={cy} r="90" fill="none" stroke="#1f7a4a" strokeWidth="3" />
 
         <g
           style={{

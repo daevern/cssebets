@@ -317,7 +317,7 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="relative overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-3">
+      <div className="relative p-0">
         <Corner pos="tr" />
         <div className="absolute right-2 top-2 z-10 rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/90 px-2 py-1 text-right">
           <div className="text-[7px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
@@ -447,7 +447,7 @@ function RoulettePage() {
             </div>
           )}
 
-        <div className="flex items-center gap-2 overflow-x-auto px-1 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex items-center gap-2 overflow-x-auto overflow-y-visible px-1 py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {chips.map((c) => (
             <CasinoChip key={c} value={c} selected={chip === c} onClick={() => setChip(c)} size={44} />
           ))}
@@ -465,12 +465,13 @@ function RoulettePage() {
               type="button"
               onClick={doubleBets}
               disabled={spinning || !positions.length || totalStake * 2 > balance}
-              className="rounded-full border border-[var(--color-surface-border)] px-2.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)] disabled:opacity-40"
+              className="grid h-9 w-9 place-items-center rounded-[4px] bg-[var(--color-surface-2)] font-mono text-[11px] font-black text-[var(--color-neon)] transition-colors hover:bg-[var(--color-surface-2)]/70 disabled:opacity-35"
             >
               2×
             </button>
           </div>
         </div>
+
 
           <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
             <button
@@ -567,7 +568,7 @@ function IconBtn({
       disabled={disabled}
       title={title}
       aria-label={title}
-      className="grid h-9 w-9 place-items-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)] disabled:opacity-40"
+      className="grid h-9 w-9 place-items-center rounded-[4px] bg-[var(--color-surface-2)] text-[var(--color-ink)] transition-colors hover:bg-[var(--color-surface-2)]/70 disabled:opacity-35"
     >
       {children}
     </button>

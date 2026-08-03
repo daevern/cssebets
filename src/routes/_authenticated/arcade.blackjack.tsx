@@ -431,22 +431,23 @@ function ActionTile({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "flex h-9 flex-col items-center justify-center rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] transition-colors md:h-[54px] md:gap-1",
-        "hover:border-[var(--color-neon)]/40 disabled:opacity-35",
+        "flex h-10 flex-col items-center justify-center gap-0.5 rounded-[4px] bg-[var(--color-surface-2)] transition-colors md:h-[54px]",
+        "hover:bg-[var(--color-surface-2)]/70 disabled:opacity-35",
       )}
     >
       {loading ? (
-        <Loader2 className="h-3 w-3 animate-spin text-[var(--color-neon)]" />
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--color-neon)]" />
       ) : glyph ? (
-        <span className="font-mono text-[11px] font-black leading-none text-[var(--color-neon)]">
+        <span className="font-mono text-[12px] font-black leading-none text-[var(--color-neon)]">
           {glyph}
         </span>
       ) : (
-        Icon && <Icon className="h-3 w-3 text-[var(--color-neon)]" />
+        Icon && <Icon className="h-3.5 w-3.5 text-[var(--color-neon)]" />
       )}
-      <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-[var(--color-ink)]">
+      <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-[var(--color-ink)]">
         {label}
       </span>
     </button>
+
   );
 }
