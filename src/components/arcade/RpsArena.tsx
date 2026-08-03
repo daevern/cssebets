@@ -4,44 +4,59 @@ import { RPS_MOVES, type RpsMove } from "@/lib/arcade/rps-math";
 
 export type ArenaPhase = "IDLE" | "LOCKED" | "REVEALING" | "SETTLED";
 
-/** Flat 2D glyphs — no gradients, no shadows, matching the arcade aesthetic. */
+/**
+ * Custom line-art hands — no emoji, no gradients. Flat 2D strokes that match
+ * the arcade aesthetic and read clearly at small sizes.
+ */
 function HandGlyph({ move, className }: { move: RpsMove | null; className?: string }) {
-  const common = {
+  const s = {
     fill: "none",
     stroke: "currentColor",
-    strokeWidth: 4,
+    strokeWidth: 3.2,
     strokeLinejoin: "round" as const,
     strokeLinecap: "round" as const,
   };
+
   if (move === "ROCK") {
+    // Closed fist, knuckles up, thumb folded across.
     return (
       <svg viewBox="0 0 64 64" className={className} aria-hidden>
-        <rect x="12" y="20" width="40" height="28" rx="10" {...common} />
-        <path d="M20 30h24M20 38h24" {...common} strokeWidth={3} />
+        <path d="M15 34c0-8 4-13 10-14.5 4.5-1.2 9-1.2 14 .2 6 1.7 10 6 10 14.3v5c0 7-6 12-17 12s-17-5-17-12v-5Z" {...s} />
+        <path d="M20 30.5c3-2.2 6-3.2 9-3.2s6.5 1 9.6 3.2" {...s} strokeWidth={2.6} />
+        <path d="M47 32.5c2.9.4 5 2.4 5 5.2 0 2.8-2 4.8-5 5.4" {...s} strokeWidth={2.6} />
+        <path d="M24 41h16" {...s} strokeWidth={2.6} />
       </svg>
     );
   }
+
   if (move === "PAPER") {
+    // Open hand, four fingers plus thumb.
     return (
       <svg viewBox="0 0 64 64" className={className} aria-hidden>
-        <rect x="14" y="12" width="36" height="40" rx="4" {...common} />
-        <path d="M22 24h20M22 32h20M22 40h12" {...common} strokeWidth={3} />
+        <path d="M25 33V15.5a3.5 3.5 0 1 1 7 0V31" {...s} />
+        <path d="M32 30V13a3.5 3.5 0 1 1 7 0v18" {...s} />
+        <path d="M39 31V17.5a3.5 3.5 0 1 1 7 0V36" {...s} />
+        <path d="M25 33V25a3.5 3.5 0 0 0-7 0v14c0 8.5 5.6 15 15 15h4c6.6 0 11-4.4 11-11v-7" {...s} />
       </svg>
     );
   }
+
   if (move === "SCISSORS") {
+    // Two extended fingers in a V, folded fist beneath.
     return (
       <svg viewBox="0 0 64 64" className={className} aria-hidden>
-        <path d="M20 12l18 30M44 12L26 42" {...common} />
-        <circle cx="22" cy="50" r="6" {...common} />
-        <circle cx="42" cy="50" r="6" {...common} />
+        <path d="M24 34 16.5 14.8a3.5 3.5 0 0 1 6.5-2.6L32 31" {...s} />
+        <path d="m34 31 9-18.8a3.5 3.5 0 0 1 6.3 3L41 34" {...s} />
+        <path d="M41 33c4 1 6.5 4.6 6.5 9.2C47.5 49 42 54 34 54h-3c-8 0-13.5-5.4-13.5-13v-9" {...s} />
+        <path d="M24 40h8" {...s} strokeWidth={2.6} />
       </svg>
     );
   }
+
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden>
-      <circle cx="32" cy="32" r="18" {...common} strokeDasharray="6 6" />
-      <path d="M32 24v10M32 40h.01" {...common} strokeWidth={4} />
+      <circle cx="32" cy="32" r="17" {...s} strokeDasharray="6 6" />
+      <path d="M32 24v10M32 40h.01" {...s} strokeWidth={3.5} />
     </svg>
   );
 }
@@ -52,7 +67,7 @@ function CardBack({ dim }: { dim?: boolean }) {
     <div
       className={cn(
         "grid h-full w-full place-items-center rounded-[6px] bg-[var(--color-neon)]",
-        dim && "opacity-35",
+        dim && "opacity-30",
       )}
     >
       <span className="-rotate-[38deg] font-display text-[9px] font-black uppercase tracking-[0.12em] text-black">
@@ -82,10 +97,7 @@ const toneRing = (t: Tone) =>
         ? "ring-2 ring-amber-400"
         : "";
 
-/**
- * A single ladder card that physically flips on its Y axis when it reveals.
- * Face-down = card back; face-up = the hand that was played.
- */
+/** A card that physically flips on its Y axis when it reveals. */
 function FlipCard({
   faceUp,
   move,
@@ -110,7 +122,6 @@ function FlipCard({
         className="relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d]"
         style={{ transform: faceUp ? "rotateY(180deg)" : "rotateY(0deg)" }}
       >
-        {/* Back */}
         <div
           className={cn(
             "absolute inset-0 overflow-hidden rounded-[6px] [backface-visibility:hidden]",
@@ -119,7 +130,6 @@ function FlipCard({
         >
           <CardBack dim={!active} />
         </div>
-        {/* Face */}
         <div
           className={cn(
             "absolute inset-0 grid place-items-center overflow-hidden rounded-[6px] bg-[var(--color-surface-2)] [backface-visibility:hidden] [transform:rotateY(180deg)]",
@@ -133,18 +143,90 @@ function FlipCard({
   );
 }
 
-const LADDER_LENGTH = 7;
+/** One column of the rail: server card on top, player hand below, multiplier badge. */
+function RailCell({
+  scale,
+  faceUp,
+  serverMove,
+  playerMove,
+  tone,
+  active,
+  shaking,
+  multiplier,
+  placeholder,
+}: {
+  scale: "past" | "active" | "next";
+  faceUp: boolean;
+  serverMove: RpsMove | null;
+  playerMove: RpsMove | null;
+  tone: Tone;
+  active: boolean;
+  shaking: boolean;
+  multiplier: number;
+  placeholder?: boolean;
+}) {
+  const width =
+    scale === "active" ? "w-[92px]" : scale === "next" ? "w-[62px]" : "w-[62px]";
+  return (
+    <div
+      className={cn(
+        "flex shrink-0 flex-col items-center gap-1.5 transition-all duration-500",
+        width,
+        scale === "past" && "opacity-70",
+        scale === "next" && "opacity-40",
+      )}
+    >
+      <FlipCard
+        faceUp={faceUp}
+        move={serverMove}
+        tone={tone}
+        active={active}
+        shaking={shaking}
+      />
+
+      <div
+        className={cn(
+          "grid aspect-square w-full place-items-center rounded-[6px] bg-[var(--color-surface-2)] transition-all duration-300",
+          tone ? toneRing(tone) : active ? "ring-2 ring-[var(--color-neon)]/60" : "",
+          active && shaking && "animate-[rps-shake_0.36s_ease-in-out_infinite]",
+        )}
+      >
+        {playerMove ? (
+          <HandGlyph
+            move={playerMove}
+            className={cn("h-[62%] w-[62%] animate-[rps-drop_0.3s_ease-out]", toneText(tone))}
+          />
+        ) : (
+          <span className="font-mono text-[10px] text-[var(--color-ink-muted)]">—</span>
+        )}
+      </div>
+
+      <div
+        className={cn(
+          "rounded-[3px] px-1.5 font-mono text-[9px] font-bold tabular-nums transition-colors",
+          tone === "WIN"
+            ? "bg-[var(--color-neon)] text-black animate-[rps-pop_0.35s_ease-out]"
+            : tone === "LOSS"
+              ? "bg-red-500 text-white animate-[rps-pop_0.35s_ease-out]"
+              : tone === "DRAW"
+                ? "bg-amber-400 text-black animate-[rps-pop_0.35s_ease-out]"
+                : active && !placeholder
+                  ? "bg-[var(--color-ink)] text-black"
+                  : "text-[var(--color-ink-muted)] opacity-60",
+        )}
+      >
+        {multiplier.toFixed(2)}×
+      </div>
+    </div>
+  );
+}
 
 /**
- * Stake-style RPS board.
+ * Centre-anchored RPS rail.
  *
- * Row 1 — the computer's committed hands on the current win streak.
- * Row 2 — the player's matching output for each step.
- * Row 3 — the dispenser: pick rock, paper or scissors.
- *
- * Both hands stay concealed while the round is in flight and flip in the SAME
- * render once the server has settled, so the animation can never leak the
- * outcome early.
+ * The live card always sits in the MIDDLE. Settled results slide out to the
+ * left (most recent nearest the centre) and the next, still-sleeping card
+ * waits on the right. Server hand on top, your hand underneath.
  */
 function RpsArenaImpl({
   phase,
@@ -161,7 +243,7 @@ function RpsArenaImpl({
   serverMove: RpsMove | null;
   outcome: "WIN" | "LOSS" | "DRAW" | null;
   winMultiplier: number;
-  /** Most recent first. */
+  /** Oldest first. */
   history: Array<{ id: string; player: RpsMove | null; server: RpsMove | null; outcome: string }>;
   onChoose: (move: RpsMove) => void;
   canPlay: boolean;
@@ -169,110 +251,80 @@ function RpsArenaImpl({
   const concealed = phase !== "SETTLED";
   const shaking = phase === "LOCKED" || phase === "REVEALING";
 
-  const past = history.slice(-(LADDER_LENGTH - 1));
-  const activeIndex = past.length;
+  const past = history.slice(-3);
+  const step = history.length;
 
   return (
-    <div className="rounded-[6px] bg-[var(--color-surface)] p-3">
+    <div className="overflow-hidden rounded-[6px] bg-[var(--color-surface)] p-3">
       <style>{`
 @keyframes rps-shake{0%,100%{transform:translateY(0) rotate(0deg)}25%{transform:translateY(-8px) rotate(-4deg)}75%{transform:translateY(-8px) rotate(4deg)}}
 @keyframes rps-pop{0%{transform:scale(1)}45%{transform:scale(1.14)}100%{transform:scale(1)}}
 @keyframes rps-drop{0%{transform:translateY(-10px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes rps-slide-in{0%{transform:translateX(46px) scale(.9);opacity:0}100%{transform:translateX(0) scale(1);opacity:1}}
 `}</style>
 
-      {/* Server / algorithm ladder */}
-      <div className="mb-1 font-display text-[8px] font-black uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-        Server
-      </div>
-      <div className="grid grid-cols-7 gap-1.5">
-        {Array.from({ length: LADDER_LENGTH }).map((_, i) => {
-          const done = past[i];
-          const isActive = i === activeIndex;
-          const revealedHere = isActive && !concealed;
-          const tone: Tone = done
-            ? (done.outcome as Tone)
-            : revealedHere
-              ? (outcome as Tone)
-              : null;
-          const badgeTone = done
-            ? done.outcome
-            : revealedHere
-              ? outcome
-              : null;
-          return (
-            <div key={i} className="flex flex-col items-center gap-1">
-              <FlipCard
-                faceUp={Boolean(done) || revealedHere}
-                move={done ? done.server : serverMove}
-                tone={tone}
-                active={isActive}
-                shaking={shaking}
-              />
-              <div
-                className={cn(
-                  "rounded-[3px] px-1 font-mono text-[8px] font-bold tabular-nums transition-colors",
-                  badgeTone === "WIN"
-                    ? "bg-[var(--color-neon)] text-black animate-[rps-pop_0.35s_ease-out]"
-                    : badgeTone === "LOSS"
-                      ? "bg-red-500 text-white animate-[rps-pop_0.35s_ease-out]"
-                      : badgeTone === "DRAW"
-                        ? "bg-amber-400 text-black animate-[rps-pop_0.35s_ease-out]"
-                        : isActive
-                          ? "bg-[var(--color-ink)] text-black"
-                          : "text-[var(--color-ink-muted)] opacity-60",
-                )}
-              >
-                {(winMultiplier ** (i + 1)).toFixed(2)}×
-              </div>
-            </div>
-          );
-        })}
+      <div className="mb-1 flex items-center justify-between">
+        <span className="font-display text-[8px] font-black uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+          Server
+        </span>
+        <span className="font-display text-[8px] font-black uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+          You
+        </span>
       </div>
 
-      {/* Player output */}
-      <div className="mb-1 mt-2 font-display text-[8px] font-black uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-        You
-      </div>
-      <div className="grid grid-cols-7 gap-1.5">
-        {Array.from({ length: LADDER_LENGTH }).map((_, i) => {
-          const done = past[i];
-          const isActive = i === activeIndex;
-          const revealedHere = isActive && !concealed;
-          const show = done ? done.player : revealedHere ? playerMove : null;
-          const tone: Tone = done
-            ? (done.outcome as Tone)
-            : revealedHere
-              ? (outcome as Tone)
-              : null;
-          return (
-            <div
-              key={i}
-              className={cn(
-                "grid aspect-square w-full place-items-center rounded-[6px] bg-[var(--color-surface-2)] transition-all duration-300",
-                tone ? toneRing(tone) : isActive ? "ring-2 ring-[var(--color-neon)]/60" : "",
-                isActive && shaking && "animate-[rps-shake_0.36s_ease-in-out_infinite]",
-              )}
-            >
-              {show ? (
-                <HandGlyph
-                  move={show}
-                  className={cn(
-                    "h-[60%] w-[60%] animate-[rps-drop_0.3s_ease-out]",
-                    toneText(tone),
-                  )}
-                />
-              ) : (
-                <span className="font-mono text-[9px] text-[var(--color-ink-muted)]">—</span>
-              )}
-            </div>
-          );
-        })}
+      {/* Rail — the active column is centred; history drifts left, next waits right. */}
+      <div className="relative flex items-start justify-center gap-2 py-1">
+        {/* Left: settled results, most recent closest to the centre. */}
+        <div className="flex flex-1 items-start justify-end gap-2 overflow-hidden">
+          {past.map((h, i) => (
+            <RailCell
+              key={h.id}
+              scale="past"
+              faceUp
+              serverMove={h.server}
+              playerMove={h.player}
+              tone={h.outcome as Tone}
+              active={false}
+              shaking={false}
+              multiplier={winMultiplier ** (step - past.length + i + 1)}
+            />
+          ))}
+        </div>
+
+        {/* Centre: the live card. */}
+        <div key={step} className="animate-[rps-slide-in_0.45s_ease-out]">
+          <RailCell
+            scale="active"
+            faceUp={!concealed}
+            serverMove={serverMove}
+            playerMove={concealed ? null : playerMove}
+            tone={concealed ? null : (outcome as Tone)}
+            active
+            shaking={shaking}
+            multiplier={winMultiplier ** (step + 1)}
+          />
+        </div>
+
+        {/* Right: the next card, still asleep. */}
+        <div className="flex flex-1 items-start justify-start gap-2 overflow-hidden">
+          <RailCell
+            scale="next"
+            faceUp={false}
+            serverMove={null}
+            playerMove={null}
+            tone={null}
+            active={false}
+            shaking={false}
+            multiplier={winMultiplier ** (step + 2)}
+            placeholder
+          />
+        </div>
       </div>
 
       {/* Status line */}
       <div
         className={cn(
-          "mt-3 text-center font-display text-[10px] font-black uppercase tracking-[0.28em] transition-colors",
+          "mt-2 text-center font-display text-[10px] font-black uppercase tracking-[0.28em] transition-colors",
           phase === "SETTLED" ? toneText(outcome as Tone) : "text-[var(--color-ink-muted)]",
         )}
       >
@@ -291,9 +343,7 @@ function RpsArenaImpl({
       <div className="mt-2 flex flex-col items-center">
         <div className="h-3 w-12 rounded-t-[4px] bg-[var(--color-surface-2)]" />
         <div className="h-2 w-28 rounded-[3px] bg-[var(--color-surface-2)]" />
-        <div className="flex w-full items-start justify-center">
-          <div className="mt-0 h-4 w-px bg-[var(--color-surface-border)]" />
-        </div>
+        <div className="h-4 w-px bg-[var(--color-surface-border)]" />
 
         <div className="grid w-full grid-cols-3 gap-2">
           {RPS_MOVES.map((m) => {
