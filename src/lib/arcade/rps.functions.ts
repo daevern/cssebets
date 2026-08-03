@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceRateLimit } from "@/lib/rate-limit.functions";
 
 /**
  * Rock–Paper–Scissors — user-facing server functions.
@@ -17,55 +16,25 @@ import { enforceRateLimit } from "@/lib/rate-limit.functions";
  * client-supplied server move, outcome, multiplier, return or balance.
  */
 
-function mapError(message: string): string {
-  const m = message || "";
-  if (m.includes("INSUFFICIENT_BALANCE")) return "Not enough points in your wallet.";
-  if (m.includes("BELOW_MIN_STAKE")) return "Stake is below the minimum.";
-  if (m.includes("ABOVE_MAX_STAKE")) return "Stake is above the maximum.";
-  if (m.includes("MAINTENANCE_MODE")) return "Rock–Paper–Scissors is under maintenance.";
-  if (m.includes("NO_ACTIVE_CONFIG")) return "Rock–Paper–Scissors is not configured yet.";
-  if (m.includes("DAILY_LIMIT")) return "Daily round limit reached.";
-  if (m.includes("EXPOSURE_LIMIT")) return "That stake exceeds the maximum return limit.";
-  if (m.includes("ROUND_NOT_FOUND")) return "Round not found.";
-  if (m.includes("ROUND_ALREADY_USED")) return "That round was already played.";
-  if (m.includes("ROUND_EXPIRED")) return "That round expired — starting a fresh one.";
-  if (m.includes("IDEMPOTENCY_CONFLICT")) return "That round was already played with a different move.";
-  if (m.includes("INVALID_CHOICE")) return "Invalid move.";
-  if (m.includes("INVALID_CLIENT_SEED")) return "Invalid client seed.";
-  if (m.includes("UNAUTHORIZED")) return "Please sign in again.";
-  return m || "Something went wrong.";
-}
-
-/** Everything safe to hand the browser about a settled round. */
-const SETTLED_FIELDS =
-  "id, status, player_choice, server_choice, outcome, stake, multiplier, gross_return, user_net, " +
-  "client_seed, server_seed_hash, nonce, hmac_input, random_hex, verification_id, config_version, " +
-  "prepared_at, settled_at, expires_at, processing_ms, created_at";
-
-function publicRound(r: any) {
-  if (!r) return null;
-  return {
-    id: r.id as string,
-    status: String(r.status),
-    playerChoice: r.player_choice as "ROCK" | "PAPER" | "SCISSORS" | null,
-    serverChoice: r.server_choice as "ROCK" | "PAPER" | "SCISSORS" | null,
-    outcome: r.outcome as "WIN" | "LOSS" | "DRAW" | null,
-    stake: Number(r.stake ?? 0),
-    multiplier: Number(r.multiplier ?? 0),
-    grossReturn: Number(r.gross_return ?? 0),
-    userNet: Number(r.user_net ?? 0),
-    clientSeed: r.client_seed ?? null,
-    serverSeedHash: r.server_seed_hash as string,
-    nonce: Number(r.nonce ?? 0),
-    hmacInput: r.hmac_input ?? null,
-    randomHex: r.random_hex ?? null,
-    verificationId: r.verification_id as string,
-    settledAt: r.settled_at ?? null,
-    processingMs: r.processing_ms == null ? null : Number(r.processing_ms),
-  };
-}
-
-export type RpsRound = NonNullable<ReturnType<typeof publicRound>>;
+export type RpsRound = {
+  id: string;
+  status: string;
+  playerChoice: "ROCK" | "PAPER" | "SCISSORS" | null;
+  serverChoice: "ROCK" | "PAPER" | "SCISSORS" | null;
+  outcome: "WIN" | "LOSS" | "DRAW" | null;
+  stake: number;
+  multiplier: number;
+  grossReturn: number;
+  userNet: number;
+  clientSeed: string | null;
+  serverSeedHash: string;
+  nonce: number;
+  hmacInput: string | null;
+  randomHex: string | null;
+  verificationId: string;
+  settledAt: string | null;
+  processingMs: number | null;
+};
 
 /** Stake bounds, chip denominations and the published payout table. */
 export const getRpsConfig = createServerFn({ method: "GET" })
@@ -143,18 +112,14 @@ export const prepareRpsRound = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { userId } = context;
-    try {
-      await enforceRateLimit(`rps:${userId}`, "arcade_rps");
-    } catch (e) {
-      if ((e as Error).message === "RATE_LIMITED") throw new Error("Too many rounds — please slow down.");
-      throw e;
-    }
+    const { enforceRpsRateLimit, mapRpsError } = await import("@/lib/arcade/rps.server");
+    await enforceRpsRateLimit(userId);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await (supabaseAdmin as any).rpc("arcade_rps_prepare_round", {
       p_user: userId,
     });
-    if (error) throw new Error(mapError(error.message));
+    if (error) throw new Error(mapRpsError(error.message));
 
     const row = Array.isArray(data) ? data[0] : data;
     if (!row) throw new Error("Could not prepare a round.");
@@ -186,12 +151,8 @@ export const settleRpsRound = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    try {
-      await enforceRateLimit(`rps:${userId}`, "arcade_rps");
-    } catch (e) {
-      if ((e as Error).message === "RATE_LIMITED") throw new Error("Too many rounds — please slow down.");
-      throw e;
-    }
+    const { enforceRpsRateLimit, mapRpsError, publicRpsRound } = await import("@/lib/arcade/rps.server");
+    await enforceRpsRateLimit(userId);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row, error } = await (supabaseAdmin as any).rpc("arcade_rps_settle", {
@@ -203,9 +164,9 @@ export const settleRpsRound = createServerFn({ method: "POST" })
       p_idempotency_key: data.idempotencyKey,
       p_client_reveal_ms: data.clientRevealMs ?? null,
     });
-    if (error) throw new Error(mapError(error.message));
+    if (error) throw new Error(mapRpsError(error.message));
 
-    return { round: publicRound(Array.isArray(row) ? row[0] : row)! };
+    return { round: publicRpsRound(Array.isArray(row) ? row[0] : row)! };
   });
 
 /** Recover a settled round after a refresh, timeout or dropped connection. */
@@ -214,9 +175,10 @@ export const getRpsRound = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ roundId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { SETTLED_RPS_FIELDS, publicRpsRound } = await import("@/lib/arcade/rps.server");
     const { data: row, error } = await supabase
       .from("arcade_rps_rounds")
-      .select(SETTLED_FIELDS)
+      .select(SETTLED_RPS_FIELDS)
       .eq("id", data.roundId)
       .eq("user_id", userId)
       .maybeSingle();
@@ -226,7 +188,7 @@ export const getRpsRound = createServerFn({ method: "POST" })
     if ((row as any).status !== "SETTLED") {
       return { round: null, status: String((row as any).status) };
     }
-    return { round: publicRound(row) };
+    return { round: publicRpsRound(row) };
   });
 
 /**
@@ -238,9 +200,10 @@ export const revealRpsRound = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ roundId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { SETTLED_RPS_FIELDS, publicRpsRound } = await import("@/lib/arcade/rps.server");
     const { data: row, error } = await supabase
       .from("arcade_rps_rounds")
-      .select(SETTLED_FIELDS)
+      .select(SETTLED_RPS_FIELDS)
       .eq("id", data.roundId)
       .eq("user_id", userId)
       .maybeSingle();
@@ -258,7 +221,7 @@ export const revealRpsRound = createServerFn({ method: "POST" })
       .maybeSingle();
 
     return {
-      round: publicRound(row)!,
+      round: publicRpsRound(row)!,
       serverSeed: String(secret?.server_seed ?? ""),
       revealedAt: secret?.server_seed_revealed_at ?? null,
       preparedAt: (row as any).prepared_at as string,
