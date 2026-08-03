@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Split } from "lucide-react";
 import {
   COLUMNS,
@@ -180,7 +180,7 @@ export function RouletteBoard({
         {numberRows.map((row, ri) => {
           const col = COLUMNS[2 - ri];
           return (
-            <>
+            <Fragment key={`row-${ri}`}>
               {row.map((n) => {
                 const colour = pocketColour(n);
                 const selected = splitFirst === n;
@@ -217,7 +217,7 @@ export function RouletteBoard({
                 2:1
                 <Stack amount={amt(key("column", col.pockets))} />
               </button>
-            </>
+            </Fragment>
           );
         })}
 
