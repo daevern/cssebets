@@ -408,11 +408,13 @@ function RpsPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={phase === "SETTLED" ? nextRound : undefined}
-              disabled={phase !== "SETTLED"}
+              onClick={
+                phase === "SETTLED" ? nextRound : canCollect ? collectRun : undefined
+              }
+              disabled={phase !== "SETTLED" && !canCollect}
               className={cn(
                 "flex h-11 flex-1 items-center justify-center gap-1.5 rounded-[4px] font-display text-xs font-bold uppercase tracking-[0.2em] transition-colors",
-                phase === "SETTLED"
+                phase === "SETTLED" || canCollect
                   ? "bg-[var(--color-neon)] text-black"
                   : "bg-[var(--color-neon)]/25 text-[var(--color-ink-muted)]",
               )}
@@ -423,25 +425,18 @@ function RpsPage() {
                 <>
                   <Loader2 className="h-3.5 w-3.5 animate-spin" /> Revealing
                 </>
+              ) : canCollect ? (
+                <>
+                  <HandCoins className="h-3.5 w-3.5" /> Collect +{fmt(runNet)}
+                </>
               ) : (
                 <>
                   <Swords className="h-3.5 w-3.5" /> Pick a hand above
                 </>
               )}
             </button>
-
-            {runActive && (
-              <button
-                type="button"
-                onClick={collectRun}
-                disabled={busy}
-                className="flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-[4px] border border-[var(--color-neon)] px-4 font-display text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-neon)] transition-colors disabled:opacity-40"
-              >
-                <HandCoins className="h-3.5 w-3.5" />
-                Collect{runNet !== 0 ? ` ${runNet > 0 ? "+" : ""}${fmt(runNet)}` : ""}
-              </button>
-            )}
           </div>
+
 
 
 
