@@ -283,14 +283,14 @@ function RoulettePage() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {cfg?.announcement && (
         <div className="rounded-xl border border-[var(--color-neon)]/30 bg-[var(--color-neon)]/8 px-3 py-2 text-[11px] text-[var(--color-ink)]">
           {cfg.announcement}
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-3 gap-1">
         <Stat label="Balance" value={`${fmt(balance)}`} accent />
         <Stat
           label="Today"
@@ -316,7 +316,7 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-[minmax(0,168px)_minmax(0,1fr)] items-center gap-3">
+      <div className="grid grid-cols-[minmax(0,140px)_minmax(0,1fr)] items-center gap-3">
         <div className="relative">
           <RouletteWheel
             winningPocket={winningPocket}
