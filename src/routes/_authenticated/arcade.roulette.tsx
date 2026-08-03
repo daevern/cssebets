@@ -290,7 +290,7 @@ function RoulettePage() {
       )}
 
       <div className="grid grid-cols-3 gap-1">
-        <Stat label="Balance" value={`${fmt(balance)}`} accent />
+        <Stat label="Balance" value={`${fmt(balance)}`} />
         <Stat
           label="Today"
           value={`${(profile.data?.todayNet ?? 0) >= 0 ? "+" : ""}${fmt(profile.data?.todayNet ?? 0)}`}
