@@ -241,8 +241,14 @@ function RpsPage() {
   };
 
   const nextRound = () => {
-    if (round) {
-      // Every settled round is kept on the rail — wins, draws and losses.
+    const lost = round?.outcome === "LOSS";
+    if (lost) {
+      // A single loss ends the run — the whole stake stays with the house,
+      // exactly like busting a mine on Treasure Grid. Nothing is collectible.
+      setLadderHistory([]);
+      setRunNet(0);
+    } else if (round) {
+      // Wins and draws stay on the rail and keep the run alive.
       setLadderHistory((current) =>
         [
           ...current,
@@ -271,17 +277,12 @@ function RpsPage() {
     setPlayerMove(null);
     setRound(null);
     clientSeed.current = newSeed();
-    toast.success(
-      banked > 0
-        ? `Collected +${fmt(banked)} pts`
-        : banked < 0
-          ? `Run closed · ${fmt(banked)} pts`
-          : "Run closed",
-    );
+    toast.success(`Collected +${fmt(banked)} pts`);
   };
 
+  /** Only a run that is currently in profit can be banked. */
+  const canCollect = phase === "IDLE" && !busy && runNet > 0 && ladderHistory.length > 0;
 
-  const runActive = ladderHistory.length > 0 || phase === "SETTLED" || runNet !== 0;
 
   const todayNet = profileQ.data?.todayNet ?? 0;
   const recent = profileQ.data?.recent ?? [];
