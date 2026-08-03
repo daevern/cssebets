@@ -48,9 +48,9 @@ export const revealTreasureSeed = createServerFn({ method: "GET" })
         .maybeSingle(),
       (supabaseAdmin as any)
         .from("arcade_treasure_tiles")
-        .select("trap_indices")
+        .select("tile_index, tile_type")
         .eq("round_id", (round as any).id)
-        .maybeSingle(),
+        .eq("tile_type", "TRAP"),
       supabase
         .from("arcade_treasure_round_actions")
         .select("action_sequence, action_type, tile_index, outcome, multiplier_after")
@@ -83,7 +83,7 @@ export const revealTreasureSeed = createServerFn({ method: "GET" })
       verificationId: (round as any).verification_id as string,
       configVersion: Number((round as any).config_version ?? 0),
       rtpVersion: Number((round as any).rtp_version ?? 0),
-      trapIndices: ((tilesRes.data?.trap_indices ?? []) as number[]).map(Number),
+      trapIndices: (((tilesRes as any).data ?? []) as any[]).map((t) => Number(t.tile_index)),
       actions: (actionsRes.data ?? []) as any[],
     };
   });

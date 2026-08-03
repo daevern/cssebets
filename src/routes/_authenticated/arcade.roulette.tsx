@@ -436,7 +436,11 @@ function RoulettePage() {
       )}
 
 
-      <RouletteBoard stakes={stakesByKey} onPlace={place} disabled={spinning} />
+      <div className="-mx-3 overflow-x-auto px-3">
+        <div style={{ zoom: 1.5 as unknown as number }}>
+          <RouletteBoard stakes={stakesByKey} onPlace={place} disabled={spinning} />
+        </div>
+      </div>
 
       <RouletteVerifyDialog
         open={!!verifyId}
