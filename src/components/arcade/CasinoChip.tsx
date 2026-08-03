@@ -10,8 +10,9 @@ const CHIP_COLORS: { at: number; face: string; edge: string; ink: string }[] = [
   { at: 5, face: "#d0353f", edge: "#8e1f27", ink: "#fff6f6" },
   { at: 10, face: "#2f6fd0", edge: "#1c4585", ink: "#f3f8ff" },
   { at: 25, face: "#2aa35c", edge: "#166b3a", ink: "#f2fff6" },
+  { at: 50, face: "#7b3fd4", edge: "#4d248a", ink: "#f8f4ff" },
   { at: 100, face: "#1d2126", edge: "#0a0d10", ink: "#f5f7f8" },
-  { at: 500, face: "#7b3fd4", edge: "#4d248a", ink: "#f8f4ff" },
+  { at: 500, face: "#d9a441", edge: "#8d6413", ink: "#1a1204" },
 ];
 
 function paletteFor(value: number) {

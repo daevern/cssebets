@@ -207,42 +207,8 @@ function BlackjackPage() {
   const lastResult = settled ? state?.hand : null;
   const todayNet = profileQ.data?.todayNet ?? 0;
 
-  const shellRef = useRef<HTMLDivElement | null>(null);
-  const [shellHeight, setShellHeight] = useState<number | undefined>(undefined);
-  useEffect(() => {
-    let measuredWidth = window.innerWidth;
-    const measure = () => {
-      const el = shellRef.current;
-      if (!el) return;
-      if (window.innerWidth >= 768) {
-        setShellHeight(undefined);
-        return;
-      }
-      const top = el.getBoundingClientRect().top + window.scrollY;
-      const nav = document.querySelector('nav[aria-label="Primary"]');
-      const navH = nav ? nav.getBoundingClientRect().height : 64;
-      setShellHeight(Math.max(400, window.innerHeight - top - navH));
-    };
-    const handleResize = () => {
-      if (Math.abs(window.innerWidth - measuredWidth) < 24) return;
-      measuredWidth = window.innerWidth;
-      measure();
-    };
-    measure();
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("orientationchange", measure);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("orientationchange", measure);
-    };
-  }, []);
-
   return (
-    <div
-      ref={shellRef}
-      style={shellHeight ? { height: shellHeight } : undefined}
-      className="-mb-24 flex min-h-0 flex-col gap-1 overflow-hidden md:mb-0 md:h-auto md:overflow-visible md:gap-3 md:pb-4"
-    >
+    <div className="flex flex-col gap-1 md:gap-3">
       <div className="grid shrink-0 grid-cols-3 gap-1.5">
         <Stat label="Balance" value={balance.toLocaleString()} Icon={Wallet} />
         <Stat
@@ -264,7 +230,7 @@ function BlackjackPage() {
         </div>
       )}
 
-      <div className="relative mx-[calc(50%-50vw)] min-h-[150px] w-screen flex-1 md:h-[520px] md:min-h-0 md:flex-none">
+      <div className="relative mx-[calc(50%-50vw)] h-[320px] w-screen md:h-[520px]">
         <BlackjackTable state={state} />
       </div>
 
@@ -330,7 +296,8 @@ function BlackjackPage() {
         />
       )}
 
-      <div className="z-20 mx-auto w-full max-w-xl shrink-0 space-y-1.5 bg-[var(--color-surface)] px-0 pb-[env(safe-area-inset-bottom)] pt-1 md:space-y-2 md:bg-transparent md:pb-0 md:pt-3">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-0">
+        <div className="mx-auto w-full max-w-xl space-y-1.5 px-3 py-2 md:space-y-2">
         <div className="grid grid-cols-4 gap-1 md:gap-2">
           <ActionTile
             label="Double"
@@ -432,6 +399,7 @@ function BlackjackPage() {
             Not enough points for this stake
           </p>
         )}
+        </div>
       </div>
 
       <p className="hidden text-center text-[10px] leading-relaxed text-[var(--color-ink-muted)] md:block">

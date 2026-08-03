@@ -21,12 +21,14 @@ export const Route = createFileRoute("/_authenticated/arcade")({
 
 function ArcadeLayout() {
   return (
-    <div className="mx-auto w-full max-w-4xl px-3 pb-24 pt-3 md:px-6 md:pt-6">
-
-
+    <div className="mx-auto w-full max-w-4xl px-3 pt-3 md:px-6 md:pt-6">
       <Outlet />
 
-      <PageFooter />
+      <PageFooter className="!mt-3" />
+
+      {/* Spacer clears the fixed console + bottom nav without pushing the
+          footer away from the page content. */}
+      <div className="h-[210px] md:h-[150px]" aria-hidden />
     </div>
   );
 }
