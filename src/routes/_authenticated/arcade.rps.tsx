@@ -392,10 +392,14 @@ function RpsPage() {
             ))}
             <div className="ml-auto shrink-0 text-right">
               <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                Stake
+                {runWins > 0 ? "Pot at risk" : "Stake"}
               </div>
-              <div className="font-display text-xs font-bold tabular-nums">{fmt(stake)} pts</div>
+              <div className="font-display text-xs font-bold tabular-nums">{fmt(wagerStake)} pts</div>
+              <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-[var(--color-neon)]">
+                Win pays {fmt(nextPayout)}
+              </div>
             </div>
+
           </div>
 
           <div className="flex items-center gap-2">
