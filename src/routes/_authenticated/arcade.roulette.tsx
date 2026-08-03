@@ -284,7 +284,7 @@ function RoulettePage() {
   }
 
   return (
-    <div className="space-y-3 pb-64 md:pb-40">
+    <div className="space-y-3">
       {cfg?.announcement && (
         <div className="rounded-xl border border-[var(--color-neon)]/30 bg-[var(--color-neon)]/8 px-3 py-2 text-[11px] text-[var(--color-ink)]">
           {cfg.announcement}

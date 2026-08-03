@@ -213,7 +213,7 @@ function PlinkoPage() {
   const locked = busy || pending;
 
   return (
-    <div className="flex min-h-[calc(100dvh-190px)] flex-col gap-2 pb-2">
+    <div className="flex flex-col gap-2">
       <div className="flex items-start gap-1.5">
         <div className="grid flex-1 grid-cols-3 gap-1.5">
           <Stat label="Balance" value={fmt(balance)} accent />
