@@ -18,7 +18,7 @@ type Props = {
   flipDelay?: number;
 };
 
-export const CARD_SLIDE_MS = 360;
+export const CARD_SLIDE_MS = 480;
 export const CARD_FLIP_MS = 520;
 
 /** The shared CSSEbets card back — identical to the Rock–Paper–Scissors deck. */
