@@ -375,12 +375,12 @@ function RpsArenaImpl({
         )}
       >
         {phase === "IDLE"
-          ? "\u00a0"
+          ? "Pick your hand"
           : phase === "SETTLED"
             ? outcome === "WIN"
               ? "You win"
               : outcome === "LOSS"
-                ? "You lose"
+                ? "Computer wins"
                 : "Draw"
             : "Revealing"}
       </div>
@@ -402,14 +402,9 @@ function RpsArenaImpl({
         <circle cx="150" cy="10" r="3" fill="currentColor" />
       </svg>
 
-      {/* Hand controls — the original flat CSSE keys, tilted into a low
-          Star-Wars-crawl perspective so the row recedes away from the player. */}
-      <div
-        className="mx-auto w-3/4 [perspective:520px] [perspective-origin:50%_120%]"
-      >
-        <div
-          className="grid w-full grid-cols-3 gap-1.5 [transform:rotateX(34deg)] [transform-style:preserve-3d]"
-        >
+      {/* Flat CSSE hand controls — tactile like the stake selectors. */}
+      <div className="mx-auto w-3/4">
+        <div className="grid w-full grid-cols-3 gap-1.5">
           {RPS_MOVES.map((m) => {
             const selected = playerMove === m;
             return (
@@ -419,11 +414,12 @@ function RpsArenaImpl({
                 disabled={!canPlay}
                 onClick={() => onChoose(m)}
                 className={cn(
-                  "relative mb-[6px] flex min-h-[58px] flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[6px] border bg-[var(--color-surface-2)] px-1.5 py-1.5 transition-[transform,box-shadow,border-color,background-color] duration-100 [transform-style:preserve-3d] active:[transform:translateZ(-10px)] disabled:pointer-events-none disabled:opacity-40",
+                  "relative mb-[6px] flex min-h-[58px] flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[6px] border bg-[var(--color-surface-2)] px-1.5 py-1.5 transition-[transform,box-shadow,border-color,background-color] duration-100 active:translate-y-[5px] active:shadow-[0_1px_0_0_var(--color-surface-border)] disabled:pointer-events-none disabled:opacity-40",
                   selected
-                    ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 shadow-[0_5px_0_0_color-mix(in_srgb,var(--color-neon)_45%,black),0_14px_18px_rgba(0,0,0,0.5),inset_0_1px_0_0_color-mix(in_srgb,white_18%,transparent)]"
-                    : "border-[var(--color-surface-border)] shadow-[0_5px_0_0_var(--color-surface-border),0_14px_18px_rgba(0,0,0,0.45),inset_0_1px_0_0_color-mix(in_srgb,white_10%,transparent)] hover:border-[var(--color-neon)]/60",
+                    ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 shadow-[0_5px_0_0_color-mix(in_srgb,var(--color-neon)_45%,black),inset_0_1px_0_0_color-mix(in_srgb,white_18%,transparent)]"
+                    : "border-[var(--color-surface-border)] shadow-[0_5px_0_0_var(--color-surface-border),inset_0_1px_0_0_color-mix(in_srgb,white_10%,transparent)] hover:border-[var(--color-neon)]/60",
                 )}
+
               >
                 <HandGlyph
                   move={m}
@@ -437,12 +433,7 @@ function RpsArenaImpl({
                 <span className="font-display text-[8px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
                   {m}
                 </span>
-                <span
-                  className={cn(
-                    "absolute inset-x-2 bottom-0 h-[3px]",
-                    selected ? "bg-[var(--color-neon)]" : "bg-[var(--color-surface-border)]",
-                  )}
-                />
+                <span className={cn("absolute inset-x-2 bottom-0 h-[3px]", selected ? "bg-[var(--color-neon)]" : "bg-[var(--color-surface-border)]")} />
               </button>
             );
           })}
