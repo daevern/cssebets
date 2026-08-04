@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -100,7 +100,9 @@ function BlackjackPage() {
   const [state, setState] = useState<BlackjackState | null>(null);
   const [stake, setStake] = useState(10);
   const [resultOpen, setResultOpen] = useState(false);
+  const [tableBusy, setTableBusy] = useState(false);
   const shownResultRef = useRef<string | null>(null);
+
   const clientSeed = useRef(newSeed());
 
   useEffect(() => {
@@ -127,13 +129,18 @@ function BlackjackPage() {
   const inPlay = state?.hand?.status === "PLAYER_TURN" && !!activeHand;
   const settled = state?.hand?.status === "COMPLETED";
 
+  // The outcome pop-up waits until every card has finished sliding and
+  // flipping — the reveal itself carries the suspense.
   useEffect(() => {
     const h = state?.hand;
     if (!h || h.status !== "COMPLETED") return;
+    if (tableBusy) return;
     if (shownResultRef.current === h.id) return;
     shownResultRef.current = h.id;
-    setResultOpen(true);
-  }, [state?.hand?.id, state?.hand?.status]);
+    const t = window.setTimeout(() => setResultOpen(true), 420);
+    return () => window.clearTimeout(t);
+  }, [state?.hand?.id, state?.hand?.status, tableBusy]);
+
 
   const activeCards = useMemo(
     () => (state?.cards ?? []).filter((c: any) => c.playerHandId === activeHand?.id),
@@ -191,7 +198,16 @@ function BlackjackPage() {
   const dbl = useMutation({ mutationFn: () => doubleFn({ data: actionArgs() }), onSuccess: applied, onError });
   const split = useMutation({ mutationFn: () => splitFn({ data: actionArgs() }), onSuccess: applied, onError });
 
-  const busy = deal.isPending || hit.isPending || stand.isPending || dbl.isPending || split.isPending;
+  const busy =
+    tableBusy ||
+    deal.isPending ||
+    hit.isPending ||
+    stand.isPending ||
+    dbl.isPending ||
+    split.isPending;
+
+  const handleBusy = useCallback((b: boolean) => setTableBusy(b), []);
+
 
   const canDeal =
     !busy && !rules?.maintenance_mode && balance >= stake && stake >= minStake && stake <= maxStake;
@@ -223,7 +239,7 @@ function BlackjackPage() {
       )}
 
       <div className="relative mx-[calc(50%-50vw)] h-[320px] w-screen md:h-[520px]">
-        <BlackjackTable state={state} />
+        <BlackjackTable state={state} onBusyChange={handleBusy} />
       </div>
 
       {lastResult && (
@@ -380,7 +396,7 @@ function BlackjackPage() {
           </button>
         ) : (
           <div className="flex h-9 md:h-12 w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[9px] md:text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
-            Your move
+            {tableBusy ? "Dealing…" : "Your move"}
           </div>
         )}
 
