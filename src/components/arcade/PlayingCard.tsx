@@ -7,26 +7,50 @@ type Props = {
   rank: number | null;
   suit: number | null;
   faceUp: boolean;
-  /** Deal index — used to stagger the entry animation. */
-  index?: number;
   className?: string;
   /** Explicit card height in px; width is derived at a 0.7 ratio. */
   height?: number;
   /** The shoe/deck the card should appear to slide out of. */
   dealFrom?: React.RefObject<HTMLElement | null>;
+  /** ms before this card slides out of the shoe. */
+  dealDelay?: number;
+  /** ms before this card flips face-up (absolute, from mount/reveal). */
+  flipDelay?: number;
 };
 
-const SLIDE_MS = 340;
-const STAGGER_MS = 120;
+export const CARD_SLIDE_MS = 360;
+export const CARD_FLIP_MS = 520;
+
+/** The shared CSSEbets card back — identical to the Rock–Paper–Scissors deck. */
+export function CsseCardBack({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "relative h-full w-full rounded-[4px] border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)]",
+        className,
+      )}
+      style={{
+        backgroundImage:
+          "repeating-linear-gradient(45deg, color-mix(in srgb, var(--color-neon) 22%, transparent) 0 4px, transparent 4px 8px)",
+      }}
+    >
+      <div className="absolute inset-[5px] rounded-[2px] border border-[var(--color-neon)]/30" />
+      <div className="absolute inset-0 grid place-items-center text-[var(--color-neon)]">
+        <CsseMark variant="mono" className="h-[42%] w-[42%]" />
+      </div>
+    </div>
+  );
+}
 
 export function PlayingCard({
   rank,
   suit,
   faceUp,
-  index = 0,
   className,
   height,
   dealFrom,
+  dealDelay = 0,
+  flipDelay,
 }: Props) {
   const red = suit != null && isRedSuit(suit);
   const h = height ?? 72;
@@ -37,7 +61,6 @@ export function PlayingCard({
   const boxRef = useRef<HTMLDivElement | null>(null);
   /** Every card lands face-down first, then flips — never a straight reveal. */
   const [landed, setLanded] = useState(false);
-  const delay = index * STAGGER_MS;
 
   useLayoutEffect(() => {
     const el = boxRef.current;
@@ -49,34 +72,47 @@ export function PlayingCard({
       const b = shoe.getBoundingClientRect();
       from = `translate(${b.left + b.width / 2 - (a.left + a.width / 2)}px, ${
         b.top + b.height / 2 - (a.top + a.height / 2)
-      }px) rotate(-10deg)`;
+      }px) rotate(-12deg)`;
     }
     el.animate(
       [
-        { transform: from, opacity: 0.85 },
+        { transform: from, opacity: 0.9 },
         { transform: "translate(0,0) rotate(0deg)", opacity: 1 },
       ],
-      { duration: SLIDE_MS, delay, easing: "cubic-bezier(.2,.7,.3,1)", fill: "backwards" },
+      {
+        duration: CARD_SLIDE_MS,
+        delay: dealDelay,
+        easing: "cubic-bezier(.2,.7,.3,1)",
+        fill: "backwards",
+      },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    const t = window.setTimeout(() => setLanded(true), SLIDE_MS + delay + 60);
+    if (!faceUp) {
+      setLanded(false);
+      return;
+    }
+    const wait = flipDelay ?? dealDelay + CARD_SLIDE_MS + 80;
+    const t = window.setTimeout(() => setLanded(true), Math.max(0, wait));
     return () => window.clearTimeout(t);
-  }, [delay]);
+  }, [faceUp, flipDelay, dealDelay]);
 
   const showFace = faceUp && landed;
 
   return (
     <div
       ref={boxRef}
-      className={cn("relative shrink-0 select-none [perspective:800px]", className)}
+      className={cn("relative shrink-0 select-none [perspective:900px]", className)}
       style={{ height: h, width: w }}
     >
       <div
-        className="relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d]"
-        style={{ transform: showFace ? "rotateY(0deg)" : "rotateY(180deg)" }}
+        className="relative h-full w-full [transform-style:preserve-3d]"
+        style={{
+          transform: showFace ? "rotateY(0deg)" : "rotateY(180deg)",
+          transition: `transform ${CARD_FLIP_MS}ms cubic-bezier(.2,.8,.25,1)`,
+        }}
       >
         {/* Face */}
         <div
@@ -97,17 +133,8 @@ export function PlayingCard({
         </div>
 
         {/* Back */}
-        <div
-          className="absolute inset-0 rounded-[4px] border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)] [backface-visibility:hidden] [transform:rotateY(180deg)]"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(45deg, color-mix(in srgb, var(--color-neon) 22%, transparent) 0 4px, transparent 4px 8px)",
-          }}
-        >
-          <div className="absolute inset-[5px] rounded-[2px] border border-[var(--color-neon)]/30" />
-          <div className="absolute inset-0 grid place-items-center text-[var(--color-neon)]">
-            <CsseMark variant="mono" className="h-[42%] w-[42%]" />
-          </div>
+        <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+          <CsseCardBack />
         </div>
       </div>
     </div>
