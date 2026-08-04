@@ -19,15 +19,15 @@ import { cn } from "@/lib/utils";
 
 export type PlaceBet = (betType: BetTypeKey, label: string, pockets: number[]) => void;
 
-/* Modern minimalistic 2D felt — flat fills, hairline borders, no gradients. */
-const FELT_BG = "#0b1310";
-const FELT_BORDER = "rgba(255,255,255,0.08)";
-const CELL_BG = "rgba(255,255,255,0.035)";
-const RED_INK = "#ef5061";
-const RED_CELL_BG = "rgba(239,80,97,0.16)";
-const RED_CELL_BORDER = "rgba(239,80,97,0.32)";
-const BLACK_CELL_BG = "rgba(255,255,255,0.045)";
-const BLACK_CELL_BORDER = "rgba(255,255,255,0.10)";
+/* Classic casino felt — green cloth, white hairlines, solid red/black pockets. */
+const FELT_BG = "#0a6b3d";
+const FELT_BORDER = "rgba(255,255,255,0.55)";
+const CELL_BG = "rgba(255,255,255,0.06)";
+const RED_INK = "#ffffff";
+const RED_CELL_BG = "#c8102e";
+const RED_CELL_BORDER = "rgba(255,255,255,0.6)";
+const BLACK_CELL_BG = "#10161a";
+const BLACK_CELL_BORDER = "rgba(255,255,255,0.6)";
 
 const cellBase =
   "relative grid place-items-center rounded-[4px] border font-display font-bold tabular-nums transition-colors disabled:opacity-40";
@@ -46,7 +46,7 @@ function Diamond({ tone }: { tone: "red" | "black" }) {
     <span
       aria-hidden
       className="inline-block h-2.5 w-2.5 rotate-45 rounded-[1px]"
-      style={{ background: tone === "red" ? RED_INK : "rgba(255,255,255,0.8)" }}
+      style={{ background: "#ffffff" }}
     />
   );
 }
@@ -117,7 +117,7 @@ export function RouletteBoard({
         style={{
           background: colour === "red" ? RED_CELL_BG : BLACK_CELL_BG,
           borderColor: colour === "red" ? RED_CELL_BORDER : BLACK_CELL_BORDER,
-          color: colour === "red" ? RED_INK : "var(--color-ink)",
+          color: "#ffffff",
         }}
       >
         <span>{n}</span>
@@ -134,8 +134,8 @@ export function RouletteBoard({
       type="button"
       disabled={disabled}
       onClick={() => handleNumber(0)}
-      className={cn(cellBase, "border-[var(--color-neon)]/50 text-[13px] text-[var(--color-neon)]", className)}
-      style={{ background: "rgba(60, 220, 150, 0.10)" }}
+      className={cn(cellBase, "text-[13px] text-white", className)}
+      style={{ background: FELT_BG, borderColor: "rgba(255,255,255,0.75)" }}
     >
       0
       <Stack amount={amt("straight:0")} />
@@ -150,7 +150,7 @@ export function RouletteBoard({
           type="button"
           disabled={disabled}
           onClick={() => onPlace(o.key, o.label, o.pockets)}
-          className={cn(cellBase, "h-8 gap-1 text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]")}
+          className={cn(cellBase, "h-8 gap-1 text-[10px] uppercase tracking-[0.14em] text-white")}
           style={{
             background:
               o.icon === "red" ? RED_CELL_BG : o.icon === "black" ? BLACK_CELL_BG : CELL_BG,
@@ -178,7 +178,7 @@ export function RouletteBoard({
           type="button"
           disabled={disabled}
           onClick={() => onPlace("six_line", `Line ${g.label}`, g.pockets)}
-          className={cn(cellBase, "h-6 text-[9px] tracking-tight text-[var(--color-ink-muted)]")}
+          className={cn(cellBase, "h-6 text-[9px] tracking-tight text-white")}
           style={{ background: CELL_BG, borderColor: FELT_BORDER }}
         >
           {g.label}
@@ -241,7 +241,7 @@ export function RouletteBoard({
                   type="button"
                   disabled={disabled}
                   onClick={() => onPlace("street", `Street ${street[0]}–${street[2]}`, street)}
-                  className={cn(cellBase, "h-7 text-[8px] text-[var(--color-ink-muted)]")}
+                  className={cn(cellBase, "h-7 text-[8px] text-white")}
                   style={{ background: CELL_BG, borderColor: FELT_BORDER }}
                   aria-label={`Street ${street[0]} to ${street[2]}`}
                 >
@@ -262,7 +262,7 @@ export function RouletteBoard({
                     }
                     className={cn(
                       cellBase,
-                      "row-span-4 text-[9px] uppercase tracking-[0.2em] text-[var(--color-ink)]",
+                      "row-span-4 text-[9px] uppercase tracking-[0.2em] text-white",
                     )}
                     style={{
                       background: CELL_BG,
@@ -285,7 +285,7 @@ export function RouletteBoard({
               type="button"
               disabled={disabled}
               onClick={() => onPlace("column", col.label, col.pockets)}
-              className={cn(cellBase, "h-7 text-[9px] text-[var(--color-ink-muted)]")}
+              className={cn(cellBase, "h-7 text-[9px] text-white")}
               style={{ background: CELL_BG, borderColor: FELT_BORDER }}
               aria-label={`${col.label} — 2 to 1`}
             >
@@ -310,7 +310,7 @@ export function RouletteBoard({
               type="button"
               disabled={disabled}
               onClick={() => onPlace("street", `Street ${s[0]}–${s[2]}`, s)}
-              className={cn(cellBase, "h-5 text-[7px] tracking-tight text-[var(--color-ink-muted)]")}
+              className={cn(cellBase, "h-5 text-[7px] tracking-tight text-white")}
               style={{ background: CELL_BG, borderColor: FELT_BORDER }}
               aria-label={`Street ${s[0]} to ${s[2]}`}
             >
@@ -334,7 +334,7 @@ export function RouletteBoard({
                   type="button"
                   disabled={disabled}
                   onClick={() => onPlace("column", col.label, col.pockets)}
-                  className={cn(cellBase, "h-8 text-[8px] text-[var(--color-ink-muted)]")}
+                  className={cn(cellBase, "h-8 text-[8px] text-white")}
                   style={{ background: CELL_BG, borderColor: FELT_BORDER }}
                   aria-label={`${col.label} — 2 to 1`}
                 >
@@ -354,7 +354,7 @@ export function RouletteBoard({
               onClick={() => onPlace("dozen", g.label, g.pockets)}
               className={cn(
                 cellBase,
-                "col-span-4 h-8 text-[9px] uppercase tracking-[0.18em] text-[var(--color-ink)]",
+                "col-span-4 h-8 text-[9px] uppercase tracking-[0.18em] text-white",
               )}
               style={{ background: CELL_BG, borderColor: FELT_BORDER }}
             >
