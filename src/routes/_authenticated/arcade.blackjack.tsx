@@ -198,7 +198,16 @@ function BlackjackPage() {
   const dbl = useMutation({ mutationFn: () => doubleFn({ data: actionArgs() }), onSuccess: applied, onError });
   const split = useMutation({ mutationFn: () => splitFn({ data: actionArgs() }), onSuccess: applied, onError });
 
-  const busy = deal.isPending || hit.isPending || stand.isPending || dbl.isPending || split.isPending;
+  const busy =
+    tableBusy ||
+    deal.isPending ||
+    hit.isPending ||
+    stand.isPending ||
+    dbl.isPending ||
+    split.isPending;
+
+  const handleBusy = useCallback((b: boolean) => setTableBusy(b), []);
+
 
   const canDeal =
     !busy && !rules?.maintenance_mode && balance >= stake && stake >= minStake && stake <= maxStake;
