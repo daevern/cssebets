@@ -326,10 +326,10 @@ function RoulettePage() {
       >
         {/* felt head */}
         <div className="relative px-3 pt-3 pb-2">
-          <div className="mx-auto w-full max-w-[210px]">
+          <div className="mx-auto w-full max-w-[280px]">
             {/* wheel well ring cut into the felt */}
             <div
-              className="relative rounded-full p-1.5"
+              className="relative rounded-full p-2"
               style={{
                 background: "rgba(0,0,0,0.35)",
                 boxShadow:

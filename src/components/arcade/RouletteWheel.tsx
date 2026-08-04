@@ -31,6 +31,10 @@ const COLOUR_FILL: Record<string, string> = {
   black: "#1a1f25",
 };
 
+const WOOD_RIM = "url(#woodRim)";
+const WOOD_RIM_STROKE = "#2a1a0d";
+
+
 export function RouletteWheel({
   winningPocket,
   spinToken,
@@ -175,15 +179,24 @@ export function RouletteWheel({
   const cy = 100;
 
   return (
-    <div className={cn("relative mx-auto aspect-square w-full max-w-[260px]", className)}>
+    <div className={cn("relative mx-auto aspect-square w-full max-w-[320px]", className)}>
       <svg viewBox="0 0 200 200" className="h-full w-full">
         <defs>
+          <radialGradient id="woodRim" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+            <stop offset="0%" stopColor="#5C3A1E" />
+            <stop offset="20%" stopColor="#8B5A2B" />
+            <stop offset="40%" stopColor="#3E2712" />
+            <stop offset="55%" stopColor="#A0703F" />
+            <stop offset="75%" stopColor="#4A2E16" />
+            <stop offset="100%" stopColor="#8B5A2B" />
+          </radialGradient>
         </defs>
 
-        <circle cx={cx} cy={cy} r="96" fill="var(--color-surface-2)" />
-        {/* Outer rim: grey outline + inner green track ring */}
-        <circle cx={cx} cy={cy} r="96" fill="none" stroke="#3a4249" strokeWidth="2" />
-        <circle cx={cx} cy={cy} r="90" fill="none" stroke="#1f7a4a" strokeWidth="3" />
+        {/* Outer rim: wood finish with dark edge */}
+        <circle cx={cx} cy={cy} r="96" fill={WOOD_RIM} stroke={WOOD_RIM_STROKE} strokeWidth="2" />
+        {/* Inner surface behind the pockets */}
+        <circle cx={cx} cy={cy} r="90" fill="var(--color-surface-2)" stroke="#1f7a4a" strokeWidth="3" />
+
 
         <g
           style={{
