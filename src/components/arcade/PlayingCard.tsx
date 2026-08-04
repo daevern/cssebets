@@ -117,12 +117,14 @@ export function PlayingCard({
         width: w,
         zIndex: travelling ? 30 : undefined,
         transform: travelling
-          ? `translate(${from?.x ?? 0}px, ${from?.y ?? -18}px) rotate(-10deg)`
-          : "translate(0px, 0px) rotate(0deg)",
-        transition: `transform ${CARD_SLIDE_MS}ms cubic-bezier(.2,.75,.3,1)`,
+          ? `translate(${from?.x ?? 0}px, ${from?.y ?? -18}px) rotate(-34deg) scale(0.94)`
+          : "translate(0px, 0px) rotate(0deg) scale(1)",
+        // No transition while parked at the shoe — only the flight animates.
+        transition: travelling ? "none" : `transform ${CARD_SLIDE_MS}ms cubic-bezier(.18,.72,.28,1)`,
         willChange: "transform",
       }}
     >
+
 
       <div
         className="relative h-full w-full [transform-style:preserve-3d]"
