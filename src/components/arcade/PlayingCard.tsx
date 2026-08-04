@@ -106,12 +106,24 @@ export function PlayingCard({
 
   const showFace = faceUp && landed;
 
+  const travelling = !from || flying;
+
   return (
     <div
       ref={boxRef}
       className={cn("relative shrink-0 select-none [perspective:900px]", className)}
-      style={{ height: h, width: w }}
+      style={{
+        height: h,
+        width: w,
+        zIndex: travelling ? 30 : undefined,
+        transform: travelling
+          ? `translate(${from?.x ?? 0}px, ${from?.y ?? -18}px) rotate(-10deg)`
+          : "translate(0px, 0px) rotate(0deg)",
+        transition: `transform ${CARD_SLIDE_MS}ms cubic-bezier(.2,.75,.3,1)`,
+        willChange: "transform",
+      }}
     >
+
       <div
         className="relative h-full w-full [transform-style:preserve-3d]"
         style={{
