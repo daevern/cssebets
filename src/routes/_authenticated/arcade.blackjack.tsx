@@ -134,12 +134,17 @@ function BlackjackPage() {
   useEffect(() => {
     const h = state?.hand;
     if (!h || h.status !== "COMPLETED") return;
-    if (tableBusy) return;
     if (shownResultRef.current === h.id) return;
-    shownResultRef.current = h.id;
-    const t = window.setTimeout(() => setResultOpen(true), 420);
+    // Restart the wait whenever the table reports motion, then open once
+    // everything has landed and flipped.
+    const t = window.setTimeout(() => {
+      if (tableBusy) return;
+      shownResultRef.current = h.id;
+      setResultOpen(true);
+    }, 520);
     return () => window.clearTimeout(t);
   }, [state?.hand?.id, state?.hand?.status, tableBusy]);
+
 
 
   const activeCards = useMemo(
