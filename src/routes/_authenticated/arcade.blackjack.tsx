@@ -100,7 +100,9 @@ function BlackjackPage() {
   const [state, setState] = useState<BlackjackState | null>(null);
   const [stake, setStake] = useState(10);
   const [resultOpen, setResultOpen] = useState(false);
+  const [tableBusy, setTableBusy] = useState(false);
   const shownResultRef = useRef<string | null>(null);
+
   const clientSeed = useRef(newSeed());
 
   useEffect(() => {
