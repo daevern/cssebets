@@ -454,11 +454,6 @@ function RoulettePage() {
       )}
 
 
-      <div className="-mx-3 px-3 pb-1 lg:overflow-x-auto [scrollbar-width:thin]">
-        <div className="lg:min-w-[560px]">
-          <RouletteBoard stakes={stakesByKey} onPlace={place} disabled={spinning} />
-        </div>
-      </div>
 
 
       <RouletteVerifyDialog
