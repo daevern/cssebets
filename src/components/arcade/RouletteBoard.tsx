@@ -55,12 +55,16 @@ export function RouletteBoard({
   stakes,
   onPlace,
   disabled,
+  bare,
 }: {
   /** positionKey -> total staked */
   stakes: Record<string, number>;
   onPlace: PlaceBet;
   disabled?: boolean;
+  /** render without its own felt panel (used when nested in the curved table shell) */
+  bare?: boolean;
 }) {
+
   const [splitMode, setSplitMode] = useState(false);
   const [splitFirst, setSplitFirst] = useState<number | null>(null);
 
@@ -195,9 +199,10 @@ export function RouletteBoard({
 
   return (
     <div
-      className="rounded-[10px] border p-2"
-      style={{ background: FELT_BG, borderColor: FELT_BORDER }}
+      className={bare ? "p-0" : "rounded-[10px] border p-2"}
+      style={bare ? undefined : { background: FELT_BG, borderColor: FELT_BORDER }}
     >
+
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-[8px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
           Table

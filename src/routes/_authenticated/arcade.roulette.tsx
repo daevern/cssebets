@@ -315,34 +315,49 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
-        {/* Wheel sits top-left so wheel + felt share one screen without scrolling */}
-        <div>
-          <div className="relative mx-auto w-full max-w-[190px] sm:max-w-[220px]">
-            <RouletteWheel
-              winningPocket={winningPocket}
-              spinToken={spinToken}
-              spinning={spinning}
-              reducedMotion={reduced}
-              onSettled={onSettled}
-            />
+      {/* Curved casino table: felt head arcs around the wheel, betting layout flows out of it */}
+      <div
+        className="relative border shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)]"
+        style={{
+          background: "#0a6b3d",
+          borderColor: "rgba(255,255,255,0.5)",
+          borderRadius: "50% 50% 16px 16px / 26% 26% 16px 16px",
+        }}
+      >
+        {/* felt head */}
+        <div className="relative px-3 pt-3 pb-2">
+          <div className="mx-auto w-full max-w-[210px]">
+            {/* wheel well ring cut into the felt */}
+            <div
+              className="relative rounded-full p-1.5"
+              style={{
+                background: "rgba(0,0,0,0.35)",
+                boxShadow:
+                  "inset 0 2px 10px rgba(0,0,0,0.65), 0 0 0 2px rgba(255,255,255,0.35)",
+              }}
+            >
+              <RouletteWheel
+                winningPocket={winningPocket}
+                spinToken={spinToken}
+                spinning={spinning}
+                reducedMotion={reduced}
+                onSettled={onSettled}
+              />
+            </div>
           </div>
-        </div>
 
-
-        <div className="min-w-0 space-y-2">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 text-[8px] font-bold uppercase leading-4 tracking-[0.2em] text-[var(--color-ink-muted)]">
+          <div className="mt-2 flex items-center justify-center gap-2">
+            <div className="text-[8px] font-bold uppercase leading-4 tracking-[0.2em] text-white/70">
               {winningPocket == null ? (
                 <span>No result yet</span>
               ) : (
                 <span
                   className={cn(
                     pocketColour(winningPocket) === "red"
-                      ? "text-[#ff5c6c]"
+                      ? "text-[#ff9aa4]"
                       : pocketColour(winningPocket) === "green"
                         ? "text-[var(--color-neon)]"
-                        : "text-[var(--color-ink)]",
+                        : "text-white",
                   )}
                 >
                   {pocketColour(winningPocket)}
@@ -359,7 +374,7 @@ function RoulettePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mt-1 flex items-center justify-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {(profile.data?.recent ?? []).map((r: any) => (
               <span
                 key={r.id}
@@ -369,20 +384,28 @@ function RoulettePage() {
                     ? "bg-[var(--color-neon)] text-black"
                     : r.winning_colour === "red"
                       ? "bg-[#e0374a] text-white"
-                      : "bg-[#161c22] text-[var(--color-ink)] ring-1 ring-[var(--color-surface-border)]",
+                      : "bg-[#161c22] text-white ring-1 ring-white/40",
                 )}
               >
                 {r.winning_pocket}
               </span>
             ))}
             {!(profile.data?.recent ?? []).length && (
-              <span className="text-[9px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
+              <span className="text-[9px] uppercase tracking-[0.2em] text-white/60">
                 No spins yet
               </span>
             )}
           </div>
         </div>
+
+        {/* betting layout, sharing the same felt */}
+        <div className="px-2 pb-2 lg:overflow-x-auto [scrollbar-width:thin]">
+          <div className="lg:min-w-[560px]">
+            <RouletteBoard stakes={stakesByKey} onPlace={place} disabled={spinning} bare />
+          </div>
+        </div>
       </div>
+
 
 
       {result?.spin && (
@@ -431,11 +454,6 @@ function RoulettePage() {
       )}
 
 
-      <div className="-mx-3 px-3 pb-1 lg:overflow-x-auto [scrollbar-width:thin]">
-        <div className="lg:min-w-[560px]">
-          <RouletteBoard stakes={stakesByKey} onPlace={place} disabled={spinning} />
-        </div>
-      </div>
 
 
       <RouletteVerifyDialog
