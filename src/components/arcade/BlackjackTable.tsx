@@ -109,7 +109,7 @@ export function BlackjackTable({
     return () => ro.disconnect();
   }, []);
 
-  const cards = state?.cards ?? [];
+  const cards = useMemo(() => state?.cards ?? [], [state]);
   const handId = String(state?.hand?.id ?? "idle");
 
   /* ------------------------------------------------------------------
