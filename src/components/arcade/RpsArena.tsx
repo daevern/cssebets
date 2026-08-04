@@ -389,29 +389,22 @@ function RpsArenaImpl({
       <svg
         viewBox="0 0 300 40"
         preserveAspectRatio="none"
-        className="mt-1 h-[30px] w-full text-[#5c6b7d]"
+        className="mt-1 h-[34px] w-full text-[#5b6675]"
         aria-hidden
       >
         <path
-          d="M150 0 V12 M52 40 V18 Q52 12 58 12 H242 Q248 12 248 18 V40"
+          d="M150 0 V40 M50 40 V16 Q50 10 56 10 H244 Q250 10 250 16 V40"
           fill="none"
           stroke="currentColor"
-          strokeWidth={6}
+          strokeWidth={7}
           strokeLinecap="round"
-          vectorEffect="non-scaling-stroke"
-        />
-        <path
-          d="M150 12 V40"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={6}
-          strokeLinecap="round"
+          strokeLinejoin="round"
           vectorEffect="non-scaling-stroke"
         />
       </svg>
 
       {/* Pedestal-mounted hand controls. */}
-      <div className="mx-auto w-3/4">
+      <div className="mx-auto -mt-1 w-3/4">
         <div className="grid w-full grid-cols-3 gap-3">
           {RPS_MOVES.map((m) => {
             const selected = playerMove === m;
@@ -424,49 +417,49 @@ function RpsArenaImpl({
                 aria-label={m}
                 className="group relative block w-full transition-transform duration-100 active:translate-y-[2px] disabled:pointer-events-none disabled:opacity-40"
               >
-                <div className="relative aspect-[1/1.12] w-full">
+                <div className="relative aspect-[1/1.06] w-full">
                   {/* cradle arms */}
                   <span
                     className={cn(
-                      "absolute left-0 top-[10%] bottom-[16%] w-[13%] rounded-[6px]",
-                      selected ? "bg-[#e6ecf2]" : "bg-[#77879a]",
+                      "absolute left-0 top-[12%] bottom-[14%] w-[15%] rounded-[7px]",
+                      selected ? "bg-[#dfe6ee]" : "bg-[#7c8899]",
                     )}
                   />
                   <span
                     className={cn(
-                      "absolute right-0 top-[10%] bottom-[16%] w-[13%] rounded-[6px]",
-                      selected ? "bg-[#e6ecf2]" : "bg-[#77879a]",
+                      "absolute right-0 top-[12%] bottom-[14%] w-[15%] rounded-[7px]",
+                      selected ? "bg-[#dfe6ee]" : "bg-[#7c8899]",
                     )}
                   />
                   {/* base slab */}
                   <span
                     className={cn(
-                      "absolute inset-x-0 bottom-0 h-[20%] rounded-[7px] shadow-[inset_0_2px_0_0_rgba(255,255,255,0.18)]",
-                      selected ? "bg-[#eef2f6]" : "bg-[#8b9aab]",
+                      "absolute inset-x-0 bottom-0 h-[15%] rounded-[8px]",
+                      selected ? "bg-[#e7edf3]" : "bg-[#98a5b4]",
                     )}
                   />
-                  {/* tile */}
+                  {/* green frame tile */}
                   <div
                     className={cn(
-                      "absolute left-[9%] right-[9%] top-0 bottom-[22%] rounded-[12px] p-[9%] transition-colors",
+                      "absolute left-[7%] right-[7%] top-0 bottom-[20%] rounded-[16px] p-[8%] transition-colors",
                       selected
-                        ? "bg-[#ffffff]"
-                        : "bg-[#8ede3f] group-hover:bg-[#9cea50]",
+                        ? "bg-[color-mix(in_srgb,var(--color-neon)_92%,white)] shadow-[0_0_18px_0_color-mix(in_srgb,var(--color-neon)_45%,transparent)]"
+                        : "bg-[var(--color-neon)] group-hover:bg-[color-mix(in_srgb,var(--color-neon)_82%,white)]",
                     )}
                   >
                     <div
                       className={cn(
-                        "grid h-full w-full place-items-center rounded-[8px]",
-                        selected ? "bg-[#f4f7fa]" : "bg-[#3c4654]",
+                        "grid h-full w-full place-items-center rounded-[9px]",
+                        selected ? "bg-[#2b3440]" : "bg-[#3b4553]",
                       )}
                     >
                       <HandGlyph
                         move={m}
                         className={cn(
-                          "h-[70%] w-[70%] transition-transform duration-100",
+                          "h-[64%] w-[64%] transition-transform duration-100",
                           selected
-                            ? "scale-110 text-[#f2a43a] animate-[rps-pop_0.3s_ease-out]"
-                            : "text-[#eef2f6]",
+                            ? "scale-110 text-white animate-[rps-pop_0.3s_ease-out]"
+                            : "text-[#f2f5f8]",
                         )}
                       />
                     </div>
@@ -477,6 +470,7 @@ function RpsArenaImpl({
           })}
         </div>
       </div>
+
 
 
     </div>
