@@ -150,7 +150,7 @@ export function RouletteBoard({
           type="button"
           disabled={disabled}
           onClick={() => onPlace(o.key, o.label, o.pockets)}
-          className={cn(cellBase, "h-9 gap-1 text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]")}
+          className={cn(cellBase, "h-8 gap-1 text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]")}
           style={{
             background:
               o.icon === "red" ? RED_CELL_BG : o.icon === "black" ? BLACK_CELL_BG : CELL_BG,
@@ -178,7 +178,7 @@ export function RouletteBoard({
           type="button"
           disabled={disabled}
           onClick={() => onPlace("six_line", `Line ${g.label}`, g.pockets)}
-          className={cn(cellBase, "h-7 text-[9px] tracking-tight text-[var(--color-ink-muted)]")}
+          className={cn(cellBase, "h-6 text-[9px] tracking-tight text-[var(--color-ink-muted)]")}
           style={{ background: CELL_BG, borderColor: FELT_BORDER }}
         >
           {g.label}
@@ -226,10 +226,10 @@ export function RouletteBoard({
       </div>
 
       {/* ── Mobile: vertical table (3 columns × 12 rows) ── */}
-      <div className="space-y-[3px] sm:hidden">
+      <div className="space-y-[3px] lg:hidden">
         <div className="grid grid-cols-[22px_repeat(3,minmax(0,1fr))_30px] gap-[3px]">
           <div />
-          <ZeroCell className="col-span-3 h-9" />
+          <ZeroCell className="col-span-3 h-8" />
           <div />
 
           {Array.from({ length: 12 }, (_, r) => {
@@ -241,7 +241,7 @@ export function RouletteBoard({
                   type="button"
                   disabled={disabled}
                   onClick={() => onPlace("street", `Street ${street[0]}–${street[2]}`, street)}
-                  className={cn(cellBase, "h-9 text-[8px] text-[var(--color-ink-muted)]")}
+                  className={cn(cellBase, "h-7 text-[8px] text-[var(--color-ink-muted)]")}
                   style={{ background: CELL_BG, borderColor: FELT_BORDER }}
                   aria-label={`Street ${street[0]} to ${street[2]}`}
                 >
@@ -250,7 +250,7 @@ export function RouletteBoard({
                 </button>
 
                 {street.map((n) => (
-                  <NumberCell key={n} n={n} className="h-9" />
+                  <NumberCell key={n} n={n} className="h-7" />
                 ))}
 
                 {r % 4 === 0 && (
@@ -285,7 +285,7 @@ export function RouletteBoard({
               type="button"
               disabled={disabled}
               onClick={() => onPlace("column", col.label, col.pockets)}
-              className={cn(cellBase, "h-8 text-[9px] text-[var(--color-ink-muted)]")}
+              className={cn(cellBase, "h-7 text-[9px] text-[var(--color-ink-muted)]")}
               style={{ background: CELL_BG, borderColor: FELT_BORDER }}
               aria-label={`${col.label} — 2 to 1`}
             >
@@ -301,7 +301,7 @@ export function RouletteBoard({
       </div>
 
       {/* ── Desktop: classic horizontal table ── */}
-      <div className="hidden space-y-[3px] sm:block">
+      <div className="hidden space-y-[3px] lg:block">
         <div className="grid grid-cols-[20px_repeat(12,minmax(0,1fr))_26px] gap-[3px]">
           <div />
           {STREETS.map((s) => (
