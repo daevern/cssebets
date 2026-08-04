@@ -199,9 +199,10 @@ export function RouletteBoard({
 
   return (
     <div
-      className="rounded-[10px] border p-2"
-      style={{ background: FELT_BG, borderColor: FELT_BORDER }}
+      className={bare ? "p-0" : "rounded-[10px] border p-2"}
+      style={bare ? undefined : { background: FELT_BG, borderColor: FELT_BORDER }}
     >
+
       <div className="mb-2 flex items-center justify-between gap-2">
         <span className="text-[8px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
           Table
