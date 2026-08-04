@@ -239,7 +239,7 @@ function BlackjackPage() {
       )}
 
       <div className="relative mx-[calc(50%-50vw)] h-[320px] w-screen md:h-[520px]">
-        <BlackjackTable state={state} />
+        <BlackjackTable state={state} onBusyChange={handleBusy} />
       </div>
 
       {lastResult && (
