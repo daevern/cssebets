@@ -402,9 +402,9 @@ function RpsArenaImpl({
         <circle cx="150" cy="10" r="3" fill="currentColor" />
       </svg>
 
-      {/* Flat CSSE hand controls — tactile like the stake selectors. */}
+      {/* 3D keycap hand controls — pedestal base with a cap that travels on press. */}
       <div className="mx-auto w-3/4">
-        <div className="grid w-full grid-cols-3 gap-1.5">
+        <div className="grid w-full grid-cols-3 gap-2.5">
           {RPS_MOVES.map((m) => {
             const selected = playerMove === m;
             return (
@@ -413,27 +413,43 @@ function RpsArenaImpl({
                 type="button"
                 disabled={!canPlay}
                 onClick={() => onChoose(m)}
-                className={cn(
-                  "relative mb-[6px] flex min-h-[58px] flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[6px] border bg-[var(--color-surface-2)] px-1.5 py-1.5 transition-[transform,box-shadow,border-color,background-color] duration-100 active:translate-y-[5px] active:shadow-[0_1px_0_0_var(--color-surface-border)] disabled:pointer-events-none disabled:opacity-40",
-                  selected
-                    ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 shadow-[0_5px_0_0_color-mix(in_srgb,var(--color-neon)_45%,black),inset_0_1px_0_0_color-mix(in_srgb,white_18%,transparent)]"
-                    : "border-[var(--color-surface-border)] shadow-[0_5px_0_0_var(--color-surface-border),inset_0_1px_0_0_color-mix(in_srgb,white_10%,transparent)] hover:border-[var(--color-neon)]/60",
-                )}
-
+                aria-pressed={selected}
+                className="group relative block select-none pb-[10px] disabled:pointer-events-none disabled:opacity-40"
               >
-                <HandGlyph
-                  move={m}
-                  className={cn(
-                    "h-7 w-7 transition-transform duration-100",
-                    selected
-                      ? "scale-110 text-[var(--color-neon)] animate-[rps-pop_0.3s_ease-out]"
-                      : "text-[var(--color-ink)]",
-                  )}
+                {/* Pedestal / socket */}
+                <span
+                  className="absolute inset-x-[-3px] bottom-0 top-[10px] rounded-[7px] border border-black/50 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--color-surface-2)_92%,white)_0%,color-mix(in_srgb,var(--color-surface-2)_60%,black)_100%)] shadow-[0_2px_4px_rgba(0,0,0,0.55)]"
+                  aria-hidden
                 />
-                <span className="font-display text-[8px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
-                  {m}
+                {/* Keycap */}
+                <span
+                  className={cn(
+                    "relative flex min-h-[62px] flex-col items-center justify-center gap-0.5 rounded-[6px] border px-1.5 py-2",
+                    "transition-[transform,box-shadow,border-color,background-color] duration-75 ease-out",
+                    "group-active:translate-y-[7px] group-active:shadow-[0_1px_0_0_rgba(0,0,0,0.6)]",
+                    selected
+                      ? "translate-y-[3px] border-[var(--color-neon)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--color-neon)_22%,var(--color-surface-2))_0%,color-mix(in_srgb,var(--color-neon)_10%,var(--color-surface-2))_100%)] shadow-[0_4px_0_0_color-mix(in_srgb,var(--color-neon)_45%,black),0_6px_10px_rgba(0,0,0,0.45),inset_0_1px_0_0_color-mix(in_srgb,white_25%,transparent)]"
+                      : "border-[color-mix(in_srgb,white_16%,var(--color-surface-border))] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--color-surface-2)_80%,white)_0%,var(--color-surface-2)_55%,color-mix(in_srgb,var(--color-surface-2)_80%,black)_100%)] shadow-[0_8px_0_0_color-mix(in_srgb,var(--color-surface-2)_55%,black),0_10px_12px_rgba(0,0,0,0.45),inset_0_1px_0_0_color-mix(in_srgb,white_20%,transparent)] group-hover:border-[var(--color-neon)]/60",
+                  )}
+                >
+                  <HandGlyph
+                    move={m}
+                    className={cn(
+                      "h-7 w-7 drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)] transition-transform duration-100",
+                      selected
+                        ? "scale-110 text-[var(--color-neon)] animate-[rps-pop_0.3s_ease-out]"
+                        : "text-[var(--color-ink)]",
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "font-display text-[8px] font-bold uppercase tracking-[0.16em]",
+                      selected ? "text-[var(--color-neon)]" : "text-[var(--color-ink-muted)]",
+                    )}
+                  >
+                    {m}
+                  </span>
                 </span>
-                <span className={cn("absolute inset-x-2 bottom-0 h-[3px]", selected ? "bg-[var(--color-neon)]" : "bg-[var(--color-surface-border)]")} />
               </button>
             );
           })}
