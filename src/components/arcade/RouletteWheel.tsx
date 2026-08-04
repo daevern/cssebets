@@ -31,6 +31,10 @@ const COLOUR_FILL: Record<string, string> = {
   black: "#1a1f25",
 };
 
+const WOOD_RIM = "url(#woodRim)";
+const WOOD_RIM_STROKE = "#2a1a0d";
+
+
 export function RouletteWheel({
   winningPocket,
   spinToken,
