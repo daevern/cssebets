@@ -315,10 +315,10 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 items-center gap-3 sm:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
-        {/* Wheel: larger and scrollable on narrow phones so the 50% larger layout never breaks */}
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
+        {/* Wheel sits top-left so wheel + felt share one screen without scrolling */}
         <div>
-          <div className="relative mx-auto w-full max-w-[260px]">
+          <div className="relative mx-auto w-full max-w-[190px] sm:max-w-[220px]">
             <RouletteWheel
               winningPocket={winningPocket}
               spinToken={spinToken}
@@ -328,6 +328,7 @@ function RoulettePage() {
             />
           </div>
         </div>
+
 
         <div className="min-w-0 space-y-2">
           <div className="flex items-start justify-between gap-2">
@@ -430,11 +431,12 @@ function RoulettePage() {
       )}
 
 
-      <div className="-mx-3 px-3 pb-1 sm:overflow-x-auto [scrollbar-width:thin]">
-        <div className="sm:min-w-[560px]">
+      <div className="-mx-3 px-3 pb-1 lg:overflow-x-auto [scrollbar-width:thin]">
+        <div className="lg:min-w-[560px]">
           <RouletteBoard stakes={stakesByKey} onPlace={place} disabled={spinning} />
         </div>
       </div>
+
 
       <RouletteVerifyDialog
         open={!!verifyId}
