@@ -118,80 +118,91 @@ export function BlackjackTable({
    * alternating on the opening deal) and only flip once they have landed.
    * A hole card turning over is queued behind everything still in flight.
    * ---------------------------------------------------------------- */
-  const seenRef = useRef<Map<string, { faceUp: boolean; timing: Timing }>>(new Map());
-  const handRef = useRef(handId);
+  const seenRef = useRef<{ handId: string; cards: Map<string, boolean>; timings: Map<string, Timing> }>({
+    handId,
+    cards: new Map(),
+    timings: new Map(),
+  });
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
 
-  const timings = useMemo(() => {
-    if (handRef.current !== handId) {
-      handRef.current = handId;
-      seenRef.current = new Map();
-    }
-    const seen = seenRef.current;
+  const plan = useMemo(() => {
+    const prev = seenRef.current;
+    const sameHand = prev.handId === handId;
+    const seen = sameHand ? prev.cards : new Map<string, boolean>();
+    const prevTimings = sameHand ? prev.timings : new Map<string, Timing>();
 
     const fresh = cards.filter((c) => !seen.has(c.id));
-    const turned = cards.filter((c) => seen.has(c.id) && c.faceUp && !seen.get(c.id)!.faceUp);
+    const turned = cards.filter((c) => seen.has(c.id) && c.faceUp && seen.get(c.id) === false);
 
     // Opening deal: dealer card, player card, dealer card, player card.
+    const pairIndex = (c: BjCard) =>
+      fresh.filter((o) => o.owner === c.owner && o.sequence < c.sequence).length;
     const ordered = [...fresh].sort((a, b) => {
-      const pa = Math.floor(fresh.filter((c) => c.owner === a.owner && c.sequence < a.sequence).length);
-      const pb = Math.floor(fresh.filter((c) => c.owner === b.owner && c.sequence < b.sequence).length);
       if (fresh.length >= 4) {
+        const pa = pairIndex(a);
+        const pb = pairIndex(b);
         if (pa !== pb) return pa - pb;
         if (a.owner !== b.owner) return a.owner === "DEALER" ? -1 : 1;
       }
       return a.sequence - b.sequence;
     });
 
+    const timings = new Map<string, Timing>();
     let cursor = 0;
-    const out = new Map<string, Timing>();
+    let animEnd = 0;
     for (const c of ordered) {
       const deal = cursor;
       const flip = deal + CARD_SLIDE_MS + 90;
-      out.set(c.id, { deal, flip });
+      timings.set(c.id, { deal, flip });
+      animEnd = Math.max(animEnd, c.faceUp ? flip + CARD_FLIP_MS : deal + CARD_SLIDE_MS);
       cursor += STEP_MS;
     }
-    // Hole card / dealer draw reveals come after the fresh cards have landed.
-    let revealCursor = ordered.length ? cursor + 120 : 0;
-    for (const c of turned.sort((a, b) => a.sequence - b.sequence)) {
-      out.set(c.id, { deal: 0, flip: revealCursor });
-      revealCursor += CARD_FLIP_MS + 80;
+    // Hole card / dealer draws turn over after everything has landed.
+    let revealCursor = ordered.length ? cursor + 160 : 0;
+    for (const c of [...turned].sort((a, b) => a.sequence - b.sequence)) {
+      timings.set(c.id, { deal: 0, flip: revealCursor });
+      animEnd = Math.max(animEnd, revealCursor + CARD_FLIP_MS);
+      revealCursor += CARD_FLIP_MS + 120;
     }
-
     for (const c of cards) {
-      const t = out.get(c.id) ?? seen.get(c.id)?.timing ?? { deal: 0, flip: 0 };
-      seen.set(c.id, { faceUp: c.faceUp, timing: t });
-      out.set(c.id, out.get(c.id) ?? { deal: 0, flip: 0 });
+      if (!timings.has(c.id)) timings.set(c.id, prevTimings.get(c.id) ?? { deal: 0, flip: 0 });
     }
-    return out;
+    return { timings, animEnd, fresh: new Set([...ordered, ...turned].map((c) => c.id)) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cards, handId]);
 
-  // Busy window + progressive reveal so totals never spoil a flip.
+  const timings = plan.timings;
+
+  // Commit what we have seen, then stagger the reveal so totals never spoil a flip.
   useEffect(() => {
+    seenRef.current = {
+      handId,
+      cards: new Map(cards.map((c) => [c.id, c.faceUp])),
+      timings: plan.timings,
+    };
+
     const timers: number[] = [];
-    let last = 0;
     for (const c of cards) {
-      const t = timings.get(c.id) ?? { deal: 0, flip: 0 };
-      const done = (c.faceUp ? t.flip + CARD_FLIP_MS : t.deal + CARD_SLIDE_MS) + 40;
-      last = Math.max(last, done);
-      if (c.faceUp && !revealed.has(c.id)) {
-        timers.push(
-          window.setTimeout(() => {
-            setRevealed((s) => (s.has(c.id) ? s : new Set(s).add(c.id)));
-          }, Math.max(0, t.flip + CARD_FLIP_MS * 0.55)),
-        );
-      }
+      if (!c.faceUp || revealed.has(c.id)) continue;
+      const t = plan.timings.get(c.id) ?? { deal: 0, flip: 0 };
+      const at = plan.fresh.has(c.id) ? t.flip + CARD_FLIP_MS * 0.55 : 0;
+      timers.push(
+        window.setTimeout(() => {
+          setRevealed((s) => (s.has(c.id) ? s : new Set(s).add(c.id)));
+        }, Math.max(0, at)),
+      );
     }
-    if (last > 0) {
+    if (plan.animEnd > 0) {
       onBusyChange?.(true);
-      timers.push(window.setTimeout(() => onBusyChange?.(false), last));
+      timers.push(window.setTimeout(() => onBusyChange?.(false), plan.animEnd + 80));
     } else {
       onBusyChange?.(false);
     }
     return () => timers.forEach((t) => window.clearTimeout(t));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timings]);
+  }, [plan]);
+
+
 
   useEffect(() => {
     setRevealed(new Set());
