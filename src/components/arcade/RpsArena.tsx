@@ -385,26 +385,34 @@ function RpsArenaImpl({
             : "Revealing"}
       </div>
 
-      {/* 2D wiring — three leads running from each control up to the output box. */}
+      {/* 2D wiring — thick rounded grey leads from the output box down to each control. */}
       <svg
-        viewBox="0 0 300 34"
+        viewBox="0 0 300 40"
         preserveAspectRatio="none"
-        className="mt-1 h-[26px] w-full text-[var(--color-surface-border)]"
+        className="mt-1 h-[30px] w-full text-[#5c6b7d]"
         aria-hidden
       >
         <path
-          d="M150 0 V10 M150 10 H50 V34 M150 10 H250 V34 M150 10 V34"
+          d="M150 0 V12 M52 40 V18 Q52 12 58 12 H242 Q248 12 248 18 V40"
           fill="none"
           stroke="currentColor"
-          strokeWidth={2}
+          strokeWidth={6}
+          strokeLinecap="round"
           vectorEffect="non-scaling-stroke"
         />
-        <circle cx="150" cy="10" r="3" fill="currentColor" />
+        <path
+          d="M150 12 V40"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={6}
+          strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
+        />
       </svg>
 
       {/* Pedestal-mounted hand controls. */}
       <div className="mx-auto w-3/4">
-        <div className="grid w-full grid-cols-3 gap-2">
+        <div className="grid w-full grid-cols-3 gap-3">
           {RPS_MOVES.map((m) => {
             const selected = playerMove === m;
             return (
@@ -414,35 +422,56 @@ function RpsArenaImpl({
                 disabled={!canPlay}
                 onClick={() => onChoose(m)}
                 aria-label={m}
-                className="group flex flex-col items-center transition-transform duration-100 active:translate-y-[3px] disabled:pointer-events-none disabled:opacity-40"
+                className="group relative block w-full transition-transform duration-100 active:translate-y-[2px] disabled:pointer-events-none disabled:opacity-40"
               >
-                {/* cradle: two side arms holding the tile */}
-                <div className="relative w-full px-[6px]">
-                  <span className="absolute inset-y-[10%] left-0 w-[6px] rounded-[3px] bg-[var(--color-surface-border)]" />
-                  <span className="absolute inset-y-[10%] right-0 w-[6px] rounded-[3px] bg-[var(--color-surface-border)]" />
+                <div className="relative aspect-[1/1.12] w-full">
+                  {/* cradle arms */}
+                  <span
+                    className={cn(
+                      "absolute left-0 top-[10%] bottom-[16%] w-[13%] rounded-[6px]",
+                      selected ? "bg-[#e6ecf2]" : "bg-[#77879a]",
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      "absolute right-0 top-[10%] bottom-[16%] w-[13%] rounded-[6px]",
+                      selected ? "bg-[#e6ecf2]" : "bg-[#77879a]",
+                    )}
+                  />
+                  {/* base slab */}
+                  <span
+                    className={cn(
+                      "absolute inset-x-0 bottom-0 h-[20%] rounded-[7px] shadow-[inset_0_2px_0_0_rgba(255,255,255,0.18)]",
+                      selected ? "bg-[#eef2f6]" : "bg-[#8b9aab]",
+                    )}
+                  />
+                  {/* tile */}
                   <div
                     className={cn(
-                      "relative aspect-square w-full rounded-[10px] p-[5px] shadow-[inset_0_1px_0_0_color-mix(in_srgb,white_16%,transparent)] transition-colors",
+                      "absolute left-[9%] right-[9%] top-0 bottom-[22%] rounded-[12px] p-[9%] transition-colors",
                       selected
-                        ? "bg-[var(--color-ink)]"
-                        : "bg-[var(--color-neon)] group-hover:bg-[color-mix(in_srgb,var(--color-neon)_80%,white)]",
+                        ? "bg-[#ffffff]"
+                        : "bg-[#8ede3f] group-hover:bg-[#9cea50]",
                     )}
                   >
-                    <div className="grid h-full w-full place-items-center rounded-[7px] bg-[var(--color-surface-2)]">
+                    <div
+                      className={cn(
+                        "grid h-full w-full place-items-center rounded-[8px]",
+                        selected ? "bg-[#f4f7fa]" : "bg-[#3c4654]",
+                      )}
+                    >
                       <HandGlyph
                         move={m}
                         className={cn(
-                          "h-[62%] w-[62%] transition-transform duration-100",
+                          "h-[70%] w-[70%] transition-transform duration-100",
                           selected
-                            ? "scale-110 text-[var(--color-neon)] animate-[rps-pop_0.3s_ease-out]"
-                            : "text-[var(--color-ink)]",
+                            ? "scale-110 text-[#f2a43a] animate-[rps-pop_0.3s_ease-out]"
+                            : "text-[#eef2f6]",
                         )}
                       />
                     </div>
                   </div>
                 </div>
-                {/* base slab */}
-                <span className="-mt-[2px] h-[9px] w-full rounded-[3px] bg-[var(--color-surface-border)] shadow-[inset_0_1px_0_0_color-mix(in_srgb,white_12%,transparent)]" />
               </button>
             );
           })}
