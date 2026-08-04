@@ -55,12 +55,16 @@ export function RouletteBoard({
   stakes,
   onPlace,
   disabled,
+  bare,
 }: {
   /** positionKey -> total staked */
   stakes: Record<string, number>;
   onPlace: PlaceBet;
   disabled?: boolean;
+  /** render without its own felt panel (used when nested in the curved table shell) */
+  bare?: boolean;
 }) {
+
   const [splitMode, setSplitMode] = useState(false);
   const [splitFirst, setSplitFirst] = useState<number | null>(null);
 
