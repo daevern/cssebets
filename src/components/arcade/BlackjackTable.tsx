@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { PlayingCard } from "@/components/arcade/PlayingCard";
+import {
+  CARD_FLIP_MS,
+  CARD_SLIDE_MS,
+  CsseCardBack,
+  PlayingCard,
+} from "@/components/arcade/PlayingCard";
 import { CsseMark } from "@/components/brand/CsseMark";
 import { formatTotal, handValue } from "@/lib/arcade/blackjack-math";
 import type { BjCard } from "@/lib/arcade/blackjack.functions";
@@ -11,6 +16,9 @@ export type BlackjackState = {
   cards: BjCard[];
 };
 
+/** Gap between consecutive cards leaving the shoe. */
+const STEP_MS = 420;
+
 function Totals({ label, value, tone }: { label: string; value: string; tone?: "neon" | "muted" }) {
   return (
     <div className="flex items-center gap-2">
@@ -19,7 +27,7 @@ function Totals({ label, value, tone }: { label: string; value: string; tone?: "
       </span>
       <span
         className={cn(
-          "flex h-7 min-w-11 items-center justify-center rounded-[3px] border px-3 text-center font-mono text-[12px] font-bold leading-none tabular-nums",
+          "flex h-7 min-w-11 items-center justify-center rounded-[3px] border px-3 text-center font-mono text-[12px] font-bold leading-none tabular-nums transition-colors",
           tone === "neon"
             ? "border-[var(--color-neon)]/50 bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
             : "border-[var(--color-surface-border)] bg-[#0b1a12] text-[var(--color-ink)]",
@@ -30,7 +38,6 @@ function Totals({ label, value, tone }: { label: string; value: string; tone?: "
     </div>
   );
 }
-
 
 /** Decorative casino felt: arcs, curved rule banners and a card shoe. */
 function FeltArt() {
@@ -48,7 +55,6 @@ function FeltArt() {
         <path id="bj-arc-banner" d="M300,268 C420,352 760,352 880,268" fill="none" />
       </defs>
 
-      {/* Main table arc */}
       <path
         d="M62,-40 C62,340 300,520 590,520 C880,520 1118,340 1118,-40"
         fill="none"
@@ -56,7 +62,6 @@ function FeltArt() {
         strokeOpacity="0.28"
         strokeWidth="1.5"
       />
-      {/* Inner arc */}
       <path
         d="M118,-40 C118,320 320,472 590,472 C860,472 1062,320 1062,-40"
         fill="none"
@@ -64,8 +69,6 @@ function FeltArt() {
         strokeOpacity="0.16"
         strokeWidth="1.5"
       />
-
-      {/* Curved banner (decorative) */}
       <path
         d="M292,240 C420,332 760,332 888,240 L916,300 C775,398 405,398 264,300 Z"
         fill="none"
@@ -74,26 +77,20 @@ function FeltArt() {
         strokeWidth="1.5"
         strokeLinejoin="round"
       />
-
-      {/* Card shoe */}
-      <g
-        transform="translate(1058,352) rotate(9)"
-        fill="none"
-        stroke={neon}
-        strokeOpacity="0.3"
-        strokeWidth="1.5"
-      >
-        <rect x="0" y="0" width="78" height="140" rx="4" />
-        <rect x="9" y="10" width="60" height="104" rx="3" strokeOpacity="0.2" />
-      </g>
     </svg>
   );
 }
 
+type Timing = { deal: number; flip: number };
 
-export function BlackjackTable({ state }: { state: BlackjackState | null }) {
-  // Cards scale to whatever vertical space the table gets so nothing is ever
-  // clipped or squashed, on any phone height.
+export function BlackjackTable({
+  state,
+  onBusyChange,
+}: {
+  state: BlackjackState | null;
+  /** True while cards are still sliding/flipping — used to hold back results. */
+  onBusyChange?: (busy: boolean) => void;
+}) {
   const boxRef = useRef<HTMLDivElement | null>(null);
   const shoeRef = useRef<HTMLDivElement | null>(null);
   const [cardH, setCardH] = useState(72);
@@ -104,7 +101,6 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
       const h = el.clientHeight;
       const w = el.clientWidth;
       const byHeight = (h - 104) / 2;
-      // Leave room for the shoe on the right edge.
       const byWidth = (w - 72) / 6 / 0.7;
       const cap = w >= 700 ? 142 : 96;
       setCardH(Math.max(44, Math.min(cap, Math.floor(Math.min(byHeight, byWidth)))));
@@ -113,30 +109,113 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
     return () => ro.disconnect();
   }, []);
 
-  const dealerCards = useMemo(
-    () => (state?.cards ?? []).filter((c) => c.owner === "DEALER"),
-    [state],
-  );
-  const playerHands = state?.playerHands ?? [];
-
-  // The shoe re-shuffles between hands.
+  const cards = state?.cards ?? [];
   const handId = String(state?.hand?.id ?? "idle");
 
+  /* ------------------------------------------------------------------
+   * Deal choreography.
+   * New cards leave the shoe one at a time (dealer first, then player,
+   * alternating on the opening deal) and only flip once they have landed.
+   * A hole card turning over is queued behind everything still in flight.
+   * ---------------------------------------------------------------- */
+  const seenRef = useRef<Map<string, { faceUp: boolean; timing: Timing }>>(new Map());
+  const handRef = useRef(handId);
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
+
+  const timings = useMemo(() => {
+    if (handRef.current !== handId) {
+      handRef.current = handId;
+      seenRef.current = new Map();
+    }
+    const seen = seenRef.current;
+
+    const fresh = cards.filter((c) => !seen.has(c.id));
+    const turned = cards.filter((c) => seen.has(c.id) && c.faceUp && !seen.get(c.id)!.faceUp);
+
+    // Opening deal: dealer card, player card, dealer card, player card.
+    const ordered = [...fresh].sort((a, b) => {
+      const pa = Math.floor(fresh.filter((c) => c.owner === a.owner && c.sequence < a.sequence).length);
+      const pb = Math.floor(fresh.filter((c) => c.owner === b.owner && c.sequence < b.sequence).length);
+      if (fresh.length >= 4) {
+        if (pa !== pb) return pa - pb;
+        if (a.owner !== b.owner) return a.owner === "DEALER" ? -1 : 1;
+      }
+      return a.sequence - b.sequence;
+    });
+
+    let cursor = 0;
+    const out = new Map<string, Timing>();
+    for (const c of ordered) {
+      const deal = cursor;
+      const flip = deal + CARD_SLIDE_MS + 90;
+      out.set(c.id, { deal, flip });
+      cursor += STEP_MS;
+    }
+    // Hole card / dealer draw reveals come after the fresh cards have landed.
+    let revealCursor = ordered.length ? cursor + 120 : 0;
+    for (const c of turned.sort((a, b) => a.sequence - b.sequence)) {
+      out.set(c.id, { deal: 0, flip: revealCursor });
+      revealCursor += CARD_FLIP_MS + 80;
+    }
+
+    for (const c of cards) {
+      const t = out.get(c.id) ?? seen.get(c.id)?.timing ?? { deal: 0, flip: 0 };
+      seen.set(c.id, { faceUp: c.faceUp, timing: t });
+      out.set(c.id, out.get(c.id) ?? { deal: 0, flip: 0 });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards, handId]);
+
+  // Busy window + progressive reveal so totals never spoil a flip.
+  useEffect(() => {
+    const timers: number[] = [];
+    let last = 0;
+    for (const c of cards) {
+      const t = timings.get(c.id) ?? { deal: 0, flip: 0 };
+      const done = (c.faceUp ? t.flip + CARD_FLIP_MS : t.deal + CARD_SLIDE_MS) + 40;
+      last = Math.max(last, done);
+      if (c.faceUp && !revealed.has(c.id)) {
+        timers.push(
+          window.setTimeout(() => {
+            setRevealed((s) => (s.has(c.id) ? s : new Set(s).add(c.id)));
+          }, Math.max(0, t.flip + CARD_FLIP_MS * 0.55)),
+        );
+      }
+    }
+    if (last > 0) {
+      onBusyChange?.(true);
+      timers.push(window.setTimeout(() => onBusyChange?.(false), last));
+    } else {
+      onBusyChange?.(false);
+    }
+    return () => timers.forEach((t) => window.clearTimeout(t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timings]);
+
+  useEffect(() => {
+    setRevealed(new Set());
+  }, [handId]);
+
+  const dealerCards = useMemo(() => cards.filter((c) => c.owner === "DEALER"), [cards]);
+  const playerHands = state?.playerHands ?? [];
+
+  const isShown = (c: BjCard) => c.faceUp && revealed.has(c.id);
+
   const dealerTotal = useMemo(() => {
-    const ranks = dealerCards.filter((c) => c.faceUp && c.rank).map((c) => c.rank as number);
-    const hidden = dealerCards.some((c) => !c.faceUp);
+    const shown = dealerCards.filter(isShown);
+    const ranks = shown.map((c) => c.rank as number).filter((r) => r != null);
+    if (!ranks.length) return "—";
+    const hidden = dealerCards.length > shown.length;
     const v = handValue(ranks);
     return hidden ? `${v.total}+` : formatTotal(v);
-  }, [dealerCards]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dealerCards, revealed]);
 
   const shoeW = Math.round(cardH * 0.7);
 
   return (
     <div ref={boxRef} className="relative h-full overflow-hidden bg-[#07130d]">
-      <style>{`
-@keyframes bj-shuffle{0%{transform:translateX(0) rotate(0deg)}25%{transform:translateX(-5px) rotate(-4deg)}50%{transform:translateX(4px) rotate(3deg)}75%{transform:translateX(-2px) rotate(-1.5deg)}100%{transform:translateX(0) rotate(0deg)}}
-`}</style>
-
       <FeltArt />
 
       {/* Brand watermark sits below the dealer pill so the two never overlap. */}
@@ -147,20 +226,17 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
 
       {/* Shoe — every card is dealt out of this stack. */}
       <div
-        key={handId}
-        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 animate-[bj-shuffle_600ms_ease-in-out] md:right-4"
+        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 md:right-4"
         style={{ width: shoeW, height: cardH }}
       >
-        {[0, 1, 2, 3].map((i) => (
+        {[3, 2, 1, 0].map((i) => (
           <div
             key={i}
-            className="absolute inset-0 rounded-[4px] border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)]"
-            style={{
-              transform: `translate(${i * 1.5}px, ${-i * 1.5}px)`,
-              backgroundImage:
-                "repeating-linear-gradient(45deg, color-mix(in srgb, var(--color-neon) 22%, transparent) 0 4px, transparent 4px 8px)",
-            }}
-          />
+            className="absolute inset-0"
+            style={{ transform: `translate(${i * 1.8}px, ${-i * 1.8}px)` }}
+          >
+            <CsseCardBack className={i ? "opacity-80" : undefined} />
+          </div>
         ))}
         <div ref={shoeRef} className="absolute inset-0" />
       </div>
@@ -171,13 +247,14 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
           <Totals label="Dealer" value={dealerCards.length ? dealerTotal : "—"} />
 
           <div className="flex max-w-full flex-wrap items-center justify-center gap-1.5 md:gap-2">
-            {dealerCards.map((c, i) => (
+            {dealerCards.map((c) => (
               <PlayingCard
                 key={c.id}
                 rank={c.rank}
                 suit={c.suit}
                 faceUp={c.faceUp}
-                index={i}
+                dealDelay={timings.get(c.id)?.deal ?? 0}
+                flipDelay={timings.get(c.id)?.flip ?? 0}
                 height={cardH}
                 dealFrom={shoeRef}
               />
@@ -185,25 +262,28 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
           </div>
         </div>
 
-        {/* Center spacer — the outcome is shown in the result pop-up. */}
         <div className="h-2 shrink-0" />
 
         {/* Player */}
         <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1">
           <div className="flex max-w-full flex-wrap items-start justify-center gap-3 md:gap-4">
             {playerHands.map((ph) => {
-              const cards = (state?.cards ?? []).filter((c) => c.playerHandId === ph.id);
-              const v = handValue(cards.map((c) => (c.rank ?? 0) as number));
+              const handCards = cards.filter((c) => c.playerHandId === ph.id);
+              const shownRanks = handCards
+                .filter(isShown)
+                .map((c) => (c.rank ?? 0) as number);
+              const v = handValue(shownRanks);
               return (
                 <div key={ph.id} className="flex flex-col items-center gap-1">
                   <div className="flex max-w-full flex-wrap items-center justify-center gap-1.5 md:gap-2">
-                    {cards.map((c, i) => (
+                    {handCards.map((c) => (
                       <PlayingCard
                         key={c.id}
                         rank={c.rank}
                         suit={c.suit}
                         faceUp={c.faceUp}
-                        index={i}
+                        dealDelay={timings.get(c.id)?.deal ?? 0}
+                        flipDelay={timings.get(c.id)?.flip ?? 0}
                         height={cardH}
                         dealFrom={shoeRef}
                       />
@@ -211,7 +291,7 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
                   </div>
                   <Totals
                     label={playerHands.length > 1 ? `Hand ${ph.hand_index + 1}` : "You"}
-                    value={formatTotal(v)}
+                    value={shownRanks.length ? formatTotal(v) : "—"}
                     tone={ph.status === "ACTIVE" ? "neon" : "muted"}
                   />
                 </div>
@@ -228,4 +308,3 @@ export function BlackjackTable({ state }: { state: BlackjackState | null }) {
     </div>
   );
 }
-
