@@ -19,15 +19,15 @@ import { cn } from "@/lib/utils";
 
 export type PlaceBet = (betType: BetTypeKey, label: string, pockets: number[]) => void;
 
-/* Modern minimalistic 2D felt — flat fills, hairline borders, no gradients. */
-const FELT_BG = "#0b1310";
-const FELT_BORDER = "rgba(255,255,255,0.08)";
-const CELL_BG = "rgba(255,255,255,0.035)";
-const RED_INK = "#ef5061";
-const RED_CELL_BG = "rgba(239,80,97,0.16)";
-const RED_CELL_BORDER = "rgba(239,80,97,0.32)";
-const BLACK_CELL_BG = "rgba(255,255,255,0.045)";
-const BLACK_CELL_BORDER = "rgba(255,255,255,0.10)";
+/* Classic casino felt — green cloth, white hairlines, solid red/black pockets. */
+const FELT_BG = "#0a6b3d";
+const FELT_BORDER = "rgba(255,255,255,0.55)";
+const CELL_BG = "rgba(255,255,255,0.06)";
+const RED_INK = "#ffffff";
+const RED_CELL_BG = "#c8102e";
+const RED_CELL_BORDER = "rgba(255,255,255,0.6)";
+const BLACK_CELL_BG = "#10161a";
+const BLACK_CELL_BORDER = "rgba(255,255,255,0.6)";
 
 const cellBase =
   "relative grid place-items-center rounded-[4px] border font-display font-bold tabular-nums transition-colors disabled:opacity-40";
