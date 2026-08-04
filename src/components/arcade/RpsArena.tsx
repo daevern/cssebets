@@ -370,17 +370,17 @@ function RpsArenaImpl({
       {/* Status line */}
       <div
         className={cn(
-          "mt-2 text-center font-display text-[10px] font-black uppercase tracking-[0.28em] transition-colors",
+          "mt-2 min-h-[13px] text-center font-display text-[10px] font-black uppercase tracking-[0.28em] transition-colors",
           phase === "SETTLED" ? toneText(outcome as Tone) : "text-[var(--color-ink-muted)]",
         )}
       >
         {phase === "IDLE"
-          ? "Pick your hand"
+          ? ""
           : phase === "SETTLED"
             ? outcome === "WIN"
               ? "You win"
               : outcome === "LOSS"
-                ? "Computer wins"
+                ? "You lose"
                 : "Draw"
             : "Revealing"}
       </div>
@@ -402,9 +402,9 @@ function RpsArenaImpl({
         <circle cx="150" cy="10" r="3" fill="currentColor" />
       </svg>
 
-      {/* Flat CSSE hand controls — tactile like the stake selectors. */}
+      {/* Pedestal-mounted hand controls. */}
       <div className="mx-auto w-3/4">
-        <div className="grid w-full grid-cols-3 gap-1.5">
+        <div className="grid w-full grid-cols-3 gap-2">
           {RPS_MOVES.map((m) => {
             const selected = playerMove === m;
             return (
@@ -413,32 +413,42 @@ function RpsArenaImpl({
                 type="button"
                 disabled={!canPlay}
                 onClick={() => onChoose(m)}
-                className={cn(
-                  "relative mb-[6px] flex min-h-[58px] flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[6px] border bg-[var(--color-surface-2)] px-1.5 py-1.5 transition-[transform,box-shadow,border-color,background-color] duration-100 active:translate-y-[5px] active:shadow-[0_1px_0_0_var(--color-surface-border)] disabled:pointer-events-none disabled:opacity-40",
-                  selected
-                    ? "border-[var(--color-neon)] bg-[var(--color-neon)]/10 shadow-[0_5px_0_0_color-mix(in_srgb,var(--color-neon)_45%,black),inset_0_1px_0_0_color-mix(in_srgb,white_18%,transparent)]"
-                    : "border-[var(--color-surface-border)] shadow-[0_5px_0_0_var(--color-surface-border),inset_0_1px_0_0_color-mix(in_srgb,white_10%,transparent)] hover:border-[var(--color-neon)]/60",
-                )}
-
+                aria-label={m}
+                className="group flex flex-col items-center transition-transform duration-100 active:translate-y-[3px] disabled:pointer-events-none disabled:opacity-40"
               >
-                <HandGlyph
-                  move={m}
-                  className={cn(
-                    "h-7 w-7 transition-transform duration-100",
-                    selected
-                      ? "scale-110 text-[var(--color-neon)] animate-[rps-pop_0.3s_ease-out]"
-                      : "text-[var(--color-ink)]",
-                  )}
-                />
-                <span className="font-display text-[8px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
-                  {m}
-                </span>
-                <span className={cn("absolute inset-x-2 bottom-0 h-[3px]", selected ? "bg-[var(--color-neon)]" : "bg-[var(--color-surface-border)]")} />
+                {/* cradle: two side arms holding the tile */}
+                <div className="relative w-full px-[6px]">
+                  <span className="absolute inset-y-[10%] left-0 w-[6px] rounded-[3px] bg-[var(--color-surface-border)]" />
+                  <span className="absolute inset-y-[10%] right-0 w-[6px] rounded-[3px] bg-[var(--color-surface-border)]" />
+                  <div
+                    className={cn(
+                      "relative aspect-square w-full rounded-[10px] p-[5px] shadow-[inset_0_1px_0_0_color-mix(in_srgb,white_16%,transparent)] transition-colors",
+                      selected
+                        ? "bg-[var(--color-ink)]"
+                        : "bg-[var(--color-neon)] group-hover:bg-[color-mix(in_srgb,var(--color-neon)_80%,white)]",
+                    )}
+                  >
+                    <div className="grid h-full w-full place-items-center rounded-[7px] bg-[var(--color-surface-2)]">
+                      <HandGlyph
+                        move={m}
+                        className={cn(
+                          "h-[62%] w-[62%] transition-transform duration-100",
+                          selected
+                            ? "scale-110 text-[var(--color-neon)] animate-[rps-pop_0.3s_ease-out]"
+                            : "text-[var(--color-ink)]",
+                        )}
+                      />
+                    </div>
+                  </div>
+                </div>
+                {/* base slab */}
+                <span className="-mt-[2px] h-[9px] w-full rounded-[3px] bg-[var(--color-surface-border)] shadow-[inset_0_1px_0_0_color-mix(in_srgb,white_12%,transparent)]" />
               </button>
             );
           })}
         </div>
       </div>
+
 
     </div>
   );
