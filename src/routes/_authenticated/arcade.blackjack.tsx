@@ -342,29 +342,6 @@ function BlackjackPage() {
           />
         </div>
 
-        <div className="flex h-8 md:h-10 items-center gap-1.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2">
-          <span className="text-[9px] font-bold text-[var(--color-ink-muted)]">PTS</span>
-          <span className="flex-1 font-mono text-[13px] font-bold tabular-nums text-[var(--color-neon)]">
-            {stake.toLocaleString()}
-          </span>
-          {(
-            [
-              ["1/2", () => clampStake(stake / 2)],
-              ["2x", () => clampStake(stake * 2)],
-              ["Max", () => clampStake(Math.min(balance, maxStake))],
-            ] as const
-          ).map(([label, fn]) => (
-            <button
-              key={label}
-              type="button"
-              disabled={inPlay || busy}
-              onClick={fn}
-              className="rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)]/50 hover:text-[var(--color-neon)] disabled:opacity-40"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
 
         <div className="flex shrink-0 items-center justify-between gap-1 overflow-x-auto overflow-y-visible px-1.5 pb-1 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <ChipRack
