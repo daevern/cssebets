@@ -396,7 +396,7 @@ function BlackjackPage() {
           </button>
         ) : (
           <div className="flex h-9 md:h-12 w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[9px] md:text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
-            Your move
+            {tableBusy ? "Dealing…" : "Your move"}
           </div>
         )}
 
