@@ -375,12 +375,12 @@ function RpsArenaImpl({
         )}
       >
         {phase === "IDLE"
-          ? "Pick your hand"
+          ? "\u00a0"
           : phase === "SETTLED"
             ? outcome === "WIN"
               ? "You win"
               : outcome === "LOSS"
-                ? "Computer wins"
+                ? "You lose"
                 : "Draw"
             : "Revealing"}
       </div>
