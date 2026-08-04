@@ -18,7 +18,7 @@ type Props = {
   flipDelay?: number;
 };
 
-export const CARD_SLIDE_MS = 360;
+export const CARD_SLIDE_MS = 480;
 export const CARD_FLIP_MS = 520;
 
 /** The shared CSSEbets card back — identical to the Rock–Paper–Scissors deck. */
@@ -61,33 +61,37 @@ export function PlayingCard({
   const boxRef = useRef<HTMLDivElement | null>(null);
   /** Every card lands face-down first, then flips — never a straight reveal. */
   const [landed, setLanded] = useState(false);
+  /** Offset (px) from the shoe to this card's resting slot. */
+  const [from, setFrom] = useState<{ x: number; y: number } | null>(null);
+  const [flying, setFlying] = useState(true);
 
   useLayoutEffect(() => {
     const el = boxRef.current;
     const shoe = dealFrom?.current;
     if (!el) return;
-    let from = "translate(0px, -14px)";
+    let dx = 0;
+    let dy = -18;
     if (shoe) {
       const a = el.getBoundingClientRect();
       const b = shoe.getBoundingClientRect();
-      from = `translate(${b.left + b.width / 2 - (a.left + a.width / 2)}px, ${
-        b.top + b.height / 2 - (a.top + a.height / 2)
-      }px) rotate(-12deg)`;
+      dx = b.left + b.width / 2 - (a.left + a.width / 2);
+      dy = b.top + b.height / 2 - (a.top + a.height / 2);
     }
-    el.animate(
-      [
-        { transform: from, opacity: 0.9 },
-        { transform: "translate(0,0) rotate(0deg)", opacity: 1 },
-      ],
-      {
-        duration: CARD_SLIDE_MS,
-        delay: dealDelay,
-        easing: "cubic-bezier(.2,.7,.3,1)",
-        fill: "backwards",
-      },
-    );
+    // Guard against a bad/zero measurement so the card never just "appears".
+    if (Math.abs(dx) + Math.abs(dy) < 40) {
+      dx = Math.max(160, (boxRef.current?.ownerDocument?.defaultView?.innerWidth ?? 400) * 0.35);
+      dy = 0;
+    }
+    setFrom({ x: dx, y: dy });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Hold at the shoe for `dealDelay`, then travel to the slot.
+  useEffect(() => {
+    if (!from) return;
+    const t = window.setTimeout(() => setFlying(false), Math.max(0, dealDelay) + 20);
+    return () => window.clearTimeout(t);
+  }, [from, dealDelay]);
 
   useEffect(() => {
     if (!faceUp) {
@@ -99,14 +103,27 @@ export function PlayingCard({
     return () => window.clearTimeout(t);
   }, [faceUp, flipDelay, dealDelay]);
 
+
   const showFace = faceUp && landed;
+
+  const travelling = !from || flying;
 
   return (
     <div
       ref={boxRef}
       className={cn("relative shrink-0 select-none [perspective:900px]", className)}
-      style={{ height: h, width: w }}
+      style={{
+        height: h,
+        width: w,
+        zIndex: travelling ? 30 : undefined,
+        transform: travelling
+          ? `translate(${from?.x ?? 0}px, ${from?.y ?? -18}px) rotate(-10deg)`
+          : "translate(0px, 0px) rotate(0deg)",
+        transition: `transform ${CARD_SLIDE_MS}ms cubic-bezier(.2,.75,.3,1)`,
+        willChange: "transform",
+      }}
     >
+
       <div
         className="relative h-full w-full [transform-style:preserve-3d]"
         style={{
