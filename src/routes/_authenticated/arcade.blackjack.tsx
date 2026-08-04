@@ -127,13 +127,18 @@ function BlackjackPage() {
   const inPlay = state?.hand?.status === "PLAYER_TURN" && !!activeHand;
   const settled = state?.hand?.status === "COMPLETED";
 
+  // The outcome pop-up waits until every card has finished sliding and
+  // flipping — the reveal itself carries the suspense.
   useEffect(() => {
     const h = state?.hand;
     if (!h || h.status !== "COMPLETED") return;
+    if (tableBusy) return;
     if (shownResultRef.current === h.id) return;
     shownResultRef.current = h.id;
-    setResultOpen(true);
-  }, [state?.hand?.id, state?.hand?.status]);
+    const t = window.setTimeout(() => setResultOpen(true), 420);
+    return () => window.clearTimeout(t);
+  }, [state?.hand?.id, state?.hand?.status, tableBusy]);
+
 
   const activeCards = useMemo(
     () => (state?.cards ?? []).filter((c: any) => c.playerHandId === activeHand?.id),
