@@ -107,15 +107,9 @@ export function RouletteArt() {
   return (
     <svg viewBox="0 0 240 170" className="h-full w-full" role="img" aria-label="Roulette table demo">
       <defs>
-        <radialGradient id="rltFelt" cx="45%" cy="40%" r="80%">
-          <stop offset="0%" stopColor="#12built" stopOpacity="0" />
-        </radialGradient>
         <radialGradient id="rltFeltG" cx="40%" cy="35%" r="85%">
           <stop offset="0%" stopColor="#1c5c3a" />
           <stop offset="100%" stopColor="#0c2d1d" />
-        </radialGradient>
-        <radialGradient id="rltWood" cx="50%" cy="50%" r="50%">
-          <stop offset="70%" stopColor="#5a3club" stopOpacity="0" />
         </radialGradient>
         <linearGradient id="rltRim" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#8a5a2b" />
