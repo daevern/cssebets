@@ -40,7 +40,15 @@ describe("treasure grid", () => {
         const p = survivalProbability(n, m, k);
         const rtp = p * actualMultiplier(n, m, k, DEFAULT_TARGET_RTP);
         expect(rtp).toBeLessThanOrEqual(RTP_CEILING + 1e-9);
-        expect(rtp).toBeCloseTo(DEFAULT_TARGET_RTP, 6);
+        const uncapped = fairMultiplier(n, m, k) * DEFAULT_TARGET_RTP < 5000;
+        if (uncapped) {
+          // Below the 5000x ceiling the game pays exactly the published RTP.
+          expect(rtp).toBeCloseTo(DEFAULT_TARGET_RTP, 6);
+        } else {
+          // Known deviation: the 5000x cap truncates deep-ladder payouts, so
+          // RTP falls BELOW target (house-favourable, never player-favourable).
+          expect(rtp).toBeLessThan(DEFAULT_TARGET_RTP);
+        }
       }
     }
   });
