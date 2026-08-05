@@ -68,11 +68,16 @@ describe("rock paper scissors", () => {
   });
 
   it("keeps round-level RTP below 100% and holds the ladder flat on a draw", () => {
-    const win = rpsMultiplier("WIN", 1);
-    const draw = rpsMultiplier("DRAW", 1);
-    const rtp = (win + draw) / 3; // 1/3 win, 1/3 draw, 1/3 loss
+    // Live config: win 1.9x on stake, draw returns the stake (ladder holds).
+    const WIN = 1.9;
+    const DRAW = 1.0;
+    const win = rpsMultiplier("WIN", WIN, DRAW);
+    const draw = rpsMultiplier("DRAW", WIN, DRAW);
+    const loss = rpsMultiplier("LOSS", WIN, DRAW);
+    const rtp = (win + draw + loss) / 3; // 1/3 win, 1/3 draw, 1/3 loss
     expect(rtp).toBeLessThan(RTP_CEILING);
     expect(draw).toBeLessThanOrEqual(1);
+    expect(loss).toBe(0);
   });
 });
 
