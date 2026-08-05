@@ -1682,6 +1682,78 @@ export type Database = {
         }
         Relationships: []
       }
+      arcade_config_activation: {
+        Row: {
+          activated_at: string
+          activated_by: string | null
+          config_version: number
+          environment: Database["public"]["Enums"]["acct_environment"]
+          product: string
+          reason: string | null
+        }
+        Insert: {
+          activated_at?: string
+          activated_by?: string | null
+          config_version: number
+          environment: Database["public"]["Enums"]["acct_environment"]
+          product: string
+          reason?: string | null
+        }
+        Update: {
+          activated_at?: string
+          activated_by?: string | null
+          config_version?: number
+          environment?: Database["public"]["Enums"]["acct_environment"]
+          product?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      arcade_config_versions: {
+        Row: {
+          change_reason: string
+          created_at: string
+          created_by: string | null
+          id: string
+          measured_house_edge: number | null
+          measured_rtp: number | null
+          payload: Json
+          product: string
+          simulation_rounds: number | null
+          target_house_edge: number
+          target_rtp: number
+          version: number
+        }
+        Insert: {
+          change_reason: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          measured_house_edge?: number | null
+          measured_rtp?: number | null
+          payload?: Json
+          product: string
+          simulation_rounds?: number | null
+          target_house_edge: number
+          target_rtp: number
+          version: number
+        }
+        Update: {
+          change_reason?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          measured_house_edge?: number | null
+          measured_rtp?: number | null
+          payload?: Json
+          product?: string
+          simulation_rounds?: number | null
+          target_house_edge?: number
+          target_rtp?: number
+          version?: number
+        }
+        Relationships: []
+      }
       arcade_cosmetics: {
         Row: {
           achievement_code: string | null
@@ -8226,6 +8298,10 @@ export type Database = {
       arcade_bj_value: { Args: { p_ranks: number[] }; Returns: number[] }
       arcade_bj_worst_case_gross: {
         Args: { p_rule_config: string; p_stake: number }
+        Returns: number
+      }
+      arcade_config_version_for: {
+        Args: { p_product: string; p_user: string }
         Returns: number
       }
       arcade_ensure_daily: {

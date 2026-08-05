@@ -109,7 +109,7 @@ export function WinDetector() {
       const activeId = forced?.id ?? data?.id;
       if (activeId) markSeen(String(activeId));
       if (winParam) {
-        router.navigate({ to: "/notifications", replace: true });
+        router.navigate({ to: "/notifications", search: { win: undefined }, replace: true });
         setForced(null);
       }
     }
