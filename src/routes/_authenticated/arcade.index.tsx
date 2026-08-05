@@ -50,7 +50,7 @@ const GAMES = [
     to: "/arcade/roulette",
     label: "Roulette",
     blurb: "Stack chips across the layout, one pocket decides it all.",
-    tag: "12 pockets",
+    tag: "37 pockets",
     TagIcon: Flame,
     Art: RouletteArt,
     art: "text-rose-300",
@@ -105,8 +105,9 @@ function ArcadeLobby() {
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-black uppercase tracking-[0.14em] text-[var(--color-ink)]">
-        Choose your game
+        CSSEbets Classic&rsquo;s
       </h1>
+
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {GAMES.map(({ key, to, label, blurb, tag, TagIcon, Art, art, frame, ring, cta }) => (
