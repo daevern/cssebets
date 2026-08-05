@@ -371,7 +371,7 @@ export function BlackjackArt() {
       </defs>
       <rect width="240" height="170" fill="url(#bjFelt)" />
       <path d="M6 156 A 118 100 0 0 1 234 156" fill="none" stroke="#c9a84c" strokeOpacity="0.45" strokeWidth="1.3" />
-      <text x="86" y="16" textAnchor="middle" fontSize="8" fontWeight="900" letterSpacing="2.6" fill="#e8dfc4" opacity="0.7">
+      <text x="152" y="150" textAnchor="middle" fontSize="8" fontWeight="900" letterSpacing="2.6" fill="#e8dfc4" opacity="0.7">
         BLACKJACK PAYS 3:2
       </text>
 
