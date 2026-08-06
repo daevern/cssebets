@@ -1709,6 +1709,42 @@ export type Database = {
         }
         Relationships: []
       }
+      arcade_config_activation_log: {
+        Row: {
+          action: string
+          actor: string | null
+          created_at: string
+          environment: Database["public"]["Enums"]["acct_environment"]
+          id: string
+          new_version: number
+          previous_version: number | null
+          product: string
+          reason: string
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          created_at?: string
+          environment: Database["public"]["Enums"]["acct_environment"]
+          id?: string
+          new_version: number
+          previous_version?: number | null
+          product: string
+          reason: string
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          created_at?: string
+          environment?: Database["public"]["Enums"]["acct_environment"]
+          id?: string
+          new_version?: number
+          previous_version?: number | null
+          product?: string
+          reason?: string
+        }
+        Relationships: []
+      }
       arcade_config_versions: {
         Row: {
           change_reason: string
@@ -8304,6 +8340,13 @@ export type Database = {
         Args: { p_product: string; p_user: string }
         Returns: number
       }
+      arcade_config_version_in_env: {
+        Args: {
+          p_env: Database["public"]["Enums"]["acct_environment"]
+          p_product: string
+        }
+        Returns: number
+      }
       arcade_ensure_daily: {
         Args: { p_daily_alloc: number; p_user: string }
         Returns: {
@@ -8414,6 +8457,15 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      arcade_promote_config: {
+        Args: {
+          p_environment: Database["public"]["Enums"]["acct_environment"]
+          p_product: string
+          p_reason: string
+          p_version: number
+        }
+        Returns: Json
+      }
       arcade_publish_treasure_config: {
         Args: {
           p_admin: string
@@ -8457,6 +8509,14 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      arcade_rollback_config: {
+        Args: {
+          p_environment: Database["public"]["Enums"]["acct_environment"]
+          p_product: string
+          p_reason: string
+        }
+        Returns: Json
       }
       arcade_roulette_draw: {
         Args: { p_client_seed: string; p_nonce: number; p_server_seed: string }
