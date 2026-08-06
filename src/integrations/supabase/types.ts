@@ -9323,6 +9323,10 @@ export type Database = {
         }
         Returns: Json
       }
+      sports_journal_reconciliation: {
+        Args: { p_env?: Database["public"]["Enums"]["acct_environment"] }
+        Returns: Json
+      }
       sports_journal_selftest: {
         Args: { p_env?: Database["public"]["Enums"]["acct_environment"] }
         Returns: Json
