@@ -68,9 +68,8 @@ export function HamburgerMenu() {
   const isGuest = !user || (user as any)?.is_anonymous === true;
   const refCode = (refQ.data?.referralCode ?? refCodeQ.data ?? "") as string;
   const refLoading =
-    !isGuest && !refCode && (refQ.isFetching || refCodeQ.isFetching);
-  const displayCode = isGuest ? "XXXXXXX" : refCode;
-  const referralLink = isGuest ? "" : buildReferralLink(refCode);
+    !!user && !refCode && (refQ.isFetching || refCodeQ.isFetching);
+  const referralLink = buildReferralLink(refCode);
 
   useEffect(() => {
     if (!open) return;
@@ -242,19 +241,19 @@ export function HamburgerMenu() {
                   {/* Referral code */}
                   <div className="mt-3 bg-black/10 px-4 py-3">
                     <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-black/60">
-                      {isGuest ? "Referrals" : "Your referral code"}
+                      {user ? "Your referral code" : "Referrals"}
                     </div>
                     <p className="mt-1 text-[11px] font-medium leading-snug text-black/70">
                       Earn tokens by referring friends. Share your code and get rewarded when they join and play.
                     </p>
                     <div className="mt-2 flex items-center justify-between gap-2">
                       <span className="font-mono text-2xl font-bold tracking-[0.24em] text-black">
-                        {refLoading ? "…" : displayCode || "—"}
+                        {refLoading ? "…" : refCode || "—"}
                       </span>
                       <button
                         type="button"
                         onClick={copyCode}
-                        disabled={isGuest || !refCode}
+                        disabled={!refCode}
                         aria-label="Copy referral link"
                         className="grid h-9 w-9 place-items-center bg-black text-[var(--neon)] transition-opacity hover:opacity-90 disabled:opacity-40"
                       >
@@ -262,7 +261,7 @@ export function HamburgerMenu() {
                       </button>
                     </div>
                     <div className="mt-2 truncate font-mono text-[11px] text-black/70">
-                      {isGuest
+                      {!user
                         ? "Register to unlock your referral link"
                         : refLoading
                           ? "Loading your link…"
