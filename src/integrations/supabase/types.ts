@@ -8336,6 +8336,14 @@ export type Database = {
         Args: { p_rule_config: string; p_stake: number }
         Returns: number
       }
+      arcade_config_selftest: {
+        Args: never
+        Returns: {
+          check_name: string
+          detail: string
+          passed: boolean
+        }[]
+      }
       arcade_config_version_for: {
         Args: { p_product: string; p_user: string }
         Returns: number
