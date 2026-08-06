@@ -2358,6 +2358,8 @@ export type Database = {
           daily_round_limit: number
           draw_multiplier: number
           id: string
+          ladder_multipliers: number[]
+          ladder_tail_multiplier: number
           maintenance_mode: boolean
           max_stake: number
           min_stake: number
@@ -2375,6 +2377,8 @@ export type Database = {
           daily_round_limit?: number
           draw_multiplier?: number
           id?: string
+          ladder_multipliers?: number[]
+          ladder_tail_multiplier?: number
           maintenance_mode?: boolean
           max_stake?: number
           min_stake?: number
@@ -2392,6 +2396,8 @@ export type Database = {
           daily_round_limit?: number
           draw_multiplier?: number
           id?: string
+          ladder_multipliers?: number[]
+          ladder_tail_multiplier?: number
           maintenance_mode?: boolean
           max_stake?: number
           min_stake?: number
@@ -2416,9 +2422,11 @@ export type Database = {
           house_net: number | null
           id: string
           idempotency_key: string | null
+          ladder_step: number
           multiplier: number | null
           nonce: number
           outcome: string | null
+          parent_round_id: string | null
           player_choice: string | null
           prepared_at: string
           processing_ms: number | null
@@ -2449,9 +2457,11 @@ export type Database = {
           house_net?: number | null
           id?: string
           idempotency_key?: string | null
+          ladder_step?: number
           multiplier?: number | null
           nonce: number
           outcome?: string | null
+          parent_round_id?: string | null
           player_choice?: string | null
           prepared_at?: string
           processing_ms?: number | null
@@ -2482,9 +2492,11 @@ export type Database = {
           house_net?: number | null
           id?: string
           idempotency_key?: string | null
+          ladder_step?: number
           multiplier?: number | null
           nonce?: number
           outcome?: string | null
+          parent_round_id?: string | null
           player_choice?: string | null
           prepared_at?: string
           processing_ms?: number | null
@@ -2509,6 +2521,13 @@ export type Database = {
             columns: ["config_id"]
             isOneToOne: false
             referencedRelation: "arcade_rps_configurations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arcade_rps_rounds_parent_round_id_fkey"
+            columns: ["parent_round_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_rps_rounds"
             referencedColumns: ["id"]
           },
           {
@@ -8630,15 +8649,27 @@ export type Database = {
         }[]
       }
       arcade_rps_expire_rounds: { Args: never; Returns: number }
-      arcade_rps_prepare_round: {
-        Args: { p_user: string }
-        Returns: {
-          out_expires_at: string
-          out_nonce: number
-          out_round_id: string
-          out_server_seed_hash: string
-        }[]
-      }
+      arcade_rps_prepare_round:
+        | {
+            Args: { p_user: string }
+            Returns: {
+              out_expires_at: string
+              out_nonce: number
+              out_round_id: string
+              out_server_seed_hash: string
+            }[]
+          }
+        | {
+            Args: { p_parent_round_id?: string; p_user: string }
+            Returns: {
+              out_expires_at: string
+              out_ladder_step: number
+              out_nonce: number
+              out_round_id: string
+              out_server_seed_hash: string
+              out_win_multiplier: number
+            }[]
+          }
       arcade_rps_settle: {
         Args: {
           p_client_reveal_ms?: number
@@ -8661,9 +8692,11 @@ export type Database = {
           house_net: number | null
           id: string
           idempotency_key: string | null
+          ladder_step: number
           multiplier: number | null
           nonce: number
           outcome: string | null
+          parent_round_id: string | null
           player_choice: string | null
           prepared_at: string
           processing_ms: number | null
@@ -8688,6 +8721,13 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      arcade_rps_step_multiplier: {
+        Args: {
+          p_cfg: Database["public"]["Tables"]["arcade_rps_configurations"]["Row"]
+          p_step: number
+        }
+        Returns: number
       }
       arcade_score_band_for: {
         Args: { p_score: number }

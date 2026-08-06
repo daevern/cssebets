@@ -93,10 +93,15 @@ function RpsPage() {
   const cfg = configQ.data?.config as any;
   const minStake = Number(cfg?.min_stake ?? 1);
   const maxStake = Math.max(minStake, Number(cfg?.max_stake ?? 100));
-  const winMult = Number(cfg?.win_multiplier ?? 1.9);
-  // Win #1 of a fresh run pays this lower, deliberately "settling in" rate;
-  // win #2+ compounds at winMult exactly as before.
-  const openingMult = Number(cfg?.opening_win_multiplier ?? winMult);
+  
+  // Per-step win ladder: 1.35 on wins #1 and #2, 1.85 on win #3, then the
+  // tail rate (doubling) on every step after that.
+  const tailMult = Number(cfg?.ladder_tail_multiplier ?? 2);
+  const ladder: number[] =
+    Array.isArray(cfg?.ladder_multipliers) && cfg.ladder_multipliers.length
+      ? cfg.ladder_multipliers.map((m: any) => Number(m))
+      : [1.35, 1.35, 1.85];
+
   
   const chips: number[] =
     Array.isArray(cfg?.chip_values) && cfg.chip_values.length
@@ -237,13 +242,14 @@ function RpsPage() {
   const ready = Boolean(commitment.current) && !prepare.isPending && commitmentVersion >= 0;
 
   // The ladder compounds: each win rolls the whole pot into the next round.
-  // Win #1 pays openingMult (a lower "settling in" rate); win #2+ compounds
-  // at winMult exactly like before. Draws hold the pot steady, a loss ends
-  // the run and the pot stays with the house.
+  // Wins #1 and #2 pay the opening rate, win #3 pays the step-3 rate, and
+  // every win after that pays the tail (doubling) rate. Draws hold the pot
+  // steady, a loss ends the run and the pot stays with the house.
   const runWins = ladderHistory.filter((h) => h.outcome === "WIN").length;
-  const wagerStake = roundMoney(stake * rpsLadderMultiplier(openingMult, winMult, runWins));
+  const wagerStake = roundMoney(stake * rpsLadderMultiplier(ladder, tailMult, runWins));
   /** What the player takes home if the next round wins. */
-  const nextPayout = roundMoney(stake * rpsLadderMultiplier(openingMult, winMult, runWins + 1));
+  const nextPayout = roundMoney(stake * rpsLadderMultiplier(ladder, tailMult, runWins + 1));
+
   const overMax = wagerStake > maxStake;
 
   const canPlay =
@@ -356,8 +362,9 @@ function RpsPage() {
         playerMove={playerMove}
         serverMove={(round?.serverChoice as RpsMove) ?? null}
         outcome={round?.outcome ?? null}
-        winMultiplier={winMult}
-        openingMultiplier={openingMult}
+        ladder={ladder}
+        tailMultiplier={tailMult}
+
         history={ladderHistory}
         onChoose={choose}
         canPlay={canPlay}

@@ -45,8 +45,10 @@ export const getRpsConfig = createServerFn({ method: "GET" })
       .from("arcade_rps_configurations")
       .select(
         "id, version, min_stake, max_stake, chip_values, win_multiplier, draw_multiplier, " +
+          "ladder_multipliers, ladder_tail_multiplier, " +
           "round_ttl_seconds, daily_round_limit, cooldown_seconds, maintenance_mode, announcement",
       )
+
       .eq("status", "active")
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -116,7 +118,7 @@ export const prepareRpsRound = createServerFn({ method: "POST" })
       .optional()
       .parse(i ?? {}),
   )
-  .handler(async ({ context }) => {
+  .handler(async ({ context, data }) => {
     const { userId } = context;
     const { enforceRpsRateLimit, mapRpsError } = await import("@/lib/arcade/rps.server");
     await enforceRpsRateLimit(userId);
@@ -124,6 +126,7 @@ export const prepareRpsRound = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rpcData, error } = await (supabaseAdmin as any).rpc("arcade_rps_prepare_round", {
       p_user: userId,
+      p_parent_round_id: data?.parentRoundId ?? null,
     });
     if (error) throw new Error(mapRpsError(error.message));
 
@@ -134,8 +137,11 @@ export const prepareRpsRound = createServerFn({ method: "POST" })
       serverSeedHash: String(row.out_server_seed_hash ?? row.server_seed_hash),
       nonce: Number(row.out_nonce ?? row.nonce),
       expiresAt: String(row.out_expires_at ?? row.expires_at),
+      ladderStep: Number(row.out_ladder_step ?? 1),
+      winMultiplier: Number(row.out_win_multiplier ?? 0),
     };
   });
+
 
 /**
  * Authoritative settlement. One transaction: consume the round, charge the
