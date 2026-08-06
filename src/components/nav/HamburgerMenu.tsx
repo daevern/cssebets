@@ -44,6 +44,18 @@ export function HamburgerMenu() {
     staleTime: 60_000,
     enabled: !!user && open,
   });
+  // Fallback: read the code straight from the profile (RLS-scoped to self) in
+  // case the server-fn overview call fails or is still cold.
+  const refCodeQ = useQuery({
+    queryKey: ["my-referral-code", uid],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles").select("referral_code").eq("id", user!.id).maybeSingle();
+      return (data as any)?.referral_code ?? null;
+    },
+    staleTime: 300_000,
+    enabled: !!user?.id && open,
+  });
   const walletQ = useQuery({
     queryKey: ["my-wallet", uid],
     queryFn: () => wFn(),
@@ -53,9 +65,10 @@ export function HamburgerMenu() {
 
   const tokens = tokensQ.data?.tokens.balance ?? 0;
   const walletBalance = walletQ.data?.balance ?? 0;
-  const refCode = refQ.data?.referralCode ?? "";
   const isGuest = !user || (user as any)?.is_anonymous === true;
-  const refLoading = !isGuest && (refQ.isLoading || refQ.isFetching) && !refCode;
+  const refCode = (refQ.data?.referralCode ?? refCodeQ.data ?? "") as string;
+  const refLoading =
+    !isGuest && !refCode && (refQ.isFetching || refCodeQ.isFetching);
   const displayCode = isGuest ? "XXXXXXX" : refCode;
   const referralLink = isGuest ? "" : buildReferralLink(refCode);
 
