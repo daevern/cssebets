@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from "react";
+import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { RPS_MOVES, type RpsMove } from "@/lib/arcade/rps-math";
 import { CsseMark } from "@/components/brand/CsseMark";
@@ -282,18 +282,10 @@ function RpsArenaImpl({
   const liveMultiplier = winMultiplier ** Math.max(runStep + (outcome === "WIN" || phase !== "SETTLED" ? 1 : 0), 1);
   const nextMultipliers = Array.from({ length: 6 }, (_, i) => winMultiplier ** Math.max(runStep + 1 + i, 1));
 
-  const pastRef = useRef<HTMLDivElement>(null);
-  const lastCount = useRef(0);
-  useEffect(() => {
-    const el = pastRef.current;
-    const count = historyWithMultipliers.length;
-    // Only snap to the newest result when a round is actually added — never
-    // while the player is scrolling back through earlier rounds.
-    if (el && count !== lastCount.current) {
-      lastCount.current = count;
-      el.scrollLeft = el.scrollWidth;
-    }
-  }, [historyWithMultipliers.length]);
+  // The rail scrolls in RTL so its natural resting position (scrollLeft 0) is
+  // the newest result. No JS scroll manipulation — nothing can yank the player
+  // back while they browse earlier rounds.
+
 
   return (
     <div className="overflow-hidden rounded-[6px] bg-[var(--color-surface)] p-3">
@@ -304,18 +296,17 @@ function RpsArenaImpl({
 @keyframes rps-slide-in{0%{transform:translateX(46px) scale(.9);opacity:0}100%{transform:translateX(0) scale(1);opacity:1}}
 @keyframes rps-badge-shake{0%,100%{transform:translateX(0) scale(1.2)}20%{transform:translateX(-3px) scale(1.2)}40%{transform:translateX(3px) scale(1.2)}60%{transform:translateX(-2px) scale(1.2)}80%{transform:translateX(2px) scale(1.2)}}
 .rps-rail::-webkit-scrollbar{height:0}
-.rps-rail{overflow-anchor:none;overscroll-behavior-x:contain;touch-action:pan-x;scroll-behavior:auto}
+.rps-rail{overflow-anchor:none;overscroll-behavior-x:contain;touch-action:pan-x;scroll-behavior:auto;direction:rtl;-webkit-overflow-scrolling:touch}
+.rps-rail > *{direction:ltr}
 .rps-rail *{overflow-anchor:none}
 `}</style>
 
       {/* Rail — the active column is centred; history drifts left, next waits right. */}
       <div className="relative flex items-start justify-center gap-2 pb-1 pt-4">
         {/* Left: settled results — scrollable, most recent closest to the centre. */}
-        <div
-          ref={pastRef}
-          className="rps-rail flex flex-1 items-start justify-start gap-2 overflow-x-auto overflow-y-hidden [scrollbar-width:none]"
-        >
+        <div className="rps-rail flex flex-1 items-start justify-start gap-2 overflow-x-auto overflow-y-hidden [scrollbar-width:none]">
           <div className="flex min-w-full items-start justify-end gap-2">
+
             {historyWithMultipliers.map((h) => (
               <RailCell
                 key={h.id}
