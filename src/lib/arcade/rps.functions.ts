@@ -116,7 +116,7 @@ export const prepareRpsRound = createServerFn({ method: "POST" })
       .optional()
       .parse(i ?? {}),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ context }) => {
     const { userId } = context;
     const { enforceRpsRateLimit, mapRpsError } = await import("@/lib/arcade/rps.server");
     await enforceRpsRateLimit(userId);
