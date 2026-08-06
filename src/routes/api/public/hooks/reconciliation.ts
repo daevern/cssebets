@@ -100,6 +100,7 @@ export const Route = createFileRoute("/api/public/hooks/reconciliation")({
 
         return new Response(JSON.stringify({
           ok: true, report: r, cards_corners: { sweptMatches, sweptSettled },
+          sports_reconciliation: sportsReconciliation,
         }), {
           headers: { "content-type": "application/json" },
         });
