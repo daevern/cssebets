@@ -44,7 +44,7 @@ export const getRpsConfig = createServerFn({ method: "GET" })
     const { data, error } = await supabase
       .from("arcade_rps_configurations")
       .select(
-        "id, version, min_stake, max_stake, chip_values, win_multiplier, opening_win_multiplier, draw_multiplier, " +
+        "id, version, min_stake, max_stake, chip_values, win_multiplier, draw_multiplier, " +
           "round_ttl_seconds, daily_round_limit, cooldown_seconds, maintenance_mode, announcement",
       )
       .eq("status", "active")
