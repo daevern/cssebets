@@ -116,7 +116,7 @@ export const prepareRpsRound = createServerFn({ method: "POST" })
       .optional()
       .parse(i ?? {}),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ context }) => {
     const { userId } = context;
     const { enforceRpsRateLimit, mapRpsError } = await import("@/lib/arcade/rps.server");
     await enforceRpsRateLimit(userId);
@@ -124,7 +124,6 @@ export const prepareRpsRound = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rpcData, error } = await (supabaseAdmin as any).rpc("arcade_rps_prepare_round", {
       p_user: userId,
-      p_parent_round_id: data?.parentRoundId ?? null,
     });
     if (error) throw new Error(mapRpsError(error.message));
 
