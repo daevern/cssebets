@@ -334,7 +334,6 @@ function RpsPage() {
 
 
   const todayNet = profileQ.data?.todayNet ?? 0;
-  const recent = profileQ.data?.recent ?? [];
 
   return (
     <div className="flex flex-col gap-2 md:gap-3">
@@ -372,26 +371,6 @@ function RpsPage() {
 
 
 
-      {recent.length > 0 && (
-        <div className="flex items-center gap-1 overflow-x-auto py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {recent.map((r: any) => (
-            <span
-              key={r.id}
-              title={`${r.player_choice} vs ${r.server_choice}`}
-              className={cn(
-                "shrink-0 rounded-[3px] px-2 py-1 font-mono text-[9px] font-bold",
-                r.outcome === "WIN"
-                  ? "bg-[var(--color-neon)]/20 text-[var(--color-neon)]"
-                  : r.outcome === "LOSS"
-                    ? "bg-red-500/15 text-red-400"
-                    : "bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]",
-              )}
-            >
-              {r.outcome === "WIN" ? "W" : r.outcome === "LOSS" ? "L" : "D"}
-            </span>
-          ))}
-        </div>
-      )}
 
       <ArcadeResultDialog
         open={resultOpen}
