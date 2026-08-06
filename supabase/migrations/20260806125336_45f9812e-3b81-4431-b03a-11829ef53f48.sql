@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.arcade_rps_prepare_round(uuid);
