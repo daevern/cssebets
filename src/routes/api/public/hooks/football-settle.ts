@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 // Dedicated settlement hook, kept separate from football-live so a failure
 // in live-score fetch doesn't block settlement (and vice versa).
 export const Route = createFileRoute("/api/public/hooks/football-settle")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const { settleFinishedFootballEvents } = await import(
             "@/features/football/services/footballSettlement.server"

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 // Hourly reconciliation hook. Called by pg_cron. Writes an audit_log entry
 // whenever drift is detected so admins are alerted via the audit dashboard.
@@ -7,7 +8,9 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/hooks/reconciliation")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: report, error } = await supabaseAdmin.rpc("run_reconciliation_check" as any);
         if (error) {

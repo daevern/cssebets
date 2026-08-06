@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 // Cron: pull post-match player ratings + final stats for recently finished matches,
 // and auto-regrade any cards/corners over-under bets whose result changes when
@@ -26,6 +27,8 @@ export const Route = createFileRoute("/api/public/hooks/apifootball-fulltime")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { syncPlayerRatings, syncStats, syncEvents } = await import("@/lib/apifootball-analytics.server");

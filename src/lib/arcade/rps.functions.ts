@@ -44,7 +44,7 @@ export const getRpsConfig = createServerFn({ method: "GET" })
     const { data, error } = await supabase
       .from("arcade_rps_configurations")
       .select(
-        "id, version, min_stake, max_stake, chip_values, win_multiplier, draw_multiplier, " +
+        "id, version, min_stake, max_stake, chip_values, win_multiplier, opening_win_multiplier, draw_multiplier, " +
           "round_ttl_seconds, daily_round_limit, cooldown_seconds, maintenance_mode, announcement",
       )
       .eq("status", "active")
@@ -110,18 +110,25 @@ export const getRpsProfile = createServerFn({ method: "GET" })
  */
 export const prepareRpsRound = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((i: unknown) =>
+    z
+      .object({ parentRoundId: z.string().uuid().optional() })
+      .optional()
+      .parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
     const { userId } = context;
     const { enforceRpsRateLimit, mapRpsError } = await import("@/lib/arcade/rps.server");
     await enforceRpsRateLimit(userId);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await (supabaseAdmin as any).rpc("arcade_rps_prepare_round", {
+    const { data: rpcData, error } = await (supabaseAdmin as any).rpc("arcade_rps_prepare_round", {
       p_user: userId,
+      p_parent_round_id: data?.parentRoundId ?? null,
     });
     if (error) throw new Error(mapRpsError(error.message));
 
-    const row = Array.isArray(data) ? data[0] : data;
+    const row = Array.isArray(rpcData) ? rpcData[0] : rpcData;
     if (!row) throw new Error("Could not prepare a round.");
     return {
       roundId: String(row.out_round_id ?? row.round_id),

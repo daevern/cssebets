@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 // Cron: sync lineups for matches with kickoff in the next 90 min that don't
 // yet have a lineup row. Cheap — one /fixtures/lineups call per matched fixture.
 export const Route = createFileRoute("/api/public/hooks/apifootball-lineups")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { syncLineups } = await import("@/lib/apifootball-analytics.server");

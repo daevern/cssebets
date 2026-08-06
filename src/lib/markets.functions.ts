@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceRateLimit } from "@/lib/rate-limit.functions";
+import { enforceRateLimit, isRateLimitError } from "@/lib/rate-limit.functions";
 
 const MARKET_KEYS = [
   "1x2",
@@ -134,7 +134,7 @@ export const placeMarketBet = createServerFn({ method: "POST" })
     try {
       await enforceRateLimit(`user:${userId}`, "bet_placement");
     } catch (e) {
-      if ((e as Error).message === "RATE_LIMITED") throw new Error("Too many requests. Please try again later.");
+      if (isRateLimitError(e)) throw new Error("Too many requests. Please try again later.");
       throw e;
     }
 

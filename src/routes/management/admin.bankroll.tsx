@@ -112,16 +112,46 @@ function BankrollPage() {
           <Wallet className="h-5 w-5 text-primary" /> Bookmaker bankroll
         </h1>
         <p className="text-sm text-muted-foreground">
-          Platform balance, global exposure, and safety coverage.
+          House bankroll, global exposure, and safety coverage.
         </p>
       </div>
+
+      <Card
+        className={`p-3 text-xs flex items-start gap-2 ${
+          (o?.bankroll as any)?.source === "accounting_journal"
+            ? "border-emerald-500/30 bg-emerald-500/5"
+            : "border-amber-500/40 bg-amber-500/5"
+        }`}
+      >
+        <ShieldCheck className="h-4 w-4 mt-0.5 shrink-0" />
+        <div>
+          {(o?.bankroll as any)?.source === "accounting_journal" ? (
+            <>
+              <strong>House balance is journal-authoritative</strong> (
+              <code>accounting_account_balances.HOUSE_BANKROLL</code>) —
+              capacity for arcade and sports (football/F1/UFC) is decided from
+              this figure. The figures below labelled "legacy" are the older{" "}
+              <code>platform_bankroll</code> lifetime counters, kept for
+              historical continuity and reconciliation only — they do not
+              gate any bet or round.
+            </>
+          ) : (
+            <>
+              <strong>Falling back to legacy `platform_bankroll`</strong> —
+              the journal balance could not be read. Placement capacity still
+              uses the journal internally; this page's balance may be stale.
+              Investigate before relying on the numbers below.
+            </>
+          )}
+        </div>
+      </Card>
 
       {overview.isLoading ? (
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       ) : o ? (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Metric label="Platform balance" value={fmt(platformBalance)} />
+            <Metric label="House balance" value={fmt(platformBalance)} />
             <Metric label="Global exposure" value={fmt(globalExposure)} />
             <Metric
               label="Available balance"
@@ -141,12 +171,12 @@ function BankrollPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Metric label="Pending match pools" value={fmt((o.bankroll as any).pendingMatchPools ?? 0)} />
             <Metric label="Total point issuance" value={fmt((o.bankroll as any).totalIssuance ?? 0)} />
-            <Metric label="Total stakes collected" value={fmt(o.bankroll.totalStakes)} />
-            <Metric label="Total payouts paid" value={fmt(o.bankroll.totalPayouts)} />
+            <Metric label="Total stakes collected (legacy)" value={fmt(o.bankroll.totalStakes)} />
+            <Metric label="Total payouts paid (legacy)" value={fmt(o.bankroll.totalPayouts)} />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <Metric
-              label="Net platform P/L"
+              label="Net platform P/L (legacy)"
               value={fmt(o.bankroll.netPL)}
               tone={o.bankroll.netPL >= 0 ? "good" : "bad"}
               icon={o.bankroll.netPL >= 0 ? TrendingUp : TrendingDown}
@@ -159,6 +189,11 @@ function BankrollPage() {
 
           <div className="text-xs text-muted-foreground">
             Open / Settled / Void bets: {o.bets.open} / {o.bets.settled} / {o.bets.void}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            Use <code>/management/admin/pl-report</code> for authoritative P/L —
+            it reads posted journals across arcade and sports, not the legacy
+            lifetime counters above.
           </div>
 
 

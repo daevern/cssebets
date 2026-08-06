@@ -46,18 +46,14 @@ export function publicRpsRound(r: any) {
 }
 
 export async function enforceRpsRateLimit(userId: string) {
-  const max = 90;
-  const windowSeconds = 60;
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await (supabaseAdmin as any).rpc("check_rate_limit", {
-    p_scope: `rps:${userId}`,
-    p_action: "arcade_rps",
-    p_max: max,
-    p_window_seconds: windowSeconds,
-  });
-  if (error) {
-    console.error("[rps] rate-limit check failed", error.message);
-    return;
+  const { enforceRateLimit } = await import("@/lib/rate-limit.functions");
+  try {
+    await enforceRateLimit(`rps:${userId}`, "arcade_rps");
+  } catch (e) {
+    const msg = (e as Error).message;
+    if (msg === "RATE_LIMITED" || msg === "RATE_LIMIT_UNAVAILABLE") {
+      throw new Error("Too many rounds — please slow down.");
+    }
+    throw e;
   }
-  if (data === false) throw new Error("Too many rounds — please slow down.");
 }

@@ -116,14 +116,12 @@ Reserve decisions serialise correctly:
 `SELECT … FOR UPDATE` on the bankroll balance row, so simultaneous rounds are
 evaluated one at a time and the reserve is recomputed after the lock.
 
-**Warning (high) — capacity checks are currently advisory.**
-`accounting_arcade_assert_capacity` reads `capacity_enforced` on the product
-flag row; when it is false (the current setting for all arcade products, set to
-allow larger stakes) an over-limit round only writes an `operational_alerts`
-warning and is then **accepted**. The house can therefore take on liability
-larger than its available reserve. Recommended: re-enable `capacity_enforced`
-and raise the bankroll or the per-product ceiling instead, so the limit is a
-real limit.
+**Resolved (Phase A) — capacity checks enforced for all arcade products.**
+Migration `20260806120500_phase_a_arcade_capacity_enforced` sets
+`capacity_enforced=true` for plinko, rps, blackjack, roulette, and treasure.
+`arcade_config_selftest` fails if any liability-enforced arcade product still
+has `capacity_enforced=false`. Over-limit rounds are rejected; raise bankroll
+or per-product ceilings rather than disabling the guard.
 
 ---
 
@@ -150,8 +148,8 @@ single oversized Blackjack or Treasure round can exceed available reserve.
 
 ## 8. Prioritised remediation list
 
-1. **High** — re-enable `capacity_enforced` for all arcade products; adjust
-   bankroll/ceilings rather than disabling the guard.
+1. **Done (Phase A)** — `capacity_enforced` re-enabled for all arcade products;
+   adjust bankroll/ceilings rather than disabling the guard.
 2. **Medium** — fix the Treasure Grid 5,000x cap (limit depth or disclose the
    capped multiplier).
 3. **Low** — clean up the six cross-environment journals from 2026-07-31.

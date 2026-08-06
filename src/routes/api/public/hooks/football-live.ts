@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 // Cron-invoked hook: refresh live scores + auto-settle any finished football events.
 export const Route = createFileRoute("/api/public/hooks/football-live")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const { syncFootballLiveScores } = await import(
             "@/features/football/services/footballSync.server"

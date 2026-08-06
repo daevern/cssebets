@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceRateLimit } from "@/lib/rate-limit.functions";
+import { enforceRateLimit, isRateLimitError } from "@/lib/rate-limit.functions";
 
 const PROOF_BUCKET = "point-request-proofs";
 
@@ -84,7 +84,7 @@ export const attachProofToRequest = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     try { await enforceRateLimit(`user:${userId}`, "proof_upload"); }
-    catch (e) { if ((e as Error).message === "RATE_LIMITED") throw new Error("Too many requests. Please try again later."); throw e; }
+    catch (e) { if (isRateLimitError(e)) throw new Error("Too many requests. Please try again later."); throw e; }
     const { data: existing, error: e1 } = await supabase
       .from("point_requests")
       .select("id, user_id, status")
@@ -122,7 +122,7 @@ export const submitPointRequest = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     try { await enforceRateLimit(`user:${userId}`, "point_request_submit"); }
-    catch (e) { if ((e as Error).message === "RATE_LIMITED") throw new Error("Too many requests. Please try again later."); throw e; }
+    catch (e) { if (isRateLimitError(e)) throw new Error("Too many requests. Please try again later."); throw e; }
     const { data: row, error: e1 } = await supabase
       .from("point_requests")
       .select("id, user_id, status, proof_file_path")
