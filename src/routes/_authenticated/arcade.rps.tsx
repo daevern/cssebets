@@ -362,8 +362,9 @@ function RpsPage() {
         playerMove={playerMove}
         serverMove={(round?.serverChoice as RpsMove) ?? null}
         outcome={round?.outcome ?? null}
-        winMultiplier={winMult}
-        openingMultiplier={openingMult}
+        ladder={ladder}
+        tailMultiplier={tailMult}
+
         history={ladderHistory}
         onChoose={choose}
         canPlay={canPlay}
