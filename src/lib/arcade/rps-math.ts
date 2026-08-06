@@ -57,17 +57,21 @@ export function rpsGrossReturn(stake: number, multiplier: number): number {
 
 /**
  * Cumulative ladder multiplier after `wins` consecutive wins in a run.
- * Win #1 of a fresh run pays `opening` (a deliberately lower "settling in"
- * rate); every win after that compounds at `standard`, the flat rate the
- * ladder always used. `wins <= 0` returns 1 — the pot is still just the base
- * stake, nothing has been won yet. Mirrors the server's
- * `arcade_rps_rounds.chain_win_depth` -> multiplier resolution exactly, so
- * the client-side ladder display and the authoritative payout never drift.
+ * Each step has its own rate: `ladder[0]` pays win #1, `ladder[1]` win #2 and
+ * so on; every step beyond the published ladder pays `tail` (the doubling
+ * rate). Mirrors `public.arcade_rps_step_multiplier` on the server exactly, so
+ * the displayed ladder and the authoritative payout never drift.
  */
-export function rpsLadderMultiplier(opening: number, standard: number, wins: number): number {
+export function rpsLadderMultiplier(ladder: number[], tail: number, wins: number): number {
   if (wins <= 0) return 1;
-  return opening * standard ** (wins - 1);
+  let total = 1;
+  for (let step = 1; step <= wins; step += 1) {
+    const stepMult = Number(ladder[step - 1] ?? tail);
+    total *= Number.isFinite(stepMult) && stepMult > 0 ? stepMult : tail;
+  }
+  return total;
 }
+
 
 /* ------------------------------------------------------------------ */
 /* Browser crypto helpers (WebCrypto) — used by the verification tool. */
