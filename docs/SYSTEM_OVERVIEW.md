@@ -37,10 +37,10 @@ be used for a decision.
 | Value | Canonical source | Notes |
 |---|---|---|
 | User points balance | `wallet_transactions` (append-only ledger) | `wallets.balance` is a maintained cache; `run_reconciliation_check` proves the two agree. |
-| House bankroll | **`accounting_account_balances.HOUSE_BANKROLL`** (per `environment`) | **LIVE / authoritative.** `platform_bankroll` id=1 is **LEGACY**: only legacy sports settlement (`place_bet_atomic`, `platform_apply_change`) writes it, so it does *not* move for arcade play. Admin UI reads the journal via `readAuthoritativeBankroll()`; compare the two with `accounting_bankroll_reconciliation(env)`. |
-| House P/L | `accounting_pl_report()` over posted journals | Only covers journal-enabled products (§7.6). Losing rounds have no `PAYOUT_SETTLED` journal (a zero-amount journal line is forbidden by `acct_line_one_side`), so settlement basis realises them at their liability-reservation release time. `platform_bankroll.total_stakes_collected / total_payouts_paid` are LEGACY lifetime counters. |
-| Reserved liability (arcade) | `accounting_liability_reservations` (active, `liability_enforced`) | Authoritative for placement capacity. |
-| Worst-case exposure (sports) | `getRiskDashboard` recomputation from pending `predictions` | LEGACY. `matches.worst_case_exposure` / `*_liability` are denormalised caches refreshed on placement. |
+| House bankroll | **`accounting_account_balances.HOUSE_BANKROLL`** (per `environment`) | **LIVE / authoritative** for arcade **and** sports (football/F1/UFC, Phase B, since 2026-08-06). `platform_bankroll` id=1 is now fully **LEGACY**: kept as a display-only lifetime cache and reconciliation cross-check; no placement or settlement path treats it as authoritative. Admin UI reads the journal via `readAuthoritativeBankroll()`; compare the two with `accounting_bankroll_reconciliation(env)`. |
+| House P/L | `accounting_pl_report()` over posted journals | Covers all journal-enabled products (§7.6) — arcade and sports as of Phase B. Losing rounds have no `PAYOUT_SETTLED` journal (a zero-amount journal line is forbidden by `acct_line_one_side`), so settlement basis realises them at their liability-reservation release time. `platform_bankroll.total_stakes_collected / total_payouts_paid` remain LEGACY lifetime counters, retained for historical continuity only. |
+| Reserved liability (arcade + sports) | `accounting_liability_reservations` (active, `liability_enforced`) | Authoritative for placement capacity across every product, enforced via `accounting_assert_capacity()` (arcade's `accounting_arcade_assert_capacity` now delegates to it; sports enforces it via `BEFORE INSERT` triggers on `predictions` / `ufc_bets` / `f1_bets` / `f1_championship_bets`). |
+| Worst-case exposure (sports) | `accounting_available_reserve(env)` (Phase B) | **LIVE.** `getRiskDashboard` recomputation from pending `predictions` remains a useful display/alerting view but no longer gates placement. `matches.worst_case_exposure` / `*_liability` are denormalised caches refreshed on placement — display only. |
 | Available bankroll | `accounting_available_reserve(env)` | `bankroll − active enforced reservations − outstanding payables`. See §7.3 for the older sports-only figure. |
 | Displayed odds | `match_market_odds` (football), `f1_race_markets`, `ufc_fight_markets` | `matches.reference_odds` is the drift-check copy used at placement only. |
 | Price a ticket was struck at | `predictions.odds` + bound `match_odds_snapshots.id` | Immutable after placement. |
@@ -68,12 +68,15 @@ everywhere. Arcade games are house-priced by design (fixed paytables)
 and provably fair via server-side seeded RNG with per-round
 verification.
 
-Money movement is being migrated onto a double-entry accounting ledger
-with liability reservations, a 2-decimal half-up rounding policy and
-automated invariant tests (§7.6). **Status today: arcade (Plinko,
-Roulette, Treasure Grid, Blackjack) is LIVE on the journal; football,
-F1 and UFC are LEGACY** — they move money through the wallet RPCs and
-`platform_bankroll` only, and are not yet journal-backed.
+Money movement runs on a double-entry accounting ledger with liability
+reservations, a 2-decimal half-up rounding policy and automated invariant
+tests (§7.6). **Status today (since Phase B, 2026-08-06): arcade (Plinko,
+Roulette, Treasure Grid, Blackjack) and sports (football, F1, UFC) are
+all LIVE on the unified journal**, with capacity enforced from
+`accounting_available_reserve()` for every product. `platform_bankroll`
+is retained as a LEGACY display/reconciliation cache only — it is written
+for historical continuity but no placement or settlement decision reads
+it.
 
 
 
@@ -562,10 +565,12 @@ netIfWins        = liabilityIfWins − totalStake_of_match
 worstCase        = max(liabilityIfWins) across scenarios
 ```
 
-Then aggregates across matches to a platform total, compared against
-**canonical bankroll** — `platform_bankroll` id=1, `kind='live'`,
-`is_active=true`. If that row is missing or nulled, the dashboard
-refuses to compute and raises a critical alert.
+Then aggregates across matches to a platform total. Placement capacity
+is decided against `accounting_available_reserve(env)` (Phase B); this
+dashboard total is compared against `platform_bankroll` id=1,
+`kind='live'`, `is_active=true` for **display/alerting only** — a LEGACY
+reference point, not the capacity source. If that row is missing or
+nulled, the dashboard refuses to compute and raises a critical alert.
 
 Authority note: this recomputation from pending `predictions` is the
 canonical sports exposure figure. `matches.worst_case_exposure` and
@@ -585,28 +590,35 @@ Recommendations per match: `accept`, `limit_stake`, `reduce_odds`,
 
 ### 7.3 Bankroll
 
-`platform_bankroll` singleton per `kind`:
+`platform_bankroll` singleton per `kind` — **fully LEGACY as of Phase B**
+(2026-08-06). Every product (arcade and sports) now decides capacity
+against the accounting journal; this table is a display/reconciliation
+cache only:
 
 | Column | Meaning | Authority |
 |---|---|---|
-| `balance` | Current chips available to pay winners | **Canonical** house balance |
+| `balance` | Historical chips figure, still updated for continuity | LEGACY — `accounting_account_balances.HOUSE_BANKROLL` is canonical |
 | `total_stakes_collected` | Lifetime sum of stakes debited on placement | LEGACY counter — use `accounting_pl_report()` for P/L |
 | `total_payouts_paid` | Lifetime sum of payouts credited on win | LEGACY counter — same |
-| `house_user_id` | Wallet that receives/pays for the house | Canonical |
+| `house_user_id` | Wallet that receives/pays for the house | Canonical (unaffected by the journal migration) |
 
 `platform_transactions` mirrors every bankroll change. Admin operators
-adjust via `/management/admin/bankroll`.
+adjust via `/management/admin/bankroll`, which now prefers the journal
+balance (`readAuthoritativeBankroll()`) and falls back to this legacy row
+only if the journal read fails — see the `source` field returned by
+`getBankrollOverview`.
 
 **Two "available bankroll" figures exist. They are not the same number
 and must not be swapped:**
 
 | Figure | Formula | Source | Use |
 |---|---|---|---|
-| Sports available balance (LEGACY) | `balance − Σ matches.worst_case_exposure` (scheduled/live) | `getBankrollOverview` in `src/lib/bankroll.functions.ts` | Admin bankroll page display only |
-| Available reserve (**canonical**) | `balance − active enforced reservations − outstanding payables` | `public.accounting_available_reserve(env)` | Placement capacity checks, arcade exposure ceilings, Phase 9 reporting |
+| Sports available balance (LEGACY) | `balance − Σ matches.worst_case_exposure` (scheduled/live) | `getBankrollOverview` in `src/lib/bankroll.functions.ts` | Admin bankroll page display only — no longer a capacity gate |
+| Available reserve (**canonical**) | `balance − active enforced reservations − outstanding payables` | `public.accounting_available_reserve(env)` | Placement capacity checks for arcade **and** sports (Phase B), Phase 9 reporting |
 
-The legacy figure ignores journal payables and arcade reservations; the
-canonical one ignores nothing. Any new capacity decision must use
+The legacy figure ignores journal payables and reservations; the
+canonical one ignores nothing and is now the sole capacity decision for
+every product. Any new capacity decision must use
 `accounting_available_reserve`. Convergence happens when sports moves
 onto the journal (§7.6).
 
@@ -632,15 +644,14 @@ Runs manually from `/management/admin/reconciliation` or via the
 
 ### 7.6 Accounting core (Phases 1–10)
 
-The platform is migrating every money movement onto a double-entry
+Every money movement (arcade and sports) now runs on the double-entry
 accounting layer. Each phase has its own spec in
 [`docs/accounting/`](./accounting/) and its own SQL self-test function.
-The infrastructure (Phases 1–10) is complete; **product coverage is
-not** — see the status table below before treating the journal as a
-complete picture of house P/L.
+Phases 1–10 (infrastructure) and Phase B (sports migration) are both
+complete — see the status table below for per-environment detail.
 
-**Per-product journal status** (authority: `accounting_migration_flags`,
-snapshot 2026-07-31):
+**Per-product journal status** (authority: `accounting_migration_flags` /
+`accounting_migration_flag_envs`, snapshot 2026-08-06 / Phase B):
 
 | Product | `journal_enabled` | `liability_enforced` | Status |
 |---|---|---|---|
@@ -648,14 +659,26 @@ snapshot 2026-07-31):
 | Roulette | yes | yes | **LIVE** |
 | Treasure Grid | yes | yes | **LIVE** |
 | Blackjack | yes | yes | **LIVE** |
-| Football | no | no | **LEGACY** — wallet RPC + `platform_bankroll` only |
-| F1 | no | no | **LEGACY** |
-| UFC | no | no | **LEGACY** |
-| `sports_generic` | no | no | **PLANNED** — shared sports posting path |
+| Football | yes (PRODUCTION + SIMULATION) | yes | **LIVE** (Phase B step 4 cutover) — `platform_bankroll` retained as LEGACY display cache only |
+| F1 | yes (PRODUCTION + SIMULATION) | yes | **LIVE** (Phase B step 4 cutover) |
+| UFC | yes (PRODUCTION + SIMULATION) | yes | **LIVE** (Phase B step 4 cutover) |
+| `sports_generic` | no | no | **PLANNED** — every live betting surface maps to football/F1/UFC tables today, so this is intentionally unbuilt |
 
-Consequences while sports is LEGACY: `accounting_pl_report()` covers
-arcade only, and `accounting_available_reserve()` reserves arcade
-exposure only. Sports exposure is still governed by §7.2 / §7.3.
+Sports capacity is enforced via `accounting_assert_capacity()` through
+`BEFORE INSERT` triggers on `predictions`, `ufc_bets`, `f1_bets`, and
+`f1_championship_bets` (mirrors arcade's `accounting_arcade_assert_capacity`,
+which now delegates to the same shared function). `accounting_pl_report()`
+and `accounting_available_reserve()` cover arcade **and** sports as of
+Phase B; the sports-only recomputation in §7.2 / §7.3 remains for display
+and alerting but is no longer the capacity authority.
+
+Known open items from the Phase B rollout (tracked, not launch-blocking):
+a two-session concurrency re-verification for sports placement was not
+re-run post-cutover (sports reuses the same advisory-lock path proven in
+Phase 6.1); and `accounting_phase10_selftest` reports 3 pre-existing
+arcade-only findings (Treasure reservation-while-open, ~530 legacy
+wallet-credit mismatches, arcade P/L-to-reserve gaps) that predate and are
+unrelated to this migration.
 
 
 
@@ -898,20 +921,26 @@ ticket rejected if any of:
 - `stake × odds > max_potential_payout`
 - `odds ≥ high_odds_threshold` and `high_odds_disabled`
 
-**Platform exposure limit (sports, LEGACY path):**
+**Platform exposure limit (sports, LEGACY display alert):**
 `max_acceptable_liability = platform_bankroll.balance × exposure_cap_pct`
 Risk dashboard `bankroll_breach` fires when
 `total_worst_case_liability > max_acceptable_liability`, where the
 liability is recomputed from pending `predictions` (§7.2), not read
-from `matches.worst_case_exposure`.
+from `matches.worst_case_exposure`. This is an operator alert, not the
+placement gate — see below.
 
-**Placement capacity (arcade, LIVE journal path):**
+**Placement capacity (arcade + sports, LIVE journal path):**
 `accounting_available_reserve(env) ≥ worst-case payout of this round`,
-checked inside the placement RPC.
+checked via `accounting_assert_capacity()` inside the placement RPC
+(arcade) or a `BEFORE INSERT` trigger (sports — `predictions`, `ufc_bets`,
+`f1_bets`, `f1_championship_bets`). This is the actual accept/reject
+decision for every product since Phase B.
 
 **Bankroll coverage ratio:**
 `coverage = platform_bankroll.balance / total_worst_case_liability`.
-Displayed to users on `/trust-center` when > 1 (safe).
+Displayed to users on `/trust-center` when > 1 (safe). This is a legacy
+display figure; the underlying accept/reject decision is
+`accounting_available_reserve(env)` above.
 
 **Referral reward:** `reward_amount` from `onboarding_settings`, credited
 when `referrals.stage` advances to `rewarded`.
