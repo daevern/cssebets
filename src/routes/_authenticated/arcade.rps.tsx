@@ -334,7 +334,6 @@ function RpsPage() {
 
 
   const todayNet = profileQ.data?.todayNet ?? 0;
-  const recent = profileQ.data?.recent ?? [];
 
   return (
     <div className="flex flex-col gap-2 md:gap-3">
