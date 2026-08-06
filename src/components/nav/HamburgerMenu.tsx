@@ -236,17 +236,24 @@ export function HamburgerMenu() {
                     </p>
                     <div className="mt-2 flex items-center justify-between gap-2">
                       <span className="font-mono text-2xl font-bold tracking-[0.24em] text-black">
-                        {displayCode || "—"}
+                        {refLoading ? "…" : displayCode || "—"}
                       </span>
                       <button
                         type="button"
                         onClick={copyCode}
                         disabled={isGuest || !refCode}
-                        aria-label="Copy referral code"
+                        aria-label="Copy referral link"
                         className="grid h-9 w-9 place-items-center bg-black text-[var(--neon)] transition-opacity hover:opacity-90 disabled:opacity-40"
                       >
                         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                       </button>
+                    </div>
+                    <div className="mt-2 truncate font-mono text-[11px] text-black/70">
+                      {isGuest
+                        ? "Register to unlock your referral link"
+                        : refLoading
+                          ? "Loading your link…"
+                          : referralLink || "Referral link unavailable — pull to refresh"}
                     </div>
                   </div>
                 </div>
