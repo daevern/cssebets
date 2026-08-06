@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyEngagementSummary } from "@/lib/engagement.functions";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
 import { getMyWallet } from "@/lib/wallet.functions";
+import { buildReferralLink } from "@/lib/referral-link";
 import { Wallet as WalletIcon } from "lucide-react";
 
 /**
