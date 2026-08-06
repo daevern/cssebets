@@ -91,6 +91,7 @@ import { Route as ManagementAdminBlackjackRouteImport } from './routes/managemen
 import { Route as ManagementAdminBankrollRouteImport } from './routes/management/admin.bankroll'
 import { Route as ManagementAdminAuditSuiteRouteImport } from './routes/management/admin.audit-suite'
 import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
+import { Route as ManagementAdminArcadeRouteImport } from './routes/management/admin.arcade'
 import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
 import { Route as ManagementAdminAlertsRouteImport } from './routes/management/admin.alerts'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
@@ -571,6 +572,11 @@ const ManagementAdminAuditRoute = ManagementAdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => ManagementAdminRoute,
 } as any)
+const ManagementAdminArcadeRoute = ManagementAdminArcadeRouteImport.update({
+  id: '/arcade',
+  path: '/arcade',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
 const ManagementAdminAnalyticsRoute =
   ManagementAdminAnalyticsRouteImport.update({
     id: '/analytics',
@@ -858,6 +864,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
+  '/management/admin/arcade': typeof ManagementAdminArcadeRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/audit-suite': typeof ManagementAdminAuditSuiteRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
@@ -976,6 +983,7 @@ export interface FileRoutesByTo {
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
+  '/management/admin/arcade': typeof ManagementAdminArcadeRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/audit-suite': typeof ManagementAdminAuditSuiteRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
@@ -1101,6 +1109,7 @@ export interface FileRoutesById {
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/management/admin/alerts': typeof ManagementAdminAlertsRoute
   '/management/admin/analytics': typeof ManagementAdminAnalyticsRoute
+  '/management/admin/arcade': typeof ManagementAdminArcadeRoute
   '/management/admin/audit': typeof ManagementAdminAuditRoute
   '/management/admin/audit-suite': typeof ManagementAdminAuditSuiteRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
@@ -1226,6 +1235,7 @@ export interface FileRouteTypes {
     | '/lovable/email/suppression'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
+    | '/management/admin/arcade'
     | '/management/admin/audit'
     | '/management/admin/audit-suite'
     | '/management/admin/bankroll'
@@ -1344,6 +1354,7 @@ export interface FileRouteTypes {
     | '/lovable/email/suppression'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
+    | '/management/admin/arcade'
     | '/management/admin/audit'
     | '/management/admin/audit-suite'
     | '/management/admin/bankroll'
@@ -1468,6 +1479,7 @@ export interface FileRouteTypes {
     | '/lovable/email/suppression'
     | '/management/admin/alerts'
     | '/management/admin/analytics'
+    | '/management/admin/arcade'
     | '/management/admin/audit'
     | '/management/admin/audit-suite'
     | '/management/admin/bankroll'
@@ -2147,6 +2159,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminAuditRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/arcade': {
+      id: '/management/admin/arcade'
+      path: '/arcade'
+      fullPath: '/management/admin/arcade'
+      preLoaderRoute: typeof ManagementAdminArcadeRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/analytics': {
       id: '/management/admin/analytics'
       path: '/analytics'
@@ -2570,6 +2589,7 @@ const AuthenticatedRouteRouteWithChildren =
 interface ManagementAdminRouteChildren {
   ManagementAdminAlertsRoute: typeof ManagementAdminAlertsRoute
   ManagementAdminAnalyticsRoute: typeof ManagementAdminAnalyticsRoute
+  ManagementAdminArcadeRoute: typeof ManagementAdminArcadeRoute
   ManagementAdminAuditRoute: typeof ManagementAdminAuditRoute
   ManagementAdminAuditSuiteRoute: typeof ManagementAdminAuditSuiteRoute
   ManagementAdminBankrollRoute: typeof ManagementAdminBankrollRoute
@@ -2614,6 +2634,7 @@ interface ManagementAdminRouteChildren {
 const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminAlertsRoute: ManagementAdminAlertsRoute,
   ManagementAdminAnalyticsRoute: ManagementAdminAnalyticsRoute,
+  ManagementAdminArcadeRoute: ManagementAdminArcadeRoute,
   ManagementAdminAuditRoute: ManagementAdminAuditRoute,
   ManagementAdminAuditSuiteRoute: ManagementAdminAuditSuiteRoute,
   ManagementAdminBankrollRoute: ManagementAdminBankrollRoute,
@@ -2726,13 +2747,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
