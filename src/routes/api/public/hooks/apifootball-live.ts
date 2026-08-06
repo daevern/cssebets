@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 // Cron: every minute. Polls live state (events + stats) for matches that are
 // currently in play, then bails out cheaply if no live fixture exists.
 export const Route = createFileRoute("/api/public/hooks/apifootball-live")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { syncEvents, syncStats, syncScore } = await import("@/lib/apifootball-analytics.server");

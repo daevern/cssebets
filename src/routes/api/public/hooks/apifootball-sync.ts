@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 // Cron hook: pull real bookmaker odds for upcoming matches from API-Football.
 // Budgeted by the database quota guard in `apiFootballGet`.
@@ -9,16 +10,9 @@ export const Route = createFileRoute("/api/public/hooks/apifootball-sync")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
-          const expectedKey = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-          const suppliedKey = request.headers.get("apikey");
-          if (expectedKey && suppliedKey !== expectedKey) {
-            return new Response(JSON.stringify({ ok: false, error: "Unauthorized" }), {
-              status: 401,
-              headers: { "content-type": "application/json" },
-            });
-          }
-
           const url = new URL(request.url);
           const max = Math.max(1, Math.min(20, Number(url.searchParams.get("max") ?? 8) || 8));
           const hoursAhead = Math.max(1, Math.min(72, Number(url.searchParams.get("hours") ?? 48) || 48));

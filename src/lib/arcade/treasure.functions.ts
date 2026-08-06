@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceRateLimit } from "@/lib/rate-limit.functions";
+import { enforceRateLimit, isRateLimitError } from "@/lib/rate-limit.functions";
 
 /**
  * Treasure Grid — user-facing server functions.
@@ -188,7 +188,7 @@ export const startTreasureRound = createServerFn({ method: "POST" })
     try {
       await enforceRateLimit(`treasure:${userId}`, "arcade_treasure");
     } catch (e) {
-      if ((e as Error).message === "RATE_LIMITED") throw new Error("Too many rounds — please slow down.");
+      if (isRateLimitError(e)) throw new Error("Too many rounds — please slow down.");
       throw e;
     }
 
@@ -223,7 +223,7 @@ export const revealTreasureTile = createServerFn({ method: "POST" })
     try {
       await enforceRateLimit(`treasure:${userId}`, "arcade_treasure");
     } catch (e) {
-      if ((e as Error).message === "RATE_LIMITED") throw new Error("Too many actions — please slow down.");
+      if (isRateLimitError(e)) throw new Error("Too many actions — please slow down.");
       throw e;
     }
 

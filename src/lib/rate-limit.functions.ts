@@ -18,6 +18,35 @@ export const RATE_LIMITS = {
 export type RateLimitAction = keyof typeof RATE_LIMITS;
 
 /**
+ * Money + auth actions fail closed when the rate-limit RPC is unavailable.
+ * Non-money paths (support) may fail open so messaging stays available.
+ *
+ * Policy (Phase A): availability must not bypass betting / arcade / wallet /
+ * auth throttles under DB stress or attack.
+ */
+const FAIL_CLOSED_ACTIONS = new Set<RateLimitAction>([
+  "bet_placement",
+  "point_request_submit",
+  "proof_upload",
+  "auth_attempt",
+  "arcade_drop",
+  "arcade_spin",
+  "arcade_treasure",
+  "blackjack_action",
+  "arcade_rps",
+]);
+
+export function rateLimitFailsClosedOnInfraError(action: RateLimitAction): boolean {
+  return FAIL_CLOSED_ACTIONS.has(action);
+}
+
+/** True for exceeded quota or fail-closed infra errors from enforceRateLimit. */
+export function isRateLimitError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  return msg === "RATE_LIMITED" || msg === "RATE_LIMIT_UNAVAILABLE";
+}
+
+/**
  * Server-only helper. Throws `RATE_LIMITED` when exceeded.
  * Callers MUST already be inside a server-fn handler (uses supabaseAdmin).
  */
@@ -31,9 +60,11 @@ export async function enforceRateLimit(scope: string, action: RateLimitAction) {
     p_window_seconds: cfg.windowSeconds,
   });
   if (error) {
-    // Fail open on infra error rather than block the entire platform,
-    // but surface it in logs.
     console.error("[rate-limit] check failed", action, scope, error.message);
+    if (rateLimitFailsClosedOnInfraError(action)) {
+      throw new Error("RATE_LIMIT_UNAVAILABLE");
+    }
+    // Fail open only for non-money actions (e.g. support_message).
     return;
   }
   if (data === false) {
@@ -57,7 +88,8 @@ export const checkAuthRateLimit = createServerFn({ method: "POST" })
       try {
         await enforceRateLimit(scope, "auth_attempt");
       } catch (e) {
-        if ((e as Error).message === "RATE_LIMITED") {
+        const msg = (e as Error).message;
+        if (msg === "RATE_LIMITED" || msg === "RATE_LIMIT_UNAVAILABLE") {
           throw new Error("Too many requests. Please try again later.");
         }
         throw e;

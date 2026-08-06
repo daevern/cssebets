@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 // Cron-invoked hook that syncs Football-Data fixtures and auto-settles
 // any matches that just transitioned to FINISHED. Called by pg_cron.
 export const Route = createFileRoute("/api/public/hooks/sync-fixtures")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const { runFootballDataSync } = await import("@/lib/sync.server");
           const result = await runFootballDataSync({ userId: null });

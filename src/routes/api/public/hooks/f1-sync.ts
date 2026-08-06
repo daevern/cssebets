@@ -1,9 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 export const Route = createFileRoute("/api/public/hooks/f1-sync")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const url = new URL(request.url);
           const seasonParam = url.searchParams.get("season");

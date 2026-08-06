@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 // Cron: warm pre-match analytics (H2H + injuries) for scheduled matches in
 // the next 48h. Cached per pair / per fixture so repeat calls are cheap.
 export const Route = createFileRoute("/api/public/hooks/apifootball-prematch")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { syncH2H, syncInjuries } = await import("@/lib/apifootball-analytics.server");

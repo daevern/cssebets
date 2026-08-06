@@ -111,7 +111,9 @@ across the two — the simulation must never influence live decisions.
   `@tanstack/react-start`; **no Supabase Edge Functions** are used for
   app-internal logic. Server routes under `src/routes/api/public/*` are
   used only for webhooks/cron endpoints (API-Football sync hooks, health
-  check, reconciliation trigger).
+  check, reconciliation trigger). Every hook requires `CRON_HOOK_SECRET`
+  via `Authorization: Bearer …` or `x-cron-secret` (`src/lib/cron-auth.server.ts`);
+  production fails closed if the secret is unset.
 - **Auth:** Supabase Auth with email/password + Google OAuth (via the
   Lovable broker `lovable.auth.signInWithOAuth`).
 - **Routing:** File-based routes under `src/routes/`. Protected routes
@@ -374,6 +376,9 @@ Defined in `src/lib/predictions.functions.ts`. Order of checks:
 2. **Rate limit** — `enforceRateLimit(user:${uid}, 'bet_placement')` via
    `rate_limits`. Exceeding it writes an `audit_log`
    `rate_limit_triggered` entry visible on the risk-settings page.
+   Money and auth actions **fail closed** if the rate-limit RPC errors
+   (reject with retry); only non-money actions such as support messaging
+   may fail open.
 3. **Server-side odds validation** — the client-supplied `referenceOdds`
    is compared to `matches.reference_odds` (or `tournament_outrights`
    for outrights). Drift > 5 % → "Odds have changed, refresh".
@@ -858,10 +863,11 @@ Cron schedule (pg_cron → public API hooks):
   SELECT-only with column projections.
 - Role checks use `public.has_role(auth.uid(), 'admin')` inside
   policies; the function is `SECURITY DEFINER` to avoid recursion.
-- Secrets (`SUPABASE_SERVICE_ROLE_KEY`, API-Football key, email
-  provider keys) are Cloudflare env vars, never in client code.
-  `supabaseAdmin` is imported dynamically **inside** server-fn
-  handlers so it never leaks into client bundles.
+- Secrets (`SUPABASE_SERVICE_ROLE_KEY`, `CRON_HOOK_SECRET`, API-Football
+  key, email provider keys) are Cloudflare env vars, never in client
+  code. `supabaseAdmin` is imported dynamically **inside** server-fn
+  handlers so it never leaks into client bundles. Public cron hooks
+  never accept the publishable/anon key as privilege.
 
 ---
 

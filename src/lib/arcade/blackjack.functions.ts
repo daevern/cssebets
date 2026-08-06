@@ -32,7 +32,7 @@ function mapError(message: string): string {
   if (m.includes("NOT_CONFIGURED")) return "Blackjack isn't configured yet.";
   if (m.includes("SHOE_EXHAUSTED")) return "The shoe ran out — deal again for a fresh one.";
   if (m.includes("INVALID_CLIENT_SEED")) return "Invalid client seed.";
-  if (m.includes("RATE_LIMITED")) return "Slow down a moment and try again.";
+  if (m.includes("RATE_LIMITED") || m.includes("RATE_LIMIT_UNAVAILABLE")) return "Slow down a moment and try again.";
   return m || "Something went wrong.";
 }
 

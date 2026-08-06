@@ -60,6 +60,41 @@
 3. Rotate exposed secrets through Lovable Cloud settings.
 4. Capture timeline in the incident notes; do not delete audit rows.
 
+## Cron hook authentication (required)
+
+All `/api/public/hooks/*` endpoints require a shared secret. Unauthenticated
+POSTs return `401 { ok: false, error: "unauthorized" }` and perform no work.
+
+1. Set Cloudflare / Lovable env var **`CRON_HOOK_SECRET`** to a long random
+   value (do not reuse the anon/publishable key).
+2. Update every `pg_cron` → `net.http_post` job so headers include the secret:
+
+```sql
+headers := jsonb_build_object(
+  'Content-Type', 'application/json',
+  'x-cron-secret', '<CRON_HOOK_SECRET value>'
+)
+-- equivalently: 'Authorization', 'Bearer <CRON_HOOK_SECRET value>'
+```
+
+3. Deploy the app **after** the secret is set and cron headers are updated.
+   If `CRON_HOOK_SECRET` is missing in production, hooks fail closed (401).
+4. Never log the secret. Rotate by setting a new env value, updating cron
+   headers, then revoking the old value.
+
+## Go-live checklist (Phase A)
+
+- [ ] `CRON_HOOK_SECRET` set in production env
+- [ ] All pg_cron `net.http_post` jobs send `x-cron-secret` (or Bearer)
+- [ ] Unauthenticated POST to `/api/public/hooks/health-check` returns 401
+- [ ] Authenticated cron POST returns 200 and writes `health_check_runs`
+- [ ] `accounting_migration_flags.capacity_enforced = true` for
+      plinko, rps, blackjack, roulette, treasure
+- [ ] Reviewed `apply_margin_to_real` on `/management/admin/risk-settings`
+      (warning banner visible when off)
+- [ ] `bun run test` / CI green
+- [ ] Reconciliation `overall_status = OK`
+
 ## Reference
 - `/docs/BACKUP_RECOVERY.md` — recovery checklist
 - `/management/admin/health` — system health-check history

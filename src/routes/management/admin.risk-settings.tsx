@@ -137,6 +137,21 @@ function RiskSettingsPage() {
         </p>
       </div>
 
+      {!applyMargin && (
+        <Card className="p-4 space-y-2 border-destructive/50 bg-destructive/5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
+            <AlertTriangle className="h-4 w-4" />
+            Real sports markets have no house margin
+          </div>
+          <p className="text-xs text-muted-foreground">
+            <strong>Apply margin to real odds</strong> is currently off. Real football / F1 / UFC
+            markets are priced at fair bookmaker-median probabilities (~0% house edge). Turn the
+            toggle on below before growing sports volume, or leave it off intentionally as a promo
+            and document that decision in an incident note.
+          </p>
+        </Card>
+      )}
+
       {/* Admin warnings */}
       <Card className="p-4 space-y-2 border-yellow-500/30">
         <div className="flex items-center gap-2 text-sm font-semibold">

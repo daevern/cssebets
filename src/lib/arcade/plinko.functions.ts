@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceRateLimit } from "@/lib/rate-limit.functions";
+import { enforceRateLimit, isRateLimitError } from "@/lib/rate-limit.functions";
 
 const RiskEnum = z.enum(["low", "medium", "high"]);
 const RowsEnum = z.union([z.literal(8), z.literal(10), z.literal(12), z.literal(14), z.literal(16)]);
@@ -97,7 +97,7 @@ export const placePlinkoDrop = createServerFn({ method: "POST" })
     try {
       await enforceRateLimit(`plinko:${userId}`, "arcade_drop");
     } catch (e) {
-      if ((e as Error).message === "RATE_LIMITED") {
+      if (isRateLimitError(e)) {
         throw new Error("Too many drops — please slow down.");
       }
       throw e;

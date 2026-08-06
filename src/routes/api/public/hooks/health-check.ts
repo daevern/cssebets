@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 // Operational health checks. Scheduled via pg_cron every 5 minutes
 // (job: health-check-5min). Persists each run into health_check_runs
@@ -7,7 +8,9 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/hooks/health-check")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         const { runHealthChecks } = await import("@/lib/health-checks.server");
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const result = await runHealthChecks();

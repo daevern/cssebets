@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 // Cron target: fires every 30s during event windows. Discovers upcoming UFC
 // events, syncs odds, and settles finished fights. Settlement gets feed
@@ -7,6 +8,8 @@ export const Route = createFileRoute("/api/public/hooks/ufc-odds-live")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const url = new URL(request.url);
           const force = url.searchParams.get("force") === "1";

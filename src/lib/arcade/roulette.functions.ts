@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { enforceRateLimit } from "@/lib/rate-limit.functions";
+import { enforceRateLimit, isRateLimitError } from "@/lib/rate-limit.functions";
 
 const BetSchema = z.object({
   bet_type: z.string().trim().min(2).max(24),
@@ -86,7 +86,7 @@ export const placeRouletteSpin = createServerFn({ method: "POST" })
     try {
       await enforceRateLimit(`roulette:${userId}`, "arcade_spin");
     } catch (e) {
-      if ((e as Error).message === "RATE_LIMITED") {
+      if (isRateLimitError(e)) {
         throw new Error("Too many spins — please slow down.");
       }
       throw e;

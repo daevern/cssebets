@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 // Warms the live-state cache for any F1 race that has already started but not
 // finished. Called by pg_cron every minute during race weekends; safe to call
@@ -6,7 +7,9 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/hooks/f1-live")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const nowIso = new Date().toISOString();

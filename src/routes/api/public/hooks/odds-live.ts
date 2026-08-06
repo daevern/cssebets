@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { requireCronAuth } from "@/lib/cron-auth.server";
 
 // Cron: fires ~every 15s (4 offset pg_cron jobs at :00/:15/:30/:45).
 // Pulls live in-play 1X2 odds from API-Football with an Odds-API fallback,
@@ -10,7 +11,9 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/hooks/odds-live")({
   server: {
     handlers: {
-      POST: async () => {
+      POST: async ({ request }) => {
+        const denied = requireCronAuth(request);
+        if (denied) return denied;
         try {
           const { runLiveOddsSync } = await import("@/lib/odds-live.server");
           const result = await runLiveOddsSync();
