@@ -72,11 +72,12 @@ export function HamburgerMenu() {
   };
 
   async function copyCode() {
-    if (!refCode) return;
+    const text = referralLink || refCode;
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(refCode);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
-      toast.success("Referral code copied");
+      toast.success("Referral link copied");
       setTimeout(() => setCopied(false), 1500);
     } catch {
       toast.error("Could not copy");
