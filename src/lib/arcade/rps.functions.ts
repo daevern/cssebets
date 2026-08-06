@@ -45,8 +45,10 @@ export const getRpsConfig = createServerFn({ method: "GET" })
       .from("arcade_rps_configurations")
       .select(
         "id, version, min_stake, max_stake, chip_values, win_multiplier, draw_multiplier, " +
+          "ladder_multipliers, ladder_tail_multiplier, " +
           "round_ttl_seconds, daily_round_limit, cooldown_seconds, maintenance_mode, announcement",
       )
+
       .eq("status", "active")
       .maybeSingle();
     if (error) throw new Error(error.message);

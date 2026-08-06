@@ -93,7 +93,7 @@ function RpsPage() {
   const cfg = configQ.data?.config as any;
   const minStake = Number(cfg?.min_stake ?? 1);
   const maxStake = Math.max(minStake, Number(cfg?.max_stake ?? 100));
-  const winMult = Number(cfg?.win_multiplier ?? 1.9);
+  
   // Per-step win ladder: 1.35 on wins #1 and #2, 1.85 on win #3, then the
   // tail rate (doubling) on every step after that.
   const tailMult = Number(cfg?.ladder_tail_multiplier ?? 2);
