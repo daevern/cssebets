@@ -1,19 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-async function assertAdmin(supabase: any, userId: string) {
-  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-  const isAdmin = (data ?? []).some((r: any) => r.role === "admin" || r.role === "super_admin");
-  if (!isAdmin) throw new Error("Forbidden");
-}
+import { assertReferralAdmin } from "@/lib/referrals.server";
 
 export const getMyReferralOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data: profile } = await supabase
+    let { data: profile, error: profileError } = await supabase
       .from("profiles").select("referral_code").eq("id", userId).maybeSingle();
+    if (profileError) throw new Error(profileError.message);
+
+    if (!(profile as any)?.referral_code) {
+      const { data: ensuredCode, error: ensureError } = await (supabase as any)
+        .rpc("ensure_my_profile");
+      if (ensureError) throw new Error(ensureError.message);
+      profile = { referral_code: ensuredCode } as any;
+    }
     const { data: rows } = await (supabase as any)
       .from("referrals")
       .select("id, referred_user_id, cumulative_settled_wagered, stage1_completed, stage2_completed, stage3_completed, total_tokens_awarded, flagged, created_at")
@@ -63,7 +66,7 @@ export const adminGetReferralDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
+    await assertReferralAdmin(supabase, userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: rows } = await (supabaseAdmin as any)
@@ -117,7 +120,7 @@ export const adminAdjustReferral = createServerFn({ method: "POST" })
   }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
+    await assertReferralAdmin(supabase, userId);
     const { error } = await (supabase as any).rpc("admin_adjust_referral", {
       p_referral_id: data.referralId,
       p_tokens_delta: data.tokensDelta,
@@ -136,7 +139,7 @@ export const adminFlagReferral = createServerFn({ method: "POST" })
   }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
+    await assertReferralAdmin(supabase, userId);
     const { error } = await (supabase as any).rpc("admin_flag_referral", {
       p_referral_id: data.referralId,
       p_flagged: data.flagged,
