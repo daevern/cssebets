@@ -8649,27 +8649,17 @@ export type Database = {
         }[]
       }
       arcade_rps_expire_rounds: { Args: never; Returns: number }
-      arcade_rps_prepare_round:
-        | {
-            Args: { p_user: string }
-            Returns: {
-              out_expires_at: string
-              out_nonce: number
-              out_round_id: string
-              out_server_seed_hash: string
-            }[]
-          }
-        | {
-            Args: { p_parent_round_id?: string; p_user: string }
-            Returns: {
-              out_expires_at: string
-              out_ladder_step: number
-              out_nonce: number
-              out_round_id: string
-              out_server_seed_hash: string
-              out_win_multiplier: number
-            }[]
-          }
+      arcade_rps_prepare_round: {
+        Args: { p_parent_round_id?: string; p_user: string }
+        Returns: {
+          out_expires_at: string
+          out_ladder_step: number
+          out_nonce: number
+          out_round_id: string
+          out_server_seed_hash: string
+          out_win_multiplier: number
+        }[]
+      }
       arcade_rps_settle: {
         Args: {
           p_client_reveal_ms?: number
