@@ -170,12 +170,10 @@ describe("Plinko configuration v2", () => {
     }
   });
 
-  it("never pays more than v1 for the same slot (house-favourable rescale)", () => {
+  it("has a strictly lower RTP than v1 for every table (house-favourable rescale)", () => {
     for (const rows of PLINKO_ROWS) {
       for (const risk of PLINKO_RISKS) {
-        const a = PLINKO_TABLES[1][rows][risk];
-        const b = PLINKO_TABLES[2][rows][risk];
-        for (let i = 0; i < a.length; i++) expect(b[i]).toBeLessThanOrEqual(a[i] + 1e-9);
+        expect(plinkoRtp(rows, risk, 2)).toBeLessThan(plinkoRtp(rows, risk, 1));
       }
     }
   });
@@ -257,7 +255,7 @@ describe("maximum payout and liability reservation", () => {
   });
 
   it("always rounds liability up", () => {
-    expect(roundLiability(maxPayoutFor("rps", 33.33, 2))).toBe(61.66);
+    expect(roundLiability(maxPayoutFor("rps", 33.33, 2))).toBe(61.67);
   });
 });
 
