@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMyEngagementSummary } from "@/lib/engagement.functions";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
 import { getMyWallet } from "@/lib/wallet.functions";
+import { buildReferralLink } from "@/lib/referral-link";
 import { Wallet as WalletIcon } from "lucide-react";
 
 /**
@@ -54,7 +55,9 @@ export function HamburgerMenu() {
   const walletBalance = walletQ.data?.balance ?? 0;
   const refCode = refQ.data?.referralCode ?? "";
   const isGuest = !user || (user as any)?.is_anonymous === true;
+  const refLoading = !isGuest && (refQ.isLoading || refQ.isFetching) && !refCode;
   const displayCode = isGuest ? "XXXXXXX" : refCode;
+  const referralLink = isGuest ? "" : buildReferralLink(refCode);
 
   useEffect(() => {
     if (!open) return;
@@ -69,11 +72,12 @@ export function HamburgerMenu() {
   };
 
   async function copyCode() {
-    if (!refCode) return;
+    const text = referralLink || refCode;
+    if (!text) return;
     try {
-      await navigator.clipboard.writeText(refCode);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
-      toast.success("Referral code copied");
+      toast.success("Referral link copied");
       setTimeout(() => setCopied(false), 1500);
     } catch {
       toast.error("Could not copy");
@@ -94,7 +98,7 @@ export function HamburgerMenu() {
 
   const items = [
     { key: "store", label: "Store", Icon: ShoppingBag, onClick: () => pick(() => navigate({ to: "/store" })) },
-    { key: "arcade", label: "Arcade", Icon: Gamepad2, onClick: () => pick(() => navigate({ to: "/arcade/plinko" })) },
+    { key: "arcade", label: "Arcade", Icon: Gamepad2, onClick: () => pick(() => navigate({ to: "/arcade" })) },
     { key: "tokens", label: "Tokens", Icon: TokenMark, onClick: () => pick(() => setTokensOpen(true)) },
     { key: "notifications", label: "Alerts", Icon: Bell, onClick: () => pick(() => navigate({ to: "/notifications", search: { win: undefined } })) },
     { key: "profile", label: "Profile", Icon: User, onClick: () => pick(() => navigate({ to: "/settings" })) },
@@ -232,17 +236,24 @@ export function HamburgerMenu() {
                     </p>
                     <div className="mt-2 flex items-center justify-between gap-2">
                       <span className="font-mono text-2xl font-bold tracking-[0.24em] text-black">
-                        {displayCode || "—"}
+                        {refLoading ? "…" : displayCode || "—"}
                       </span>
                       <button
                         type="button"
                         onClick={copyCode}
                         disabled={isGuest || !refCode}
-                        aria-label="Copy referral code"
+                        aria-label="Copy referral link"
                         className="grid h-9 w-9 place-items-center bg-black text-[var(--neon)] transition-opacity hover:opacity-90 disabled:opacity-40"
                       >
                         {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                       </button>
+                    </div>
+                    <div className="mt-2 truncate font-mono text-[11px] text-black/70">
+                      {isGuest
+                        ? "Register to unlock your referral link"
+                        : refLoading
+                          ? "Loading your link…"
+                          : referralLink || "Referral link unavailable — pull to refresh"}
                     </div>
                   </div>
                 </div>
