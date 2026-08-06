@@ -94,6 +94,19 @@ headers := jsonb_build_object(
       (warning banner visible when off)
 - [ ] `bun run test` / CI green
 - [ ] Reconciliation `overall_status = OK`
+- [ ] `select * from arcade_config_selftest();` all rows `passed = true`
+      (includes `min_stake_floor_consistent` — every arcade table must
+      accept a 1-point stake, matching what the ChipRack UI shows)
+- [ ] Migration `20260806140000_phase_a_rps_min_stake_fix` applied — RPS
+      previously had a hidden 5-point floor while its chip rack (and every
+      other game) advertised a 1-point chip
+- [ ] Migration `20260806160000_phase_a_rps_opening_multiplier` applied —
+      RPS win #1 of a fresh ladder run now pays `opening_win_multiplier`
+      (1.35x) instead of the flat 1.85x; win #2+ is unchanged. Tracked
+      server-side via `arcade_rps_rounds.parent_round_id` /
+      `chain_win_depth` so a client cannot claim a fake higher ladder
+      position. Raises round-1 house edge to ~21.7% — confirm this is the
+      intended trade-off before enabling for real users
 
 ## Reference
 - `/docs/BACKUP_RECOVERY.md` — recovery checklist

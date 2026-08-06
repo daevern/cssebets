@@ -9,7 +9,7 @@ import { ChipRack } from "@/components/arcade/ChipRack";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import { RpsArena, type ArenaPhase } from "@/components/arcade/RpsArena";
 import { RpsVerifyDialog } from "@/components/arcade/RpsVerifyDialog";
-import { type RpsMove } from "@/lib/arcade/rps-math";
+import { rpsLadderMultiplier, type RpsMove } from "@/lib/arcade/rps-math";
 import { roundMoney } from "@/lib/accounting/money";
 
 import {
@@ -94,6 +94,9 @@ function RpsPage() {
   const minStake = Number(cfg?.min_stake ?? 1);
   const maxStake = Math.max(minStake, Number(cfg?.max_stake ?? 100));
   const winMult = Number(cfg?.win_multiplier ?? 1.9);
+  // Win #1 of a fresh run pays this lower, deliberately "settling in" rate;
+  // win #2+ compounds at winMult exactly as before.
+  const openingMult = Number(cfg?.opening_win_multiplier ?? winMult);
   
   const chips: number[] =
     Array.isArray(cfg?.chip_values) && cfg.chip_values.length
@@ -125,6 +128,13 @@ function RpsPage() {
   const commitment = useRef<{ roundId: string; serverSeedHash: string; nonce: number } | null>(null);
   const idemKey = useRef<string | null>(null);
   const lockedAt = useRef<number>(0);
+  /**
+   * The previous settled round id, when the next round is a ladder
+   * continuation. The server re-derives the ladder position from this chain
+   * itself (a round can only ever be claimed as a parent once) — the client
+   * can never inflate its own win depth to dodge the opening rate.
+   */
+  const chainParentId = useRef<string | null>(null);
 
   useEffect(() => {
     setStake((s) => Math.min(Math.max(s, minStake), maxStake));
@@ -138,7 +148,8 @@ function RpsPage() {
   /* ----------------------- Phase 1: commitment ----------------------- */
 
   const prepare = useMutation({
-    mutationFn: () => prepareFn(),
+    mutationFn: () =>
+      prepareFn({ data: { parentRoundId: chainParentId.current ?? undefined } }),
     onSuccess: (res: any) => {
       commitment.current = {
         roundId: res.roundId,
@@ -225,13 +236,14 @@ function RpsPage() {
   const busy = settle.isPending || phase === "LOCKED" || phase === "REVEALING";
   const ready = Boolean(commitment.current) && !prepare.isPending && commitmentVersion >= 0;
 
-  // The ladder compounds: each win rolls the whole pot into the next round, so
-  // the amount at risk is base stake x winMultiplier^(wins so far). Draws hold
-  // the pot steady, a loss ends the run and the pot stays with the house.
+  // The ladder compounds: each win rolls the whole pot into the next round.
+  // Win #1 pays openingMult (a lower "settling in" rate); win #2+ compounds
+  // at winMult exactly like before. Draws hold the pot steady, a loss ends
+  // the run and the pot stays with the house.
   const runWins = ladderHistory.filter((h) => h.outcome === "WIN").length;
-  const wagerStake = roundMoney(stake * winMult ** runWins);
+  const wagerStake = roundMoney(stake * rpsLadderMultiplier(openingMult, winMult, runWins));
   /** What the player takes home if the next round wins. */
-  const nextPayout = roundMoney(wagerStake * winMult);
+  const nextPayout = roundMoney(stake * rpsLadderMultiplier(openingMult, winMult, runWins + 1));
   const overMax = wagerStake > maxStake;
 
   const canPlay =
@@ -263,8 +275,12 @@ function RpsPage() {
       // exactly like busting a mine on Treasure Grid. Nothing is collectible.
       setLadderHistory([]);
       setRunNet(0);
+      chainParentId.current = null;
     } else if (round) {
-      // Wins and draws stay on the rail and keep the run alive.
+      // Wins and draws stay on the rail and keep the run alive — and chain
+      // the next round to this one server-side, so the next win resolves at
+      // the correct ladder position instead of always the opening rate.
+      chainParentId.current = String(round.id);
       setLadderHistory((current) =>
         [
           ...current,
@@ -298,6 +314,7 @@ function RpsPage() {
     setCollected(runNet);
     setLadderHistory([]);
     setRunNet(0);
+    chainParentId.current = null;
     setResultOpen(true);
     setPhase("IDLE");
     setPlayerMove(null);
@@ -340,6 +357,7 @@ function RpsPage() {
         serverMove={(round?.serverChoice as RpsMove) ?? null}
         outcome={round?.outcome ?? null}
         winMultiplier={winMult}
+        openingMultiplier={openingMult}
         history={ladderHistory}
         onChoose={choose}
         canPlay={canPlay}

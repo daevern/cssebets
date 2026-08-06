@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { RPS_MOVES, type RpsMove } from "@/lib/arcade/rps-math";
+import { RPS_MOVES, rpsLadderMultiplier, type RpsMove } from "@/lib/arcade/rps-math";
 import { CsseMark } from "@/components/brand/CsseMark";
 
 export type ArenaPhase = "IDLE" | "LOCKED" | "REVEALING" | "SETTLED";
@@ -251,6 +251,7 @@ function RpsArenaImpl({
   serverMove,
   outcome,
   winMultiplier,
+  openingMultiplier,
   history,
   onChoose,
   canPlay,
@@ -260,6 +261,8 @@ function RpsArenaImpl({
   serverMove: RpsMove | null;
   outcome: "WIN" | "LOSS" | "DRAW" | null;
   winMultiplier: number;
+  /** Lower rate paid on win #1 of a fresh run; every win after that pays winMultiplier. */
+  openingMultiplier: number;
   /** Oldest first. */
   history: Array<{ id: string; player: RpsMove | null; server: RpsMove | null; outcome: string }>;
   onChoose: (move: RpsMove) => void;
@@ -273,14 +276,20 @@ function RpsArenaImpl({
   let runStep = 0;
   const historyWithMultipliers = history.map((round) => {
     const step = round.outcome === "WIN" ? runStep + 1 : runStep;
-    const multiplier = winMultiplier ** Math.max(step, 1);
+    const multiplier = rpsLadderMultiplier(openingMultiplier, winMultiplier, Math.max(step, 1));
     if (round.outcome === "LOSS") runStep = 0;
     else if (round.outcome === "WIN") runStep += 1;
     return { ...round, multiplier };
   });
   const animationKey = history.length;
-  const liveMultiplier = winMultiplier ** Math.max(runStep + (outcome === "WIN" || phase !== "SETTLED" ? 1 : 0), 1);
-  const nextMultipliers = Array.from({ length: 6 }, (_, i) => winMultiplier ** Math.max(runStep + 1 + i, 1));
+  const liveMultiplier = rpsLadderMultiplier(
+    openingMultiplier,
+    winMultiplier,
+    Math.max(runStep + (outcome === "WIN" || phase !== "SETTLED" ? 1 : 0), 1),
+  );
+  const nextMultipliers = Array.from({ length: 6 }, (_, i) =>
+    rpsLadderMultiplier(openingMultiplier, winMultiplier, Math.max(runStep + 1 + i, 1)),
+  );
 
   const pastRef = useRef<HTMLDivElement>(null);
   const lastCount = useRef(0);
