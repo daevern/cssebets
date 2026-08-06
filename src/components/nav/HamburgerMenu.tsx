@@ -54,7 +54,9 @@ export function HamburgerMenu() {
   const walletBalance = walletQ.data?.balance ?? 0;
   const refCode = refQ.data?.referralCode ?? "";
   const isGuest = !user || (user as any)?.is_anonymous === true;
+  const refLoading = !isGuest && (refQ.isLoading || refQ.isFetching) && !refCode;
   const displayCode = isGuest ? "XXXXXXX" : refCode;
+  const referralLink = isGuest ? "" : buildReferralLink(refCode);
 
   useEffect(() => {
     if (!open) return;
