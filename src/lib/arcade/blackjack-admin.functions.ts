@@ -53,9 +53,9 @@ export const adminListBlackjackHands = createServerFn({ method: "POST" })
 
     const ids = Array.from(new Set((rows ?? []).map((r: any) => r.user_id)));
     const { data: profiles } = ids.length
-      ? await db.from("profiles").select("id, username").in("id", ids)
+      ? await db.from("profiles").select("id, display_name").in("id", ids)
       : { data: [] as any[] };
-    const nameOf = new Map((profiles ?? []).map((p: any) => [p.id, p.username]));
+    const nameOf = new Map((profiles ?? []).map((p: any) => [p.id, p.display_name]));
 
     return {
       rows: (rows ?? []).map((r: any) => ({ ...r, username: nameOf.get(r.user_id) ?? null })),
