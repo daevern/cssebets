@@ -8315,6 +8315,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      arcade_admin_snapshot: {
+        Args: { p_admin: string; p_window_hours?: number }
+        Returns: Json
+      }
       arcade_bj_admin_resolve_hand: {
         Args: {
           p_action: string
@@ -8584,6 +8588,65 @@ export type Database = {
           p_version: number
         }
         Returns: Json
+      }
+      arcade_publish_roulette_config: {
+        Args: { p_admin: string; p_patch: Json; p_reason: string }
+        Returns: {
+          announcement: string | null
+          black_pockets: number[]
+          change_reason: string | null
+          chip_values: number[]
+          cooldown_seconds: number
+          created_at: string
+          created_by: string | null
+          daily_spin_limit: number
+          id: string
+          maintenance_mode: boolean
+          max_positions: number
+          max_stake_per_position: number
+          max_total_stake: number
+          min_total_stake: number
+          published_at: string | null
+          red_pockets: number[]
+          status: string
+          updated_at: string
+          version: number
+          wheel_order: number[]
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_roulette_configurations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_publish_rps_config: {
+        Args: { p_admin: string; p_patch: Json; p_reason: string }
+        Returns: {
+          announcement: string | null
+          chip_values: number[]
+          cooldown_seconds: number
+          created_at: string
+          daily_round_limit: number
+          draw_multiplier: number
+          id: string
+          ladder_multipliers: number[]
+          ladder_tail_multiplier: number
+          maintenance_mode: boolean
+          max_stake: number
+          min_stake: number
+          round_ttl_seconds: number
+          status: string
+          updated_at: string
+          version: number
+          win_multiplier: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_rps_configurations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       arcade_publish_treasure_config: {
         Args: {
