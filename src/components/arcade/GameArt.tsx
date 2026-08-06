@@ -322,7 +322,8 @@ export function TreasureArt() {
           </tspan>
         </text>
         <text x="36" y="77" textAnchor="middle" fontSize="11.5" fontWeight="900" fill="#2a1500" opacity="0">
-          1.9x
+          WIN
+
           <animate
             attributeName="opacity"
             values="0;1;0;0;0"
