@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from "react";
+import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { RPS_MOVES, type RpsMove } from "@/lib/arcade/rps-math";
 import { CsseMark } from "@/components/brand/CsseMark";
