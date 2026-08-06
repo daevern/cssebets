@@ -546,6 +546,42 @@ export type Database = {
         }
         Relationships: []
       }
+      accounting_migration_flag_envs: {
+        Row: {
+          capacity_enforced: boolean | null
+          created_at: string
+          dual_write: boolean | null
+          environment: Database["public"]["Enums"]["acct_environment"]
+          journal_enabled: boolean | null
+          liability_enforced: boolean | null
+          notes: string | null
+          product: string
+          updated_at: string
+        }
+        Insert: {
+          capacity_enforced?: boolean | null
+          created_at?: string
+          dual_write?: boolean | null
+          environment: Database["public"]["Enums"]["acct_environment"]
+          journal_enabled?: boolean | null
+          liability_enforced?: boolean | null
+          notes?: string | null
+          product: string
+          updated_at?: string
+        }
+        Update: {
+          capacity_enforced?: boolean | null
+          created_at?: string
+          dual_write?: boolean | null
+          environment?: Database["public"]["Enums"]["acct_environment"]
+          journal_enabled?: boolean | null
+          liability_enforced?: boolean | null
+          notes?: string | null
+          product?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       accounting_migration_flags: {
         Row: {
           capacity_enforced: boolean
@@ -7909,6 +7945,16 @@ export type Database = {
         Returns: undefined
       }
       accounting_arcade_selftest: { Args: never; Returns: Json }
+      accounting_assert_capacity: {
+        Args: {
+          p_is_simulation?: boolean
+          p_max_gross: number
+          p_product: string
+          p_stake?: number
+          p_user: string
+        }
+        Returns: undefined
+      }
       accounting_available_reserve: {
         Args: { p_env: Database["public"]["Enums"]["acct_environment"] }
         Returns: number
@@ -7930,6 +7976,18 @@ export type Database = {
         Returns: Json
       }
       accounting_caller_authorised: { Args: never; Returns: boolean }
+      accounting_flags_for: {
+        Args: {
+          p_env: Database["public"]["Enums"]["acct_environment"]
+          p_product: string
+        }
+        Returns: {
+          capacity_enforced: boolean
+          dual_write: boolean
+          journal_enabled: boolean
+          liability_enforced: boolean
+        }[]
+      }
       accounting_integrity_scan: { Args: never; Returns: Json }
       accounting_internal_ctx: { Args: never; Returns: boolean }
       accounting_liability_integrity_alert: { Args: never; Returns: Json }
@@ -8019,6 +8077,21 @@ export type Database = {
         Args: { p_game_id: string }
         Returns: Json
       }
+      accounting_post_sports_position: {
+        Args: {
+          p_effective: string
+          p_env?: Database["public"]["Enums"]["acct_environment"]
+          p_meta?: Json
+          p_payout: number
+          p_product: string
+          p_ref_id: string
+          p_ref_type: string
+          p_release_liability?: boolean
+          p_stake: number
+          p_user: string
+        }
+        Returns: Json
+      }
       accounting_release_liability: {
         Args: {
           p_reason?: string
@@ -8073,6 +8146,25 @@ export type Database = {
         Returns: Json
       }
       accounting_run_phase5_final_selftest: { Args: never; Returns: undefined }
+      accounting_sports_env: {
+        Args: { p_is_simulation?: boolean; p_user: string }
+        Returns: Database["public"]["Enums"]["acct_environment"]
+      }
+      accounting_sports_hook: {
+        Args: {
+          p_effective: string
+          p_is_simulation?: boolean
+          p_meta?: Json
+          p_payout: number
+          p_product: string
+          p_ref_id: string
+          p_ref_type: string
+          p_release_liability?: boolean
+          p_stake: number
+          p_user: string
+        }
+        Returns: undefined
+      }
       accounting_terminal_reservation_violations: {
         Args: never
         Returns: {
@@ -9229,6 +9321,14 @@ export type Database = {
           p_user_id?: string
           p_version?: number
         }
+        Returns: Json
+      }
+      sports_journal_reconciliation: {
+        Args: { p_env?: Database["public"]["Enums"]["acct_environment"] }
+        Returns: Json
+      }
+      sports_journal_selftest: {
+        Args: { p_env?: Database["public"]["Enums"]["acct_environment"] }
         Returns: Json
       }
       staff_approve_point_request: {

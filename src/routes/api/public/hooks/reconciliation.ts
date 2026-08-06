@@ -26,6 +26,28 @@ export const Route = createFileRoute("/api/public/hooks/reconciliation")({
           });
         }
 
+        // Phase B — sports journal vs legacy bankroll reconciliation. Runs for
+        // both worlds and raises an operational alert on any drift.
+        const sportsReconciliation: Record<string, unknown> = {};
+        for (const env of ["PRODUCTION", "SIMULATION"] as const) {
+          const { data: rec, error: recErr } = await (supabaseAdmin as any).rpc(
+            "sports_journal_reconciliation",
+            { p_env: env },
+          );
+          sportsReconciliation[env] = recErr ? { error: recErr.message } : rec;
+          const drift = recErr || !(rec as any)?.ok;
+          if (drift) {
+            await (supabaseAdmin as any).from("operational_alerts").insert({
+              level: "critical",
+              category: "accounting",
+              title: "Sports journal reconciliation drift",
+              message: `Sports accounting reconciliation failed for ${env}`,
+              status: "open",
+              metadata: recErr ? { error: recErr.message, environment: env } : rec,
+            });
+          }
+        }
+
         // Cards/corners sweep — find finished matches with pending C/C bets,
         // resync stats from provider, then run the settler (which auto-voids
         // when stale beyond the configured window).
@@ -78,6 +100,7 @@ export const Route = createFileRoute("/api/public/hooks/reconciliation")({
 
         return new Response(JSON.stringify({
           ok: true, report: r, cards_corners: { sweptMatches, sweptSettled },
+          sports_reconciliation: sportsReconciliation,
         }), {
           headers: { "content-type": "application/json" },
         });
