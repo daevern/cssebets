@@ -282,18 +282,10 @@ function RpsArenaImpl({
   const liveMultiplier = winMultiplier ** Math.max(runStep + (outcome === "WIN" || phase !== "SETTLED" ? 1 : 0), 1);
   const nextMultipliers = Array.from({ length: 6 }, (_, i) => winMultiplier ** Math.max(runStep + 1 + i, 1));
 
-  const pastRef = useRef<HTMLDivElement>(null);
-  const lastCount = useRef(0);
-  useEffect(() => {
-    const el = pastRef.current;
-    const count = historyWithMultipliers.length;
-    // Only snap to the newest result when a round is actually added — never
-    // while the player is scrolling back through earlier rounds.
-    if (el && count !== lastCount.current) {
-      lastCount.current = count;
-      el.scrollLeft = el.scrollWidth;
-    }
-  }, [historyWithMultipliers.length]);
+  // The rail scrolls in RTL so its natural resting position (scrollLeft 0) is
+  // the newest result. No JS scroll manipulation — nothing can yank the player
+  // back while they browse earlier rounds.
+
 
   return (
     <div className="overflow-hidden rounded-[6px] bg-[var(--color-surface)] p-3">
