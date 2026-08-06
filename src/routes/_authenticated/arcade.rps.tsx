@@ -242,13 +242,14 @@ function RpsPage() {
   const ready = Boolean(commitment.current) && !prepare.isPending && commitmentVersion >= 0;
 
   // The ladder compounds: each win rolls the whole pot into the next round.
-  // Win #1 pays openingMult (a lower "settling in" rate); win #2+ compounds
-  // at winMult exactly like before. Draws hold the pot steady, a loss ends
-  // the run and the pot stays with the house.
+  // Wins #1 and #2 pay the opening rate, win #3 pays the step-3 rate, and
+  // every win after that pays the tail (doubling) rate. Draws hold the pot
+  // steady, a loss ends the run and the pot stays with the house.
   const runWins = ladderHistory.filter((h) => h.outcome === "WIN").length;
-  const wagerStake = roundMoney(stake * rpsLadderMultiplier(openingMult, winMult, runWins));
+  const wagerStake = roundMoney(stake * rpsLadderMultiplier(ladder, tailMult, runWins));
   /** What the player takes home if the next round wins. */
-  const nextPayout = roundMoney(stake * rpsLadderMultiplier(openingMult, winMult, runWins + 1));
+  const nextPayout = roundMoney(stake * rpsLadderMultiplier(ladder, tailMult, runWins + 1));
+
   const overMax = wagerStake > maxStake;
 
   const canPlay =
