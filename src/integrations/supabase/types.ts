@@ -7945,6 +7945,16 @@ export type Database = {
         Returns: undefined
       }
       accounting_arcade_selftest: { Args: never; Returns: Json }
+      accounting_assert_capacity: {
+        Args: {
+          p_is_simulation?: boolean
+          p_max_gross: number
+          p_product: string
+          p_stake?: number
+          p_user: string
+        }
+        Returns: undefined
+      }
       accounting_available_reserve: {
         Args: { p_env: Database["public"]["Enums"]["acct_environment"] }
         Returns: number
