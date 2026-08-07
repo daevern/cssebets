@@ -274,32 +274,40 @@ export function PlinkoBoard({
     };
   }, []);
 
+  const pegR = Math.max(3.6, Math.min(6.2, 70 / rows));
   const pegs: React.ReactElement[] = [];
   for (let r = 0; r < rows; r++) {
     for (let i = 0; i < r + 2; i++) {
       const key = `${r}-${i}`;
       const isHit = hitPegs.has(key);
+      const cx = pegX(r, i);
+      const cy = pegY(r);
       pegs.push(
         <g key={key}>
           {isHit && (
             <circle
-              cx={pegX(r, i)}
-              cy={pegY(r)}
-              r={9}
-              fill="rgba(255,255,255,0.18)"
+              cx={cx}
+              cy={cy}
+              r={pegR * 3}
+              fill="url(#pegBurst)"
               className="[transform-origin:center] [animation:pegFlash_320ms_ease-out_forwards]"
             />
           )}
+          <circle cx={cx} cy={cy + pegR * 0.35} r={pegR} fill="rgba(10,6,40,0.55)" />
+          <circle cx={cx} cy={cy} r={pegR} fill="url(#pegBody)" />
           <circle
-            cx={pegX(r, i)}
-            cy={pegY(r)}
-            r={3.2}
-            fill={isHit ? "#ffffff" : "rgba(255,255,255,0.34)"}
+            cx={cx - pegR * 0.28}
+            cy={cy - pegR * 0.32}
+            r={pegR * 0.36}
+            fill="rgba(255,255,255,0.9)"
+            opacity={isHit ? 1 : 0.7}
           />
+          {isHit && <circle cx={cx} cy={cy} r={pegR * 1.35} fill="rgba(255,255,255,0.55)" />}
         </g>,
       );
     }
   }
+
 
   void renderTick;
   const slotWidth = spacing - 3;
