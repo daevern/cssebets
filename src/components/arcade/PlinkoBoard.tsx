@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PlinkoSlot } from "./types";
+import { PlinkoPeg } from "./PlinkoPeg";
+import { PlinkoBall } from "./PlinkoBall";
+import { PlinkoBoardFrame } from "./PlinkoBoardFrame";
+import { PlinkoPayoutBin } from "./PlinkoPayoutBin";
+
 
 export type ActiveBall = {
   id: string;
