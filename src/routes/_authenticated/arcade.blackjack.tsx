@@ -443,7 +443,7 @@ function ActionTile({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "flex h-10 flex-col items-center justify-center gap-0.5 rounded-[4px] bg-[var(--color-surface-2)] transition-colors md:h-[54px]",
+        "flex h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-xl bg-[var(--color-surface-2)] transition-colors md:h-12",
         "hover:bg-[var(--color-surface-2)]/70 disabled:opacity-35",
       )}
     >
@@ -454,9 +454,9 @@ function ActionTile({
           {glyph}
         </span>
       ) : (
-        Icon && <Icon className="h-3.5 w-3.5 text-[var(--color-neon)]" />
+        Icon && <Icon className="h-4 w-4 text-[var(--color-neon)]" />
       )}
-      <span className="text-[8px] font-bold uppercase tracking-[0.14em] text-[var(--color-ink)]">
+      <span className="text-[9px] font-bold uppercase tracking-[0.06em] text-[var(--color-ink)]">
         {label}
       </span>
     </button>
