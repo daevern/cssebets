@@ -87,7 +87,7 @@ export function ArcadeStage({
 
     schedule();
     const ro = new ResizeObserver(schedule);
-    if (innerRef.current) ro.observe(innerRef.current);
+    if (contentRef.current) ro.observe(contentRef.current);
     if (outerRef.current) ro.observe(outerRef.current);
     window.addEventListener("resize", handleResize);
     window.addEventListener("orientationchange", handleOrientationChange);
@@ -111,15 +111,16 @@ export function ArcadeStage({
     >
       <div
         ref={innerRef}
-        className="absolute inset-x-0 top-0 flex min-h-full flex-col justify-start"
+        className="absolute inset-x-0 top-0"
         style={{
           width: `${100 / scale}%`,
-          minHeight: avail ? `${avail / scale}px` : undefined,
           transform: `scale(${scale})`,
           transformOrigin: "top left",
         }}
       >
-        {children}
+        <div ref={contentRef} className="flex flex-col justify-center">
+          {children}
+        </div>
       </div>
     </div>
   );
