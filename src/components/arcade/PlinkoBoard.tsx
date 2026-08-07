@@ -382,11 +382,13 @@ export function PlinkoBoard({
         aria-label="Plinko board"
       >
         <defs>
-          <radialGradient id="boardGlow" cx="50%" cy="14%" r="88%">
-            <stop offset="0%" stopColor="#3b40e0" />
-            <stop offset="45%" stopColor="#1e2299" />
-            <stop offset="100%" stopColor="#0a0e45" />
+          <radialGradient id="boardGlow" cx="50%" cy="16%" r="92%">
+            <stop offset="0%" stopColor="#2b34cf" />
+            <stop offset="42%" stopColor="#141a86" />
+            <stop offset="78%" stopColor="#080c40" />
+            <stop offset="100%" stopColor="#04061c" />
           </radialGradient>
+
           <radialGradient id="pegBody" cx="34%" cy="28%" r="78%">
             <stop offset="0%" stopColor="#eef0ff" />
             <stop offset="55%" stopColor="#a9b2f5" />
