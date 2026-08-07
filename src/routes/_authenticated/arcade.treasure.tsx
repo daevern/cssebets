@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { ShieldCheck, Loader2, Gem } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TreasureGrid } from "@/components/arcade/TreasureGrid";
 import { ChipRack } from "@/components/arcade/ChipRack";
