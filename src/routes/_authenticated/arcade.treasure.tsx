@@ -256,8 +256,9 @@ function TreasurePage() {
                 ? round.status === "WON"
                   ? "Collected"
                   : "Busted"
-                : "Set your stake to begin"
+                : null
           }
+
         />
       </div>
 
