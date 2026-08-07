@@ -243,28 +243,8 @@ function BlackjackPage() {
         />
       </div>
 
-      {rules && (
-        <div className="shrink-0 overflow-x-auto">
-          <div className="flex min-w-max items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-            {[
-              `${rules.deck_count} decks`,
-              rules.dealer_hits_soft_17 ? "Dealer hits soft 17" : "Dealer stands soft 17",
-              rules.dealer_peek ? "Peek" : "No peek (ENHC)",
-              rules.double_after_split ? "DAS" : "No DAS",
-              `Split to ${rules.max_split_hands}`,
-              `Blackjack pays ${Number(rules.blackjack_payout) === 1.5 ? "3:2" : Number(rules.blackjack_payout) === 1.3333 || Math.abs(Number(rules.blackjack_payout) - 4 / 3) < 0.01 ? "4:3" : `${Number(rules.blackjack_payout)}x`}`,
-              `Rules v${rules.version}`,
-            ].map((chip) => (
-              <span
-                key={chip}
-                className="rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2 py-1"
-              >
-                {chip}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+
+
 
       {rules?.maintenance_mode && (
         <div className="shrink-0 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-[11px] text-amber-300">
