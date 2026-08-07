@@ -27,15 +27,18 @@ type Props = {
 };
 
 function slotFill(mult: number): { fill: string; glow: string; text: string } {
-  if (mult >= 100) return { fill: "#ff2d55", glow: "rgba(255,45,85,0.55)", text: "#ffffff" };
-  if (mult >= 26) return { fill: "#ff5a1f", glow: "rgba(255,90,31,0.5)", text: "#ffffff" };
-  if (mult >= 9) return { fill: "#ff8a1f", glow: "rgba(255,138,31,0.45)", text: "#1a0f00" };
-  if (mult >= 3) return { fill: "#ffb020", glow: "rgba(255,176,32,0.4)", text: "#1a0f00" };
-  if (mult >= 1.5) return { fill: "#ffd21f", glow: "rgba(255,210,31,0.35)", text: "#1a0f00" };
-  if (mult >= 1) return { fill: "#c4e64a", glow: "rgba(196,230,74,0.3)", text: "#0a1200" };
-  if (mult >= 0.5) return { fill: "#5aa96b", glow: "rgba(90,169,107,0.28)", text: "#e9ffef" };
-  return { fill: "#2b3a3f", glow: "rgba(0,0,0,0)", text: "#8aa0a8" };
+  // Palette matched to the neon poster: magenta/orange extremes, violet mids,
+  // teal → deep blue toward the centre (lowest multipliers).
+  if (mult >= 50) return { fill: "#ff7a18", glow: "rgba(255,122,24,0.55)", text: "#ffca8a" };
+  if (mult >= 15) return { fill: "#ff2f92", glow: "rgba(255,47,146,0.5)", text: "#ffa9d0" };
+  if (mult >= 4) return { fill: "#c04ff0", glow: "rgba(192,79,240,0.45)", text: "#e8b9ff" };
+  if (mult >= 1.8) return { fill: "#9a5cff", glow: "rgba(154,92,255,0.4)", text: "#d9c4ff" };
+  if (mult >= 1.1) return { fill: "#2ad3d3", glow: "rgba(42,211,211,0.38)", text: "#a8fbfb" };
+  if (mult >= 0.55) return { fill: "#3b8cff", glow: "rgba(59,140,255,0.34)", text: "#b8d6ff" };
+  if (mult > 0) return { fill: "#2b4bd6", glow: "rgba(43,75,214,0.3)", text: "#a9bbff" };
+  return { fill: "#25306b", glow: "rgba(0,0,0,0)", text: "#8b96c8" };
 }
+
 
 type BallRuntime = {
   id: string;
