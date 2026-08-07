@@ -216,19 +216,20 @@ export function BlackjackTable({
       className="relative h-full overflow-hidden"
       style={{
         background:
-          "radial-gradient(120% 90% at 50% 8%, #1c6047 0%, #12513b 42%, #0c3a2b 72%, #082a1f 100%)",
+          "radial-gradient(120% 90% at 50% 8%, #164d39 0%, #0e412f 42%, #0a2e22 72%, #062219 100%)",
       }}
     >
       <FeltArt />
 
-      {/* House medallion — always dead centre and never covered by cards. */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1">
-        <div className="grid h-10 w-10 place-items-center rounded-full border border-white/25 bg-black/35 backdrop-blur-[1px] md:h-14 md:w-14">
-          <CsseMark variant="mono" className="h-5 w-5 text-[var(--color-neon)] md:h-7 md:w-7" />
+      {/* House medallion — screen-printed outline, always dead centre. */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5">
+        <div className="grid h-11 w-11 place-items-center rounded-full border border-white/20 md:h-16 md:w-16">
+          <CsseMark variant="mono" className="h-6 w-6 text-white/25 md:h-9 md:w-9" />
         </div>
-        <span className="font-display text-[9px] font-bold uppercase tracking-[0.34em] text-white/70 md:text-[11px]">
-          CSSEBets
-        </span>
+        <CsseWordmark
+          size={13}
+          className="[&_span]:[color:transparent!important] [&_span]:[-webkit-text-stroke:0.7px_rgba(255,255,255,0.32)!important] md:[&_span]:[font-size:18px]"
+        />
       </div>
 
 
