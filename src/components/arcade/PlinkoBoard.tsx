@@ -27,15 +27,18 @@ type Props = {
 };
 
 function slotFill(mult: number): { fill: string; glow: string; text: string } {
-  if (mult >= 100) return { fill: "#ff2d55", glow: "rgba(255,45,85,0.55)", text: "#ffffff" };
-  if (mult >= 26) return { fill: "#ff5a1f", glow: "rgba(255,90,31,0.5)", text: "#ffffff" };
-  if (mult >= 9) return { fill: "#ff8a1f", glow: "rgba(255,138,31,0.45)", text: "#1a0f00" };
-  if (mult >= 3) return { fill: "#ffb020", glow: "rgba(255,176,32,0.4)", text: "#1a0f00" };
-  if (mult >= 1.5) return { fill: "#ffd21f", glow: "rgba(255,210,31,0.35)", text: "#1a0f00" };
-  if (mult >= 1) return { fill: "#c4e64a", glow: "rgba(196,230,74,0.3)", text: "#0a1200" };
-  if (mult >= 0.5) return { fill: "#5aa96b", glow: "rgba(90,169,107,0.28)", text: "#e9ffef" };
-  return { fill: "#2b3a3f", glow: "rgba(0,0,0,0)", text: "#8aa0a8" };
+  // Palette matched to the neon poster: magenta/orange extremes, violet mids,
+  // teal → deep blue toward the centre (lowest multipliers).
+  if (mult >= 50) return { fill: "#ff7a18", glow: "rgba(255,122,24,0.55)", text: "#ffca8a" };
+  if (mult >= 15) return { fill: "#ff2f92", glow: "rgba(255,47,146,0.5)", text: "#ffa9d0" };
+  if (mult >= 4) return { fill: "#c04ff0", glow: "rgba(192,79,240,0.45)", text: "#e8b9ff" };
+  if (mult >= 1.8) return { fill: "#9a5cff", glow: "rgba(154,92,255,0.4)", text: "#d9c4ff" };
+  if (mult >= 1.1) return { fill: "#2ad3d3", glow: "rgba(42,211,211,0.38)", text: "#a8fbfb" };
+  if (mult >= 0.55) return { fill: "#3b8cff", glow: "rgba(59,140,255,0.34)", text: "#b8d6ff" };
+  if (mult > 0) return { fill: "#2b4bd6", glow: "rgba(43,75,214,0.3)", text: "#a9bbff" };
+  return { fill: "#25306b", glow: "rgba(0,0,0,0)", text: "#8b96c8" };
 }
+
 
 type BallRuntime = {
   id: string;
@@ -129,7 +132,7 @@ export function PlinkoBoard({
   // Add newly-arrived balls to runtime map
   useEffect(() => {
     const now = performance.now();
-    const stepMs = reducedMotion ? 40 : 135;
+    const stepMs = reducedMotion ? 70 : 230;
     const currentIds = new Set(normalizedBalls.map((b) => b.id));
 
     for (const id of Array.from(runtimeRef.current.keys())) {
@@ -354,22 +357,11 @@ export function PlinkoBoard({
   };
 
 
-  const colTop = slotY - 26;
-  const colBottom = boardHeight - 12;
-  const colH = colBottom - colTop;
-  // spiky column: pointed tip on top, straight body toward the multiplier chip
-  const spikePath = (x: number, w: number) => {
-    const tip = x + w / 2;
-    const shoulder = colTop + colH * 0.6;
-    return [
-      `M ${x + 0.5} ${colBottom}`,
-      `L ${x + 0.5} ${shoulder}`,
-      `L ${tip} ${colTop}`,
-      `L ${x + w - 0.5} ${shoulder}`,
-      `L ${x + w - 0.5} ${colBottom}`,
-      "Z",
-    ].join(" ");
-  };
+  const colTop = slotY - 34;
+  const colBottom = boardHeight - 14;
+  const pinH = 16; // thin neon pin above each column body
+  const bodyTop = colTop + pinH;
+
 
 
   return (
@@ -390,11 +382,13 @@ export function PlinkoBoard({
         aria-label="Plinko board"
       >
         <defs>
-          <radialGradient id="boardGlow" cx="50%" cy="14%" r="88%">
-            <stop offset="0%" stopColor="#3b40e0" />
-            <stop offset="45%" stopColor="#1e2299" />
-            <stop offset="100%" stopColor="#0a0e45" />
+          <radialGradient id="boardGlow" cx="50%" cy="16%" r="92%">
+            <stop offset="0%" stopColor="#2b34cf" />
+            <stop offset="42%" stopColor="#141a86" />
+            <stop offset="78%" stopColor="#080c40" />
+            <stop offset="100%" stopColor="#04061c" />
           </radialGradient>
+
           <radialGradient id="pegBody" cx="34%" cy="28%" r="78%">
             <stop offset="0%" stopColor="#eef0ff" />
             <stop offset="55%" stopColor="#a9b2f5" />
@@ -488,27 +482,45 @@ export function PlinkoBoard({
           const chipH = Math.min(24, Math.max(16, slotWidth * 0.52));
           return (
             <g key={`slot-${k}`} className={isFlash ? "slot-pop" : undefined}>
-              <path
-                d={spikePath(x, slotWidth)}
-                fill={`url(#slotG-${k})`}
-                opacity={isFlash ? 1 : 0.92}
+              {/* thin neon pin */}
+              <rect
+                x={cx - 1}
+                y={colTop}
+                width={2}
+                height={pinH}
+                rx={1}
+                fill={c.fill}
+                opacity={isFlash ? 1 : 0.75}
               />
-              <path
-                d={spikePath(x, slotWidth)}
-                fill="none"
-                stroke={c.fill}
-                strokeOpacity={isFlash ? 0.9 : 0.28}
-                strokeWidth={1}
-                strokeLinejoin="round"
+              {/* glowing column body */}
+              <rect
+                x={x + 1}
+                y={bodyTop}
+                width={slotWidth - 2}
+                height={colBottom - bodyTop}
+                rx={7}
+                fill={`url(#slotG-${k})`}
+                opacity={isFlash ? 1 : 0.95}
               />
               <rect
-
+                x={x + 1}
+                y={bodyTop}
+                width={slotWidth - 2}
+                height={colBottom - bodyTop}
+                rx={7}
+                fill="none"
+                stroke={c.fill}
+                strokeOpacity={isFlash ? 0.95 : 0.35}
+                strokeWidth={1}
+              />
+              {/* dark label plate at the base */}
+              <rect
                 x={x + 1}
                 y={colBottom - chipH}
                 width={slotWidth - 2}
                 height={chipH - 1}
-                rx={4}
-                fill={c.fill}
+                rx={6}
+                fill="rgba(7,9,28,0.82)"
               />
               <text
                 x={cx}
@@ -527,6 +539,7 @@ export function PlinkoBoard({
               </text>
             </g>
           );
+
         })}
 
         {liveBalls.map((rb) => (
