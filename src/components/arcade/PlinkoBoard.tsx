@@ -480,27 +480,45 @@ export function PlinkoBoard({
           const chipH = Math.min(24, Math.max(16, slotWidth * 0.52));
           return (
             <g key={`slot-${k}`} className={isFlash ? "slot-pop" : undefined}>
-              <path
-                d={spikePath(x, slotWidth)}
-                fill={`url(#slotG-${k})`}
-                opacity={isFlash ? 1 : 0.92}
+              {/* thin neon pin */}
+              <rect
+                x={cx - 1}
+                y={colTop}
+                width={2}
+                height={pinH}
+                rx={1}
+                fill={c.fill}
+                opacity={isFlash ? 1 : 0.75}
               />
-              <path
-                d={spikePath(x, slotWidth)}
-                fill="none"
-                stroke={c.fill}
-                strokeOpacity={isFlash ? 0.9 : 0.28}
-                strokeWidth={1}
-                strokeLinejoin="round"
+              {/* glowing column body */}
+              <rect
+                x={x + 1}
+                y={bodyTop}
+                width={slotWidth - 2}
+                height={colBottom - bodyTop}
+                rx={7}
+                fill={`url(#slotG-${k})`}
+                opacity={isFlash ? 1 : 0.95}
               />
               <rect
-
+                x={x + 1}
+                y={bodyTop}
+                width={slotWidth - 2}
+                height={colBottom - bodyTop}
+                rx={7}
+                fill="none"
+                stroke={c.fill}
+                strokeOpacity={isFlash ? 0.95 : 0.35}
+                strokeWidth={1}
+              />
+              {/* dark label plate at the base */}
+              <rect
                 x={x + 1}
                 y={colBottom - chipH}
                 width={slotWidth - 2}
                 height={chipH - 1}
-                rx={4}
-                fill={c.fill}
+                rx={6}
+                fill="rgba(7,9,28,0.82)"
               />
               <text
                 x={cx}
@@ -519,6 +537,7 @@ export function PlinkoBoard({
               </text>
             </g>
           );
+
         })}
 
         {liveBalls.map((rb) => (
