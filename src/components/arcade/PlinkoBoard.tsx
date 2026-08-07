@@ -354,9 +354,23 @@ export function PlinkoBoard({
   };
 
 
-  const colTop = slotY - 4;
+  const colTop = slotY - 26;
   const colBottom = boardHeight - 12;
   const colH = colBottom - colTop;
+  // spiky column: pointed tip on top, straight body toward the multiplier chip
+  const spikePath = (x: number, w: number) => {
+    const tip = x + w / 2;
+    const shoulder = colTop + colH * 0.34;
+    return [
+      `M ${x + 0.5} ${colBottom}`,
+      `L ${x + 0.5} ${shoulder}`,
+      `L ${tip} ${colTop}`,
+      `L ${x + w - 0.5} ${shoulder}`,
+      `L ${x + w - 0.5} ${colBottom}`,
+      "Z",
+    ].join(" ");
+  };
+
 
   return (
     <div className="relative w-full overflow-hidden" style={{ background: boardBg ?? "transparent" }}>
