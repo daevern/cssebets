@@ -340,16 +340,6 @@ function TreasurePage() {
       <ControlDock>
         {!active ? (
           <>
-            <DockSeg
-              grow
-              value={difficulty}
-              onChange={(d: string) => setDifficulty(d as Difficulty)}
-              options={(["easy", "medium", "hard"] as Difficulty[]).map((d) => ({
-                key: d,
-                label: `${d} · ${configs.find((x: any) => x.difficulty === d)?.trap_count ?? "-"}`,
-              }))}
-            />
-
             <DockRow scroll>
               <ChipRack
                 values={chips}
