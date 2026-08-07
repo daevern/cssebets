@@ -362,11 +362,12 @@ export function PlinkoBoard({
     <div className="relative w-full overflow-hidden" style={{ background: boardBg ?? "transparent" }}>
       <style>{`
         @keyframes pegFlash { 0%{opacity:.9;transform:scale(.4)} 100%{opacity:0;transform:scale(1.6)} }
-        @keyframes slotPop { 0%{transform:translateY(0) scaleY(1)} 35%{transform:translateY(-6px) scaleY(1.06)} 100%{transform:translateY(0) scaleY(1)} }
-        .slot-pop { animation: slotPop 600ms cubic-bezier(.2,.9,.3,1.2); transform-origin: bottom; transform-box: fill-box; }
+        @keyframes slotPop { 0%{transform:translateY(0)} 22%{transform:translateY(14px)} 55%{transform:translateY(-3px)} 100%{transform:translateY(0)} }
+        .slot-pop { animation: slotPop 520ms cubic-bezier(.25,.85,.35,1.1); transform-box: fill-box; }
         @keyframes beamPulse { 0%,100%{opacity:.55} 50%{opacity:1} }
         .drop-beam { animation: beamPulse 2.4s ease-in-out infinite; }
       `}</style>
+
 
       <svg
         viewBox={`0 0 ${W} ${boardHeight}`}
