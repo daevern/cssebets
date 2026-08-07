@@ -349,6 +349,32 @@ export function PlinkoBoard({
 
   return (
     <div className="relative w-full overflow-hidden" style={{ background: boardBg ?? "transparent" }}>
+      {/* Board title — neon cabinet marquee */}
+      <div className="pointer-events-none absolute inset-x-0 top-1.5 z-10 flex items-center justify-center gap-2 sm:top-2.5">
+        <span
+          aria-hidden
+          className="h-2 w-2 shrink-0 rounded-full sm:h-2.5 sm:w-2.5"
+          style={{
+            background: "radial-gradient(circle at 34% 30%, #f4ffff, #33cfff 70%)",
+            boxShadow: "0 0 8px rgba(41,196,255,.9)",
+          }}
+        />
+        <span
+          className="font-display text-base font-black uppercase tracking-[0.12em] text-white sm:text-xl"
+          style={{ textShadow: "0 0 12px rgba(90,140,255,.75), 0 0 26px rgba(255,47,146,.35)" }}
+        >
+          Plin<span style={{ color: "#29c4ff" }}>ko</span>
+        </span>
+        <span
+          aria-hidden
+          className="h-2 w-2 shrink-0 rounded-full sm:h-2.5 sm:w-2.5"
+          style={{
+            background: "radial-gradient(circle at 34% 30%, #f4ffff, #33cfff 70%)",
+            boxShadow: "0 0 8px rgba(41,196,255,.9)",
+          }}
+        />
+      </div>
+
       <style>{`
         @keyframes pegFlash { 0%{opacity:.9;transform:scale(.4)} 100%{opacity:0;transform:scale(1.6)} }
         @keyframes slotPop { 0%{transform:translateY(0)} 22%{transform:translateY(14px)} 55%{transform:translateY(-3px)} 100%{transform:translateY(0)} }
