@@ -21,22 +21,41 @@ type Props = {
 export const CARD_SLIDE_MS = 480;
 export const CARD_FLIP_MS = 520;
 
-/** The shared CSSEbets card back — identical to the Rock–Paper–Scissors deck. */
+/**
+ * CSSEbets card back — white bevel frame around a deep-green panel with a
+ * woven diamond lattice and the house mark medallion at the centre.
+ */
 export function CsseCardBack({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "relative h-full w-full rounded-[4px] border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)]",
+        "relative h-full w-full overflow-hidden rounded-[6px] bg-[#f4f6f3] p-[7%] shadow-[0_2px_6px_rgba(0,0,0,.45)]",
         className,
       )}
-      style={{
-        backgroundImage:
-          "repeating-linear-gradient(45deg, color-mix(in srgb, var(--color-neon) 22%, transparent) 0 4px, transparent 4px 8px)",
-      }}
     >
-      <div className="absolute inset-[5px] rounded-[2px] border border-[var(--color-neon)]/30" />
-      <div className="absolute inset-0 grid place-items-center text-[var(--color-neon)]">
-        <CsseMark variant="mono" className="h-[42%] w-[42%]" />
+      <div
+        className="relative h-full w-full overflow-hidden rounded-[4px]"
+        style={{
+          background: "linear-gradient(160deg, #1d5b41 0%, #0f3d2c 55%, #0a2c20 100%)",
+        }}
+      >
+        {/* Diamond lattice weave */}
+        <div
+          className="absolute inset-0 opacity-70"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(45deg, rgba(255,255,255,.10) 0 1px, transparent 1px 9px)," +
+              "repeating-linear-gradient(-45deg, rgba(255,255,255,.10) 0 1px, transparent 1px 9px)",
+          }}
+        />
+        {/* Inner hairline */}
+        <div className="absolute inset-[6%] rounded-[3px] border border-white/15" />
+        {/* Brand medallion */}
+        <div className="absolute inset-0 grid place-items-center">
+          <div className="grid aspect-square w-[46%] place-items-center rounded-full border border-white/20 bg-black/25">
+            <CsseMark variant="mono" className="h-[62%] w-[62%] text-[#8ff0bd]" />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -136,7 +155,7 @@ export function PlayingCard({
         {/* Face */}
         <div
           className={cn(
-            "absolute inset-0 flex flex-col justify-between rounded-[4px] border border-black/10 bg-[#f7f7f2] px-1.5 py-1 [backface-visibility:hidden]",
+            "absolute inset-0 flex flex-col justify-between rounded-[6px] border border-black/10 bg-[#f7f7f2] px-1.5 py-1 shadow-[0_2px_6px_rgba(0,0,0,.45)] [backface-visibility:hidden]",
             red ? "text-[#d92b3a]" : "text-[#101418]",
           )}
         >

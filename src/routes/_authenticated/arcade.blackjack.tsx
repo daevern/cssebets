@@ -13,7 +13,13 @@ import {
 import { cn } from "@/lib/utils";
 import { BlackjackTable, type BlackjackState } from "@/components/arcade/BlackjackTable";
 import { ChipRack } from "@/components/arcade/ChipRack";
-import { ControlDock, DockNote, DockPrimary, DockRow } from "@/components/arcade/ControlDock";
+import {
+  ControlDock,
+  DockIconButton,
+  DockNote,
+  DockPrimary,
+  DockRow,
+} from "@/components/arcade/ControlDock";
 import { BlackjackVerifyDialog } from "@/components/arcade/BlackjackVerifyDialog";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import {
@@ -335,37 +341,6 @@ function BlackjackPage() {
       )}
 
       <ControlDock maxWidth="max-w-xl">
-        <div className="grid grid-cols-4 gap-2">
-          <ActionTile
-            label="Double"
-            glyph="x2"
-            disabled={!inPlay || busy || !canDouble}
-            loading={dbl.isPending}
-            onClick={() => dbl.mutate()}
-          />
-          <ActionTile
-            label="Hit"
-            Icon={CopyPlus}
-            disabled={!inPlay || busy}
-            loading={hit.isPending}
-            onClick={() => hit.mutate()}
-          />
-          <ActionTile
-            label="Stand"
-            Icon={Hand}
-            disabled={!inPlay || busy}
-            loading={stand.isPending}
-            onClick={() => stand.mutate()}
-          />
-          <ActionTile
-            label="Split"
-            Icon={SplitSquareHorizontal}
-            disabled={!inPlay || busy || !canSplit}
-            loading={split.isPending}
-            onClick={() => split.mutate()}
-          />
-        </div>
-
         <DockRow scroll>
           <ChipRack
             values={chips}
@@ -375,7 +350,51 @@ function BlackjackPage() {
             onSelect={(c) => clampStake(c)}
             size={44}
           />
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <DockIconButton
+              onClick={() => dbl.mutate()}
+              disabled={!inPlay || busy || !canDouble}
+              title="Double"
+              className="font-mono text-[12px] font-black text-[var(--color-neon)]"
+            >
+              {dbl.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "2×"}
+            </DockIconButton>
+            <DockIconButton
+              onClick={() => hit.mutate()}
+              disabled={!inPlay || busy}
+              title="Hit"
+            >
+              {hit.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CopyPlus className="h-4 w-4 text-[var(--color-neon)]" />
+              )}
+            </DockIconButton>
+            <DockIconButton
+              onClick={() => stand.mutate()}
+              disabled={!inPlay || busy}
+              title="Stand"
+            >
+              {stand.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Hand className="h-4 w-4 text-[var(--color-neon)]" />
+              )}
+            </DockIconButton>
+            <DockIconButton
+              onClick={() => split.mutate()}
+              disabled={!inPlay || busy || !canSplit}
+              title="Split"
+            >
+              {split.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <SplitSquareHorizontal className="h-4 w-4 text-[var(--color-neon)]" />
+              )}
+            </DockIconButton>
+          </div>
         </DockRow>
+
 
         {!inPlay ? (
           <DockPrimary
@@ -403,47 +422,5 @@ function BlackjackPage() {
         client seed.
       </p>
     </div>
-  );
-}
-
-function ActionTile({
-  label,
-  glyph,
-  Icon,
-  onClick,
-  disabled,
-  loading,
-}: {
-  label: string;
-  glyph?: string;
-  Icon?: any;
-  onClick: () => void;
-  disabled?: boolean;
-  loading?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={cn(
-        "flex h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-xl bg-[var(--color-surface-2)] transition-colors md:h-12",
-        "hover:bg-[var(--color-surface-2)]/70 disabled:opacity-35",
-      )}
-    >
-      {loading ? (
-        <Loader2 className="h-3.5 w-3.5 animate-spin text-[var(--color-neon)]" />
-      ) : glyph ? (
-        <span className="font-mono text-[12px] font-black leading-none text-[var(--color-neon)]">
-          {glyph}
-        </span>
-      ) : (
-        Icon && <Icon className="h-4 w-4 text-[var(--color-neon)]" />
-      )}
-      <span className="text-[9px] font-bold uppercase tracking-[0.06em] text-[var(--color-ink)]">
-        {label}
-      </span>
-    </button>
-
   );
 }

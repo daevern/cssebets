@@ -39,9 +39,8 @@ function Totals({ label, value, tone }: { label: string; value: string; tone?: "
   );
 }
 
-/** Decorative casino felt: arcs, curved rule banners and a card shoe. */
+/** Minimal casino felt: soft arcs framing the play area. */
 function FeltArt() {
-  const neon = "var(--color-neon)";
   return (
     <svg
       viewBox="0 -70 1180 670"
@@ -49,33 +48,19 @@ function FeltArt() {
       className="pointer-events-none absolute inset-0 h-full w-full"
       aria-hidden="true"
     >
-      <defs>
-        <path id="bj-arc-left" d="M150,300 C185,430 350,500 590,500" fill="none" />
-        <path id="bj-arc-right" d="M590,500 C830,500 995,430 1030,300" fill="none" />
-        <path id="bj-arc-banner" d="M300,268 C420,352 760,352 880,268" fill="none" />
-      </defs>
-
       <path
         d="M62,-40 C62,340 300,520 590,520 C880,520 1118,340 1118,-40"
         fill="none"
-        stroke={neon}
-        strokeOpacity="0.28"
+        stroke="#ffffff"
+        strokeOpacity="0.16"
         strokeWidth="1.5"
       />
       <path
         d="M118,-40 C118,320 320,472 590,472 C860,472 1062,320 1062,-40"
         fill="none"
-        stroke={neon}
-        strokeOpacity="0.16"
+        stroke="#ffffff"
+        strokeOpacity="0.08"
         strokeWidth="1.5"
-      />
-      <path
-        d="M292,240 C420,332 760,332 888,240 L916,300 C775,398 405,398 264,300 Z"
-        fill="none"
-        stroke={neon}
-        strokeOpacity="0.35"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
       />
     </svg>
   );
@@ -100,7 +85,7 @@ export function BlackjackTable({
     const ro = new ResizeObserver(() => {
       const h = el.clientHeight;
       const w = el.clientWidth;
-      const byHeight = (h - 104) / 2;
+      const byHeight = (h - 160) / 2;
       const byWidth = (w - 72) / 6 / 0.7;
       const cap = w >= 700 ? 142 : 96;
       setCardH(Math.max(44, Math.min(cap, Math.floor(Math.min(byHeight, byWidth)))));
@@ -226,14 +211,26 @@ export function BlackjackTable({
   const shoeW = Math.round(cardH * 0.7);
 
   return (
-    <div ref={boxRef} className="relative h-full overflow-hidden bg-[#07130d]">
+    <div
+      ref={boxRef}
+      className="relative h-full overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(120% 90% at 50% 8%, #1c6047 0%, #12513b 42%, #0c3a2b 72%, #082a1f 100%)",
+      }}
+    >
       <FeltArt />
 
-      {/* Brand watermark sits below the dealer pill so the two never overlap. */}
-      <div className="pointer-events-none absolute left-1/2 top-[38%] flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 text-[var(--color-neon)] opacity-[0.14]">
-        <CsseMark variant="mono" className="h-7 w-7 md:h-11 md:w-11" />
-        <span className="font-display text-base font-bold tracking-tight md:text-2xl">CSSEBets</span>
+      {/* House medallion — always dead centre and never covered by cards. */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1">
+        <div className="grid h-10 w-10 place-items-center rounded-full border border-white/25 bg-black/35 backdrop-blur-[1px] md:h-14 md:w-14">
+          <CsseMark variant="mono" className="h-5 w-5 text-[var(--color-neon)] md:h-7 md:w-7" />
+        </div>
+        <span className="font-display text-[9px] font-bold uppercase tracking-[0.34em] text-white/70 md:text-[11px]">
+          CSSEBets
+        </span>
       </div>
+
 
       {/* Shoe — every card is dealt out of this stack. */}
       <div
@@ -273,10 +270,11 @@ export function BlackjackTable({
           </div>
         </div>
 
-        <div className="h-2 shrink-0" />
+        {/* Reserved centre lane for the house medallion. */}
+        <div className="h-16 shrink-0 md:h-20" />
 
         {/* Player */}
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-end gap-1">
           <div className="flex max-w-full flex-wrap items-start justify-center gap-3 md:gap-4">
             {playerHands.map((ph) => {
               const handCards = cards.filter((c) => c.playerHandId === ph.id);
