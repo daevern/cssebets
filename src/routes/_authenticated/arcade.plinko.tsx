@@ -263,7 +263,17 @@ function PlinkoPage() {
             onRowsChange={(r) => setRows(r as RowsCount)}
             controlsDisabled={locked}
           />
+          {/* Soft edge fade so the cabinet dissolves into the page instead of ending in a hard box. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-16 md:hidden"
+            style={{
+              background:
+                "linear-gradient(to bottom, rgba(7,8,13,0) 0%, rgba(7,8,13,0.55) 55%, rgba(7,8,13,0.95) 100%)",
+            }}
+          />
         </div>
+
 
 
         <div className="mt-2 flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
