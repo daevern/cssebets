@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 export function ArcadeStage({
   children,
   className,
-  minScale = 0.5,
+  minScale = 0.3,
   maxScale = 1.35,
   gap = 8,
 }: {

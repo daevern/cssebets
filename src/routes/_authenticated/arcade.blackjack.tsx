@@ -255,7 +255,7 @@ function BlackjackPage() {
 
 
       <ArcadeStage>
-        <div className="relative mx-[calc(50%-50vw)] h-[360px] w-screen md:h-[520px]">
+        <div className="relative h-[360px] w-full md:h-[520px]">
           <BlackjackTable state={state} onBusyChange={handleBusy} />
         </div>
       </ArcadeStage>
