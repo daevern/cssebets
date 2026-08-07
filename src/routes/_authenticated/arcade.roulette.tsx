@@ -594,27 +594,3 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
   );
 }
 
-function IconBtn({
-  children,
-  onClick,
-  disabled,
-  title,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  disabled?: boolean;
-  title: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      aria-label={title}
-      className="grid h-9 w-9 place-items-center rounded-[4px] bg-[var(--color-surface-2)] text-[var(--color-ink)] transition-colors hover:bg-[var(--color-surface-2)]/70 disabled:opacity-35"
-    >
-      {children}
-    </button>
-  );
-}
