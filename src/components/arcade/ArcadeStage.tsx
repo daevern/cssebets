@@ -72,8 +72,9 @@ export function ArcadeStage({
 
     const handleResize = () => {
       const nextViewport = readLayoutViewport();
+      const isMobileViewport = window.matchMedia("(pointer: coarse)").matches;
       const widthChanged = Math.abs(nextViewport.width - viewportRef.current.width) > 40;
-      if (widthChanged) viewportRef.current = nextViewport;
+      if (!isMobileViewport || widthChanged) viewportRef.current = nextViewport;
       schedule();
     };
 
