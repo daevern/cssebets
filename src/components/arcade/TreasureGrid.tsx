@@ -79,7 +79,8 @@ function TreasureGridImpl({
               disabled={disabled || isOpen || pending}
               onClick={() => onReveal(i)}
               className={cn(
-                "group relative aspect-square select-none overflow-hidden rounded-xl transition-all duration-150 [contain:paint]",
+                "group relative aspect-square select-none rounded-xl transition-all duration-150",
+                mine === "TRAP" ? "z-10 overflow-visible" : "overflow-hidden [contain:paint]",
                 "grid place-items-center active:scale-[0.94]",
                 !isOpen && !disabled && "hover:brightness-125",
                 pending && "animate-pulse",
@@ -88,16 +89,17 @@ function TreasureGridImpl({
                 background: mine
                   ? mine === "SAFE"
                     ? "linear-gradient(180deg, #ff5ea8 0%, #b4247a 100%)"
-                    : "linear-gradient(180deg, #ff5a4d 0%, #8c1509 100%)"
+                    : "radial-gradient(70% 70% at 50% 50%, #3a0d12 0%, #1a0509 100%)"
                   : exposed
                     ? "linear-gradient(180deg, #4a1f2c 0%, #2a0f18 100%)"
                     : "linear-gradient(180deg, #9c53f0 0%, #5a1fb0 55%, #3d128a 100%)",
                 boxShadow: mine
                   ? mine === "SAFE"
                     ? "0 0 22px -4px rgba(255,94,168,0.9), inset 0 1px 0 rgba(255,255,255,0.4)"
-                    : "0 0 22px -4px rgba(255,90,77,0.8), inset 0 1px 0 rgba(255,255,255,0.25)"
+                    : "0 0 34px -6px rgba(255,26,58,0.85), inset 0 0 14px rgba(0,0,0,0.7)"
                     : "inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -3px 6px rgba(0,0,0,0.35)",
                 opacity: exposed ? 0.65 : 1,
+                animation: mine === "TRAP" ? "tshake 420ms ease-in-out" : undefined,
               }}
             >
               {/* glossy top highlight */}
