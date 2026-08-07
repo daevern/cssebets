@@ -2,13 +2,11 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { HelpCircle, Zap, Flame, Gem, Spade, Swords } from "lucide-react";
 import { HowToPlayDialog, HOW_TO_PLAY } from "@/components/arcade/HowToPlayDialog";
-import {
-  PlinkoArt,
-  RouletteArt,
-  TreasureArt,
-  BlackjackArt,
-  RpsArt,
-} from "@/components/arcade/GameArt";
+import plinkoPoster from "@/assets/arcade/plinko-poster.jpg";
+import roulettePoster from "@/assets/arcade/roulette-poster.jpg";
+import treasurePoster from "@/assets/arcade/treasure-poster.jpg";
+import blackjackPoster from "@/assets/arcade/blackjack-poster.jpg";
+import rpsPoster from "@/assets/arcade/rps-poster.jpg";
 
 export const Route = createFileRoute("/_authenticated/arcade/")({
   head: () => ({
@@ -38,11 +36,8 @@ const GAMES = [
     label: "Plinko",
     tag: "Up to 1000x",
     TagIcon: Zap,
-    Art: PlinkoArt,
-    art: "text-[var(--color-neon)]",
-    grad: "from-[color-mix(in_oklab,var(--color-neon)_38%,#0b0e12)] to-[#0b0e12]",
-    glow: "bg-[var(--color-neon)]/35",
-    ring: "hover:border-[var(--color-neon)]/70",
+    poster: plinkoPoster,
+    accent: "34 224 107",
   },
   {
     key: "roulette" as const,
@@ -50,11 +45,8 @@ const GAMES = [
     label: "Roulette",
     tag: "37 pockets",
     TagIcon: Flame,
-    Art: RouletteArt,
-    art: "text-rose-300",
-    grad: "from-rose-500/45 to-[#0b0e12]",
-    glow: "bg-rose-500/35",
-    ring: "hover:border-rose-400/70",
+    poster: roulettePoster,
+    accent: "244 63 94",
   },
   {
     key: "treasure" as const,
@@ -62,11 +54,8 @@ const GAMES = [
     label: "Treasure Grid",
     tag: "Cash out anytime",
     TagIcon: Gem,
-    Art: TreasureArt,
-    art: "text-amber-200",
-    grad: "from-amber-400/40 to-[#0b0e12]",
-    glow: "bg-amber-400/35",
-    ring: "hover:border-amber-400/70",
+    poster: treasurePoster,
+    accent: "251 191 36",
   },
   {
     key: "blackjack" as const,
@@ -74,11 +63,8 @@ const GAMES = [
     label: "Blackjack",
     tag: "Pays 3:2",
     TagIcon: Spade,
-    Art: BlackjackArt,
-    art: "text-sky-200",
-    grad: "from-sky-500/40 to-[#0b0e12]",
-    glow: "bg-sky-400/35",
-    ring: "hover:border-sky-400/70",
+    poster: blackjackPoster,
+    accent: "56 130 246",
   },
   {
     key: "rps" as const,
@@ -86,11 +72,8 @@ const GAMES = [
     label: "Rock Paper Scissors",
     tag: "Instant reveal",
     TagIcon: Swords,
-    Art: RpsArt,
-    art: "text-cyan-200",
-    grad: "from-cyan-400/40 to-[#0b0e12]",
-    glow: "bg-cyan-400/35",
-    ring: "hover:border-cyan-400/70",
+    poster: rpsPoster,
+    accent: "34 211 238",
   },
 ];
 
@@ -104,38 +87,55 @@ function ArcadeLobby() {
       </h1>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {GAMES.map(({ key, to, label, tag, TagIcon, Art, art, grad, glow, ring }) => (
+        {GAMES.map(({ key, to, label, tag, TagIcon, poster, accent }) => (
           <article key={key} className="group relative">
             <Link
               to={to}
               aria-label={`Play ${label}`}
-              className={`relative flex aspect-[3/4] flex-col overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-gradient-to-b ${grad} ${ring} transition-transform duration-300 hover:-translate-y-1`}
+              className="relative block aspect-[3/4] overflow-hidden rounded-2xl border border-white/10 bg-[#05070a] transition-transform duration-300 hover:-translate-y-1"
+              style={{ boxShadow: `0 10px 30px -14px rgba(${accent} / 0.55)` }}
             >
-              {/* soft halo behind the art */}
-              <div
-                className={`pointer-events-none absolute left-1/2 top-[34%] h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl ${glow}`}
+              <img
+                src={poster}
+                alt={`${label} game poster`}
+                width={768}
+                height={1024}
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.07]"
               />
 
-              <span className="absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-full bg-black/45 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.16em] text-white backdrop-blur">
-                <TagIcon className="h-2.5 w-2.5" />
+              {/* bottom scrim for the title plate */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(to top, rgba(3,5,8,0.95) 0%, rgba(3,5,8,0.7) 22%, rgba(3,5,8,0.05) 52%, rgba(3,5,8,0.35) 100%)",
+                }}
+              />
+
+              {/* accent edge light */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 bottom-[62px] h-px opacity-70"
+                style={{
+                  background: `linear-gradient(90deg, transparent, rgb(${accent}), transparent)`,
+                }}
+              />
+
+              <span className="absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/55 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.16em] text-white backdrop-blur">
+                <TagIcon className="h-2.5 w-2.5" style={{ color: `rgb(${accent})` }} />
                 {tag}
               </span>
 
-              {/* game art */}
-              <div
-                className={`relative flex flex-1 items-center justify-center px-3 pt-7 ${art}`}
-              >
-                <div className="w-full overflow-hidden rounded-xl transition-transform duration-500 group-hover:scale-[1.06]">
-                  <Art />
-                </div>
-              </div>
-
-              {/* footer plate */}
-              <div className="relative z-10 px-2 pb-3 text-center">
-                <h2 className="text-[12px] font-black uppercase leading-tight tracking-[0.1em] text-white">
+              <div className="absolute inset-x-0 bottom-0 z-10 px-2.5 pb-3 text-center">
+                <h2 className="text-[13px] font-black uppercase leading-tight tracking-[0.06em] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
                   {label}
                 </h2>
-                <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.28em] text-white/55">
+                <p
+                  className="mt-1 text-[8px] font-black uppercase tracking-[0.34em]"
+                  style={{ color: `rgb(${accent} / 0.85)` }}
+                >
                   cssebets
                 </p>
               </div>
@@ -145,7 +145,7 @@ function ArcadeLobby() {
               type="button"
               onClick={() => setHowTo(key)}
               aria-label={`How to play ${label}`}
-              className="absolute right-2 top-2 z-20 grid h-6 w-6 place-items-center rounded-full bg-black/45 text-white backdrop-blur transition-colors hover:bg-black/70"
+              className="absolute right-2 top-2 z-20 grid h-6 w-6 place-items-center rounded-full border border-white/15 bg-black/55 text-white backdrop-blur transition-colors hover:bg-black/80"
             >
               <HelpCircle className="h-3.5 w-3.5" />
             </button>
@@ -161,4 +161,3 @@ function ArcadeLobby() {
     </div>
   );
 }
-
