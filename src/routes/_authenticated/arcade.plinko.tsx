@@ -236,7 +236,7 @@ function PlinkoPage() {
 
 
       <div className="relative flex flex-1 flex-col justify-center">
-        <div className="relative w-full">
+        <div className="relative w-full overflow-hidden rounded-2xl shadow-[0_0_50px_-18px_rgba(90,110,255,0.9)]">
           <PlinkoBoard
             rows={rows}
             slots={slots}
