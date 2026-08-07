@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { HelpCircle } from "lucide-react";
 import { HowToPlayDialog, HOW_TO_PLAY } from "@/components/arcade/HowToPlayDialog";
+import { CsseWordmark } from "@/components/brand/CsseMark";
 import tilePlinko from "@/assets/arcade/tile-plinko.jpg";
 import tileRoulette from "@/assets/arcade/tile-roulette.jpg";
 import tileTreasure from "@/assets/arcade/tile-treasure.jpg";
@@ -42,8 +43,9 @@ function ArcadeLobby() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-black uppercase tracking-[0.14em] text-[var(--color-ink)]">
-        CSSEbets Classic&rsquo;s
+      <h1 className="flex items-baseline gap-2 text-lg font-black uppercase tracking-[0.14em] text-[var(--color-ink)]">
+        <CsseWordmark size={20} />
+        <span>Classic&rsquo;s</span>
       </h1>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -76,9 +78,9 @@ function ArcadeLobby() {
                 <h2 className="text-[13px] font-black uppercase leading-[1.15] tracking-[0.02em] text-white">
                   {label}
                 </h2>
-                <p className="mt-1 text-[8px] font-bold uppercase tracking-[0.3em] text-white/60">
-                  cssebets
-                </p>
+                <div className="mt-1 flex justify-center">
+                  <CsseWordmark size={9} className="opacity-90" />
+                </div>
               </div>
             </Link>
 
