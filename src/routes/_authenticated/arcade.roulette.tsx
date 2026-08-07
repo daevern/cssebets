@@ -24,6 +24,7 @@ import {
   type BetTypeKey,
 } from "@/lib/arcade/roulette-math";
 import { cn } from "@/lib/utils";
+import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 
 export const Route = createFileRoute("/_authenticated/arcade/roulette")({
   head: () => ({
@@ -317,6 +318,7 @@ function RoulettePage() {
       )}
 
       {/* Curved casino table: felt head arcs around the wheel, betting layout flows out of it */}
+      <ArcadeStage>
       <div
         className="relative border shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)]"
         style={{
@@ -424,6 +426,7 @@ function RoulettePage() {
           </div>
         </div>
       </div>
+      </ArcadeStage>
 
 
 

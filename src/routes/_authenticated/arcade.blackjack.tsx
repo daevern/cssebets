@@ -10,6 +10,7 @@ import {
   SplitSquareHorizontal,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 import { BlackjackTable, type BlackjackState } from "@/components/arcade/BlackjackTable";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import {
@@ -253,9 +254,11 @@ function BlackjackPage() {
       )}
 
 
-      <div className="relative mx-[calc(50%-50vw)] h-[320px] w-screen md:h-[520px]">
-        <BlackjackTable state={state} onBusyChange={handleBusy} />
-      </div>
+      <ArcadeStage>
+        <div className="relative mx-[calc(50%-50vw)] h-[360px] w-screen md:h-[520px]">
+          <BlackjackTable state={state} onBusyChange={handleBusy} />
+        </div>
+      </ArcadeStage>
 
       {lastResult && (
         <div className="hidden shrink-0 items-center justify-between gap-2 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-3 py-1.5 md:flex">

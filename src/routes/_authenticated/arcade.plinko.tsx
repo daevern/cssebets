@@ -22,6 +22,7 @@ import {
 
 } from "@/components/arcade/ControlDock";
 import { cn } from "@/lib/utils";
+import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 
 export const Route = createFileRoute("/_authenticated/arcade/plinko")({
   head: () => ({
@@ -235,7 +236,8 @@ function PlinkoPage() {
       </div>
 
 
-      <div className="relative flex flex-1 flex-col justify-center">
+      <ArcadeStage>
+        <div className="relative flex flex-col justify-start">
         <div className="arcade-stage relative w-full overflow-hidden rounded-2xl shadow-[0_0_50px_-18px_rgba(90,110,255,0.9)]">
           <PlinkoBoard
             rows={rows}
@@ -309,6 +311,7 @@ function PlinkoPage() {
           )}
         </div>
       </div>
+      </ArcadeStage>
 
 
       <VerifyDialog open={verifyOpen} onOpenChange={setVerifyOpen} gameId={lastGame?.id ?? null} />
