@@ -7,7 +7,7 @@ import { ShieldCheck, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TreasureGrid } from "@/components/arcade/TreasureGrid";
 import { ChipRack } from "@/components/arcade/ChipRack";
-import { ControlDock, DockPrimary, DockReadout, DockRow, DockSeg } from "@/components/arcade/ControlDock";
+import { ControlDock, DockPrimary, DockReadout, DockRow } from "@/components/arcade/ControlDock";
 import { TreasureVerifyDialog } from "@/components/arcade/TreasureVerifyDialog";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import {
