@@ -329,39 +329,39 @@ function BlackjackPage() {
             onSelect={(c) => clampStake(c)}
             size={44}
           />
+          <div className="mx-1 h-8 w-px shrink-0 bg-[var(--color-surface-border)]" />
+          <div className="flex shrink-0 items-center gap-1.5">
+            <ActionBtn
+              label="2×"
+              title="Double"
+              onClick={() => dbl.mutate()}
+              disabled={!inPlay || busy || !canDouble}
+              loading={dbl.isPending}
+              icon={<span className="font-mono text-[13px] font-black">2×</span>}
+            />
+            <ActionBtn
+              label="Hit"
+              onClick={() => hit.mutate()}
+              disabled={!inPlay || busy}
+              loading={hit.isPending}
+              icon={<CopyPlus className="h-4 w-4" />}
+            />
+            <ActionBtn
+              label="Stand"
+              onClick={() => stand.mutate()}
+              disabled={!inPlay || busy}
+              loading={stand.isPending}
+              icon={<Hand className="h-4 w-4" />}
+            />
+            <ActionBtn
+              label="Split"
+              onClick={() => split.mutate()}
+              disabled={!inPlay || busy || !canSplit}
+              loading={split.isPending}
+              icon={<SplitSquareHorizontal className="h-4 w-4" />}
+            />
+          </div>
         </DockRow>
-
-
-        <div className="grid grid-cols-4 gap-1.5">
-          <ActionBtn
-            label="Double"
-            onClick={() => dbl.mutate()}
-            disabled={!inPlay || busy || !canDouble}
-            loading={dbl.isPending}
-            icon={<span className="font-mono text-[13px] font-black">2×</span>}
-          />
-          <ActionBtn
-            label="Hit"
-            onClick={() => hit.mutate()}
-            disabled={!inPlay || busy}
-            loading={hit.isPending}
-            icon={<CopyPlus className="h-4 w-4" />}
-          />
-          <ActionBtn
-            label="Stand"
-            onClick={() => stand.mutate()}
-            disabled={!inPlay || busy}
-            loading={stand.isPending}
-            icon={<Hand className="h-4 w-4" />}
-          />
-          <ActionBtn
-            label="Split"
-            onClick={() => split.mutate()}
-            disabled={!inPlay || busy || !canSplit}
-            loading={split.isPending}
-            icon={<SplitSquareHorizontal className="h-4 w-4" />}
-          />
-        </div>
 
         {!inPlay ? (
           <DockPrimary
@@ -385,12 +385,14 @@ function BlackjackPage() {
 
 function ActionBtn({
   label,
+  title,
   icon,
   onClick,
   disabled,
   loading,
 }: {
   label: string;
+  title?: string;
   icon: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
@@ -401,16 +403,17 @@ function ActionBtn({
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
-      title={label}
+      title={title ?? label}
       className={cn(
-        "flex h-[44px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-neon)] transition active:scale-[0.97]",
+        "flex h-11 w-11 shrink-0 flex-col items-center justify-center gap-0 rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-neon)] transition active:scale-[0.97]",
         (disabled || loading) && "pointer-events-none opacity-40",
       )}
     >
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
-      <span className="font-display text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--color-ink)]">
+      <span className="font-display text-[8px] font-bold uppercase tracking-[0.1em] text-[var(--color-ink)]">
         {label}
       </span>
     </button>
   );
 }
+
