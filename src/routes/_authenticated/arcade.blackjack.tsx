@@ -14,7 +14,7 @@ import { BlackjackTable, type BlackjackState } from "@/components/arcade/Blackja
 import { ChipRack } from "@/components/arcade/ChipRack";
 import {
   ControlDock,
-  DockIconButton,
+  
   DockNote,
   DockPrimary,
   DockRow,
@@ -243,28 +243,8 @@ function BlackjackPage() {
         />
       </div>
 
-      {rules && (
-        <div className="shrink-0 overflow-x-auto">
-          <div className="flex min-w-max items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-            {[
-              `${rules.deck_count} decks`,
-              rules.dealer_hits_soft_17 ? "Dealer hits soft 17" : "Dealer stands soft 17",
-              rules.dealer_peek ? "Peek" : "No peek (ENHC)",
-              rules.double_after_split ? "DAS" : "No DAS",
-              `Split to ${rules.max_split_hands}`,
-              `Blackjack pays ${Number(rules.blackjack_payout) === 1.5 ? "3:2" : Number(rules.blackjack_payout) === 1.3333 || Math.abs(Number(rules.blackjack_payout) - 4 / 3) < 0.01 ? "4:3" : `${Number(rules.blackjack_payout)}x`}`,
-              `Rules v${rules.version}`,
-            ].map((chip) => (
-              <span
-                key={chip}
-                className="rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2 py-1"
-              >
-                {chip}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+
+
 
       {rules?.maintenance_mode && (
         <div className="shrink-0 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-[11px] text-amber-300">
@@ -349,51 +329,39 @@ function BlackjackPage() {
             onSelect={(c) => clampStake(c)}
             size={44}
           />
-          <div className="ml-auto flex shrink-0 items-center gap-1">
-            <DockIconButton
-              onClick={() => dbl.mutate()}
-              disabled={!inPlay || busy || !canDouble}
-              title="Double"
-              className="font-mono text-[12px] font-black text-[var(--color-neon)]"
-            >
-              {dbl.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "2×"}
-            </DockIconButton>
-            <DockIconButton
-              onClick={() => hit.mutate()}
-              disabled={!inPlay || busy}
-              title="Hit"
-            >
-              {hit.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <CopyPlus className="h-4 w-4 text-[var(--color-neon)]" />
-              )}
-            </DockIconButton>
-            <DockIconButton
-              onClick={() => stand.mutate()}
-              disabled={!inPlay || busy}
-              title="Stand"
-            >
-              {stand.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Hand className="h-4 w-4 text-[var(--color-neon)]" />
-              )}
-            </DockIconButton>
-            <DockIconButton
-              onClick={() => split.mutate()}
-              disabled={!inPlay || busy || !canSplit}
-              title="Split"
-            >
-              {split.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <SplitSquareHorizontal className="h-4 w-4 text-[var(--color-neon)]" />
-              )}
-            </DockIconButton>
-          </div>
         </DockRow>
 
+
+        <div className="grid grid-cols-4 gap-1.5">
+          <ActionBtn
+            label="Double"
+            onClick={() => dbl.mutate()}
+            disabled={!inPlay || busy || !canDouble}
+            loading={dbl.isPending}
+            icon={<span className="font-mono text-[13px] font-black">2×</span>}
+          />
+          <ActionBtn
+            label="Hit"
+            onClick={() => hit.mutate()}
+            disabled={!inPlay || busy}
+            loading={hit.isPending}
+            icon={<CopyPlus className="h-4 w-4" />}
+          />
+          <ActionBtn
+            label="Stand"
+            onClick={() => stand.mutate()}
+            disabled={!inPlay || busy}
+            loading={stand.isPending}
+            icon={<Hand className="h-4 w-4" />}
+          />
+          <ActionBtn
+            label="Split"
+            onClick={() => split.mutate()}
+            disabled={!inPlay || busy || !canSplit}
+            loading={split.isPending}
+            icon={<SplitSquareHorizontal className="h-4 w-4" />}
+          />
+        </div>
 
         {!inPlay ? (
           <DockPrimary
@@ -401,7 +369,7 @@ function BlackjackPage() {
             disabled={!canDeal}
             loading={deal.isPending}
           >
-            {settled ? "DEAL AGAIN" : `PLACE BET · ${stake.toLocaleString()} pts`}
+            {settled ? "DEAL AGAIN" : "PLAY"}
           </DockPrimary>
         ) : (
           <div className="flex h-[52px] w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--color-ink-muted)]">
@@ -411,12 +379,38 @@ function BlackjackPage() {
 
         {balance < stake && !inPlay && <DockNote>Not enough points for this stake</DockNote>}
       </ControlDock>
-
-
-      <p className="hidden text-center text-[10px] leading-relaxed text-[var(--color-ink-muted)] md:block">
-        Played with wallet points. Every shoe is shuffled from a committed server seed and your
-        client seed.
-      </p>
     </div>
+  );
+}
+
+function ActionBtn({
+  label,
+  icon,
+  onClick,
+  disabled,
+  loading,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || loading}
+      title={label}
+      className={cn(
+        "flex h-[44px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-neon)] transition active:scale-[0.97]",
+        (disabled || loading) && "pointer-events-none opacity-40",
+      )}
+    >
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
+      <span className="font-display text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--color-ink)]">
+        {label}
+      </span>
+    </button>
   );
 }
