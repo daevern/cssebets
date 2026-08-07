@@ -39,9 +39,8 @@ function Totals({ label, value, tone }: { label: string; value: string; tone?: "
   );
 }
 
-/** Decorative casino felt: arcs, curved rule banners and a card shoe. */
+/** Minimal casino felt: soft arcs framing the play area. */
 function FeltArt() {
-  const neon = "var(--color-neon)";
   return (
     <svg
       viewBox="0 -70 1180 670"
@@ -49,33 +48,19 @@ function FeltArt() {
       className="pointer-events-none absolute inset-0 h-full w-full"
       aria-hidden="true"
     >
-      <defs>
-        <path id="bj-arc-left" d="M150,300 C185,430 350,500 590,500" fill="none" />
-        <path id="bj-arc-right" d="M590,500 C830,500 995,430 1030,300" fill="none" />
-        <path id="bj-arc-banner" d="M300,268 C420,352 760,352 880,268" fill="none" />
-      </defs>
-
       <path
         d="M62,-40 C62,340 300,520 590,520 C880,520 1118,340 1118,-40"
         fill="none"
-        stroke={neon}
-        strokeOpacity="0.28"
+        stroke="#ffffff"
+        strokeOpacity="0.16"
         strokeWidth="1.5"
       />
       <path
         d="M118,-40 C118,320 320,472 590,472 C860,472 1062,320 1062,-40"
         fill="none"
-        stroke={neon}
-        strokeOpacity="0.16"
+        stroke="#ffffff"
+        strokeOpacity="0.08"
         strokeWidth="1.5"
-      />
-      <path
-        d="M292,240 C420,332 760,332 888,240 L916,300 C775,398 405,398 264,300 Z"
-        fill="none"
-        stroke={neon}
-        strokeOpacity="0.35"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
       />
     </svg>
   );
