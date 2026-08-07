@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { BlackjackTable, type BlackjackState } from "@/components/arcade/BlackjackTable";
 import { ChipRack } from "@/components/arcade/ChipRack";
+import { ControlDock, DockNote, DockPrimary, DockRow } from "@/components/arcade/ControlDock";
 import { BlackjackVerifyDialog } from "@/components/arcade/BlackjackVerifyDialog";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import {

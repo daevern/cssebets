@@ -14,6 +14,7 @@ import { RouletteVerifyDialog } from "@/components/arcade/RouletteVerifyDialog";
 import { RouletteWheel } from "@/components/arcade/RouletteWheel";
 import { RouletteBoard } from "@/components/arcade/RouletteBoard";
 import { ChipRack } from "@/components/arcade/ChipRack";
+import { ControlDock, DockIconButton, DockNote, DockPrimary, DockRow } from "@/components/arcade/ControlDock";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import {
   positionKey,
