@@ -39,7 +39,9 @@ export function ArcadeStage({
 
       const dock = document.querySelector("[data-arcade-console]") as HTMLElement | null;
       const dockH = dock?.offsetHeight ?? 0;
-      const top = outer.getBoundingClientRect().top;
+      // Document-relative top so scrolling never changes the measured space
+      // (viewport-relative top shrinks as you scroll, which zoomed the game).
+      const top = outer.getBoundingClientRect().top + window.scrollY;
       const space = Math.max(160, Math.round(window.innerHeight - top - dockH - gap));
 
       const naturalH = inner.offsetHeight || 1;
