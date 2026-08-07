@@ -24,7 +24,6 @@ import {
   type BetTypeKey,
 } from "@/lib/arcade/roulette-math";
 import { cn } from "@/lib/utils";
-import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 
 export const Route = createFileRoute("/_authenticated/arcade/roulette")({
   head: () => ({
