@@ -14,7 +14,7 @@ import { BlackjackTable, type BlackjackState } from "@/components/arcade/Blackja
 import { ChipRack } from "@/components/arcade/ChipRack";
 import {
   ControlDock,
-  DockIconButton,
+  
   DockNote,
   DockPrimary,
   DockRow,
