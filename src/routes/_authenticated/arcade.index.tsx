@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Play, HelpCircle, Zap, Flame, Gem, Spade, Swords } from "lucide-react";
+import { HelpCircle, Zap, Flame, Gem, Spade, Swords } from "lucide-react";
 import { HowToPlayDialog, HOW_TO_PLAY } from "@/components/arcade/HowToPlayDialog";
 import {
   PlinkoArt,
@@ -36,66 +36,61 @@ const GAMES = [
     key: "plinko" as const,
     to: "/arcade/plinko",
     label: "Plinko",
-    blurb: "Drop the ball, ride the bounce into a multiplier bucket.",
     tag: "Up to 1000x",
     TagIcon: Zap,
     Art: PlinkoArt,
     art: "text-[var(--color-neon)]",
-    frame: "from-[var(--color-neon)]/18 via-[var(--color-surface)]/0 to-transparent",
+    grad: "from-[color-mix(in_oklab,var(--color-neon)_38%,#0b0e12)] to-[#0b0e12]",
+    glow: "bg-[var(--color-neon)]/35",
     ring: "hover:border-[var(--color-neon)]/70",
-    cta: "bg-[var(--color-neon)] text-[var(--color-bg)]",
   },
   {
     key: "roulette" as const,
     to: "/arcade/roulette",
     label: "Roulette",
-    blurb: "Stack chips across the layout, one pocket decides it all.",
     tag: "37 pockets",
     TagIcon: Flame,
     Art: RouletteArt,
     art: "text-rose-300",
-    frame: "from-rose-500/20 via-[var(--color-surface)]/0 to-transparent",
+    grad: "from-rose-500/45 to-[#0b0e12]",
+    glow: "bg-rose-500/35",
     ring: "hover:border-rose-400/70",
-    cta: "bg-rose-500 text-white",
   },
   {
     key: "treasure" as const,
     to: "/arcade/treasure",
     label: "Treasure Grid",
-    blurb: "Flip safe tiles, grow the multiplier, bank it before a trap.",
     tag: "Cash out anytime",
     TagIcon: Gem,
     Art: TreasureArt,
     art: "text-amber-200",
-    frame: "from-amber-400/20 via-[var(--color-surface)]/0 to-transparent",
+    grad: "from-amber-400/40 to-[#0b0e12]",
+    glow: "bg-amber-400/35",
     ring: "hover:border-amber-400/70",
-    cta: "bg-amber-400 text-[#2a1500]",
   },
   {
     key: "blackjack" as const,
     to: "/arcade/blackjack",
     label: "Blackjack",
-    blurb: "Stake your points against the dealer. Hit 21, get paid 3:2.",
-    tag: "Free to play",
+    tag: "Pays 3:2",
     TagIcon: Spade,
     Art: BlackjackArt,
     art: "text-sky-200",
-    frame: "from-sky-400/20 via-[var(--color-surface)]/0 to-transparent",
+    grad: "from-sky-500/40 to-[#0b0e12]",
+    glow: "bg-sky-400/35",
     ring: "hover:border-sky-400/70",
-    cta: "bg-sky-400 text-[#04121c]",
   },
   {
     key: "rps" as const,
     to: "/arcade/rps",
-    label: "Rock–Paper–Scissors",
-    blurb: "The computer commits its move first. Pick yours, both reveal at once.",
-    tag: "Simultaneous reveal",
+    label: "Rock Paper Scissors",
+    tag: "Instant reveal",
     TagIcon: Swords,
     Art: RpsArt,
     art: "text-cyan-200",
-    frame: "from-cyan-400/20 via-[var(--color-surface)]/0 to-transparent",
+    grad: "from-cyan-400/40 to-[#0b0e12]",
+    glow: "bg-cyan-400/35",
     ring: "hover:border-cyan-400/70",
-    cta: "bg-cyan-400 text-[#04161c]",
   },
 ];
 
@@ -108,53 +103,52 @@ function ArcadeLobby() {
         CSSEbets Classic&rsquo;s
       </h1>
 
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        {GAMES.map(({ key, to, label, tag, TagIcon, Art, art, grad, glow, ring }) => (
+          <article key={key} className="group relative">
+            <Link
+              to={to}
+              aria-label={`Play ${label}`}
+              className={`relative flex aspect-[3/4] flex-col overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-gradient-to-b ${grad} ${ring} transition-transform duration-300 hover:-translate-y-1`}
+            >
+              {/* soft halo behind the art */}
+              <div
+                className={`pointer-events-none absolute left-1/2 top-[34%] h-28 w-28 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl ${glow}`}
+              />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {GAMES.map(({ key, to, label, blurb, tag, TagIcon, Art, art, frame, ring, cta }) => (
-          <article
-            key={key}
-            className={`group relative overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface)]/70 transition-colors ${ring}`}
-          >
-            <div className={`pointer-events-none absolute inset-0 bg-gradient-to-b ${frame}`} />
+              <span className="absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-full bg-black/45 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.16em] text-white backdrop-blur">
+                <TagIcon className="h-2.5 w-2.5" />
+                {tag}
+              </span>
 
-            <div className="relative flex h-full flex-col p-3">
-              <Link
-                to={to}
-                aria-label={`Play ${label}`}
-                className={`relative block aspect-[16/10] overflow-hidden rounded-xl border border-[var(--color-surface-border)] bg-[#0b0e12] ${art}`}
+              {/* game art */}
+              <div
+                className={`relative flex flex-1 items-center justify-center px-3 pt-7 ${art}`}
               >
-                <div className="absolute inset-0 transition-transform duration-500 group-hover:scale-[1.06]">
+                <div className="w-full overflow-hidden rounded-xl transition-transform duration-500 group-hover:scale-[1.06]">
                   <Art />
                 </div>
-                <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] text-white backdrop-blur">
-                  <TagIcon className="h-3 w-3" />
-                  {tag}
-                </span>
-              </Link>
-
-              <h2 className="mt-3 text-sm font-black uppercase tracking-[0.16em] text-[var(--color-ink)]">
-                {label}
-              </h2>
-              <p className="mt-1 flex-1 text-xs leading-relaxed text-[var(--color-ink-muted)]">
-                {blurb}
-              </p>
-
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <Link
-                  to={to}
-                  className={`inline-flex h-10 items-center justify-center gap-1.5 rounded-lg text-[11px] font-black uppercase tracking-[0.16em] transition-opacity hover:opacity-90 ${cta}`}
-                >
-                  <Play className="h-3.5 w-3.5" /> Play
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setHowTo(key)}
-                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-[var(--color-surface-border)] text-[11px] font-black uppercase tracking-[0.16em] text-[var(--color-ink)] transition-colors hover:border-[var(--color-ink)]"
-                >
-                  <HelpCircle className="h-3.5 w-3.5" /> How to play
-                </button>
               </div>
-            </div>
+
+              {/* footer plate */}
+              <div className="relative z-10 px-2 pb-3 text-center">
+                <h2 className="text-[12px] font-black uppercase leading-tight tracking-[0.1em] text-white">
+                  {label}
+                </h2>
+                <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.28em] text-white/55">
+                  cssebets
+                </p>
+              </div>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setHowTo(key)}
+              aria-label={`How to play ${label}`}
+              className="absolute right-2 top-2 z-20 grid h-6 w-6 place-items-center rounded-full bg-black/45 text-white backdrop-blur transition-colors hover:bg-black/70"
+            >
+              <HelpCircle className="h-3.5 w-3.5" />
+            </button>
           </article>
         ))}
       </div>
@@ -167,3 +161,4 @@ function ArcadeLobby() {
     </div>
   );
 }
+
