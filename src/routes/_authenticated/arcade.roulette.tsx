@@ -463,118 +463,114 @@ function RoulettePage() {
       />
 
       {/* Sticky bet slip + spin */}
-      <div data-arcade-console className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-0">
-        <div className="mx-auto w-full max-w-4xl space-y-2 px-3 py-2">
-          {slipOpen && positions.length > 0 && (
-            <div className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-2">
-              {positions.map((p) => {
-                const key = positionKey(p.bet_type, p.pockets);
-                return (
-                  <div
-                    key={key}
-                    className="flex items-center gap-2 text-[11px] text-[var(--color-ink)]"
+      <ControlDock>
+        {slipOpen && positions.length > 0 && (
+          <div className="max-h-40 space-y-1 overflow-y-auto rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-2">
+            {positions.map((p) => {
+              const key = positionKey(p.bet_type, p.pockets);
+              return (
+                <div
+                  key={key}
+                  className="flex items-center gap-2 text-[11px] text-[var(--color-ink)]"
+                >
+                  <span className="truncate">{p.label}</span>
+                  <span className="ml-auto shrink-0 font-display font-bold tabular-nums text-[var(--color-neon)]">
+                    {fmt(p.stake)}
+                  </span>
+                  <span className="shrink-0 text-[9px] uppercase tracking-[0.12em] text-[var(--color-ink-muted)]">
+                    ×{returnMultiplier(p.pockets.length).toFixed(2)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeOne(key)}
+                    disabled={spinning}
+                    className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
+                    aria-label={`Remove ${chip} from ${p.label}`}
                   >
-                    <span className="truncate">{p.label}</span>
-                    <span className="ml-auto shrink-0 font-display font-bold tabular-nums text-[var(--color-neon)]">
-                      {fmt(p.stake)}
-                    </span>
-                    <span className="shrink-0 text-[9px] uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
-                      ×{returnMultiplier(p.pockets.length).toFixed(2)}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeOne(key)}
-                      disabled={spinning}
-                      className="grid h-5 w-5 shrink-0 place-items-center rounded-md border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
-                      aria-label={`Remove ${chip} from ${p.label}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-        <div className="flex items-center gap-2 overflow-x-auto overflow-y-visible px-1 py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <DockRow scroll>
           <ChipRack values={chips} value={chip} onSelect={(c) => setChip(c)} size={44} />
-          <div className="ml-auto flex shrink-0 gap-1">
-            <IconBtn onClick={undo} disabled={spinning || !history.length} title="Undo">
-              <Undo2 className="h-3.5 w-3.5" />
-            </IconBtn>
-            <IconBtn onClick={clearAll} disabled={spinning || !positions.length} title="Clear all">
-              <Trash2 className="h-3.5 w-3.5" />
-            </IconBtn>
-            <IconBtn onClick={repeat} disabled={spinning || !lastConfirmed.length} title="Repeat bets">
-              <RotateCcw className="h-3.5 w-3.5" />
-            </IconBtn>
-            <button
-              type="button"
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <DockIconButton onClick={undo} disabled={spinning || !history.length} title="Undo">
+              <Undo2 className="h-4 w-4" />
+            </DockIconButton>
+            <DockIconButton
+              onClick={clearAll}
+              disabled={spinning || !positions.length}
+              title="Clear all"
+            >
+              <Trash2 className="h-4 w-4" />
+            </DockIconButton>
+            <DockIconButton
+              onClick={repeat}
+              disabled={spinning || !lastConfirmed.length}
+              title="Repeat bets"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </DockIconButton>
+            <DockIconButton
               onClick={doubleBets}
               disabled={spinning || !positions.length || totalStake * 2 > balance}
-              className="grid h-9 w-9 place-items-center rounded-[4px] bg-[var(--color-surface-2)] font-mono text-[11px] font-black text-[var(--color-neon)] transition-colors hover:bg-[var(--color-surface-2)]/70 disabled:opacity-35"
+              title="Double bets"
+              className="font-mono text-[12px] font-black text-[var(--color-neon)]"
             >
               2×
-            </button>
+            </DockIconButton>
           </div>
-        </div>
+        </DockRow>
 
-
-          <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-            <button
-              type="button"
-              onClick={() => setSlipOpen((v) => !v)}
-              disabled={!positions.length}
-              className="font-bold text-[var(--color-neon)] disabled:opacity-40"
-            >
-              {positions.length} {positions.length === 1 ? "position" : "positions"}
-            </button>
-            <span className="ml-auto">
-              Stake{" "}
-              <span className="font-display font-bold tabular-nums text-[var(--color-ink)]">
-                {fmt(totalStake)}
-              </span>
-            </span>
-            <span>
-              Max return{" "}
-              <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
-                {fmt(potentialTotal)}
-              </span>
-            </span>
-          </div>
-
+        <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.1em] text-[var(--color-ink-muted)]">
           <button
             type="button"
-            onClick={spin}
-            disabled={!canSpin}
-            className={cn(
-              "flex h-11 w-full items-center justify-center rounded-full font-display text-xs font-bold uppercase tracking-[0.2em] transition-all",
-              canSpin
-                ? "bg-[var(--color-neon)] text-black active:opacity-90"
-                : "border border-[var(--color-surface-border)] bg-[var(--color-surface)] text-[var(--color-ink-muted)]",
-            )}
+            onClick={() => setSlipOpen((v) => !v)}
+            disabled={!positions.length}
+            className="font-bold text-[var(--color-neon)] disabled:opacity-40"
           >
-            {mutation.isPending
-              ? "Placing…"
-              : spinning
-                ? "Spinning…"
-                : cooldown > 0
-                  ? `Cooldown ${cooldown}s`
-                  : dailyLimitReached
-                    ? "Daily limit reached"
-                    : `Spin · ${fmt(totalStake)} pts`}
+            {positions.length} {positions.length === 1 ? "position" : "positions"}
           </button>
-
-          {balance < totalStake && (
-            <p className="text-center text-[9px] font-bold uppercase tracking-[0.2em] text-destructive/90">
-              Need {fmt(totalStake - balance)} more pts ·{" "}
-              <Link to="/wallet" className="underline">
-                wallet
-              </Link>
-            </p>
-          )}
+          <span className="ml-auto">
+            Stake{" "}
+            <span className="font-display font-bold tabular-nums text-[var(--color-ink)]">
+              {fmt(totalStake)}
+            </span>
+          </span>
+          <span>
+            Max return{" "}
+            <span className="font-display font-bold tabular-nums text-[var(--color-neon)]">
+              {fmt(potentialTotal)}
+            </span>
+          </span>
         </div>
-      </div>
+
+        <DockPrimary onClick={spin} disabled={!canSpin} active={canSpin}>
+          {mutation.isPending
+            ? "Placing…"
+            : spinning
+              ? "Spinning…"
+              : cooldown > 0
+                ? `Cooldown ${cooldown}s`
+                : dailyLimitReached
+                  ? "Daily limit reached"
+                  : `Spin · ${fmt(totalStake)} pts`}
+        </DockPrimary>
+
+        {balance < totalStake && (
+          <DockNote>
+            Need {fmt(totalStake - balance)} more pts ·{" "}
+            <Link to="/wallet" className="underline">
+              wallet
+            </Link>
+          </DockNote>
+        )}
+      </ControlDock>
+
     </div>
   );
 }
