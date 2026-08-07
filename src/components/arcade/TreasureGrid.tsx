@@ -49,12 +49,12 @@ function TreasureGridImpl({
 
   return (
     <div
-      className="treasure-stage relative mx-auto w-full max-w-[min(100%,1080px)] overflow-hidden rounded-[24px] p-2 sm:p-3 max-md:rounded-none"
+      className="treasure-stage relative mx-auto w-full max-w-[820px] overflow-hidden rounded-[24px] p-3 max-md:rounded-none"
       style={{
         background:
           "radial-gradient(115% 85% at 50% 4%, var(--treasure-glow) 0%, var(--treasure-bg-2) 46%, var(--treasure-bg) 100%)",
         maskImage:
-          "linear-gradient(90deg, transparent 0%, #000 2.5%, #000 97.5%, transparent 100%)",
+          "linear-gradient(90deg, transparent 0%, #000 7%, #000 93%, transparent 100%)",
       }}
     >
       <style>{`
@@ -129,7 +129,7 @@ function TreasureGridImpl({
       )}
 
       <div
-        className="relative grid w-full gap-1.5 sm:gap-2.5"
+        className="relative grid w-full gap-1.5"
         style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
         role="grid"
         aria-label="Treasure grid"

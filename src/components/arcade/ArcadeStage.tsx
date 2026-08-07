@@ -26,6 +26,7 @@ export function ArcadeStage({
 }) {
   const outerRef = React.useRef<HTMLDivElement | null>(null);
   const innerRef = React.useRef<HTMLDivElement | null>(null);
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
   const viewportRef = React.useRef({ width: 0, height: 0 });
   const [avail, setAvail] = React.useState(0);
   const [scale, setScale] = React.useState(1);
@@ -45,8 +46,8 @@ export function ArcadeStage({
 
     const measure = () => {
       const outer = outerRef.current;
-      const inner = innerRef.current;
-      if (!outer || !inner) return;
+      const content = contentRef.current;
+      if (!outer || !content) return;
 
       const dock = document.querySelector("[data-arcade-console]") as HTMLElement | null;
       const dockH = dock?.offsetHeight ?? 0;
@@ -55,11 +56,13 @@ export function ArcadeStage({
       const top = outer.getBoundingClientRect().top + Math.max(0, window.scrollY);
       const space = Math.max(1, Math.round(viewportRef.current.height - top - dockH - gap));
 
-      const naturalH = inner.offsetHeight || 1;
+      // Measure the content itself (never the stretched wrapper) so the game
+      // can scale UP into leftover room, not only down.
+      const naturalH = content.offsetHeight || 1;
       const next = Math.min(maxScale, Math.max(minScale, space / naturalH));
 
       setAvail((prev) => (Math.abs(prev - space) > 1 ? space : prev));
-      setScale((prev) => (Math.abs(prev - next) > 0.01 ? next : prev));
+      setScale((prev) => (Math.abs(prev - next) > 0.005 ? next : prev));
     };
 
     const schedule = () => {
@@ -84,7 +87,7 @@ export function ArcadeStage({
 
     schedule();
     const ro = new ResizeObserver(schedule);
-    if (innerRef.current) ro.observe(innerRef.current);
+    if (contentRef.current) ro.observe(contentRef.current);
     if (outerRef.current) ro.observe(outerRef.current);
     window.addEventListener("resize", handleResize);
     window.addEventListener("orientationchange", handleOrientationChange);
@@ -108,15 +111,16 @@ export function ArcadeStage({
     >
       <div
         ref={innerRef}
-        className="absolute inset-x-0 top-0 flex min-h-full flex-col justify-start"
+        className="absolute inset-x-0 top-0"
         style={{
           width: `${100 / scale}%`,
-          minHeight: avail ? `${avail / scale}px` : undefined,
           transform: `scale(${scale})`,
           transformOrigin: "top left",
         }}
       >
-        {children}
+        <div ref={contentRef} className="flex flex-col justify-center">
+          {children}
+        </div>
       </div>
     </div>
   );
