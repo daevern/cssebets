@@ -84,7 +84,7 @@ export function ChipRack({
     .sort((a, b) => a - b);
 
   return (
-    <div className={cn("flex min-w-0 items-center gap-1.5", className)}>
+    <div className={cn("flex w-auto shrink-0 items-center gap-1.5", className)}>
       <BrandChip size={size} open={open} disabled={disabled} onClick={() => setOpen((o) => !o)} />
 
       {!open ? (
