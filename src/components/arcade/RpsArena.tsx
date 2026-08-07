@@ -400,27 +400,42 @@ function RpsArenaImpl({
             : "Revealing"}
       </div>
 
-      {/* 2D wiring — thick rounded grey leads from the output box down to each control. */}
-      <svg
-        viewBox="0 0 300 40"
-        preserveAspectRatio="none"
-        className="mt-1 h-[26px] w-full text-[#5b6675]"
-        aria-hidden
-      >
-        <path
-          d="M150 0 V40 M50 40 V16 Q50 10 56 10 H244 Q250 10 250 16 V40"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={7}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
+      {/* Wiring + pedestal-mounted hand controls.
+          The wires live in the SAME width container as the button grid and use
+          the grid's own column maths, so every lead stays welded to its control
+          at any screen size (col width = (100% - 2*gap)/3, gap = 12px). */}
+      <div className="mx-auto mt-3 w-[62%] max-w-[280px]">
+        <div className="relative h-[46px]">
+          {/* drop lead from the arena down to the bus */}
+          <span className="absolute left-1/2 top-0 h-[30px] w-[7px] -translate-x-1/2 rounded-full bg-[#5b6675]" />
+          {/* horizontal bus spanning the outer column centres */}
+          <span
+            className="absolute h-[7px] rounded-full bg-[#5b6675]"
+            style={{
+              left: "calc((100% - 24px) / 6)",
+              right: "calc((100% - 24px) / 6)",
+              top: "26px",
+            }}
+          />
+          {/* stems into each control */}
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="absolute top-[26px] h-[20px] w-[7px] -translate-x-1/2 rounded-full bg-[#5b6675]"
+              style={{
+                left:
+                  i === 1
+                    ? "50%"
+                    : i === 0
+                      ? "calc((100% - 24px) / 6)"
+                      : "calc(100% - (100% - 24px) / 6)",
+              }}
+            />
+          ))}
+        </div>
 
-      {/* Pedestal-mounted hand controls. */}
-      <div className="mx-auto -mt-1 w-[62%] max-w-[280px]">
         <div className="grid w-full grid-cols-3 gap-3">
+
           {RPS_MOVES.map((m) => {
             const selected = playerMove === m;
             return (
