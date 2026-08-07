@@ -26,6 +26,7 @@ export function ArcadeStage({
 }) {
   const outerRef = React.useRef<HTMLDivElement | null>(null);
   const innerRef = React.useRef<HTMLDivElement | null>(null);
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
   const viewportRef = React.useRef({ width: 0, height: 0 });
   const [avail, setAvail] = React.useState(0);
   const [scale, setScale] = React.useState(1);
