@@ -76,6 +76,39 @@ function ArcadeLayout() {
   const game = pathname.split("/arcade/")[1]?.split("/")[0] ?? "";
   const ambient = AMBIENT[game] ?? null;
 
+  // Only pad by however much of the console actually covers the content.
+  // When the game already ends above the console, the page stays exactly one
+  // screen tall — no blank scroll tail.
+  const contentRef = useRef<HTMLDivElement | null>(null);
+  const [spacer, setSpacer] = useState(0);
+
+  useEffect(() => {
+    let raf = 0;
+    const measure = () => {
+      const el = contentRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const bottom = rect.bottom + window.scrollY;
+      const slack = Math.max(0, window.innerHeight - bottom);
+      setSpacer(Math.max(0, Math.round(consoleHeight - slack)));
+    };
+    const schedule = () => {
+      window.cancelAnimationFrame(raf);
+      raf = window.requestAnimationFrame(measure);
+    };
+    schedule();
+    const ro = new ResizeObserver(schedule);
+    if (contentRef.current) ro.observe(contentRef.current);
+    window.addEventListener("resize", schedule);
+    const poll = window.setInterval(schedule, 400);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearInterval(poll);
+      window.removeEventListener("resize", schedule);
+      ro.disconnect();
+    };
+  }, [consoleHeight, pathname]);
+
   return (
     <div className="relative w-full">
       {/* Full-bleed ambient backdrop — the game's world fills the viewport edge to edge. */}
@@ -88,6 +121,7 @@ function ArcadeLayout() {
       )}
 
       <div
+        ref={contentRef}
         className={
           ambient
             ? // Stages bleed edge-to-edge on mobile; surrounding chrome keeps its gutter.
@@ -95,13 +129,13 @@ function ArcadeLayout() {
             : "mx-auto w-full max-w-4xl px-3 pt-3 md:px-6 md:pt-6"
         }
       >
-
         <Outlet />
-
-        {/* Spacer clears the fixed console exactly — nothing more. */}
-        <div style={{ height: consoleHeight }} aria-hidden />
       </div>
+
+      {/* Clears only the part of the console that would cover the game. */}
+      <div style={{ height: spacer }} aria-hidden />
     </div>
   );
 }
+
 
