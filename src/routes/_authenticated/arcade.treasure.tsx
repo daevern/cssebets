@@ -224,12 +224,13 @@ function TreasurePage() {
 
       <div className="relative">
         <div className="mb-1.5 flex items-center justify-center gap-2">
-          <span className="text-lg">💎</span>
+          <Gem className="h-5 w-5 text-[#ff5ea8] drop-shadow-[0_0_8px_rgba(255,94,168,0.9)]" />
           <span className="font-display text-lg font-black uppercase tracking-[0.06em] text-white drop-shadow-[0_0_12px_rgba(216,120,255,0.8)]">
             Treasure <span className="text-[#e879f9]">Grid</span>
           </span>
-          <span className="text-lg">💎</span>
+          <Gem className="h-5 w-5 text-[#ff5ea8] drop-shadow-[0_0_8px_rgba(255,94,168,0.9)]" />
         </div>
+
         <TreasureGrid
 
           rows={Number(config?.grid_rows ?? 5)}
