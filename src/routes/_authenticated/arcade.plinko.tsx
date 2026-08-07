@@ -242,18 +242,18 @@ function PlinkoPage() {
             playfield so the side gutters read as room light, not empty page. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -inset-x-[40vw] -top-10 bottom-0 -z-10"
+          className="pointer-events-none absolute -inset-x-[45vw] -top-12 -bottom-6 -z-10"
           style={{
             background:
-              "radial-gradient(60% 70% at 50% 40%, rgba(43,52,207,.55) 0%, rgba(20,26,134,.34) 38%, rgba(8,12,64,.16) 62%, transparent 82%)",
-            filter: "blur(28px)",
+              "radial-gradient(70% 78% at 50% 36%, rgba(46,56,214,.95) 0%, rgba(28,35,158,.88) 34%, rgba(15,20,102,.68) 58%, rgba(8,12,64,.34) 78%, transparent 92%)",
+            filter: "blur(34px)",
           }}
         />
         <div
           className="arcade-stage relative w-full overflow-hidden rounded-2xl max-md:rounded-none"
           style={{
             maskImage:
-              "linear-gradient(90deg, transparent 0%, #000 7%, #000 93%, transparent 100%)",
+              "linear-gradient(90deg, transparent 0%, #000 2.5%, #000 97.5%, transparent 100%)",
           }}
         >
           <PlinkoBoard
