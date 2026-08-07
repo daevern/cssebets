@@ -14,7 +14,7 @@ export function ArcadeStage({
   children,
   className,
   minScale = 0.3,
-  maxScale = Number.POSITIVE_INFINITY,
+  maxScale = 1.6,
   gap = 0,
 }: {
   children: React.ReactNode;
