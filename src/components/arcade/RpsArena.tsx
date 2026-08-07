@@ -182,7 +182,7 @@ function RailCell({
   multiplier: number;
   placeholder?: boolean;
 }) {
-  const width = scale === "active" ? "w-[76px]" : "w-[52px]";
+  const width = scale === "active" ? "w-[61px]" : "w-[42px]";
   return (
     <div
       className={cn(
@@ -299,7 +299,7 @@ function RpsArenaImpl({
 
 
   return (
-    <div className="overflow-hidden rounded-[6px] bg-[var(--color-surface)] p-3">
+    <div className="overflow-hidden rounded-[6px] bg-[var(--color-surface)] p-2.5">
       <style>{`
 @keyframes rps-shake{0%,100%{transform:translateY(0) rotate(0deg)}25%{transform:translateY(-8px) rotate(-4deg)}75%{transform:translateY(-8px) rotate(4deg)}}
 @keyframes rps-pop{0%{transform:scale(1)}45%{transform:scale(1.14)}100%{transform:scale(1)}}
@@ -313,7 +313,7 @@ function RpsArenaImpl({
 `}</style>
 
       {/* Rail — the active column is centred; history drifts left, next waits right. */}
-      <div className="relative flex items-start justify-center gap-2 pb-1 pt-4">
+      <div className="relative flex items-start justify-center gap-2 pb-0.5 pt-2">
         {/* Left: settled results — scrollable, most recent closest to the centre. */}
         <div className="rps-rail flex flex-1 items-start justify-start gap-2 overflow-x-auto overflow-y-hidden [scrollbar-width:none]">
           <div className="flex min-w-full items-start justify-end gap-2">
@@ -372,7 +372,7 @@ function RpsArenaImpl({
       {/* Status line */}
       <div
         className={cn(
-          "mt-2 min-h-[13px] text-center font-display text-[10px] font-black uppercase tracking-[0.28em] transition-colors",
+          "mt-1.5 min-h-[12px] text-center font-display text-[10px] font-black uppercase tracking-[0.14em] transition-colors",
           phase === "SETTLED" ? toneText(outcome as Tone) : "text-[var(--color-ink-muted)]",
         )}
       >
@@ -391,7 +391,7 @@ function RpsArenaImpl({
       <svg
         viewBox="0 0 300 40"
         preserveAspectRatio="none"
-        className="mt-1 h-[34px] w-full text-[#5b6675]"
+        className="mt-1 h-[26px] w-full text-[#5b6675]"
         aria-hidden
       >
         <path
@@ -406,7 +406,7 @@ function RpsArenaImpl({
       </svg>
 
       {/* Pedestal-mounted hand controls. */}
-      <div className="mx-auto -mt-1 w-3/4">
+      <div className="mx-auto -mt-1 w-[62%] max-w-[280px]">
         <div className="grid w-full grid-cols-3 gap-3">
           {RPS_MOVES.map((m) => {
             const selected = playerMove === m;
