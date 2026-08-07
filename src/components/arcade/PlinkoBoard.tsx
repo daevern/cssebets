@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import type { PlinkoSlot } from "./types";
 import { PlinkoPeg } from "./PlinkoPeg";
 import { PlinkoBall } from "./PlinkoBall";
