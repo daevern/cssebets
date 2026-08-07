@@ -120,6 +120,50 @@ function ArcadeLayout() {
         />
       )}
 
+      {/* Side "cabinet" dressing — turns the empty gutters into part of the room:
+          angled light beams, a faint dot grid and an edge vignette. */}
+      {ambient && (
+        <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+          <div
+            className="absolute inset-0 opacity-[0.16]"
+            style={{
+              backgroundImage:
+                "radial-gradient(rgba(255,255,255,.55) 1px, transparent 1.2px)",
+              backgroundSize: "22px 22px",
+              maskImage:
+                "linear-gradient(90deg, #000 0%, transparent 26%, transparent 74%, #000 100%)",
+              WebkitMaskImage:
+                "linear-gradient(90deg, #000 0%, transparent 26%, transparent 74%, #000 100%)",
+            }}
+          />
+          <div
+            className="absolute -left-24 top-0 h-full w-[45vw] rotate-[8deg] opacity-[0.20]"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent 0%, var(--color-neon) 45%, transparent 100%)",
+              filter: "blur(60px)",
+            }}
+          />
+          <div
+            className="absolute -right-24 top-0 h-full w-[45vw] -rotate-[8deg] opacity-[0.20]"
+            style={{
+              background:
+                "linear-gradient(90deg, transparent 0%, var(--color-neon) 55%, transparent 100%)",
+              filter: "blur(60px)",
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(120% 90% at 50% 45%, transparent 40%, rgba(0,0,0,.55) 100%)",
+            }}
+          />
+        </div>
+      )}
+
+
+
       <div
         ref={contentRef}
         className={
