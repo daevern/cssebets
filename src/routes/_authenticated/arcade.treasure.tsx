@@ -331,93 +331,58 @@ function TreasurePage() {
       />
 
       {/* Sticky console */}
-      <div data-arcade-console className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-0">
-        <div className="mx-auto w-full max-w-4xl space-y-2 px-3 py-2">
-          {!active ? (
-            <>
-              <div className="flex items-center gap-1.5">
-                {(["easy", "medium", "hard"] as Difficulty[]).map((d) => {
-                  const c = configs.find((x: any) => x.difficulty === d);
-                  return (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setDifficulty(d)}
-                      className={cn(
-                        "flex-1 rounded-[4px] py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] transition-colors",
-                        difficulty === d
-                          ? "bg-[var(--color-neon)] text-black"
-                          : "bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]",
-                      )}
-                    >
-                      {d} · {c?.trap_count ?? "-"}
-                    </button>
-                  );
-                })}
-              </div>
+      <ControlDock>
+        {!active ? (
+          <>
+            <DockSeg
+              grow
+              value={difficulty}
+              onChange={(d: string) => setDifficulty(d as Difficulty)}
+              options={(["easy", "medium", "hard"] as Difficulty[]).map((d) => ({
+                key: d,
+                label: `${d} · ${configs.find((x: any) => x.difficulty === d)?.trap_count ?? "-"}`,
+              }))}
+            />
 
-              <div className="flex items-center gap-1.5 overflow-x-auto overflow-y-visible py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <ChipRack
-                  values={chips}
-                  max={maxStake}
-                  value={stake}
-                  onSelect={(c) => setStake(Math.min(Math.max(c, minStake), maxStake))}
-                  size={44}
-                />
+            <DockRow scroll>
+              <ChipRack
+                values={chips}
+                max={maxStake}
+                value={stake}
+                onSelect={(c) => setStake(Math.min(Math.max(c, minStake), maxStake))}
+                size={44}
+              />
+              <DockReadout className="ml-auto" label="Stake" value={`${fmt(stake)} pts`} />
+            </DockRow>
 
-                <div className="ml-auto shrink-0 text-right">
-                  <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                    Stake
-                  </div>
-                  <div className="font-display text-xs font-bold tabular-nums">{fmt(stake)} pts</div>
-                </div>
-              </div>
+            <DockPrimary
+              onClick={() => (settled ? newRound() : startM.mutate())}
+              disabled={!settled && !canStart}
+              loading={startM.isPending}
+            >
+              {settled ? "New round" : `Play · ${fmt(stake)} pts`}
+            </DockPrimary>
+          </>
+        ) : (
+          <DockRow>
+            <DockReadout
+              align="left"
+              label="Next tile"
+              value={nextMult ? `${nextMult.toFixed(2)}×` : "—"}
+            />
+            <DockReadout align="left" label="Collect" value={`${fmt(collectable)} pts`} />
+            <DockPrimary
+              className="ml-auto flex-1"
+              onClick={() => collectM.mutate()}
+              disabled={safeReveals === 0 || busy}
+              loading={collectM.isPending}
+            >
+              Collect
+            </DockPrimary>
+          </DockRow>
+        )}
+      </ControlDock>
 
-              <button
-                type="button"
-                onClick={() => (settled ? newRound() : startM.mutate())}
-                disabled={!settled && !canStart}
-                className="flex h-11 w-full items-center justify-center rounded-full bg-[var(--color-neon)] font-display text-xs font-bold uppercase tracking-[0.2em] text-black transition-opacity disabled:opacity-40"
-              >
-                {startM.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : settled ? (
-                  "New round"
-                ) : (
-                  `Play · ${fmt(stake)} pts`
-                )}
-              </button>
-            </>
-          ) : (
-            <div className="flex items-center gap-2">
-              <div className="shrink-0">
-                <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                  Next tile
-                </div>
-                <div className="font-display text-xs font-bold tabular-nums text-[var(--color-ink)]">
-                  {nextMult ? `${nextMult.toFixed(2)}×` : "—"}
-                </div>
-              </div>
-              <div className="shrink-0">
-                <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                  Collect
-                </div>
-                <div className="font-display text-xs font-bold tabular-nums text-[var(--color-neon)]">
-                  {fmt(collectable)} pts
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => collectM.mutate()}
-                disabled={safeReveals === 0 || busy}
-                className="ml-auto flex h-11 flex-1 items-center justify-center rounded-full bg-[var(--color-neon)] font-display text-xs font-bold uppercase tracking-[0.2em] text-black disabled:opacity-40"
-              >
-                {collectM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Collect"}
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
