@@ -14,8 +14,8 @@ export function ArcadeStage({
   children,
   className,
   minScale = 0.3,
-  maxScale = 1.35,
-  gap = 8,
+  maxScale = 4,
+  gap = 0,
 }: {
   children: React.ReactNode;
   className?: string;
@@ -53,10 +53,7 @@ export function ArcadeStage({
       // Document-relative top so scrolling never changes the measured space
       // (viewport-relative top shrinks as you scroll, which zoomed the game).
       const top = outer.getBoundingClientRect().top + Math.max(0, window.scrollY);
-      const space = Math.max(
-        160,
-        Math.round(viewportRef.current.height - top - dockH - gap),
-      );
+      const space = Math.max(1, Math.round(viewportRef.current.height - top - dockH - gap));
 
       const naturalH = inner.offsetHeight || 1;
       const next = Math.min(maxScale, Math.max(minScale, space / naturalH));
@@ -103,14 +100,18 @@ export function ArcadeStage({
   return (
     <div
       ref={outerRef}
-      className={cn("relative w-full overflow-hidden", className)}
+      className={cn(
+        "relative left-1/2 w-screen -translate-x-1/2 overflow-hidden",
+        className,
+      )}
       style={{ height: avail || undefined }}
     >
       <div
         ref={innerRef}
-        className="absolute left-0 top-0 flex flex-col justify-start"
+        className="absolute inset-x-0 top-0 flex min-h-full flex-col justify-start"
         style={{
           width: `${100 / scale}%`,
+          minHeight: avail ? `${avail / scale}px` : undefined,
           transform: `scale(${scale})`,
           transformOrigin: "top left",
         }}
