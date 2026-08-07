@@ -389,83 +389,62 @@ function RpsPage() {
         roundId={verifyId}
       />
 
-      {/* Sticky console */}
-      <div data-arcade-console className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-0">
-        <div className="mx-auto w-full max-w-4xl space-y-2 px-3 py-2">
-          <div className="flex items-center gap-1.5 overflow-x-auto overflow-y-visible py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <ChipRack
-              values={chips}
-              max={maxStake}
-              value={stake}
-              disabled={busy || runWins > 0 || ladderHistory.length > 0}
-              onSelect={(c) => setStake(Math.min(Math.max(c, minStake), maxStake))}
-              size={44}
-            />
+      {/* Shared control dock */}
+      <ControlDock>
+        <DockRow scroll>
+          <ChipRack
+            values={chips}
+            max={maxStake}
+            value={stake}
+            disabled={busy || runWins > 0 || ladderHistory.length > 0}
+            onSelect={(c) => setStake(Math.min(Math.max(c, minStake), maxStake))}
+            size={44}
+          />
 
-            <div className="ml-auto shrink-0 text-right">
-              <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                {runWins > 0 ? "Pot at risk" : "Stake"}
-              </div>
-              <div className="font-display text-xs font-bold tabular-nums">{fmt(wagerStake)} pts</div>
-              <div className="text-[8px] font-bold uppercase tracking-[0.18em] text-[var(--color-neon)]">
-                Win pays {fmt(nextPayout)}
-              </div>
-            </div>
+          <DockReadout
+            className="ml-auto"
+            label={runWins > 0 ? "Pot at risk" : "Stake"}
+            value={`${fmt(wagerStake)} pts`}
+            hint={`Win pays ${fmt(nextPayout)}`}
+          />
+        </DockRow>
 
-          </div>
+        {(() => {
+          // Only a loss stops the run; wins and draws auto-advance, so the
+          // button stays on "Collect".
+          const showPlayAgain = phase === "SETTLED" && round?.outcome === "LOSS";
+          return (
+            <DockPrimary
+              onClick={showPlayAgain ? nextRound : canCollect ? collectRun : undefined}
+              disabled={!showPlayAgain && !canCollect}
+              active={showPlayAgain || canCollect}
+            >
+              {showPlayAgain ? (
+                "Play again"
+              ) : busy || phase === "SETTLED" ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Revealing
+                </>
+              ) : canCollect ? (
+                <>
+                  <HandCoins className="h-4 w-4" /> Collect +{fmt(runNet)}
+                </>
+              ) : (
+                <>
+                  <Swords className="h-4 w-4" /> Pick a hand above
+                </>
+              )}
+            </DockPrimary>
+          );
+        })()}
 
-          <div className="flex items-center gap-2">
-            {(() => {
-              // Only a loss stops the run; wins and draws auto-advance, so the
-              // button stays on "Collect".
-              const showPlayAgain = phase === "SETTLED" && round?.outcome === "LOSS";
-              return (
-                <button
-                  type="button"
-                  onClick={showPlayAgain ? nextRound : canCollect ? collectRun : undefined}
-                  disabled={!showPlayAgain && !canCollect}
-                  className={cn(
-                    "flex h-11 flex-1 items-center justify-center gap-1.5 rounded-[4px] font-display text-xs font-bold uppercase tracking-[0.2em] transition-colors",
-                    showPlayAgain || canCollect
-                      ? "bg-[var(--color-neon)] text-black"
-                      : "bg-[var(--color-neon)]/25 text-[var(--color-ink-muted)]",
-                  )}
-                >
-                  {showPlayAgain ? (
-                    "Play again"
-                  ) : busy || phase === "SETTLED" ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Revealing
-                    </>
-                  ) : canCollect ? (
-                    <>
-                      <HandCoins className="h-3.5 w-3.5" /> Collect +{fmt(runNet)}
-                    </>
-                  ) : (
-                    <>
-                      <Swords className="h-3.5 w-3.5" /> Pick a hand above
-                    </>
-                  )}
-                </button>
-              );
-            })()}
-          </div>
+        {overMax && phase !== "SETTLED" ? (
+          <DockNote>Pot is at the table limit — collect to bank it</DockNote>
+        ) : balance < wagerStake && phase !== "SETTLED" ? (
+          <DockNote>Not enough points for this stake</DockNote>
+        ) : null}
+      </ControlDock>
 
-
-
-
-          {overMax && phase !== "SETTLED" ? (
-            <p className="text-center text-[10px] uppercase tracking-[0.24em] text-amber-300">
-              Pot is at the table limit — collect to bank it
-            </p>
-          ) : balance < wagerStake && phase !== "SETTLED" ? (
-            <p className="text-center text-[10px] uppercase tracking-[0.24em] text-amber-300">
-              Not enough points for this stake
-            </p>
-          ) : null}
-
-        </div>
-      </div>
     </div>
   );
 }
