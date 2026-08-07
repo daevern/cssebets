@@ -6,7 +6,7 @@ import {
   CsseCardBack,
   PlayingCard,
 } from "@/components/arcade/PlayingCard";
-import { CsseMark } from "@/components/brand/CsseMark";
+import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
 import { formatTotal, handValue } from "@/lib/arcade/blackjack-math";
 import type { BjCard } from "@/lib/arcade/blackjack.functions";
 
