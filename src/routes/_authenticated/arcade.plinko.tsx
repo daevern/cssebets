@@ -305,7 +305,6 @@ function PlinkoPage() {
 
       <ControlDock>
 
-
         <DockRow scroll>
           <ChipRack
             values={CHIP_VALUES}
@@ -315,49 +314,51 @@ function PlinkoPage() {
             onSelect={(c: number) => setStakePerBall(c)}
             size={44}
           />
+
+          {/* Balls stepper — sits right next to the casino chips */}
+          <DockField className="shrink-0 pl-2.5 pr-1.5">
+            <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--color-ink-muted)]">
+              {mode === "auto" ? "Bets" : "Balls"}
+            </span>
+            <button
+              type="button"
+              aria-label="Decrease"
+              onClick={() => setBallCount((v) => Math.max(BALLS_MIN, v - 1))}
+              disabled={locked}
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
+            >
+              <Minus className="h-3.5 w-3.5" />
+            </button>
+            <input
+              inputMode="numeric"
+              pattern="[0-9]*"
+              aria-label={mode === "auto" ? "Bets" : "Balls"}
+              value={ballCountInput}
+              onChange={(e) => setBallCountInput(e.target.value.replace(/[^0-9]/g, ""))}
+              onBlur={(e) => commitBallCount(e.target.value || "1")}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+              }}
+              disabled={locked}
+              className="w-8 bg-transparent text-center font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none"
+            />
+            <button
+              type="button"
+              aria-label="Increase"
+              onClick={() => setBallCount((v) => Math.min(BALLS_MAX, v + 1))}
+              disabled={locked}
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </button>
+          </DockField>
+
           <DockReadout
             className="ml-auto"
             label="Stake / ball"
             value={`${fmt(stakePerBall)} pts`}
           />
         </DockRow>
-
-        <DockField>
-          <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--color-ink-muted)]">
-            {mode === "auto" ? "Bets" : "Balls"}
-          </span>
-          <button
-            type="button"
-            aria-label="Decrease"
-            onClick={() => setBallCount((v) => Math.max(BALLS_MIN, v - 1))}
-            disabled={locked}
-            className="ml-auto grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
-          >
-            <Minus className="h-4 w-4" />
-          </button>
-          <input
-            inputMode="numeric"
-            pattern="[0-9]*"
-            aria-label={mode === "auto" ? "Bets" : "Balls"}
-            value={ballCountInput}
-            onChange={(e) => setBallCountInput(e.target.value.replace(/[^0-9]/g, ""))}
-            onBlur={(e) => commitBallCount(e.target.value || "1")}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-            }}
-            disabled={locked}
-            className="w-10 bg-transparent text-center font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none"
-          />
-          <button
-            type="button"
-            aria-label="Increase"
-            onClick={() => setBallCount((v) => Math.min(BALLS_MAX, v + 1))}
-            disabled={locked}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        </DockField>
 
         <DockPrimary onClick={placeBet} disabled={!canDrop} active={canDrop}>
           {pending
