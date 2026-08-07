@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import type { PlinkoSlot } from "./types";
 import { PlinkoPeg } from "./PlinkoPeg";
 import { PlinkoBall } from "./PlinkoBall";
@@ -29,7 +30,18 @@ type Props = {
   ballAccent?: string | null;
   boardColor?: string | null;
   boardAccent?: string | null;
+  /** Control band rendered under the title */
+  riskOptions?: { key: string; label: string }[];
+  risk?: string;
+  onRiskChange?: (key: string) => void;
+  modeOptions?: { key: string; label: string }[];
+  mode?: string;
+  onModeChange?: (key: string) => void;
+  rowOptions?: number[];
+  onRowsChange?: (rows: number) => void;
+  controlsDisabled?: boolean;
 };
+
 
 function slotFill(mult: number): { fill: string; glow: string; text: string } {
   // Palette matched to the neon poster: magenta/orange extremes, violet mids,
@@ -71,6 +83,15 @@ export function PlinkoBoard({
   ballAccent,
   boardColor,
   boardAccent,
+  riskOptions,
+  risk,
+  onRiskChange,
+  modeOptions,
+  mode,
+  onModeChange,
+  rowOptions,
+  onRowsChange,
+  controlsDisabled,
 }: Props) {
   const ballFill = ballColor ?? "#ffffff";
   const ballStroke = ballAccent ?? "#ff2d55";
@@ -374,6 +395,104 @@ export function PlinkoBoard({
           }}
         />
       </div>
+
+      {(riskOptions?.length || modeOptions?.length || rowOptions?.length) && (
+        <div className="relative z-10 mx-auto mb-2 flex w-full max-w-[520px] flex-wrap items-center justify-center gap-2 px-3 sm:mb-3">
+          {riskOptions?.length ? (
+            <div
+              role="tablist"
+              aria-label="Risk"
+              className="flex items-center gap-1 rounded-full border border-[rgba(41,196,255,.32)] bg-[#0a1140]/80 p-1 backdrop-blur-sm"
+            >
+              {riskOptions.map((o) => {
+                const active = o.key === risk;
+                return (
+                  <button
+                    key={o.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    disabled={controlsDisabled}
+                    onClick={() => onRiskChange?.(o.key)}
+                    className={cn(
+                      "h-8 min-w-[62px] rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.04em] transition-all disabled:opacity-40",
+                      active
+                        ? "bg-gradient-to-b from-[#33cfff] to-[#1668d8] text-[#03102b] shadow-[0_0_12px_-2px_rgba(41,196,255,.7)]"
+                        : "text-[#8fb8ff] hover:bg-[rgba(41,196,255,.15)] hover:text-white",
+                    )}
+                  >
+                    {o.label}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+
+          <div className="ml-auto flex items-center gap-2">
+            {modeOptions?.length ? (
+              <div
+                role="tablist"
+                aria-label="Bet mode"
+                className="flex items-center gap-1 rounded-full border border-[rgba(255,47,146,.3)] bg-[#0a1140]/80 p-1 backdrop-blur-sm"
+              >
+                {modeOptions.map((o) => {
+                  const active = o.key === mode;
+                  return (
+                    <button
+                      key={o.key}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      disabled={controlsDisabled}
+                      onClick={() => onModeChange?.(o.key)}
+                      className={cn(
+                        "h-8 min-w-[62px] rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.04em] transition-all disabled:opacity-40",
+                        active
+                          ? "bg-gradient-to-b from-[#ff5fb0] to-[#d21a72] text-white shadow-[0_0_12px_-2px_rgba(255,47,146,.7)]"
+                          : "text-[#f0a3cb] hover:bg-[rgba(255,47,146,.15)] hover:text-white",
+                      )}
+                    >
+                      {o.label}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {rowOptions?.length ? (
+              <div
+                role="tablist"
+                aria-label="Rows"
+                className="flex items-center gap-0.5 rounded-full border border-[rgba(154,92,255,.35)] bg-[#0a1140]/80 p-1 backdrop-blur-sm"
+              >
+                {rowOptions.map((r) => {
+                  const active = r === rows;
+                  return (
+                    <button
+                      key={r}
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      disabled={controlsDisabled}
+                      onClick={() => onRowsChange?.(r)}
+                      className={cn(
+                        "h-8 w-8 rounded-full text-[11px] font-bold tabular-nums transition-all disabled:opacity-40",
+                        active
+                          ? "bg-gradient-to-b from-[#b58cff] to-[#6a2fe0] text-white shadow-[0_0_12px_-2px_rgba(154,92,255,.7)]"
+                          : "text-[#b9a6ff] hover:bg-[rgba(154,92,255,.16)] hover:text-white",
+                      )}
+                    >
+                      {r}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      )}
+
+
 
       <style>{`
         @keyframes pegFlash { 0%{opacity:.9;transform:scale(.4)} 100%{opacity:0;transform:scale(1.6)} }
