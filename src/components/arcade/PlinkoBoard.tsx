@@ -188,11 +188,26 @@ export function PlinkoBoard({
             landedIds.push(rb.id);
             continue;
           }
-          const eased = frac * frac * (3 - 2 * frac);
-          rb.x = a.x + (b2.x - a.x) * eased;
-          rb.y = a.y + (b2.y - a.y) * eased;
+          // --- bounce physics -------------------------------------------------
+          // Horizontal travel eases out (the ball is deflected sideways then keeps
+          // drifting), vertical travel accelerates like gravity and gets a small
+          // upward hop right after the peg impact so the ball visibly bounces.
+          const isLast = idx >= total - 1;
+          const xe = 1 - Math.pow(1 - frac, 2.2);
+          const fall = Math.pow(frac, 1.75);
+          const hopAmp = reducedMotion ? 0 : Math.min(ROW_GAP * 0.34, 14);
+          const hop = -hopAmp * Math.sin(Math.PI * Math.min(1, frac * 1.05)) * (1 - frac * 0.45);
+          rb.x = a.x + (b2.x - a.x) * xe;
+          rb.y = a.y + (b2.y - a.y) * fall + (isLast ? 0 : hop);
+          if (isLast && !reducedMotion) {
+            // settle into the slot with two damped bounces
+            const s = frac;
+            const settle = Math.abs(Math.sin(Math.PI * s * 2.2)) * (1 - s) * 10;
+            rb.y -= settle;
+          }
           rb.trail.push({ x: rb.x, y: rb.y, t });
           rb.trail = rb.trail.filter((p) => t - p.t < 260).slice(-10);
+
 
           if (b2.pegKey && b2.pegKey !== rb.lastPegKey && frac > 0.92) {
             rb.lastPegKey = b2.pegKey;
@@ -339,19 +354,34 @@ export function PlinkoBoard({
   };
 
 
-  const colTop = slotY - 4;
+  const colTop = slotY - 26;
   const colBottom = boardHeight - 12;
   const colH = colBottom - colTop;
+  // spiky column: pointed tip on top, straight body toward the multiplier chip
+  const spikePath = (x: number, w: number) => {
+    const tip = x + w / 2;
+    const shoulder = colTop + colH * 0.6;
+    return [
+      `M ${x + 0.5} ${colBottom}`,
+      `L ${x + 0.5} ${shoulder}`,
+      `L ${tip} ${colTop}`,
+      `L ${x + w - 0.5} ${shoulder}`,
+      `L ${x + w - 0.5} ${colBottom}`,
+      "Z",
+    ].join(" ");
+  };
+
 
   return (
     <div className="relative w-full overflow-hidden" style={{ background: boardBg ?? "transparent" }}>
       <style>{`
         @keyframes pegFlash { 0%{opacity:.9;transform:scale(.4)} 100%{opacity:0;transform:scale(1.6)} }
-        @keyframes slotPop { 0%{transform:translateY(0) scaleY(1)} 35%{transform:translateY(-6px) scaleY(1.06)} 100%{transform:translateY(0) scaleY(1)} }
-        .slot-pop { animation: slotPop 600ms cubic-bezier(.2,.9,.3,1.2); transform-origin: bottom; transform-box: fill-box; }
+        @keyframes slotPop { 0%{transform:translateY(0)} 22%{transform:translateY(14px)} 55%{transform:translateY(-3px)} 100%{transform:translateY(0)} }
+        .slot-pop { animation: slotPop 520ms cubic-bezier(.25,.85,.35,1.1); transform-box: fill-box; }
         @keyframes beamPulse { 0%,100%{opacity:.55} 50%{opacity:1} }
         .drop-beam { animation: beamPulse 2.4s ease-in-out infinite; }
       `}</style>
+
 
       <svg
         viewBox={`0 0 ${W} ${boardHeight}`}
@@ -390,12 +420,14 @@ export function PlinkoBoard({
             const c = slotColors.get(k)!;
             return (
               <linearGradient key={`sg-${k}`} id={`slotG-${k}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={c.fill} stopOpacity={0.05} />
-                <stop offset="45%" stopColor={c.fill} stopOpacity={0.45} />
+                <stop offset="0%" stopColor={c.fill} stopOpacity={0} />
+                <stop offset="35%" stopColor={c.fill} stopOpacity={0.18} />
+                <stop offset="70%" stopColor={c.fill} stopOpacity={0.6} />
                 <stop offset="100%" stopColor={c.fill} stopOpacity={1} />
               </linearGradient>
             );
           })}
+
         </defs>
 
         <rect x={0} y={0} width={W} height={boardHeight} rx={22} fill="url(#boardGlow)" />
@@ -456,26 +488,21 @@ export function PlinkoBoard({
           const chipH = Math.min(24, Math.max(16, slotWidth * 0.52));
           return (
             <g key={`slot-${k}`} className={isFlash ? "slot-pop" : undefined}>
-              <rect
-                x={x}
-                y={colTop}
-                width={slotWidth}
-                height={colH}
-                rx={5}
+              <path
+                d={spikePath(x, slotWidth)}
                 fill={`url(#slotG-${k})`}
-                opacity={isFlash ? 1 : 0.9}
+                opacity={isFlash ? 1 : 0.92}
               />
-              <rect
-                x={x}
-                y={colTop}
-                width={slotWidth}
-                height={colH}
-                rx={5}
+              <path
+                d={spikePath(x, slotWidth)}
                 fill="none"
                 stroke={c.fill}
-                strokeOpacity={isFlash ? 0.95 : 0.4}
+                strokeOpacity={isFlash ? 0.9 : 0.28}
+                strokeWidth={1}
+                strokeLinejoin="round"
               />
               <rect
+
                 x={x + 1}
                 y={colBottom - chipH}
                 width={slotWidth - 2}
