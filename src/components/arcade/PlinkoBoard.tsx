@@ -328,7 +328,7 @@ export function PlinkoBoard({
     pts.push(`M ${topX} ${PADDING_TOP - 34}`);
     for (let r = 0; r < rows; r++) {
       // alternate the inset so the rails read as a zig-zag rather than a plain diagonal
-      const zig = wallInset * (r % 2 === 0 ? 0.55 : 1.5);
+      const zig = wallInset * (r % 2 === 0 ? 0.35 : 1.95);
       const edge = side === -1 ? pegX(r, 0) - zig : pegX(r, r + 1) + zig;
       pts.push(`L ${edge} ${pegY(r)}`);
     }
@@ -361,9 +361,9 @@ export function PlinkoBoard({
       >
         <defs>
           <radialGradient id="boardGlow" cx="50%" cy="14%" r="88%">
-            <stop offset="0%" stopColor="#2b2ea8" />
-            <stop offset="45%" stopColor="#161a75" />
-            <stop offset="100%" stopColor="#080b30" />
+            <stop offset="0%" stopColor="#3b40e0" />
+            <stop offset="45%" stopColor="#1e2299" />
+            <stop offset="100%" stopColor="#0a0e45" />
           </radialGradient>
           <radialGradient id="pegBody" cx="34%" cy="28%" r="78%">
             <stop offset="0%" stopColor="#eef0ff" />
