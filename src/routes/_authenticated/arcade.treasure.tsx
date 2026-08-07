@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 import { TreasureGrid } from "@/components/arcade/TreasureGrid";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import { ControlDock, DockPrimary, DockReadout, DockRow } from "@/components/arcade/ControlDock";
@@ -222,6 +223,7 @@ function TreasurePage() {
         <Stat label="Found" value={`${safeReveals}`} />
       </div>
 
+      <ArcadeStage>
       <div className="relative">
         <TreasureGrid
           rows={Number(config?.grid_rows ?? 5)}
@@ -276,6 +278,8 @@ function TreasurePage() {
           );
         })}
       </div>
+
+      </ArcadeStage>
 
       {settled && (
         <div className="flex justify-end px-1">

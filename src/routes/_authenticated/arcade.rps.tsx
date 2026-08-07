@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { HandCoins, Loader2, Swords } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import {
   ControlDock,
@@ -363,6 +364,7 @@ function RpsPage() {
         </div>
       )}
 
+      <ArcadeStage>
       <RpsArena
         phase={phase}
         playerMove={playerMove}
@@ -375,6 +377,7 @@ function RpsPage() {
         onChoose={choose}
         canPlay={canPlay}
       />
+      </ArcadeStage>
 
 
 
