@@ -321,12 +321,33 @@ export function PlinkoBoard({
     (rb) => performance.now() >= rb.startTime,
   );
 
+  const wallInset = spacing * 0.62;
+  const wallPath = (side: -1 | 1) => {
+    const pts: string[] = [];
+    const topX = side === -1 ? W / 2 - spacing * 0.9 : W / 2 + spacing * 0.9;
+    pts.push(`M ${topX} ${PADDING_TOP - 34}`);
+    for (let r = 0; r < rows; r++) {
+      const edge = side === -1 ? pegX(r, 0) - wallInset : pegX(r, r + 1) + wallInset;
+      pts.push(`L ${edge} ${pegY(r)}`);
+    }
+    const lastEdge =
+      side === -1 ? pegX(rows - 1, 0) - wallInset : pegX(rows - 1, rows) + wallInset;
+    pts.push(`L ${lastEdge} ${boardHeight - 8}`);
+    return pts.join(" ");
+  };
+
+  const colTop = slotY - 4;
+  const colBottom = boardHeight - 12;
+  const colH = colBottom - colTop;
+
   return (
     <div className="relative w-full overflow-hidden" style={{ background: boardBg ?? "transparent" }}>
       <style>{`
         @keyframes pegFlash { 0%{opacity:.9;transform:scale(.4)} 100%{opacity:0;transform:scale(1.6)} }
-        @keyframes slotPop { 0%{transform:translateY(0)} 40%{transform:translateY(-3px)} 100%{transform:translateY(0)} }
-        .slot-pop { animation: slotPop 600ms cubic-bezier(.2,.9,.3,1.2); transform-origin: center; transform-box: fill-box; }
+        @keyframes slotPop { 0%{transform:translateY(0) scaleY(1)} 35%{transform:translateY(-6px) scaleY(1.06)} 100%{transform:translateY(0) scaleY(1)} }
+        .slot-pop { animation: slotPop 600ms cubic-bezier(.2,.9,.3,1.2); transform-origin: bottom; transform-box: fill-box; }
+        @keyframes beamPulse { 0%,100%{opacity:.55} 50%{opacity:1} }
+        .drop-beam { animation: beamPulse 2.4s ease-in-out infinite; }
       `}</style>
 
       <svg
@@ -336,26 +357,84 @@ export function PlinkoBoard({
         aria-label="Plinko board"
       >
         <defs>
+          <radialGradient id="boardGlow" cx="50%" cy="14%" r="88%">
+            <stop offset="0%" stopColor="#2b2ea8" />
+            <stop offset="45%" stopColor="#161a75" />
+            <stop offset="100%" stopColor="#080b30" />
+          </radialGradient>
+          <radialGradient id="pegBody" cx="34%" cy="28%" r="78%">
+            <stop offset="0%" stopColor="#eef0ff" />
+            <stop offset="55%" stopColor="#a9b2f5" />
+            <stop offset="100%" stopColor="#5661c4" />
+          </radialGradient>
+          <radialGradient id="pegBurst">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.55)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </radialGradient>
+          <linearGradient id="wallG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#8f9bff" />
+            <stop offset="100%" stopColor="#5b45d6" />
+          </linearGradient>
+          <linearGradient id="beamG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(120,210,255,0)" />
+            <stop offset="100%" stopColor="rgba(120,210,255,0.85)" />
+          </linearGradient>
+          <radialGradient id="ballGlow">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.75)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          </radialGradient>
+          {Array.from({ length: slotCount }).map((_, k) => {
+            const c = slotColors.get(k)!;
+            return (
+              <linearGradient key={`sg-${k}`} id={`slotG-${k}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={c.fill} stopOpacity={0.05} />
+                <stop offset="45%" stopColor={c.fill} stopOpacity={0.45} />
+                <stop offset="100%" stopColor={c.fill} stopOpacity={1} />
+              </linearGradient>
+            );
+          })}
         </defs>
 
-        <path
-          d={`M ${W / 2 - 26} ${PADDING_TOP - 20} L ${W / 2 + 26} ${PADDING_TOP - 20} L ${W / 2 + 8} ${PADDING_TOP - 4} L ${W / 2 - 8} ${PADDING_TOP - 4} Z`}
+        <rect x={0} y={0} width={W} height={boardHeight} rx={22} fill="url(#boardGlow)" />
+        <rect
+          x={1}
+          y={1}
+          width={W - 2}
+          height={boardHeight - 2}
+          rx={22}
           fill="none"
-          stroke="rgba(64,255,140,0.28)"
-          strokeWidth={1}
+          stroke="rgba(150,160,255,0.22)"
         />
+
+        {/* drop beam */}
+        <rect
+          className="drop-beam"
+          x={W / 2 - 5}
+          y={0}
+          width={10}
+          height={PADDING_TOP - 6}
+          fill="url(#beamG)"
+        />
+        <circle className="drop-beam" cx={W / 2} cy={PADDING_TOP - 8} r={22} fill="url(#ballGlow)" />
+        <circle cx={W / 2} cy={PADDING_TOP - 8} r={6} fill="#dff4ff" />
+
+        {/* funnel walls */}
+        <path d={wallPath(-1)} fill="none" stroke="url(#wallG)" strokeWidth={7} strokeLinejoin="round" strokeLinecap="round" opacity={0.9} />
+        <path d={wallPath(1)} fill="none" stroke="url(#wallG)" strokeWidth={7} strokeLinejoin="round" strokeLinecap="round" opacity={0.9} />
+        <path d={wallPath(-1)} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth={2} strokeLinejoin="round" />
+        <path d={wallPath(1)} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth={2} strokeLinejoin="round" />
 
         {pegs}
 
         {liveBalls.map((rb) =>
           rb.trail.map((p, i) => {
-            const alpha = ((i + 1) / rb.trail.length) * 0.32;
+            const alpha = ((i + 1) / rb.trail.length) * 0.45;
             return (
               <circle
                 key={`t-${rb.id}-${i}`}
                 cx={p.x}
                 cy={p.y}
-                r={5 - i * 0.15}
+                r={6 - i * 0.2}
                 fill={ballStroke}
                 opacity={alpha}
               />
@@ -370,26 +449,46 @@ export function PlinkoBoard({
           const mult = Number((slot as any)?.multiplier ?? 0);
           const label = fmtMult(mult);
           const cx = slotX(k);
+          const x = cx - slotWidth / 2;
+          const chipH = Math.min(24, Math.max(16, slotWidth * 0.52));
           return (
             <g key={`slot-${k}`} className={isFlash ? "slot-pop" : undefined}>
               <rect
-                x={cx - slotWidth / 2}
-                y={slotY}
+                x={x}
+                y={colTop}
                 width={slotWidth}
-                height={28}
-                rx={3}
+                height={colH}
+                rx={5}
+                fill={`url(#slotG-${k})`}
+                opacity={isFlash ? 1 : 0.9}
+              />
+              <rect
+                x={x}
+                y={colTop}
+                width={slotWidth}
+                height={colH}
+                rx={5}
+                fill="none"
+                stroke={c.fill}
+                strokeOpacity={isFlash ? 0.95 : 0.4}
+              />
+              <rect
+                x={x + 1}
+                y={colBottom - chipH}
+                width={slotWidth - 2}
+                height={chipH - 1}
+                rx={4}
                 fill={c.fill}
-                opacity={isFlash ? 1 : 0.92}
               />
               <text
                 x={cx}
-                y={slotY + 19}
+                y={colBottom - chipH / 2 + slotFontSize * 0.36}
                 textAnchor="middle"
                 fontSize={slotFontSize}
-                fontWeight={700}
+                fontWeight={800}
                 fill={c.text}
                 textLength={
-                  label.length * slotFontSize * 0.62 > slotWidth - 4 ? slotWidth - 6 : undefined
+                  label.length * slotFontSize * 0.62 > slotWidth - 6 ? slotWidth - 8 : undefined
                 }
                 lengthAdjust="spacingAndGlyphs"
                 style={{ letterSpacing: 0 }}
@@ -398,15 +497,17 @@ export function PlinkoBoard({
               </text>
             </g>
           );
-
         })}
 
         {liveBalls.map((rb) => (
           <g key={`ball-${rb.id}`}>
-            <circle cx={rb.x} cy={rb.y} r={6.5} fill={ballFill} stroke={ballStroke} strokeWidth={1} />
+            <circle cx={rb.x} cy={rb.y} r={16} fill="url(#ballGlow)" />
+            <circle cx={rb.x} cy={rb.y} r={7} fill={ballFill} stroke={ballStroke} strokeWidth={1.4} />
+            <circle cx={rb.x - 2.2} cy={rb.y - 2.4} r={2.2} fill="rgba(255,255,255,0.95)" />
           </g>
         ))}
       </svg>
     </div>
+
   );
 }
