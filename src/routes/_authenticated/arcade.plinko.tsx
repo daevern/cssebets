@@ -236,7 +236,7 @@ function PlinkoPage() {
 
 
       <div className="relative flex flex-1 flex-col justify-center">
-        <div className="relative w-full overflow-hidden rounded-2xl shadow-[0_0_50px_-18px_rgba(90,110,255,0.9)]">
+        <div className="arcade-stage relative w-full overflow-hidden rounded-2xl shadow-[0_0_50px_-18px_rgba(90,110,255,0.9)]">
           <PlinkoBoard
             rows={rows}
             slots={slots}
@@ -263,7 +263,17 @@ function PlinkoPage() {
             onRowsChange={(r) => setRows(r as RowsCount)}
             controlsDisabled={locked}
           />
+          {/* Soft edge fade so the cabinet dissolves into the page instead of ending in a hard box. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-16 md:hidden"
+            style={{
+              background:
+                "linear-gradient(to bottom, rgba(7,8,13,0) 0%, rgba(7,8,13,0.55) 55%, rgba(7,8,13,0.95) 100%)",
+            }}
+          />
         </div>
+
 
 
         <div className="mt-2 flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
