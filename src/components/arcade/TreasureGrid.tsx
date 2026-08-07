@@ -46,6 +46,12 @@ function TreasureGridImpl({
       <style>{`
         @keyframes tgem { 0%{transform:scale(.4);opacity:0} 60%{transform:scale(1.12);opacity:1} 100%{transform:scale(1)} }
         @keyframes tspark { 0%{opacity:.85;transform:scale(.5)} 100%{opacity:0;transform:scale(1.7)} }
+        @keyframes tsmoke { 0%{opacity:0;transform:scale(.25) rotate(0deg)} 25%{opacity:.95} 100%{opacity:.55;transform:scale(1.25) rotate(22deg)} }
+        @keyframes tflash { 0%{opacity:0;transform:scale(.2)} 12%{opacity:1;transform:scale(1.35)} 100%{opacity:0;transform:scale(1.9)} }
+        @keyframes torb { 0%{opacity:0;transform:scale(.1)} 30%{opacity:1;transform:scale(1.18)} 55%{transform:scale(.94)} 100%{opacity:1;transform:scale(1)} }
+        @keyframes tstar { 0%{opacity:0;transform:scale(.2) rotate(-25deg)} 35%{opacity:1;transform:scale(1.15) rotate(0deg)} 100%{opacity:.85;transform:scale(1) rotate(0deg)} }
+        @keyframes tring { 0%{opacity:.9;transform:scale(.2)} 100%{opacity:0;transform:scale(2.1)} }
+        @keyframes tshake { 0%,100%{transform:translate(0,0)} 15%{transform:translate(-2px,1px)} 30%{transform:translate(2px,-1px)} 45%{transform:translate(-2px,-1px)} 60%{transform:translate(2px,1px)} 80%{transform:translate(-1px,0)} }
       `}</style>
 
       <div
