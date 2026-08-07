@@ -250,31 +250,21 @@ function PlinkoPage() {
             ballAccent={equipped.data?.ball?.preview_accent ?? null}
             boardColor={equipped.data?.board?.preview_color ?? null}
             boardAccent={equipped.data?.board?.preview_accent ?? null}
+            riskOptions={RISK_OPTIONS.map((r) => ({ key: r.key, label: r.label }))}
+            risk={riskMode}
+            onRiskChange={(v) => setRiskMode(v as RiskMode)}
+            modeOptions={[
+              { key: "manual", label: "Manual" },
+              { key: "auto", label: "Auto" },
+            ]}
+            mode={mode}
+            onModeChange={(v) => setMode(v as BetMode)}
+            rowOptions={ROW_OPTIONS}
+            onRowsChange={(r) => setRows(r as RowsCount)}
+            controlsDisabled={locked}
           />
-          <div className="pointer-events-none absolute inset-0">
-            <div className="pointer-events-auto absolute right-2 top-2 z-10 flex flex-col gap-0.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]/95 p-0.5 backdrop-blur">
-              {ROW_OPTIONS.map((r) => {
-                const active = r === rows;
-                return (
-                  <button
-                    key={r}
-                    type="button"
-                    disabled={locked}
-                    onClick={() => setRows(r as RowsCount)}
-                    className={cn(
-                      "rounded-lg py-1 text-[10px] font-bold tabular-nums transition-colors disabled:opacity-40",
-                      active
-                        ? "bg-[var(--color-neon)] text-black"
-                        : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]",
-                    )}
-                  >
-                    {r}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
+
 
         <div className="mt-2 flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {recent.length === 0 ? (
