@@ -238,7 +238,24 @@ function PlinkoPage() {
 
       <ArcadeStage>
         <div className="relative flex flex-col justify-start">
-        <div className="arcade-stage relative w-full overflow-hidden rounded-2xl shadow-[0_0_50px_-18px_rgba(90,110,255,0.9)]">
+        {/* Colour spill: the board's own blue/violet light bleeds far past the
+            playfield so the side gutters read as room light, not empty page. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -inset-x-[40vw] -top-10 bottom-0 -z-10"
+          style={{
+            background:
+              "radial-gradient(60% 70% at 50% 40%, rgba(43,52,207,.55) 0%, rgba(20,26,134,.34) 38%, rgba(8,12,64,.16) 62%, transparent 82%)",
+            filter: "blur(28px)",
+          }}
+        />
+        <div
+          className="arcade-stage relative w-full overflow-hidden rounded-2xl max-md:rounded-none"
+          style={{
+            maskImage:
+              "linear-gradient(90deg, transparent 0%, #000 7%, #000 93%, transparent 100%)",
+          }}
+        >
           <PlinkoBoard
             rows={rows}
             slots={slots}
