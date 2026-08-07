@@ -5,7 +5,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Loader2,
-  Spade,
   CopyPlus,
   Hand,
   SplitSquareHorizontal,
@@ -398,14 +397,11 @@ function BlackjackPage() {
 
         {!inPlay ? (
           <DockPrimary
-            disabled={!canDeal}
-            active={canDeal}
-            loading={deal.isPending}
             onClick={() => deal.mutate()}
+            disabled={!canDeal}
+            loading={deal.isPending}
           >
-            <Spade className="h-4 w-4" />
-            {settled ? "Deal again" : "Place bet"}
-            <span className="font-mono text-[11px]">· {stake} pts</span>
+            {settled ? "DEAL AGAIN" : `PLACE BET · ${stake.toLocaleString()} pts`}
           </DockPrimary>
         ) : (
           <div className="flex h-[52px] w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--color-ink-muted)]">
