@@ -211,14 +211,26 @@ export function BlackjackTable({
   const shoeW = Math.round(cardH * 0.7);
 
   return (
-    <div ref={boxRef} className="relative h-full overflow-hidden bg-[#07130d]">
+    <div
+      ref={boxRef}
+      className="relative h-full overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(120% 90% at 50% 8%, #1c6047 0%, #12513b 42%, #0c3a2b 72%, #082a1f 100%)",
+      }}
+    >
       <FeltArt />
 
-      {/* Brand watermark sits below the dealer pill so the two never overlap. */}
-      <div className="pointer-events-none absolute left-1/2 top-[38%] flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 text-[var(--color-neon)] opacity-[0.14]">
-        <CsseMark variant="mono" className="h-7 w-7 md:h-11 md:w-11" />
-        <span className="font-display text-base font-bold tracking-tight md:text-2xl">CSSEBets</span>
+      {/* House medallion — always dead centre and never covered by cards. */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1">
+        <div className="grid h-10 w-10 place-items-center rounded-full border border-white/25 bg-black/35 backdrop-blur-[1px] md:h-14 md:w-14">
+          <CsseMark variant="mono" className="h-5 w-5 text-[var(--color-neon)] md:h-7 md:w-7" />
+        </div>
+        <span className="font-display text-[9px] font-bold uppercase tracking-[0.34em] text-white/70 md:text-[11px]">
+          CSSEBets
+        </span>
       </div>
+
 
       {/* Shoe — every card is dealt out of this stack. */}
       <div
