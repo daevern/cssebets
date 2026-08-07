@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PlinkoSlot } from "./types";
+import { PlinkoPeg } from "./PlinkoPeg";
+import { PlinkoBall } from "./PlinkoBall";
+import { PlinkoBoardFrame } from "./PlinkoBoardFrame";
+import { PlinkoPayoutBin } from "./PlinkoPayoutBin";
+
 
 export type ActiveBall = {
   id: string;
@@ -297,34 +302,12 @@ export function PlinkoBoard({
   for (let r = 0; r < rows; r++) {
     for (let i = 0; i < r + 2; i++) {
       const key = `${r}-${i}`;
-      const isHit = hitPegs.has(key);
-      const cx = pegX(r, i);
-      const cy = pegY(r);
       pegs.push(
-        <g key={key}>
-          {isHit && (
-            <circle
-              cx={cx}
-              cy={cy}
-              r={pegR * 3}
-              fill="url(#pegBurst)"
-              className="[transform-origin:center] [animation:pegFlash_320ms_ease-out_forwards]"
-            />
-          )}
-          <circle cx={cx} cy={cy + pegR * 0.35} r={pegR} fill="rgba(10,6,40,0.55)" />
-          <circle cx={cx} cy={cy} r={pegR} fill="url(#pegBody)" />
-          <circle
-            cx={cx - pegR * 0.28}
-            cy={cy - pegR * 0.32}
-            r={pegR * 0.36}
-            fill="rgba(255,255,255,0.9)"
-            opacity={isHit ? 1 : 0.7}
-          />
-          {isHit && <circle cx={cx} cy={cy} r={pegR * 1.35} fill="rgba(255,255,255,0.55)" />}
-        </g>,
+        <PlinkoPeg key={key} cx={pegX(r, i)} cy={pegY(r)} r={pegR} active={hitPegs.has(key)} />,
       );
     }
   }
+
 
 
   void renderTick;
@@ -407,9 +390,15 @@ export function PlinkoBoard({
             <stop offset="100%" stopColor="rgba(120,210,255,0.85)" />
           </linearGradient>
           <radialGradient id="ballGlow">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.75)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+            <stop offset="0%" stopColor="rgba(41,196,255,0.65)" />
+            <stop offset="100%" stopColor="rgba(41,196,255,0)" />
           </radialGradient>
+          <radialGradient id="ballBody" cx="36%" cy="30%" r="80%">
+            <stop offset="0%" stopColor="#F4FFFF" />
+            <stop offset="55%" stopColor="#8FE9FF" />
+            <stop offset="100%" stopColor="#33CFFF" />
+          </radialGradient>
+
           {Array.from({ length: slotCount }).map((_, k) => {
             const c = slotColors.get(k)!;
             return (
@@ -447,11 +436,9 @@ export function PlinkoBoard({
         <circle className="drop-beam" cx={W / 2} cy={PADDING_TOP - 8} r={22} fill="url(#ballGlow)" />
         <circle cx={W / 2} cy={PADDING_TOP - 8} r={6} fill="#dff4ff" />
 
-        {/* funnel walls */}
-        <path d={wallPath(-1)} fill="none" stroke="url(#wallG)" strokeWidth={7} strokeLinejoin="round" strokeLinecap="round" opacity={0.9} />
-        <path d={wallPath(1)} fill="none" stroke="url(#wallG)" strokeWidth={7} strokeLinejoin="round" strokeLinecap="round" opacity={0.9} />
-        <path d={wallPath(-1)} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth={2} strokeLinejoin="round" />
-        <path d={wallPath(1)} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth={2} strokeLinejoin="round" />
+        {/* stylized cabinet frame */}
+        <PlinkoBoardFrame left={wallPath(-1)} right={wallPath(1)} />
+
 
         {pegs}
 
@@ -472,83 +459,34 @@ export function PlinkoBoard({
         )}
 
         {Array.from({ length: slotCount }).map((_, k) => {
-          const isFlash = (flashSlots.get(k) ?? 0) > 0;
           const c = slotColors.get(k)!;
           const slot = slots.find((s) => s.slot_index === k);
-          const mult = Number((slot as any)?.multiplier ?? 0);
-          const label = fmtMult(mult);
           const cx = slotX(k);
-          const x = cx - slotWidth / 2;
-          const chipH = Math.min(24, Math.max(16, slotWidth * 0.52));
           return (
-            <g key={`slot-${k}`} className={isFlash ? "slot-pop" : undefined}>
-              {/* thin neon pin */}
-              <rect
-                x={cx - 1}
-                y={colTop}
-                width={2}
-                height={pinH}
-                rx={1}
-                fill={c.fill}
-                opacity={isFlash ? 1 : 0.75}
-              />
-              {/* glowing column body */}
-              <rect
-                x={x + 1}
-                y={bodyTop}
-                width={slotWidth - 2}
-                height={colBottom - bodyTop}
-                rx={7}
-                fill={`url(#slotG-${k})`}
-                opacity={isFlash ? 1 : 0.95}
-              />
-              <rect
-                x={x + 1}
-                y={bodyTop}
-                width={slotWidth - 2}
-                height={colBottom - bodyTop}
-                rx={7}
-                fill="none"
-                stroke={c.fill}
-                strokeOpacity={isFlash ? 0.95 : 0.35}
-                strokeWidth={1}
-              />
-              {/* dark label plate at the base */}
-              <rect
-                x={x + 1}
-                y={colBottom - chipH}
-                width={slotWidth - 2}
-                height={chipH - 1}
-                rx={6}
-                fill="rgba(7,9,28,0.82)"
-              />
-              <text
-                x={cx}
-                y={colBottom - chipH / 2 + slotFontSize * 0.36}
-                textAnchor="middle"
-                fontSize={slotFontSize}
-                fontWeight={800}
-                fill={c.text}
-                textLength={
-                  label.length * slotFontSize * 0.62 > slotWidth - 6 ? slotWidth - 8 : undefined
-                }
-                lengthAdjust="spacingAndGlyphs"
-                style={{ letterSpacing: 0 }}
-              >
-                {label}
-              </text>
-            </g>
+            <PlinkoPayoutBin
+              key={`slot-${k}`}
+              index={k}
+              label={fmtMult(Number((slot as any)?.multiplier ?? 0))}
+              color={c.fill}
+              textColor={c.text}
+              active={(flashSlots.get(k) ?? 0) > 0}
+              cx={cx}
+              x={cx - slotWidth / 2}
+              width={slotWidth}
+              colTop={colTop}
+              bodyTop={bodyTop}
+              colBottom={colBottom}
+              pinH={pinH}
+              chipH={Math.min(24, Math.max(16, slotWidth * 0.52))}
+              fontSize={slotFontSize}
+            />
           );
-
         })}
 
         {liveBalls.map((rb) => (
-          <g key={`ball-${rb.id}`}>
-            <circle cx={rb.x} cy={rb.y} r={16} fill="url(#ballGlow)" />
-            <circle cx={rb.x} cy={rb.y} r={7} fill={ballFill} stroke={ballStroke} strokeWidth={1.4} />
-            <circle cx={rb.x - 2.2} cy={rb.y - 2.4} r={2.2} fill="rgba(255,255,255,0.95)" />
-          </g>
+          <PlinkoBall key={`ball-${rb.id}`} cx={rb.x} cy={rb.y} fill={ballFill} accent={ballStroke} />
         ))}
+
       </svg>
     </div>
 

@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ShieldCheck, Loader2, Gem } from "lucide-react";
+import { ShieldCheck, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TreasureGrid } from "@/components/arcade/TreasureGrid";
 import { ChipRack } from "@/components/arcade/ChipRack";
@@ -223,16 +223,7 @@ function TreasurePage() {
       </div>
 
       <div className="relative">
-        <div className="mb-1.5 flex items-center justify-center gap-2">
-          <Gem className="h-5 w-5 text-[#ff5ea8] drop-shadow-[0_0_8px_rgba(255,94,168,0.9)]" />
-          <span className="font-display text-lg font-black uppercase tracking-[0.06em] text-white drop-shadow-[0_0_12px_rgba(216,120,255,0.8)]">
-            Treasure <span className="text-[#e879f9]">Grid</span>
-          </span>
-          <Gem className="h-5 w-5 text-[#ff5ea8] drop-shadow-[0_0_8px_rgba(255,94,168,0.9)]" />
-        </div>
-
         <TreasureGrid
-
           rows={Number(config?.grid_rows ?? 5)}
           cols={Number(config?.grid_cols ?? 5)}
           opened={opened}
@@ -240,19 +231,18 @@ function TreasurePage() {
           pendingIndex={pendingTile}
           disabled={!active || busy}
           onReveal={onReveal}
-        />
-        {!active && (
-          <div className="pointer-events-none absolute inset-0 grid place-items-center">
-            <span className="rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface)]/85 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)] backdrop-blur">
-              {settled
+          message={
+            active
+              ? null
+              : settled
                 ? round.status === "WON"
                   ? "Collected"
                   : "Busted"
-                : "Set your stake to begin"}
-            </span>
-          </div>
-        )}
+                : "Set your stake to begin"
+          }
+        />
       </div>
+
 
       <div className="flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {multipliers.slice(0, 14).map((m: any) => {
