@@ -2,6 +2,8 @@ import { memo } from "react";
 import { TreasureGem } from "./TreasureGem";
 import { TreasureTile, type TreasureTileState } from "./TreasureTile";
 
+export type TreasureDifficulty = "easy" | "medium" | "hard";
+
 export type TreasureGridProps = {
   rows: number;
   cols: number;
@@ -15,6 +17,12 @@ export type TreasureGridProps = {
   onReveal: (index: number) => void;
   /** overlay pill shown before a round starts */
   message?: string | null;
+  /** selected difficulty */
+  difficulty?: TreasureDifficulty;
+  /** difficulty options to display below the title */
+  difficultyOptions?: { key: string; label: string }[];
+  /** called when a difficulty option is selected */
+  onDifficultyChange?: (key: TreasureDifficulty) => void;
 };
 
 /**
