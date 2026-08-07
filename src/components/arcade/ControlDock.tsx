@@ -88,8 +88,8 @@ export function DockPrimary({
       onClick={onClick}
       disabled={disabled || loading}
       className={cn(
-        "flex h-[52px] w-full min-w-0 items-center justify-center gap-1.5 rounded-full",
-        "font-display text-[13px] font-bold uppercase tracking-[0.08em] transition-all",
+        "flex h-[36px] w-full min-w-0 items-center justify-center gap-1.5 rounded-full",
+        "font-display text-[11px] font-bold uppercase tracking-[0.08em] transition-all",
         active && !disabled
           ? "bg-[var(--color-neon)] text-black active:opacity-90"
           : "border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]",
