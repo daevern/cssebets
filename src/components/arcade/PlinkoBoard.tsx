@@ -360,7 +360,7 @@ export function PlinkoBoard({
   // spiky column: pointed tip on top, straight body toward the multiplier chip
   const spikePath = (x: number, w: number) => {
     const tip = x + w / 2;
-    const shoulder = colTop + colH * 0.34;
+    const shoulder = colTop + colH * 0.6;
     return [
       `M ${x + 0.5} ${colBottom}`,
       `L ${x + 0.5} ${shoulder}`,
