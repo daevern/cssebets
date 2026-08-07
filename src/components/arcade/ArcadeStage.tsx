@@ -60,7 +60,13 @@ export function ArcadeStage({
 
       // Measure the content itself (never the stretched wrapper) so the game
       // can scale UP into leftover room, not only down.
-      const naturalH = content.offsetHeight || 1;
+      const naturalH = content.offsetHeight;
+      // Before the content has a real height, any ratio would be nonsense and
+      // would squash the inner width (which collapses grid columns).
+      if (!naturalH || naturalH < 40) {
+        setAvail((prev) => (Math.abs(prev - space) > 1 ? space : prev));
+        return;
+      }
       const next = Math.min(maxScale, Math.max(minScale, space / naturalH));
 
       setAvail((prev) => (Math.abs(prev - space) > 1 ? space : prev));
