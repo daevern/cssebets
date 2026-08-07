@@ -474,26 +474,21 @@ export function PlinkoBoard({
           const chipH = Math.min(24, Math.max(16, slotWidth * 0.52));
           return (
             <g key={`slot-${k}`} className={isFlash ? "slot-pop" : undefined}>
-              <rect
-                x={x}
-                y={colTop}
-                width={slotWidth}
-                height={colH}
-                rx={5}
+              <path
+                d={spikePath(x, slotWidth)}
                 fill={`url(#slotG-${k})`}
-                opacity={isFlash ? 1 : 0.9}
+                opacity={isFlash ? 1 : 0.92}
               />
-              <rect
-                x={x}
-                y={colTop}
-                width={slotWidth}
-                height={colH}
-                rx={5}
+              <path
+                d={spikePath(x, slotWidth)}
                 fill="none"
                 stroke={c.fill}
-                strokeOpacity={isFlash ? 0.95 : 0.4}
+                strokeOpacity={isFlash ? 0.9 : 0.28}
+                strokeWidth={1}
+                strokeLinejoin="round"
               />
               <rect
+
                 x={x + 1}
                 y={colBottom - chipH}
                 width={slotWidth - 2}
