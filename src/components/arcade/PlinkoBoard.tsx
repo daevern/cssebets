@@ -71,8 +71,8 @@ export function PlinkoBoard({
 
   const W = 560;
   const PADDING_X = 8;
-  const PADDING_TOP = 26;
-  const PADDING_BOTTOM = 66;
+  const PADDING_TOP = 44;
+  const PADDING_BOTTOM = 132;
   const ROW_GAP = 32;
   const boardHeight = PADDING_TOP + rows * ROW_GAP + PADDING_BOTTOM;
   const innerW = W - PADDING_X * 2;
