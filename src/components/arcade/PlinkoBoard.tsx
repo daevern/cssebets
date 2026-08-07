@@ -327,7 +327,9 @@ export function PlinkoBoard({
     const topX = side === -1 ? W / 2 - spacing * 0.9 : W / 2 + spacing * 0.9;
     pts.push(`M ${topX} ${PADDING_TOP - 34}`);
     for (let r = 0; r < rows; r++) {
-      const edge = side === -1 ? pegX(r, 0) - wallInset : pegX(r, r + 1) + wallInset;
+      // alternate the inset so the rails read as a zig-zag rather than a plain diagonal
+      const zig = wallInset * (r % 2 === 0 ? 0.55 : 1.5);
+      const edge = side === -1 ? pegX(r, 0) - zig : pegX(r, r + 1) + zig;
       pts.push(`L ${edge} ${pegY(r)}`);
     }
     const lastEdge =
@@ -335,6 +337,7 @@ export function PlinkoBoard({
     pts.push(`L ${lastEdge} ${boardHeight - 8}`);
     return pts.join(" ");
   };
+
 
   const colTop = slotY - 4;
   const colBottom = boardHeight - 12;
