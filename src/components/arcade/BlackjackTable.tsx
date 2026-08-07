@@ -85,7 +85,7 @@ export function BlackjackTable({
     const ro = new ResizeObserver(() => {
       const h = el.clientHeight;
       const w = el.clientWidth;
-      const byHeight = (h - 104) / 2;
+      const byHeight = (h - 160) / 2;
       const byWidth = (w - 72) / 6 / 0.7;
       const cap = w >= 700 ? 142 : 96;
       setCardH(Math.max(44, Math.min(cap, Math.floor(Math.min(byHeight, byWidth)))));
