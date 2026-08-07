@@ -188,11 +188,26 @@ export function PlinkoBoard({
             landedIds.push(rb.id);
             continue;
           }
-          const eased = frac * frac * (3 - 2 * frac);
-          rb.x = a.x + (b2.x - a.x) * eased;
-          rb.y = a.y + (b2.y - a.y) * eased;
+          // --- bounce physics -------------------------------------------------
+          // Horizontal travel eases out (the ball is deflected sideways then keeps
+          // drifting), vertical travel accelerates like gravity and gets a small
+          // upward hop right after the peg impact so the ball visibly bounces.
+          const isLast = idx >= total - 1;
+          const xe = 1 - Math.pow(1 - frac, 2.2);
+          const fall = Math.pow(frac, 1.75);
+          const hopAmp = reducedMotion ? 0 : Math.min(ROW_GAP * 0.34, 14);
+          const hop = -hopAmp * Math.sin(Math.PI * Math.min(1, frac * 1.05)) * (1 - frac * 0.45);
+          rb.x = a.x + (b2.x - a.x) * xe;
+          rb.y = a.y + (b2.y - a.y) * fall + (isLast ? 0 : hop);
+          if (isLast && !reducedMotion) {
+            // settle into the slot with two damped bounces
+            const s = frac;
+            const settle = Math.abs(Math.sin(Math.PI * s * 2.2)) * (1 - s) * 10;
+            rb.y -= settle;
+          }
           rb.trail.push({ x: rb.x, y: rb.y, t });
           rb.trail = rb.trail.filter((p) => t - p.t < 260).slice(-10);
+
 
           if (b2.pegKey && b2.pegKey !== rb.lastPegKey && frac > 0.92) {
             rb.lastPegKey = b2.pegKey;
