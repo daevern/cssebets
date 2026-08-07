@@ -252,7 +252,7 @@ export function BlackjackTable({
 
       <div className="relative flex h-full flex-col items-stretch gap-1 px-3 pb-2 pr-16 md:pr-24 pt-2 md:gap-2 md:px-6 md:pb-4 md:pt-4">
         {/* Table title — engraved casino script */}
-        <div className="pointer-events-none flex shrink-0 items-center justify-center gap-2">
+        <div className="pointer-events-none flex shrink-0 items-center justify-center gap-2 pb-2 pt-0.5 md:pb-3">
           <span aria-hidden className="text-[10px] leading-none text-white/45 md:text-xs">
             ♠
           </span>

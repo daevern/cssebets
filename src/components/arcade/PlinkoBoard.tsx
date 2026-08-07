@@ -350,7 +350,7 @@ export function PlinkoBoard({
   return (
     <div className="relative w-full overflow-hidden" style={{ background: boardBg ?? "transparent" }}>
       {/* Board title — neon cabinet marquee */}
-      <div className="pointer-events-none absolute inset-x-0 top-1.5 z-10 flex items-center justify-center gap-2 sm:top-2.5">
+      <div className="pointer-events-none relative z-10 flex items-center justify-center gap-2 pb-2 pt-3 sm:pb-3 sm:pt-4">
         <span
           aria-hidden
           className="h-2 w-2 shrink-0 rounded-full sm:h-2.5 sm:w-2.5"

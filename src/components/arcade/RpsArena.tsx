@@ -313,7 +313,7 @@ function RpsArenaImpl({
 `}</style>
 
       {/* Arena title */}
-      <div className="mb-0.5 flex items-center justify-center gap-2">
+      <div className="mb-3 flex items-center justify-center gap-2 pt-1">
         <HandGlyph move="ROCK" className="h-4 w-4 shrink-0 text-[var(--color-neon)]/70" />
         <span
           className="font-display text-base font-black uppercase tracking-[0.1em] text-white sm:text-lg"
