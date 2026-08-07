@@ -406,12 +406,14 @@ export function PlinkoBoard({
             const c = slotColors.get(k)!;
             return (
               <linearGradient key={`sg-${k}`} id={`slotG-${k}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={c.fill} stopOpacity={0.05} />
-                <stop offset="45%" stopColor={c.fill} stopOpacity={0.45} />
+                <stop offset="0%" stopColor={c.fill} stopOpacity={0} />
+                <stop offset="35%" stopColor={c.fill} stopOpacity={0.18} />
+                <stop offset="70%" stopColor={c.fill} stopOpacity={0.6} />
                 <stop offset="100%" stopColor={c.fill} stopOpacity={1} />
               </linearGradient>
             );
           })}
+
         </defs>
 
         <rect x={0} y={0} width={W} height={boardHeight} rx={22} fill="url(#boardGlow)" />
