@@ -230,6 +230,12 @@ function TreasurePage() {
           traps={traps}
           pendingIndex={pendingTile}
           disabled={!active || busy}
+          difficulty={difficulty}
+          onDifficultyChange={(d) => setDifficulty(d as Difficulty)}
+          difficultyOptions={configs.map((c: any) => ({
+            key: c.difficulty,
+            label: `${c.difficulty} · ${c.trap_count ?? "-"}`,
+          }))}
           onReveal={onReveal}
           message={
             active
