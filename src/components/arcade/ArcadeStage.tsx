@@ -54,7 +54,9 @@ export function ArcadeStage({
       // Document-relative top so scrolling never changes the measured space
       // (viewport-relative top shrinks as you scroll, which zoomed the game).
       const top = outer.getBoundingClientRect().top + Math.max(0, window.scrollY);
-      const space = Math.max(1, Math.round(viewportRef.current.height - top - dockH - gap));
+      // The stage owns every pixel down to the fixed console. Route-level flex
+      // gaps must never create a visible strip between the game and controls.
+      const space = Math.max(1, Math.ceil(viewportRef.current.height - top - dockH - gap));
 
       // Measure the content itself (never the stretched wrapper) so the game
       // can scale UP into leftover room, not only down.
@@ -104,14 +106,14 @@ export function ArcadeStage({
     <div
       ref={outerRef}
       className={cn(
-        "relative left-1/2 w-screen -translate-x-1/2 overflow-hidden",
+        "relative left-1/2 mb-0 w-screen -translate-x-1/2 overflow-hidden",
         className,
       )}
       style={{ height: avail || undefined }}
     >
       <div
         ref={innerRef}
-        className="absolute inset-x-0 top-0"
+        className="absolute inset-x-0 top-0 h-full"
         style={{
           width: `${100 / scale}%`,
           transform: `scale(${scale})`,

@@ -169,7 +169,7 @@ function ArcadeLayout() {
         className={
           ambient
             ? // Stages bleed edge-to-edge on mobile; surrounding chrome keeps its gutter.
-              "mx-auto w-full max-w-4xl px-3 pt-2 md:px-6 md:pt-6 [&_.arcade-stage]:rounded-none [&_.arcade-stage]:shadow-none [&_.treasure-stage]:w-full [&_.treasure-stage]:max-w-none [&_.treasure-stage]:rounded-none"
+              "mx-auto w-full max-w-4xl px-3 pt-2 md:px-6 md:pt-6 [&_.arcade-stage]:rounded-none [&_.arcade-stage]:shadow-none"
             : "mx-auto w-full max-w-4xl px-3 pt-3 md:px-6 md:pt-6"
         }
       >

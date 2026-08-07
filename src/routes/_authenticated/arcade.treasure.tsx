@@ -212,7 +212,7 @@ function TreasurePage() {
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-0">
       <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid grid-cols-3 gap-1.5">
         <Stat label="Balance" value={`${fmt(balance)}`} />
         <Stat
@@ -223,7 +223,7 @@ function TreasurePage() {
         <Stat label="Found" value={`${safeReveals}`} />
       </div>
 
-      <ArcadeStage>
+      <ArcadeStage className="mt-3">
       <div className="relative">
         {/* Violet spill so the grid's light carries into the side gutters. */}
         <div
