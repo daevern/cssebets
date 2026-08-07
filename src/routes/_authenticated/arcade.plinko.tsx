@@ -304,109 +304,97 @@ function PlinkoPage() {
 
       <VerifyDialog open={verifyOpen} onOpenChange={setVerifyOpen} gameId={lastGame?.id ?? null} />
 
-      <div data-arcade-console className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-0">
-        <div className="mx-auto w-full max-w-4xl space-y-2 px-3 py-2">
-          <div className="flex items-center gap-1.5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <Seg
-              options={RISK_OPTIONS.map((r) => ({ key: r.key, label: r.label }))}
-              value={riskMode}
-              disabled={locked}
-              onChange={(v) => setRiskMode(v as RiskMode)}
-            />
-            <div className="ml-auto shrink-0">
-              <Seg
-                options={[
-                  { key: "manual", label: "Manual" },
-                  { key: "auto", label: "Auto" },
-                ]}
-                value={mode}
-                disabled={locked}
-                onChange={(v) => setMode(v as BetMode)}
-              />
-            </div>
-          </div>
+      <ControlDock>
+        <DockRow scroll>
+          <DockSeg
+            options={RISK_OPTIONS.map((r) => ({ key: r.key, label: r.label }))}
+            value={riskMode}
+            disabled={locked}
+            onChange={(v) => setRiskMode(v as RiskMode)}
+          />
+          <DockSeg
+            className="ml-auto"
+            options={[
+              { key: "manual", label: "Manual" },
+              { key: "auto", label: "Auto" },
+            ]}
+            value={mode}
+            disabled={locked}
+            onChange={(v) => setMode(v as BetMode)}
+          />
+        </DockRow>
 
-          <div className="flex items-center gap-2 overflow-x-auto px-1 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <ChipRack
-              values={CHIP_VALUES}
-              max={STAKE_MAX}
-              value={stakePerBall}
-              disabled={locked}
-              onSelect={(c: number) => setStakePerBall(c)}
-              size={44}
-            />
-            <div className="ml-auto shrink-0 text-right">
-              <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-                Stake / ball
-              </div>
-              <div className="font-display text-xs font-bold tabular-nums text-[var(--color-ink)]">
-                {fmt(stakePerBall)} pts
-              </div>
-            </div>
-          </div>
+        <DockRow scroll>
+          <ChipRack
+            values={CHIP_VALUES}
+            max={STAKE_MAX}
+            value={stakePerBall}
+            disabled={locked}
+            onSelect={(c: number) => setStakePerBall(c)}
+            size={44}
+          />
+          <DockReadout
+            className="ml-auto"
+            label="Stake / ball"
+            value={`${fmt(stakePerBall)} pts`}
+          />
+        </DockRow>
 
-          <div className="flex min-w-0 items-center gap-1 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-2 py-1">
-            <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-              {mode === "auto" ? "Bets" : "Balls"}
-            </span>
-            <button
-              type="button"
-              onClick={() => setBallCount((v) => Math.max(BALLS_MIN, v - 1))}
-              disabled={locked}
-              className="ml-auto grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
-            >
-              <Minus className="h-3 w-3" />
-            </button>
-            <input
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={ballCountInput}
-              onChange={(e) => setBallCountInput(e.target.value.replace(/[^0-9]/g, ""))}
-              onBlur={(e) => commitBallCount(e.target.value || "1")}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-              }}
-              disabled={locked}
-              className="w-9 bg-transparent text-center font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none"
-            />
-            <button
-              type="button"
-              onClick={() => setBallCount((v) => Math.min(BALLS_MAX, v + 1))}
-              disabled={locked}
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-md border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
-            >
-              <Plus className="h-3 w-3" />
-            </button>
-          </div>
-
+        <DockField>
+          <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--color-ink-muted)]">
+            {mode === "auto" ? "Bets" : "Balls"}
+          </span>
           <button
             type="button"
-            onClick={placeBet}
-            disabled={!canDrop}
-            className={cn(
-              "flex h-11 w-full items-center justify-center rounded-full font-display text-xs font-bold uppercase tracking-[0.2em] transition-all",
-              canDrop
-                ? "bg-[var(--color-neon)] text-black active:opacity-90"
-                : "border border-[var(--color-surface-border)] bg-[var(--color-surface)] text-[var(--color-ink-muted)]",
-            )}
+            aria-label="Decrease"
+            onClick={() => setBallCount((v) => Math.max(BALLS_MIN, v - 1))}
+            disabled={locked}
+            className="ml-auto grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
           >
-            {pending
-              ? "Placing…"
-              : busy
-                ? `In play · ${activeBalls.length}`
-                : `Bet · ${fmt(totalCost)} pts`}
+            <Minus className="h-4 w-4" />
           </button>
+          <input
+            inputMode="numeric"
+            pattern="[0-9]*"
+            aria-label={mode === "auto" ? "Bets" : "Balls"}
+            value={ballCountInput}
+            onChange={(e) => setBallCountInput(e.target.value.replace(/[^0-9]/g, ""))}
+            onBlur={(e) => commitBallCount(e.target.value || "1")}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+            }}
+            disabled={locked}
+            className="w-10 bg-transparent text-center font-display text-sm font-bold tabular-nums text-[var(--color-ink)] outline-none"
+          />
+          <button
+            type="button"
+            aria-label="Increase"
+            onClick={() => setBallCount((v) => Math.min(BALLS_MAX, v + 1))}
+            disabled={locked}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[var(--color-surface-border)] text-[var(--color-ink-muted)] disabled:opacity-40"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        </DockField>
 
-          {!canAfford && !profile.isLoading && (
-            <p className="text-center text-[9px] font-bold uppercase tracking-[0.2em] text-destructive/90">
-              Need {fmt(totalCost - balance)} more pts ·{" "}
-              <Link to="/wallet" className="underline">
-                wallet
-              </Link>
-            </p>
-          )}
-        </div>
-      </div>
+        <DockPrimary onClick={placeBet} disabled={!canDrop} active={canDrop}>
+          {pending
+            ? "Placing…"
+            : busy
+              ? `In play · ${activeBalls.length}`
+              : `Bet · ${fmt(totalCost)} pts`}
+        </DockPrimary>
+
+        {!canAfford && !profile.isLoading && (
+          <DockNote>
+            Need {fmt(totalCost - balance)} more pts ·{" "}
+            <Link to="/wallet" className="underline">
+              wallet
+            </Link>
+          </DockNote>
+        )}
+      </ControlDock>
+
     </div>
   );
 }
