@@ -57,16 +57,50 @@ function useConsoleHeight() {
   return height;
 }
 
+/** Per-game ambient wash so the page itself becomes the cabinet, not a card on a page. */
+const AMBIENT: Record<string, string> = {
+  plinko:
+    "radial-gradient(120% 70% at 50% -6%, #1b2a6b 0%, #0d1330 42%, var(--color-bg, #07080d) 100%)",
+  treasure:
+    "radial-gradient(120% 70% at 50% -6%, #3f1273 0%, #1b0733 44%, var(--color-bg, #07080d) 100%)",
+  roulette:
+    "radial-gradient(120% 70% at 50% -6%, #0f7a46 0%, #072317 44%, var(--color-bg, #07080d) 100%)",
+  blackjack:
+    "radial-gradient(120% 70% at 50% -6%, #0d5a38 0%, #06180f 44%, var(--color-bg, #07080d) 100%)",
+  rps: "radial-gradient(120% 70% at 50% -6%, #2a1160 0%, #100a26 44%, var(--color-bg, #07080d) 100%)",
+};
+
 function ArcadeLayout() {
   const consoleHeight = useConsoleHeight();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const game = pathname.split("/arcade/")[1]?.split("/")[0] ?? "";
+  const ambient = AMBIENT[game] ?? null;
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-3 pt-3 md:px-6 md:pt-6">
-      <Outlet />
+    <div className="relative w-full">
+      {/* Full-bleed ambient backdrop — the game's world fills the viewport edge to edge. */}
+      {ambient && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 -z-10 transition-[background] duration-500"
+          style={{ background: ambient }}
+        />
+      )}
 
-      {/* Spacer clears the fixed console exactly — nothing more. */}
-      <div style={{ height: consoleHeight }} aria-hidden />
+      <div
+        className={
+          ambient
+            ? // Full-bleed on mobile: no side gutters, stages merge into the page.
+              "mx-auto w-full max-w-[720px] px-0 pt-2 sm:px-4 sm:pt-4 md:max-w-4xl md:px-6 md:pt-6 [&_.treasure-stage]:max-md:rounded-none [&_.arcade-stage]:max-md:rounded-none [&_.arcade-stage]:max-md:shadow-none"
+            : "mx-auto w-full max-w-4xl px-3 pt-3 md:px-6 md:pt-6"
+        }
+      >
+        <Outlet />
+
+        {/* Spacer clears the fixed console exactly — nothing more. */}
+        <div style={{ height: consoleHeight }} aria-hidden />
+      </div>
     </div>
-
   );
 }
+
