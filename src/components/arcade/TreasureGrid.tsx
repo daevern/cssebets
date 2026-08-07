@@ -90,13 +90,42 @@ function TreasureGridImpl({
         }}
       />
 
-      <div className="relative mb-2 flex items-center justify-center gap-2">
+      <div className="relative mb-1 flex items-center justify-center gap-2">
         <TreasureGem className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />
         <span className="font-display text-base font-black uppercase tracking-[0.08em] text-white sm:text-xl">
           Treasure <span style={{ color: "var(--treasure-magenta)" }}>Grid</span>
         </span>
         <TreasureGem className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />
       </div>
+
+      {showDifficulty && (
+        <div
+          role="tablist"
+          aria-label="Difficulty"
+          className="relative z-10 mx-auto mb-2 flex w-fit max-w-full items-center gap-1 rounded-full border border-[rgba(198,120,255,.35)] bg-[#1b0733]/80 p-1 backdrop-blur-sm"
+        >
+          {difficultyOptions.map((o) => {
+            const active = o.key === difficulty;
+            return (
+              <button
+                key={o.key}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => onDifficultyChange?.(o.key as TreasureDifficulty)}
+                className={cn(
+                  "h-8 min-w-[72px] rounded-full px-3 text-[10px] font-bold uppercase tracking-[0.04em] transition-all",
+                  active
+                    ? "bg-gradient-to-b from-[#b73bff] to-[#7c16d6] text-white shadow-[0_0_12px_-2px_rgba(183,59,255,.65)]"
+                    : "text-[#c79aff] hover:bg-[rgba(198,120,255,.15)] hover:text-white",
+                )}
+              >
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div
         className="relative grid w-full gap-1.5"
