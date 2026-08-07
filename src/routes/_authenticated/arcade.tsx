@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { PageFooter } from "@/components/ui/page-footer";
+
 
 export const Route = createFileRoute("/_authenticated/arcade")({
   head: () => ({
