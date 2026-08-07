@@ -38,9 +38,13 @@ function TreasureGridImpl({
   disabled,
   onReveal,
   message,
+  difficulty,
+  difficultyOptions,
+  onDifficultyChange,
 }: TreasureGridProps) {
   const total = rows * cols;
   const trapSet = traps ? new Set(traps) : null;
+  const showDifficulty = difficultyOptions && difficultyOptions.length > 0 && difficulty !== undefined;
 
   return (
     <div
