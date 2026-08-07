@@ -390,9 +390,15 @@ export function PlinkoBoard({
             <stop offset="100%" stopColor="rgba(120,210,255,0.85)" />
           </linearGradient>
           <radialGradient id="ballGlow">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.75)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+            <stop offset="0%" stopColor="rgba(41,196,255,0.65)" />
+            <stop offset="100%" stopColor="rgba(41,196,255,0)" />
           </radialGradient>
+          <radialGradient id="ballBody" cx="36%" cy="30%" r="80%">
+            <stop offset="0%" stopColor="#F4FFFF" />
+            <stop offset="55%" stopColor="#8FE9FF" />
+            <stop offset="100%" stopColor="#33CFFF" />
+          </radialGradient>
+
           {Array.from({ length: slotCount }).map((_, k) => {
             const c = slotColors.get(k)!;
             return (
@@ -430,11 +436,9 @@ export function PlinkoBoard({
         <circle className="drop-beam" cx={W / 2} cy={PADDING_TOP - 8} r={22} fill="url(#ballGlow)" />
         <circle cx={W / 2} cy={PADDING_TOP - 8} r={6} fill="#dff4ff" />
 
-        {/* funnel walls */}
-        <path d={wallPath(-1)} fill="none" stroke="url(#wallG)" strokeWidth={7} strokeLinejoin="round" strokeLinecap="round" opacity={0.9} />
-        <path d={wallPath(1)} fill="none" stroke="url(#wallG)" strokeWidth={7} strokeLinejoin="round" strokeLinecap="round" opacity={0.9} />
-        <path d={wallPath(-1)} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth={2} strokeLinejoin="round" />
-        <path d={wallPath(1)} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth={2} strokeLinejoin="round" />
+        {/* stylized cabinet frame */}
+        <PlinkoBoardFrame left={wallPath(-1)} right={wallPath(1)} />
+
 
         {pegs}
 
