@@ -46,8 +46,8 @@ export function ArcadeStage({
 
     const measure = () => {
       const outer = outerRef.current;
-      const inner = innerRef.current;
-      if (!outer || !inner) return;
+      const content = contentRef.current;
+      if (!outer || !content) return;
 
       const dock = document.querySelector("[data-arcade-console]") as HTMLElement | null;
       const dockH = dock?.offsetHeight ?? 0;
@@ -56,11 +56,13 @@ export function ArcadeStage({
       const top = outer.getBoundingClientRect().top + Math.max(0, window.scrollY);
       const space = Math.max(1, Math.round(viewportRef.current.height - top - dockH - gap));
 
-      const naturalH = inner.offsetHeight || 1;
+      // Measure the content itself (never the stretched wrapper) so the game
+      // can scale UP into leftover room, not only down.
+      const naturalH = content.offsetHeight || 1;
       const next = Math.min(maxScale, Math.max(minScale, space / naturalH));
 
       setAvail((prev) => (Math.abs(prev - space) > 1 ? space : prev));
-      setScale((prev) => (Math.abs(prev - next) > 0.01 ? next : prev));
+      setScale((prev) => (Math.abs(prev - next) > 0.005 ? next : prev));
     };
 
     const schedule = () => {
