@@ -270,10 +270,11 @@ export function BlackjackTable({
           </div>
         </div>
 
-        <div className="h-2 shrink-0" />
+        {/* Reserved centre lane for the house medallion. */}
+        <div className="h-16 shrink-0 md:h-20" />
 
         {/* Player */}
-        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-1">
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-end gap-1">
           <div className="flex max-w-full flex-wrap items-start justify-center gap-3 md:gap-4">
             {playerHands.map((ph) => {
               const handCards = cards.filter((c) => c.playerHandId === ph.id);
