@@ -12,6 +12,15 @@ import { VerifyDialog } from "@/components/arcade/VerifyDialog";
 import type { PlinkoGame, RiskMode, RowsCount } from "@/components/arcade/types";
 import { Minus, Plus, ShieldCheck } from "lucide-react";
 import { ChipRack } from "@/components/arcade/ChipRack";
+import {
+  ControlDock,
+  DockField,
+  DockNote,
+  DockPrimary,
+  DockReadout,
+  DockRow,
+  DockSeg,
+} from "@/components/arcade/ControlDock";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/arcade/plinko")({
@@ -310,7 +319,7 @@ function PlinkoPage() {
             options={RISK_OPTIONS.map((r) => ({ key: r.key, label: r.label }))}
             value={riskMode}
             disabled={locked}
-            onChange={(v) => setRiskMode(v as RiskMode)}
+            onChange={(v: string) => setRiskMode(v as RiskMode)}
           />
           <DockSeg
             className="ml-auto"
@@ -320,7 +329,7 @@ function PlinkoPage() {
             ]}
             value={mode}
             disabled={locked}
-            onChange={(v) => setMode(v as BetMode)}
+            onChange={(v: string) => setMode(v as BetMode)}
           />
         </DockRow>
 
@@ -417,39 +426,4 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
   );
 }
 
-function Seg({
-  options,
-  value,
-  disabled,
-  onChange,
-}: {
-  options: { key: string; label: string }[];
-  value: string;
-  disabled?: boolean;
-  onChange: (key: string) => void;
-}) {
-  return (
-    <div className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-0.5">
-      {options.map((o) => {
-        const active = o.key === value;
-        return (
-          <button
-            key={o.key}
-            type="button"
-            disabled={disabled}
-            onClick={() => onChange(o.key)}
-            className={cn(
-              "rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] transition-colors disabled:opacity-40",
-              active
-                ? "bg-[var(--color-neon)] text-black"
-                : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]",
-            )}
-          >
-            {o.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
