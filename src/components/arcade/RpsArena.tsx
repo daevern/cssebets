@@ -312,8 +312,21 @@ function RpsArenaImpl({
 .rps-rail *{overflow-anchor:none}
 `}</style>
 
+      {/* Arena title */}
+      <div className="mb-0.5 flex items-center justify-center gap-2">
+        <HandGlyph move="ROCK" className="h-4 w-4 shrink-0 text-[var(--color-neon)]/70" />
+        <span
+          className="font-display text-base font-black uppercase tracking-[0.1em] text-white sm:text-lg"
+          style={{ textShadow: "0 0 14px color-mix(in oklab, var(--color-neon) 45%, transparent)" }}
+        >
+          Rock <span className="text-[var(--color-neon)]">Paper</span> Scissors
+        </span>
+        <HandGlyph move="SCISSORS" className="h-4 w-4 shrink-0 text-[var(--color-neon)]/70" />
+      </div>
+
       {/* Rail — the active column is centred; history drifts left, next waits right. */}
       <div className="relative flex items-start justify-center gap-2 pb-0.5 pt-2">
+
         {/* Left: settled results — scrollable, most recent closest to the centre. */}
         <div className="rps-rail flex flex-1 items-start justify-start gap-2 overflow-x-auto overflow-y-hidden [scrollbar-width:none]">
           <div className="flex min-w-full items-start justify-end gap-2">
