@@ -132,7 +132,7 @@ export function PlinkoBoard({
   // Add newly-arrived balls to runtime map
   useEffect(() => {
     const now = performance.now();
-    const stepMs = reducedMotion ? 40 : 135;
+    const stepMs = reducedMotion ? 70 : 230;
     const currentIds = new Set(normalizedBalls.map((b) => b.id));
 
     for (const id of Array.from(runtimeRef.current.keys())) {
