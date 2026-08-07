@@ -327,7 +327,7 @@ function RoulettePage() {
       >
         {/* felt head */}
         <div className="relative px-3 pt-3 pb-2">
-          <div className="mb-2 flex items-center justify-center gap-2">
+          <div className="mb-4 flex items-center justify-center gap-2 pt-1">
             <span
               aria-hidden
               className="h-2.5 w-2.5 rotate-45 rounded-[1px]"

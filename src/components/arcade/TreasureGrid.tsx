@@ -91,7 +91,7 @@ function TreasureGridImpl({
         }}
       />
 
-      <div className="relative mb-1 flex items-center justify-center gap-2">
+      <div className="relative mb-3 flex items-center justify-center gap-2 pt-1 sm:mb-4 sm:pt-2">
         <TreasureGem className="h-5 w-5 shrink-0 sm:h-6 sm:w-6" />
         <span className="font-display text-base font-black uppercase tracking-[0.08em] text-white sm:text-xl">
           Treasure <span style={{ color: "var(--treasure-magenta)" }}>Grid</span>
