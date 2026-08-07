@@ -137,17 +137,78 @@ function TreasureGridImpl({
                 </>
               )}
               {mine === "TRAP" && (
-                <>
+                <span className="pointer-events-none absolute inset-0 grid place-items-center">
+                  {/* smoke / scorch cloud puffing out beyond the tile */}
                   <span
-                    className="pointer-events-none absolute inset-0"
+                    className="absolute -inset-[22%]"
                     style={{
                       background:
-                        "radial-gradient(circle at 50% 50%, rgba(255,200,120,0.85), rgba(255,90,77,0) 70%)",
-                      animation: "tspark 560ms ease-out forwards",
+                        "radial-gradient(circle at 32% 38%, rgba(40,12,18,0.95) 0 18%, rgba(40,12,18,0) 42%)," +
+                        "radial-gradient(circle at 70% 30%, rgba(52,16,24,0.9) 0 16%, rgba(52,16,24,0) 40%)," +
+                        "radial-gradient(circle at 28% 72%, rgba(46,14,20,0.9) 0 17%, rgba(46,14,20,0) 42%)," +
+                        "radial-gradient(circle at 74% 70%, rgba(38,10,16,0.92) 0 18%, rgba(38,10,16,0) 44%)," +
+                        "radial-gradient(circle at 50% 50%, rgba(30,8,12,0.9) 0 30%, rgba(30,8,12,0) 62%)",
+                      filter: "blur(1.5px)",
+                      animation: "tsmoke 620ms cubic-bezier(0.18,0.9,0.3,1) forwards",
                     }}
                   />
-                  <Bomb className="relative h-[48%] w-[48%] text-white will-change-transform animate-[treasure-shake_420ms_ease-in-out]" />
-                </>
+                  {/* shockwave ring */}
+                  <span
+                    className="absolute inset-0 rounded-full border-2"
+                    style={{
+                      borderColor: "rgba(255,120,120,0.8)",
+                      animation: "tring 520ms ease-out forwards",
+                    }}
+                  />
+                  {/* white-hot flash */}
+                  <span
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.95) 0 18%, rgba(255,90,77,0.6) 38%, rgba(255,60,60,0) 70%)",
+                      animation: "tflash 460ms ease-out forwards",
+                    }}
+                  />
+                  {/* glowing red core orb */}
+                  <span
+                    className="relative h-[62%] w-[62%] rounded-full"
+                    style={{
+                      background:
+                        "radial-gradient(circle at 42% 36%, #ff8f8f 0 12%, #ff1a3a 45%, #b70020 100%)",
+                      boxShadow:
+                        "0 0 26px 6px rgba(255,26,58,0.75), inset 0 0 12px rgba(255,255,255,0.45)",
+                      animation: "torb 420ms cubic-bezier(0.34,1.56,0.64,1) forwards",
+                    }}
+                  />
+                  {/* white starburst rays over the core */}
+                  <span
+                    className="absolute h-[62%] w-[62%]"
+                    style={{
+                      background:
+                        "conic-gradient(from 0deg, rgba(255,255,255,0.95) 0 2deg, rgba(255,255,255,0) 2deg 43deg," +
+                        "rgba(255,255,255,0.9) 43deg 46deg, rgba(255,255,255,0) 46deg 88deg," +
+                        "rgba(255,255,255,0.95) 88deg 91deg, rgba(255,255,255,0) 91deg 133deg," +
+                        "rgba(255,255,255,0.9) 133deg 136deg, rgba(255,255,255,0) 136deg 178deg," +
+                        "rgba(255,255,255,0.95) 178deg 181deg, rgba(255,255,255,0) 181deg 223deg," +
+                        "rgba(255,255,255,0.9) 223deg 226deg, rgba(255,255,255,0) 226deg 268deg," +
+                        "rgba(255,255,255,0.95) 268deg 271deg, rgba(255,255,255,0) 271deg 313deg," +
+                        "rgba(255,255,255,0.9) 313deg 316deg, rgba(255,255,255,0) 316deg 360deg)",
+                      WebkitMaskImage:
+                        "radial-gradient(circle at 50% 50%, #000 0 12%, rgba(0,0,0,0.85) 40%, transparent 72%)",
+                      maskImage:
+                        "radial-gradient(circle at 50% 50%, #000 0 12%, rgba(0,0,0,0.85) 40%, transparent 72%)",
+                      animation: "tstar 520ms ease-out forwards",
+                    }}
+                  />
+                  {/* bright center pinpoint */}
+                  <span
+                    className="absolute h-[18%] w-[18%] rounded-full bg-white"
+                    style={{
+                      boxShadow: "0 0 14px 4px rgba(255,255,255,0.9)",
+                      animation: "torb 380ms ease-out forwards",
+                    }}
+                  />
+                </span>
               )}
               {exposed && <Bomb className="h-[42%] w-[42%] text-white/50" />}
             </button>
