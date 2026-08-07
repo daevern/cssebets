@@ -374,6 +374,36 @@ function BlackjackPage() {
           </div>
         </DockRow>
 
+        <div className="grid grid-cols-4 gap-1.5">
+          <ActionBtn
+            label="Double"
+            onClick={() => dbl.mutate()}
+            disabled={!inPlay || busy || !canDouble}
+            loading={dbl.isPending}
+            icon={<span className="font-mono text-[13px] font-black">2×</span>}
+          />
+          <ActionBtn
+            label="Hit"
+            onClick={() => hit.mutate()}
+            disabled={!inPlay || busy}
+            loading={hit.isPending}
+            icon={<CopyPlus className="h-4 w-4" />}
+          />
+          <ActionBtn
+            label="Stand"
+            onClick={() => stand.mutate()}
+            disabled={!inPlay || busy}
+            loading={stand.isPending}
+            icon={<Hand className="h-4 w-4" />}
+          />
+          <ActionBtn
+            label="Split"
+            onClick={() => split.mutate()}
+            disabled={!inPlay || busy || !canSplit}
+            loading={split.isPending}
+            icon={<SplitSquareHorizontal className="h-4 w-4" />}
+          />
+        </div>
 
         {!inPlay ? (
           <DockPrimary
@@ -381,7 +411,7 @@ function BlackjackPage() {
             disabled={!canDeal}
             loading={deal.isPending}
           >
-            {settled ? "DEAL AGAIN" : `PLACE BET · ${stake.toLocaleString()} pts`}
+            {settled ? "DEAL AGAIN" : "PLAY"}
           </DockPrimary>
         ) : (
           <div className="flex h-[52px] w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--color-ink-muted)]">
@@ -391,12 +421,38 @@ function BlackjackPage() {
 
         {balance < stake && !inPlay && <DockNote>Not enough points for this stake</DockNote>}
       </ControlDock>
-
-
-      <p className="hidden text-center text-[10px] leading-relaxed text-[var(--color-ink-muted)] md:block">
-        Played with wallet points. Every shoe is shuffled from a committed server seed and your
-        client seed.
-      </p>
     </div>
+  );
+}
+
+function ActionBtn({
+  label,
+  icon,
+  onClick,
+  disabled,
+  loading,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || loading}
+      title={label}
+      className={cn(
+        "flex h-[44px] min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-neon)] transition active:scale-[0.97]",
+        (disabled || loading) && "pointer-events-none opacity-40",
+      )}
+    >
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : icon}
+      <span className="font-display text-[9px] font-bold uppercase tracking-[0.14em] text-[var(--color-ink)]">
+        {label}
+      </span>
+    </button>
   );
 }
