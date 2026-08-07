@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Play, HelpCircle, Zap, Flame, Gem, Spade, Swords } from "lucide-react";
+import { HelpCircle, Zap, Flame, Gem, Spade, Swords } from "lucide-react";
 import { HowToPlayDialog, HOW_TO_PLAY } from "@/components/arcade/HowToPlayDialog";
 import {
   PlinkoArt,
