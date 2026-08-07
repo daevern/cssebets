@@ -102,7 +102,7 @@ export function ChipRack({
           </div>
         </button>
       ) : (
-        <div className="flex min-w-0 items-center gap-1.5 overflow-x-auto overflow-y-visible py-1 [-ms-overflow-style:none] [overflow-anchor:none] [overscroll-behavior-x:contain] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex shrink-0 items-center gap-1.5 py-1">
           {denominations.map((v) => (
             <span key={v} className="animate-[scale-in_0.15s_ease-out]">
               <CasinoChip

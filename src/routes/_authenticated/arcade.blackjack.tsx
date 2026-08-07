@@ -230,7 +230,7 @@ function BlackjackPage() {
 
   return (
     <div className="flex flex-col gap-1 md:gap-3">
-      <div className="grid shrink-0 grid-cols-3 gap-1.5">
+      <div className="sticky top-0 z-20 -mx-3 bg-black/35 px-3 py-1 backdrop-blur grid shrink-0 grid-cols-3 gap-1.5">
         <Stat label="Balance" value={balance.toLocaleString()} />
         <Stat
           label="P/L today"
