@@ -155,7 +155,7 @@ export function PlayingCard({
         {/* Face */}
         <div
           className={cn(
-            "absolute inset-0 flex flex-col justify-between rounded-[4px] border border-black/10 bg-[#f7f7f2] px-1.5 py-1 [backface-visibility:hidden]",
+            "absolute inset-0 flex flex-col justify-between rounded-[6px] border border-black/10 bg-[#f7f7f2] px-1.5 py-1 shadow-[0_2px_6px_rgba(0,0,0,.45)] [backface-visibility:hidden]",
             red ? "text-[#d92b3a]" : "text-[#101418]",
           )}
         >
