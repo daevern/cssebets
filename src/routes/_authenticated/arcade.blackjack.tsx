@@ -333,9 +333,8 @@ function BlackjackPage() {
         />
       )}
 
-      <div data-arcade-console className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-0">
-        <div className="mx-auto w-full max-w-xl space-y-1.5 px-3 py-2 md:space-y-2">
-        <div className="grid grid-cols-4 gap-1 md:gap-2">
+      <ControlDock maxWidth="max-w-xl">
+        <div className="grid grid-cols-4 gap-2">
           <ActionTile
             label="Double"
             glyph="x2"
@@ -366,53 +365,37 @@ function BlackjackPage() {
           />
         </div>
 
-
-        <div className="flex shrink-0 items-center justify-between gap-1 overflow-x-auto overflow-y-visible px-1.5 pb-1 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <DockRow scroll>
           <ChipRack
             values={chips}
             max={maxStake}
             value={stake}
             disabled={inPlay || busy}
             onSelect={(c) => clampStake(c)}
-            size={36}
+            size={44}
           />
-        </div>
+        </DockRow>
 
         {!inPlay ? (
-          <button
-            type="button"
+          <DockPrimary
             disabled={!canDeal}
+            active={canDeal}
+            loading={deal.isPending}
             onClick={() => deal.mutate()}
-            className={cn(
-              "flex h-9 md:h-12 w-full items-center justify-center gap-1.5 rounded-full font-display text-[10px] md:text-[12px] font-bold uppercase tracking-[0.16em] transition-all",
-              canDeal
-                ? "bg-[var(--color-neon)] text-black active:opacity-90"
-                : "border border-[var(--color-surface-border)] bg-[var(--color-surface)] text-[var(--color-ink-muted)]",
-            )}
           >
-            {deal.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <>
-                <Spade className="h-3.5 w-3.5" />
-                {settled ? "Deal again" : "Place bet"}
-                <span className="font-mono text-[9px]">· {stake} pts</span>
-              </>
-            )}
-          </button>
+            <Spade className="h-4 w-4" />
+            {settled ? "Deal again" : "Place bet"}
+            <span className="font-mono text-[11px]">· {stake} pts</span>
+          </DockPrimary>
         ) : (
-          <div className="flex h-9 md:h-12 w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[9px] md:text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
+          <div className="flex h-[52px] w-full items-center justify-center rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] font-display text-[12px] font-bold uppercase tracking-[0.08em] text-[var(--color-ink-muted)]">
             {tableBusy ? "Dealing…" : "Your move"}
           </div>
         )}
 
-        {balance < stake && !inPlay && (
-          <p className="text-center text-[10px] uppercase tracking-[0.24em] text-amber-300">
-            Not enough points for this stake
-          </p>
-        )}
-        </div>
-      </div>
+        {balance < stake && !inPlay && <DockNote>Not enough points for this stake</DockNote>}
+      </ControlDock>
+
 
       <p className="hidden text-center text-[10px] leading-relaxed text-[var(--color-ink-muted)] md:block">
         Played with wallet points. Every shoe is shuffled from a committed server seed and your
