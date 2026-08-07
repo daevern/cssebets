@@ -49,12 +49,12 @@ function TreasureGridImpl({
 
   return (
     <div
-      className="treasure-stage relative mx-auto w-full max-w-[720px] overflow-hidden rounded-[24px] p-3"
+      className="treasure-stage relative mx-auto w-full max-w-[820px] overflow-hidden rounded-[24px] p-3 max-md:rounded-none"
       style={{
         background:
           "radial-gradient(115% 85% at 50% 4%, var(--treasure-glow) 0%, var(--treasure-bg-2) 46%, var(--treasure-bg) 100%)",
-        boxShadow:
-          "inset 0 0 0 1px var(--treasure-border), 0 0 34px -16px rgba(168,85,247,.7)",
+        maskImage:
+          "linear-gradient(90deg, transparent 0%, #000 7%, #000 93%, transparent 100%)",
       }}
     >
       <style>{`

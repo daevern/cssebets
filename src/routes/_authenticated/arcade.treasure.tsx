@@ -225,6 +225,16 @@ function TreasurePage() {
 
       <ArcadeStage>
       <div className="relative">
+        {/* Violet spill so the grid's light carries into the side gutters. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -inset-x-[40vw] -top-8 bottom-0 -z-10"
+          style={{
+            background:
+              "radial-gradient(60% 70% at 50% 40%, rgba(63,18,115,.6) 0%, rgba(36,9,63,.36) 40%, rgba(18,5,34,.16) 64%, transparent 82%)",
+            filter: "blur(28px)",
+          }}
+        />
         <TreasureGrid
           rows={Number(config?.grid_rows ?? 5)}
           cols={Number(config?.grid_cols ?? 5)}
