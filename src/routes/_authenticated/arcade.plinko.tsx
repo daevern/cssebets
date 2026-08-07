@@ -304,24 +304,7 @@ function PlinkoPage() {
       <VerifyDialog open={verifyOpen} onOpenChange={setVerifyOpen} gameId={lastGame?.id ?? null} />
 
       <ControlDock>
-        <DockRow scroll>
-          <DockSeg
-            options={RISK_OPTIONS.map((r) => ({ key: r.key, label: r.label }))}
-            value={riskMode}
-            disabled={locked}
-            onChange={(v: string) => setRiskMode(v as RiskMode)}
-          />
-          <DockSeg
-            className="ml-auto"
-            options={[
-              { key: "manual", label: "Manual" },
-              { key: "auto", label: "Auto" },
-            ]}
-            value={mode}
-            disabled={locked}
-            onChange={(v: string) => setMode(v as BetMode)}
-          />
-        </DockRow>
+
 
         <DockRow scroll>
           <ChipRack
