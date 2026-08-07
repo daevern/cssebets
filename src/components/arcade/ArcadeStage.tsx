@@ -26,11 +26,22 @@ export function ArcadeStage({
 }) {
   const outerRef = React.useRef<HTMLDivElement | null>(null);
   const innerRef = React.useRef<HTMLDivElement | null>(null);
+  const viewportRef = React.useRef({ width: 0, height: 0 });
   const [avail, setAvail] = React.useState(0);
   const [scale, setScale] = React.useState(1);
 
   React.useEffect(() => {
     let raf = 0;
+
+    const readLayoutViewport = () => ({
+      width: document.documentElement.clientWidth,
+      height: document.documentElement.clientHeight,
+    });
+
+    // Mobile browsers repeatedly change window.innerHeight while their address
+    // bar moves or pull-to-refresh stretches the visual viewport. Keep the
+    // layout viewport fixed unless the screen width genuinely changes.
+    viewportRef.current = readLayoutViewport();
 
     const measure = () => {
       const outer = outerRef.current;
@@ -41,8 +52,11 @@ export function ArcadeStage({
       const dockH = dock?.offsetHeight ?? 0;
       // Document-relative top so scrolling never changes the measured space
       // (viewport-relative top shrinks as you scroll, which zoomed the game).
-      const top = outer.getBoundingClientRect().top + window.scrollY;
-      const space = Math.max(160, Math.round(window.innerHeight - top - dockH - gap));
+      const top = outer.getBoundingClientRect().top + Math.max(0, window.scrollY);
+      const space = Math.max(
+        160,
+        Math.round(viewportRef.current.height - top - dockH - gap),
+      );
 
       const naturalH = inner.offsetHeight || 1;
       const next = Math.min(maxScale, Math.max(minScale, space / naturalH));
@@ -56,19 +70,32 @@ export function ArcadeStage({
       raf = window.requestAnimationFrame(measure);
     };
 
+    const handleResize = () => {
+      const nextViewport = readLayoutViewport();
+      const isMobileViewport = window.matchMedia("(pointer: coarse)").matches;
+      const widthChanged = Math.abs(nextViewport.width - viewportRef.current.width) > 40;
+      if (!isMobileViewport || widthChanged) viewportRef.current = nextViewport;
+      schedule();
+    };
+
+    const handleOrientationChange = () => {
+      window.setTimeout(() => {
+        viewportRef.current = readLayoutViewport();
+        schedule();
+      }, 150);
+    };
+
     schedule();
     const ro = new ResizeObserver(schedule);
     if (innerRef.current) ro.observe(innerRef.current);
     if (outerRef.current) ro.observe(outerRef.current);
-    window.addEventListener("resize", schedule);
-    window.addEventListener("orientationchange", schedule);
-    const poll = window.setInterval(schedule, 500);
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("orientationchange", handleOrientationChange);
 
     return () => {
       window.cancelAnimationFrame(raf);
-      window.clearInterval(poll);
-      window.removeEventListener("resize", schedule);
-      window.removeEventListener("orientationchange", schedule);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("orientationchange", handleOrientationChange);
       ro.disconnect();
     };
   }, [gap, minScale, maxScale]);
