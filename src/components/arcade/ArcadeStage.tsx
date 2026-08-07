@@ -14,8 +14,8 @@ export function ArcadeStage({
   children,
   className,
   minScale = 0.3,
-  maxScale = 1.6,
-  gap = 0,
+  maxScale = 1.35,
+  gap = 8,
 }: {
   children: React.ReactNode;
   className?: string;
@@ -26,7 +26,6 @@ export function ArcadeStage({
 }) {
   const outerRef = React.useRef<HTMLDivElement | null>(null);
   const innerRef = React.useRef<HTMLDivElement | null>(null);
-  const contentRef = React.useRef<HTMLDivElement | null>(null);
   const viewportRef = React.useRef({ width: 0, height: 0 });
   const [avail, setAvail] = React.useState(0);
   const [scale, setScale] = React.useState(1);
@@ -46,31 +45,24 @@ export function ArcadeStage({
 
     const measure = () => {
       const outer = outerRef.current;
-      const content = contentRef.current;
-      if (!outer || !content) return;
+      const inner = innerRef.current;
+      if (!outer || !inner) return;
 
       const dock = document.querySelector("[data-arcade-console]") as HTMLElement | null;
       const dockH = dock?.offsetHeight ?? 0;
       // Document-relative top so scrolling never changes the measured space
       // (viewport-relative top shrinks as you scroll, which zoomed the game).
       const top = outer.getBoundingClientRect().top + Math.max(0, window.scrollY);
-      // The stage owns every pixel down to the fixed console. Route-level flex
-      // gaps must never create a visible strip between the game and controls.
-      const space = Math.max(1, Math.ceil(viewportRef.current.height - top - dockH - gap));
+      const space = Math.max(
+        160,
+        Math.round(viewportRef.current.height - top - dockH - gap),
+      );
 
-      // Measure the content itself (never the stretched wrapper) so the game
-      // can scale UP into leftover room, not only down.
-      const naturalH = content.offsetHeight;
-      // Before the content has a real height, any ratio would be nonsense and
-      // would squash the inner width (which collapses grid columns).
-      if (!naturalH || naturalH < 40) {
-        setAvail((prev) => (Math.abs(prev - space) > 1 ? space : prev));
-        return;
-      }
+      const naturalH = inner.offsetHeight || 1;
       const next = Math.min(maxScale, Math.max(minScale, space / naturalH));
 
       setAvail((prev) => (Math.abs(prev - space) > 1 ? space : prev));
-      setScale((prev) => (Math.abs(prev - next) > 0.005 ? next : prev));
+      setScale((prev) => (Math.abs(prev - next) > 0.01 ? next : prev));
     };
 
     const schedule = () => {
@@ -95,7 +87,7 @@ export function ArcadeStage({
 
     schedule();
     const ro = new ResizeObserver(schedule);
-    if (contentRef.current) ro.observe(contentRef.current);
+    if (innerRef.current) ro.observe(innerRef.current);
     if (outerRef.current) ro.observe(outerRef.current);
     window.addEventListener("resize", handleResize);
     window.addEventListener("orientationchange", handleOrientationChange);
@@ -111,24 +103,19 @@ export function ArcadeStage({
   return (
     <div
       ref={outerRef}
-      className={cn(
-        "relative left-1/2 mb-0 w-screen -translate-x-1/2 overflow-hidden",
-        className,
-      )}
+      className={cn("relative w-full overflow-hidden", className)}
       style={{ height: avail || undefined }}
     >
       <div
         ref={innerRef}
-        className="absolute inset-x-0 top-0 h-full"
+        className="absolute left-0 top-0 flex flex-col justify-start"
         style={{
           width: `${100 / scale}%`,
           transform: `scale(${scale})`,
           transformOrigin: "top left",
         }}
       >
-        <div ref={contentRef} className="flex flex-col justify-center">
-          {children}
-        </div>
+        {children}
       </div>
     </div>
   );

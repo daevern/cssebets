@@ -16,7 +16,6 @@ import { RouletteBoard } from "@/components/arcade/RouletteBoard";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import { ControlDock, DockIconButton, DockNote, DockPrimary, DockRow } from "@/components/arcade/ControlDock";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
-import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 import {
   positionKey,
   returnMultiplier,
@@ -317,15 +316,15 @@ function RoulettePage() {
         </div>
       )}
 
-      <ArcadeStage>
-        {/* Curved casino table: felt head arcs around the wheel, betting layout flows out of it */}
-        <div
-          className="relative w-full shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)]"
-          style={{
-            background: "#0a6b3d",
-            borderRadius: "50% 50% 0 0 / 26% 26% 0 0",
-          }}
-        >
+      {/* Curved casino table: felt head arcs around the wheel, betting layout flows out of it */}
+      <div
+        className="relative border shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)]"
+        style={{
+          background: "#0a6b3d",
+          borderColor: "rgba(255,255,255,0.5)",
+          borderRadius: "50% 50% 16px 16px / 26% 26% 16px 16px",
+        }}
+      >
         {/* felt head */}
         <div className="relative px-3 pt-3 pb-2">
           <div className="mb-4 flex items-center justify-center gap-2 pt-1">
@@ -424,8 +423,7 @@ function RoulettePage() {
             <RouletteBoard stakes={stakesByKey} onPlace={place} disabled={spinning} bare />
           </div>
         </div>
-        </div>
-      </ArcadeStage>
+      </div>
       
 
 

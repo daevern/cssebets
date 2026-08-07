@@ -212,7 +212,7 @@ function TreasurePage() {
   }
 
   return (
-    <div className="flex flex-col gap-0">
+    <div className="flex flex-col gap-3">
       <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid grid-cols-3 gap-1.5">
         <Stat label="Balance" value={`${fmt(balance)}`} />
         <Stat
@@ -223,16 +223,16 @@ function TreasurePage() {
         <Stat label="Found" value={`${safeReveals}`} />
       </div>
 
-      <ArcadeStage className="mt-3">
+      <ArcadeStage>
       <div className="relative">
         {/* Violet spill so the grid's light carries into the side gutters. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute -inset-x-[40vw] -top-8 bottom-0 -z-10"
+          className="pointer-events-none absolute -inset-x-[45vw] -top-10 -bottom-6 -z-10"
           style={{
             background:
-              "radial-gradient(60% 70% at 50% 40%, rgba(63,18,115,.6) 0%, rgba(36,9,63,.36) 40%, rgba(18,5,34,.16) 64%, transparent 82%)",
-            filter: "blur(28px)",
+              "radial-gradient(70% 78% at 50% 34%, rgba(74,21,134,.98) 0%, rgba(52,13,92,.9) 34%, rgba(30,8,56,.7) 58%, rgba(18,5,34,.35) 78%, transparent 92%)",
+            filter: "blur(34px)",
           }}
         />
         <TreasureGrid
