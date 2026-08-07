@@ -223,7 +223,15 @@ function TreasurePage() {
       </div>
 
       <div className="relative">
+        <div className="mb-1.5 flex items-center justify-center gap-2">
+          <span className="text-lg">💎</span>
+          <span className="font-display text-lg font-black uppercase tracking-[0.06em] text-white drop-shadow-[0_0_12px_rgba(216,120,255,0.8)]">
+            Treasure <span className="text-[#e879f9]">Grid</span>
+          </span>
+          <span className="text-lg">💎</span>
+        </div>
         <TreasureGrid
+
           rows={Number(config?.grid_rows ?? 5)}
           cols={Number(config?.grid_cols ?? 5)}
           opened={opened}
