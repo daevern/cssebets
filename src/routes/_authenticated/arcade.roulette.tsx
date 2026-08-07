@@ -425,7 +425,7 @@ function RoulettePage() {
           </div>
         </div>
       </div>
-      </ArcadeStage>
+      
 
 
 
