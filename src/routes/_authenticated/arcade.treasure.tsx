@@ -7,7 +7,7 @@ import { ShieldCheck, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TreasureGrid } from "@/components/arcade/TreasureGrid";
 import { ChipRack } from "@/components/arcade/ChipRack";
-import { ControlDock, DockPrimary, DockReadout, DockRow, DockSeg } from "@/components/arcade/ControlDock";
+import { ControlDock, DockPrimary, DockReadout, DockRow } from "@/components/arcade/ControlDock";
 import { TreasureVerifyDialog } from "@/components/arcade/TreasureVerifyDialog";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import {
@@ -230,6 +230,12 @@ function TreasurePage() {
           traps={traps}
           pendingIndex={pendingTile}
           disabled={!active || busy}
+          difficulty={difficulty}
+          onDifficultyChange={(d) => setDifficulty(d as Difficulty)}
+          difficultyOptions={configs.map((c: any) => ({
+            key: c.difficulty,
+            label: `${c.difficulty} · ${c.trap_count ?? "-"}`,
+          }))}
           onReveal={onReveal}
           message={
             active
@@ -334,16 +340,6 @@ function TreasurePage() {
       <ControlDock>
         {!active ? (
           <>
-            <DockSeg
-              grow
-              value={difficulty}
-              onChange={(d: string) => setDifficulty(d as Difficulty)}
-              options={(["easy", "medium", "hard"] as Difficulty[]).map((d) => ({
-                key: d,
-                label: `${d} · ${configs.find((x: any) => x.difficulty === d)?.trap_count ?? "-"}`,
-              }))}
-            />
-
             <DockRow scroll>
               <ChipRack
                 values={chips}
