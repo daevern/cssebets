@@ -459,83 +459,34 @@ export function PlinkoBoard({
         )}
 
         {Array.from({ length: slotCount }).map((_, k) => {
-          const isFlash = (flashSlots.get(k) ?? 0) > 0;
           const c = slotColors.get(k)!;
           const slot = slots.find((s) => s.slot_index === k);
-          const mult = Number((slot as any)?.multiplier ?? 0);
-          const label = fmtMult(mult);
           const cx = slotX(k);
-          const x = cx - slotWidth / 2;
-          const chipH = Math.min(24, Math.max(16, slotWidth * 0.52));
           return (
-            <g key={`slot-${k}`} className={isFlash ? "slot-pop" : undefined}>
-              {/* thin neon pin */}
-              <rect
-                x={cx - 1}
-                y={colTop}
-                width={2}
-                height={pinH}
-                rx={1}
-                fill={c.fill}
-                opacity={isFlash ? 1 : 0.75}
-              />
-              {/* glowing column body */}
-              <rect
-                x={x + 1}
-                y={bodyTop}
-                width={slotWidth - 2}
-                height={colBottom - bodyTop}
-                rx={7}
-                fill={`url(#slotG-${k})`}
-                opacity={isFlash ? 1 : 0.95}
-              />
-              <rect
-                x={x + 1}
-                y={bodyTop}
-                width={slotWidth - 2}
-                height={colBottom - bodyTop}
-                rx={7}
-                fill="none"
-                stroke={c.fill}
-                strokeOpacity={isFlash ? 0.95 : 0.35}
-                strokeWidth={1}
-              />
-              {/* dark label plate at the base */}
-              <rect
-                x={x + 1}
-                y={colBottom - chipH}
-                width={slotWidth - 2}
-                height={chipH - 1}
-                rx={6}
-                fill="rgba(7,9,28,0.82)"
-              />
-              <text
-                x={cx}
-                y={colBottom - chipH / 2 + slotFontSize * 0.36}
-                textAnchor="middle"
-                fontSize={slotFontSize}
-                fontWeight={800}
-                fill={c.text}
-                textLength={
-                  label.length * slotFontSize * 0.62 > slotWidth - 6 ? slotWidth - 8 : undefined
-                }
-                lengthAdjust="spacingAndGlyphs"
-                style={{ letterSpacing: 0 }}
-              >
-                {label}
-              </text>
-            </g>
+            <PlinkoPayoutBin
+              key={`slot-${k}`}
+              index={k}
+              label={fmtMult(Number((slot as any)?.multiplier ?? 0))}
+              color={c.fill}
+              textColor={c.text}
+              active={(flashSlots.get(k) ?? 0) > 0}
+              cx={cx}
+              x={cx - slotWidth / 2}
+              width={slotWidth}
+              colTop={colTop}
+              bodyTop={bodyTop}
+              colBottom={colBottom}
+              pinH={pinH}
+              chipH={Math.min(24, Math.max(16, slotWidth * 0.52))}
+              fontSize={slotFontSize}
+            />
           );
-
         })}
 
         {liveBalls.map((rb) => (
-          <g key={`ball-${rb.id}`}>
-            <circle cx={rb.x} cy={rb.y} r={16} fill="url(#ballGlow)" />
-            <circle cx={rb.x} cy={rb.y} r={7} fill={ballFill} stroke={ballStroke} strokeWidth={1.4} />
-            <circle cx={rb.x - 2.2} cy={rb.y - 2.4} r={2.2} fill="rgba(255,255,255,0.95)" />
-          </g>
+          <PlinkoBall key={`ball-${rb.id}`} cx={rb.x} cy={rb.y} fill={ballFill} accent={ballStroke} />
         ))}
+
       </svg>
     </div>
 
