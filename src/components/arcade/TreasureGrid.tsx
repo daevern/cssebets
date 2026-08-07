@@ -129,7 +129,7 @@ function TreasureGridImpl({
       )}
 
       <div
-        className="relative grid w-full gap-1.5"
+        className="relative grid w-full gap-1.5 sm:gap-2.5"
         style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
         role="grid"
         aria-label="Treasure grid"
