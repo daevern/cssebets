@@ -315,7 +315,7 @@ function PlinkoPage() {
             size={44}
           />
 
-          {/* Balls stepper — sits right next to the casino chips */}
+          {/* Balls stepper + quick multipliers — sits right next to the casino chips */}
           <DockField className="shrink-0 pl-2.5 pr-1.5">
             <span className="text-[9px] font-bold uppercase tracking-[0.1em] text-[var(--color-ink-muted)]">
               {mode === "auto" ? "Bets" : "Balls"}
@@ -351,6 +351,36 @@ function PlinkoPage() {
             >
               <Plus className="h-3.5 w-3.5" />
             </button>
+
+            <div className="ml-1 flex shrink-0 items-center gap-1 border-l border-[var(--color-surface-border)] pl-2">
+              <button
+                type="button"
+                aria-label="Halve balls"
+                onClick={() => setBallCount((v) => Math.max(BALLS_MIN, Math.floor(v / 2)))}
+                disabled={locked}
+                className="grid h-6 w-7 shrink-0 place-items-center rounded-md bg-[var(--color-surface)] text-[10px] font-bold text-[var(--color-ink-muted)] ring-1 ring-[var(--color-surface-border)] transition-colors hover:text-[var(--color-ink)] disabled:opacity-40"
+              >
+                ½
+              </button>
+              <button
+                type="button"
+                aria-label="Double balls"
+                onClick={() => setBallCount((v) => Math.min(BALLS_MAX, v * 2))}
+                disabled={locked}
+                className="grid h-6 w-7 shrink-0 place-items-center rounded-md bg-[var(--color-surface)] text-[10px] font-bold text-[var(--color-ink-muted)] ring-1 ring-[var(--color-surface-border)] transition-colors hover:text-[var(--color-ink)] disabled:opacity-40"
+              >
+                2×
+              </button>
+              <button
+                type="button"
+                aria-label="Max balls"
+                onClick={() => setBallCount(BALLS_MAX)}
+                disabled={locked}
+                className="grid h-6 w-9 shrink-0 place-items-center rounded-md bg-[var(--color-neon)]/15 text-[10px] font-bold text-[var(--color-neon)] ring-1 ring-[var(--color-neon)]/30 transition-colors hover:bg-[var(--color-neon)]/25 disabled:opacity-40"
+              >
+                Max
+              </button>
+            </div>
           </DockField>
 
           <DockReadout
