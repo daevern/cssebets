@@ -29,7 +29,18 @@ type Props = {
   ballAccent?: string | null;
   boardColor?: string | null;
   boardAccent?: string | null;
+  /** Control band rendered under the title */
+  riskOptions?: { key: string; label: string }[];
+  risk?: string;
+  onRiskChange?: (key: string) => void;
+  modeOptions?: { key: string; label: string }[];
+  mode?: string;
+  onModeChange?: (key: string) => void;
+  rowOptions?: number[];
+  onRowsChange?: (rows: number) => void;
+  controlsDisabled?: boolean;
 };
+
 
 function slotFill(mult: number): { fill: string; glow: string; text: string } {
   // Palette matched to the neon poster: magenta/orange extremes, violet mids,
