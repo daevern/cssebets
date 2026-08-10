@@ -102,17 +102,17 @@ export function AuthShell({
       </aside>
 
       {/* Right column — form */}
-      <main className="flex h-[100dvh] flex-col overflow-hidden px-5 py-6 sm:px-10 lg:px-14 lg:py-8">
-        <Link to="/" className="mb-4 flex items-center gap-3 lg:hidden">
+      <main className="flex h-[100dvh] flex-col overflow-hidden px-5 py-4 sm:px-10 lg:px-14 lg:py-5">
+        <Link to="/" className="mb-3 flex items-center gap-3 lg:hidden">
           <CsseAppIcon size={30} />
           <CsseWordmark size={16} />
         </Link>
 
         {topSlot && <div className="mx-auto w-full max-w-[400px] shrink-0">{topSlot}</div>}
 
-        <div className="mx-auto flex w-full max-w-[400px] min-h-0 flex-1 flex-col justify-center overflow-y-auto">
+        <div className="mx-auto flex w-full max-w-[400px] min-h-0 flex-1 flex-col justify-start overflow-y-auto pt-2">
           {eyebrow && (
-            <span className="mb-2 text-xs font-medium text-[var(--color-neon)]">
+            <span className="mb-1.5 text-xs font-medium text-[var(--color-neon)]">
               {eyebrow}
             </span>
           )}
@@ -120,15 +120,15 @@ export function AuthShell({
             {title}
           </h1>
           {subtitle && (
-            <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            <p className="mt-1.5 text-sm leading-relaxed text-[var(--color-ink-muted)]">
               {subtitle}
             </p>
           )}
-          <div className="mt-7">{children}</div>
-          {footer && <div className="mt-6">{footer}</div>}
+          <div className="mt-4">{children}</div>
+          {footer && <div className="mt-5">{footer}</div>}
         </div>
 
-        <p className="mx-auto mt-6 w-full max-w-[400px] shrink-0 text-xs text-[var(--color-ink-muted)]">
+        <p className="mx-auto mt-4 w-full max-w-[400px] shrink-0 text-xs text-[var(--color-ink-muted)]">
           By continuing you agree to our terms. Markets involve risk — play responsibly.
         </p>
       </main>
