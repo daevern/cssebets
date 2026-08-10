@@ -33,16 +33,43 @@ export const listFootballMatches = createServerFn({ method: "GET" })
       .limit(data.limit);
     if (error) throw new Error(`Could not load football fixtures: ${error.message}`);
 
+    const ids = (rows ?? []).map((r: any) => r.id);
+    const refOdds = new Map<string, { home: number; draw: number; away: number }>();
+    if (ids.length > 0) {
+      const { data: mk } = await supabaseAdmin
+        .from("sports_markets" as any)
+        .select(
+          "sports_event_id, market_key, sports_market_selections (selection_key, decimal_odds)",
+        )
+        .in("sports_event_id", ids)
+        .eq("market_key", "match_result");
+      for (const m of (mk ?? []) as any[]) {
+        const sels: Record<string, number> = {};
+        for (const s of m.sports_market_selections ?? [])
+          sels[s.selection_key] = Number(s.decimal_odds);
+        if (sels.home && sels.draw && sels.away) {
+          refOdds.set(m.sports_event_id, {
+            home: sels.home,
+            draw: sels.draw,
+            away: sels.away,
+          });
+        }
+      }
+    }
+
+    const { competitionDisplayName } = await import("./config/footballCompetitions");
+
     const matches: FootballMatch[] = (rows ?? []).map((r: any) => ({
       id: r.id,
       competitionCode: r.competition_code as FootballCompetitionCode,
-      competitionName: r.competition_code,
+      competitionName: competitionDisplayName(r.competition_code),
       season: r.season,
       round: r.round,
       kickoffAt: r.scheduled_at,
       status: r.status,
       liveMinute: r.live_minute,
       venue: r.venue,
+      referenceOdds: refOdds.get(r.id) ?? null,
       home: {
         name: r.home_name ?? "TBD",
         shortName: r.home_short,
@@ -79,10 +106,11 @@ export const getFootballMatch = createServerFn({ method: "GET" })
       .order("sort_order", { ascending: true });
 
 
+    const { competitionDisplayName: cdn } = await import("./config/footballCompetitions");
     const match: FootballMatch = {
       id: (ev as any).id,
       competitionCode: (ev as any).competition_code,
-      competitionName: (ev as any).competition_code,
+      competitionName: cdn((ev as any).competition_code),
       season: (ev as any).season,
       round: (ev as any).round,
       kickoffAt: (ev as any).scheduled_at,

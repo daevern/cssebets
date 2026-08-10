@@ -1,55 +1,83 @@
 import { format } from "date-fns";
+import { competitionLogoForCode } from "../config/footballCompetitions";
 import type { FootballMatch } from "../types/football";
 
 export function FootballMatchHeader({ match }: { match: FootballMatch }) {
   const kickoff = new Date(match.kickoffAt);
   const showScore = ["live", "halftime", "finished"].includes(match.status);
+  const leagueLogo = competitionLogoForCode(match.competitionCode);
+  const live = match.status === "live" || match.status === "halftime";
 
   return (
-    <header className="rounded-2xl border border-[var(--color-surface-border)]/70 bg-[var(--surface)]/60 p-5">
-      <div className="flex items-center justify-between text-[11px] text-[var(--ink-muted)] mb-4">
-        <span className="uppercase tracking-wider font-semibold">
-          {match.competitionName}
-          {match.round ? ` · ${match.round}` : ""}
+    <header className="relative overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-5">
+      {live && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(100% 60% at 50% 0%, rgba(244,63,94,0.10), transparent 60%)",
+          }}
+        />
+      )}
+      <div className="relative mb-4 flex items-center justify-between gap-3 text-[11px] font-semibold">
+        <span className="flex min-w-0 items-center gap-2 text-[var(--ink-muted)]">
+          {leagueLogo && (
+            <img src={leagueLogo} alt="" className="h-5 w-5 shrink-0 object-contain" loading="lazy" />
+          )}
+          <span className="truncate uppercase tracking-wider">
+            {match.competitionName}
+            {match.round ? ` · ${match.round}` : ""}
+          </span>
         </span>
-        <span>
-          {match.status === "live" && match.liveMinute != null
-            ? <span className="text-[var(--neon)] font-bold">LIVE {match.liveMinute}'</span>
-            : match.status === "halftime"
-              ? <span className="text-orange-400 font-bold">HALF TIME</span>
-              : match.status === "finished"
-                ? <span>FULL TIME</span>
-                : format(kickoff, "EEE MMM d · HH:mm")}
+        <span className="shrink-0">
+          {match.status === "live" ? (
+            <span className="flex items-center gap-1.5 text-rose-400">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-500 opacity-70" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-rose-500" />
+              </span>
+              LIVE{match.liveMinute != null ? ` ${match.liveMinute}'` : ""}
+            </span>
+          ) : match.status === "halftime" ? (
+            <span className="text-orange-400">HALF TIME</span>
+          ) : match.status === "finished" ? (
+            <span className="text-[var(--ink-muted)]">FULL TIME</span>
+          ) : (
+            <span className="text-[var(--ink-muted)]">{format(kickoff, "EEE MMM d · HH:mm")}</span>
+          )}
         </span>
       </div>
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="relative flex items-center justify-between gap-4">
         <TeamBig name={match.home.name} logo={match.home.logo} />
-        <div className="flex flex-col items-center gap-1">
+        <div className="flex shrink-0 flex-col items-center gap-1">
           {showScore ? (
-            <div className="text-3xl font-bold tabular-nums text-[var(--ink)]">
+            <div className="font-display text-3xl font-bold tabular-nums text-[var(--ink)]">
               {match.home.score ?? 0} <span className="text-[var(--ink-muted)]">-</span> {match.away.score ?? 0}
             </div>
           ) : (
-            <div className="text-2xl font-bold text-[var(--ink-muted)]">vs</div>
+            <div className="font-display text-2xl font-bold text-[var(--ink-muted)]">vs</div>
           )}
-          {match.venue ? <div className="text-[11px] text-[var(--ink-muted)] text-center">{match.venue}</div> : null}
+          {match.venue ? (
+            <div className="max-w-[9rem] truncate text-center text-[11px] text-[var(--ink-muted)]">{match.venue}</div>
+          ) : null}
         </div>
-        <TeamBig name={match.away.name} logo={match.away.logo} align="right" />
+        <TeamBig name={match.away.name} logo={match.away.logo} />
       </div>
     </header>
   );
 }
 
-function TeamBig({ name, logo, align = "left" }: { name: string; logo: string | null; align?: "left" | "right" }) {
+function TeamBig({ name, logo }: { name: string; logo: string | null }) {
   return (
-    <div className={`flex flex-col items-center gap-2 flex-1 ${align === "right" ? "" : ""}`}>
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
       {logo ? (
-        <img src={logo} alt="" className="h-14 w-14 object-contain" />
+        <img src={logo} alt="" className="h-14 w-14 object-contain" loading="lazy" />
       ) : (
-        <div className="h-14 w-14 rounded-full bg-white/5" />
+        <div className="h-14 w-14 rounded-full bg-[var(--surface-3)]" />
       )}
-      <div className="text-sm font-semibold text-center text-[var(--ink)] line-clamp-2">{name}</div>
+      <div className="line-clamp-2 text-center text-sm font-bold tracking-tight text-[var(--ink)]">{name}</div>
     </div>
   );
 }
