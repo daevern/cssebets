@@ -19,6 +19,22 @@ export type FootballCompetitionConfig = {
   routePath: string;
 };
 
+/** Official competition crest served by the API-Football media CDN. */
+export function competitionLogoUrl(leagueId: number): string {
+  return `https://media.api-sports.io/football/leagues/${leagueId}.png`;
+}
+
+/** Human display name for a raw competition code (never show LA_LIGA in UI). */
+export function competitionDisplayName(code: string): string {
+  const cfg = (FOOTBALL_COMPETITIONS as Record<string, FootballCompetitionConfig>)[code];
+  return cfg ? cfg.displayName : code.replace(/_/g, " ");
+}
+
+export function competitionLogoForCode(code: string): string | null {
+  const cfg = (FOOTBALL_COMPETITIONS as Record<string, FootballCompetitionConfig>)[code];
+  return cfg ? competitionLogoUrl(cfg.apiFootballLeagueId) : null;
+}
+
 export const FOOTBALL_COMPETITIONS: Record<
   FootballCompetitionCode,
   FootballCompetitionConfig
