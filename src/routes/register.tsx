@@ -220,6 +220,7 @@ function RegisterPage() {
 
   return (
     <AuthShell
+      topSlot={<StepProgress step={step} />}
       eyebrow="Create account"
       title={copy.title}
       subtitle={copy.subtitle}
@@ -232,9 +233,8 @@ function RegisterPage() {
         </p>
       }
     >
-      <StepProgress step={step} />
-
       <form onSubmit={step === STEPS.length - 1 ? finish : next} className="space-y-4">
+
         {step === 0 && (
           <AuthField label="Display name" htmlFor="name">
             <input
