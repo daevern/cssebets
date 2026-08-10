@@ -83,7 +83,7 @@ export function MatchAnalyticsScreen({
       )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [matchId, qc, publicMode]);
+  }, [matchId, qc, publicMode, realtime]);
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
