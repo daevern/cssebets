@@ -30,6 +30,12 @@ export const Route = createFileRoute("/register")({
     meta: [
       { title: "Create account — CSSEBets" },
       {
+        name: "viewport",
+        content:
+          "width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover",
+      },
+      {
+
         name: "description",
         content:
           "Create a CSSEBets account to trade prediction markets on football, F1 and UFC and play the provably fair arcade.",
@@ -66,7 +72,7 @@ const STEPS = ["Name", "Contact", "Password", "Referral"] as const;
 
 function StepProgress({ step }: { step: number }) {
   return (
-    <div className="mb-6">
+    <div className="mb-4">
       <div className="flex items-center gap-1.5">
         {STEPS.map((label, i) => {
           const done = i < step;

@@ -16,6 +16,12 @@ export const Route = createFileRoute("/auth")({
     meta: [
       { title: "Sign in — CSSEBets" },
       {
+        name: "viewport",
+        content:
+          "width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover",
+      },
+      {
+
         name: "description",
         content:
           "Sign in to CSSEBets to trade prediction markets on football, F1 and UFC, and play the provably fair arcade.",
