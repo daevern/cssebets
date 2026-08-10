@@ -26,6 +26,8 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useHasSession, withSession } from "@/hooks/use-staff-session";
+
 
 export const Route = createFileRoute("/management/admin/")({
   head: () => ({ meta: [{ title: "Risk overview — cssebets admin" }] }),
@@ -53,15 +55,18 @@ const RISK_STYLES: Record<string, string> = {
 
 function AdminOverview() {
   const qc = useQueryClient();
+  const hasSession = useHasSession();
   const overviewFn = useServerFn(getAdminRiskOverview);
   const bulkFn = useServerFn(recalculateAllStaleMatches);
   const singleFn = useServerFn(recalculateMatchExposure);
 
   const q = useQuery({
     queryKey: ["admin-risk-overview"],
-    queryFn: () => overviewFn({}),
+    queryFn: () => withSession(() => overviewFn({})),
+    enabled: hasSession === true,
     refetchInterval: 30_000,
   });
+
 
   const invalidateAll = () => {
     qc.invalidateQueries({ queryKey: ["admin-risk-overview"] });
