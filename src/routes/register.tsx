@@ -127,11 +127,12 @@ function RegisterPage() {
       const refCode = resolveReferralCode();
       const redirect = new URL(window.location.origin);
       if (refCode) redirect.searchParams.set("ref", refCode);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: redirect.toString() },
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: redirect.toString(),
       });
-      if (error) throw error;
+      if (result.error) throw result.error;
+      if (result.redirected) return;
+      navigate({ to: "/dashboard" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Google sign-in unavailable");
     }
