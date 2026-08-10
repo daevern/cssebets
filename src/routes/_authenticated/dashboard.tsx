@@ -208,7 +208,7 @@ function HomePage() {
 
 
       {/* Next on the card — featured football fixture + F1 race + UFC fight */}
-      {(featured || extras?.nextRace || extras?.nextFight) && (
+      {(featured || extras?.nextRace || extras?.nextFight || extras?.nextFootball) && (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--ink)]">
@@ -218,6 +218,7 @@ function HomePage() {
           </div>
           <div className="grid gap-3">
             {featured && <FeaturedMarketCard match={featured} now={now} />}
+            {extras?.nextFootball && <NextFootballCard match={extras.nextFootball} now={now} />}
             {extras?.nextRace && <NextRaceCard race={extras.nextRace} now={now} />}
             {extras?.nextFight && <NextFightCard fight={extras.nextFight} now={now} />}
           </div>
