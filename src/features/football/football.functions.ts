@@ -170,9 +170,11 @@ export const getFootballOddsHistory = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const since = new Date(Date.now() - data.hours * 3600_000).toISOString();
-    const { data: rows } = await browserPublishable
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin
       .from("sports_odds_snapshots" as any)
       .select("selection_key, decimal_odds, fetched_at, provider_ts")
+
       .eq("sports_market_id", data.marketId)
       .gte("fetched_at", since)
       .order("fetched_at", { ascending: true })
