@@ -3,7 +3,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabase as browserPublishable } from "@/integrations/supabase/client";
 import type { FootballCompetitionCode } from "./config/footballCompetitions";
 import type { FootballMatch, FootballMarket, FootballBet } from "./types/football";
 
