@@ -1026,3 +1026,118 @@ function NextFightCard({ fight, now }: { fight: NonNullable<NextUfcFight>; now: 
   );
 }
 
+
+/* ------------ Next football (La Liga) fixture card ------------ */
+function ClubCrest({ url, name }: { url: string | null; name: string }) {
+  const [err, setErr] = useState(false);
+  if (url && !err) {
+    return (
+      <img
+        src={url}
+        alt={`${name} crest`}
+        className="h-full w-full object-contain p-1.5"
+        loading="lazy"
+        onError={() => setErr(true)}
+      />
+    );
+  }
+  return (
+    <div className="grid h-full w-full place-items-center font-display text-[10px] font-bold uppercase text-[var(--ink-muted)]">
+      {name.slice(0, 3)}
+    </div>
+  );
+}
+
+function FootballTeamRow({
+  name, logo, odds, pct, isFavorite,
+}: { name: string; logo: string | null; odds: number | null; pct: number; isFavorite: boolean }) {
+  const color = isFavorite ? "text-[var(--neon)]" : "text-rose-400";
+  const borderColor = isFavorite ? "border-[var(--neon)]" : "border-rose-400";
+  const barColor = isFavorite ? "bg-[var(--neon)]" : "bg-rose-400";
+  const barGlow = isFavorite
+    ? "shadow-[0_0_6px_rgba(34,224,107,0.55)]"
+    : "shadow-[0_0_6px_rgba(251,113,133,0.55)]";
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-3)]">
+          <ClubCrest url={logo} name={name} />
+        </div>
+        <span className="truncate text-[15px] font-bold tracking-tight text-[var(--ink)]">{name}</span>
+      </div>
+      <div className="flex items-center gap-2.5">
+        <div className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-[var(--surface-3)]">
+          <div
+            className={`h-full rounded-full ${barColor} ${barGlow} transition-[width] duration-500`}
+            style={{ width: `${Math.max(4, Math.min(100, pct))}%` }}
+          />
+        </div>
+        <div className="flex flex-col items-end">
+          <span className={`rounded-full border ${borderColor} px-3 py-1 text-[13px] font-bold tabular-nums ${color}`}>
+            {pct}%
+          </span>
+          {odds != null && (
+            <span className="mt-0.5 text-[10px] tabular-nums text-[var(--ink-muted)]">{odds.toFixed(2)}x</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NextFootballCard({ match, now }: { match: NonNullable<NextFootballMatch>; now: number }) {
+  const oh = match.odds_home ?? 0;
+  const od = match.odds_draw ?? 0;
+  const oa = match.odds_away ?? 0;
+  const inv = (o: number) => (o > 0 ? 1 / o : 0);
+  const total = inv(oh) + inv(od) + inv(oa);
+  const pctH = total > 0 ? Math.round((inv(oh) / total) * 100) : 0;
+  const pctA = total > 0 ? Math.round((inv(oa) / total) * 100) : 0;
+  const pctD = total > 0 ? Math.max(0, 100 - pctH - pctA) : 0;
+  const crest = competitionLogoForCode(match.competition_code);
+
+  return (
+    <Link
+      to="/football/matches/$matchId"
+      params={{ matchId: match.id }}
+      className="group relative block overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] transition-colors hover:border-[var(--neon)]/40 next-fixture-corner"
+    >
+      <div className="relative p-4">
+        <div className="flex items-center justify-between text-[11px] font-semibold">
+          <span className="flex items-center gap-1.5 text-[var(--ink-muted)]">
+            {crest && <img src={crest} alt="" className="h-6 w-6 object-contain" loading="lazy" />}
+            {whenLabel(match.kickoff_at, now)}
+          </span>
+          <span className="text-[var(--ink-muted)]">{match.competition_name}</span>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3">
+          <FootballTeamRow
+            name={match.home_name}
+            logo={match.home_logo}
+            odds={match.odds_home}
+            pct={pctH}
+            isFavorite={oh > 0 && oa > 0 && oh < oa}
+          />
+          <FootballTeamRow
+            name={match.away_name}
+            logo={match.away_logo}
+            odds={match.odds_away}
+            pct={pctA}
+            isFavorite={oh > 0 && oa > 0 && oa < oh}
+          />
+        </div>
+
+        {match.odds_draw != null && (
+          <div className="mt-2 flex items-center justify-center gap-2 text-[11px] font-semibold text-[var(--ink-muted)]">
+            Draw · {pctD}% · {match.odds_draw.toFixed(2)}x
+          </div>
+        )}
+
+        <div className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)]/5 py-3.5 text-[14px] font-bold tracking-tight text-[var(--neon)] transition-transform group-hover:translate-y-[-1px] group-hover:bg-[var(--neon)]/10">
+          Open Market <ArrowUpRight className="h-4 w-4" />
+        </div>
+      </div>
+    </Link>
+  );
+}
