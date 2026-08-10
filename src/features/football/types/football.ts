@@ -19,6 +19,8 @@ export type FootballMatch = {
   status: FootballEventStatus;
   liveMinute: number | null;
   venue: string | null;
+  referenceOdds?: { home: number; draw: number; away: number } | null;
+
   home: {
     name: string;
     shortName: string | null;
