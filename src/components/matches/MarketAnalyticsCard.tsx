@@ -98,8 +98,25 @@ function pointTime(p: { t: string }): number { return new Date(p.t).getTime(); }
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
-export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: string; publicMode?: boolean }) {
-  const fn = useServerFn(publicMode ? getMarketHistoryPublic : getMarketHistory);
+export function MarketAnalyticsCard({
+  matchId,
+  publicMode = false,
+  historyFn,
+  tradesFn: tradesFnOverride,
+  queryNamespace,
+  realtime = true,
+}: {
+  matchId: string;
+  publicMode?: boolean;
+  /** Override the odds-history source (e.g. club football). */
+  historyFn?: any;
+  /** Override the trade-tape source. */
+  tradesFn?: any;
+  queryNamespace?: string;
+  realtime?: boolean;
+}) {
+  const fn = useServerFn(historyFn ?? (publicMode ? getMarketHistoryPublic : getMarketHistory));
+  const ns = queryNamespace ?? (publicMode ? "pub" : "auth");
   const qc = useQueryClient();
   const [market, setMarket] = useState<string | undefined>(undefined);
   const [range, setRange] = useState<Range>("LIVE");
@@ -109,15 +126,15 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
   const now = useNowTick(1000);
 
   const q = useQuery({
-    queryKey: ["market-history", matchId, market ?? "default", publicMode ? "pub" : "auth"],
+    queryKey: ["market-history", matchId, market ?? "default", ns],
     queryFn: () => fn({ data: { matchId, market } }) as Promise<MarketHistoryPayload>,
     refetchInterval: 5_000,
     staleTime: 2_000,
   });
 
-  const tradesFn = useServerFn(publicMode ? getRecentTradesPublic : getRecentTrades);
+  const tradesFn = useServerFn(tradesFnOverride ?? (publicMode ? getRecentTradesPublic : getRecentTrades));
   const tq = useQuery({
-    queryKey: ["market-trades", matchId, publicMode ? "pub" : "auth"],
+    queryKey: ["market-trades", matchId, ns],
     queryFn: () => tradesFn({ data: { matchId } }) as Promise<RecentTradesPayload>,
     refetchInterval: 5_000,
     staleTime: 2_000,
@@ -131,7 +148,7 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
   }, [isFinished, range]);
 
   useEffect(() => {
-    if (publicMode) return;
+    if (publicMode || !realtime) return;
     const ch = supabase
       .channel(`market-history-${matchId}`)
       .on("postgres_changes",
@@ -142,7 +159,8 @@ export function MarketAnalyticsCard({ matchId, publicMode = false }: { matchId: 
         () => qc.invalidateQueries({ queryKey: ["market-history", matchId] }))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [matchId, qc, publicMode]);
+  }, [matchId, qc, publicMode, realtime]);
+
 
   const data = q.data;
 
