@@ -165,7 +165,7 @@ function Analytics({
       <nav className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">
         <span>Sports</span>
         <span className="mx-1.5 text-white/25">›</span>
-        <span>World Cup 2026</span>
+        <span>{breadcrumbLabel}</span>
         <span className="mx-1.5 text-white/25">›</span>
       </nav>
       <MatchHero
@@ -180,7 +180,7 @@ function Analytics({
       />
 
       {/* Market Analytics — historical odds / implied probability */}
-      <MarketAnalyticsCard matchId={match.id} publicMode={publicMode} />
+      {analyticsCard ?? <MarketAnalyticsCard matchId={match.id} publicMode={publicMode} />}
 
       {/* Markets — only show pre-kickoff. */}
       {!locked && (
@@ -190,13 +190,20 @@ function Analytics({
               Take a position
             </h2>
           </div>
-          {!publicMode && (
-            <FreeBetInMatch matchId={match.id} referenceOdds={(match as any).reference_odds ?? null} />
+          {marketsSlot ?? (
+            <>
+              {!publicMode && (
+                <FreeBetInMatch matchId={match.id} referenceOdds={(match as any).reference_odds ?? null} />
+              )}
+              <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} publicMode={publicMode} />
+            </>
           )}
-          <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} publicMode={publicMode} />
         </section>
       )}
-      {locked && !publicMode && <YourPicksSummary matchId={match.id} phase={phase} homeTeam={home} awayTeam={away} />}
+      {locked && !publicMode && !marketsSlot && (
+        <YourPicksSummary matchId={match.id} phase={phase} homeTeam={home} awayTeam={away} />
+      )}
+
 
 
       {/* ============ Full football analytics report — all sections inline ============ */}
