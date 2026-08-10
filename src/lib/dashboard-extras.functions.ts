@@ -37,8 +37,22 @@ export type NextUfcFight = {
   odds_b: number | null;
 } | null;
 
+export type NextFootballMatch = {
+  id: string;
+  competition_code: string;
+  competition_name: string;
+  home_name: string;
+  away_name: string;
+  home_logo: string | null;
+  away_logo: string | null;
+  kickoff_at: string;
+  odds_home: number | null;
+  odds_draw: number | null;
+  odds_away: number | null;
+} | null;
+
 export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler(
-  async (): Promise<{ nextRace: NextF1Race; nextFight: NextUfcFight }> => {
+  async (): Promise<{ nextRace: NextF1Race; nextFight: NextUfcFight; nextFootball: NextFootballMatch }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
 
@@ -149,6 +163,48 @@ export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler
       }
     }
 
+    // Next La Liga fixture (soonest upcoming), with 1X2 reference odds.
+    let nextFootball: NextFootballMatch = null;
+    {
+      const { data: ev } = await (supabaseAdmin as any)
+        .from("sports_events")
+        .select("id, competition_code, home_name, away_name, home_logo, away_logo, scheduled_at, status")
+        .eq("sport_code", "football")
+        .eq("competition_code", "LA_LIGA")
+        .eq("is_enabled", true)
+        .gte("scheduled_at", nowIso)
+        .neq("status", "finished")
+        .order("scheduled_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (ev) {
+        const { data: mk } = await (supabaseAdmin as any)
+          .from("sports_markets")
+          .select("sports_event_id, market_key, sports_market_selections (selection_key, decimal_odds)")
+          .eq("sports_event_id", ev.id)
+          .eq("market_key", "match_result")
+          .limit(1)
+          .maybeSingle();
+        const sels: Record<string, number> = {};
+        for (const s of (mk?.sports_market_selections ?? []) as any[])
+          sels[s.selection_key] = Number(s.decimal_odds);
+        const { competitionDisplayName } = await import("@/features/football/config/footballCompetitions");
+        nextFootball = {
+          id: ev.id,
+          competition_code: ev.competition_code,
+          competition_name: competitionDisplayName(ev.competition_code),
+          home_name: ev.home_name ?? "TBD",
+          away_name: ev.away_name ?? "TBD",
+          home_logo: ev.home_logo ?? null,
+          away_logo: ev.away_logo ?? null,
+          kickoff_at: ev.scheduled_at,
+          odds_home: sels.home ?? null,
+          odds_draw: sels.draw ?? null,
+          odds_away: sels.away ?? null,
+        };
+      }
+    }
+
     return {
       nextRace: race
         ? {
@@ -163,6 +219,7 @@ export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler
           }
         : null,
       nextFight: fight,
+      nextFootball,
     };
   },
 );
