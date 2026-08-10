@@ -541,6 +541,8 @@ export function MarketTabs({
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
       qc.invalidateQueries({ queryKey: ["my-wallet"] });
       qc.invalidateQueries({ queryKey: ["my-match-pending-bets", matchId, user?.id] });
+      qc.invalidateQueries({ queryKey: ["football-my-bets", matchId] });
+      qc.invalidateQueries({ queryKey: ["football-match", matchId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -579,6 +581,8 @@ export function MarketTabs({
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
       qc.invalidateQueries({ queryKey: ["my-wallet"] });
       qc.invalidateQueries({ queryKey: ["my-match-pending-bets", matchId, user?.id] });
+      qc.invalidateQueries({ queryKey: ["football-my-bets", matchId] });
+      qc.invalidateQueries({ queryKey: ["football-match", matchId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
