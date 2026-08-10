@@ -3933,6 +3933,32 @@ export type Database = {
         }
         Relationships: []
       }
+      football_event_analytics: {
+        Row: {
+          fetched_at: string
+          payload: Json
+          sports_event_id: string
+        }
+        Insert: {
+          fetched_at?: string
+          payload: Json
+          sports_event_id: string
+        }
+        Update: {
+          fetched_at?: string
+          payload?: Json
+          sports_event_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "football_event_analytics_sports_event_id_fkey"
+            columns: ["sports_event_id"]
+            isOneToOne: true
+            referencedRelation: "sports_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       health_check_runs: {
         Row: {
           check_name: string
