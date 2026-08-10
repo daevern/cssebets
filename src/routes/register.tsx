@@ -62,7 +62,45 @@ export function phoneToSyntheticEmail(phone: string) {
   return `${digits}@phone.cssebets.local`;
 }
 
+const STEPS = ["Name", "Contact", "Password", "Referral"] as const;
+
+function StepProgress({ step }: { step: number }) {
+  return (
+    <div className="mb-8">
+      <div className="flex items-center gap-1.5">
+        {STEPS.map((label, i) => {
+          const done = i < step;
+          const active = i === step;
+          return (
+            <div key={label} className="flex-1">
+              <div className="h-1 w-full overflow-hidden rounded-full bg-[var(--surface-3)]">
+                <div
+                  className="h-full rounded-full bg-[var(--color-neon)] transition-all duration-300"
+                  style={{ width: done ? "100%" : active ? "50%" : "0%" }}
+                />
+              </div>
+              <span
+                className={`mt-2 block text-[11px] font-medium ${
+                  done || active
+                    ? "text-[var(--color-ink)]"
+                    : "text-[var(--color-ink-muted)]"
+                }`}
+              >
+                {label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <p className="mt-3 text-xs text-[var(--color-ink-muted)]">
+        Step {step + 1} of {STEPS.length}
+      </p>
+    </div>
+  );
+}
+
 function RegisterPage() {
+  const [step, setStep] = useState(0);
   const [channel, setChannel] = useState<Channel>("email");
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
@@ -86,65 +124,69 @@ function RegisterPage() {
     return stored ? normalizeReferralCode(stored) : null;
   }
 
-  async function handleEmail(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
+  async function signUpWithGoogle() {
     try {
-      if (password.length < 8) throw new Error("Password must be at least 8 characters");
-      if (password !== confirm) throw new Error("Passwords do not match");
-      if (referralInput.trim() && !normalizeReferralCode(referralInput)) {
-        throw new Error("Referral code must be 4–12 letters/numbers");
-      }
-      await checkAuthRateLimit({ data: { email } });
       const refCode = resolveReferralCode();
-      const { data: signUp, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: window.location.origin,
-          data: {
-            display_name: displayName || email.split("@")[0],
-            ...(refCode ? { referral_code: refCode } : {}),
-          },
-        },
+      const redirect = new URL(window.location.origin);
+      if (refCode) redirect.searchParams.set("ref", refCode);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: redirect.toString() },
       });
       if (error) throw error;
-      clearStoredReferralCode();
-      if (signUp?.user?.id) {
-        try { await notifyAdminsOfRegistration({ data: { newUserId: signUp.user.id } }); } catch {}
-      }
-      toast.success("Account created. Waiting for admin approval.");
-      navigate({ to: "/dashboard" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
+      toast.error(err instanceof Error ? err.message : "Google sign-in unavailable");
     }
   }
 
-  async function handlePhone(e: React.FormEvent) {
+  function next(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      if (step === 0) {
+        if (!displayName.trim()) throw new Error("Please enter a display name");
+        if (displayName.trim().length > 40)
+          throw new Error("Display name must be 40 characters or fewer");
+      }
+      if (step === 1) {
+        if (channel === "email") {
+          if (!/^\S+@\S+\.\S+$/.test(email.trim()))
+            throw new Error("Please enter a valid email address");
+        } else if (!isValidPhone(normalizePhone(phone))) {
+          throw new Error("Phone must be in international format, e.g. +60123456789");
+        }
+      }
+      if (step === 2) {
+        if (password.length < 8) throw new Error("Password must be at least 8 characters");
+        if (password !== confirm) throw new Error("Passwords do not match");
+      }
+      setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
+    }
+  }
+
+  async function finish(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
+      if (referralInput.trim() && !normalizeReferralCode(referralInput)) {
+        throw new Error("Referral code must be 4–12 letters/numbers");
+      }
+      const refCode = resolveReferralCode();
+      const isEmail = channel === "email";
       const p = normalizePhone(phone);
-      if (!isValidPhone(p))
-        throw new Error("Phone must be in international format, e.g. +60123456789");
-      if (password.length < 8) throw new Error("Password must be at least 8 characters");
-      if (password !== confirm) throw new Error("Passwords do not match");
-      if (referralInput.trim() && !normalizeReferralCode(referralInput)) {
-        throw new Error("Referral code must be 4–12 letters/numbers");
-      }
-      const syntheticEmail = phoneToSyntheticEmail(p);
-      await checkAuthRateLimit({ data: { phone: p } });
-      const refCode = resolveReferralCode();
+      const authEmail = isEmail ? email.trim() : phoneToSyntheticEmail(p);
+
+      await checkAuthRateLimit({ data: isEmail ? { email: email.trim() } : { phone: p } });
+
       const { data: signUp, error } = await supabase.auth.signUp({
-        email: syntheticEmail,
+        email: authEmail,
         password,
         options: {
           emailRedirectTo: window.location.origin,
           data: {
-            display_name: displayName || p,
-            phone_number: p,
+            display_name: displayName.trim(),
+            ...(isEmail ? {} : { phone_number: p }),
             ...(refCode ? { referral_code: refCode } : {}),
           },
         },
@@ -152,7 +194,9 @@ function RegisterPage() {
       if (error) throw error;
       clearStoredReferralCode();
       if (signUp?.user?.id) {
-        try { await notifyAdminsOfRegistration({ data: { newUserId: signUp.user.id } }); } catch {}
+        try {
+          await notifyAdminsOfRegistration({ data: { newUserId: signUp.user.id } });
+        } catch {}
       }
       toast.success("Account created. Waiting for admin approval.");
       navigate({ to: "/dashboard" });
@@ -163,12 +207,30 @@ function RegisterPage() {
     }
   }
 
-  const submit = channel === "email" ? handleEmail : handlePhone;
+  const copy = [
+    {
+      title: "How would you like to be addressed by us and the community?",
+      subtitle: "This is the name shown on leaderboards and trade tapes.",
+    },
+    {
+      title: channel === "email" ? "What's your email address?" : "What's your phone number?",
+      subtitle: "We use this to sign you in and confirm your account.",
+    },
+    {
+      title: "Please enter a password.",
+      subtitle: "At least 8 characters. Make it something only you would guess.",
+    },
+    {
+      title: "Do you have a referral code?",
+      subtitle: "Optional — you and your friend both get rewarded.",
+    },
+  ][step];
 
   return (
     <AuthShell
-      title="Create your account"
-      subtitle="Takes under a minute. Accounts are reviewed before your first trade."
+      eyebrow="Create account"
+      title={copy.title}
+      subtitle={copy.subtitle}
       footer={
         <p className="text-sm text-[var(--color-ink-muted)]">
           Already have an account?{" "}
@@ -178,108 +240,165 @@ function RegisterPage() {
         </p>
       }
     >
-      <form onSubmit={submit} className="space-y-4">
-        <AuthSegmented
-          value={channel}
-          onChange={setChannel}
-          options={[
-            { value: "email", label: "Email" },
-            { value: "phone", label: "Phone" },
-          ]}
-        />
+      <StepProgress step={step} />
 
-        <AuthField label="Display name" htmlFor="name">
-          <input
-            id="name"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Shown on the leaderboard"
-            className={authInputClass}
-          />
-        </AuthField>
-
-        {channel === "email" ? (
-          <AuthField label="Email" htmlFor="email">
+      <form onSubmit={step === STEPS.length - 1 ? finish : next} className="space-y-4">
+        {step === 0 && (
+          <AuthField label="Display name" htmlFor="name">
             <input
-              id="email"
-              type="email"
+              id="name"
+              autoFocus
               required
-              autoComplete="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={authInputClass}
-            />
-          </AuthField>
-        ) : (
-          <AuthField
-            label="Phone"
-            htmlFor="phone"
-            hint="You'll sign in with this number and password."
-          >
-            <input
-              id="phone"
-              type="tel"
-              required
-              inputMode="tel"
-              placeholder="+60123456789"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              maxLength={40}
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="e.g. NightTrader"
               className={authInputClass}
             />
           </AuthField>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
-          <AuthField label="Password" htmlFor="password">
-            <input
-              id="password"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={authInputClass}
-            />
-          </AuthField>
-          <AuthField label="Confirm" htmlFor="confirm">
-            <input
-              id="confirm"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-              placeholder="••••••••"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              className={authInputClass}
-            />
-          </AuthField>
-        </div>
+        {step === 1 && (
+          <>
+            <button
+              type="button"
+              onClick={signUpWithGoogle}
+              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[15px] font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)]"
+            >
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
+                <path
+                  fill="#4285F4"
+                  d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"
+                />
+                <path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.6V6.7H1.4a12 12 0 0 0 0 10.8l4-3.1z" />
+                <path
+                  fill="#EA4335"
+                  d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.7l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"
+                />
+              </svg>
+              Continue with Google
+            </button>
 
-        <AuthField
-          label="Referral code"
-          htmlFor="referral"
-          hint="Optional — you and your friend both get rewarded."
-        >
-          <input
-            id="referral"
-            value={referralInput}
-            onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
-            placeholder="e.g. 9W928VQ"
-            maxLength={12}
-            autoCapitalize="characters"
-            autoCorrect="off"
-            spellCheck={false}
-            className={authInputClass}
-          />
-        </AuthField>
+            <div className="flex items-center gap-3">
+              <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
+              <span className="text-xs text-[var(--color-ink-muted)]">or</span>
+              <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
+            </div>
+
+            <AuthSegmented
+              value={channel}
+              onChange={setChannel}
+              options={[
+                { value: "email", label: "Email" },
+                { value: "phone", label: "Phone" },
+              ]}
+            />
+
+            {channel === "email" ? (
+              <AuthField label="Email" htmlFor="email">
+                <input
+                  id="email"
+                  type="email"
+                  required
+                  autoFocus
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={authInputClass}
+                />
+              </AuthField>
+            ) : (
+              <AuthField
+                label="Phone"
+                htmlFor="phone"
+                hint="You'll sign in with this number and password."
+              >
+                <input
+                  id="phone"
+                  type="tel"
+                  required
+                  inputMode="tel"
+                  placeholder="+60123456789"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className={authInputClass}
+                />
+              </AuthField>
+            )}
+          </>
+        )}
+
+        {step === 2 && (
+          <div className="grid gap-4">
+            <AuthField label="Password" htmlFor="password">
+              <input
+                id="password"
+                type="password"
+                required
+                autoFocus
+                minLength={8}
+                autoComplete="new-password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={authInputClass}
+              />
+            </AuthField>
+            <AuthField label="Confirm password" htmlFor="confirm">
+              <input
+                id="confirm"
+                type="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                placeholder="••••••••"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                className={authInputClass}
+              />
+            </AuthField>
+          </div>
+        )}
+
+        {step === 3 && (
+          <AuthField label="Referral code" htmlFor="referral" hint="Leave blank if you don't have one.">
+            <input
+              id="referral"
+              autoFocus
+              value={referralInput}
+              onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
+              placeholder="e.g. 9W928VQ"
+              maxLength={12}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              className={authInputClass}
+            />
+          </AuthField>
+        )}
 
         <AuthSubmit loading={loading}>
-          {loading ? "Creating account…" : "Create account"}
+          {step === STEPS.length - 1
+            ? loading
+              ? "Creating account…"
+              : "Create account"
+            : "Continue"}
         </AuthSubmit>
+
+        {step > 0 && (
+          <button
+            type="button"
+            onClick={() => setStep((s) => Math.max(0, s - 1))}
+            className="h-10 w-full rounded-lg text-[13px] font-medium text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)]"
+          >
+            ← Back
+          </button>
+        )}
       </form>
 
       <div className="mt-6 text-center">
