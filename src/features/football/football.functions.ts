@@ -21,7 +21,8 @@ export const listFootballMatches = createServerFn({ method: "GET" })
       .parse(i),
   )
   .handler(async ({ data }) => {
-    const { data: rows, error } = await browserPublishable
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
       .from("sports_events" as any)
       .select(
         "id, competition_code, season, round, scheduled_at, status, venue, live_minute, home_name, away_name, home_logo, away_logo, home_short, away_short, home_score, away_score",
@@ -31,7 +32,7 @@ export const listFootballMatches = createServerFn({ method: "GET" })
       .eq("is_enabled", true)
       .order("scheduled_at", { ascending: true })
       .limit(data.limit);
-    if (error) return { matches: [] as FootballMatch[] };
+    if (error) throw new Error(`Could not load football fixtures: ${error.message}`);
 
     const matches: FootballMatch[] = (rows ?? []).map((r: any) => ({
       id: r.id,
