@@ -313,9 +313,10 @@ export async function syncFootballOddsBatch(opts: {
   const errors: string[] = [];
 
   const staleBefore = new Date(Date.now() - freshness * 60_000).toISOString();
-  const horizon = new Date(Date.now() + 3 * 86400_000).toISOString();
+  const horizon = new Date(Date.now() + 7 * 86400_000).toISOString();
 
-  // Pick scheduled events in the next 72h whose latest odds snapshot is stale
+  // Pick scheduled events in the next 7 days whose latest odds snapshot is stale
+
   const { data: events } = await supabaseAdmin
     .from("sports_events" as any)
     .select("id, scheduled_at, updated_at")
