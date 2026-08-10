@@ -62,7 +62,8 @@ function mapSelectionKey(catalogMarket: string, key: string): string | null {
     const m = k.match(/^exact_(\d+)$/);
     if (m) {
       const n = Number(m[1]);
-      return n >= 5 ? "GOALS_5_PLUS" : `GOALS_${n}`;
+      if (n === 5) return "GOALS_5_PLUS";
+      return n > 5 ? null : `GOALS_${n}`;
     }
     if (k === "exact_6_plus" || k === "exact_5_plus") return "GOALS_5_PLUS";
     return null;
@@ -128,11 +129,6 @@ export function FootballMarketTabs({ matchId }: { matchId: string }) {
 
   const placedKeys = useMemo(() => {
     const set = new Set<string>();
-    const byId = new Map<string, { market: string; selection: string }>();
-    for (const r of rows) {
-      const [marketId, selectionId] = r.id.split("::");
-      byId.set(`${marketId}:${selectionId}`, { market: r.market, selection: r.selection });
-    }
     for (const b of openBetsQ.data?.openSelections ?? []) {
       const catalogMarket = mapMarketKey(b.marketKey);
       if (!catalogMarket) continue;
