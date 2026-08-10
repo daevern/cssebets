@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { checkAuthRateLimit } from "@/lib/rate-limit.functions";
 import { notifyAdminsOfRegistration } from "@/lib/notifications.functions";
 import {
@@ -127,11 +128,12 @@ function RegisterPage() {
       const refCode = resolveReferralCode();
       const redirect = new URL(window.location.origin);
       if (refCode) redirect.searchParams.set("ref", refCode);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: redirect.toString() },
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: redirect.toString(),
       });
-      if (error) throw error;
+      if (result.error) throw result.error;
+      if (result.redirected) return;
+      navigate({ to: "/dashboard" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Google sign-in unavailable");
     }
