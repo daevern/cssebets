@@ -1,0 +1,1 @@
+update public.sports_feature_flags set enabled = true, updated_at = now() where key in ('football_enabled','epl_enabled','la_liga_enabled','serie_a_enabled','ucl_enabled','live_football_betting_enabled','sports_settlement_enabled');
