@@ -51,12 +51,14 @@ export function AuthShell({
   eyebrow,
   title,
   subtitle,
+  topSlot,
   children,
   footer,
 }: {
   eyebrow?: string;
   title: string;
   subtitle?: string;
+  topSlot?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
 }) {
