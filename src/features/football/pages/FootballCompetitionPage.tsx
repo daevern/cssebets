@@ -124,7 +124,7 @@ export function FootballCompetitionPage({ code }: { code: FootballCompetitionCod
             {cfg.displayName}
           </h1>
           <p className="truncate text-[11px] font-semibold text-[var(--ink-muted)]">
-            {cfg.country} · This week&apos;s fixtures
+            {cfg.country} · Upcoming fixtures
           </p>
         </div>
       </header>
