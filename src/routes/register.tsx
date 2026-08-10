@@ -66,7 +66,7 @@ const STEPS = ["Name", "Contact", "Password", "Referral"] as const;
 
 function StepProgress({ step }: { step: number }) {
   return (
-    <div className="mb-8">
+    <div className="mb-6">
       <div className="flex items-center gap-1.5">
         {STEPS.map((label, i) => {
           const done = i < step;
@@ -79,19 +79,11 @@ function StepProgress({ step }: { step: number }) {
                   style={{ width: done ? "100%" : active ? "50%" : "0%" }}
                 />
               </div>
-              <span
-                className={`mt-2 block text-[11px] font-medium ${
-                  done || active
-                    ? "text-[var(--color-ink)]"
-                    : "text-[var(--color-ink-muted)]"
-                }`}
-              >
-                {label}
-              </span>
             </div>
           );
         })}
       </div>
+
       <p className="mt-3 text-xs text-[var(--color-ink-muted)]">
         Step {step + 1} of {STEPS.length}
       </p>
