@@ -1,13 +1,17 @@
 import { MatchAnalyticsScreen } from "@/routes/_authenticated/matches.$matchId";
 import { getFootballEventAnalytics } from "../football-analytics.functions";
-import { FootballMarketsSection } from "../components/FootballMarketsSection";
-import { FootballMarketMovement } from "../components/FootballMarketMovement";
+import { FootballMarketTabs } from "../components/FootballMarketTabs";
+import { MarketAnalyticsCard } from "@/components/matches/MarketAnalyticsCard";
+import {
+  getFootballMarketHistory,
+  getFootballRecentTrades,
+} from "../football-market-history.functions";
 
 /**
- * Club-football match page. Reuses the exact World Cup analytics screen
- * (`/matches/$matchId`) — same hero, market-movement chart, timeline, team
- * sheets, ratings, injuries and H2H — with football's own markets and odds
- * history plugged into the market slots.
+ * Club-football match page — a 1:1 reuse of the World Cup `/matches/$matchId`
+ * screen: same hero, same market-movement chart (with range picker, legend
+ * filtering and live trade tape), same market tabs, odds buttons and stake
+ * slip — pointed at football's own odds, history and bet placement.
  */
 export function FootballMatchDetailsPage({ matchId }: { matchId: string }) {
   return (
@@ -17,8 +21,16 @@ export function FootballMatchDetailsPage({ matchId }: { matchId: string }) {
       queryKey="football-analytics"
       breadcrumbLabel="Football"
       realtime={false}
-      analyticsCard={<FootballMarketMovement matchId={matchId} />}
-      marketsSlot={<FootballMarketsSection matchId={matchId} />}
+      analyticsCard={
+        <MarketAnalyticsCard
+          matchId={matchId}
+          historyFn={getFootballMarketHistory}
+          tradesFn={getFootballRecentTrades}
+          queryNamespace="football"
+          realtime={false}
+        />
+      }
+      marketsSlot={<FootballMarketTabs matchId={matchId} />}
     />
   );
 }

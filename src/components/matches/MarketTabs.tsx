@@ -377,7 +377,40 @@ const TAB_DEFS = [
 ] as const;
 type TabId = (typeof TAB_DEFS)[number]["id"];
 
-export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedMarkets = [], homeTeam, awayTeam, publicMode = false }: { matchId: string; locked: boolean; bettingBlocked?: boolean; suspendedMarkets?: string[]; homeTeam?: string; awayTeam?: string; publicMode?: boolean }) {
+export function MarketTabs({
+  matchId,
+  locked,
+  bettingBlocked = false,
+  suspendedMarkets = [],
+  homeTeam,
+  awayTeam,
+  publicMode = false,
+  externalOdds,
+  externalLoading = false,
+  externalPlacedKeys,
+  onExternalPlace,
+}: {
+  matchId: string;
+  locked: boolean;
+  bettingBlocked?: boolean;
+  suspendedMarkets?: string[];
+  homeTeam?: string;
+  awayTeam?: string;
+  publicMode?: boolean;
+  /** Supply odds from another product (e.g. club football) instead of the World Cup source. */
+  externalOdds?: OddsRow[];
+  externalLoading?: boolean;
+  externalPlacedKeys?: Set<string>;
+  /** Placement handler used when `externalOdds` is supplied. */
+  onExternalPlace?: (args: {
+    market: string;
+    selection: string;
+    odds: number;
+    stake: number;
+    clientRequestId: string;
+  }) => Promise<unknown>;
+}) {
+  const isExternal = externalOdds !== undefined;
   const isMarketSuspended = (m: string) =>
     bettingBlocked || suspendedMarkets.includes("ALL") || suspendedMarkets.includes(m);
   const fn = useServerFn(publicMode ? getMatchMarketsPublic : getMatchMarkets);
@@ -390,11 +423,12 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   const [showAllScores, setShowAllScores] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading: queryLoading } = useQuery({
     queryKey: [publicMode ? "match-markets-public" : "match-markets", matchId],
     queryFn: () => fn({ data: { matchId } }),
-    enabled: !locked,
+    enabled: !locked && !isExternal,
   });
+  const isLoading = isExternal ? externalLoading : queryLoading;
 
   const wallet = useQuery({
     queryKey: ["my-wallet", user?.id],
@@ -407,7 +441,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
 
   const myBets = useQuery({
     queryKey: ["my-match-pending-bets", matchId, user?.id],
-    enabled: !!user && !locked && !publicMode,
+    enabled: !!user && !locked && !publicMode && !isExternal,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("predictions")
@@ -421,22 +455,25 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
   });
 
   const placedKeys = useMemo(() => {
+    if (externalPlacedKeys) return externalPlacedKeys;
     const s = new Set<string>();
     for (const b of (myBets.data ?? []) as Array<{ market_text: string | null; selection_label: string | null }>) {
       if (b.market_text && b.selection_label) s.add(`${b.market_text}:${b.selection_label}`);
     }
     return s;
-  }, [myBets.data]);
+  }, [myBets.data, externalPlacedKeys]);
 
   const grouped = useMemo(() => {
     const g: Partial<Record<MarketKey, OddsRow[]>> = {};
-    for (const o of (data?.odds ?? []) as OddsRow[]) {
+    for (const o of (externalOdds ?? (data?.odds ?? [])) as OddsRow[]) {
       const key = o.market as MarketKey;
       (g[key] ??= []).push(o);
     }
     return g;
-  }, [data]);
+  }, [data, externalOdds]);
   const getGroup = (k: MarketKey): OddsRow[] => (isMarketActive(k) ? (grouped[k] ?? []) : []);
+
+
 
   const [picks, setPicks] = useState<Record<string, { selection: string; odds: number } | null>>({});
   const [csPicks, setCsPicks] = useState<Record<string, number>>({});
@@ -469,6 +506,15 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       if (err) throw new Error(err);
       if (n > balance) throw new Error("Insufficient points");
       const slipId = getSlipId(`single:${market}`, `${pick.selection}:${pick.odds}:${n}`);
+      if (onExternalPlace) {
+        return onExternalPlace({
+          market,
+          selection: pick.selection,
+          odds: pick.odds,
+          stake: n,
+          clientRequestId: slipId,
+        });
+      }
       if (market === "1x2") {
         return submitResult({
           data: {
@@ -484,6 +530,7 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       return place({
         data: { matchId, market, selection: pick.selection, stake: n, clientRequestId: slipId },
       });
+
     },
     onSuccess: (result, variables) => {
       if (publicMode || result == null) return;
@@ -494,6 +541,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
       qc.invalidateQueries({ queryKey: ["my-wallet"] });
       qc.invalidateQueries({ queryKey: ["my-match-pending-bets", matchId, user?.id] });
+      qc.invalidateQueries({ queryKey: ["football-my-bets", matchId] });
+      qc.invalidateQueries({ queryKey: ["football-match", matchId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -509,9 +558,19 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       if (err) throw new Error(err);
       if (n > balance) throw new Error("Insufficient points");
       const slipId = getSlipId(`cs:${selection}`, `${odds}:${n}`);
+      if (onExternalPlace) {
+        return onExternalPlace({
+          market: "correct_score",
+          selection,
+          odds,
+          stake: n,
+          clientRequestId: slipId,
+        });
+      }
       return place({
         data: { matchId, market: "correct_score", selection, stake: n, clientRequestId: slipId },
       });
+
     },
     onSuccess: (result, variables) => {
       if (publicMode || result == null) return;
@@ -522,6 +581,8 @@ export function MarketTabs({ matchId, locked, bettingBlocked = false, suspendedM
       qc.invalidateQueries({ queryKey: ["my-predictions"] });
       qc.invalidateQueries({ queryKey: ["my-wallet"] });
       qc.invalidateQueries({ queryKey: ["my-match-pending-bets", matchId, user?.id] });
+      qc.invalidateQueries({ queryKey: ["football-my-bets", matchId] });
+      qc.invalidateQueries({ queryKey: ["football-match", matchId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
