@@ -24,6 +24,8 @@ export const Route = createFileRoute("/management/admin/football")({
 
 function AdminFootballPage() {
   const qc = useQueryClient();
+  const hasSession = useHasSession();
+  const canQuery = hasSession === true;
   const flagsFn = useServerFn(listFootballFlags);
   const setFlag = useServerFn(adminSetFootballFlag);
   const syncFixtures = useServerFn(adminSyncFootballFixtures);
@@ -37,32 +39,38 @@ function AdminFootballPage() {
 
   const { data: flags } = useQuery({
     queryKey: ["admin-football-flags"],
-    queryFn: () => flagsFn(),
+    queryFn: () => withSession(() => flagsFn()),
+    enabled: canQuery,
   });
 
   const { data: runsData } = useQuery({
     queryKey: ["admin-football-runs"],
-    queryFn: () => recentRunsFn(),
+    queryFn: () => withSession(() => recentRunsFn()),
+    enabled: canQuery,
     refetchInterval: 15_000,
   });
 
   const { data: liabilityData } = useQuery({
     queryKey: ["admin-football-liability"],
-    queryFn: () => liabilityFn(),
+    queryFn: () => withSession(() => liabilityFn()),
+    enabled: canQuery,
     refetchInterval: 30_000,
   });
 
   const { data: settlementLog } = useQuery({
     queryKey: ["admin-football-settlement-log"],
-    queryFn: () => settlementLogFn(),
+    queryFn: () => withSession(() => settlementLogFn()),
+    enabled: canQuery,
     refetchInterval: 30_000,
   });
 
   const { data: syncErrorsData } = useQuery({
     queryKey: ["admin-football-sync-errors"],
-    queryFn: () => syncErrorsFn(),
+    queryFn: () => withSession(() => syncErrorsFn()),
+    enabled: canQuery,
     refetchInterval: 30_000,
   });
+
 
   const flagMutation = useMutation({
     mutationFn: (v: { key: string; enabled: boolean }) => setFlag({ data: v }),
