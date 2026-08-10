@@ -106,10 +106,11 @@ export const getFootballMatch = createServerFn({ method: "GET" })
       .order("sort_order", { ascending: true });
 
 
+    const { competitionDisplayName: cdn } = await import("./config/footballCompetitions");
     const match: FootballMatch = {
       id: (ev as any).id,
       competitionCode: (ev as any).competition_code,
-      competitionName: (ev as any).competition_code,
+      competitionName: cdn((ev as any).competition_code),
       season: (ev as any).season,
       round: (ev as any).round,
       kickoffAt: (ev as any).scheduled_at,
