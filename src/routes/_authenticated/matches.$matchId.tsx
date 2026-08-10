@@ -73,7 +73,7 @@ export function MatchAnalyticsScreen({
 
   // Realtime: only wire up on the authenticated route (realtime requires a session).
   useEffect(() => {
-    if (publicMode) return;
+    if (publicMode || !realtime) return;
     const ch = supabase
       .channel(`match-analytics-${matchId}`)
       .on(
