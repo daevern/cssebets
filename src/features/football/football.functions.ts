@@ -12,7 +12,6 @@ const COMPETITION_CODES = ["EPL", "LA_LIGA", "SERIE_A", "UCL"] as const;
 // ---------- Public lists ----------
 
 export const listFootballMatches = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) =>
     z
       .object({
@@ -21,8 +20,9 @@ export const listFootballMatches = createServerFn({ method: "GET" })
       })
       .parse(i),
   )
-  .handler(async ({ data, context }) => {
-    const { data: rows, error } = await context.supabase
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin
       .from("sports_events" as any)
       .select(
         "id, competition_code, season, round, scheduled_at, status, venue, live_minute, home_name, away_name, home_logo, away_logo, home_short, away_short, home_score, away_score",
