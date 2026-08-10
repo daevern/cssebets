@@ -10,7 +10,8 @@ import { listMatchesForUsers } from "@/lib/matches.functions";
 import { useHasSession, withSession } from "@/hooks/use-staff-session";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { useAuth } from "@/hooks/use-auth";
-import { getDashboardMotorAndUfc, type NextF1Race, type NextUfcFight } from "@/lib/dashboard-extras.functions";
+import { getDashboardMotorAndUfc, type NextF1Race, type NextUfcFight, type NextFootballMatch } from "@/lib/dashboard-extras.functions";
+import { competitionLogoForCode } from "@/features/football/config/footballCompetitions";
 import { F1Badge, UfcBadge } from "@/components/brand/SportBadge";
 
 
