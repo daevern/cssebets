@@ -37,15 +37,30 @@ function MatchAnalyticsPage() {
 export function MatchAnalyticsScreen({
   matchId,
   publicMode = false,
+  analyticsFn,
+  queryKey,
+  breadcrumbLabel = "World Cup 2026",
+  marketsSlot,
+  analyticsCard,
+  realtime = true,
 }: {
   matchId: string;
   publicMode?: boolean;
+  /** Override the analytics source (e.g. club football events). */
+  analyticsFn?: any;
+  queryKey?: string;
+  breadcrumbLabel?: string;
+  /** Replaces the built-in World Cup betting surfaces. */
+  marketsSlot?: ReactNode;
+  /** Replaces the built-in market-movement chart. */
+  analyticsCard?: ReactNode;
+  realtime?: boolean;
 }) {
-  const fn = useServerFn(publicMode ? getMatchAnalyticsPublic : getMatchAnalytics);
+  const fn = useServerFn(analyticsFn ?? (publicMode ? getMatchAnalyticsPublic : getMatchAnalytics));
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: [publicMode ? "match-analytics-public" : "match-analytics", matchId],
+    queryKey: [queryKey ?? (publicMode ? "match-analytics-public" : "match-analytics"), matchId],
     queryFn: () => fn({ data: { matchId } }) as Promise<AnalyticsBundle>,
     refetchInterval: (q) => {
       const phase = (q.state.data as AnalyticsBundle | undefined)?.phase;
@@ -54,6 +69,7 @@ export function MatchAnalyticsScreen({
       return false;
     },
   });
+
 
   // Realtime: only wire up on the authenticated route (realtime requires a session).
   useEffect(() => {
