@@ -51,12 +51,14 @@ export function AuthShell({
   eyebrow,
   title,
   subtitle,
+  topSlot,
   children,
   footer,
 }: {
   eyebrow?: string;
   title: string;
   subtitle?: string;
+  topSlot?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
 }) {
@@ -107,6 +109,7 @@ export function AuthShell({
         </Link>
 
         <div className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center">
+          {topSlot}
           {eyebrow && (
             <span className="mb-2 text-xs font-medium text-[var(--color-neon)]">
               {eyebrow}

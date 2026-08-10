@@ -66,7 +66,7 @@ const STEPS = ["Name", "Contact", "Password", "Referral"] as const;
 
 function StepProgress({ step }: { step: number }) {
   return (
-    <div className="mb-8">
+    <div className="mb-6">
       <div className="flex items-center gap-1.5">
         {STEPS.map((label, i) => {
           const done = i < step;
@@ -79,19 +79,11 @@ function StepProgress({ step }: { step: number }) {
                   style={{ width: done ? "100%" : active ? "50%" : "0%" }}
                 />
               </div>
-              <span
-                className={`mt-2 block text-[11px] font-medium ${
-                  done || active
-                    ? "text-[var(--color-ink)]"
-                    : "text-[var(--color-ink-muted)]"
-                }`}
-              >
-                {label}
-              </span>
             </div>
           );
         })}
       </div>
+
       <p className="mt-3 text-xs text-[var(--color-ink-muted)]">
         Step {step + 1} of {STEPS.length}
       </p>
@@ -228,6 +220,7 @@ function RegisterPage() {
 
   return (
     <AuthShell
+      topSlot={<StepProgress step={step} />}
       eyebrow="Create account"
       title={copy.title}
       subtitle={copy.subtitle}
@@ -240,9 +233,8 @@ function RegisterPage() {
         </p>
       }
     >
-      <StepProgress step={step} />
-
       <form onSubmit={step === STEPS.length - 1 ? finish : next} className="space-y-4">
+
         {step === 0 && (
           <AuthField label="Display name" htmlFor="name">
             <input
@@ -400,12 +392,6 @@ function RegisterPage() {
           </button>
         )}
       </form>
-
-      <div className="mt-6 text-center">
-        <Link to="/" className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]">
-          ← Back to home
-        </Link>
-      </div>
     </AuthShell>
   );
 }
