@@ -123,7 +123,20 @@ export function MatchAnalyticsScreen({
 
 
 
-function Analytics({ bundle, publicMode = false }: { bundle: AnalyticsBundle; publicMode?: boolean }) {
+function Analytics({
+  bundle,
+  publicMode = false,
+  breadcrumbLabel = "World Cup 2026",
+  marketsSlot,
+  analyticsCard,
+}: {
+  bundle: AnalyticsBundle;
+  publicMode?: boolean;
+  breadcrumbLabel?: string;
+  marketsSlot?: ReactNode;
+  analyticsCard?: ReactNode;
+}) {
+
   const { match, phase, lineups, events, stats, ratings, h2h, injuries } = bundle;
   if (!match) return null;
   const home = match.home_team;
