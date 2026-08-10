@@ -147,9 +147,11 @@ export const getFootballMatch = createServerFn({ method: "GET" })
   });
 
 export const listFootballFlags = createServerFn({ method: "GET" }).handler(async () => {
-  const { data } = await browserPublishable
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
     .from("sports_feature_flags" as any)
     .select("key, enabled");
+
   const map: Record<string, boolean> = {};
   for (const r of (data ?? []) as any[]) map[r.key] = r.enabled;
   return map;
