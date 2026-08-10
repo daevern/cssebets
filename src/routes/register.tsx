@@ -72,7 +72,7 @@ const STEPS = ["Name", "Contact", "Password", "Referral"] as const;
 
 function StepProgress({ step }: { step: number }) {
   return (
-    <div className="mb-6">
+    <div className="mb-4">
       <div className="flex items-center gap-1.5">
         {STEPS.map((label, i) => {
           const done = i < step;
