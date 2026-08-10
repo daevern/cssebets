@@ -238,21 +238,9 @@ function AuthedLayout() {
   }
 
   if (isPending && !isMember && !isAdmin) {
-    return (
-      <div className="min-h-screen grid place-items-center p-4">
-        <Card className="max-w-md p-8 text-center space-y-4">
-          <div className="h-14 w-14 mx-auto rounded-2xl bg-warning/20 grid place-items-center">
-            <Shield className="h-7 w-7 text-warning" />
-          </div>
-          <h1 className="text-xl font-bold">Waiting for approval</h1>
-          <p className="text-sm text-muted-foreground">
-            Hi {user?.email}. An admin needs to approve your account before you can join the pool.
-          </p>
-          <Button variant="outline" onClick={signOut} className="w-full">Sign out</Button>
-        </Card>
-      </div>
-    );
+    return <PendingApproval email={user?.email} onSignOut={signOut} />;
   }
+
 
 
 
