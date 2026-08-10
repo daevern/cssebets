@@ -392,12 +392,6 @@ function RegisterPage() {
           </button>
         )}
       </form>
-
-      <div className="mt-6 text-center">
-        <Link to="/" className="text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]">
-          ← Back to home
-        </Link>
-      </div>
     </AuthShell>
   );
 }
