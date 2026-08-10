@@ -15,6 +15,7 @@ import {
   adminFootballSyncErrors,
 } from "@/features/football/football.functions";
 import { ALL_FOOTBALL_COMPETITIONS } from "@/features/football/config/footballCompetitions";
+import { useHasSession, withSession } from "@/hooks/use-staff-session";
 
 export const Route = createFileRoute("/management/admin/football")({
   head: () => ({ meta: [{ title: "Admin — Football" }] }),
