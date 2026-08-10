@@ -201,7 +201,7 @@ function RegisterPage() {
 
   const copy = [
     {
-      title: "How would you like to be addressed by us and the community?",
+      title: "How would you like to be addressed by the community?",
       subtitle: "This is the name shown on leaderboards and trade tapes.",
     },
     {
@@ -214,7 +214,7 @@ function RegisterPage() {
     },
     {
       title: "Do you have a referral code?",
-      subtitle: "Optional — you and your friend both get rewarded.",
+      subtitle: "",
     },
   ][step];
 
@@ -236,7 +236,7 @@ function RegisterPage() {
       <form onSubmit={step === STEPS.length - 1 ? finish : next} className="space-y-4">
 
         {step === 0 && (
-          <AuthField label="Display name" htmlFor="name">
+          <AuthField label="Name" htmlFor="name">
             <input
               id="name"
               autoFocus
