@@ -98,7 +98,14 @@ export function MatchAnalyticsScreen({
         ) : !data.match ? (
           <div className="py-16 text-center text-sm text-[var(--color-ink-muted)]">Match not found.</div>
         ) : (
-          <Analytics bundle={data} publicMode={publicMode} />
+          <Analytics
+            bundle={data}
+            publicMode={publicMode}
+            breadcrumbLabel={breadcrumbLabel}
+            marketsSlot={marketsSlot}
+            analyticsCard={analyticsCard}
+          />
+
         )}
 
         {!publicMode && (
