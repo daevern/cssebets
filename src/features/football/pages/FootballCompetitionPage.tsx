@@ -80,8 +80,9 @@ export function FootballCompetitionPage({ code }: { code: FootballCompetitionCod
 
   const { live, upcoming, completed } = useMemo(() => {
     const arr = data?.matches ?? [];
-    // Only this week's fixtures — matching the World Cup markets horizon.
-    const horizon = now + 7 * 24 * 60 * 60 * 1000;
+    // Show the full upcoming matchweek(s) — covers weekend fixtures that fall
+    // just outside a strict 7-day cut-off.
+    const horizon = now + 14 * 24 * 60 * 60 * 1000;
     const backstop = now - 7 * 24 * 60 * 60 * 1000;
     const l: FootballMatch[] = [];
     const u: FootballMatch[] = [];
@@ -123,7 +124,7 @@ export function FootballCompetitionPage({ code }: { code: FootballCompetitionCod
             {cfg.displayName}
           </h1>
           <p className="truncate text-[11px] font-semibold text-[var(--ink-muted)]">
-            {cfg.country} · This week&apos;s fixtures
+            {cfg.country} · Upcoming fixtures
           </p>
         </div>
       </header>
