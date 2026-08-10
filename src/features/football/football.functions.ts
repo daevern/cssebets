@@ -3,7 +3,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabase as browserPublishable } from "@/integrations/supabase/client";
 import type { FootballCompetitionCode } from "./config/footballCompetitions";
 import type { FootballMatch, FootballMarket, FootballBet } from "./types/football";
 
@@ -63,20 +62,22 @@ export const listFootballMatches = createServerFn({ method: "GET" })
 export const getFootballMatch = createServerFn({ method: "GET" })
   .inputValidator((i: unknown) => z.object({ matchId: z.string().uuid() }).parse(i))
   .handler(async ({ data }) => {
-    const { data: ev } = await browserPublishable
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: ev } = await supabaseAdmin
       .from("sports_events" as any)
       .select("*")
       .eq("id", data.matchId)
       .maybeSingle();
     if (!ev) throw new Error("Match not found");
 
-    const { data: markets } = await browserPublishable
+    const { data: markets } = await supabaseAdmin
       .from("sports_markets" as any)
       .select(
         "id, market_key, display_name, category, period, line, status, sort_order, provider_odds_ts, last_odds_update_at, stale_after_seconds, suspension_reason, sports_market_selections (id, selection_key, display_name, line, decimal_odds, status, sort_order)",
       )
       .eq("sports_event_id", data.matchId)
       .order("sort_order", { ascending: true });
+
 
     const match: FootballMatch = {
       id: (ev as any).id,
@@ -145,9 +146,11 @@ export const getFootballMatch = createServerFn({ method: "GET" })
   });
 
 export const listFootballFlags = createServerFn({ method: "GET" }).handler(async () => {
-  const { data } = await browserPublishable
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
     .from("sports_feature_flags" as any)
     .select("key, enabled");
+
   const map: Record<string, boolean> = {};
   for (const r of (data ?? []) as any[]) map[r.key] = r.enabled;
   return map;
@@ -166,9 +169,11 @@ export const getFootballOddsHistory = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const since = new Date(Date.now() - data.hours * 3600_000).toISOString();
-    const { data: rows } = await browserPublishable
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin
       .from("sports_odds_snapshots" as any)
       .select("selection_key, decimal_odds, fetched_at, provider_ts")
+
       .eq("sports_market_id", data.marketId)
       .gte("fetched_at", since)
       .order("fetched_at", { ascending: true })
