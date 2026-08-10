@@ -104,7 +104,7 @@ export async function syncFootballFixtures(
   opts: { daysAhead?: number } = {},
 ): Promise<FootballSyncResult> {
   const cfg = FOOTBALL_COMPETITIONS[code];
-  const daysAhead = opts.daysAhead ?? 14;
+  const daysAhead = opts.daysAhead ?? 45;
   const { id: runId, skipped } = await startSyncRun("api-football", "fixtures", code);
   if (skipped) {
     return { competition: code, fixturesFetched: 0, created: 0, updated: 0, errors: ["skipped: already running"] };
