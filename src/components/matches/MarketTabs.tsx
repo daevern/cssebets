@@ -506,6 +506,15 @@ export function MarketTabs({
       if (err) throw new Error(err);
       if (n > balance) throw new Error("Insufficient points");
       const slipId = getSlipId(`single:${market}`, `${pick.selection}:${pick.odds}:${n}`);
+      if (onExternalPlace) {
+        return onExternalPlace({
+          market,
+          selection: pick.selection,
+          odds: pick.odds,
+          stake: n,
+          clientRequestId: slipId,
+        });
+      }
       if (market === "1x2") {
         return submitResult({
           data: {
@@ -521,6 +530,7 @@ export function MarketTabs({
       return place({
         data: { matchId, market, selection: pick.selection, stake: n, clientRequestId: slipId },
       });
+
     },
     onSuccess: (result, variables) => {
       if (publicMode || result == null) return;
