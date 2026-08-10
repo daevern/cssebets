@@ -37,15 +37,30 @@ function MatchAnalyticsPage() {
 export function MatchAnalyticsScreen({
   matchId,
   publicMode = false,
+  analyticsFn,
+  queryKey,
+  breadcrumbLabel = "World Cup 2026",
+  marketsSlot,
+  analyticsCard,
+  realtime = true,
 }: {
   matchId: string;
   publicMode?: boolean;
+  /** Override the analytics source (e.g. club football events). */
+  analyticsFn?: any;
+  queryKey?: string;
+  breadcrumbLabel?: string;
+  /** Replaces the built-in World Cup betting surfaces. */
+  marketsSlot?: ReactNode;
+  /** Replaces the built-in market-movement chart. */
+  analyticsCard?: ReactNode;
+  realtime?: boolean;
 }) {
-  const fn = useServerFn(publicMode ? getMatchAnalyticsPublic : getMatchAnalytics);
+  const fn = useServerFn(analyticsFn ?? (publicMode ? getMatchAnalyticsPublic : getMatchAnalytics));
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: [publicMode ? "match-analytics-public" : "match-analytics", matchId],
+    queryKey: [queryKey ?? (publicMode ? "match-analytics-public" : "match-analytics"), matchId],
     queryFn: () => fn({ data: { matchId } }) as Promise<AnalyticsBundle>,
     refetchInterval: (q) => {
       const phase = (q.state.data as AnalyticsBundle | undefined)?.phase;
@@ -55,9 +70,10 @@ export function MatchAnalyticsScreen({
     },
   });
 
+
   // Realtime: only wire up on the authenticated route (realtime requires a session).
   useEffect(() => {
-    if (publicMode) return;
+    if (publicMode || !realtime) return;
     const ch = supabase
       .channel(`match-analytics-${matchId}`)
       .on(
@@ -67,7 +83,7 @@ export function MatchAnalyticsScreen({
       )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [matchId, qc, publicMode]);
+  }, [matchId, qc, publicMode, realtime]);
 
   return (
     <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)]">
@@ -82,7 +98,14 @@ export function MatchAnalyticsScreen({
         ) : !data.match ? (
           <div className="py-16 text-center text-sm text-[var(--color-ink-muted)]">Match not found.</div>
         ) : (
-          <Analytics bundle={data} publicMode={publicMode} />
+          <Analytics
+            bundle={data}
+            publicMode={publicMode}
+            breadcrumbLabel={breadcrumbLabel}
+            marketsSlot={marketsSlot}
+            analyticsCard={analyticsCard}
+          />
+
         )}
 
         {!publicMode && (
@@ -100,7 +123,20 @@ export function MatchAnalyticsScreen({
 
 
 
-function Analytics({ bundle, publicMode = false }: { bundle: AnalyticsBundle; publicMode?: boolean }) {
+function Analytics({
+  bundle,
+  publicMode = false,
+  breadcrumbLabel = "World Cup 2026",
+  marketsSlot,
+  analyticsCard,
+}: {
+  bundle: AnalyticsBundle;
+  publicMode?: boolean;
+  breadcrumbLabel?: string;
+  marketsSlot?: ReactNode;
+  analyticsCard?: ReactNode;
+}) {
+
   const { match, phase, lineups, events, stats, ratings, h2h, injuries } = bundle;
   if (!match) return null;
   const home = match.home_team;
@@ -129,7 +165,7 @@ function Analytics({ bundle, publicMode = false }: { bundle: AnalyticsBundle; pu
       <nav className="text-[10px] font-medium uppercase tracking-[0.18em] text-white/40">
         <span>Sports</span>
         <span className="mx-1.5 text-white/25">›</span>
-        <span>World Cup 2026</span>
+        <span>{breadcrumbLabel}</span>
         <span className="mx-1.5 text-white/25">›</span>
       </nav>
       <MatchHero
@@ -144,7 +180,7 @@ function Analytics({ bundle, publicMode = false }: { bundle: AnalyticsBundle; pu
       />
 
       {/* Market Analytics — historical odds / implied probability */}
-      <MarketAnalyticsCard matchId={match.id} publicMode={publicMode} />
+      {analyticsCard ?? <MarketAnalyticsCard matchId={match.id} publicMode={publicMode} />}
 
       {/* Markets — only show pre-kickoff. */}
       {!locked && (
@@ -154,13 +190,20 @@ function Analytics({ bundle, publicMode = false }: { bundle: AnalyticsBundle; pu
               Take a position
             </h2>
           </div>
-          {!publicMode && (
-            <FreeBetInMatch matchId={match.id} referenceOdds={(match as any).reference_odds ?? null} />
+          {marketsSlot ?? (
+            <>
+              {!publicMode && (
+                <FreeBetInMatch matchId={match.id} referenceOdds={(match as any).reference_odds ?? null} />
+              )}
+              <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} publicMode={publicMode} />
+            </>
           )}
-          <MarketTabs matchId={match.id} locked={false} bettingBlocked={false} suspendedMarkets={[]} publicMode={publicMode} />
         </section>
       )}
-      {locked && !publicMode && <YourPicksSummary matchId={match.id} phase={phase} homeTeam={home} awayTeam={away} />}
+      {locked && !publicMode && !marketsSlot && (
+        <YourPicksSummary matchId={match.id} phase={phase} homeTeam={home} awayTeam={away} />
+      )}
+
 
 
       {/* ============ Full football analytics report — all sections inline ============ */}
@@ -408,8 +451,9 @@ function MatchHero({
   const showScore = isFinished || match.home_score != null || isLive;
   void homeGoals; void awayGoals; void phaseLabel;
 
-  const homeFlag = teamFlagUrl(match.home_team, 320);
-  const awayFlag = teamFlagUrl(match.away_team, 320);
+  const homeFlag = (match as any).home_logo ?? teamFlagUrl(match.home_team, 320);
+  const awayFlag = (match as any).away_logo ?? teamFlagUrl(match.away_team, 320);
+
 
   const lastPlay = (() => {
     if (!isLive || !lastEvent) return null;
