@@ -63,20 +63,22 @@ export const listFootballMatches = createServerFn({ method: "GET" })
 export const getFootballMatch = createServerFn({ method: "GET" })
   .inputValidator((i: unknown) => z.object({ matchId: z.string().uuid() }).parse(i))
   .handler(async ({ data }) => {
-    const { data: ev } = await browserPublishable
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: ev } = await supabaseAdmin
       .from("sports_events" as any)
       .select("*")
       .eq("id", data.matchId)
       .maybeSingle();
     if (!ev) throw new Error("Match not found");
 
-    const { data: markets } = await browserPublishable
+    const { data: markets } = await supabaseAdmin
       .from("sports_markets" as any)
       .select(
         "id, market_key, display_name, category, period, line, status, sort_order, provider_odds_ts, last_odds_update_at, stale_after_seconds, suspension_reason, sports_market_selections (id, selection_key, display_name, line, decimal_odds, status, sort_order)",
       )
       .eq("sports_event_id", data.matchId)
       .order("sort_order", { ascending: true });
+
 
     const match: FootballMatch = {
       id: (ev as any).id,
