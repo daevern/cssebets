@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { checkAuthRateLimit } from "@/lib/rate-limit.functions";
+import { validateRealEmail, normalizeEmail } from "@/lib/email-validation";
 import { notifyAdminsOfRegistration } from "@/lib/notifications.functions";
 import {
   captureReferralFromUrl,
@@ -149,8 +150,8 @@ function RegisterPage() {
       }
       if (step === 1) {
         if (channel === "email") {
-          if (!/^\S+@\S+\.\S+$/.test(email.trim()))
-            throw new Error("Please enter a valid email address");
+          const emailError = validateRealEmail(email);
+          if (emailError) throw new Error(emailError);
         } else if (!isValidPhone(normalizePhone(phone))) {
           throw new Error("Phone must be in international format, e.g. +60123456789");
         }
@@ -175,9 +176,13 @@ function RegisterPage() {
       const refCode = resolveReferralCode();
       const isEmail = channel === "email";
       const p = normalizePhone(phone);
-      const authEmail = isEmail ? email.trim() : phoneToSyntheticEmail(p);
+      if (isEmail) {
+        const emailError = validateRealEmail(email);
+        if (emailError) throw new Error(emailError);
+      }
+      const authEmail = isEmail ? normalizeEmail(email) : phoneToSyntheticEmail(p);
 
-      await checkAuthRateLimit({ data: isEmail ? { email: email.trim() } : { phone: p } });
+      await checkAuthRateLimit({ data: isEmail ? { email: authEmail } : { phone: p } });
 
       const { data: signUp, error } = await supabase.auth.signUp({
         email: authEmail,
@@ -198,6 +203,13 @@ function RegisterPage() {
           await notifyAdminsOfRegistration({ data: { newUserId: signUp.user.id } });
         } catch {}
       }
+      if (isEmail && !signUp?.session) {
+        toast.success(
+          "Check your inbox — confirm your email address to activate your account.",
+        );
+        navigate({ to: "/auth" });
+        return;
+      }
       toast.success("Account created. Waiting for admin approval.");
       navigate({ to: "/dashboard" });
     } catch (err) {
@@ -214,7 +226,10 @@ function RegisterPage() {
     },
     {
       title: channel === "email" ? "What's your email address?" : "What's your phone number?",
-      subtitle: "We use this to sign you in and confirm your account.",
+      subtitle:
+        channel === "email"
+          ? "Use a real address — we'll send a confirmation link you need to click."
+          : "We use this to sign you in and confirm your account.",
     },
     {
       title: "Please enter a password.",
