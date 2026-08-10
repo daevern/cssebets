@@ -384,7 +384,7 @@ export function normalizeOdds(payload: AfOddsResponse): NormalizedMarket[] {
       for (const bet of bm.bets ?? []) {
         if (!specMatchesBet(spec, bet.id, bet.name ?? "")) continue;
         for (const v of bet.values ?? []) {
-          const mapped = spec.map(v.value);
+          const mapped = spec.map(String(v.value ?? ""));
           if (!mapped) continue;
           const price = Number(v.odd);
           if (!isFinite(price) || price < 1.01) continue;
