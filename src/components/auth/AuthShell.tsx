@@ -63,9 +63,9 @@ export function AuthShell({
   footer?: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-ink)] lg:grid lg:grid-cols-[1fr_minmax(420px,46%)]">
+    <div className="h-[100dvh] w-full overflow-hidden overscroll-none bg-[var(--color-surface)] text-[var(--color-ink)] lg:grid lg:grid-cols-[1fr_minmax(420px,46%)]">
       {/* Left rail — brand + market preview (desktop) */}
-      <aside className="relative hidden flex-col justify-between border-r border-[var(--color-surface-border)] p-10 lg:flex">
+      <aside className="relative hidden h-[100dvh] flex-col justify-between overflow-hidden border-r border-[var(--color-surface-border)] p-10 lg:flex">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-60"
