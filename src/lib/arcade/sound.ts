@@ -73,13 +73,14 @@ export type SfxMoment =
   | "settle"
   | "trap"
   | "step"
+  | "bounce"
   | "collect"
   | "loss"
   | "button";
 
 const VARIANTS: Partial<Record<ArcadeGameKey, Partial<Record<SfxMoment, SfxName>>>> = {
   plinko: { "reveal-tick": "plinko-tick", settle: "plinko-tick" },
-  roulette: { "spin-start": "roulette-spin", settle: "roulette-settle" },
+  roulette: { "spin-start": "roulette-spin", settle: "roulette-settle", bounce: "roulette-settle" },
   treasure: { "reveal-tick": "treasure-chime", trap: "treasure-blast" },
   blackjack: { "reveal-tick": "card-snap", settle: "card-flip" },
   rps: { step: "rps-step", collect: "rps-bank" },
@@ -93,6 +94,7 @@ export function sfxFor(game: ArcadeGameKey, moment: SfxMoment): SfxName {
   if (moment === "settle") return "reveal-tick";
   if (moment === "trap") return "loss";
   if (moment === "step") return "reveal-tick";
+  if (moment === "bounce") return "reveal-tick";
   return moment as SfxName;
 }
 

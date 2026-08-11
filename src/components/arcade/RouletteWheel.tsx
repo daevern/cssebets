@@ -41,6 +41,7 @@ export function RouletteWheel({
   spinning,
   reducedMotion,
   onSettled,
+  onHop,
   className,
 }: {
   /** Server-decided winning pocket, or null before the first spin. */
@@ -50,6 +51,13 @@ export function RouletteWheel({
   spinning: boolean;
   reducedMotion?: boolean;
   onSettled?: () => void;
+  /**
+   * Fires once per real fret collision as the ball drops off the outer
+   * track — not once per animation frame. `energy` is that bounce's height
+   * normalised against the first (hardest) bounce, so callers can scale
+   * volume/pitch to match what's actually happening on screen.
+   */
+  onHop?: (info: { index: number; energy: number }) => void;
   className?: string;
 }) {
   const [rotation, setRotation] = useState(0);
@@ -57,6 +65,7 @@ export function RouletteWheel({
   const [ballRadius, setBallRadius] = useState(92);
   const [settledPocket, setSettledPocket] = useState<number | null>(null);
   const raf = useRef<number | null>(null);
+  const lastHop = useRef<number>(-1);
 
   const targetIndex = useMemo(
     () => (winningPocket == null ? 0 : WHEEL_ORDER.indexOf(winningPocket as any)),
@@ -66,6 +75,7 @@ export function RouletteWheel({
   useEffect(() => {
     if (!spinToken || winningPocket == null) return;
     setSettledPocket(null);
+    lastHop.current = -1;
 
     // Pocket centre in wheel-local degrees.
     const pocketMid = targetIndex * SEG + SEG / 2;
@@ -144,6 +154,13 @@ export function RouletteWheel({
           acc += w;
         }
         const hop = HOPS[hopIndex]!;
+        // Fire once per hop, right as it strikes (arc bottoms out just past the
+        // midpoint of its window) rather than at the start — a real ball makes
+        // its sound on impact, not on lift-off.
+        if (hopIndex !== lastHop.current && local >= 0.5) {
+          lastHop.current = hopIndex;
+          onHop?.({ index: hopIndex, energy: hop.h / HOPS[0]!.h });
+        }
         // Parabolic arc per bounce (radially outward off the fret, then back down).
         const arc = 4 * local * (1 - local) * hop.h;
         // Radial descent from the track down to the pocket ring.
