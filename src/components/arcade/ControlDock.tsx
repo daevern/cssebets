@@ -109,6 +109,8 @@ export function DockPrimary({
   active?: boolean;
   className?: string;
 }) {
+  const theme = useDockTheme();
+  const filled = active && !disabled;
   return (
     <button
       type="button"
@@ -117,12 +119,22 @@ export function DockPrimary({
       className={cn(
         "flex h-[36px] w-full min-w-0 items-center justify-center gap-1.5 rounded-full",
         "font-display text-[11px] font-bold uppercase tracking-[0.08em] transition-all",
-        active && !disabled
-          ? "bg-[var(--color-neon)] text-black active:opacity-90"
+        filled
+          ? "bg-[var(--color-neon)] text-black active:translate-y-[1px] active:opacity-90"
           : "border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]",
         "disabled:cursor-not-allowed",
         className,
       )}
+      style={
+        theme && filled
+          ? {
+              background: theme.dock.primaryBg,
+              color: theme.dock.primaryText,
+              boxShadow:
+                "inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 4px rgba(0,0,0,.28), 0 6px 16px -10px rgba(0,0,0,.9)",
+            }
+          : undefined
+      }
     >
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : children}
     </button>
@@ -146,6 +158,7 @@ export function DockSeg({
   /** Stretch to fill the row and share width equally. */
   grow?: boolean;
 }) {
+  const theme = useDockTheme();
   return (
     <div
       role="tablist"
@@ -154,6 +167,15 @@ export function DockSeg({
         grow && "w-full min-w-0 shrink",
         className,
       )}
+      style={
+        theme
+          ? {
+              borderColor: theme.dock.chipEdge,
+              background: "rgba(0,0,0,.35)",
+              boxShadow: "inset 0 2px 6px rgba(0,0,0,.55)",
+            }
+          : undefined
+      }
     >
       {options.map((o) => {
         const active = o.key === value;
@@ -172,6 +194,15 @@ export function DockSeg({
                 ? "bg-[var(--color-neon)] text-black"
                 : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]",
             )}
+            style={
+              theme && active
+                ? {
+                    background: theme.dock.primaryBg,
+                    color: theme.dock.primaryText,
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,.4)",
+                  }
+                : undefined
+            }
           >
             {o.label}
           </button>
@@ -180,6 +211,7 @@ export function DockSeg({
     </div>
   );
 }
+
 
 /** 44px input / stepper shell. */
 export function DockField({
