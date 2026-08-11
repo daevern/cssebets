@@ -6,8 +6,11 @@ DECLARE
   v_referral UUID;
   v_existing UUID;
 BEGIN
+  -- One-off backfill for a specific real referral pair. On a fresh/CI database
+  -- neither profile exists yet, so skip instead of raising (this used to hard
+  -- error, which would fail the entire migration replay on an empty database).
   SELECT id INTO v_referrer FROM public.profiles WHERE referral_code = v_code LIMIT 1;
-  IF v_referrer IS NULL THEN RAISE EXCEPTION 'Referrer for code % not found', v_code; END IF;
+  IF v_referrer IS NULL THEN RETURN; END IF;
 
   ALTER TABLE public.profiles DISABLE TRIGGER USER;
   UPDATE public.profiles

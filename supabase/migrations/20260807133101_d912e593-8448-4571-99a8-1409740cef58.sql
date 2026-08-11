@@ -2,6 +2,12 @@ DO $$
 DECLARE u uuid; b numeric;
 BEGIN
   FOREACH u IN ARRAY ARRAY['f15582b9-f9e0-4ec1-9f59-028c6c08a0c0'::uuid,'b92c27fb-d33a-4a7e-a8f3-8746c6cc624a'::uuid] LOOP
+    -- One-off goodwill credit for two specific real users. On a fresh/CI
+    -- database these auth.users rows don't exist, so skip (wallets.user_id
+    -- has an FK to auth.users) instead of failing the migration replay.
+    IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = u) THEN
+      CONTINUE;
+    END IF;
     INSERT INTO public.wallets (user_id, balance) VALUES (u, 0) ON CONFLICT (user_id) DO NOTHING;
     SELECT balance INTO b FROM public.wallets WHERE user_id = u FOR UPDATE;
     UPDATE public.wallets SET balance = b + 100, updated_at = now() WHERE user_id = u;
