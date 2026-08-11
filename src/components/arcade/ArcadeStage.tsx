@@ -1,6 +1,9 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { ArcadeSoundToggle } from "@/components/arcade/ArcadeSoundToggle";
+import { SurfaceGrain } from "@/components/arcade/ArcadeHud";
+import { ARCADE_THEMES } from "@/lib/arcade/theme";
+import type { ArcadeGameKey } from "@/lib/arcade/sound";
 
 /**
  * Fits a game's playfield into the exact space between the sticky stats bar
@@ -14,12 +17,15 @@ import { ArcadeSoundToggle } from "@/components/arcade/ArcadeSoundToggle";
 export function ArcadeStage({
   children,
   className,
+  game,
   minScale = 0.3,
   maxScale = 1.35,
   gap = 8,
 }: {
   children: React.ReactNode;
   className?: string;
+  /** Paints the cabinet's stage void + grain behind the playfield. */
+  game?: ArcadeGameKey;
   minScale?: number;
   maxScale?: number;
   /** Breathing room kept above the control dock. */
@@ -104,9 +110,13 @@ export function ArcadeStage({
   return (
     <div
       ref={outerRef}
-      className={cn("relative w-full overflow-hidden", className)}
-      style={{ height: avail || undefined }}
+      className={cn("relative w-full overflow-hidden", game && "rounded-[18px]", className)}
+      style={{
+        height: avail || undefined,
+        background: game ? ARCADE_THEMES[game].stageBg : undefined,
+      }}
     >
+      {game && <SurfaceGrain game={game} radius="18px" />}
       <ArcadeSoundToggle className="absolute right-2 top-2 z-30" />
       <div
         ref={innerRef}
