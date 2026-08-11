@@ -276,7 +276,7 @@ function PlinkoPage() {
       {/* Colour spill lives OUTSIDE the stage: ArcadeStage clips its children. */}
       <div className="relative isolate">
       <ArcadeGlow game="plinko" />
-      <ArcadeStage className="relative z-10">
+      <ArcadeStage game="plinko" className="relative z-10">
       <ArcadeEntrance game="plinko">
         <div className="relative flex flex-col justify-start">
         <div
