@@ -139,7 +139,7 @@ export const ARCADE_THEMES: Record<ArcadeGameKey, ArcadeTheme> = {
     backdrop:
       "radial-gradient(80% 70% at 50% 0%, rgba(22,77,57,.45) 0%, rgba(6,34,25,.22) 55%, transparent 100%)",
     stageBg: "linear-gradient(180deg,#080f0c 0%,#050908 100%)",
-    feltOrBoardFill: "radial-gradient(120% 90% at 50% 0%,#12померь 0%,#0d5a38 45%,#06301e 100%)",
+    feltOrBoardFill: "radial-gradient(120% 90% at 50% 0%,#127a4d 0%,#0d5a38 45%,#06301e 100%)",
     feltNoiseOpacity: 0.06,
     railColor: "#3a2413",
     rimMetal: "linear-gradient(180deg,#f3dfa6 0%,#c8a34a 45%,#6a5220 100%)",
@@ -167,7 +167,7 @@ export const ARCADE_THEMES: Record<ArcadeGameKey, ArcadeTheme> = {
     stageBg: "linear-gradient(180deg,#08161c 0%,#050b0f 100%)",
     feltOrBoardFill: "linear-gradient(180deg,rgba(28,70,84,.55) 0%,rgba(8,20,26,.9) 100%)",
     feltNoiseOpacity: 0.05,
-    railColor: "#123murky",
+    railColor: "#123642",
     rimMetal: "linear-gradient(180deg,#c5f6ff 0%,#4fb6c9 45%,#123642 100%)",
     dock: {
       border: "rgba(92,225,242,.42)",
