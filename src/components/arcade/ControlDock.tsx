@@ -1,6 +1,8 @@
 import * as React from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ARCADE_THEMES } from "@/lib/arcade/theme";
+import type { ArcadeGameKey } from "@/lib/arcade/sound";
 
 /**
  * Shared arcade control dock.
@@ -10,35 +12,60 @@ import { cn } from "@/lib/utils";
  *  - primary action 52px, segmented selectors 44px, input rows 44px
  *  - every interactive target is at least 44x44
  *
- * Visual identity (dark surfaces, neon accent, rounded styling) is unchanged.
+ * Structure and sizing are identical across games; only the MATERIALS change,
+ * driven by the cabinet theme passed via `game`.
  */
+
+const DockCtx = React.createContext<ArcadeGameKey | null>(null);
+
+/** Cabinet theme for the surrounding dock, or null outside one. */
+function useDockTheme() {
+  const game = React.useContext(DockCtx);
+  return game ? ARCADE_THEMES[game] : null;
+}
 
 export function ControlDock({
   children,
   className,
   maxWidth = "max-w-4xl",
+  game,
 }: {
   children: React.ReactNode;
   className?: string;
   maxWidth?: string;
+  /** Cabinet whose materials the console should wear. */
+  game?: ArcadeGameKey;
 }) {
+  const theme = game ? ARCADE_THEMES[game] : null;
   return (
-    <div
-      data-arcade-console
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-[env(safe-area-inset-bottom)]"
-    >
+    <DockCtx.Provider value={game ?? null}>
       <div
-        className={cn(
-          "mx-auto flex w-full flex-col gap-2 px-3 py-2 sm:px-4",
-          maxWidth,
-          className,
-        )}
+        data-arcade-console
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-[env(safe-area-inset-bottom)]"
+        style={
+          theme
+            ? {
+                borderTopColor: theme.dock.border,
+                background: theme.dock.surface,
+                boxShadow: "0 -14px 32px -22px rgba(0,0,0,.95)",
+              }
+            : undefined
+        }
       >
-        {children}
+        <div
+          className={cn(
+            "mx-auto flex w-full flex-col gap-2 px-3 py-2 sm:px-4",
+            maxWidth,
+            className,
+          )}
+        >
+          {children}
+        </div>
       </div>
-    </div>
+    </DockCtx.Provider>
   );
 }
+
 
 /** A single control row. `scroll` enables silent horizontal overflow. */
 export function DockRow({
