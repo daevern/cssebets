@@ -20,6 +20,11 @@ dist-ssr
 .wrangler/
 .dev.vars
 
+# Playwright
+/playwright-report/
+/test-results/
+/blob-report/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

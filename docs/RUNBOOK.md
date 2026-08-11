@@ -104,6 +104,32 @@ it was actually a missing local secret, not a code bug. Get the real value
 from the Supabase project settings (Project Settings → API → service_role)
 and set it before testing auth flows locally.
 
+## End-to-end tests (Playwright)
+
+`npm run test:e2e` runs the Playwright suite in `e2e/` against a local dev
+server (auto-started on port 8080 if one isn't already running — set
+`PLAYWRIGHT_BASE_URL` to point at a different one). `npm run test:e2e:ui`
+opens the interactive UI runner. Covers:
+
+- `e2e/registration.spec.ts` — the 4-step `/register` flow: per-step
+  validation (empty name, invalid email, weak/mismatched password) and that
+  final submission always produces visible feedback (toast or redirect),
+  never a silent no-op.
+- `e2e/public-pages.spec.ts` — landing page, `/auth`, and the pages that
+  live behind the auto-anonymous guest session (`/support`,
+  `/trust-center`, `/status`), including a regression test for the
+  "no recent check" duplicate-text bug on `/status`.
+
+Note: `@playwright/test` is pinned to `1.55.1` because 1.58+ dropped
+support for macOS 13 (Ventura) entirely. Bump it once dev machines are on
+macOS 14+.
+
+These tests exercise the real project's Supabase anon key (sign-in,
+anonymous sessions, registration attempts) — they are not yet wired into
+CI because doing so would hit the live Supabase project's auth endpoints
+on every push. Point `PLAYWRIGHT_BASE_URL` / the Supabase env vars at a
+separate staging project before adding this to CI.
+
 ## Go-live checklist (Phase A)
 
 - [ ] `CRON_HOOK_SECRET` set in production env
