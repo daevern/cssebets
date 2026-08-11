@@ -54,7 +54,12 @@ const newSeed = () => Math.random().toString(36).slice(2, 14);
 
 function TreasurePage() {
   const qc = useQueryClient();
-  const { play } = useArcadeSound();
+  const { play, playFor } = useArcadeSound();
+  const fetchBest = useServerFn(getArcadePersonalBest);
+  const bestQ = useQuery({
+    queryKey: ["treasure", "personal-best"],
+    queryFn: () => fetchBest({ data: { game: "treasure" } }),
+  });
   const fetchConfig = useServerFn(getTreasureConfig);
   const fetchProfile = useServerFn(getTreasureProfile);
   const fetchActive = useServerFn(getActiveTreasureRound);
