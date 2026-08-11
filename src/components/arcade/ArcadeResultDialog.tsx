@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Dialog } from "@/components/ui/dialog";
 import { StencilDialogContent } from "@/components/wallet/StencilDialog";
 import { useCountUp } from "@/hooks/use-count-up";
-import { useArcadeSound, winSfxForRatio } from "@/lib/arcade/sound";
+import { useArcadeSound, winSfxForRatio, type ArcadeGameKey } from "@/lib/arcade/sound";
+import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import { cn } from "@/lib/utils";
 
 export type ArcadeResultTone = "win" | "loss" | "push";
@@ -20,8 +21,17 @@ function tierFromRatio(ratio: number | undefined): ArcadeWinTier {
   return "small";
 }
 
+const DEFAULT_PARTICLES = [
+  "var(--color-neon)",
+  "#ffd76a",
+  "#ff9aa4",
+  "#8ff0bd",
+  "#7cc4ff",
+];
+
 /** Lightweight CSS confetti burst — no dependency, unmounts after ~1.2s. */
-function ConfettiBurst({ count }: { count: number }) {
+function ConfettiBurst({ count, palette }: { count: number; palette?: string[] }) {
+  const colours = palette?.length ? palette : DEFAULT_PARTICLES;
   const pieces = useMemo(
     () =>
       Array.from({ length: count }, (_, i) => {
@@ -34,16 +44,10 @@ function ConfettiBurst({ count }: { count: number }) {
           delay: Math.random() * 140,
           size: 5 + Math.random() * 6,
           rot: Math.round(Math.random() * 540 - 270),
-          colour: [
-            "var(--color-neon)",
-            "#ffd76a",
-            "#ff9aa4",
-            "#8ff0bd",
-            "#7cc4ff",
-          ][i % 5],
+          colour: colours[i % colours.length],
         };
       }),
-    [count],
+    [count, colours],
   );
 
   return (
@@ -89,6 +93,8 @@ export function ArcadeResultDialog({
   stake,
   /** Explicit ratio override when a game already knows its multiplier. */
   ratio,
+  /** Optional per-game skin (accent, backdrop, particle palette). */
+  game,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -99,10 +105,12 @@ export function ArcadeResultDialog({
   footer?: ReactNode;
   stake?: number;
   ratio?: number;
+  game?: ArcadeGameKey;
 }) {
   const { play } = useArcadeSound();
   const [showParticles, setShowParticles] = useState(false);
   const firedFor = useRef<string | null>(null);
+  const theme = game ? ARCADE_THEMES[game] : null;
 
   const effectiveRatio =
     ratio ?? (stake && stake > 0 ? Math.abs(net) / stake : Math.abs(net) >= 100 ? 3 : 1);
@@ -140,9 +148,10 @@ export function ArcadeResultDialog({
     return () => window.clearTimeout(t);
   }, [showParticles]);
 
+  const winColourClass = theme ? undefined : "text-[var(--color-neon)]";
   const colour =
     tone === "win"
-      ? "text-[var(--color-neon)]"
+      ? winColourClass
       : tone === "loss"
         ? "text-red-400"
         : "text-[var(--color-ink)]";
@@ -152,7 +161,13 @@ export function ArcadeResultDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <StencilDialogContent
-        kicker={tone === "win" ? "Round settled" : tone === "loss" ? "Round settled" : "Push"}
+        kicker={
+          theme
+            ? `${theme.label} · ${tone === "push" ? "Push" : "Round settled"}`
+            : tone === "push"
+              ? "Push"
+              : "Round settled"
+        }
         title={headline}
         footer={
           <>
@@ -163,7 +178,8 @@ export function ArcadeResultDialog({
                 play("button");
                 onOpenChange(false);
               }}
-              className="h-9 rounded-full bg-[var(--color-neon)] px-5 font-display text-[11px] font-bold uppercase tracking-[0.18em] text-black"
+              className="h-9 rounded-full px-5 font-display text-[11px] font-bold uppercase tracking-[0.18em] text-black"
+              style={{ background: theme?.accent ?? "var(--color-neon)" }}
             >
               Continue
             </button>
@@ -171,15 +187,25 @@ export function ArcadeResultDialog({
         }
       >
         <div className="relative pb-2 text-center">
-          {showParticles && <ConfettiBurst count={tier === "mega" ? 30 : 16} />}
+          {theme && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute -inset-x-6 -top-6 bottom-0 -z-20"
+              style={{ background: theme.backdrop }}
+            />
+          )}
+          {showParticles && (
+            <ConfettiBurst count={tier === "mega" ? 30 : 16} palette={theme?.particles} />
+          )}
 
           {isWin && tier !== "small" && (
             <div
               aria-hidden
               className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full"
               style={{
-                background:
-                  "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 42%, transparent) 0%, transparent 70%)",
+                background: theme
+                  ? `radial-gradient(circle, ${theme.glow} 0%, transparent 70%)`
+                  : "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 42%, transparent) 0%, transparent 70%)",
                 filter: "blur(14px)",
               }}
             />
@@ -195,6 +221,7 @@ export function ArcadeResultDialog({
                   ? "text-[46px]"
                   : "text-[40px]",
             )}
+            style={isWin && theme ? { color: theme.accent } : undefined}
           >
             {net > 0 ? "+" : ""}
             {animatedNet.toLocaleString(undefined, { maximumFractionDigits: 2 })}

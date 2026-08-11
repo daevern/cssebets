@@ -19,9 +19,22 @@ export const SFX_NAMES = [
   "loss",
   "button",
   "collect",
+  // Per-game variants. Each game only overrides the two or three moments it
+  // triggers most; everything else falls back to the shared set above.
+  "plinko-tick",
+  "roulette-spin",
+  "roulette-settle",
+  "treasure-chime",
+  "treasure-blast",
+  "card-snap",
+  "card-flip",
+  "rps-step",
+  "rps-bank",
 ] as const;
 
 export type SfxName = (typeof SFX_NAMES)[number];
+
+export type ArcadeGameKey = "plinko" | "roulette" | "treasure" | "blackjack" | "rps";
 
 const STORAGE_KEY = "arcade_sound_muted";
 const POOL_SIZE = 4;
@@ -37,7 +50,51 @@ const VOLUMES: Record<SfxName, number> = {
   loss: 0.45,
   button: 0.3,
   collect: 0.55,
+  "plinko-tick": 0.4,
+  "roulette-spin": 0.42,
+  "roulette-settle": 0.5,
+  "treasure-chime": 0.45,
+  "treasure-blast": 0.5,
+  "card-snap": 0.42,
+  "card-flip": 0.4,
+  "rps-step": 0.4,
+  "rps-bank": 0.5,
 };
+
+/**
+ * Logical moments each game can trigger. A game only appears in the variant
+ * map below for the moments where it has its own clip; anything missing falls
+ * through to the shared default of the same name.
+ */
+export type SfxMoment =
+  | "chip"
+  | "reveal-tick"
+  | "spin-start"
+  | "settle"
+  | "trap"
+  | "step"
+  | "collect"
+  | "loss"
+  | "button";
+
+const VARIANTS: Partial<Record<ArcadeGameKey, Partial<Record<SfxMoment, SfxName>>>> = {
+  plinko: { "reveal-tick": "plinko-tick", settle: "plinko-tick" },
+  roulette: { "spin-start": "roulette-spin", settle: "roulette-settle" },
+  treasure: { "reveal-tick": "treasure-chime", trap: "treasure-blast" },
+  blackjack: { "reveal-tick": "card-snap", settle: "card-flip" },
+  rps: { step: "rps-step", collect: "rps-bank" },
+};
+
+/** Resolve a game + moment to the clip that should actually play. */
+export function sfxFor(game: ArcadeGameKey, moment: SfxMoment): SfxName {
+  const variant = VARIANTS[game]?.[moment];
+  if (variant) return variant;
+  // Moments without a shared counterpart degrade to the nearest generic clip.
+  if (moment === "settle") return "reveal-tick";
+  if (moment === "trap") return "loss";
+  if (moment === "step") return "reveal-tick";
+  return moment as SfxName;
+}
 
 type PlayOptions = {
   /** Playback rate, e.g. rising pitch on a win ladder. */
@@ -185,11 +242,19 @@ export function useArcadeSound() {
     arcadeSound.play(name, opts);
   }, []);
 
+  /** Play a moment through the calling game's variant, if it has one. */
+  const playFor = React.useCallback(
+    (game: ArcadeGameKey, moment: SfxMoment, opts?: PlayOptions) => {
+      arcadeSound.play(sfxFor(game, moment), opts);
+    },
+    [],
+  );
+
   const setMuted = React.useCallback((next: boolean) => arcadeSound.setMuted(next), []);
   const toggleMuted = React.useCallback(
     () => arcadeSound.setMuted(!arcadeSound.muted),
     [],
   );
 
-  return { play, muted, setMuted, toggleMuted };
+  return { play, playFor, muted, setMuted, toggleMuted };
 }

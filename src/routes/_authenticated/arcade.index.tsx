@@ -99,6 +99,7 @@ function ArcadeLobby() {
       <HowToPlayDialog
         open={howTo !== null}
         onOpenChange={(v) => !v && setHowTo(null)}
+        game={howTo ?? "plinko"}
         content={HOW_TO_PLAY[howTo ?? "plinko"]}
       />
     </div>
