@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
+import { SettlePlaque, useSettleBeat } from "@/components/arcade/SettlePlaque";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
 import { BlackjackTable, type BlackjackState } from "@/components/arcade/BlackjackTable";
 import { ChipRack } from "@/components/arcade/ChipRack";
@@ -101,6 +102,7 @@ function BlackjackPage() {
   const [state, setState] = useState<BlackjackState | null>(null);
   const [stake, setStake] = useState(10);
   const [resultOpen, setResultOpen] = useState(false);
+  const { beat, run: runBeat } = useSettleBeat(340);
   const [tableBusy, setTableBusy] = useState(false);
   const shownResultRef = useRef<string | null>(null);
 
@@ -142,7 +144,8 @@ function BlackjackPage() {
       if (tableBusy) return;
       shownResultRef.current = h.id;
       if (Number(h.user_net ?? 0) === 0) play("chip", { rate: 0.8 });
-      setResultOpen(true);
+      // In-table brass plaque lands on the felt before the themed dialog.
+      runBeat(() => setResultOpen(true));
     }, 520);
     return () => window.clearTimeout(t);
   }, [state?.hand?.id, state?.hand?.status, tableBusy]);
@@ -300,6 +303,14 @@ function BlackjackPage() {
         <ArcadeGlow game="blackjack" />
         <ArcadeStage game="blackjack" className="relative z-10">
           <ArcadeEntrance game="blackjack" className="relative h-[360px] w-full md:h-[520px]">
+            <SettlePlaque
+              game="blackjack"
+              show={beat}
+              label={String(state?.hand?.result ?? "Result").replace("_", " ")}
+              value={`${Number(state?.hand?.user_net ?? 0) > 0 ? "+" : ""}${Number(
+                state?.hand?.user_net ?? 0,
+              ).toLocaleString()}`}
+            />
             <BlackjackTable state={state} onBusyChange={handleBusy} />
           </ArcadeEntrance>
         </ArcadeStage>
@@ -372,6 +383,7 @@ function BlackjackPage() {
       <ControlDock game="blackjack" maxWidth="max-w-xl">
         <DockRow scroll>
           <ChipRack
+            game="blackjack"
             values={chips}
             max={maxStake}
             value={stake}

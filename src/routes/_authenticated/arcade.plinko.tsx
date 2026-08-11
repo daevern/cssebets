@@ -24,6 +24,7 @@ import {
 } from "@/components/arcade/ControlDock";
 import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
+import { SettlePlaque, useSettleBeat } from "@/components/arcade/SettlePlaque";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound, winSfxForRatio } from "@/lib/arcade/sound";
@@ -110,6 +111,8 @@ function PlinkoPage() {
   const [mode, setMode] = useState<BetMode>("manual");
   const [clientSeed] = useState<string>(() => randHex(12));
   const [lastGame, setLastGame] = useState<PlinkoGame | null>(null);
+  const { beat, run: runBeat } = useSettleBeat(340);
+  const [plaqueMult, setPlaqueMult] = useState<number | null>(null);
   const [activeBalls, setActiveBalls] = useState<
     { id: string; path: number[]; landingSlot: number; startDelayMs: number }[]
   >([]);
@@ -228,6 +231,9 @@ function PlinkoPage() {
       const payout = Number(g.payout ?? 0);
       if (payout > 0) adjustBalance(payout);
       setLastGame(g);
+      // Short on-board plaque so the payout lands on the table, not only in the HUD.
+      setPlaqueMult(m);
+      runBeat(() => setPlaqueMult(null));
     }
     setActiveBalls((prev) => {
       const next = prev.filter((b) => b.id !== id);
@@ -286,6 +292,26 @@ function PlinkoPage() {
               "linear-gradient(90deg, transparent 0%, #000 2.5%, #000 97.5%, transparent 100%)",
           }}
         >
+          {activeBalls.length === 0 && !lastGame && !pending && (
+            <div className="pointer-events-none absolute inset-x-0 top-2 z-20 flex justify-center">
+              <span
+                className="rounded-full border px-3 py-1 text-[9px] font-bold uppercase tracking-[0.22em] backdrop-blur-sm motion-safe:animate-[fade-in_.4s_ease-out]"
+                style={{
+                  background: "rgba(10,13,32,.72)",
+                  borderColor: "rgba(143,155,255,.35)",
+                  color: "#8f9bff",
+                }}
+              >
+                Pick a chip, then drop
+              </span>
+            </div>
+          )}
+          <SettlePlaque
+            game="plinko"
+            show={beat && plaqueMult != null}
+            label={(plaqueMult ?? 0) >= 1 ? "Payout" : "Landed"}
+            value={`${Number(plaqueMult ?? 0).toFixed(2)}×`}
+          />
           <PlinkoBoard
             rows={rows}
             slots={slots}
@@ -370,6 +396,7 @@ function PlinkoPage() {
 
         <DockRow scroll>
           <ChipRack
+            game="plinko"
             values={CHIP_VALUES}
             max={STAKE_MAX}
             value={stakePerBall}

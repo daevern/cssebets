@@ -12,6 +12,7 @@ import {
 import { getRouletteSession } from "@/lib/arcade/roulette-phase2.functions";
 import { RouletteVerifyDialog } from "@/components/arcade/RouletteVerifyDialog";
 import { RouletteWheel } from "@/components/arcade/RouletteWheel";
+import { rouletteBallAudio } from "@/lib/arcade/roulette-ball-audio";
 import { RouletteBoard } from "@/components/arcade/RouletteBoard";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import { ControlDock, DockIconButton, DockNote, DockPrimary, DockRow } from "@/components/arcade/ControlDock";
@@ -272,6 +273,7 @@ function RoulettePage() {
     play("button");
     if (!canSpin) return;
     playFor("roulette", "spin-start");
+    rouletteBallAudio.start();
     setResult(null);
     setSettled(false);
     setSlipOpen(false);
@@ -281,6 +283,7 @@ function RoulettePage() {
   const onSettled = () => {
     setSettled(true);
     // Wooden click as the ball drops into its pocket.
+    rouletteBallAudio.settle();
     playFor("roulette", "settle");
     qc.invalidateQueries({ queryKey: ["roulette-profile"] });
     qc.invalidateQueries({ queryKey: ["roulette-session"] });
@@ -291,6 +294,9 @@ function RoulettePage() {
     // Short on-table pocket plaque before the themed result dialog.
     runBeat(() => setResultOpen(true));
   };
+
+  // Never leave the rolling bed running if the player leaves mid-spin.
+  useEffect(() => () => rouletteBallAudio.stop(), []);
 
   const winningPocket = result?.spin ? Number(result.spin.winning_pocket) : null;
 
@@ -415,17 +421,24 @@ function RoulettePage() {
                 spinning={spinning}
                 reducedMotion={reduced}
                 onSettled={onSettled}
-                onHop={({ energy }) =>
+                onFrame={({ speed, onTrack }) =>
+                  // Continuous rolling bed synthesised from the ball's real
+                  // on-screen velocity — pitch and brightness fall with it.
+                  rouletteBallAudio.setVelocity(speed, onTrack)
+                }
+                onHop={({ energy }) => {
                   // Each real fret collision gets its own clack, scaled to that
                   // bounce's actual energy — heavy first hop lands loud and low,
                   // the last, smallest hop is a light, high tick right before it
                   // settles. This is the rhythm a real ball makes; a single
                   // spin-then-click clip can't reproduce it.
+                  rouletteBallAudio.hop(energy);
                   playFor("roulette", "bounce", {
                     volume: 0.35 + energy * 0.85,
                     rate: 1.55 - energy * 0.45,
-                  })
-                }
+                  });
+                }}
+
               />
             </div>
           </ArcadeEntrance>
@@ -585,7 +598,8 @@ function RoulettePage() {
         )}
 
         <DockRow scroll>
-          <ChipRack values={chips} value={chip} onSelect={(c) => setChip(c)} size={44} />
+          <ChipRack
+            game="roulette" values={chips} value={chip} onSelect={(c) => setChip(c)} size={44} />
           <div className="ml-auto flex shrink-0 items-center gap-1">
             <DockIconButton onClick={undo} disabled={spinning || !history.length} title="Undo">
               <Undo2 className="h-4 w-4" />

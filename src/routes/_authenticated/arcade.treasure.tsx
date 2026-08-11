@@ -401,6 +401,7 @@ function TreasurePage() {
           <>
             <DockRow scroll>
               <ChipRack
+            game="treasure"
                 values={chips}
                 max={maxStake}
                 value={stake}

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { CasinoChip, chipCylinderStyle } from "@/components/arcade/CasinoChip";
 import { CsseMark } from "@/components/brand/CsseMark";
+import { ARCADE_THEMES } from "@/lib/arcade/theme";
+import type { ArcadeGameKey } from "@/lib/arcade/sound";
 
 /** Standard denominations offered by every arcade table. */
 export const CHIP_LADDER = [1, 5, 10, 25, 50, 100, 500, 1000];
@@ -16,11 +18,14 @@ export function BrandChip({
   open,
   disabled,
   onClick,
+  accent,
 }: {
   size?: number;
   open?: boolean;
   disabled?: boolean;
   onClick?: () => void;
+  /** Cabinet accent for the open-state ring. */
+  accent?: string;
 }) {
   return (
     <button
@@ -39,7 +44,7 @@ export function BrandChip({
         className="absolute inset-0 rounded-full"
         style={{
           ...chipCylinderStyle("#161c1f", "#e9edeb"),
-          outline: open ? "2px solid var(--color-neon)" : undefined,
+          outline: open ? `2px solid ${accent ?? "var(--color-neon)"}` : undefined,
           outlineOffset: "3px",
         }}
       />
@@ -68,6 +73,7 @@ export function ChipRack({
   disabled,
   isChipDisabled,
   className,
+  game,
 }: {
   values?: number[];
   value: number;
@@ -78,8 +84,11 @@ export function ChipRack({
   disabled?: boolean;
   isChipDisabled?: (v: number) => boolean;
   className?: string;
+  /** Skins the rack's selection rings with that cabinet's accent. */
+  game?: ArcadeGameKey;
 }) {
   const [open, setOpen] = useState(false);
+  const accent = game ? ARCADE_THEMES[game].accent : undefined;
 
   const denominations = Array.from(new Set([...(values ?? []), ...CHIP_LADDER]))
     .filter((v) => Number.isFinite(v) && v > 0 && (max == null || v <= max))
@@ -87,7 +96,7 @@ export function ChipRack({
 
   return (
     <div className={cn("flex w-auto shrink-0 items-center gap-1.5", className)}>
-      <BrandChip size={size} open={open} disabled={disabled} onClick={() => setOpen((o) => !o)} />
+      <BrandChip size={size} accent={accent} open={open} disabled={disabled} onClick={() => setOpen((o) => !o)} />
 
       {!open ? (
         <button
@@ -95,6 +104,7 @@ export function ChipRack({
           disabled={disabled}
           onClick={() => setOpen(true)}
           className="shrink-0 rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1 text-left disabled:opacity-40"
+          style={accent ? { boxShadow: `inset 0 0 0 1px ${accent}33` } : undefined}
         >
           <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
             Chip
@@ -110,6 +120,7 @@ export function ChipRack({
               <CasinoChip
                 value={v}
                 size={size}
+                accent={accent}
                 selected={value === v}
                 disabled={disabled || isChipDisabled?.(v)}
                 onClick={() => {

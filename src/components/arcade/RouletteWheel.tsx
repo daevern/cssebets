@@ -42,6 +42,8 @@ export function RouletteWheel({
   reducedMotion,
   onSettled,
   onHop,
+  onFrame,
+
   className,
 }: {
   /** Server-decided winning pocket, or null before the first spin. */
@@ -58,8 +60,15 @@ export function RouletteWheel({
    * volume/pitch to match what's actually happening on screen.
    */
   onHop?: (info: { index: number; energy: number }) => void;
+  /**
+   * Per-frame ball telemetry for velocity-synced audio: `speed` is the ball's
+   * angular speed normalised against its launch speed (1 → 0), `onTrack` is
+   * true while it is still riding the outer track.
+   */
+  onFrame?: (info: { speed: number; onTrack: boolean }) => void;
   className?: string;
 }) {
+
   const [rotation, setRotation] = useState(0);
   const [ballAngle, setBallAngle] = useState(0);
   const [ballRadius, setBallRadius] = useState(92);
@@ -128,6 +137,10 @@ export function RouletteWheel({
       const t = Math.min(1, (now - t0) / duration);
       const e = easeOut(t);
       setRotation(wheelStart + (wheelEnd - wheelStart) * easeOut(Math.min(1, t * 1.05)));
+      // Derivative of the ease, normalised to 1 at launch: the ball's real
+      // angular speed on screen, which the procedural audio tracks.
+      onFrame?.({ speed: Math.pow(1 - t, 2.2), onTrack: t < dropStart });
+
 
       if (t < dropStart) {
         // Free orbit on the outer track, still moving fast counter to the wheel.

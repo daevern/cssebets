@@ -40,3 +40,41 @@ export function ArcadeGlow({
     />
   );
 }
+
+/**
+ * Cabinet lighting pass painted INSIDE the stage: a soft overhead key light,
+ * a warm bounce off the rail and a vignette that pushes the corners down so
+ * the playfield reads as a lit object in a room rather than a flat panel.
+ * Sits above the stage void and below the playfield content.
+ */
+const KEY_LIGHT: Record<ArcadeGameKey, string> = {
+  plinko: "rgba(160,172,255,.16)",
+  treasure: "rgba(198,146,255,.16)",
+  roulette: "rgba(255,226,150,.15)",
+  blackjack: "rgba(255,226,150,.14)",
+  rps: "rgba(150,232,247,.16)",
+};
+
+export function CabinetLight({ game, className }: { game: ArcadeGameKey; className?: string }) {
+  return (
+    <div aria-hidden className={cn("pointer-events-none absolute inset-0 z-[1]", className)}>
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(120% 70% at 50% -10%, ${KEY_LIGHT[game]} 0%, transparent 62%)`,
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(120% 100% at 50% 55%, transparent 38%, rgba(0,0,0,.30) 78%, rgba(0,0,0,.55) 100%)",
+        }}
+      />
+      <div
+        className="absolute inset-x-0 top-0 h-px"
+        style={{ background: "linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent)" }}
+      />
+    </div>
+  );
+}
