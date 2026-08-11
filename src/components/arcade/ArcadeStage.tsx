@@ -106,6 +106,7 @@ export function ArcadeStage({
       className={cn("relative w-full overflow-hidden", className)}
       style={{ height: avail || undefined }}
     >
+      <ArcadeSoundToggle className="absolute right-2 top-2 z-30" />
       <div
         ref={innerRef}
         className="absolute left-0 top-0 flex flex-col justify-start"
