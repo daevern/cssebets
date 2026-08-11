@@ -160,13 +160,13 @@ function TreasurePage() {
       setRound(res.round);
       setPendingTile(null);
       if (res.tileType === "SAFE") {
-        // Pitch climbs with the streak so each safe tile feels bigger.
+        // Crystalline chime, pitch climbing with the streak.
         const found = Number(res.round?.safe_reveals ?? 1);
-        play("reveal-tick", { rate: Math.min(1.8, 1 + found * 0.07) });
+        playFor("treasure", "reveal-tick", { rate: Math.min(1.8, 1 + found * 0.07) });
       }
       if (res.tileType === "TRAP") {
         // Synced with the bomb blast/shake keyframes on the tile.
-        play("loss");
+        playFor("treasure", "trap");
         setTraps(res.traps ?? null);
         setResultRound(res.round);
         // Let the bomb blast/shake animation finish before the modal covers it.
