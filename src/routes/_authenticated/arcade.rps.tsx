@@ -22,6 +22,8 @@ import { rpsLadderMultiplier, type RpsMove } from "@/lib/arcade/rps-math";
 import { roundMoney } from "@/lib/accounting/money";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound } from "@/lib/arcade/sound";
+import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
+import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 
 import {
   getRpsConfig,
@@ -95,7 +97,12 @@ function Stat({
 
 function RpsPage() {
   const qc = useQueryClient();
-  const { play } = useArcadeSound();
+  const { play, playFor } = useArcadeSound();
+  const bestFn = useServerFn(getArcadePersonalBest);
+  const bestQ = useQuery({
+    queryKey: ["rps", "personal-best"],
+    queryFn: () => bestFn({ data: { game: "rps" } }),
+  });
   const fetchConfig = useServerFn(getRpsConfig);
   const fetchProfile = useServerFn(getRpsProfile);
   const prepareFn = useServerFn(prepareRpsRound);
@@ -215,7 +222,8 @@ function RpsPage() {
       // win already banked in this run so the ladder audibly climbs.
       const outcome = String(r?.outcome ?? "DRAW");
       const step = winsRef.current + (outcome === "WIN" ? 1 : 0);
-      play("reveal-tick", { rate: Math.min(1.9, 1 + step * 0.09) });
+      // Escalating musical step as the ladder climbs.
+      playFor("rps", "step", { rate: Math.min(1.9, 1 + step * 0.09) });
       if (outcome === "LOSS") window.setTimeout(() => play("loss"), 160);
 
       // The wallet only moves once the hands have visually flipped — the
@@ -344,7 +352,7 @@ function RpsPage() {
 
   /** Bank the run: the pot is already in the wallet, so this just clears the rail. */
   const collectRun = () => {
-    play("collect");
+    playFor("rps", "collect");
     setCollectedPot(wagerStake);
     setCollected(runNet);
     setLadderHistory([]);
@@ -366,7 +374,7 @@ function RpsPage() {
 
   return (
     <div className="flex flex-col gap-2 md:gap-3">
-      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid grid-cols-3 gap-1.5">
+      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid grid-cols-4 gap-1.5">
         <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
         <Stat
           label="P/L today"
@@ -377,6 +385,7 @@ function RpsPage() {
           label="W / D / L"
           value={`${profileQ.data?.todayWins ?? 0}/${profileQ.data?.todayDraws ?? 0}/${profileQ.data?.todayLosses ?? 0}`}
         />
+        <Stat label="Longest streak" value={`${bestQ.data?.value ?? 0}`} />
       </div>
 
       {cfg?.maintenance_mode && (
@@ -386,6 +395,7 @@ function RpsPage() {
       )}
 
       <ArcadeStage>
+      <ArcadeEntrance game="rps">
       <RpsArena
         phase={phase}
         playerMove={playerMove}
@@ -398,6 +408,7 @@ function RpsPage() {
         onChoose={choose}
         canPlay={canPlay}
       />
+      </ArcadeEntrance>
       </ArcadeStage>
 
 
