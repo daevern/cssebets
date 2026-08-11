@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { ArcadeSoundToggle } from "@/components/arcade/ArcadeSoundToggle";
 
 /**
  * Fits a game's playfield into the exact space between the sticky stats bar
