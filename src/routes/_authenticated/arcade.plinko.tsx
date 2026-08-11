@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound, winSfxForRatio } from "@/lib/arcade/sound";
+import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
+import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 
 export const Route = createFileRoute("/_authenticated/arcade/plinko")({
   head: () => ({
