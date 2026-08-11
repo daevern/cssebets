@@ -69,7 +69,7 @@ const fmt = (n: number) => nf.format(n);
 
 function PlinkoPage() {
   const qc = useQueryClient();
-  const { play } = useArcadeSound();
+  const { play, playFor } = useArcadeSound();
   const configFn = useServerFn(getPlinkoConfig);
   const profileFn = useServerFn(getPlinkoProfile);
   const dropFn = useServerFn(placePlinkoDrop);
