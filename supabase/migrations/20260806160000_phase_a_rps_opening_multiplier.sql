@@ -25,24 +25,41 @@
 -- correct rate for what are actually independent fresh bets. Close that
 -- gap, and extend the capacity self-test to replay settled rounds against
 -- the real per-step ladder rate instead of a flat win_multiplier.
+--
+-- Bugbot review caught a real bug in the first cut of this fix: scoping
+-- the uniqueness guard to *every* row with a parent_round_id (including
+-- PREPARED rounds that later EXPIRE without ever being played) meant a
+-- timed-out continuation permanently wedged that parent — the player's
+-- next retry would insert a fresh PREPARED row with the same
+-- parent_round_id and hit the unique index, failing outright instead of
+-- just starting a new attempt at the correct ladder step. The only rows
+-- that actually matter for the fan-out exploit are ones that *claimed* the
+-- ladder continuation (WIN, which advances the ladder, or DRAW, which
+-- holds it) — a round that expired or lost never granted anything, so it
+-- must not consume the parent slot. Scope the guard to outcome IN
+-- ('WIN','DRAW') instead of "has a parent at all".
 
 DO $do$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM public.arcade_rps_rounds
-     WHERE parent_round_id IS NOT NULL
+     WHERE parent_round_id IS NOT NULL AND outcome IN ('WIN','DRAW')
      GROUP BY parent_round_id HAVING count(*) > 1
   ) THEN
     RAISE EXCEPTION
-      'RPS_LADDER_FANOUT_EXISTS: one or more settled rounds are already claimed as parent_round_id by more than one continuation. Investigate arcade_rps_rounds for double-spent ladder wins before this migration can add the uniqueness guard.';
+      'RPS_LADDER_FANOUT_EXISTS: one or more settled WIN/DRAW rounds are already claimed as parent_round_id by more than one continuation. Investigate arcade_rps_rounds for double-spent ladder wins before this migration can add the uniqueness guard.';
   END IF;
 END $do$;
 
--- A settled round can seed at most one continuation, closing the fan-out
--- gap described above. Complements the existing (non-unique)
--- arcade_rps_rounds_parent_idx from 20260806124837.
+-- A round that actually claimed a ladder continuation (settled WIN or
+-- DRAW) can seed at most one further continuation, closing the fan-out gap
+-- described above — without blocking retries of a PREPARED continuation
+-- that later expires or loses (outcome NULL or LOSS), which must remain
+-- free to be re-prepared against the same parent. Complements the existing
+-- (non-unique) arcade_rps_rounds_parent_idx from 20260806124837.
 CREATE UNIQUE INDEX IF NOT EXISTS arcade_rps_rounds_parent_once
-  ON public.arcade_rps_rounds (parent_round_id) WHERE parent_round_id IS NOT NULL;
+  ON public.arcade_rps_rounds (parent_round_id)
+  WHERE parent_round_id IS NOT NULL AND outcome IN ('WIN','DRAW');
 
 -- Extend the capacity self-test: replay settled rounds against the real
 -- per-step ladder rate (arcade_rps_step_multiplier), and guard the ladder
@@ -141,12 +158,21 @@ BEGIN
   END IF;
 
   -- 6. replay recent settled rounds against their real per-step ladder rate
+  -- Bugbot review caught a second issue: rounds settled BEFORE the ladder
+  -- feature went live (20260806124837) were priced at a flat win_multiplier
+  -- with no ladder_step concept, but that column got backfilled to 1 on
+  -- every pre-existing row. Replaying those against
+  -- arcade_rps_step_multiplier(cfg, 1) recomputes the *new* ladder-aware
+  -- rate, not the flat rate they were actually (correctly) paid at, so they
+  -- show up as permanent false-positive mismatches and block this selftest
+  -- forever. Only replay rounds settled at-or-after the ladder cutover.
   FOR r IN
     SELECT ro.stake, ro.outcome, ro.gross_return, ro.ladder_step,
            c AS cfg, c.draw_multiplier, c.version
       FROM public.arcade_rps_rounds ro
       JOIN public.arcade_rps_configurations c ON c.id = ro.config_id
      WHERE ro.status = 'SETTLED'
+       AND ro.settled_at >= '2026-08-06 12:48:37+00'::timestamptz
      ORDER BY ro.settled_at DESC LIMIT 500
   LOOP
     v_n := v_n + 1;
@@ -190,9 +216,12 @@ BEGIN
   RETURN NEXT;
 
   -- 9. RPS ladder chain cannot be fanned out (parent used more than once) --
+  -- Matches the partial unique index above: only WIN/DRAW continuations
+  -- actually claim the parent's ladder slot, so an expired or lost
+  -- continuation sharing a parent_round_id is not a fork.
   SELECT count(*) INTO v_bad FROM (
     SELECT parent_round_id FROM public.arcade_rps_rounds
-     WHERE parent_round_id IS NOT NULL
+     WHERE parent_round_id IS NOT NULL AND outcome IN ('WIN','DRAW')
      GROUP BY parent_round_id HAVING count(*) > 1
   ) forks;
   check_name := 'rps_ladder_chain_not_forked';
