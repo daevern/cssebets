@@ -109,7 +109,7 @@
   * { border-color: var(--color-border); }
   html {
     background-color: var(--surface);
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   body {
     background-color: var(--surface);
@@ -118,7 +118,7 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     min-height: 100vh;
-    overflow-x: hidden;
+    overflow-x: clip;
     overscroll-behavior-x: none;
   }
 }
