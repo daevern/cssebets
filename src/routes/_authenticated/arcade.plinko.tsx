@@ -29,6 +29,7 @@ import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound, winSfxForRatio } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
+
 import * as React from "react";
 import { HudPlaque } from "@/components/arcade/ArcadeHud";
 
@@ -36,6 +37,7 @@ import { HudPlaque } from "@/components/arcade/ArcadeHud";
 const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
   <HudPlaque game="plinko" {...props} />
 );
+
 
 
 export const Route = createFileRoute("/_authenticated/arcade/plinko")({

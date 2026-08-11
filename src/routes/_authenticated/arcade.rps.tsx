@@ -26,6 +26,14 @@ import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 
 import {
+
+  getRpsConfig,
+  getRpsProfile,
+  getRpsRound,
+  prepareRpsRound,
+  settleRpsRound,
+} from "@/lib/arcade/rps.functions";
+
 import * as React from "react";
 import { HudPlaque } from "@/components/arcade/ArcadeHud";
 
@@ -34,12 +42,6 @@ const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
   <HudPlaque game="rps" {...props} />
 );
 
-  getRpsConfig,
-  getRpsProfile,
-  getRpsRound,
-  prepareRpsRound,
-  settleRpsRound,
-} from "@/lib/arcade/rps.functions";
 
 export const Route = createFileRoute("/_authenticated/arcade/rps")({
   head: () => ({

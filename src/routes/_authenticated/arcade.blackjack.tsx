@@ -29,13 +29,6 @@ import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 import {
-import * as React from "react";
-import { HudPlaque } from "@/components/arcade/ArcadeHud";
-
-/** Engraved cabinet plaque bound to this game's theme. */
-const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
-  <HudPlaque game="blackjack" {...props} />
-);
 
   doubleBlackjack,
   getActiveBlackjackHand,
@@ -46,6 +39,15 @@ const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
   standBlackjack,
   startBlackjackHand,
 } from "@/lib/arcade/blackjack.functions";
+
+import * as React from "react";
+import { HudPlaque } from "@/components/arcade/ArcadeHud";
+
+/** Engraved cabinet plaque bound to this game's theme. */
+const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
+  <HudPlaque game="blackjack" {...props} />
+);
+
 
 export const Route = createFileRoute("/_authenticated/arcade/blackjack")({
   head: () => ({

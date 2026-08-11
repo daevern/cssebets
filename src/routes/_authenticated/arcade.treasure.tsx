@@ -18,13 +18,6 @@ import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import {
-import * as React from "react";
-import { HudPlaque } from "@/components/arcade/ArcadeHud";
-
-/** Engraved cabinet plaque bound to this game's theme. */
-const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
-  <HudPlaque game="treasure" {...props} />
-);
 
   collectTreasureRound,
   getActiveTreasureRound,
@@ -33,6 +26,15 @@ const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
   revealTreasureTile,
   startTreasureRound,
 } from "@/lib/arcade/treasure.functions";
+
+import * as React from "react";
+import { HudPlaque } from "@/components/arcade/ArcadeHud";
+
+/** Engraved cabinet plaque bound to this game's theme. */
+const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
+  <HudPlaque game="treasure" {...props} />
+);
+
 
 export const Route = createFileRoute("/_authenticated/arcade/treasure")({
   head: () => ({
