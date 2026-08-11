@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceRateLimit, isRateLimitError } from "@/lib/rate-limit.functions";
+import { requireApprovedMember } from "@/lib/access-control";
 
 /**
  * Treasure Grid — user-facing server functions.
@@ -185,6 +186,7 @@ export const startTreasureRound = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    await requireApprovedMember(context);
     try {
       await enforceRateLimit(`treasure:${userId}`, "arcade_treasure");
     } catch (e) {

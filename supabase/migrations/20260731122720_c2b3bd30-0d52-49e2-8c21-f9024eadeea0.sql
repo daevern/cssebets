@@ -315,17 +315,24 @@ BEGIN
    WHERE w.is_simulation = false AND w.balance > 0
   ) s;
 
-  v_res := public.accounting_post_journal(
-    p_journal_type := 'OPENING_BALANCE',
-    p_lines := v_lines,
-    p_idempotency_key := 'phase31-opening-production-' || v_prod_batch::text,
-    p_event_type := 'OPENING_BALANCE',
-    p_cutover_batch_id := v_prod_batch,
-    p_metadata := jsonb_build_object('phase','3.1','environment','PRODUCTION'),
-    p_environment := 'PRODUCTION');
+  -- On a fresh/CI database the real bankroll is 0 (reset in an earlier
+  -- migration) and there are no wallets/payables yet, so there may be
+  -- nothing but the opening-source line to post. accounting_post_journal()
+  -- requires >=2 lines for a balanced double-entry journal; skip posting
+  -- when there's truly nothing to record instead of failing the replay.
+  IF jsonb_array_length(v_lines) >= 2 THEN
+    v_res := public.accounting_post_journal(
+      p_journal_type := 'OPENING_BALANCE',
+      p_lines := v_lines,
+      p_idempotency_key := 'phase31-opening-production-' || v_prod_batch::text,
+      p_event_type := 'OPENING_BALANCE',
+      p_cutover_batch_id := v_prod_batch,
+      p_metadata := jsonb_build_object('phase','3.1','environment','PRODUCTION'),
+      p_environment := 'PRODUCTION');
 
-  UPDATE public.accounting_cutover_batches SET status = 'OPENING_POSTED' WHERE id = v_prod_batch;
-  RAISE NOTICE 'production opening: %', v_res->>'journal_number';
+    UPDATE public.accounting_cutover_batches SET status = 'OPENING_POSTED' WHERE id = v_prod_batch;
+    RAISE NOTICE 'production opening: %', v_res->>'journal_number';
+  END IF;
 
   -- 4. SIMULATION cutover batch
   v_snap := jsonb_build_object(
@@ -371,17 +378,19 @@ BEGIN
    WHERE w.is_simulation = true AND w.balance > 0
   ) s;
 
-  v_res := public.accounting_post_journal(
-    p_journal_type := 'OPENING_BALANCE',
-    p_lines := v_lines,
-    p_idempotency_key := 'phase31-opening-simulation-' || v_sim_batch::text,
-    p_event_type := 'OPENING_BALANCE',
-    p_cutover_batch_id := v_sim_batch,
-    p_metadata := jsonb_build_object('phase','3.1','environment','SIMULATION'),
-    p_environment := 'SIMULATION');
+  IF jsonb_array_length(v_lines) >= 2 THEN
+    v_res := public.accounting_post_journal(
+      p_journal_type := 'OPENING_BALANCE',
+      p_lines := v_lines,
+      p_idempotency_key := 'phase31-opening-simulation-' || v_sim_batch::text,
+      p_event_type := 'OPENING_BALANCE',
+      p_cutover_batch_id := v_sim_batch,
+      p_metadata := jsonb_build_object('phase','3.1','environment','SIMULATION'),
+      p_environment := 'SIMULATION');
 
-  UPDATE public.accounting_cutover_batches SET status = 'OPENING_POSTED' WHERE id = v_sim_batch;
-  RAISE NOTICE 'simulation opening: %', v_res->>'journal_number';
+    UPDATE public.accounting_cutover_batches SET status = 'OPENING_POSTED' WHERE id = v_sim_batch;
+    RAISE NOTICE 'simulation opening: %', v_res->>'journal_number';
+  END IF;
 
   -- 5. supersede the original mixed batch (annotation only)
   UPDATE public.accounting_cutover_batches

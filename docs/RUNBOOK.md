@@ -82,6 +82,76 @@ headers := jsonb_build_object(
 4. Never log the secret. Rotate by setting a new env value, updating cron
    headers, then revoking the old value.
 
+## Local dev environment (required for testing auth/wallet/arcade)
+
+`.env` in the repo only carries the public `SUPABASE_URL` /
+`SUPABASE_PUBLISHABLE_KEY` (anon key) — safe to commit. It does **not**
+include `SUPABASE_SERVICE_ROLE_KEY`, which is a secret and must be added
+locally (e.g. in a git-ignored `.env.local`) to run the dev server for
+anything beyond static/public pages.
+
+Every `createServerFn` handler that needs to bypass RLS (wallet, bets,
+arcade, admin, and critically `enforceRateLimit` — which every auth
+attempt, bet, and arcade action goes through) imports `supabaseAdmin` from
+`src/integrations/supabase/client.server.ts`. That client is a lazy proxy
+that throws on first property access if `SUPABASE_SERVICE_ROLE_KEY` is
+missing. Because `auth_attempt` is a fail-closed rate-limit action (see
+`FAIL_CLOSED_ACTIONS` in `src/lib/rate-limit.functions.ts`), **without this
+key set, registration and login both fail** — the UI shows a generic error
+toast instead of silently succeeding. This was found during a local
+browser walkthrough and looked identical to a broken registration flow;
+it was actually a missing local secret, not a code bug. Get the real value
+from the Supabase project settings (Project Settings → API → service_role)
+and set it before testing auth flows locally.
+
+## End-to-end tests (Playwright)
+
+`npm run test:e2e` runs the Playwright suite in `e2e/` against a local dev
+server (auto-started on port 8080 if one isn't already running — set
+`PLAYWRIGHT_BASE_URL` to point at a different one). `npm run test:e2e:ui`
+opens the interactive UI runner. Covers:
+
+- `e2e/registration.spec.ts` — the 4-step `/register` flow: per-step
+  validation (empty name, invalid email, weak/mismatched password) and that
+  final submission always produces visible feedback (toast or redirect),
+  never a silent no-op.
+- `e2e/public-pages.spec.ts` — landing page, `/auth`, and the pages that
+  live behind the auto-anonymous guest session (`/support`,
+  `/trust-center`, `/status`), including a regression test for the
+  "no recent check" duplicate-text bug on `/status`.
+
+Note: `@playwright/test` is pinned to `1.55.1` because 1.58+ dropped
+support for macOS 13 (Ventura) entirely. Bump it once dev machines are on
+macOS 14+.
+
+### CI: ephemeral local Supabase, not the real project
+
+`.github/workflows/e2e.yml` runs this suite on every PR (and on demand via
+`workflow_dispatch`). It does **not** touch the real hosted Supabase
+project. Instead it uses the Supabase CLI (`supabase/setup-cli` action) to
+spin up a throwaway Postgres + Auth + Storage stack in Docker, seeded
+entirely from `supabase/migrations/` and `supabase/config.toml`, runs the
+app's dev server against that local stack, runs Playwright, then tears
+the whole thing down. Every run starts from a clean database built from
+whatever migrations are on that branch — no drift, no shared state, no
+manual staging project to maintain, zero risk to production data.
+
+Key config lives in `supabase/config.toml`:
+`auth.enable_anonymous_sign_ins = true` (the landing page silently signs
+guests in anonymously — without this every "guest" page 404s on auth
+locally/in CI even though it works fine against the real project) and
+`auth.email.enable_confirmations = false` (so `signUp()` returns a
+session immediately in CI instead of needing a real inbox).
+
+**Caveat:** this was authored and reasoned through carefully but could
+not be dry-run end-to-end locally — Docker Desktop's daemon does not come
+up in this environment. With 362 accumulated migrations (Lovable +
+manual), there's a real chance the first CI run surfaces a migration that
+doesn't replay cleanly against a fresh database (a missing extension, or
+something Lovable's control plane set up outside of a tracked migration).
+Treat the first run as the actual validation step, and expect to iterate
+on `supabase/config.toml` or a specific migration if it fails.
+
 ## Go-live checklist (Phase A)
 
 - [ ] `CRON_HOOK_SECRET` set in production env
@@ -101,12 +171,37 @@ headers := jsonb_build_object(
       previously had a hidden 5-point floor while its chip rack (and every
       other game) advertised a 1-point chip
 - [ ] Migration `20260806160000_phase_a_rps_opening_multiplier` applied —
-      RPS win #1 of a fresh ladder run now pays `opening_win_multiplier`
-      (1.35x) instead of the flat 1.85x; win #2+ is unchanged. Tracked
-      server-side via `arcade_rps_rounds.parent_round_id` /
-      `chain_win_depth` so a client cannot claim a fake higher ladder
-      position. Raises round-1 house edge to ~21.7% — confirm this is the
-      intended trade-off before enabling for real users
+      note: the tiered ladder payout itself (win #1/#2 pay less than a flat
+      rate) shipped independently on `main` as `ladder_multipliers` /
+      `ladder_tail_multiplier` (config) + `ladder_step` (round), resolved via
+      `arcade_rps_step_multiplier()`; this migration was rewritten to not
+      collide with that and instead (a) closes a fan-out gap where one
+      settled round could be claimed as `parent_round_id` by more than one
+      continuation, each wrongly inheriting the higher post-opening rate,
+      and (b) fixes `arcade_config_selftest()`'s historical-replay check to
+      verify against the real per-step ladder rate instead of a flat
+      `win_multiplier`. Confirm on `/management/admin/arcade` that the live
+      `ladder_multipliers` / `ladder_tail_multiplier` values match the
+      intended round-1/round-2 house edge before enabling for real users
+
+- [ ] Migration `20260811080000_phase_a_arcade_admin_rpc_hardening` applied
+      — security review found `arcade_publish_roulette_config`,
+      `arcade_publish_rps_config` and `arcade_admin_snapshot` authorized on
+      a caller-supplied `p_admin` argument (not the real caller) while
+      granted to `authenticated`; any logged-in user could pass a known
+      admin's UUID and push live payout config. Now `service_role` only,
+      matching `arcade_publish_treasure_config`'s existing pattern. Also
+      closes a gap where `ladder_multipliers[]` steps weren't bounded like
+      `win_multiplier` is, so a patch could publish an unsafe per-step
+      payout live.
+- [ ] Confirm every arcade wallet-mutating server function calls
+      `requireApprovedMember` (added to `settleRpsRound`, `placePlinkoDrop`,
+      `placeRouletteSpin`, `startTreasureRound`, `startBlackjackHand`) —
+      previously the "pending approval" gate was UI-only, so a pending
+      user with a valid session could wager real wallet points on arcade
+      before an admin approved them (sports betting already enforced this
+      via `submitPrediction` / `placeMarketBet`, now refactored onto the
+      same shared `src/lib/access-control.ts` helper)
 
 ## Reference
 - `/docs/BACKUP_RECOVERY.md` — recovery checklist

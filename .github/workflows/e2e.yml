@@ -1,0 +1,88 @@
+name: E2E (Playwright + ephemeral local Supabase)
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Spins up a throwaway Postgres + Auth + Storage stack from
+      # supabase/migrations and supabase/config.toml — never the real
+      # hosted project. Destroyed with the runner at the end of the job.
+      - name: Start local Supabase
+        run: supabase start --exclude edge-runtime,vector,imgproxy,logflare,studio
+
+      - name: Export local Supabase connection details
+        run: |
+          supabase status -o json > /tmp/supabase-status.json
+          cat /tmp/supabase-status.json
+          API_URL=$(jq -r '.API_URL' /tmp/supabase-status.json)
+          ANON_KEY=$(jq -r '.ANON_KEY // .PUBLISHABLE_KEY // empty' /tmp/supabase-status.json)
+          SERVICE_ROLE_KEY=$(jq -r '.SERVICE_ROLE_KEY // .SECRET_KEY // empty' /tmp/supabase-status.json)
+          if [ -z "$API_URL" ] || [ -z "$ANON_KEY" ] || [ -z "$SERVICE_ROLE_KEY" ]; then
+            echo "::error::Could not read one or more keys from 'supabase status -o json' — CLI output shape may have changed, see logged JSON above."
+            exit 1
+          fi
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_PUBLISHABLE_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "VITE_SUPABASE_URL=$API_URL"
+            echo "VITE_SUPABASE_PUBLISHABLE_KEY=$ANON_KEY"
+          } >> "$GITHUB_ENV"
+
+      - name: Start app dev server
+        run: |
+          npm run dev > /tmp/dev-server.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8080/ -o /dev/null && echo "dev server is up" && exit 0
+            sleep 1
+          done
+          echo "::error::Dev server did not become ready in time"
+          cat /tmp/dev-server.log
+          exit 1
+
+      - name: Run Playwright e2e tests
+        run: npx playwright test
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:8080
+
+      - name: Upload dev server log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-server-log
+          path: /tmp/dev-server.log
+          retention-days: 7
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceRateLimit, isRateLimitError } from "@/lib/rate-limit.functions";
+import { requireApprovedMember } from "@/lib/access-control";
 
 const RiskEnum = z.enum(["low", "medium", "high"]);
 const RowsEnum = z.union([z.literal(8), z.literal(10), z.literal(12), z.literal(14), z.literal(16)]);
@@ -94,6 +95,7 @@ export const placePlinkoDrop = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    await requireApprovedMember(context);
     try {
       await enforceRateLimit(`plinko:${userId}`, "arcade_drop");
     } catch (e) {

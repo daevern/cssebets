@@ -184,6 +184,15 @@ DO $$
 DECLARE
   v_sim boolean;
 BEGIN
+  -- One-off correction for two specific real production prediction rows. On a
+  -- fresh/CI database these rows (and the match/user they reference) don't
+  -- exist, so skip entirely instead of crediting a wallet with a NULL
+  -- is_simulation flag (which fails the NOT NULL constraint added later).
+  IF NOT EXISTS (SELECT 1 FROM public.predictions WHERE id='0c1452ad-26bb-4355-adad-bec01b97ec5a')
+     OR NOT EXISTS (SELECT 1 FROM public.predictions WHERE id='5eba31f2-f621-4082-8748-7ca2f57bf17e') THEN
+    RETURN;
+  END IF;
+
   SELECT COALESCE(is_simulation,false) INTO v_sim FROM public.matches
    WHERE id='99ca7642-76f5-4645-84bc-54026c95da8f';
 
