@@ -312,6 +312,7 @@ function TreasurePage() {
         })}
       </div>
 
+      </ArcadeEntrance>
       </ArcadeStage>
 
       {settled && (
