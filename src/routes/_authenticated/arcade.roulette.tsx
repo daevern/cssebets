@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -28,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
 import { ArcadeSoundToggle } from "@/components/arcade/ArcadeSoundToggle";
+import { HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
 import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
@@ -308,21 +308,33 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="sticky top-14 z-20 -mx-3 flex items-center gap-1 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16">
-        <div className="grid flex-1 grid-cols-4 gap-1">
-        <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
-        <Stat
+      <HudBar game="roulette">
+        <HudPlaque
+          className="flex-1"
+          hero
+          label="Balance"
+          value={<AnimatedBalance value={balance} />}
+        />
+        <HudPlaque
+          className="flex-1"
           label="Today"
           value={`${(profile.data?.todayNet ?? 0) >= 0 ? "+" : ""}${fmt(profile.data?.todayNet ?? 0)}`}
+          tone={
+            (profile.data?.todayNet ?? 0) > 0
+              ? "up"
+              : (profile.data?.todayNet ?? 0) < 0
+                ? "down"
+                : undefined
+          }
         />
-        <Stat
-          label="W / L"
-          value={`${profile.data?.totalWins ?? 0} / ${profile.data?.totalLosses ?? 0}`}
+        <HudPlaque
+          className="flex-1"
+          label="Biggest single hit"
+          value={fmt(Number(bestQ.data?.value ?? 0))}
         />
-        <Stat label="Biggest single hit" value={fmt(Number(bestQ.data?.value ?? 0))} />
-        </div>
-        <ArcadeSoundToggle className="shrink-0" />
-      </div>
+        <ArcadeSoundToggle className="shrink-0 self-center" />
+      </HudBar>
+
 
       {cooldownSeconds > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
@@ -522,7 +534,7 @@ function RoulettePage() {
       />
 
       {/* Sticky bet slip + spin */}
-      <ControlDock>
+      <ControlDock game="roulette">
         {slipOpen && positions.length > 0 && (
           <div className="max-h-40 space-y-1 overflow-y-auto rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-2">
             {positions.map((p) => {
@@ -634,29 +646,6 @@ function RoulettePage() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: ReactNode;
-  accent?: boolean;
-}) {
-  return (
-    <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">
-      <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-        {label}
-      </div>
-      <div
-        className={cn(
-          "font-display text-sm font-bold tabular-nums",
-          accent ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]",
-        )}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
+
+
 

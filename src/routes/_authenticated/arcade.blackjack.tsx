@@ -29,6 +29,7 @@ import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 import {
+
   doubleBlackjack,
   getActiveBlackjackHand,
   getBlackjackConfig,
@@ -38,6 +39,15 @@ import {
   standBlackjack,
   startBlackjackHand,
 } from "@/lib/arcade/blackjack.functions";
+
+import * as React from "react";
+import { HudPlaque } from "@/components/arcade/ArcadeHud";
+
+/** Engraved cabinet plaque bound to this game's theme. */
+const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
+  <HudPlaque game="blackjack" {...props} />
+);
+
 
 export const Route = createFileRoute("/_authenticated/arcade/blackjack")({
   head: () => ({
@@ -66,37 +76,6 @@ const newSeed = () => Math.random().toString(36).slice(2, 14);
 /** Matches BlackjackTable's per-card deal stagger. */
 const DEAL_STEP_MS = 420;
 
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: ReactNode;
-  tone?: "up" | "down";
-}) {
-  return (
-    <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">
-      <div className="leading-tight">
-        <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-          {label}
-        </div>
-        <div
-          className={cn(
-            "font-display text-sm font-bold tabular-nums",
-            tone === "up"
-              ? "text-[var(--color-neon)]"
-              : tone === "down"
-                ? "text-red-400"
-                : "text-[var(--color-ink)]",
-          )}
-        >
-          {value}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function BlackjackPage() {
   const qc = useQueryClient();
@@ -293,7 +272,7 @@ function BlackjackPage() {
 
   return (
     <div className="flex flex-col gap-1 md:gap-3">
-      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid shrink-0 grid-cols-4 gap-1.5">
+      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/50 px-3 py-1.5 backdrop-blur-md md:top-16 grid shrink-0 grid-cols-4 gap-1.5">
         <Stat label="Balance" value={<AnimatedBalance value={balance} maximumFractionDigits={0} />} />
         <Stat
           label="P/L today"
@@ -390,7 +369,7 @@ function BlackjackPage() {
         />
       )}
 
-      <ControlDock maxWidth="max-w-xl">
+      <ControlDock game="blackjack" maxWidth="max-w-xl">
         <DockRow scroll>
           <ChipRack
             values={chips}

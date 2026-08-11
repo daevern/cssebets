@@ -8,6 +8,7 @@ import {
 } from "@/components/arcade/PlayingCard";
 import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
 import { formatTotal, handValue } from "@/lib/arcade/blackjack-math";
+import { SurfaceGrain } from "@/components/arcade/ArcadeHud";
 import type { BjCard } from "@/lib/arcade/blackjack.functions";
 
 export type BlackjackState = {
@@ -219,6 +220,14 @@ export function BlackjackTable({
           "radial-gradient(120% 90% at 50% 8%, #164d39 0%, #0e412f 42%, #0a2e22 72%, #062219 100%)",
       }}
     >
+      {/* Felt grain — keeps the cloth from reading as a flat fill. */}
+      <SurfaceGrain game="blackjack" />
+      {/* Inset contact shadow around the rail. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ boxShadow: "inset 0 0 60px 18px rgba(0,0,0,.55)" }}
+      />
       <FeltArt />
 
       {/* House medallion — screen-printed outline, always dead centre. */}
@@ -289,7 +298,24 @@ export function BlackjackTable({
         </div>
 
         {/* Reserved centre lane for the house medallion. */}
-        <div className="h-16 shrink-0 md:h-20" />
+        <div className="relative h-16 shrink-0 md:h-20">
+          {!cards.length && (
+            <div className="pointer-events-none absolute inset-x-0 -bottom-24 flex flex-col items-center gap-2 md:-bottom-28">
+              <div
+                className="rounded-full border px-4 py-1"
+                style={{
+                  borderColor: "rgba(224,182,74,.35)",
+                  background: "rgba(0,0,0,.28)",
+                  boxShadow: "0 0 22px -10px rgba(224,182,74,.6)",
+                }}
+              >
+                <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#f0e3bd]/80">
+                  Place a bet to deal
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Player */}
         <div className="flex min-h-0 flex-1 flex-col items-center justify-end gap-1">
@@ -324,11 +350,7 @@ export function BlackjackTable({
                 </div>
               );
             })}
-            {!playerHands.length && (
-              <div className="flex items-center text-[11px] font-bold uppercase tracking-[0.32em] text-[var(--color-ink-muted)]">
-                No cards yet
-              </div>
-            )}
+
           </div>
         </div>
       </div>

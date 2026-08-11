@@ -26,12 +26,22 @@ import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 
 import {
+
   getRpsConfig,
   getRpsProfile,
   getRpsRound,
   prepareRpsRound,
   settleRpsRound,
 } from "@/lib/arcade/rps.functions";
+
+import * as React from "react";
+import { HudPlaque } from "@/components/arcade/ArcadeHud";
+
+/** Engraved cabinet plaque bound to this game's theme. */
+const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
+  <HudPlaque game="rps" {...props} />
+);
+
 
 export const Route = createFileRoute("/_authenticated/arcade/rps")({
   head: () => ({
@@ -65,35 +75,6 @@ const MIN_REVEAL_MS = 700;
 /** How long the settled hands take to flip before the balance may move. */
 const REVEAL_FLIP_MS = 620;
 
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: ReactNode;
-  tone?: "up" | "down";
-}) {
-  return (
-    <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">
-      <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-        {label}
-      </div>
-      <div
-        className={cn(
-          "font-display text-sm font-bold tabular-nums",
-          tone === "up"
-            ? "text-[var(--color-neon)]"
-            : tone === "down"
-              ? "text-red-400"
-              : "text-[var(--color-ink)]",
-        )}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
 
 function RpsPage() {
   const qc = useQueryClient();
@@ -374,7 +355,7 @@ function RpsPage() {
 
   return (
     <div className="flex flex-col gap-2 md:gap-3">
-      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid grid-cols-4 gap-1.5">
+      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/50 px-3 py-1.5 backdrop-blur-md md:top-16 grid grid-cols-4 gap-1.5">
         <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
         <Stat
           label="P/L today"
@@ -434,7 +415,7 @@ function RpsPage() {
       />
 
       {/* Shared control dock */}
-      <ControlDock>
+      <ControlDock game="rps">
         <DockRow scroll>
           <ChipRack
             values={chips}

@@ -207,11 +207,39 @@ export function RouletteWheel({
             <stop offset="75%" stopColor="#4A2E16" />
             <stop offset="100%" stopColor="#8B5A2B" />
           </radialGradient>
+          <linearGradient id="goldRing" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ffeaad" />
+            <stop offset="45%" stopColor="#d4a747" />
+            <stop offset="100%" stopColor="#7a5a1c" />
+          </linearGradient>
+          <radialGradient id="hubSpec" cx="38%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
+            <stop offset="45%" stopColor="#ffffff" stopOpacity="0.06" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0.45" />
+          </radialGradient>
+          <radialGradient id="ballSpec" cx="35%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="60%" stopColor="#f2ede0" />
+            <stop offset="100%" stopColor="#b9b1a0" />
+          </radialGradient>
         </defs>
 
         {/* Outer rim: wood finish with dark edge */}
         <circle cx={cx} cy={cy} r="96" fill={WOOD_RIM} stroke={WOOD_RIM_STROKE} strokeWidth="2" />
         {/* Inner surface behind the pockets */}
+        <circle
+          cx={cx}
+          cy={cy}
+          r="91.5"
+          fill="none"
+          stroke="url(#goldRing)"
+          strokeWidth="1.4"
+          style={
+            spinning || reducedMotion
+              ? undefined
+              : { animation: "rouletteRimBreathe 4.5s ease-in-out infinite" }
+          }
+        />
         <circle cx={cx} cy={cy} r="90" fill="var(--color-surface-2)" stroke="#1f7a4a" strokeWidth="3" />
 
 
@@ -238,12 +266,33 @@ export function RouletteWheel({
                   strokeWidth="0.4"
                   opacity={settledPocket != null && !isWinner ? 0.55 : 1}
                 />
+                {(() => {
+                  const a = polar(cx, cy, 88, start);
+                  const b = polar(cx, cy, 56, start);
+                  return (
+                    <line
+                      x1={a.x}
+                      y1={a.y}
+                      x2={b.x}
+                      y2={b.y}
+                      stroke="url(#goldRing)"
+                      strokeOpacity="0.55"
+                      strokeWidth="0.7"
+                    />
+                  );
+                })()}
                 {isWinner && (
                   <path
                     d={sector(cx, cy, 88, 56, start, end)}
                     fill="none"
-                    stroke="var(--color-neon)"
-                    strokeWidth="2"
+                    stroke="#ffd76a"
+                    strokeWidth="2.4"
+                    style={{
+                      filter: "drop-shadow(0 0 5px rgba(255,215,106,.9))",
+                      animation: reducedMotion
+                        ? undefined
+                        : "rouletteWinFlash 300ms ease-out 2",
+                    }}
                   />
                 )}
                 <text
@@ -271,7 +320,8 @@ export function RouletteWheel({
           fill="var(--color-surface)"
           stroke="var(--color-surface-border)"
         />
-        <circle cx={cx} cy={cy} r="34" fill="none" stroke="var(--color-neon)" strokeOpacity="0.3" />
+        <circle cx={cx} cy={cy} r="42" fill="url(#hubSpec)" />
+        <circle cx={cx} cy={cy} r="34" fill="none" stroke="url(#goldRing)" strokeOpacity="0.55" />
 
         {/* Ball track + ball */}
         <g
@@ -280,12 +330,16 @@ export function RouletteWheel({
             transformOrigin: "100px 100px",
           }}
         >
-          <circle
-            cx={cx}
-            cy={cy - ballRadius}
-            r="4.5"
-            fill="#ffffff"
+          {/* contact shadow lags slightly behind the ball */}
+          <ellipse
+            cx={cx + 1.6}
+            cy={cy - ballRadius + 2.2}
+            rx="4.8"
+            ry="3.4"
+            fill="#000000"
+            opacity="0.4"
           />
+          <circle cx={cx} cy={cy - ballRadius} r="4.5" fill="url(#ballSpec)" />
         </g>
       </svg>
 
