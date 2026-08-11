@@ -263,6 +263,7 @@ function PlinkoPage() {
 
 
       <ArcadeStage>
+      <ArcadeEntrance game="plinko">
         <div className="relative flex flex-col justify-start">
         {/* Colour spill: the board's own blue/violet light bleeds far past the
             playfield so the side gutters read as room light, not empty page. */}
@@ -354,6 +355,7 @@ function PlinkoPage() {
           )}
         </div>
       </div>
+      </ArcadeEntrance>
       </ArcadeStage>
 
 
