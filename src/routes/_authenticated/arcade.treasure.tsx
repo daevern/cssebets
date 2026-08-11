@@ -14,6 +14,7 @@ import { ControlDock, DockPrimary, DockReadout, DockRow } from "@/components/arc
 import { TreasureVerifyDialog } from "@/components/arcade/TreasureVerifyDialog";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
+import { SettlePlaque, useSettleBeat } from "@/components/arcade/SettlePlaque";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
@@ -181,7 +182,7 @@ function TreasurePage() {
         setTraps(res.traps ?? null);
         setResultRound(res.round);
         // Let the bomb blast/shake animation finish before the modal covers it.
-        window.setTimeout(() => setResultOpen(true), 900);
+        window.setTimeout(() => runBeat(() => setResultOpen(true)), 900);
         refresh();
       }
     },
@@ -202,7 +203,8 @@ function TreasurePage() {
       setRound(res.round);
       setTraps(res.traps ?? null);
       setResultRound(res.round);
-      setResultOpen(true);
+      // Vault-unlock beat on the board before the themed dialog.
+      runBeat(() => setResultOpen(true));
       refresh();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -261,6 +263,16 @@ function TreasurePage() {
       <ArcadeStage game="treasure" className="relative z-10">
       <ArcadeEntrance game="treasure">
       <div className="relative">
+        <SettlePlaque
+          game="treasure"
+          show={beat}
+          label={resultRound?.status === "WON" ? "Vault unlocked" : "Vault sealed"}
+          value={
+            resultRound?.status === "WON"
+              ? `${Number(resultRound?.current_multiplier ?? 1).toFixed(2)}×`
+              : "Trap"
+          }
+        />
         <TreasureGrid
           rows={Number(config?.grid_rows ?? 5)}
           cols={Number(config?.grid_cols ?? 5)}
