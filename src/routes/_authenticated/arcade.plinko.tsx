@@ -292,6 +292,20 @@ function PlinkoPage() {
               "linear-gradient(90deg, transparent 0%, #000 2.5%, #000 97.5%, transparent 100%)",
           }}
         >
+          {activeBalls.length === 0 && !lastGame && !pending && (
+            <div className="pointer-events-none absolute inset-x-0 top-2 z-20 flex justify-center">
+              <span
+                className="rounded-full border px-3 py-1 text-[9px] font-bold uppercase tracking-[0.22em] backdrop-blur-sm motion-safe:animate-[fade-in_.4s_ease-out]"
+                style={{
+                  background: "rgba(10,13,32,.72)",
+                  borderColor: "rgba(143,155,255,.35)",
+                  color: "#8f9bff",
+                }}
+              >
+                Pick a chip, then drop
+              </span>
+            </div>
+          )}
           <SettlePlaque
             game="plinko"
             show={beat && plaqueMult != null}
