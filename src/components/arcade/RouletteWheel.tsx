@@ -58,8 +58,15 @@ export function RouletteWheel({
    * volume/pitch to match what's actually happening on screen.
    */
   onHop?: (info: { index: number; energy: number }) => void;
+  /**
+   * Per-frame ball telemetry for velocity-synced audio: `speed` is the ball's
+   * angular speed normalised against its launch speed (1 → 0), `onTrack` is
+   * true while it is still riding the outer track.
+   */
+  onFrame?: (info: { speed: number; onTrack: boolean }) => void;
   className?: string;
 }) {
+
   const [rotation, setRotation] = useState(0);
   const [ballAngle, setBallAngle] = useState(0);
   const [ballRadius, setBallRadius] = useState(92);
