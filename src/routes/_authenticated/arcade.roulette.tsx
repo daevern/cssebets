@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,6 +25,9 @@ import {
   type BetTypeKey,
 } from "@/lib/arcade/roulette-math";
 import { cn } from "@/lib/utils";
+import { AnimatedBalance } from "@/components/AnimatedBalance";
+import { ArcadeSoundToggle } from "@/components/arcade/ArcadeSoundToggle";
+import { useArcadeSound } from "@/lib/arcade/sound";
 
 export const Route = createFileRoute("/_authenticated/arcade/roulette")({
   head: () => ({
@@ -57,6 +61,7 @@ function randHex(bytes = 12) {
 
 function RoulettePage() {
   const qc = useQueryClient();
+  const { play } = useArcadeSound();
   const configFn = useServerFn(getRouletteConfig);
   const profileFn = useServerFn(getRouletteProfile);
   const spinFn = useServerFn(placeRouletteSpin);
@@ -173,6 +178,7 @@ function RoulettePage() {
       toast.error("Not enough points.");
       return;
     }
+    play("chip");
     pushHistory();
     setPositions((prev) =>
       existing
@@ -251,7 +257,9 @@ function RoulettePage() {
   });
 
   const spin = () => {
+    play("button");
     if (!canSpin) return;
+    play("spin-start");
     setResult(null);
     setSettled(false);
     setSlipOpen(false);
@@ -290,8 +298,9 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid grid-cols-3 gap-1">
-        <Stat label="Balance" value={`${fmt(balance)}`} />
+      <div className="sticky top-14 z-20 -mx-3 flex items-center gap-1 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16">
+        <div className="grid flex-1 grid-cols-3 gap-1">
+        <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
         <Stat
           label="Today"
           value={`${(profile.data?.todayNet ?? 0) >= 0 ? "+" : ""}${fmt(profile.data?.todayNet ?? 0)}`}
@@ -300,6 +309,8 @@ function RoulettePage() {
           label="W / L"
           value={`${profile.data?.totalWins ?? 0} / ${profile.data?.totalLosses ?? 0}`}
         />
+        </div>
+        <ArcadeSoundToggle className="shrink-0" />
       </div>
 
       {cooldownSeconds > 0 && (
@@ -447,6 +458,7 @@ function RoulettePage() {
                 : "No win this spin"
           }
           net={Number(result.spin.user_net ?? 0)}
+          stake={Number(result.spin.total_stake ?? 0)}
           detail={
             <>
               Pocket {result.spin.winning_pocket} (
@@ -595,7 +607,15 @@ function RoulettePage() {
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function Stat({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: ReactNode;
+  accent?: boolean;
+}) {
   return (
     <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">
       <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">

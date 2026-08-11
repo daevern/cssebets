@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +12,8 @@ import { ChipRack } from "@/components/arcade/ChipRack";
 import { ControlDock, DockPrimary, DockReadout, DockRow } from "@/components/arcade/ControlDock";
 import { TreasureVerifyDialog } from "@/components/arcade/TreasureVerifyDialog";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
+import { AnimatedBalance } from "@/components/AnimatedBalance";
+import { useArcadeSound } from "@/lib/arcade/sound";
 import {
   collectTreasureRound,
   getActiveTreasureRound,
@@ -49,6 +52,7 @@ const newSeed = () => Math.random().toString(36).slice(2, 14);
 
 function TreasurePage() {
   const qc = useQueryClient();
+  const { play } = useArcadeSound();
   const fetchConfig = useServerFn(getTreasureConfig);
   const fetchProfile = useServerFn(getTreasureProfile);
   const fetchActive = useServerFn(getActiveTreasureRound);
@@ -125,6 +129,7 @@ function TreasurePage() {
         },
       }),
     onSuccess: (res) => {
+      play("chip");
       setOpened({});
       setTraps(null);
       setRound(res.round);
@@ -147,7 +152,14 @@ function TreasurePage() {
       setOpened((o) => ({ ...o, [res.tileIndex]: res.tileType }));
       setRound(res.round);
       setPendingTile(null);
+      if (res.tileType === "SAFE") {
+        // Pitch climbs with the streak so each safe tile feels bigger.
+        const found = Number(res.round?.safe_reveals ?? 1);
+        play("reveal-tick", { rate: Math.min(1.8, 1 + found * 0.07) });
+      }
       if (res.tileType === "TRAP") {
+        // Synced with the bomb blast/shake keyframes on the tile.
+        play("loss");
         setTraps(res.traps ?? null);
         setResultRound(res.round);
         // Let the bomb blast/shake animation finish before the modal covers it.
@@ -168,6 +180,7 @@ function TreasurePage() {
         data: { roundId: round.id, stateVersion: round.state_version, idempotencyKey: newKey() },
       }),
     onSuccess: (res) => {
+      play("collect");
       setRound(res.round);
       setTraps(res.traps ?? null);
       setResultRound(res.round);
@@ -214,7 +227,7 @@ function TreasurePage() {
   return (
     <div className="flex flex-col gap-3">
       <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid grid-cols-3 gap-1.5">
-        <Stat label="Balance" value={`${fmt(balance)}`} />
+        <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
         <Stat
           label="Multiplier"
           value={`${currentMult.toFixed(2)}×`}
@@ -323,6 +336,7 @@ function TreasurePage() {
                 : "Busted"
           }
           net={Number(resultRound.user_net ?? 0)}
+          stake={Number(resultRound.stake ?? 0)}
           detail={
             <>
               {resultRound.status === "WON"
@@ -367,7 +381,11 @@ function TreasurePage() {
             </DockRow>
 
             <DockPrimary
-              onClick={() => (settled ? newRound() : startM.mutate())}
+              onClick={() => {
+                play("button");
+                if (settled) newRound();
+                else startM.mutate();
+              }}
               disabled={!settled && !canStart}
               loading={startM.isPending}
             >
@@ -384,7 +402,10 @@ function TreasurePage() {
             <DockReadout align="left" label="Collect" value={`${fmt(collectable)} pts`} />
             <DockPrimary
               className="ml-auto flex-1"
-              onClick={() => collectM.mutate()}
+              onClick={() => {
+                play("button");
+                collectM.mutate();
+              }}
               disabled={safeReveals === 0 || busy}
               loading={collectM.isPending}
             >
@@ -404,7 +425,7 @@ function Stat({
   accent,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   accent?: boolean;
 }) {
   return (

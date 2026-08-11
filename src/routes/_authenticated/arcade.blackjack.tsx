@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -22,6 +23,8 @@ import {
 } from "@/components/arcade/ControlDock";
 import { BlackjackVerifyDialog } from "@/components/arcade/BlackjackVerifyDialog";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
+import { AnimatedBalance } from "@/components/AnimatedBalance";
+import { useArcadeSound } from "@/lib/arcade/sound";
 import {
   doubleBlackjack,
   getActiveBlackjackHand,
@@ -57,13 +60,16 @@ export const Route = createFileRoute("/_authenticated/arcade/blackjack")({
 const newKey = () => `bj_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 const newSeed = () => Math.random().toString(36).slice(2, 14);
 
+/** Matches BlackjackTable's per-card deal stagger. */
+const DEAL_STEP_MS = 420;
+
 function Stat({
   label,
   value,
   tone,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   tone?: "up" | "down";
 }) {
   return (
@@ -91,6 +97,7 @@ function Stat({
 
 function BlackjackPage() {
   const qc = useQueryClient();
+  const { play } = useArcadeSound();
   const fetchConfig = useServerFn(getBlackjackConfig);
   const fetchProfile = useServerFn(getBlackjackProfile);
   const fetchActive = useServerFn(getActiveBlackjackHand);
@@ -147,12 +154,30 @@ function BlackjackPage() {
     const t = window.setTimeout(() => {
       if (tableBusy) return;
       shownResultRef.current = h.id;
+      if (Number(h.user_net ?? 0) === 0) play("chip", { rate: 0.8 });
       setResultOpen(true);
     }, 520);
     return () => window.clearTimeout(t);
   }, [state?.hand?.id, state?.hand?.status, tableBusy]);
 
 
+
+  // A "snap" per card as it leaves the shoe, staggered to match the deal.
+  const seenCardsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const cards = (state?.cards ?? []) as any[];
+    const handId = String(state?.hand?.id ?? "");
+    if (seenCardsRef.current.size && handId && !cards.some((c) => seenCardsRef.current.has(c.id))) {
+      seenCardsRef.current = new Set();
+    }
+    const fresh = cards.filter((c) => !seenCardsRef.current.has(c.id));
+    fresh.forEach((c) => seenCardsRef.current.add(c.id));
+    const timers = fresh.map((_, i) =>
+      window.setTimeout(() => play("chip", { rate: 1.25, volume: 0.8 }), i * DEAL_STEP_MS),
+    );
+    return () => timers.forEach((t) => window.clearTimeout(t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.cards]);
 
   const activeCards = useMemo(
     () => (state?.cards ?? []).filter((c: any) => c.playerHandId === activeHand?.id),
@@ -174,11 +199,32 @@ function BlackjackPage() {
     (state?.playerHands.length ?? 1) < Number(rules?.max_split_hands ?? 4) &&
     balance >= Number(activeHand?.stake ?? stake);
 
-  const refresh = () => {
-    qc.invalidateQueries({ queryKey: ["blackjack", "profile"] });
+  /** Table state only — safe to refetch mid-animation. */
+  const refreshTable = () => {
     qc.invalidateQueries({ queryKey: ["blackjack", "active"] });
-    qc.invalidateQueries({ queryKey: ["wallet"] });
   };
+
+  /** Money-facing queries. Held back until the deal/flip has finished. */
+  const refreshBalance = useCallback(() => {
+    qc.invalidateQueries({ queryKey: ["blackjack", "profile"] });
+    qc.invalidateQueries({ queryKey: ["wallet"] });
+  }, [qc]);
+
+  const refresh = () => {
+    refreshTable();
+    refreshBalance();
+  };
+
+  /**
+   * The visible balance may only move once every card has landed and
+   * flipped — the same rule the other arcade games follow.
+   */
+  const pendingBalanceRef = useRef(false);
+  useEffect(() => {
+    if (!pendingBalanceRef.current || tableBusy) return;
+    pendingBalanceRef.current = false;
+    refreshBalance();
+  }, [tableBusy, state?.hand?.state_version, refreshBalance]);
 
   const onError = (e: any) => {
     toast.error(e?.message ?? "Something went wrong.");
@@ -188,7 +234,10 @@ function BlackjackPage() {
 
   const applied = (res: any) => {
     setState(res.state as BlackjackState);
-    refresh();
+    refreshTable();
+    // Wallet/profile are refreshed by the effect above once the table has
+    // stopped animating; settlement maths is untouched.
+    pendingBalanceRef.current = true;
   };
 
   const deal = useMutation({
@@ -232,7 +281,7 @@ function BlackjackPage() {
   return (
     <div className="flex flex-col gap-1 md:gap-3">
       <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid shrink-0 grid-cols-3 gap-1.5">
-        <Stat label="Balance" value={balance.toLocaleString()} />
+        <Stat label="Balance" value={<AnimatedBalance value={balance} maximumFractionDigits={0} />} />
         <Stat
           label="P/L today"
           value={`${todayNet > 0 ? "+" : ""}${todayNet.toLocaleString()}`}
@@ -310,6 +359,7 @@ function BlackjackPage() {
                 : "Push"
           }
           net={Number(lastResult.user_net ?? 0)}
+          stake={Number((state?.playerHands ?? [])[0]?.stake ?? stake)}
           detail={String(lastResult.result ?? "").replace("_", " ")}
           footer={
             <BlackjackVerifyDialog
@@ -368,7 +418,10 @@ function BlackjackPage() {
 
         {!inPlay ? (
           <DockPrimary
-            onClick={() => deal.mutate()}
+            onClick={() => {
+              play("button");
+              deal.mutate();
+            }}
             disabled={!canDeal}
             loading={deal.isPending}
           >

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -226,7 +227,7 @@ export function WalletCreditCard({
               Balance
             </div>
             <div className="font-display text-base font-bold tabular-nums leading-tight text-[var(--neon)]">
-              {balance.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+              <AnimatedBalance value={balance} maximumFractionDigits={1} />
               <span className="ml-1 text-[8px] font-bold uppercase tracking-widest text-white/70">
                 pts
               </span>
@@ -358,7 +359,9 @@ export function WalletChip({ balance, loading }: { balance?: number | null; load
         className="flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-surface-border)] bg-[var(--surface-2)] px-2 py-1.5 text-[12px] font-semibold text-[var(--ink)] transition-colors hover:border-[var(--neon)]/40 sm:gap-1.5 sm:px-3 md:py-2 md:text-[13px]"
       >
         <WalletIcon className="h-3.5 w-3.5 shrink-0 text-[var(--neon)] md:h-4 md:w-4" />
-        <span className="tabular-nums">{loading ? "…" : balance.toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>
+        <span className="tabular-nums">
+          {loading ? "…" : <AnimatedBalance value={balance} maximumFractionDigits={1} />}
+        </span>
         <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--ink-muted)]">PTS</span>
       </button>
       <WalletCardSheet open={open} onOpenChange={setOpen} />

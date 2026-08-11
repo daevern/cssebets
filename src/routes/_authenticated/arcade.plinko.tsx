@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,6 +24,8 @@ import {
 } from "@/components/arcade/ControlDock";
 import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
+import { AnimatedBalance } from "@/components/AnimatedBalance";
+import { useArcadeSound, winSfxForRatio } from "@/lib/arcade/sound";
 
 export const Route = createFileRoute("/_authenticated/arcade/plinko")({
   head: () => ({
@@ -66,6 +69,7 @@ const fmt = (n: number) => nf.format(n);
 
 function PlinkoPage() {
   const qc = useQueryClient();
+  const { play } = useArcadeSound();
   const configFn = useServerFn(getPlinkoConfig);
   const profileFn = useServerFn(getPlinkoProfile);
   const dropFn = useServerFn(placePlinkoDrop);
@@ -161,7 +165,10 @@ function PlinkoPage() {
         inflightKey.current = null;
       }
     },
-    onSuccess: (res) => launchGames([(res as any).game as PlinkoGame]),
+    onSuccess: (res) => {
+      play("chip");
+      launchGames([(res as any).game as PlinkoGame]);
+    },
     onError: (e: any) => toast.error(e?.message ?? "Drop failed"),
   });
 
@@ -178,11 +185,15 @@ function PlinkoPage() {
         inflightKey.current = null;
       }
     },
-    onSuccess: (res) => launchGames(((res as any).games ?? []) as PlinkoGame[]),
+    onSuccess: (res) => {
+      play("chip");
+      launchGames(((res as any).games ?? []) as PlinkoGame[]);
+    },
     onError: (e: any) => toast.error(e?.message ?? "Batch drop failed"),
   });
 
   const placeBet = () => {
+    play("button");
     if (ballCount === 1) drop.mutate();
     else dropBatch.mutate();
   };
@@ -191,6 +202,8 @@ function PlinkoPage() {
     const g = gamesById.current.get(id);
     if (g) {
       const m = Number(g.multiplier ?? 0);
+      if (m > 0) play(winSfxForRatio(m));
+      else play("loss");
       setRecent((r) => [m, ...r].slice(0, 14));
       const payout = Number(g.payout ?? 0);
       if (payout > 0) adjustBalance(payout);
@@ -212,7 +225,7 @@ function PlinkoPage() {
     <div className="flex flex-col gap-2">
       <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 flex items-start gap-1.5">
         <div className="grid flex-1 grid-cols-3 gap-1.5">
-          <Stat label="Balance" value={fmt(balance)} />
+            <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
           <Stat label="Max win" value={`${maxMult.toFixed(maxMult >= 100 ? 0 : 1)}×`} />
           <Stat
             label="Last"
@@ -442,7 +455,15 @@ function PlinkoPage() {
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function Stat({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: ReactNode;
+  accent?: boolean;
+}) {
   return (
     <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">
       <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
