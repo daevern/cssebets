@@ -28,7 +28,7 @@ const TONE: Record<string, { dot: string; label: string; chip: string }> = {
 };
 
 function rel(iso: string | null) {
-  if (!iso) return "no recent check";
+  if (!iso) return null;
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
   if (diff < 60) return "just now";
   if (diff < 3600) return `${Math.round(diff / 60)}m ago`;
@@ -57,6 +57,7 @@ export function StatusGrid() {
       <ul className="divide-y divide-dashed divide-[var(--color-surface-border)] border border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
         {services.map((s) => {
           const t = TONE[s.status] ?? TONE.unknown;
+          const lastCheck = rel(s.last_checked);
           return (
             <li key={s.service} className="flex items-center justify-between gap-3 px-4 py-3">
               <div className="flex items-center gap-3 min-w-0">
@@ -66,9 +67,11 @@ export function StatusGrid() {
                 </span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="hidden md:inline text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-                  Last check {rel(s.last_checked)}
-                </span>
+                {lastCheck && (
+                  <span className="hidden md:inline text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                    Last check {lastCheck}
+                  </span>
+                )}
                 <span className={`inline-flex items-center border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.22em] ${t.chip}`}>
                   {t.label}
                 </span>

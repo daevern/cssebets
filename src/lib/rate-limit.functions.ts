@@ -52,13 +52,28 @@ export function isRateLimitError(error: unknown): boolean {
  */
 export async function enforceRateLimit(scope: string, action: RateLimitAction) {
   const cfg = RATE_LIMITS[action];
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await (supabaseAdmin as any).rpc("check_rate_limit", {
-    p_scope: scope,
-    p_action: action,
-    p_max: cfg.max,
-    p_window_seconds: cfg.windowSeconds,
-  });
+  // `supabaseAdmin` is a lazy proxy that throws synchronously (outside the
+  // `{ data, error }` result) if server env vars (e.g. SUPABASE_SERVICE_ROLE_KEY)
+  // are missing/misconfigured. Without this try/catch that throw bypasses the
+  // fail-open/fail-closed policy below entirely and surfaces as a raw,
+  // unhandled infra error to every caller (bet placement, arcade, auth
+  // registration, etc.) instead of the intended RATE_LIMIT_UNAVAILABLE /
+  // fail-open behavior. Treat it exactly like an RPC-level error.
+  let data: unknown = null;
+  let error: { message: string } | null = null;
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const result = await (supabaseAdmin as any).rpc("check_rate_limit", {
+      p_scope: scope,
+      p_action: action,
+      p_max: cfg.max,
+      p_window_seconds: cfg.windowSeconds,
+    });
+    data = result.data;
+    error = result.error;
+  } catch (e) {
+    error = { message: e instanceof Error ? e.message : String(e) };
+  }
   if (error) {
     console.error("[rate-limit] check failed", action, scope, error.message);
     if (rateLimitFailsClosedOnInfraError(action)) {

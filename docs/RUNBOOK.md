@@ -82,6 +82,28 @@ headers := jsonb_build_object(
 4. Never log the secret. Rotate by setting a new env value, updating cron
    headers, then revoking the old value.
 
+## Local dev environment (required for testing auth/wallet/arcade)
+
+`.env` in the repo only carries the public `SUPABASE_URL` /
+`SUPABASE_PUBLISHABLE_KEY` (anon key) — safe to commit. It does **not**
+include `SUPABASE_SERVICE_ROLE_KEY`, which is a secret and must be added
+locally (e.g. in a git-ignored `.env.local`) to run the dev server for
+anything beyond static/public pages.
+
+Every `createServerFn` handler that needs to bypass RLS (wallet, bets,
+arcade, admin, and critically `enforceRateLimit` — which every auth
+attempt, bet, and arcade action goes through) imports `supabaseAdmin` from
+`src/integrations/supabase/client.server.ts`. That client is a lazy proxy
+that throws on first property access if `SUPABASE_SERVICE_ROLE_KEY` is
+missing. Because `auth_attempt` is a fail-closed rate-limit action (see
+`FAIL_CLOSED_ACTIONS` in `src/lib/rate-limit.functions.ts`), **without this
+key set, registration and login both fail** — the UI shows a generic error
+toast instead of silently succeeding. This was found during a local
+browser walkthrough and looked identical to a broken registration flow;
+it was actually a missing local secret, not a code bug. Get the real value
+from the Supabase project settings (Project Settings → API → service_role)
+and set it before testing auth flows locally.
+
 ## Go-live checklist (Phase A)
 
 - [ ] `CRON_HOOK_SECRET` set in production env
