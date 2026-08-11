@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -19,6 +20,8 @@ import { RpsArena, type ArenaPhase } from "@/components/arcade/RpsArena";
 import { RpsVerifyDialog } from "@/components/arcade/RpsVerifyDialog";
 import { rpsLadderMultiplier, type RpsMove } from "@/lib/arcade/rps-math";
 import { roundMoney } from "@/lib/accounting/money";
+import { AnimatedBalance } from "@/components/AnimatedBalance";
+import { useArcadeSound } from "@/lib/arcade/sound";
 
 import {
   getRpsConfig,
@@ -57,13 +60,16 @@ const newSeed = () => Math.random().toString(36).slice(2, 16);
 /** Minimum time the concealed "shake" is shown so reveals feel simultaneous. */
 const MIN_REVEAL_MS = 700;
 
+/** How long the settled hands take to flip before the balance may move. */
+const REVEAL_FLIP_MS = 620;
+
 function Stat({
   label,
   value,
   tone,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   tone?: "up" | "down";
 }) {
   return (
@@ -89,6 +95,7 @@ function Stat({
 
 function RpsPage() {
   const qc = useQueryClient();
+  const { play } = useArcadeSound();
   const fetchConfig = useServerFn(getRpsConfig);
   const fetchProfile = useServerFn(getRpsProfile);
   const prepareFn = useServerFn(prepareRpsRound);
@@ -148,6 +155,8 @@ function RpsPage() {
    * can never inflate its own win depth to dodge the opening rate.
    */
   const chainParentId = useRef<string | null>(null);
+  /** Wins banked so far in this run — read inside settle callbacks. */
+  const winsRef = useRef(0);
 
   useEffect(() => {
     setStake((s) => Math.min(Math.max(s, minStake), maxStake));
@@ -201,9 +210,19 @@ function RpsPage() {
       setPhase("SETTLED");
       commitment.current = null;
       idemKey.current = null;
-      refresh();
+
+      // Reveal audio: a tick for the flip, pitched up one step for every
+      // win already banked in this run so the ladder audibly climbs.
+      const outcome = String(r?.outcome ?? "DRAW");
+      const step = winsRef.current + (outcome === "WIN" ? 1 : 0);
+      play("reveal-tick", { rate: Math.min(1.9, 1 + step * 0.09) });
+      if (outcome === "LOSS") window.setTimeout(() => play("loss"), 160);
+
+      // The wallet only moves once the hands have visually flipped — the
+      // same rule Plinko, Roulette and Treasure Grid follow.
+      window.setTimeout(refresh, REVEAL_FLIP_MS);
     },
-    [refresh],
+    [refresh, play],
   );
 
   const settle = useMutation({
@@ -254,6 +273,7 @@ function RpsPage() {
   // every win after that pays the tail (doubling) rate. Draws hold the pot
   // steady, a loss ends the run and the pot stays with the house.
   const runWins = ladderHistory.filter((h) => h.outcome === "WIN").length;
+  winsRef.current = runWins;
   const wagerStake = roundMoney(stake * rpsLadderMultiplier(ladder, tailMult, runWins));
   /** What the player takes home if the next round wins. */
   const nextPayout = roundMoney(stake * rpsLadderMultiplier(ladder, tailMult, runWins + 1));
@@ -324,6 +344,7 @@ function RpsPage() {
 
   /** Bank the run: the pot is already in the wallet, so this just clears the rail. */
   const collectRun = () => {
+    play("collect");
     setCollectedPot(wagerStake);
     setCollected(runNet);
     setLadderHistory([]);
@@ -346,7 +367,7 @@ function RpsPage() {
   return (
     <div className="flex flex-col gap-2 md:gap-3">
       <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid grid-cols-3 gap-1.5">
-        <Stat label="Balance" value={fmt(balance)} />
+        <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
         <Stat
           label="P/L today"
           value={`${todayNet > 0 ? "+" : ""}${fmt(todayNet)}`}
@@ -388,6 +409,7 @@ function RpsPage() {
         tone="win"
         headline="Collected"
         net={collectedPot}
+        stake={Math.max(1, collectedPot - collected)}
         detail={`Pot banked to your balance — profit +${fmt(collected)} pts.`}
       />
 
@@ -425,7 +447,11 @@ function RpsPage() {
           const showPlayAgain = phase === "SETTLED" && round?.outcome === "LOSS";
           return (
             <DockPrimary
-              onClick={showPlayAgain ? nextRound : canCollect ? collectRun : undefined}
+              onClick={() => {
+                play("button");
+                if (showPlayAgain) nextRound();
+                else if (canCollect) collectRun();
+              }}
               disabled={!showPlayAgain && !canCollect}
               active={showPlayAgain || canCollect}
             >
