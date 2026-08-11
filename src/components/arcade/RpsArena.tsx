@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { cn } from "@/lib/utils";
+import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import { RPS_MOVES, rpsLadderMultiplier, type RpsMove } from "@/lib/arcade/rps-math";
 import { CsseMark } from "@/components/brand/CsseMark";
 
@@ -299,7 +300,12 @@ function RpsArenaImpl({
 
 
   return (
-    <div className="overflow-hidden rounded-[6px] bg-[var(--color-surface)] p-2.5">
+    // RPS owns the cyan identity from ARCADE_THEMES: scope the accent token
+    // locally so every child inherits it.
+    <div
+      className="overflow-hidden rounded-[6px] bg-[var(--color-surface)] p-2.5 md:px-6"
+      style={{ ["--color-neon" as any]: ARCADE_THEMES.rps.accent }}
+    >
       <style>{`
 @keyframes rps-shake{0%,100%{transform:translateY(0) rotate(0deg)}25%{transform:translateY(-8px) rotate(-4deg)}75%{transform:translateY(-8px) rotate(4deg)}}
 @keyframes rps-pop{0%{transform:scale(1)}45%{transform:scale(1.14)}100%{transform:scale(1)}}
@@ -404,7 +410,7 @@ function RpsArenaImpl({
           The wires live in the SAME width container as the button grid and use
           the grid's own column maths, so every lead stays welded to its control
           at any screen size (col width = (100% - 2*gap)/3, gap = 12px). */}
-      <div className="mx-auto mt-3 w-[62%] max-w-[280px]">
+      <div className="mx-auto mt-3 w-[62%] max-w-[280px] md:max-w-[330px] lg:max-w-[380px]">
         <div className="relative h-[46px]">
           {/* drop lead from the arena down to the bus */}
           <span className="absolute left-1/2 top-0 h-[30px] w-[7px] -translate-x-1/2 rounded-full bg-[#5b6675]" />

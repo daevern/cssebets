@@ -26,6 +26,7 @@ import {
 } from "@/lib/arcade/roulette-math";
 import { cn } from "@/lib/utils";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
+import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
 import { ArcadeSoundToggle } from "@/components/arcade/ArcadeSoundToggle";
 import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
@@ -338,8 +339,10 @@ function RoulettePage() {
       )}
 
       {/* Curved casino table: felt head arcs around the wheel, betting layout flows out of it */}
+      <div className="relative isolate">
+      <ArcadeGlow game="roulette" className="-top-8 -bottom-8" />
       <div
-        className="relative border shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)]"
+        className="relative z-10 border shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)]"
         style={{
           background: "#0a6b3d",
           borderColor: "rgba(255,255,255,0.5)",
@@ -456,6 +459,8 @@ function RoulettePage() {
           </div>
         </div>
       </div>
+      </div>
+
       
 
 

@@ -24,6 +24,7 @@ import {
 } from "@/components/arcade/ControlDock";
 import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
+import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound, winSfxForRatio } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
@@ -262,20 +263,12 @@ function PlinkoPage() {
       </div>
 
 
-      <ArcadeStage>
+      {/* Colour spill lives OUTSIDE the stage: ArcadeStage clips its children. */}
+      <div className="relative isolate">
+      <ArcadeGlow game="plinko" />
+      <ArcadeStage className="relative z-10">
       <ArcadeEntrance game="plinko">
         <div className="relative flex flex-col justify-start">
-        {/* Colour spill: the board's own blue/violet light bleeds far past the
-            playfield so the side gutters read as room light, not empty page. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -inset-x-[45vw] -top-12 -bottom-6 -z-10"
-          style={{
-            background:
-              "radial-gradient(70% 78% at 50% 36%, rgba(46,56,214,.95) 0%, rgba(28,35,158,.88) 34%, rgba(15,20,102,.68) 58%, rgba(8,12,64,.34) 78%, transparent 92%)",
-            filter: "blur(34px)",
-          }}
-        />
         <div
           className="arcade-stage relative w-full overflow-hidden rounded-2xl max-md:rounded-none"
           style={{
@@ -357,6 +350,8 @@ function PlinkoPage() {
       </div>
       </ArcadeEntrance>
       </ArcadeStage>
+      </div>
+
 
 
       <VerifyDialog open={verifyOpen} onOpenChange={setVerifyOpen} gameId={lastGame?.id ?? null} />

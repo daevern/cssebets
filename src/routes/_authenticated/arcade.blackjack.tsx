@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
+import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
 import { BlackjackTable, type BlackjackState } from "@/components/arcade/BlackjackTable";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import {
@@ -316,11 +317,14 @@ function BlackjackPage() {
       )}
 
 
-      <ArcadeStage>
-        <ArcadeEntrance game="blackjack" className="relative h-[360px] w-full md:h-[520px]">
-          <BlackjackTable state={state} onBusyChange={handleBusy} />
-        </ArcadeEntrance>
-      </ArcadeStage>
+      <div className="relative isolate">
+        <ArcadeGlow game="blackjack" />
+        <ArcadeStage className="relative z-10">
+          <ArcadeEntrance game="blackjack" className="relative h-[360px] w-full md:h-[520px]">
+            <BlackjackTable state={state} onBusyChange={handleBusy} />
+          </ArcadeEntrance>
+        </ArcadeStage>
+      </div>
 
       {lastResult && (
         <div className="hidden shrink-0 items-center justify-between gap-2 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-3 py-1.5 md:flex">

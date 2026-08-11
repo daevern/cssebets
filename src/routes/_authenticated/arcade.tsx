@@ -169,8 +169,8 @@ function ArcadeLayout() {
         className={
           ambient
             ? // Stages bleed edge-to-edge on mobile; surrounding chrome keeps its gutter.
-              "mx-auto w-full max-w-4xl px-3 pt-2 md:px-6 md:pt-6 [&_.arcade-stage]:max-md:mx-[calc(50%-50vw)] [&_.arcade-stage]:max-md:w-screen [&_.arcade-stage]:max-md:rounded-none [&_.arcade-stage]:max-md:shadow-none [&_.treasure-stage]:max-md:mx-[calc(50%-50vw)] [&_.treasure-stage]:max-md:w-screen [&_.treasure-stage]:max-md:max-w-none [&_.treasure-stage]:max-md:rounded-none"
-            : "mx-auto w-full max-w-4xl px-3 pt-3 md:px-6 md:pt-6"
+              "mx-auto w-full max-w-4xl xl:max-w-5xl px-3 pt-2 md:px-6 md:pt-6 [&_.arcade-stage]:max-md:mx-[calc(50%-50vw)] [&_.arcade-stage]:max-md:w-screen [&_.arcade-stage]:max-md:rounded-none [&_.arcade-stage]:max-md:shadow-none [&_.treasure-stage]:max-md:mx-[calc(50%-50vw)] [&_.treasure-stage]:max-md:w-screen [&_.treasure-stage]:max-md:max-w-none [&_.treasure-stage]:max-md:rounded-none"
+            : "mx-auto w-full max-w-4xl xl:max-w-5xl px-3 pt-3 md:px-6 md:pt-6"
         }
       >
         <Outlet />

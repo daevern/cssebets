@@ -260,7 +260,14 @@ function AuthedLayout() {
           onSignOut={signOut}
         />
 
-        <main className="mx-auto w-full max-w-md md:max-w-2xl safe-bottom">
+        <main
+          className={
+            location.pathname.startsWith("/arcade")
+              ? // Arcade cabinets need room to breathe on wide screens.
+                "mx-auto w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl safe-bottom"
+              : "mx-auto w-full max-w-md md:max-w-2xl safe-bottom"
+          }
+        >
           <Outlet />
         </main>
 
