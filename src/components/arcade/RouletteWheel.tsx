@@ -42,6 +42,8 @@ export function RouletteWheel({
   reducedMotion,
   onSettled,
   onHop,
+  onFrame,
+
   className,
 }: {
   /** Server-decided winning pocket, or null before the first spin. */
