@@ -250,7 +250,7 @@ export function BlackjackTable({
         <div ref={shoeRef} className="absolute inset-0" />
       </div>
 
-      <div className="relative flex h-full flex-col items-stretch gap-1 px-12 pb-2 pt-2 md:gap-2 md:px-20 md:pb-4 md:pt-4">
+      <div className="relative mx-auto flex h-full w-full max-w-4xl flex-col items-stretch gap-1 px-12 pb-2 pt-2 md:gap-2 md:px-20 md:pb-4 md:pt-4 lg:px-28">
         {/* Table title — engraved casino script */}
         <div className="pointer-events-none flex shrink-0 items-center justify-center gap-2 pb-2 pt-0.5 md:pb-3">
           <span aria-hidden className="text-[10px] leading-none text-white/45 md:text-xs">

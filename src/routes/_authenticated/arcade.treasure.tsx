@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
+import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
 import { TreasureGrid } from "@/components/arcade/TreasureGrid";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import { ControlDock, DockPrimary, DockReadout, DockRow } from "@/components/arcade/ControlDock";
@@ -244,19 +245,12 @@ function TreasurePage() {
         <Stat label="Deepest dig" value={`${bestQ.data?.value ?? 0}`} />
       </div>
 
+      {/* Violet spill sits outside the stage, which clips its own children. */}
+      <div className="relative">
+      <ArcadeGlow game="treasure" />
       <ArcadeStage>
       <ArcadeEntrance game="treasure">
       <div className="relative">
-        {/* Violet spill so the grid's light carries into the side gutters. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -inset-x-[45vw] -top-10 -bottom-6 -z-10"
-          style={{
-            background:
-              "radial-gradient(70% 78% at 50% 34%, rgba(74,21,134,.98) 0%, rgba(52,13,92,.9) 34%, rgba(30,8,56,.7) 58%, rgba(18,5,34,.35) 78%, transparent 92%)",
-            filter: "blur(34px)",
-          }}
-        />
         <TreasureGrid
           rows={Number(config?.grid_rows ?? 5)}
           cols={Number(config?.grid_cols ?? 5)}
@@ -314,6 +308,8 @@ function TreasurePage() {
 
       </ArcadeEntrance>
       </ArcadeStage>
+      </div>
+
 
       {settled && (
         <div className="flex justify-end px-1">
