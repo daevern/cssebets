@@ -300,20 +300,18 @@ export function BlackjackTable({
         {/* Reserved centre lane for the house medallion. */}
         <div className="relative h-16 shrink-0 md:h-20">
           {!cards.length && (
-            <div className="pointer-events-none absolute inset-x-0 -bottom-28 flex flex-col items-center gap-1.5 md:-bottom-32">
+            <div className="pointer-events-none absolute inset-x-0 -bottom-24 flex flex-col items-center gap-2 md:-bottom-28">
               <div
-                className="grid h-9 w-9 place-items-center rounded-full border md:h-11 md:w-11"
+                className="rounded-full border px-4 py-1"
                 style={{
-                  borderColor: "rgba(224,182,74,.45)",
-                  boxShadow: "0 0 18px -4px rgba(224,182,74,.5)",
+                  borderColor: "rgba(224,182,74,.35)",
+                  background: "rgba(0,0,0,.28)",
+                  boxShadow: "0 0 22px -10px rgba(224,182,74,.6)",
                 }}
               >
-                <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#e0b64a]">
-                  Bet
+                <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#f0e3bd]/80">
+                  Place a bet to deal
                 </span>
-              </div>
-              <div className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#f0e3bd]/70">
-                Place a bet to deal
               </div>
             </div>
           )}
