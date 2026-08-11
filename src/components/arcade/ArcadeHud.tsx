@@ -46,6 +46,7 @@ export function HudPlaque({
   tone,
   hero,
   className,
+  game: gameProp,
 }: {
   label: string;
   value: React.ReactNode;
@@ -53,8 +54,11 @@ export function HudPlaque({
   tone?: "up" | "down";
   hero?: boolean;
   className?: string;
+  /** Explicit cabinet when the plaque sits outside a HudBar. */
+  game?: ArcadeGameKey;
 }) {
-  const game = React.useContext(HudCtx);
+  const ctxGame = React.useContext(HudCtx);
+  const game = gameProp ?? ctxGame;
   const t = ARCADE_THEMES[game];
   return (
     <div
