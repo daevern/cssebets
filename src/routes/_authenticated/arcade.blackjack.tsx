@@ -25,6 +25,8 @@ import { BlackjackVerifyDialog } from "@/components/arcade/BlackjackVerifyDialog
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound } from "@/lib/arcade/sound";
+import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
+import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 import {
   doubleBlackjack,
   getActiveBlackjackHand,
@@ -97,7 +99,12 @@ function Stat({
 
 function BlackjackPage() {
   const qc = useQueryClient();
-  const { play } = useArcadeSound();
+  const { play, playFor } = useArcadeSound();
+  const fetchBest = useServerFn(getArcadePersonalBest);
+  const bestQ = useQuery({
+    queryKey: ["blackjack", "personal-best"],
+    queryFn: () => fetchBest({ data: { game: "blackjack" } }),
+  });
   const fetchConfig = useServerFn(getBlackjackConfig);
   const fetchProfile = useServerFn(getBlackjackProfile);
   const fetchActive = useServerFn(getActiveBlackjackHand);
@@ -172,8 +179,13 @@ function BlackjackPage() {
     }
     const fresh = cards.filter((c) => !seenCardsRef.current.has(c.id));
     fresh.forEach((c) => seenCardsRef.current.add(c.id));
-    const timers = fresh.map((_, i) =>
-      window.setTimeout(() => play("chip", { rate: 1.25, volume: 0.8 }), i * DEAL_STEP_MS),
+    // Card snap per dealt card; the dealer's hole card gets a slower,
+    // more deliberate flip beat than the player's cards.
+    const timers = fresh.map((c: any, i) =>
+      window.setTimeout(() => {
+        if (c.is_hole_card || c.isHoleCard) playFor("blackjack", "settle", { rate: 0.85 });
+        else playFor("blackjack", "reveal-tick", { rate: 1.05, volume: 0.9 });
+      }, i * DEAL_STEP_MS),
     );
     return () => timers.forEach((t) => window.clearTimeout(t));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -280,7 +292,7 @@ function BlackjackPage() {
 
   return (
     <div className="flex flex-col gap-1 md:gap-3">
-      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid shrink-0 grid-cols-3 gap-1.5">
+      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid shrink-0 grid-cols-4 gap-1.5">
         <Stat label="Balance" value={<AnimatedBalance value={balance} maximumFractionDigits={0} />} />
         <Stat
           label="P/L today"
@@ -291,6 +303,7 @@ function BlackjackPage() {
           label="W / L today"
           value={`${profileQ.data?.todayWins ?? 0} / ${profileQ.data?.todayLosses ?? 0}`}
         />
+        <Stat label="Best hand" value={`${bestQ.data?.value ?? 0}`} />
       </div>
 
 
@@ -304,9 +317,9 @@ function BlackjackPage() {
 
 
       <ArcadeStage>
-        <div className="relative h-[360px] w-full md:h-[520px]">
+        <ArcadeEntrance game="blackjack" className="relative h-[360px] w-full md:h-[520px]">
           <BlackjackTable state={state} onBusyChange={handleBusy} />
-        </div>
+        </ArcadeEntrance>
       </ArcadeStage>
 
       {lastResult && (
