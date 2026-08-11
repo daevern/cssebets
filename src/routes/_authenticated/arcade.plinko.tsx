@@ -83,6 +83,11 @@ function PlinkoPage() {
     refetchOnWindowFocus: true,
   });
   const equipped = useQuery({ queryKey: ["plinko-equipped"], queryFn: () => equippedFn({}) });
+  const bestFn = useServerFn(getArcadePersonalBest);
+  const bestQ = useQuery({
+    queryKey: ["plinko", "personal-best"],
+    queryFn: () => bestFn({ data: { game: "plinko" } }),
+  });
 
   const [rows, setRows] = useState<RowsCount>(10);
   const [riskMode, setRiskMode] = useState<RiskMode>("medium");
