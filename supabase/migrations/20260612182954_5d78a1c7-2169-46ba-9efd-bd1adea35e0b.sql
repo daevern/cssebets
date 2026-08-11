@@ -23,13 +23,24 @@ GRANT SELECT (
 
 -- 2. realtime.messages: only allow authenticated subscribers, and only to postgres_changes
 --    (broadcast/presence topics blocked). Source-table RLS still filters rows per user.
-ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
+--    On the hosted project, migrations run as a role that owns realtime.messages, so this
+--    applies cleanly. On a local/CI Supabase CLI stack (`supabase start`), realtime.messages
+--    is owned by an internal Supabase-managed role instead, and ALTER TABLE / CREATE POLICY
+--    on it fails with "must be owner of table messages" (42501/insufficient_privilege).
+--    Guard so local/CI runs skip this (broadcast/presence auth doesn't matter for a throwaway
+--    CI database) instead of failing the whole migration run.
+DO $$
+BEGIN
+  ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "authenticated may receive postgres_changes" ON realtime.messages;
-CREATE POLICY "authenticated may receive postgres_changes"
-  ON realtime.messages FOR SELECT
-  TO authenticated
-  USING (extension = 'postgres_changes');
+  DROP POLICY IF EXISTS "authenticated may receive postgres_changes" ON realtime.messages;
+  CREATE POLICY "authenticated may receive postgres_changes"
+    ON realtime.messages FOR SELECT
+    TO authenticated
+    USING (extension = 'postgres_changes');
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE NOTICE 'Skipping realtime.messages RLS setup: current role does not own the table (expected on local/CI Supabase stacks).';
+END $$;
 
 -- 3. payout-proofs: allow users to upload into their own folder (payouts/<auth.uid()>/...).
 DROP POLICY IF EXISTS "users upload own payout proofs" ON storage.objects;
