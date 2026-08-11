@@ -228,6 +228,8 @@ function PlinkoPage() {
       <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 flex items-start gap-1.5">
         <div className="grid flex-1 grid-cols-3 gap-1.5">
             <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
+        <div className="grid flex-1 grid-cols-4 gap-1.5">
+            <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
           <Stat label="Max win" value={`${maxMult.toFixed(maxMult >= 100 ? 0 : 1)}×`} />
           <Stat
             label="Last"
@@ -238,6 +240,10 @@ function PlinkoPage() {
                   ? "In play"
                   : "—"
             }
+          />
+          <Stat
+            label="Highest multiplier"
+            value={`${Number(bestQ.data?.value ?? 0).toFixed(2)}×`}
           />
         </div>
         <div className="flex w-14 shrink-0 flex-col items-stretch gap-1">
