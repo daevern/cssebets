@@ -16,6 +16,7 @@ import {
   type BetTypeKey,
 } from "@/lib/arcade/roulette-math";
 import { cn } from "@/lib/utils";
+import { paletteFor } from "@/components/arcade/CasinoChip";
 
 export type PlaceBet = (betType: BetTypeKey, label: string, pockets: number[]) => void;
 
