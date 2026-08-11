@@ -92,6 +92,7 @@ function TreasurePage() {
   const [verifyId, setVerifyId] = useState<string | null>(null);
   const [resultOpen, setResultOpen] = useState(false);
   const [resultRound, setResultRound] = useState<any>(null);
+  const { beat, run: runBeat } = useSettleBeat(340);
   const clientSeed = useRef(newSeed());
 
   // hydrate an in-flight round after refresh
