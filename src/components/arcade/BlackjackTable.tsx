@@ -300,7 +300,7 @@ export function BlackjackTable({
         {/* Reserved centre lane for the house medallion. */}
         <div className="relative h-16 shrink-0 md:h-20">
           {!cards.length && (
-            <div className="pointer-events-none absolute inset-x-0 -bottom-6 flex flex-col items-center gap-1.5">
+            <div className="pointer-events-none absolute inset-x-0 -bottom-28 flex flex-col items-center gap-1.5 md:-bottom-32">
               <div
                 className="grid h-9 w-9 place-items-center rounded-full border md:h-11 md:w-11"
                 style={{
