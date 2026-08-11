@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { cn } from "@/lib/utils";
+import { SurfaceGrain } from "@/components/arcade/ArcadeHud";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import { RPS_MOVES, rpsLadderMultiplier, type RpsMove } from "@/lib/arcade/rps-math";
 import { CsseMark } from "@/components/brand/CsseMark";
@@ -303,9 +304,14 @@ function RpsArenaImpl({
     // RPS owns the cyan identity from ARCADE_THEMES: scope the accent token
     // locally so every child inherits it.
     <div
-      className="overflow-hidden rounded-[6px] bg-[var(--color-surface)] p-2.5 md:px-6"
-      style={{ ["--color-neon" as any]: ARCADE_THEMES.rps.accent }}
+      className="relative overflow-hidden rounded-[6px] p-2.5 md:px-6"
+      style={{
+        ["--color-neon" as any]: ARCADE_THEMES.rps.accent,
+        background: ARCADE_THEMES.rps.feltOrBoardFill,
+        boxShadow: `inset 0 0 0 1px ${ARCADE_THEMES.rps.dock.chipEdge}`,
+      }}
     >
+      <SurfaceGrain game="rps" radius="6px" />
       <style>{`
 @keyframes rps-shake{0%,100%{transform:translateY(0) rotate(0deg)}25%{transform:translateY(-8px) rotate(-4deg)}75%{transform:translateY(-8px) rotate(4deg)}}
 @keyframes rps-pop{0%{transform:scale(1)}45%{transform:scale(1.14)}100%{transform:scale(1)}}

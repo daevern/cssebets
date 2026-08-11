@@ -2,6 +2,7 @@ import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { TreasureGem } from "./TreasureGem";
 import { TreasureTile, type TreasureTileState } from "./TreasureTile";
+import { SurfaceGrain } from "@/components/arcade/ArcadeHud";
 
 export type TreasureDifficulty = "easy" | "medium" | "hard";
 
@@ -57,6 +58,7 @@ function TreasureGridImpl({
           "linear-gradient(90deg, transparent 0%, #000 2.5%, #000 97.5%, transparent 100%)",
       }}
     >
+      <SurfaceGrain game="treasure" radius="24px" />
       <style>{`
         .treasure-stage {
           --treasure-bg: #120522;
