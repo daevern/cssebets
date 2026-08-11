@@ -202,6 +202,8 @@ function PlinkoPage() {
     const g = gamesById.current.get(id);
     if (g) {
       const m = Number(g.multiplier ?? 0);
+      // Mechanical peg-tick under the payout chime keeps Plinko kinetic.
+      playFor("plinko", "settle", { rate: 0.9 + Math.min(0.6, m / 20) });
       if (m > 0) play(winSfxForRatio(m));
       else play("loss");
       setRecent((r) => [m, ...r].slice(0, 14));
