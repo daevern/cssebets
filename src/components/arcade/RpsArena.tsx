@@ -410,7 +410,7 @@ function RpsArenaImpl({
           The wires live in the SAME width container as the button grid and use
           the grid's own column maths, so every lead stays welded to its control
           at any screen size (col width = (100% - 2*gap)/3, gap = 12px). */}
-      <div className="mx-auto mt-3 w-[62%] max-w-[280px]">
+      <div className="mx-auto mt-3 w-[62%] max-w-[280px] md:max-w-[330px] lg:max-w-[380px]">
         <div className="relative h-[46px]">
           {/* drop lead from the arena down to the bus */}
           <span className="absolute left-1/2 top-0 h-[30px] w-[7px] -translate-x-1/2 rounded-full bg-[#5b6675]" />
