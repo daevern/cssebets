@@ -390,7 +390,7 @@ function BlackjackPage() {
         />
       )}
 
-      <ControlDock maxWidth="max-w-xl">
+      <ControlDock game="blackjack" maxWidth="max-w-xl">
         <DockRow scroll>
           <ChipRack
             values={chips}
