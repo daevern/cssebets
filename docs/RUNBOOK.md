@@ -124,11 +124,33 @@ Note: `@playwright/test` is pinned to `1.55.1` because 1.58+ dropped
 support for macOS 13 (Ventura) entirely. Bump it once dev machines are on
 macOS 14+.
 
-These tests exercise the real project's Supabase anon key (sign-in,
-anonymous sessions, registration attempts) — they are not yet wired into
-CI because doing so would hit the live Supabase project's auth endpoints
-on every push. Point `PLAYWRIGHT_BASE_URL` / the Supabase env vars at a
-separate staging project before adding this to CI.
+### CI: ephemeral local Supabase, not the real project
+
+`.github/workflows/e2e.yml` runs this suite on every PR (and on demand via
+`workflow_dispatch`). It does **not** touch the real hosted Supabase
+project. Instead it uses the Supabase CLI (`supabase/setup-cli` action) to
+spin up a throwaway Postgres + Auth + Storage stack in Docker, seeded
+entirely from `supabase/migrations/` and `supabase/config.toml`, runs the
+app's dev server against that local stack, runs Playwright, then tears
+the whole thing down. Every run starts from a clean database built from
+whatever migrations are on that branch — no drift, no shared state, no
+manual staging project to maintain, zero risk to production data.
+
+Key config lives in `supabase/config.toml`:
+`auth.enable_anonymous_sign_ins = true` (the landing page silently signs
+guests in anonymously — without this every "guest" page 404s on auth
+locally/in CI even though it works fine against the real project) and
+`auth.email.enable_confirmations = false` (so `signUp()` returns a
+session immediately in CI instead of needing a real inbox).
+
+**Caveat:** this was authored and reasoned through carefully but could
+not be dry-run end-to-end locally — Docker Desktop's daemon does not come
+up in this environment. With 362 accumulated migrations (Lovable +
+manual), there's a real chance the first CI run surfaces a migration that
+doesn't replay cleanly against a fresh database (a missing extension, or
+something Lovable's control plane set up outside of a tracked migration).
+Treat the first run as the actual validation step, and expect to iterate
+on `supabase/config.toml` or a specific migration if it fails.
 
 ## Go-live checklist (Phase A)
 
