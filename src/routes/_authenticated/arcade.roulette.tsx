@@ -366,7 +366,7 @@ function RoulettePage() {
               style={{ background: "#10161a", boxShadow: "0 0 0 1px rgba(255,255,255,.55)" }}
             />
           </div>
-          <div className="mx-auto w-full max-w-[280px]">
+          <ArcadeEntrance game="roulette" className="mx-auto w-full max-w-[280px]">
             {/* wheel well ring cut into the felt */}
             <div
               className="relative rounded-full p-2"
@@ -384,7 +384,7 @@ function RoulettePage() {
                 onSettled={onSettled}
               />
             </div>
-          </div>
+          </ArcadeEntrance>
 
           <div className="mt-2 flex items-center justify-center gap-2">
             <div className="text-[8px] font-bold uppercase leading-4 tracking-[0.2em] text-white/70">
