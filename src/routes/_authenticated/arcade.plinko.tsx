@@ -29,6 +29,14 @@ import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound, winSfxForRatio } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
+import * as React from "react";
+import { HudPlaque } from "@/components/arcade/ArcadeHud";
+
+/** Engraved cabinet plaque bound to this game's theme. */
+const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
+  <HudPlaque game="plinko" {...props} />
+);
+
 
 export const Route = createFileRoute("/_authenticated/arcade/plinko")({
   head: () => ({
@@ -233,7 +241,7 @@ function PlinkoPage() {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 flex items-start gap-1.5">
+      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/50 px-3 py-1.5 backdrop-blur-md md:top-16 flex items-start gap-1.5">
         <div className="grid flex-1 grid-cols-4 gap-1.5">
             <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
           <Stat label="Max win" value={`${maxMult.toFixed(maxMult >= 100 ? 0 : 1)}×`} />
@@ -465,30 +473,5 @@ function PlinkoPage() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: ReactNode;
-  accent?: boolean;
-}) {
-  return (
-    <div className="rounded-[4px] bg-[var(--color-surface-2)] px-2.5 py-1.5">
-      <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-        {label}
-      </div>
-      <div
-        className={cn(
-          "font-display text-sm font-bold tabular-nums",
-          accent ? "text-[var(--color-neon)]" : "text-[var(--color-ink)]",
-        )}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
 
 
