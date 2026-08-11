@@ -252,7 +252,7 @@ function AuthedLayout() {
 
   return (
     <TourProvider>
-      <div className="relative min-h-screen bg-[var(--surface)] text-[var(--ink)]">
+      <div className="relative min-h-screen overflow-x-clip bg-[var(--surface)] text-[var(--ink)]">
         <WelcomeModal />
         <TopBar
           balance={showBalance ? (wallet.data?.balance ?? 0) : null}
@@ -264,8 +264,8 @@ function AuthedLayout() {
           className={
             location.pathname.startsWith("/arcade")
               ? // Arcade cabinets need room to breathe on wide screens.
-                "mx-auto w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl safe-bottom"
-              : "mx-auto w-full max-w-md md:max-w-2xl safe-bottom"
+                "mx-auto w-full max-w-md overflow-x-clip md:max-w-3xl lg:max-w-4xl xl:max-w-5xl safe-bottom"
+              : "mx-auto w-full max-w-md overflow-x-clip md:max-w-2xl safe-bottom"
           }
         >
           <Outlet />
