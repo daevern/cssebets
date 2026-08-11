@@ -70,6 +70,19 @@ function TreasureTileImpl({ index, state, pending, disabled, onClick }: Treasure
         />
       )}
 
+      {/* slow specular crawl across sealed vault stone */}
+      {state === "hidden" && (
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.22) 50%, rgba(255,255,255,0) 100%)",
+            animation: `arcadeSpecularCrawl 5.2s ${(index % 5) * 0.4}s ease-in-out infinite`,
+          }}
+        />
+      )}
+
       {(state === "hidden" || state === "exposed") && (
         <TreasureBombIcon className="h-[52%] w-[52%] opacity-90" bright={state === "exposed"} />
       )}
