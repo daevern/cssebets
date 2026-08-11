@@ -43,6 +43,7 @@ export function RouletteWheel({
   onSettled,
   onHop,
   onFrame,
+
   className,
 }: {
   /** Server-decided winning pocket, or null before the first spin. */
@@ -60,23 +61,20 @@ export function RouletteWheel({
    */
   onHop?: (info: { index: number; energy: number }) => void;
   /**
-   * Every animation frame while the ball is moving. Used by the procedural
-   * roulette audio engine to densify/thin fret ticks with live ball speed.
+   * Per-frame ball telemetry for velocity-synced audio: `speed` is the ball's
+   * angular speed normalised against its launch speed (1 → 0), `onTrack` is
+   * true while it is still riding the outer track.
    */
-  onFrame?: (info: {
-    t: number;
-    phase: "track" | "drop";
-    speedDegPerSec: number;
-  }) => void;
+  onFrame?: (info: { speed: number; onTrack: boolean }) => void;
   className?: string;
 }) {
+
   const [rotation, setRotation] = useState(0);
   const [ballAngle, setBallAngle] = useState(0);
   const [ballRadius, setBallRadius] = useState(92);
   const [settledPocket, setSettledPocket] = useState<number | null>(null);
   const raf = useRef<number | null>(null);
   const lastHop = useRef<number>(-1);
-  const lastAudio = useRef<{ angle: number; time: number } | null>(null);
 
   const targetIndex = useMemo(
     () => (winningPocket == null ? 0 : WHEEL_ORDER.indexOf(winningPocket as any)),
@@ -135,22 +133,19 @@ export function RouletteWheel({
     const TRACK_R = 92;
     const POCKET_R = 66;
 
-    lastAudio.current = null;
-
     const step = (now: number) => {
       const t = Math.min(1, (now - t0) / duration);
       const e = easeOut(t);
       setRotation(wheelStart + (wheelEnd - wheelStart) * easeOut(Math.min(1, t * 1.05)));
+      // Derivative of the ease, normalised to 1 at launch: the ball's real
+      // angular speed on screen, which the procedural audio tracks.
+      onFrame?.({ speed: Math.pow(1 - t, 2.2), onTrack: t < dropStart });
 
-      let nextAngle = 0;
-      let phase: "track" | "drop" = "track";
 
       if (t < dropStart) {
         // Free orbit on the outer track, still moving fast counter to the wheel.
-        nextAngle = ballStart + (ballEnd - ballStart) * e;
-        setBallAngle(nextAngle);
+        setBallAngle(ballStart + (ballEnd - ballStart) * e);
         setBallRadius(TRACK_R);
-        phase = "track";
       } else {
         const d = (t - dropStart) / (1 - dropStart); // 0..1 through the bounce phase
         // Angular travel keeps decaying but the collisions scrub speed harder,
@@ -188,19 +183,8 @@ export function RouletteWheel({
         // Each collision knocks the ball slightly against its direction of
         // travel; the wobble decays to zero so it settles in the right pocket.
         const kick = Math.sin(local * Math.PI) * (1 - d) * (hopIndex % 2 === 0 ? 3.2 : -2.4);
-        nextAngle = base + kick * (1 - d);
-        setBallAngle(nextAngle);
-        phase = "drop";
+        setBallAngle(base + kick * (1 - d));
       }
-
-      const prev = lastAudio.current;
-      let speedDegPerSec = 0;
-      if (prev) {
-        const dt = Math.max(0.001, (now - prev.time) / 1000);
-        speedDegPerSec = Math.abs(nextAngle - prev.angle) / dt;
-      }
-      lastAudio.current = { angle: nextAngle, time: now };
-      onFrame?.({ t, phase, speedDegPerSec });
 
       if (t < 1) {
         raf.current = requestAnimationFrame(step);
