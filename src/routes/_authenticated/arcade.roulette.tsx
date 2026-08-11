@@ -415,17 +415,24 @@ function RoulettePage() {
                 spinning={spinning}
                 reducedMotion={reduced}
                 onSettled={onSettled}
-                onHop={({ energy }) =>
+                onFrame={({ speed, onTrack }) =>
+                  // Continuous rolling bed synthesised from the ball's real
+                  // on-screen velocity — pitch and brightness fall with it.
+                  rouletteBallAudio.setVelocity(speed, onTrack)
+                }
+                onHop={({ energy }) => {
                   // Each real fret collision gets its own clack, scaled to that
                   // bounce's actual energy — heavy first hop lands loud and low,
                   // the last, smallest hop is a light, high tick right before it
                   // settles. This is the rhythm a real ball makes; a single
                   // spin-then-click clip can't reproduce it.
+                  rouletteBallAudio.hop(energy);
                   playFor("roulette", "bounce", {
                     volume: 0.35 + energy * 0.85,
                     rate: 1.55 - energy * 0.45,
-                  })
-                }
+                  });
+                }}
+
               />
             </div>
           </ArcadeEntrance>
