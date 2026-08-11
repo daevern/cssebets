@@ -145,6 +145,11 @@ class RouletteBallAudio {
     this.stop();
   }
 
+  /** Mirror the shared mute switch: silence the bed immediately when muted. */
+  setMuted(muted: boolean) {
+    if (muted) this.stop();
+  }
+
   stop() {
     if (this.gain && this.ctx) {
       try {
