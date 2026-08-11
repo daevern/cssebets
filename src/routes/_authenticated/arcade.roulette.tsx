@@ -522,7 +522,7 @@ function RoulettePage() {
       />
 
       {/* Sticky bet slip + spin */}
-      <ControlDock>
+      <ControlDock game="roulette">
         {slipOpen && positions.length > 0 && (
           <div className="max-h-40 space-y-1 overflow-y-auto rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-2">
             {positions.map((p) => {

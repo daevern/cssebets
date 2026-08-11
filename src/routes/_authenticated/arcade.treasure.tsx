@@ -373,7 +373,7 @@ function TreasurePage() {
       />
 
       {/* Sticky console */}
-      <ControlDock>
+      <ControlDock game="treasure">
         {!active ? (
           <>
             <DockRow scroll>

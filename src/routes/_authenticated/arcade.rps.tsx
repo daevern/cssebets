@@ -434,7 +434,7 @@ function RpsPage() {
       />
 
       {/* Shared control dock */}
-      <ControlDock>
+      <ControlDock game="rps">
         <DockRow scroll>
           <ChipRack
             values={chips}

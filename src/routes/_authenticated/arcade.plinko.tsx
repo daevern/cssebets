@@ -356,7 +356,7 @@ function PlinkoPage() {
 
       <VerifyDialog open={verifyOpen} onOpenChange={setVerifyOpen} gameId={lastGame?.id ?? null} />
 
-      <ControlDock>
+      <ControlDock game="plinko">
 
         <DockRow scroll>
           <ChipRack
