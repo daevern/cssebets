@@ -207,6 +207,10 @@ class ArcadeSoundEngine {
         }
       }
     }
+    // Keep procedural roulette ball audio in lockstep with the shared mute.
+    void import("./roulette-ball-audio").then(({ rouletteBallAudio }) => {
+      rouletteBallAudio.setMuted(next);
+    });
     this.listeners.forEach((l) => l());
   }
 

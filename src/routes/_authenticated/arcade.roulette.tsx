@@ -29,6 +29,7 @@ import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
 import { ArcadeSoundToggle } from "@/components/arcade/ArcadeSoundToggle";
 import { HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
 import { useArcadeSound } from "@/lib/arcade/sound";
+import { rouletteBallAudio } from "@/lib/arcade/roulette-ball-audio";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 import { SettlePlaque, useSettleBeat } from "@/components/arcade/SettlePlaque";
@@ -67,7 +68,10 @@ function randHex(bytes = 12) {
 
 function RoulettePage() {
   const qc = useQueryClient();
-  const { play, playFor } = useArcadeSound();
+  const { play, muted } = useArcadeSound();
+  useEffect(() => {
+    rouletteBallAudio.setMuted(muted);
+  }, [muted]);
   const bestFn = useServerFn(getArcadePersonalBest);
   const bestQ = useQuery({
     queryKey: ["roulette", "personal-best"],
@@ -264,6 +268,7 @@ function RoulettePage() {
     },
     onError: (e: any) => {
       setSettled(true);
+      rouletteBallAudio.stop();
       toast.error(e?.message ?? "Spin failed");
     },
   });
@@ -271,7 +276,10 @@ function RoulettePage() {
   const spin = () => {
     play("button");
     if (!canSpin) return;
-    playFor("roulette", "spin-start");
+    // Procedural Stake-style ball audio (velocity-synced frets). Do not also
+    // play the baked roulette-spin MP3 — it fights the live rattle.
+    rouletteBallAudio.setMuted(muted);
+    rouletteBallAudio.start();
     setResult(null);
     setSettled(false);
     setSlipOpen(false);
@@ -280,8 +288,7 @@ function RoulettePage() {
 
   const onSettled = () => {
     setSettled(true);
-    // Wooden click as the ball drops into its pocket.
-    playFor("roulette", "settle");
+    rouletteBallAudio.settle();
     qc.invalidateQueries({ queryKey: ["roulette-profile"] });
     qc.invalidateQueries({ queryKey: ["roulette-session"] });
     qc.invalidateQueries({ queryKey: ["roulette-stats"] });
@@ -415,17 +422,8 @@ function RoulettePage() {
                 spinning={spinning}
                 reducedMotion={reduced}
                 onSettled={onSettled}
-                onHop={({ energy }) =>
-                  // Each real fret collision gets its own clack, scaled to that
-                  // bounce's actual energy — heavy first hop lands loud and low,
-                  // the last, smallest hop is a light, high tick right before it
-                  // settles. This is the rhythm a real ball makes; a single
-                  // spin-then-click clip can't reproduce it.
-                  playFor("roulette", "bounce", {
-                    volume: 0.35 + energy * 0.85,
-                    rate: 1.55 - energy * 0.45,
-                  })
-                }
+                onFrame={(frame) => rouletteBallAudio.update(frame)}
+                onHop={({ energy }) => rouletteBallAudio.hop(energy)}
               />
             </div>
           </ArcadeEntrance>
