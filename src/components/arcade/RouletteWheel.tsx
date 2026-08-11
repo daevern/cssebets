@@ -135,6 +135,10 @@ export function RouletteWheel({
       const t = Math.min(1, (now - t0) / duration);
       const e = easeOut(t);
       setRotation(wheelStart + (wheelEnd - wheelStart) * easeOut(Math.min(1, t * 1.05)));
+      // Derivative of the ease, normalised to 1 at launch: the ball's real
+      // angular speed on screen, which the procedural audio tracks.
+      onFrame?.({ speed: Math.pow(1 - t, 2.2), onTrack: t < dropStart });
+
 
       if (t < dropStart) {
         // Free orbit on the outer track, still moving fast counter to the wheel.
