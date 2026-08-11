@@ -101,12 +101,18 @@ headers := jsonb_build_object(
       previously had a hidden 5-point floor while its chip rack (and every
       other game) advertised a 1-point chip
 - [ ] Migration `20260806160000_phase_a_rps_opening_multiplier` applied —
-      RPS win #1 of a fresh ladder run now pays `opening_win_multiplier`
-      (1.35x) instead of the flat 1.85x; win #2+ is unchanged. Tracked
-      server-side via `arcade_rps_rounds.parent_round_id` /
-      `chain_win_depth` so a client cannot claim a fake higher ladder
-      position. Raises round-1 house edge to ~21.7% — confirm this is the
-      intended trade-off before enabling for real users
+      note: the tiered ladder payout itself (win #1/#2 pay less than a flat
+      rate) shipped independently on `main` as `ladder_multipliers` /
+      `ladder_tail_multiplier` (config) + `ladder_step` (round), resolved via
+      `arcade_rps_step_multiplier()`; this migration was rewritten to not
+      collide with that and instead (a) closes a fan-out gap where one
+      settled round could be claimed as `parent_round_id` by more than one
+      continuation, each wrongly inheriting the higher post-opening rate,
+      and (b) fixes `arcade_config_selftest()`'s historical-replay check to
+      verify against the real per-step ladder rate instead of a flat
+      `win_multiplier`. Confirm on `/management/admin/arcade` that the live
+      `ladder_multipliers` / `ladder_tail_multiplier` values match the
+      intended round-1/round-2 house edge before enabling for real users
 
 ## Reference
 - `/docs/BACKUP_RECOVERY.md` — recovery checklist
