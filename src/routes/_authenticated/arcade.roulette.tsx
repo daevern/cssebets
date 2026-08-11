@@ -598,7 +598,8 @@ function RoulettePage() {
         )}
 
         <DockRow scroll>
-          <ChipRack values={chips} value={chip} onSelect={(c) => setChip(c)} size={44} />
+          <ChipRack
+            game="roulette" values={chips} value={chip} onSelect={(c) => setChip(c)} size={44} />
           <div className="ml-auto flex shrink-0 items-center gap-1">
             <DockIconButton onClick={undo} disabled={spinning || !history.length} title="Undo">
               <Undo2 className="h-4 w-4" />

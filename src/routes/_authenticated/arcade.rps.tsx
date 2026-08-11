@@ -418,6 +418,7 @@ function RpsPage() {
       <ControlDock game="rps">
         <DockRow scroll>
           <ChipRack
+            game="rps"
             values={chips}
             max={maxStake}
             value={stake}

@@ -370,6 +370,7 @@ function PlinkoPage() {
 
         <DockRow scroll>
           <ChipRack
+            game="plinko"
             values={CHIP_VALUES}
             max={STAKE_MAX}
             value={stakePerBall}
