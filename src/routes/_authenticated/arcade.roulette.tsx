@@ -308,21 +308,33 @@ function RoulettePage() {
         </div>
       )}
 
-      <div className="sticky top-14 z-20 -mx-3 flex items-center gap-1 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16">
-        <div className="grid flex-1 grid-cols-4 gap-1">
-        <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
-        <Stat
+      <HudBar game="roulette">
+        <HudPlaque
+          className="flex-1"
+          hero
+          label="Balance"
+          value={<AnimatedBalance value={balance} />}
+        />
+        <HudPlaque
+          className="flex-1"
           label="Today"
           value={`${(profile.data?.todayNet ?? 0) >= 0 ? "+" : ""}${fmt(profile.data?.todayNet ?? 0)}`}
+          tone={
+            (profile.data?.todayNet ?? 0) > 0
+              ? "up"
+              : (profile.data?.todayNet ?? 0) < 0
+                ? "down"
+                : undefined
+          }
         />
-        <Stat
-          label="W / L"
-          value={`${profile.data?.totalWins ?? 0} / ${profile.data?.totalLosses ?? 0}`}
+        <HudPlaque
+          className="flex-1"
+          label="Biggest single hit"
+          value={fmt(Number(bestQ.data?.value ?? 0))}
         />
-        <Stat label="Biggest single hit" value={fmt(Number(bestQ.data?.value ?? 0))} />
-        </div>
-        <ArcadeSoundToggle className="shrink-0" />
-      </div>
+        <ArcadeSoundToggle className="shrink-0 self-center" />
+      </HudBar>
+
 
       {cooldownSeconds > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-3 py-2 text-[10px] uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
