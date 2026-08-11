@@ -245,3 +245,23 @@
   45% { transform: translateX(10%) scale(1.1); }
   70% { transform: translateX(-6%) scale(1.05); }
 }
+
+
+/* Roulette cabinet motion (presentation only). */
+@keyframes rouletteWinFlash {
+  0% { opacity: 0.25; }
+  50% { opacity: 1; }
+  100% { opacity: 0.85; }
+}
+@keyframes rouletteRimBreathe {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes arcadePedestalBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*="rouletteRimBreathe"],
+  [style*="arcadePedestalBreathe"] { animation: none !important; }
+}

@@ -227,7 +227,19 @@ export function RouletteWheel({
         {/* Outer rim: wood finish with dark edge */}
         <circle cx={cx} cy={cy} r="96" fill={WOOD_RIM} stroke={WOOD_RIM_STROKE} strokeWidth="2" />
         {/* Inner surface behind the pockets */}
-        <circle cx={cx} cy={cy} r="91.5" fill="none" stroke="url(#goldRing)" strokeWidth="1.4" />
+        <circle
+          cx={cx}
+          cy={cy}
+          r="91.5"
+          fill="none"
+          stroke="url(#goldRing)"
+          strokeWidth="1.4"
+          style={
+            spinning || reducedMotion
+              ? undefined
+              : { animation: "rouletteRimBreathe 4.5s ease-in-out infinite" }
+          }
+        />
         <circle cx={cx} cy={cy} r="90" fill="var(--color-surface-2)" stroke="#1f7a4a" strokeWidth="3" />
 
 
@@ -235,8 +247,6 @@ export function RouletteWheel({
           style={{
             transform: `rotate(${rotation}deg)`,
             transformOrigin: "100px 100px",
-            animation:
-              !spinning && !reducedMotion ? "rouletteIdleDrift 90s linear infinite" : undefined,
           }}
         >
 
