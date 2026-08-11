@@ -12,6 +12,7 @@ import {
 import { getRouletteSession } from "@/lib/arcade/roulette-phase2.functions";
 import { RouletteVerifyDialog } from "@/components/arcade/RouletteVerifyDialog";
 import { RouletteWheel } from "@/components/arcade/RouletteWheel";
+import { rouletteBallAudio } from "@/lib/arcade/roulette-ball-audio";
 import { RouletteBoard } from "@/components/arcade/RouletteBoard";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import { ControlDock, DockIconButton, DockNote, DockPrimary, DockRow } from "@/components/arcade/ControlDock";
@@ -272,6 +273,7 @@ function RoulettePage() {
     play("button");
     if (!canSpin) return;
     playFor("roulette", "spin-start");
+    rouletteBallAudio.start();
     setResult(null);
     setSettled(false);
     setSlipOpen(false);
@@ -281,6 +283,7 @@ function RoulettePage() {
   const onSettled = () => {
     setSettled(true);
     // Wooden click as the ball drops into its pocket.
+    rouletteBallAudio.settle();
     playFor("roulette", "settle");
     qc.invalidateQueries({ queryKey: ["roulette-profile"] });
     qc.invalidateQueries({ queryKey: ["roulette-session"] });
