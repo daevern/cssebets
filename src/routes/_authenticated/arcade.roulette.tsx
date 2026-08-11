@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
 import { ArcadeSoundToggle } from "@/components/arcade/ArcadeSoundToggle";
+import { HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
 import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
