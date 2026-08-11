@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceRateLimit } from "@/lib/rate-limit.functions";
+import { requireApprovedMember } from "@/lib/access-control";
 
 /**
  * Blackjack Arcade — user-facing server functions.
@@ -233,6 +234,7 @@ export const startBlackjackHand = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    await requireApprovedMember(context);
     await enforceRateLimit(`user:${userId}`, "blackjack_action");
     const db = await admin();
     const { data: handId, error } = await db.rpc("arcade_bj_start_hand", {

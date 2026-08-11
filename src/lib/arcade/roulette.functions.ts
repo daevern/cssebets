@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceRateLimit, isRateLimitError } from "@/lib/rate-limit.functions";
+import { requireApprovedMember } from "@/lib/access-control";
 
 const BetSchema = z.object({
   bet_type: z.string().trim().min(2).max(24),
@@ -83,6 +84,7 @@ export const placeRouletteSpin = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    await requireApprovedMember(context);
     try {
       await enforceRateLimit(`roulette:${userId}`, "arcade_spin");
     } catch (e) {

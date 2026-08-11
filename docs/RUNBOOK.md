@@ -114,6 +114,25 @@ headers := jsonb_build_object(
       `ladder_multipliers` / `ladder_tail_multiplier` values match the
       intended round-1/round-2 house edge before enabling for real users
 
+- [ ] Migration `20260811080000_phase_a_arcade_admin_rpc_hardening` applied
+      — security review found `arcade_publish_roulette_config`,
+      `arcade_publish_rps_config` and `arcade_admin_snapshot` authorized on
+      a caller-supplied `p_admin` argument (not the real caller) while
+      granted to `authenticated`; any logged-in user could pass a known
+      admin's UUID and push live payout config. Now `service_role` only,
+      matching `arcade_publish_treasure_config`'s existing pattern. Also
+      closes a gap where `ladder_multipliers[]` steps weren't bounded like
+      `win_multiplier` is, so a patch could publish an unsafe per-step
+      payout live.
+- [ ] Confirm every arcade wallet-mutating server function calls
+      `requireApprovedMember` (added to `settleRpsRound`, `placePlinkoDrop`,
+      `placeRouletteSpin`, `startTreasureRound`, `startBlackjackHand`) —
+      previously the "pending approval" gate was UI-only, so a pending
+      user with a valid session could wager real wallet points on arcade
+      before an admin approved them (sports betting already enforced this
+      via `submitPrediction` / `placeMarketBet`, now refactored onto the
+      same shared `src/lib/access-control.ts` helper)
+
 ## Reference
 - `/docs/BACKUP_RECOVERY.md` — recovery checklist
 - `/management/admin/health` — system health-check history

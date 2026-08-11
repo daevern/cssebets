@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceRateLimit, isRateLimitError } from "@/lib/rate-limit.functions";
+import { requireApprovedMember } from "@/lib/access-control";
 
 const SubmitSchema = z.object({
   matchId: z.string().uuid().nullable(),
@@ -17,12 +18,8 @@ export const submitPrediction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => SubmitSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-
-    // Validate the user is approved
-    const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-    const isMember = (roles ?? []).some((r) => r.role === "member" || r.role === "admin");
-    if (!isMember) throw new Error("Your account isn't approved yet.");
+    const { userId } = context;
+    await requireApprovedMember(context);
 
     try {
       await enforceRateLimit(`user:${userId}`, "bet_placement");

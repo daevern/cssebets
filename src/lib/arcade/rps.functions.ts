@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireApprovedMember } from "@/lib/access-control";
 
 /**
  * Rock–Paper–Scissors — user-facing server functions.
@@ -163,6 +164,7 @@ export const settleRpsRound = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    await requireApprovedMember(context);
     const { enforceRpsRateLimit, mapRpsError, publicRpsRound } = await import("@/lib/arcade/rps.server");
     await enforceRpsRateLimit(userId);
 
