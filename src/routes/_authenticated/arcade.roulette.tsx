@@ -295,6 +295,9 @@ function RoulettePage() {
     runBeat(() => setResultOpen(true));
   };
 
+  // Never leave the rolling bed running if the player leaves mid-spin.
+  useEffect(() => () => rouletteBallAudio.stop(), []);
+
   const winningPocket = result?.spin ? Number(result.spin.winning_pocket) : null;
 
   if (config.isLoading) {
