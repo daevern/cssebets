@@ -12,8 +12,10 @@ import { ChipRack } from "@/components/arcade/ChipRack";
 import { ControlDock, DockPrimary, DockReadout, DockRow } from "@/components/arcade/ControlDock";
 import { TreasureVerifyDialog } from "@/components/arcade/TreasureVerifyDialog";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
+import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound } from "@/lib/arcade/sound";
+import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import {
   collectTreasureRound,
   getActiveTreasureRound,
