@@ -402,7 +402,8 @@ function RpsArenaImpl({
         )}
       >
         {phase === "IDLE"
-          ? ""
+          ? "Throw a hand to challenge"
+
           : phase === "SETTLED"
             ? outcome === "WIN"
               ? "You win"
