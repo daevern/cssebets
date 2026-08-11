@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { HandCoins, Loader2, Swords } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
+import { SettlePlaque, useSettleBeat } from "@/components/arcade/SettlePlaque";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import {
   ControlDock,
@@ -121,6 +122,7 @@ function RpsPage() {
     Array<{ id: string; player: RpsMove | null; server: RpsMove | null; outcome: string }>
   >([]);
   const [resultOpen, setResultOpen] = useState(false);
+  const { beat, run: runBeat } = useSettleBeat(340);
   /** Amount shown in the collect pop-up. */
   const [collected, setCollected] = useState(0);
   /** Total pot returned by the run (base stake + profit). */
@@ -339,7 +341,7 @@ function RpsPage() {
     setLadderHistory([]);
     setRunNet(0);
     chainParentId.current = null;
-    setResultOpen(true);
+    runBeat(() => setResultOpen(true));
     setPhase("IDLE");
     setPlayerMove(null);
     setRound(null);
@@ -376,7 +378,13 @@ function RpsPage() {
       )}
 
       <ArcadeStage game="rps">
-      <ArcadeEntrance game="rps">
+      <ArcadeEntrance game="rps" className="relative">
+      <SettlePlaque
+        game="rps"
+        show={beat}
+        label="Run banked"
+        value={`${collected > 0 ? "+" : ""}${Number(collected).toLocaleString()}`}
+      />
       <RpsArena
         phase={phase}
         playerMove={playerMove}

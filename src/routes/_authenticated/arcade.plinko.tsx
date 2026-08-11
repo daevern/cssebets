@@ -24,6 +24,7 @@ import {
 } from "@/components/arcade/ControlDock";
 import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
+import { SettlePlaque, useSettleBeat } from "@/components/arcade/SettlePlaque";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound, winSfxForRatio } from "@/lib/arcade/sound";
@@ -110,6 +111,8 @@ function PlinkoPage() {
   const [mode, setMode] = useState<BetMode>("manual");
   const [clientSeed] = useState<string>(() => randHex(12));
   const [lastGame, setLastGame] = useState<PlinkoGame | null>(null);
+  const { beat, run: runBeat } = useSettleBeat(340);
+  const [plaqueMult, setPlaqueMult] = useState<number | null>(null);
   const [activeBalls, setActiveBalls] = useState<
     { id: string; path: number[]; landingSlot: number; startDelayMs: number }[]
   >([]);
@@ -228,6 +231,9 @@ function PlinkoPage() {
       const payout = Number(g.payout ?? 0);
       if (payout > 0) adjustBalance(payout);
       setLastGame(g);
+      // Short on-board plaque so the payout lands on the table, not only in the HUD.
+      setPlaqueMult(m);
+      runBeat(() => setPlaqueMult(null));
     }
     setActiveBalls((prev) => {
       const next = prev.filter((b) => b.id !== id);
@@ -286,6 +292,12 @@ function PlinkoPage() {
               "linear-gradient(90deg, transparent 0%, #000 2.5%, #000 97.5%, transparent 100%)",
           }}
         >
+          <SettlePlaque
+            game="plinko"
+            show={beat && plaqueMult != null}
+            label={(plaqueMult ?? 0) >= 1 ? "Payout" : "Landed"}
+            value={`${Number(plaqueMult ?? 0).toFixed(2)}×`}
+          />
           <PlinkoBoard
             rows={rows}
             slots={slots}
