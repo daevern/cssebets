@@ -32,7 +32,7 @@ export function ArcadeGlow({
     <div
       aria-hidden
       className={cn(
-        "pointer-events-none absolute -inset-x-[45vw] -top-12 -bottom-6 -z-10",
+        "pointer-events-none absolute -inset-x-[45vw] -top-12 -bottom-6 z-0",
         className,
       )}
       style={{ background: SPILL[game], filter: "blur(34px)" }}

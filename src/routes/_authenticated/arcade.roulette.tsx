@@ -339,10 +339,10 @@ function RoulettePage() {
       )}
 
       {/* Curved casino table: felt head arcs around the wheel, betting layout flows out of it */}
-      <div className="relative">
+      <div className="relative isolate">
       <ArcadeGlow game="roulette" className="-top-8 -bottom-8" />
       <div
-        className="relative border shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)]"
+        className="relative z-10 border shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)]"
         style={{
           background: "#0a6b3d",
           borderColor: "rgba(255,255,255,0.5)",

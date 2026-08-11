@@ -317,9 +317,9 @@ function BlackjackPage() {
       )}
 
 
-      <div className="relative">
+      <div className="relative isolate">
         <ArcadeGlow game="blackjack" />
-        <ArcadeStage>
+        <ArcadeStage className="relative z-10">
           <ArcadeEntrance game="blackjack" className="relative h-[360px] w-full md:h-[520px]">
             <BlackjackTable state={state} onBusyChange={handleBusy} />
           </ArcadeEntrance>

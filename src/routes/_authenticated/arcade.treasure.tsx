@@ -246,9 +246,9 @@ function TreasurePage() {
       </div>
 
       {/* Violet spill sits outside the stage, which clips its own children. */}
-      <div className="relative">
+      <div className="relative isolate">
       <ArcadeGlow game="treasure" />
-      <ArcadeStage>
+      <ArcadeStage className="relative z-10">
       <ArcadeEntrance game="treasure">
       <div className="relative">
         <TreasureGrid
