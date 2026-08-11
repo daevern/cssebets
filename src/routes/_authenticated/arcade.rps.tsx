@@ -375,7 +375,7 @@ function RpsPage() {
         </div>
       )}
 
-      <ArcadeStage>
+      <ArcadeStage game="rps">
       <ArcadeEntrance game="rps">
       <RpsArena
         phase={phase}

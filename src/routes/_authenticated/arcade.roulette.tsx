@@ -31,6 +31,9 @@ import { HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
 import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
+import { SettlePlaque, useSettleBeat } from "@/components/arcade/SettlePlaque";
+import { SurfaceGrain } from "@/components/arcade/ArcadeHud";
+import { ARCADE_THEMES } from "@/lib/arcade/theme";
 
 export const Route = createFileRoute("/_authenticated/arcade/roulette")({
   head: () => ({
@@ -102,6 +105,7 @@ function RoulettePage() {
   const [result, setResult] = useState<any | null>(null);
   const [spinToken, setSpinToken] = useState<string | null>(null);
   const [settled, setSettled] = useState(true);
+  const { beat, run: runBeat } = useSettleBeat(340);
   const [slipOpen, setSlipOpen] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -284,7 +288,8 @@ function RoulettePage() {
     if (cooldownSeconds > 0) setCooldown(cooldownSeconds);
     const spinRow = result?.spin;
     if (!spinRow) return;
-    setResultOpen(true);
+    // Short on-table pocket plaque before the themed result dialog.
+    runBeat(() => setResultOpen(true));
   };
 
   const winningPocket = result?.spin ? Number(result.spin.winning_pocket) : null;
@@ -356,11 +361,24 @@ function RoulettePage() {
       <div
         className="relative z-10 border shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)]"
         style={{
-          background: "#0a6b3d",
-          borderColor: "rgba(255,255,255,0.5)",
+          background: ARCADE_THEMES.roulette.feltOrBoardFill,
+          borderColor: ARCADE_THEMES.roulette.railColor,
+          borderWidth: 6,
           borderRadius: "50% 50% 16px 16px / 26% 26% 16px 16px",
+          boxShadow:
+            "0 18px 40px -24px rgba(0,0,0,.9), inset 0 0 0 2px rgba(255,215,106,.35)",
         }}
       >
+        <SurfaceGrain
+          game="roulette"
+          radius="50% 50% 16px 16px / 26% 26% 16px 16px"
+        />
+        <SettlePlaque
+          game="roulette"
+          show={beat && winningPocket != null}
+          label="Pocket"
+          value={`${winningPocket} · ${winningPocket == null ? "" : pocketColour(winningPocket)}`}
+        />
         {/* felt head */}
         <div className="relative px-3 pt-3 pb-2">
           <div className="mb-4 flex items-center justify-center gap-2 pt-1">
@@ -415,7 +433,7 @@ function RoulettePage() {
           <div className="mt-2 flex items-center justify-center gap-2">
             <div className="text-[8px] font-bold uppercase leading-4 tracking-[0.2em] text-white/70">
               {winningPocket == null ? (
-                <span>No result yet</span>
+                <span>{positions.length ? "Ready to spin" : "Place chips, then spin"}</span>
               ) : (
                 <span
                   className={cn(

@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { CasinoChip } from "@/components/arcade/CasinoChip";
+import { CasinoChip, chipCylinderStyle } from "@/components/arcade/CasinoChip";
 import { CsseMark } from "@/components/brand/CsseMark";
 
 /** Standard denominations offered by every arcade table. */
 export const CHIP_LADDER = [1, 5, 10, 25, 50, 100, 500, 1000];
 
 /**
- * CSSEBets house chip — identical physical aesthetic to CasinoChip
- * (flat face + dashed edge ring) but branded: black face, white edge,
+ * CSSEBets house chip — same short-cylinder geometry as CasinoChip
+ * (face disc, edge ring, contact shadow) but branded: black face, white edge,
  * green mark. Logo only, no wordmark.
  */
 export function BrandChip({
@@ -38,14 +38,16 @@ export function BrandChip({
       <span
         className="absolute inset-0 rounded-full"
         style={{
-          background: "#0d1113",
-          boxShadow: open ? "0 0 0 2px var(--color-neon)" : "none",
+          ...chipCylinderStyle("#161c1f", "#e9edeb"),
+          outline: open ? "2px solid var(--color-neon)" : undefined,
+          outlineOffset: "3px",
         }}
       />
       <span
-        className="absolute inset-[6px] rounded-full border-2 border-dashed"
-        style={{ borderColor: "#f4f6f5" }}
+        className="pointer-events-none absolute inset-[6px] rounded-full border-2 border-dashed"
+        style={{ borderColor: "#f4f6f5", opacity: 0.8 }}
       />
+
       <span className="absolute inset-0 grid place-items-center">
         <CsseMark style={{ width: size * 0.44, height: size * 0.44 }} />
       </span>
