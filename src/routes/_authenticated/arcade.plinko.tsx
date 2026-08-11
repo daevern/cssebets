@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound, winSfxForRatio } from "@/lib/arcade/sound";
+import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
+import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 
 export const Route = createFileRoute("/_authenticated/arcade/plinko")({
   head: () => ({
@@ -69,7 +71,7 @@ const fmt = (n: number) => nf.format(n);
 
 function PlinkoPage() {
   const qc = useQueryClient();
-  const { play } = useArcadeSound();
+  const { play, playFor } = useArcadeSound();
   const configFn = useServerFn(getPlinkoConfig);
   const profileFn = useServerFn(getPlinkoProfile);
   const dropFn = useServerFn(placePlinkoDrop);
@@ -83,6 +85,11 @@ function PlinkoPage() {
     refetchOnWindowFocus: true,
   });
   const equipped = useQuery({ queryKey: ["plinko-equipped"], queryFn: () => equippedFn({}) });
+  const bestFn = useServerFn(getArcadePersonalBest);
+  const bestQ = useQuery({
+    queryKey: ["plinko", "personal-best"],
+    queryFn: () => bestFn({ data: { game: "plinko" } }),
+  });
 
   const [rows, setRows] = useState<RowsCount>(10);
   const [riskMode, setRiskMode] = useState<RiskMode>("medium");
@@ -202,6 +209,8 @@ function PlinkoPage() {
     const g = gamesById.current.get(id);
     if (g) {
       const m = Number(g.multiplier ?? 0);
+      // Mechanical peg-tick under the payout chime keeps Plinko kinetic.
+      playFor("plinko", "settle", { rate: 0.9 + Math.min(0.6, m / 20) });
       if (m > 0) play(winSfxForRatio(m));
       else play("loss");
       setRecent((r) => [m, ...r].slice(0, 14));
@@ -224,7 +233,7 @@ function PlinkoPage() {
   return (
     <div className="flex flex-col gap-2">
       <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 flex items-start gap-1.5">
-        <div className="grid flex-1 grid-cols-3 gap-1.5">
+        <div className="grid flex-1 grid-cols-4 gap-1.5">
             <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
           <Stat label="Max win" value={`${maxMult.toFixed(maxMult >= 100 ? 0 : 1)}×`} />
           <Stat
@@ -236,6 +245,10 @@ function PlinkoPage() {
                   ? "In play"
                   : "—"
             }
+          />
+          <Stat
+            label="Highest multiplier"
+            value={`${Number(bestQ.data?.value ?? 0).toFixed(2)}×`}
           />
         </div>
         <div className="flex w-14 shrink-0 flex-col items-stretch gap-1">
@@ -250,6 +263,7 @@ function PlinkoPage() {
 
 
       <ArcadeStage>
+      <ArcadeEntrance game="plinko">
         <div className="relative flex flex-col justify-start">
         {/* Colour spill: the board's own blue/violet light bleeds far past the
             playfield so the side gutters read as room light, not empty page. */}
@@ -341,6 +355,7 @@ function PlinkoPage() {
           )}
         </div>
       </div>
+      </ArcadeEntrance>
       </ArcadeStage>
 
 

@@ -28,6 +28,8 @@ import { cn } from "@/lib/utils";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { ArcadeSoundToggle } from "@/components/arcade/ArcadeSoundToggle";
 import { useArcadeSound } from "@/lib/arcade/sound";
+import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
+import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 
 export const Route = createFileRoute("/_authenticated/arcade/roulette")({
   head: () => ({
@@ -61,7 +63,12 @@ function randHex(bytes = 12) {
 
 function RoulettePage() {
   const qc = useQueryClient();
-  const { play } = useArcadeSound();
+  const { play, playFor } = useArcadeSound();
+  const bestFn = useServerFn(getArcadePersonalBest);
+  const bestQ = useQuery({
+    queryKey: ["roulette", "personal-best"],
+    queryFn: () => bestFn({ data: { game: "roulette" } }),
+  });
   const configFn = useServerFn(getRouletteConfig);
   const profileFn = useServerFn(getRouletteProfile);
   const spinFn = useServerFn(placeRouletteSpin);
@@ -259,7 +266,7 @@ function RoulettePage() {
   const spin = () => {
     play("button");
     if (!canSpin) return;
-    play("spin-start");
+    playFor("roulette", "spin-start");
     setResult(null);
     setSettled(false);
     setSlipOpen(false);
@@ -268,6 +275,8 @@ function RoulettePage() {
 
   const onSettled = () => {
     setSettled(true);
+    // Wooden click as the ball drops into its pocket.
+    playFor("roulette", "settle");
     qc.invalidateQueries({ queryKey: ["roulette-profile"] });
     qc.invalidateQueries({ queryKey: ["roulette-session"] });
     qc.invalidateQueries({ queryKey: ["roulette-stats"] });
@@ -299,7 +308,7 @@ function RoulettePage() {
       )}
 
       <div className="sticky top-14 z-20 -mx-3 flex items-center gap-1 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16">
-        <div className="grid flex-1 grid-cols-3 gap-1">
+        <div className="grid flex-1 grid-cols-4 gap-1">
         <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
         <Stat
           label="Today"
@@ -309,6 +318,7 @@ function RoulettePage() {
           label="W / L"
           value={`${profile.data?.totalWins ?? 0} / ${profile.data?.totalLosses ?? 0}`}
         />
+        <Stat label="Biggest single hit" value={fmt(Number(bestQ.data?.value ?? 0))} />
         </div>
         <ArcadeSoundToggle className="shrink-0" />
       </div>
@@ -356,7 +366,7 @@ function RoulettePage() {
               style={{ background: "#10161a", boxShadow: "0 0 0 1px rgba(255,255,255,.55)" }}
             />
           </div>
-          <div className="mx-auto w-full max-w-[280px]">
+          <ArcadeEntrance game="roulette" className="mx-auto w-full max-w-[280px]">
             {/* wheel well ring cut into the felt */}
             <div
               className="relative rounded-full p-2"
@@ -374,7 +384,7 @@ function RoulettePage() {
                 onSettled={onSettled}
               />
             </div>
-          </div>
+          </ArcadeEntrance>
 
           <div className="mt-2 flex items-center justify-center gap-2">
             <div className="text-[8px] font-bold uppercase leading-4 tracking-[0.2em] text-white/70">
@@ -441,6 +451,7 @@ function RoulettePage() {
 
       {result?.spin && (
         <ArcadeResultDialog
+          game="roulette"
           open={resultOpen && settled}
           onOpenChange={setResultOpen}
           tone={

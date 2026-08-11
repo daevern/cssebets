@@ -12,8 +12,10 @@ import { ChipRack } from "@/components/arcade/ChipRack";
 import { ControlDock, DockPrimary, DockReadout, DockRow } from "@/components/arcade/ControlDock";
 import { TreasureVerifyDialog } from "@/components/arcade/TreasureVerifyDialog";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
+import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound } from "@/lib/arcade/sound";
+import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import {
   collectTreasureRound,
   getActiveTreasureRound,
@@ -52,7 +54,12 @@ const newSeed = () => Math.random().toString(36).slice(2, 14);
 
 function TreasurePage() {
   const qc = useQueryClient();
-  const { play } = useArcadeSound();
+  const { play, playFor } = useArcadeSound();
+  const fetchBest = useServerFn(getArcadePersonalBest);
+  const bestQ = useQuery({
+    queryKey: ["treasure", "personal-best"],
+    queryFn: () => fetchBest({ data: { game: "treasure" } }),
+  });
   const fetchConfig = useServerFn(getTreasureConfig);
   const fetchProfile = useServerFn(getTreasureProfile);
   const fetchActive = useServerFn(getActiveTreasureRound);
@@ -153,13 +160,13 @@ function TreasurePage() {
       setRound(res.round);
       setPendingTile(null);
       if (res.tileType === "SAFE") {
-        // Pitch climbs with the streak so each safe tile feels bigger.
+        // Crystalline chime, pitch climbing with the streak.
         const found = Number(res.round?.safe_reveals ?? 1);
-        play("reveal-tick", { rate: Math.min(1.8, 1 + found * 0.07) });
+        playFor("treasure", "reveal-tick", { rate: Math.min(1.8, 1 + found * 0.07) });
       }
       if (res.tileType === "TRAP") {
         // Synced with the bomb blast/shake keyframes on the tile.
-        play("loss");
+        playFor("treasure", "trap");
         setTraps(res.traps ?? null);
         setResultRound(res.round);
         // Let the bomb blast/shake animation finish before the modal covers it.
@@ -226,7 +233,7 @@ function TreasurePage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid grid-cols-3 gap-1.5">
+      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/45 px-3 py-1 backdrop-blur-md md:top-16 grid grid-cols-4 gap-1.5">
         <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
         <Stat
           label="Multiplier"
@@ -234,9 +241,11 @@ function TreasurePage() {
           accent={safeReveals > 0}
         />
         <Stat label="Found" value={`${safeReveals}`} />
+        <Stat label="Deepest dig" value={`${bestQ.data?.value ?? 0}`} />
       </div>
 
       <ArcadeStage>
+      <ArcadeEntrance game="treasure">
       <div className="relative">
         {/* Violet spill so the grid's light carries into the side gutters. */}
         <div
@@ -303,6 +312,7 @@ function TreasurePage() {
         })}
       </div>
 
+      </ArcadeEntrance>
       </ArcadeStage>
 
       {settled && (
@@ -319,6 +329,7 @@ function TreasurePage() {
 
       {resultRound && (
         <ArcadeResultDialog
+          game="treasure"
           open={resultOpen}
           onOpenChange={setResultOpen}
           tone={

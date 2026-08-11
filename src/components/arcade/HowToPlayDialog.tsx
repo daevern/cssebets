@@ -6,6 +6,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { BlackjackArt, PlinkoArt, RouletteArt, RpsArt, TreasureArt } from "./GameArt";
+import { ARCADE_THEMES } from "@/lib/arcade/theme";
+import type { ArcadeGameKey } from "@/lib/arcade/sound";
+
+/** Lobby art reused inside the rules dialog so each game keeps its identity. */
+const GAME_ART: Record<ArcadeGameKey, () => ReactNode> = {
+  plinko: PlinkoArt,
+  roulette: RouletteArt,
+  treasure: TreasureArt,
+  blackjack: BlackjackArt,
+  rps: RpsArt,
+};
 
 export type HowToPlayContent = {
   title: string;
@@ -110,20 +122,38 @@ export function HowToPlayDialog({
   open,
   onOpenChange,
   content,
+  game,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   content: HowToPlayContent;
+  /** Renders that game's lobby art at the top of the dialog. */
+  game?: ArcadeGameKey;
 }) {
+  const Art = game ? GAME_ART[game] : null;
+  const theme = game ? ARCADE_THEMES[game] : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        {Art && (
+          <div
+            aria-hidden
+            className="relative -mx-6 -mt-6 mb-1 h-28 overflow-hidden sm:h-32"
+            style={{ background: theme?.backdrop }}
+          >
+            <div className="pointer-events-none absolute inset-0 [&>*]:h-full [&>*]:w-full">
+              <Art />
+            </div>
+          </div>
+        )}
         <DialogHeader>
           <DialogTitle className="text-base font-black uppercase tracking-[0.14em]">
             {content.title}
           </DialogTitle>
           <DialogDescription>{content.tagline}</DialogDescription>
         </DialogHeader>
+
 
         <Section label="The round">
           <ol className="space-y-2">
