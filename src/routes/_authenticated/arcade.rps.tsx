@@ -404,6 +404,7 @@ function RpsPage() {
 
 
       <ArcadeResultDialog
+        game="rps"
         open={resultOpen}
         onOpenChange={setResultOpen}
         tone="win"

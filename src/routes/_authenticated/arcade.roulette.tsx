@@ -441,6 +441,7 @@ function RoulettePage() {
 
       {result?.spin && (
         <ArcadeResultDialog
+          game="roulette"
           open={resultOpen && settled}
           onOpenChange={setResultOpen}
           tone={

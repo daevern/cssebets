@@ -340,6 +340,7 @@ function BlackjackPage() {
 
       {lastResult && (
         <ArcadeResultDialog
+          game="blackjack"
           open={resultOpen}
           onOpenChange={setResultOpen}
           tone={

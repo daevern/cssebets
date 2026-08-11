@@ -329,6 +329,7 @@ function TreasurePage() {
 
       {resultRound && (
         <ArcadeResultDialog
+          game="treasure"
           open={resultOpen}
           onOpenChange={setResultOpen}
           tone={
