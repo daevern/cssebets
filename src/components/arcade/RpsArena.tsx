@@ -453,7 +453,16 @@ function RpsArenaImpl({
                 aria-label={m}
                 className="group relative block w-full transition-transform duration-100 active:translate-y-[2px] disabled:pointer-events-none disabled:opacity-40"
               >
-                <div className="relative aspect-[1/1.06] w-full">
+                <div
+                  className="relative aspect-[1/1.06] w-full"
+                  style={
+                    phase === "IDLE" && !selected
+                      ? {
+                          animation: `arcadePedestalBreathe 1.8s ease-in-out ${RPS_MOVES.indexOf(m) * 0.22}s infinite`,
+                        }
+                      : undefined
+                  }
+                >
                   {/* cradle arms */}
                   <span
                     className={cn(
