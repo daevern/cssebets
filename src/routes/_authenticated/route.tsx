@@ -130,6 +130,16 @@ function AuthedLayout() {
   const [signingOut, setSigningOut] = useState(false);
   const redirectTimeoutRef = useRef<any>(null);
 
+  const tableMode = isArcadeTablePath(location.pathname);
+
+  // Immersive cabinet: hide sportsbook chrome so the table owns the viewport.
+  useEffect(() => {
+    if (tableMode) document.documentElement.setAttribute("data-arcade-table", "");
+    else document.documentElement.removeAttribute("data-arcade-table");
+    return () => document.documentElement.removeAttribute("data-arcade-table");
+  }, [tableMode]);
+
+
   const triggerRedirect = () => {
     if (redirectTimeoutRef.current) {
       clearTimeout(redirectTimeoutRef.current);
