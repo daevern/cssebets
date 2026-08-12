@@ -1,12 +1,9 @@
 import * as React from "react";
 
 /**
- * Tiny arcade sound engine.
- *
- * Presentation only — nothing here touches game state, RNG or payouts.
- * Short SFX are preloaded from /sfx and played through small pools of
- * HTMLAudioElements so overlapping hits (chip clacks, coin cascades) never
- * cut each other off.
+ * Tiny arcade sound engine — presentation only.
+ * Lazy per-clip pools (identity pack). Shared UI clicks preload lightly;
+ * game variants load on first play so mount stays cheap.
  */
 
 export const SFX_NAMES = [
@@ -19,8 +16,6 @@ export const SFX_NAMES = [
   "loss",
   "button",
   "collect",
-  // Per-game variants. Each game only overrides the two or three moments it
-  // triggers most; everything else falls back to the shared set above.
   "plinko-tick",
   "roulette-spin",
   "roulette-settle",
@@ -33,13 +28,14 @@ export const SFX_NAMES = [
 ] as const;
 
 export type SfxName = (typeof SFX_NAMES)[number];
-
 export type ArcadeGameKey = "plinko" | "roulette" | "treasure" | "blackjack" | "rps";
 
 const STORAGE_KEY = "arcade_sound_muted";
-const POOL_SIZE = 4;
+const POOL_SIZE = 2;
 
-/** Per-sound base volume so nothing overpowers the rest of the mix. */
+/** Shared house UI clips warmed on first gesture. */
+const WARM_SFX: SfxName[] = ["button", "chip", "collect", "win-small", "loss"];
+
 const VOLUMES: Record<SfxName, number> = {
   chip: 0.5,
   "spin-start": 0.45,
@@ -50,22 +46,17 @@ const VOLUMES: Record<SfxName, number> = {
   loss: 0.45,
   button: 0.3,
   collect: 0.55,
-  "plinko-tick": 0.4,
+  "plinko-tick": 0.42,
   "roulette-spin": 0.42,
-  "roulette-settle": 0.5,
-  "treasure-chime": 0.45,
-  "treasure-blast": 0.5,
-  "card-snap": 0.42,
-  "card-flip": 0.4,
-  "rps-step": 0.4,
-  "rps-bank": 0.5,
+  "roulette-settle": 0.52,
+  "treasure-chime": 0.48,
+  "treasure-blast": 0.52,
+  "card-snap": 0.44,
+  "card-flip": 0.42,
+  "rps-step": 0.42,
+  "rps-bank": 0.55,
 };
 
-/**
- * Logical moments each game can trigger. A game only appears in the variant
- * map below for the moments where it has its own clip; anything missing falls
- * through to the shared default of the same name.
- */
 export type SfxMoment =
   | "chip"
   | "reveal-tick"
@@ -78,19 +69,18 @@ export type SfxMoment =
   | "loss"
   | "button";
 
+/** CSSE Originals identity map — each table owns a few signature moments. */
 const VARIANTS: Partial<Record<ArcadeGameKey, Partial<Record<SfxMoment, SfxName>>>> = {
-  plinko: { "reveal-tick": "plinko-tick", settle: "plinko-tick" },
+  plinko: { "reveal-tick": "plinko-tick", settle: "plinko-tick", bounce: "plinko-tick" },
   roulette: { "spin-start": "roulette-spin", settle: "roulette-settle", bounce: "roulette-settle" },
-  treasure: { "reveal-tick": "treasure-chime", trap: "treasure-blast" },
-  blackjack: { "reveal-tick": "card-snap", settle: "card-flip" },
-  rps: { step: "rps-step", collect: "rps-bank" },
+  treasure: { "reveal-tick": "treasure-chime", trap: "treasure-blast", settle: "treasure-chime" },
+  blackjack: { "reveal-tick": "card-snap", settle: "card-flip", chip: "chip" },
+  rps: { step: "rps-step", collect: "rps-bank", settle: "rps-step" },
 };
 
-/** Resolve a game + moment to the clip that should actually play. */
 export function sfxFor(game: ArcadeGameKey, moment: SfxMoment): SfxName {
   const variant = VARIANTS[game]?.[moment];
   if (variant) return variant;
-  // Moments without a shared counterpart degrade to the nearest generic clip.
   if (moment === "settle") return "reveal-tick";
   if (moment === "trap") return "loss";
   if (moment === "step") return "reveal-tick";
@@ -98,19 +88,14 @@ export function sfxFor(game: ArcadeGameKey, moment: SfxMoment): SfxName {
   return moment as SfxName;
 }
 
-type PlayOptions = {
-  /** Playback rate, e.g. rising pitch on a win ladder. */
-  rate?: number;
-  /** Multiplier on the sound's base volume. */
-  volume?: number;
-};
+type PlayOptions = { rate?: number; volume?: number };
 
 class ArcadeSoundEngine {
   private pools = new Map<SfxName, HTMLAudioElement[]>();
   private cursors = new Map<SfxName, number>();
   private listeners = new Set<() => void>();
   private armed = false;
-  private loaded = false;
+  private armInstalled = false;
   muted = false;
 
   constructor() {
@@ -122,36 +107,48 @@ class ArcadeSoundEngine {
     }
   }
 
-  /** Preload every clip; safe to call repeatedly. */
-  load() {
-    if (this.loaded || typeof window === "undefined") return;
-    this.loaded = true;
-    for (const name of SFX_NAMES) {
-      const pool: HTMLAudioElement[] = [];
-      for (let i = 0; i < POOL_SIZE; i++) {
-        const el = new Audio(`/sfx/${name}.mp3`);
-        el.preload = "auto";
-        el.volume = VOLUMES[name];
-        pool.push(el);
-      }
-      this.pools.set(name, pool);
-      this.cursors.set(name, 0);
+  private ensurePool(name: SfxName) {
+    if (this.pools.has(name) || typeof window === "undefined") return;
+    const pool: HTMLAudioElement[] = [];
+    for (let i = 0; i < POOL_SIZE; i++) {
+      const el = new Audio(`/sfx/${name}.mp3`);
+      el.preload = "auto";
+      el.volume = VOLUMES[name];
+      pool.push(el);
     }
+    this.pools.set(name, pool);
+    this.cursors.set(name, 0);
+  }
+
+  /** Warm shared house clips only — game variants load on demand. */
+  warmShared() {
+    if (typeof window === "undefined") return;
+    for (const name of WARM_SFX) this.ensurePool(name);
     this.installArmListeners();
   }
 
-  /**
-   * Browsers block audio until the page has seen a user gesture. The first
-   * pointer/key press plays a silent primer so later, code-triggered sounds
-   * (a ball landing, a card flipping) are allowed through.
-   */
-  private installArmListeners() {
+  /** Prefetch a game's signature clips (call when entering a table). */
+  warmGame(game: ArcadeGameKey) {
     if (typeof window === "undefined") return;
+    this.warmShared();
+    const moments = Object.keys(VARIANTS[game] ?? {}) as SfxMoment[];
+    for (const m of moments) this.ensurePool(sfxFor(game, m));
+  }
+
+  /** @deprecated use warmShared / warmGame — kept for call-site compat */
+  load() {
+    this.warmShared();
+  }
+
+  private installArmListeners() {
+    if (this.armInstalled || typeof window === "undefined") return;
+    this.armInstalled = true;
     const arm = () => {
       if (this.armed) return;
       this.armed = true;
       for (const pool of this.pools.values()) {
         const el = pool[0];
+        if (!el) continue;
         const vol = el.volume;
         el.volume = 0;
         el.play()
@@ -175,7 +172,8 @@ class ArcadeSoundEngine {
 
   play(name: SfxName, opts: PlayOptions = {}) {
     if (this.muted || typeof window === "undefined") return;
-    this.load();
+    this.ensurePool(name);
+    this.installArmListeners();
     const pool = this.pools.get(name);
     if (!pool) return;
     const i = this.cursors.get(name) ?? 0;
@@ -188,7 +186,7 @@ class ArcadeSoundEngine {
       el.volume = Math.min(1, Math.max(0, VOLUMES[name] * (opts.volume ?? 1)));
       void el.play().catch(() => {});
     } catch {
-      /* audio is a nicety — never let it break a round */
+      /* audio is a nicety */
     }
   }
 
@@ -207,7 +205,6 @@ class ArcadeSoundEngine {
         }
       }
     }
-    // Keep procedural roulette ball audio in lockstep with the shared mute.
     void import("./roulette-ball-audio").then(({ rouletteBallAudio }) => {
       rouletteBallAudio.setMuted(next);
     });
@@ -226,14 +223,13 @@ class ArcadeSoundEngine {
 
 export const arcadeSound = new ArcadeSoundEngine();
 
-/** Pick the win tier sound for a payout ratio (payout ÷ stake). */
 export function winSfxForRatio(ratio: number): SfxName {
   if (ratio > 10) return "win-mega";
   if (ratio >= 3) return "win-big";
   return "win-small";
 }
 
-export function useArcadeSound() {
+export function useArcadeSound(game?: ArcadeGameKey) {
   const muted = React.useSyncExternalStore(
     arcadeSound.subscribe,
     arcadeSound.getMuted,
@@ -241,17 +237,17 @@ export function useArcadeSound() {
   );
 
   React.useEffect(() => {
-    arcadeSound.load();
-  }, []);
+    if (game) arcadeSound.warmGame(game);
+    else arcadeSound.warmShared();
+  }, [game]);
 
   const play = React.useCallback((name: SfxName, opts?: PlayOptions) => {
     arcadeSound.play(name, opts);
   }, []);
 
-  /** Play a moment through the calling game's variant, if it has one. */
   const playFor = React.useCallback(
-    (game: ArcadeGameKey, moment: SfxMoment, opts?: PlayOptions) => {
-      arcadeSound.play(sfxFor(game, moment), opts);
+    (g: ArcadeGameKey, moment: SfxMoment, opts?: PlayOptions) => {
+      arcadeSound.play(sfxFor(g, moment), opts);
     },
     [],
   );

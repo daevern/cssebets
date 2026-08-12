@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { RotateCcw, ShieldCheck, Trash2, Undo2, X } from "lucide-react";
+import { RotateCcw, Trash2, Undo2, X } from "lucide-react";
 import {
   getRouletteConfig,
   getRouletteProfile,
@@ -29,6 +29,7 @@ import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
 import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
 import { RecentResultsStrip } from "@/components/arcade/RecentResultsStrip";
+import { ArcadeVerifyCue } from "@/components/arcade/ArcadeVerifyCue";
 import { ArcadeIdleCue } from "@/components/arcade/ArcadeIdleCue";
 import { arcadeFairness } from "@/lib/arcade/published-rtp";
 import { useArcadeSound } from "@/lib/arcade/sound";
@@ -69,7 +70,7 @@ function randHex(bytes = 12) {
 
 function RoulettePage() {
   const qc = useQueryClient();
-  const { play, playFor } = useArcadeSound();
+  const { play, playFor } = useArcadeSound("roulette");
   const bestFn = useServerFn(getArcadePersonalBest);
   const bestQ = useQuery({
     queryKey: ["roulette", "personal-best"],
@@ -485,6 +486,14 @@ function RoulettePage() {
                     ? "win"
                     : "neutral",
             }))}
+            trailing={
+              result?.spin ? (
+                <ArcadeVerifyCue
+                  game="roulette"
+                  onClick={() => setVerifyId(result.spin.id)}
+                />
+              ) : null
+            }
           />
         </div>
 
@@ -534,16 +543,14 @@ function RoulettePage() {
             </>
           }
           footer={
-            <button
-              type="button"
+            <ArcadeVerifyCue
+              game="roulette"
+              className="h-9 px-4 text-[10px]"
               onClick={() => {
                 setResultOpen(false);
                 setVerifyId(result.spin.id);
               }}
-              className="inline-flex h-9 items-center justify-center gap-1 rounded-full border border-[var(--color-surface-border)] px-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]"
-            >
-              <ShieldCheck className="h-3 w-3" /> Verify
-            </button>
+            />
           }
         />
       )}

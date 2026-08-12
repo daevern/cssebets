@@ -262,6 +262,21 @@ html[data-arcade-table] [data-arcade-console] {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* CSSE Originals house tokens — shared type + plaque rhythm across tables. */
+[data-arcade-game] {
+  --arcade-plaque-radius: 5px;
+  --arcade-micro: 8px;
+  --arcade-settle-ms: 320ms;
+}
+[data-arcade-game] [data-arcade-hud],
+[data-arcade-game] [data-arcade-table-rail],
+[data-arcade-game] [data-arcade-console] {
+  font-feature-settings: "tnum" 1;
+}
+[data-arcade-game] .font-display {
+  letter-spacing: 0.04em;
+}
+
 /* Roulette cabinet motion (presentation only). */
 @keyframes rouletteWinFlash {
   0% { opacity: 0.25; }

@@ -1,13 +1,21 @@
 import { memo } from "react";
 
-/** Stylized zig-zag blue/violet Plinko cabinet frame (SVG paths supplied by the board). */
-function PlinkoBoardFrameImpl({ left, right }: { left: string; right: string }) {
+/** Flat 2D Plinko cabinet rails. */
+function PlinkoBoardFrameImpl({
+  left,
+  right,
+  stroke = "#6b76c4",
+}: {
+  left: string;
+  right: string;
+  stroke?: string;
+}) {
   return (
     <g>
       <path
         d={left}
         fill="none"
-        stroke="#6b76c4"
+        stroke={stroke}
         strokeWidth={5}
         strokeLinejoin="round"
         strokeLinecap="round"
@@ -16,7 +24,7 @@ function PlinkoBoardFrameImpl({ left, right }: { left: string; right: string }) 
       <path
         d={right}
         fill="none"
-        stroke="#6b76c4"
+        stroke={stroke}
         strokeWidth={5}
         strokeLinejoin="round"
         strokeLinecap="round"

@@ -12,8 +12,8 @@ export const getRouter = () => {
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
     defaultPendingComponent: () => <CsseLogoLoader />,
-    defaultPendingMs: 200,
-    defaultPendingMinMs: 500,
+    defaultPendingMs: 400,
+    defaultPendingMinMs: 120,
   });
 
   return router;

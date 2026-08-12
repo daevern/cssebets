@@ -64,45 +64,63 @@ export const getRpsProfile = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const startOfDay = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
 
-    const [walletRes, todayRes, allRes, recentRes] = await Promise.all([
-      supabase.from("wallets").select("balance").eq("user_id", userId).maybeSingle(),
-      supabase
-        .from("arcade_rps_rounds")
-        .select("stake, gross_return, user_net, outcome")
-        .eq("user_id", userId)
-        .eq("status", "SETTLED")
-        .gte("created_at", startOfDay),
-      supabase
-        .from("arcade_rps_rounds")
-        .select("outcome, user_net")
-        .eq("user_id", userId)
-        .eq("status", "SETTLED"),
-      supabase
-        .from("arcade_rps_rounds")
-        .select("id, player_choice, server_choice, outcome, stake, user_net, settled_at")
-        .eq("user_id", userId)
-        .eq("status", "SETTLED")
-        .order("settled_at", { ascending: false })
-        .limit(12),
-    ]);
+    const [walletRes, todayRes, countRes, winsRes, lossesRes, drawsRes, recentRes] =
+      await Promise.all([
+        supabase.from("wallets").select("balance").eq("user_id", userId).maybeSingle(),
+        supabase
+          .from("arcade_rps_rounds")
+          .select("stake, gross_return, user_net, outcome")
+          .eq("user_id", userId)
+          .eq("status", "SETTLED")
+          .gte("created_at", startOfDay),
+        supabase
+          .from("arcade_rps_rounds")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("status", "SETTLED"),
+        supabase
+          .from("arcade_rps_rounds")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("status", "SETTLED")
+          .eq("outcome", "WIN"),
+        supabase
+          .from("arcade_rps_rounds")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("status", "SETTLED")
+          .eq("outcome", "LOSS"),
+        supabase
+          .from("arcade_rps_rounds")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("status", "SETTLED")
+          .eq("outcome", "DRAW"),
+        supabase
+          .from("arcade_rps_rounds")
+          .select("id, player_choice, server_choice, outcome, stake, user_net, settled_at")
+          .eq("user_id", userId)
+          .eq("status", "SETTLED")
+          .order("settled_at", { ascending: false })
+          .limit(12),
+      ]);
 
     const today = (todayRes.data ?? []) as any[];
-    const all = (allRes.data ?? []) as any[];
-    const count = (rows: any[], o: string) => rows.filter((r) => r.outcome === o).length;
+    const countToday = (o: string) => today.filter((r) => r.outcome === o).length;
 
     return {
       balance: Number(walletRes.data?.balance ?? 0),
       todayNet: today.reduce((a, r) => a + Number(r.user_net ?? 0), 0),
       todayStaked: today.reduce((a, r) => a + Number(r.stake ?? 0), 0),
       todayRounds: today.length,
-      todayWins: count(today, "WIN"),
-      todayLosses: count(today, "LOSS"),
-      todayDraws: count(today, "DRAW"),
-      totalRounds: all.length,
-      totalWins: count(all, "WIN"),
-      totalLosses: count(all, "LOSS"),
-      totalDraws: count(all, "DRAW"),
-      lifetimeNet: all.reduce((a, r) => a + Number(r.user_net ?? 0), 0),
+      todayWins: countToday("WIN"),
+      todayLosses: countToday("LOSS"),
+      todayDraws: countToday("DRAW"),
+      totalRounds: countRes.count ?? 0,
+      totalWins: winsRes.count ?? 0,
+      totalLosses: lossesRes.count ?? 0,
+      totalDraws: drawsRes.count ?? 0,
+      lifetimeNet: today.reduce((a, r) => a + Number(r.user_net ?? 0), 0),
       recent: (recentRes.data ?? []) as any[],
     };
   });

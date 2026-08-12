@@ -34,11 +34,15 @@ class RouletteBallAudio {
     return this.ctx;
   }
 
+  private noiseBuf: AudioBuffer | null = null;
+
   private noiseBuffer(ctx: AudioContext) {
+    if (this.noiseBuf && this.noiseBuf.sampleRate === ctx.sampleRate) return this.noiseBuf;
     const len = Math.floor(ctx.sampleRate * 1.2);
     const buf = ctx.createBuffer(1, len, ctx.sampleRate);
     const data = buf.getChannelData(0);
     for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    this.noiseBuf = buf;
     return buf;
   }
 

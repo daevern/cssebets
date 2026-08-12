@@ -50,7 +50,7 @@ export const getPlinkoProfile = createServerFn({ method: "GET" })
       .from("wallets")
       .upsert({ user_id: userId }, { onConflict: "user_id", ignoreDuplicates: true });
 
-    const [walletRes, todayRes, lifetimeRes] = await Promise.all([
+    const [walletRes, todayRes, bestRes, countRes] = await Promise.all([
       supabase.from("wallets").select("balance").eq("user_id", userId).maybeSingle(),
       supabase
         .from("arcade_plinko_games")
@@ -59,7 +59,14 @@ export const getPlinkoProfile = createServerFn({ method: "GET" })
         .gte("created_at", new Date(new Date().setHours(0, 0, 0, 0)).toISOString()),
       supabase
         .from("arcade_plinko_games")
-        .select("payout, stake_per_ball, multiplier")
+        .select("multiplier")
+        .eq("user_id", userId)
+        .order("multiplier", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from("arcade_plinko_games")
+        .select("id", { count: "exact", head: true })
         .eq("user_id", userId),
     ]);
 
@@ -68,15 +75,14 @@ export const getPlinkoProfile = createServerFn({ method: "GET" })
       arr.length ? arr.reduce((m, r) => Math.max(m, Number(r.multiplier ?? 0)), 0) : 0;
 
     const today = todayRes.data ?? [];
-    const all = lifetimeRes.data ?? [];
 
     return {
       balance: Number(walletRes.data?.balance ?? 0),
       todayWagered: sum(today, "stake_per_ball"),
       todayPayout: sum(today, "payout"),
       todayBestMult: bestMult(today),
-      lifetimeBestMult: bestMult(all),
-      totalDrops: all.length,
+      lifetimeBestMult: Number(bestRes.data?.multiplier ?? 0),
+      totalDrops: countRes.count ?? 0,
     };
   });
 

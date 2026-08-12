@@ -106,38 +106,64 @@ export const getTreasureProfile = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const startOfDay = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
 
-    const [walletRes, todayRes, allRes, recentRes] = await Promise.all([
-      supabase.from("wallets").select("balance").eq("user_id", userId).maybeSingle(),
-      supabase
-        .from("arcade_treasure_rounds")
-        .select("stake, gross_return, user_net, status")
-        .eq("user_id", userId)
-        .gte("created_at", startOfDay),
-      supabase.from("arcade_treasure_rounds").select("status, user_net, safe_reveals").eq("user_id", userId),
-      supabase
-        .from("arcade_treasure_rounds")
-        .select("id, difficulty, stake, gross_return, user_net, status, final_multiplier, safe_reveals, created_at")
-        .eq("user_id", userId)
-        .not("settled_at", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(10),
-    ]);
+    const [walletRes, todayRes, countRes, winsRes, lossesRes, pushesRes, bestRes, recentRes] =
+      await Promise.all([
+        supabase.from("wallets").select("balance").eq("user_id", userId).maybeSingle(),
+        supabase
+          .from("arcade_treasure_rounds")
+          .select("stake, gross_return, user_net, status")
+          .eq("user_id", userId)
+          .gte("created_at", startOfDay),
+        supabase
+          .from("arcade_treasure_rounds")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId),
+        supabase
+          .from("arcade_treasure_rounds")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("status", "WON"),
+        supabase
+          .from("arcade_treasure_rounds")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("status", "LOST"),
+        supabase
+          .from("arcade_treasure_rounds")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("status", "PUSH"),
+        supabase
+          .from("arcade_treasure_rounds")
+          .select("safe_reveals")
+          .eq("user_id", userId)
+          .order("safe_reveals", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from("arcade_treasure_rounds")
+          .select(
+            "id, difficulty, stake, gross_return, user_net, status, final_multiplier, safe_reveals, created_at",
+          )
+          .eq("user_id", userId)
+          .not("settled_at", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(10),
+      ]);
 
     const today = (todayRes.data ?? []) as any[];
-    const all = (allRes.data ?? []) as any[];
-    const count = (s: string) => all.filter((r) => r.status === s).length;
 
     return {
       balance: Number(walletRes.data?.balance ?? 0),
       todayNet: today.reduce((a, r) => a + Number(r.user_net ?? 0), 0),
       todayStaked: today.reduce((a, r) => a + Number(r.stake ?? 0), 0),
       todayRounds: today.length,
-      totalRounds: all.length,
-      totalWins: count("WON"),
-      totalLosses: count("LOST"),
-      totalPushes: count("PUSH"),
-      lifetimeNet: all.reduce((a, r) => a + Number(r.user_net ?? 0), 0),
-      bestSafeReveals: all.reduce((a, r) => Math.max(a, Number(r.safe_reveals ?? 0)), 0),
+      totalRounds: countRes.count ?? 0,
+      totalWins: winsRes.count ?? 0,
+      totalLosses: lossesRes.count ?? 0,
+      totalPushes: pushesRes.count ?? 0,
+      lifetimeNet: today.reduce((a, r) => a + Number(r.user_net ?? 0), 0),
+      bestSafeReveals: Number(bestRes.data?.safe_reveals ?? 0),
       recent: (recentRes.data ?? []) as any[],
     };
   });

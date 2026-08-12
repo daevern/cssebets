@@ -33,28 +33,42 @@ export const getRouletteProfile = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const startOfDay = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
 
-    const [walletRes, todayRes, allRes, recentRes] = await Promise.all([
-      supabase.from("wallets").select("balance").eq("user_id", userId).maybeSingle(),
-      supabase
-        .from("arcade_roulette_spins")
-        .select("total_stake, total_return, user_net, status")
-        .eq("user_id", userId)
-        .gte("created_at", startOfDay),
-      supabase
-        .from("arcade_roulette_spins")
-        .select("status, user_net")
-        .eq("user_id", userId),
-      supabase
-        .from("arcade_roulette_spins")
-        .select("id, winning_pocket, winning_colour, created_at")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(12),
-    ]);
+    const [walletRes, todayRes, countRes, winsRes, lossesRes, pushesRes, recentRes] =
+      await Promise.all([
+        supabase.from("wallets").select("balance").eq("user_id", userId).maybeSingle(),
+        supabase
+          .from("arcade_roulette_spins")
+          .select("total_stake, total_return, user_net, status")
+          .eq("user_id", userId)
+          .gte("created_at", startOfDay),
+        supabase
+          .from("arcade_roulette_spins")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId),
+        supabase
+          .from("arcade_roulette_spins")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("status", "WIN"),
+        supabase
+          .from("arcade_roulette_spins")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("status", "LOSS"),
+        supabase
+          .from("arcade_roulette_spins")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("status", "PUSH"),
+        supabase
+          .from("arcade_roulette_spins")
+          .select("id, winning_pocket, winning_colour, created_at")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(12),
+      ]);
 
     const today = (todayRes.data ?? []) as any[];
-    const all = (allRes.data ?? []) as any[];
-    const count = (rows: any[], s: string) => rows.filter((r) => r.status === s).length;
 
     return {
       balance: Number(walletRes.data?.balance ?? 0),
@@ -62,11 +76,11 @@ export const getRouletteProfile = createServerFn({ method: "GET" })
       todayStaked: today.reduce((a, r) => a + Number(r.total_stake ?? 0), 0),
       todayReturned: today.reduce((a, r) => a + Number(r.total_return ?? 0), 0),
       todaySpins: today.length,
-      totalSpins: all.length,
-      totalWins: count(all, "WIN"),
-      totalLosses: count(all, "LOSS"),
-      totalPushes: count(all, "PUSH"),
-      lifetimeNet: all.reduce((a, r) => a + Number(r.user_net ?? 0), 0),
+      totalSpins: countRes.count ?? 0,
+      totalWins: winsRes.count ?? 0,
+      totalLosses: lossesRes.count ?? 0,
+      totalPushes: pushesRes.count ?? 0,
+      lifetimeNet: today.reduce((a, r) => a + Number(r.user_net ?? 0), 0),
       recent: (recentRes.data ?? []) as any[],
     };
   });

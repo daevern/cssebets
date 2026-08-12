@@ -11,7 +11,7 @@ import { getEquippedCosmetics } from "@/lib/arcade/plinko-cosmetics.functions";
 import { HowItWorksDialog } from "@/components/arcade/HowItWorksDialog";
 import { VerifyDialog } from "@/components/arcade/VerifyDialog";
 import type { PlinkoGame, RiskMode, RowsCount } from "@/components/arcade/types";
-import { Minus, Plus, ShieldCheck } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import {
   ControlDock,
@@ -33,6 +33,8 @@ import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 
 import * as React from "react";
 import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
+import { ArcadeVerifyCue } from "@/components/arcade/ArcadeVerifyCue";
+import { FlatCosmeticsStrip } from "@/components/arcade/FlatCosmeticsStrip";
 import { RecentResultsStrip } from "@/components/arcade/RecentResultsStrip";
 import { arcadeFairness } from "@/lib/arcade/published-rtp";
 import type { ConfigVersion, PlinkoRisk, PlinkoRows } from "@/lib/arcade/config-registry";
@@ -86,7 +88,7 @@ const fmt = (n: number) => nf.format(n);
 
 function PlinkoPage() {
   const qc = useQueryClient();
-  const { play, playFor } = useArcadeSound();
+  const { play, playFor } = useArcadeSound("plinko");
   const configFn = useServerFn(getPlinkoConfig);
   const profileFn = useServerFn(getPlinkoProfile);
   const dropFn = useServerFn(placePlinkoDrop);
@@ -379,17 +381,7 @@ function PlinkoPage() {
           }))}
           trailing={
             lastGame && !busy ? (
-              <button
-                type="button"
-                onClick={() => setVerifyOpen(true)}
-                className="inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
-                style={{
-                  borderColor: "rgba(143,155,255,.45)",
-                  color: "#8f9bff",
-                }}
-              >
-                <ShieldCheck className="h-3 w-3" /> Verify
-              </button>
+              <ArcadeVerifyCue game="plinko" onClick={() => setVerifyOpen(true)} />
             ) : null
           }
         />
@@ -403,6 +395,7 @@ function PlinkoPage() {
       <VerifyDialog open={verifyOpen} onOpenChange={setVerifyOpen} gameId={lastGame?.id ?? null} />
 
       <ControlDock game="plinko">
+        <FlatCosmeticsStrip disabled={locked} />
 
         <DockRow scroll>
           <ChipRack

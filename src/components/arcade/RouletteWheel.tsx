@@ -69,12 +69,16 @@ export function RouletteWheel({
   className?: string;
 }) {
 
-  const [rotation, setRotation] = useState(0);
-  const [ballAngle, setBallAngle] = useState(0);
-  const [ballRadius, setBallRadius] = useState(92);
   const [settledPocket, setSettledPocket] = useState<number | null>(null);
   const raf = useRef<number | null>(null);
   const lastHop = useRef<number>(-1);
+  const wheelRef = useRef<SVGGElement | null>(null);
+  const ballRef = useRef<SVGGElement | null>(null);
+  const ballShadowRef = useRef<SVGEllipseElement | null>(null);
+  const ballDotRef = useRef<SVGCircleElement | null>(null);
+  const rotationRef = useRef(0);
+  const ballAngleRef = useRef(0);
+  const frameAudioAt = useRef(0);
 
   const targetIndex = useMemo(
     () => (winningPocket == null ? 0 : WHEEL_ORDER.indexOf(winningPocket as any)),
@@ -86,40 +90,45 @@ export function RouletteWheel({
     setSettledPocket(null);
     lastHop.current = -1;
 
-    // Pocket centre in wheel-local degrees.
     const pocketMid = targetIndex * SEG + SEG / 2;
+    const wheelStart = rotationRef.current;
+    const ballStart = ballAngleRef.current;
 
-    const wheelStart = rotation;
-    const ballStart = ballAngle;
+    const applyPose = (rot: number, ang: number, radius: number) => {
+      rotationRef.current = rot;
+      ballAngleRef.current = ang;
+      if (wheelRef.current) {
+        wheelRef.current.style.transform = `rotate(${rot}deg)`;
+      }
+      if (ballRef.current) {
+        ballRef.current.style.transform = `rotate(${ang}deg)`;
+      }
+      if (ballShadowRef.current) {
+        ballShadowRef.current.setAttribute("cy", String(100 - radius + 2.2));
+      }
+      if (ballDotRef.current) {
+        ballDotRef.current.setAttribute("cy", String(100 - radius));
+      }
+    };
 
     if (reducedMotion) {
       const wheelEnd = wheelStart + 360;
-      setRotation(wheelEnd);
-      setBallAngle(wheelEnd + pocketMid);
-      setBallRadius(66);
+      applyPose(wheelEnd, wheelEnd + pocketMid, 66);
       setSettledPocket(winningPocket);
       onSettled?.();
       return;
     }
 
-    // Wheel keeps turning clockwise and stops at an arbitrary angle — the
-    // winning pocket can end up anywhere around the rim, not under the marker.
     const wheelEnd = wheelStart + 360 * 4 + Math.random() * 360;
-
-    // Ball orbits the opposite way and must finish sitting on the winning
-    // pocket, wherever the wheel happens to leave it.
     const desired = wheelEnd + pocketMid;
     const roughEnd = ballStart - (360 * 7 + Math.random() * 360);
-    // Snap the rough counter-rotating end angle onto the exact pocket angle.
     const ballEnd = desired - Math.ceil((desired - roughEnd) / 360) * 360;
 
-    const duration = 6400;
-    const dropStart = 0.6; // ball leaves the outer track and hits the frets
+    const duration = 4800;
+    const dropStart = 0.6;
     const t0 = performance.now();
-
     const easeOut = (t: number) => 1 - Math.pow(1 - t, 3.2);
 
-    // Deflector/fret bounces: each hop is shorter and shallower than the last.
     const HOPS = [
       { w: 0.2, h: 15 },
       { w: 0.18, h: 9.5 },
@@ -129,30 +138,25 @@ export function RouletteWheel({
       { w: 0.1, h: 0.5 },
     ];
     const hopTotal = HOPS.reduce((s, h) => s + h.w, 0);
-
     const TRACK_R = 92;
     const POCKET_R = 66;
 
     const step = (now: number) => {
       const t = Math.min(1, (now - t0) / duration);
       const e = easeOut(t);
-      setRotation(wheelStart + (wheelEnd - wheelStart) * easeOut(Math.min(1, t * 1.05)));
-      // Derivative of the ease, normalised to 1 at launch: the ball's real
-      // angular speed on screen, which the procedural audio tracks.
-      onFrame?.({ speed: Math.pow(1 - t, 2.2), onTrack: t < dropStart });
+      const rot = wheelStart + (wheelEnd - wheelStart) * easeOut(Math.min(1, t * 1.05));
 
+      if (now - frameAudioAt.current > 48) {
+        frameAudioAt.current = now;
+        onFrame?.({ speed: Math.pow(1 - t, 2.2), onTrack: t < dropStart });
+      }
 
-      if (t < dropStart) {
-        // Free orbit on the outer track, still moving fast counter to the wheel.
-        setBallAngle(ballStart + (ballEnd - ballStart) * e);
-        setBallRadius(TRACK_R);
-      } else {
-        const d = (t - dropStart) / (1 - dropStart); // 0..1 through the bounce phase
-        // Angular travel keeps decaying but the collisions scrub speed harder,
-        // so the ball converges on the pocket rather than gliding into it.
+      let ang = ballStart + (ballEnd - ballStart) * e;
+      let radius = TRACK_R;
+
+      if (t >= dropStart) {
+        const d = (t - dropStart) / (1 - dropStart);
         const base = ballStart + (ballEnd - ballStart) * e;
-
-        // Which hop are we in?
         let acc = 0;
         let hopIndex = HOPS.length - 1;
         let local = 1;
@@ -167,35 +171,27 @@ export function RouletteWheel({
           acc += w;
         }
         const hop = HOPS[hopIndex]!;
-        // Fire once per hop, right as it strikes (arc bottoms out just past the
-        // midpoint of its window) rather than at the start — a real ball makes
-        // its sound on impact, not on lift-off.
         if (hopIndex !== lastHop.current && local >= 0.5) {
           lastHop.current = hopIndex;
           onHop?.({ index: hopIndex, energy: hop.h / HOPS[0]!.h });
         }
-        // Parabolic arc per bounce (radially outward off the fret, then back down).
         const arc = 4 * local * (1 - local) * hop.h;
-        // Radial descent from the track down to the pocket ring.
         const descent = TRACK_R + (POCKET_R - TRACK_R) * easeOut(d);
-        setBallRadius(descent + arc);
-
-        // Each collision knocks the ball slightly against its direction of
-        // travel; the wobble decays to zero so it settles in the right pocket.
+        radius = descent + arc;
         const kick = Math.sin(local * Math.PI) * (1 - d) * (hopIndex % 2 === 0 ? 3.2 : -2.4);
-        setBallAngle(base + kick * (1 - d));
+        ang = base + kick * (1 - d);
       }
+
+      applyPose(rot, ang, radius);
 
       if (t < 1) {
         raf.current = requestAnimationFrame(step);
       } else {
-        setBallAngle(ballEnd);
-        setBallRadius(POCKET_R);
+        applyPose(wheelEnd, ballEnd, POCKET_R);
         setSettledPocket(winningPocket);
         onSettled?.();
       }
     };
-
 
     if (raf.current) cancelAnimationFrame(raf.current);
     raf.current = requestAnimationFrame(step);
@@ -257,9 +253,11 @@ export function RouletteWheel({
 
 
         <g
+          ref={wheelRef}
           style={{
-            transform: `rotate(${rotation}deg)`,
+            transform: `rotate(${rotationRef.current}deg)`,
             transformOrigin: "100px 100px",
+            willChange: "transform",
           }}
         >
 
@@ -337,21 +335,23 @@ export function RouletteWheel({
 
         {/* Ball track + ball */}
         <g
+          ref={ballRef}
           style={{
-            transform: `rotate(${ballAngle}deg)`,
+            transform: `rotate(${ballAngleRef.current}deg)`,
             transformOrigin: "100px 100px",
+            willChange: "transform",
           }}
         >
-          {/* contact shadow lags slightly behind the ball */}
           <ellipse
+            ref={ballShadowRef}
             cx={cx + 1.6}
-            cy={cy - ballRadius + 2.2}
+            cy={cy - 92 + 2.2}
             rx="4.8"
             ry="3.4"
             fill="#000000"
             opacity="0.4"
           />
-          <circle cx={cx} cy={cy - ballRadius} r="4.5" fill="url(#ballSpec)" />
+          <circle ref={ballDotRef} cx={cx} cy={cy - 92} r="4.5" fill="url(#ballSpec)" />
         </g>
       </svg>
 

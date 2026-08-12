@@ -94,9 +94,9 @@ export function PlinkoBoard({
   controlsDisabled,
 }: Props) {
   const ballFill = ballColor ?? "#ffffff";
-  const ballStroke = ballAccent ?? "#ff2d55";
+  const ballStroke = ballAccent ?? "#8f9bff";
   const boardBg = boardColor ?? null;
-  void boardAccent;
+  const railAccent = boardAccent ?? "#6b76c4";
 
   const W = 560;
   const PADDING_X = 8;
@@ -154,6 +154,7 @@ export function PlinkoBoard({
   const runtimeRef = useRef<Map<string, BallRuntime>>(new Map());
   const rafRef = useRef<number | null>(null);
   const seenIdsRef = useRef<Set<string>>(new Set());
+  const frameSkip = useRef(0);
 
   // Add newly-arrived balls to runtime map
   useEffect(() => {
@@ -229,13 +230,15 @@ export function PlinkoBoard({
           rb.x = a.x + (b2.x - a.x) * xe;
           rb.y = a.y + (b2.y - a.y) * fall + (isLast ? 0 : hop);
           if (isLast && !reducedMotion) {
-            // settle into the slot with two damped bounces
             const s = frac;
             const settle = Math.abs(Math.sin(Math.PI * s * 2.2)) * (1 - s) * 10;
             rb.y -= settle;
           }
-          rb.trail.push({ x: rb.x, y: rb.y, t });
-          rb.trail = rb.trail.filter((p) => t - p.t < 260).slice(-10);
+          // Short trail only — fewer DOM nodes per frame.
+          if (rb.trail.length === 0 || t - (rb.trail[rb.trail.length - 1]?.t ?? 0) > 40) {
+            rb.trail.push({ x: rb.x, y: rb.y, t });
+            rb.trail = rb.trail.filter((p) => t - p.t < 180).slice(-5);
+          }
 
 
           if (b2.pegKey && b2.pegKey !== rb.lastPegKey && frac > 0.92) {
@@ -293,13 +296,18 @@ export function PlinkoBoard({
           }
         }
 
-        setRenderTick((v) => (v + 1) % 1_000_000);
+        // ~30fps React paints — positions live in refs; tick only drives SVG refresh.
+        frameSkip.current = (frameSkip.current + 1) % 2;
+        if (frameSkip.current === 0 || landedIds.length || pegHits.length) {
+          setRenderTick((v) => (v + 1) % 1_000_000);
+        }
 
         const anyLive = Array.from(runtimeRef.current.values()).some((rb) => !rb.landed);
         if (anyLive) {
           rafRef.current = requestAnimationFrame(tick);
         } else {
           rafRef.current = null;
+          setRenderTick((v) => (v + 1) % 1_000_000);
         }
       };
       rafRef.current = requestAnimationFrame(tick);
@@ -565,7 +573,7 @@ export function PlinkoBoard({
         <circle cx={W / 2} cy={PADDING_TOP - 8} r={6} fill="#dff4ff" />
 
         {/* stylized cabinet frame */}
-        <PlinkoBoardFrame left={wallPath(-1)} right={wallPath(1)} />
+        <PlinkoBoardFrame left={wallPath(-1)} right={wallPath(1)} stroke={railAccent} />
 
 
         {pegs}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { ArcadeTableRail } from "@/components/arcade/ArcadeTableRail";
 import { arcadeTableGame } from "@/lib/arcade/table-mode";
+import { arcadeCssVars, ARCADE_THEMES } from "@/lib/arcade/theme";
 
 export const Route = createFileRoute("/_authenticated/arcade")({
   head: () => ({
@@ -9,12 +10,14 @@ export const Route = createFileRoute("/_authenticated/arcade")({
       { title: "Arcade — cssebets" },
       {
         name: "description",
-        content: "Plinko drops, Roulette spins and Treasure Grid rounds — provably fair.",
+        content:
+          "CSSE Originals — Plinko, Roulette, Treasure Grid, Blackjack and Rock–Paper–Scissors. Provably fair points arcade.",
       },
       { property: "og:title", content: "Arcade — cssebets" },
       {
         property: "og:description",
-        content: "Plinko drops, Roulette spins and Treasure Grid rounds — provably fair.",
+        content:
+          "CSSE Originals — five flat, provably fair tables. Server decides every payout.",
       },
     ],
   }),
@@ -57,17 +60,13 @@ function useConsoleHeight() {
   return height;
 }
 
-/** Per-game ambient wash so the page itself becomes the cabinet, not a card on a page. */
+/** Per-game ambient wash — flat stage color from house theme. */
 const AMBIENT: Record<string, string> = {
-  plinko:
-    "radial-gradient(120% 70% at 50% -6%, #1b2a6b 0%, #0d1330 42%, var(--color-bg, #07080d) 100%)",
-  treasure:
-    "radial-gradient(120% 70% at 50% -6%, #3f1273 0%, #1b0733 44%, var(--color-bg, #07080d) 100%)",
-  roulette:
-    "radial-gradient(120% 70% at 50% -6%, #0f7a46 0%, #072317 44%, var(--color-bg, #07080d) 100%)",
-  blackjack:
-    "radial-gradient(120% 70% at 50% -6%, #0d5a38 0%, #06180f 44%, var(--color-bg, #07080d) 100%)",
-  rps: "radial-gradient(120% 70% at 50% -6%, #2a1160 0%, #100a26 44%, var(--color-bg, #07080d) 100%)",
+  plinko: ARCADE_THEMES.plinko.stageBg,
+  treasure: ARCADE_THEMES.treasure.stageBg,
+  roulette: ARCADE_THEMES.roulette.stageBg,
+  blackjack: ARCADE_THEMES.blackjack.stageBg,
+  rps: ARCADE_THEMES.rps.stageBg,
 };
 
 function ArcadeLayout() {
@@ -111,7 +110,11 @@ function ArcadeLayout() {
   }, [consoleHeight, pathname]);
 
   return (
-    <div className="relative w-full">
+    <div
+      className="relative w-full"
+      data-arcade-game={tableGame ?? undefined}
+      style={tableGame ? arcadeCssVars(tableGame) : undefined}
+    >
       {/* Full-bleed ambient backdrop — the game's world fills the viewport edge to edge. */}
       {ambient && (
         <div

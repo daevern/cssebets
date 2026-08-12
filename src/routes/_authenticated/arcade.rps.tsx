@@ -28,6 +28,7 @@ import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 import { ArcadeIdleCue } from "@/components/arcade/ArcadeIdleCue";
 import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
 import { RecentResultsStrip } from "@/components/arcade/RecentResultsStrip";
+import { ArcadeVerifyCue } from "@/components/arcade/ArcadeVerifyCue";
 import { arcadeFairness } from "@/lib/arcade/published-rtp";
 import {
   getRpsConfig,
@@ -80,7 +81,7 @@ const REVEAL_FLIP_MS = 620;
 
 function RpsPage() {
   const qc = useQueryClient();
-  const { play, playFor } = useArcadeSound();
+  const { play, playFor } = useArcadeSound("rps");
   const bestFn = useServerFn(getArcadePersonalBest);
   const bestQ = useQuery({
     queryKey: ["rps", "personal-best"],
@@ -425,14 +426,7 @@ function RpsPage() {
         }))}
         trailing={
           round?.id ? (
-            <button
-              type="button"
-              onClick={() => setVerifyId(round.id)}
-              className="inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
-              style={{ borderColor: "rgba(255,176,96,.45)", color: "#ffb060" }}
-            >
-              Verify
-            </button>
+            <ArcadeVerifyCue game="rps" onClick={() => setVerifyId(round.id)} />
           ) : null
         }
       />

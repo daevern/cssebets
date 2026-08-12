@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
@@ -26,6 +26,7 @@ import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
 import { RecentResultsStrip } from "@/components/arcade/RecentResultsStrip";
+import { ArcadeVerifyCue } from "@/components/arcade/ArcadeVerifyCue";
 import { arcadeFairness } from "@/lib/arcade/published-rtp";
 import {
   collectTreasureRound,
@@ -73,7 +74,7 @@ const newSeed = () => Math.random().toString(36).slice(2, 14);
 
 function TreasurePage() {
   const qc = useQueryClient();
-  const { play, playFor } = useArcadeSound();
+  const { play, playFor } = useArcadeSound("treasure");
   const fetchBest = useServerFn(getArcadePersonalBest);
   const bestQ = useQuery({
     queryKey: ["treasure", "personal-best"],
@@ -375,14 +376,7 @@ function TreasurePage() {
         items={recent}
         trailing={
           settled ? (
-            <button
-              type="button"
-              onClick={() => setVerifyId(round.id)}
-              className="inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
-              style={{ borderColor: "rgba(196,155,255,.45)", color: "#c49bff" }}
-            >
-              <ShieldCheck className="h-3 w-3" /> Verify
-            </button>
+            <ArcadeVerifyCue game="treasure" onClick={() => setVerifyId(round.id)} />
           ) : null
         }
       />
@@ -416,16 +410,14 @@ function TreasurePage() {
             </>
           }
           footer={
-            <button
-              type="button"
+            <ArcadeVerifyCue
+              game="treasure"
+              className="h-9 px-4 text-[10px]"
               onClick={() => {
                 setResultOpen(false);
                 setVerifyId(resultRound.id);
               }}
-              className="inline-flex h-9 items-center justify-center gap-1 rounded-full border border-[var(--color-surface-border)] px-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]"
-            >
-              <ShieldCheck className="h-3 w-3" /> Verify
-            </button>
+            />
           }
         />
       )}

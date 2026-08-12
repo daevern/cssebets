@@ -82,7 +82,7 @@ const DEAL_STEP_MS = 420;
 
 function BlackjackPage() {
   const qc = useQueryClient();
-  const { play, playFor } = useArcadeSound();
+  const { play, playFor } = useArcadeSound("blackjack");
   const fetchBest = useServerFn(getArcadePersonalBest);
   const bestQ = useQuery({
     queryKey: ["blackjack", "personal-best"],

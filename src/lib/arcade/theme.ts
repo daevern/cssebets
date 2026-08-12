@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { ArcadeGameKey } from "./sound";
 
 /**
@@ -167,3 +168,20 @@ export const ARCADE_THEMES: Record<ArcadeGameKey, ArcadeTheme> = {
 
 /** Unused in flat mode; kept so older call sites compile. */
 export const ARCADE_GRAIN_URL = "none";
+
+/** CSS custom properties for house chrome — set on `[data-arcade-game]`. */
+export function arcadeCssVars(game: ArcadeGameKey): CSSProperties {
+  const t = ARCADE_THEMES[game];
+  return {
+    ["--arcade-accent" as string]: t.accent,
+    ["--arcade-stage" as string]: t.stageBg,
+    ["--arcade-felt" as string]: t.feltOrBoardFill,
+    ["--arcade-plaque-bg" as string]: t.hud.plaqueBg,
+    ["--arcade-plaque-border" as string]: t.hud.plaqueBorder,
+    ["--arcade-dock-surface" as string]: t.dock.surface,
+    ["--arcade-dock-border" as string]: t.dock.border,
+    ["--arcade-primary" as string]: t.dock.primaryBg,
+    ["--arcade-primary-text" as string]: t.dock.primaryText,
+    ["--arcade-label-tracking" as string]: t.hud.labelTracking,
+  };
+}
