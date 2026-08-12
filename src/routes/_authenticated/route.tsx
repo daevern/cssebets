@@ -26,6 +26,7 @@ import { PendingApproval } from "@/components/auth/PendingApproval";
 
 import { TourProvider, useTour } from "@/components/onboarding/TourProvider";
 import { WelcomeModal } from "@/components/onboarding/WelcomeModal";
+import { isArcadeTablePath } from "@/lib/arcade/table-mode";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -250,15 +251,26 @@ function AuthedLayout() {
 
 
 
+  const tableMode = isArcadeTablePath(location.pathname);
+
+  // Immersive cabinet: hide sportsbook chrome so the table owns the viewport.
+  useEffect(() => {
+    if (tableMode) document.documentElement.setAttribute("data-arcade-table", "");
+    else document.documentElement.removeAttribute("data-arcade-table");
+    return () => document.documentElement.removeAttribute("data-arcade-table");
+  }, [tableMode]);
+
   return (
     <TourProvider>
       <div className="relative min-h-screen overflow-x-clip bg-[var(--surface)] text-[var(--ink)]">
         <WelcomeModal />
-        <TopBar
-          balance={showBalance ? (wallet.data?.balance ?? 0) : null}
-          loading={wallet.isLoading}
-          onSignOut={signOut}
-        />
+        {!tableMode && (
+          <TopBar
+            balance={showBalance ? (wallet.data?.balance ?? 0) : null}
+            loading={wallet.isLoading}
+            onSignOut={signOut}
+          />
+        )}
 
         <main
           className={
@@ -271,7 +283,7 @@ function AuthedLayout() {
           <Outlet />
         </main>
 
-        <BottomNav />
+        {!tableMode && <BottomNav />}
         <WinDetector />
         <FirstVisitWalkthroughs />
       </div>

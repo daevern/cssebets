@@ -250,6 +250,18 @@
 }
 
 
+/* Immersive arcade table mode: sportsbook chrome hidden.
+   Rail owns the top edge; HUD sits just under it; dock drops BottomNav padding. */
+html[data-arcade-table] [data-arcade-table-rail] {
+  top: 0;
+}
+html[data-arcade-table] [data-arcade-hud] {
+  top: 3.25rem;
+}
+html[data-arcade-table] [data-arcade-console] {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Roulette cabinet motion (presentation only). */
 @keyframes rouletteWinFlash {
   0% { opacity: 0.25; }

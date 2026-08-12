@@ -32,7 +32,10 @@ import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 
 import * as React from "react";
-import { HudPlaque } from "@/components/arcade/ArcadeHud";
+import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
+import { RecentResultsStrip } from "@/components/arcade/RecentResultsStrip";
+import { arcadeFairness } from "@/lib/arcade/published-rtp";
+import type { ConfigVersion, PlinkoRisk, PlinkoRows } from "@/lib/arcade/config-registry";
 
 /** Engraved cabinet plaque bound to this game's theme. */
 const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
@@ -249,25 +252,40 @@ function PlinkoPage() {
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/50 px-3 py-1.5 backdrop-blur-md md:top-16 flex items-start gap-1.5">
-        <div className="grid flex-1 grid-cols-4 gap-1.5">
-            <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
-          <Stat label="Max win" value={`${maxMult.toFixed(maxMult >= 100 ? 0 : 1)}×`} />
-          <Stat
-            label="Last"
-            value={
-              lastGame && !busy
-                ? `${Number(lastGame.multiplier ?? 0).toFixed(2)}×`
-                : busy
-                  ? "In play"
-                  : "—"
-            }
-          />
-          <Stat
-            label="Highest multiplier"
-            value={`${Number(bestQ.data?.value ?? 0).toFixed(2)}×`}
-          />
-        </div>
+      <HudBar game="plinko" className="items-start">
+        <Stat className="flex-1" label="Balance" value={<AnimatedBalance value={balance} />} />
+        <Stat
+          className="flex-1"
+          label="Max win"
+          value={`${maxMult.toFixed(maxMult >= 100 ? 0 : 1)}×`}
+        />
+        <Stat
+          className="flex-1"
+          label="Last"
+          value={
+            lastGame && !busy
+              ? `${Number(lastGame.multiplier ?? 0).toFixed(2)}×`
+              : busy
+                ? "In play"
+                : "—"
+          }
+        />
+        <Stat
+          className="flex-1"
+          label="Highest multiplier"
+          value={`${Number(bestQ.data?.value ?? 0).toFixed(2)}×`}
+        />
+        <FairnessPlaque
+          game="plinko"
+          rtpLabel={
+            arcadeFairness("plinko", {
+              version: (currentProfile?.version === 1 ? 1 : 2) as ConfigVersion,
+              rows: rows as PlinkoRows,
+              risk: riskMode as PlinkoRisk,
+            }).rtpLabel
+          }
+          tag="Fair"
+        />
         <div className="flex w-14 shrink-0 flex-col items-stretch gap-1">
           <HowItWorksDialog
             rows={rows}
@@ -276,7 +294,7 @@ function PlinkoPage() {
             configVersion={currentProfile?.version}
           />
         </div>
-      </div>
+      </HudBar>
 
 
       {/* Colour spill lives OUTSIDE the stage: ArcadeStage clips its children. */}
@@ -351,38 +369,30 @@ function PlinkoPage() {
 
 
 
-        <div className="mt-2 flex items-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {recent.length === 0 ? (
-            <span className="text-[9px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-              No drops yet
-            </span>
-          ) : (
-            recent.map((m, i) => (
-              <span
-                key={i}
-                className={cn(
-                  "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold tabular-nums",
-                  m >= 5
-                    ? "bg-[var(--color-neon)] text-black"
-                    : m >= 1
-                      ? "bg-[var(--color-neon)]/15 text-[var(--color-neon)]"
-                      : "bg-[#161c22] text-[var(--color-ink-muted)] ring-1 ring-[var(--color-surface-border)]",
-                )}
+        <RecentResultsStrip
+          game="plinko"
+          empty="No drops yet"
+          items={recent.slice(0, 12).map((m, i) => ({
+            key: `${i}-${m}`,
+            label: `${m.toFixed(m >= 100 ? 0 : 2)}×`,
+            tone: m >= 5 ? "hot" : m >= 1 ? "win" : "loss",
+          }))}
+          trailing={
+            lastGame && !busy ? (
+              <button
+                type="button"
+                onClick={() => setVerifyOpen(true)}
+                className="inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
+                style={{
+                  borderColor: "rgba(143,155,255,.45)",
+                  color: "#8f9bff",
+                }}
               >
-                {m.toFixed(m >= 100 ? 0 : 2)}×
-              </span>
-            ))
-          )}
-          {lastGame && !busy && (
-            <button
-              type="button"
-              onClick={() => setVerifyOpen(true)}
-              className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-neon)]/40 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--color-neon)]"
-            >
-              <ShieldCheck className="h-3 w-3" /> Verify
-            </button>
-          )}
-        </div>
+                <ShieldCheck className="h-3 w-3" /> Verify
+              </button>
+            ) : null
+          }
+        />
       </div>
       </ArcadeEntrance>
       </ArcadeStage>
@@ -477,6 +487,7 @@ function PlinkoPage() {
             className="ml-auto"
             label="Stake / ball"
             value={`${fmt(stakePerBall)} pts`}
+            hint={`Max ${fmt(stakePerBall * maxMult)} if top slot`}
           />
         </DockRow>
 

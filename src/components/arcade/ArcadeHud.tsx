@@ -23,7 +23,9 @@ export function HudBar({
   return (
     <HudCtx.Provider value={game}>
       <div
+        data-arcade-hud
         className={cn(
+          // Default clears the sportsbook TopBar. Immersive table mode flips to top-0 via styles.css.
           "sticky top-14 z-20 -mx-3 flex items-stretch gap-1.5 border-b px-3 py-1.5 backdrop-blur-md md:top-16",
           className,
         )}
@@ -35,6 +37,47 @@ export function HudBar({
         {children}
       </div>
     </HudCtx.Provider>
+  );
+}
+
+/** Compact RTP / fairness read-out for cabinet HUDs. */
+export function FairnessPlaque({
+  game,
+  rtpLabel,
+  tag = "Fair",
+  className,
+}: {
+  game?: ArcadeGameKey;
+  rtpLabel: string;
+  tag?: string;
+  className?: string;
+}) {
+  const ctxGame = React.useContext(HudCtx);
+  const g = game ?? ctxGame;
+  const t = ARCADE_THEMES[g];
+  return (
+    <div
+      className={cn("min-w-0 shrink-0 rounded-[5px] border px-2 py-1", className)}
+      style={{
+        background: t.hud.plaqueBg,
+        borderColor: t.hud.plaqueBorder,
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,.07), inset 0 -2px 6px rgba(0,0,0,.45)",
+      }}
+      title="Published theoretical RTP — server decides every payout"
+    >
+      <div
+        className="text-[8px] font-bold uppercase text-[var(--color-ink-muted)]"
+        style={{ letterSpacing: t.hud.labelTracking }}
+      >
+        RTP · {tag}
+      </div>
+      <div
+        className="font-display text-sm font-bold tabular-nums"
+        style={{ color: t.accent }}
+      >
+        {rtpLabel}
+      </div>
+    </div>
   );
 }
 

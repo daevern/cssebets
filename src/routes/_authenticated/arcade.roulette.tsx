@@ -27,8 +27,10 @@ import {
 import { cn } from "@/lib/utils";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
-import { ArcadeSoundToggle } from "@/components/arcade/ArcadeSoundToggle";
-import { HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
+import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
+import { RecentResultsStrip } from "@/components/arcade/RecentResultsStrip";
+import { ArcadeIdleCue } from "@/components/arcade/ArcadeIdleCue";
+import { arcadeFairness } from "@/lib/arcade/published-rtp";
 import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
@@ -343,7 +345,11 @@ function RoulettePage() {
           label="Biggest single hit"
           value={fmt(Number(bestQ.data?.value ?? 0))}
         />
-        <ArcadeSoundToggle className="shrink-0 self-center" />
+        <FairnessPlaque
+          game="roulette"
+          rtpLabel={arcadeFairness("roulette").rtpLabel}
+          tag="Fair"
+        />
       </HudBar>
 
 
@@ -438,8 +444,14 @@ function RoulettePage() {
                     rate: 1.55 - energy * 0.45,
                   });
                 }}
-
               />
+              <ArcadeIdleCue
+                game="roulette"
+                show={!spinning && !mutation.isPending && positions.length === 0}
+                className="bottom-1"
+              >
+                Place chips on the layout
+              </ArcadeIdleCue>
             </div>
           </ArcadeEntrance>
 
@@ -471,28 +483,21 @@ function RoulettePage() {
             </div>
           </div>
 
-          <div className="mt-1 flex items-center justify-center gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {(profile.data?.recent ?? []).map((r: any) => (
-              <span
-                key={r.id}
-                className={cn(
-                  "grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10px] font-bold tabular-nums",
-                  r.winning_colour === "green"
-                    ? "bg-[var(--color-neon)] text-black"
-                    : r.winning_colour === "red"
-                      ? "bg-[#e0374a] text-white"
-                      : "bg-[#161c22] text-white ring-1 ring-white/40",
-                )}
-              >
-                {r.winning_pocket}
-              </span>
-            ))}
-            {!(profile.data?.recent ?? []).length && (
-              <span className="text-[9px] uppercase tracking-[0.2em] text-white/60">
-                No spins yet
-              </span>
-            )}
-          </div>
+          <RecentResultsStrip
+            game="roulette"
+            empty="No spins yet"
+            className="mt-1 border-white/15 bg-black/25"
+            items={(profile.data?.recent ?? []).slice(0, 12).map((r: any) => ({
+              key: String(r.id),
+              label: String(r.winning_pocket),
+              tone:
+                r.winning_colour === "green"
+                  ? "hot"
+                  : r.winning_colour === "red"
+                    ? "win"
+                    : "neutral",
+            }))}
+          />
         </div>
 
         {/* betting layout, sharing the same felt */}

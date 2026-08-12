@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
-
-
+import { ArcadeTableRail } from "@/components/arcade/ArcadeTableRail";
+import { arcadeTableGame } from "@/lib/arcade/table-mode";
 
 export const Route = createFileRoute("/_authenticated/arcade")({
   head: () => ({
@@ -74,6 +74,7 @@ function ArcadeLayout() {
   const consoleHeight = useConsoleHeight();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const game = pathname.split("/arcade/")[1]?.split("/")[0] ?? "";
+  const tableGame = arcadeTableGame(pathname);
   const ambient = AMBIENT[game] ?? null;
 
   // Only pad by however much of the console actually covers the content.
@@ -173,6 +174,7 @@ function ArcadeLayout() {
             : "mx-auto w-full max-w-4xl xl:max-w-5xl px-3 pt-3 md:px-6 md:pt-6"
         }
       >
+        {tableGame && <ArcadeTableRail game={tableGame} />}
         <Outlet />
       </div>
 

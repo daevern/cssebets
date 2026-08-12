@@ -1,6 +1,5 @@
-import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -10,16 +9,25 @@ import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
 import { TreasureGrid } from "@/components/arcade/TreasureGrid";
 import { ChipRack } from "@/components/arcade/ChipRack";
-import { ControlDock, DockPrimary, DockReadout, DockRow } from "@/components/arcade/ControlDock";
+import {
+  ControlDock,
+  DockNote,
+  DockPrimary,
+  DockReadout,
+  DockRow,
+} from "@/components/arcade/ControlDock";
 import { TreasureVerifyDialog } from "@/components/arcade/TreasureVerifyDialog";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
+import { ArcadeIdleCue } from "@/components/arcade/ArcadeIdleCue";
 import { SettlePlaque, useSettleBeat } from "@/components/arcade/SettlePlaque";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
+import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
+import { RecentResultsStrip } from "@/components/arcade/RecentResultsStrip";
+import { arcadeFairness } from "@/lib/arcade/published-rtp";
 import {
-
   collectTreasureRound,
   getActiveTreasureRound,
   getTreasureConfig,
@@ -29,7 +37,6 @@ import {
 } from "@/lib/arcade/treasure.functions";
 
 import * as React from "react";
-import { HudPlaque } from "@/components/arcade/ArcadeHud";
 
 /** Engraved cabinet plaque bound to this game's theme. */
 const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
@@ -94,6 +101,25 @@ function TreasurePage() {
   const [resultRound, setResultRound] = useState<any>(null);
   const { beat, run: runBeat } = useSettleBeat(340);
   const clientSeed = useRef(newSeed());
+  const [recent, setRecent] = useState<
+    Array<{ key: string; label: string; tone?: "hot" | "win" | "neutral" | "loss" }>
+  >([]);
+
+  const pushRecent = (r: any) => {
+    if (!r?.id) return;
+    const won = r.status === "WON";
+    const mult = Number(r.current_multiplier ?? 1);
+    setRecent((prev) =>
+      [
+        {
+          key: String(r.id),
+          label: won ? `${mult.toFixed(mult >= 10 ? 1 : 2)}×` : "X",
+          tone: won ? (mult >= 5 ? ("hot" as const) : ("win" as const)) : ("loss" as const),
+        },
+        ...prev.filter((x) => x.key !== String(r.id)),
+      ].slice(0, 12),
+    );
+  };
 
   // hydrate an in-flight round after refresh
   useEffect(() => {
@@ -182,6 +208,7 @@ function TreasurePage() {
         playFor("treasure", "trap");
         setTraps(res.traps ?? null);
         setResultRound(res.round);
+        pushRecent(res.round);
         // Let the bomb blast/shake animation finish before the modal covers it.
         window.setTimeout(() => runBeat(() => setResultOpen(true)), 900);
         refresh();
@@ -204,6 +231,7 @@ function TreasurePage() {
       setRound(res.round);
       setTraps(res.traps ?? null);
       setResultRound(res.round);
+      pushRecent(res.round);
       // Vault-unlock beat on the board before the themed dialog.
       runBeat(() => setResultOpen(true));
       refresh();
@@ -247,16 +275,22 @@ function TreasurePage() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/50 px-3 py-1.5 backdrop-blur-md md:top-16 grid grid-cols-4 gap-1.5">
-        <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
+      <HudBar game="treasure">
+        <Stat className="flex-1" label="Balance" value={<AnimatedBalance value={balance} />} />
         <Stat
+          className="flex-1"
           label="Multiplier"
           value={`${currentMult.toFixed(2)}×`}
           accent={safeReveals > 0}
         />
-        <Stat label="Found" value={`${safeReveals}`} />
-        <Stat label="Deepest dig" value={`${bestQ.data?.value ?? 0}`} />
-      </div>
+        <Stat className="flex-1" label="Found" value={`${safeReveals}`} />
+        <Stat className="flex-1" label="Deepest dig" value={`${bestQ.data?.value ?? 0}`} />
+        <FairnessPlaque
+          game="treasure"
+          rtpLabel={arcadeFairness("treasure").rtpLabel}
+          tag="Fair"
+        />
+      </HudBar>
 
       {/* Violet spill sits outside the stage, which clips its own children. */}
       <div className="relative isolate">
@@ -297,8 +331,10 @@ function TreasurePage() {
                   : "Busted"
                 : null
           }
-
         />
+        <ArcadeIdleCue game="treasure" show={!active && !busy && !resultOpen}>
+          {settled ? "New round when ready" : "Pick difficulty · Stake · Dig"}
+        </ArcadeIdleCue>
       </div>
 
 
@@ -333,18 +369,23 @@ function TreasurePage() {
       </ArcadeStage>
       </div>
 
-
-      {settled && (
-        <div className="flex justify-end px-1">
-          <button
-            type="button"
-            onClick={() => setVerifyId(round.id)}
-            className="rounded-lg border border-[var(--color-neon)]/50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]"
-          >
-            Verify round
-          </button>
-        </div>
-      )}
+      <RecentResultsStrip
+        game="treasure"
+        empty="No digs yet"
+        items={recent}
+        trailing={
+          settled ? (
+            <button
+              type="button"
+              onClick={() => setVerifyId(round.id)}
+              className="inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
+              style={{ borderColor: "rgba(196,155,255,.45)", color: "#c49bff" }}
+            >
+              <ShieldCheck className="h-3 w-3" /> Verify
+            </button>
+          ) : null
+        }
+      />
 
       {resultRound && (
         <ArcadeResultDialog
@@ -401,14 +442,19 @@ function TreasurePage() {
           <>
             <DockRow scroll>
               <ChipRack
-            game="treasure"
+                game="treasure"
                 values={chips}
                 max={maxStake}
                 value={stake}
                 onSelect={(c) => setStake(Math.min(Math.max(c, minStake), maxStake))}
                 size={44}
               />
-              <DockReadout className="ml-auto" label="Stake" value={`${fmt(stake)} pts`} />
+              <DockReadout
+                className="ml-auto"
+                label="Stake"
+                value={`${fmt(stake)} pts`}
+                hint={nextMult ? `First safe → ${nextMult.toFixed(2)}×` : undefined}
+              />
             </DockRow>
 
             <DockPrimary
@@ -422,6 +468,15 @@ function TreasurePage() {
             >
               {settled ? "New round" : `Play · ${fmt(stake)} pts`}
             </DockPrimary>
+
+            {balance < stake && !settled && (
+              <DockNote>
+                Need {fmt(stake - balance)} more pts ·{" "}
+                <Link to="/wallet" className="underline">
+                  wallet
+                </Link>
+              </DockNote>
+            )}
           </>
         ) : (
           <DockRow>
@@ -429,6 +484,7 @@ function TreasurePage() {
               align="left"
               label="Next tile"
               value={nextMult ? `${nextMult.toFixed(2)}×` : "—"}
+              hint={nextMult ? `Pays ~${fmt(Math.floor(stake * nextMult))} if safe` : undefined}
             />
             <DockReadout align="left" label="Collect" value={`${fmt(collectable)} pts`} />
             <DockPrimary

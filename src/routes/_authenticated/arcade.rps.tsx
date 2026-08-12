@@ -25,9 +25,11 @@ import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
-
+import { ArcadeIdleCue } from "@/components/arcade/ArcadeIdleCue";
+import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
+import { RecentResultsStrip } from "@/components/arcade/RecentResultsStrip";
+import { arcadeFairness } from "@/lib/arcade/published-rtp";
 import {
-
   getRpsConfig,
   getRpsProfile,
   getRpsRound,
@@ -36,7 +38,6 @@ import {
 } from "@/lib/arcade/rps.functions";
 
 import * as React from "react";
-import { HudPlaque } from "@/components/arcade/ArcadeHud";
 
 /** Engraved cabinet plaque bound to this game's theme. */
 const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
@@ -357,19 +358,22 @@ function RpsPage() {
 
   return (
     <div className="flex flex-col gap-2 md:gap-3">
-      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/50 px-3 py-1.5 backdrop-blur-md md:top-16 grid grid-cols-4 gap-1.5">
-        <Stat label="Balance" value={<AnimatedBalance value={balance} />} />
+      <HudBar game="rps">
+        <Stat className="flex-1" label="Balance" value={<AnimatedBalance value={balance} />} />
         <Stat
+          className="flex-1"
           label="P/L today"
           value={`${todayNet > 0 ? "+" : ""}${fmt(todayNet)}`}
           tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
         />
         <Stat
+          className="flex-1"
           label="W / D / L"
           value={`${profileQ.data?.todayWins ?? 0}/${profileQ.data?.todayDraws ?? 0}/${profileQ.data?.todayLosses ?? 0}`}
         />
-        <Stat label="Longest streak" value={`${bestQ.data?.value ?? 0}`} />
-      </div>
+        <Stat className="flex-1" label="Longest streak" value={`${bestQ.data?.value ?? 0}`} />
+        <FairnessPlaque game="rps" rtpLabel={arcadeFairness("rps").rtpLabel} tag="Fair" />
+      </HudBar>
 
       {cfg?.maintenance_mode && (
         <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-[11px] text-amber-300">
@@ -392,13 +396,46 @@ function RpsPage() {
         outcome={round?.outcome ?? null}
         ladder={ladder}
         tailMultiplier={tailMult}
-
         history={ladderHistory}
         onChoose={choose}
         canPlay={canPlay}
       />
+      <ArcadeIdleCue
+        game="rps"
+        show={phase === "IDLE" && !busy && ladderHistory.length === 0 && !resultOpen}
+      >
+        Choose a move to open the ladder
+      </ArcadeIdleCue>
       </ArcadeEntrance>
       </ArcadeStage>
+
+      <RecentResultsStrip
+        game="rps"
+        empty="No rounds yet"
+        items={ladderHistory.slice(0, 12).map((h) => ({
+          key: h.id,
+          label:
+            h.outcome === "WIN" ? "W" : h.outcome === "LOSS" ? "L" : h.outcome === "DRAW" ? "D" : "—",
+          tone:
+            h.outcome === "WIN"
+              ? ("win" as const)
+              : h.outcome === "LOSS"
+                ? ("loss" as const)
+                : ("neutral" as const),
+        }))}
+        trailing={
+          round?.id ? (
+            <button
+              type="button"
+              onClick={() => setVerifyId(round.id)}
+              className="inline-flex shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
+              style={{ borderColor: "rgba(255,176,96,.45)", color: "#ffb060" }}
+            >
+              Verify
+            </button>
+          ) : null
+        }
+      />
 
 
 

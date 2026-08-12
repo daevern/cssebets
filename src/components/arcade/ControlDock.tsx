@@ -303,12 +303,21 @@ export function DockNote({
   children: React.ReactNode;
   tone?: "warn" | "muted";
 }) {
+  const theme = useDockTheme();
   return (
     <p
       className={cn(
-        "text-center text-[10px] font-bold uppercase tracking-[0.06em]",
-        tone === "warn" ? "text-amber-300" : "text-[var(--color-ink-muted)]",
+        "rounded-[5px] border px-2 py-1.5 text-center text-[10px] font-bold uppercase tracking-[0.06em]",
+        tone === "warn" ? "text-amber-200" : "text-[var(--color-ink-muted)]",
       )}
+      style={{
+        background: theme?.hud.plaqueBg ?? "rgba(0,0,0,.4)",
+        borderColor:
+          tone === "warn"
+            ? "rgba(251,191,36,.35)"
+            : (theme?.hud.plaqueBorder ?? "rgba(255,255,255,.1)"),
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,.06)",
+      }}
     >
       {children}
     </p>

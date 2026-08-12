@@ -18,9 +18,9 @@ import { BlackjackTable, type BlackjackState } from "@/components/arcade/Blackja
 import { ChipRack } from "@/components/arcade/ChipRack";
 import {
   ControlDock,
-  
   DockNote,
   DockPrimary,
+  DockReadout,
   DockRow,
 } from "@/components/arcade/ControlDock";
 import { BlackjackVerifyDialog } from "@/components/arcade/BlackjackVerifyDialog";
@@ -29,8 +29,11 @@ import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
+import { ArcadeIdleCue } from "@/components/arcade/ArcadeIdleCue";
+import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
+import { RecentResultsStrip } from "@/components/arcade/RecentResultsStrip";
+import { arcadeFairness } from "@/lib/arcade/published-rtp";
 import {
-
   doubleBlackjack,
   getActiveBlackjackHand,
   getBlackjackConfig,
@@ -42,7 +45,6 @@ import {
 } from "@/lib/arcade/blackjack.functions";
 
 import * as React from "react";
-import { HudPlaque } from "@/components/arcade/ArcadeHud";
 
 /** Engraved cabinet plaque bound to this game's theme. */
 const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
@@ -105,6 +107,9 @@ function BlackjackPage() {
   const { beat, run: runBeat } = useSettleBeat(340);
   const [tableBusy, setTableBusy] = useState(false);
   const shownResultRef = useRef<string | null>(null);
+  const [recent, setRecent] = useState<
+    Array<{ key: string; label: string; tone?: "hot" | "win" | "neutral" | "loss" }>
+  >([]);
 
   const clientSeed = useRef(newSeed());
 
@@ -143,7 +148,33 @@ function BlackjackPage() {
     const t = window.setTimeout(() => {
       if (tableBusy) return;
       shownResultRef.current = h.id;
-      if (Number(h.user_net ?? 0) === 0) play("chip", { rate: 0.8 });
+      const net = Number(h.user_net ?? 0);
+      const result = String(h.result ?? "");
+      setRecent((prev) =>
+        [
+          {
+            key: String(h.id),
+            label:
+              result === "BLACKJACK"
+                ? "BJ"
+                : net > 0
+                  ? "W"
+                  : net < 0
+                    ? "L"
+                    : "P",
+            tone:
+              result === "BLACKJACK" || net > 0
+                ? result === "BLACKJACK"
+                  ? ("hot" as const)
+                  : ("win" as const)
+                : net < 0
+                  ? ("loss" as const)
+                  : ("neutral" as const),
+          },
+          ...prev,
+        ].slice(0, 12),
+      );
+      if (net === 0) play("chip", { rate: 0.8 });
       // In-table brass plaque lands on the felt before the themed dialog.
       runBeat(() => setResultOpen(true));
     }, 520);
@@ -275,29 +306,36 @@ function BlackjackPage() {
 
   return (
     <div className="flex flex-col gap-1 md:gap-3">
-      <div className="sticky top-14 z-20 -mx-3 rounded-b-xl bg-black/50 px-3 py-1.5 backdrop-blur-md md:top-16 grid shrink-0 grid-cols-4 gap-1.5">
-        <Stat label="Balance" value={<AnimatedBalance value={balance} maximumFractionDigits={0} />} />
+      <HudBar game="blackjack">
         <Stat
+          className="flex-1"
+          label="Balance"
+          value={<AnimatedBalance value={balance} maximumFractionDigits={0} />}
+        />
+        <Stat
+          className="flex-1"
           label="P/L today"
           value={`${todayNet > 0 ? "+" : ""}${todayNet.toLocaleString()}`}
           tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
         />
         <Stat
+          className="flex-1"
           label="W / L today"
           value={`${profileQ.data?.todayWins ?? 0} / ${profileQ.data?.todayLosses ?? 0}`}
         />
-        <Stat label="Best hand" value={`${bestQ.data?.value ?? 0}`} />
-      </div>
-
-
-
+        <Stat className="flex-1" label="Best hand" value={`${bestQ.data?.value ?? 0}`} />
+        <FairnessPlaque
+          game="blackjack"
+          rtpLabel={arcadeFairness("blackjack").rtpLabel}
+          tag="Fair"
+        />
+      </HudBar>
 
       {rules?.maintenance_mode && (
         <div className="shrink-0 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-[11px] text-amber-300">
           {rules.announcement ?? "Blackjack is under maintenance."}
         </div>
       )}
-
 
       <div className="relative isolate">
         <ArcadeGlow game="blackjack" />
@@ -312,38 +350,28 @@ function BlackjackPage() {
               ).toLocaleString()}`}
             />
             <BlackjackTable state={state} onBusyChange={handleBusy} />
+            <ArcadeIdleCue game="blackjack" show={!inPlay && !busy && !resultOpen}>
+              {settled ? "Deal again when ready" : "Select stake · Deal"}
+            </ArcadeIdleCue>
           </ArcadeEntrance>
         </ArcadeStage>
       </div>
 
-      {lastResult && (
-        <div className="hidden shrink-0 items-center justify-between gap-2 rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-3 py-1.5 md:flex">
-          <div className="leading-tight">
-            <div className="text-[9px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-              {String(lastResult.result ?? "").replace("_", " ") || "Result"}
-            </div>
-            <div
-              className={cn(
-                "font-mono text-[13px] font-bold tabular-nums",
-                Number(lastResult.user_net) > 0
-                  ? "text-[var(--color-neon)]"
-                  : Number(lastResult.user_net) < 0
-                    ? "text-red-400"
-                    : "text-[var(--color-ink)]",
-              )}
-            >
-              {Number(lastResult.user_net) > 0 ? "+" : ""}
-              {Number(lastResult.user_net ?? 0).toLocaleString()} pts
-            </div>
-          </div>
-          <BlackjackVerifyDialog
-            handId={lastResult.id}
-            serverSeedHash={lastResult.server_seed_hash}
-            clientSeed={lastResult.client_seed}
-            nonce={lastResult.nonce}
-          />
-        </div>
-      )}
+      <RecentResultsStrip
+        game="blackjack"
+        empty="No hands yet"
+        items={recent}
+        trailing={
+          lastResult ? (
+            <BlackjackVerifyDialog
+              handId={lastResult.id}
+              serverSeedHash={lastResult.server_seed_hash}
+              clientSeed={lastResult.client_seed}
+              nonce={lastResult.nonce}
+            />
+          ) : null
+        }
+      />
 
       {lastResult && (
         <ArcadeResultDialog
@@ -391,6 +419,14 @@ function BlackjackPage() {
             onSelect={(c) => clampStake(c)}
             size={44}
           />
+          {!inPlay && (
+            <DockReadout
+              className="ml-1"
+              label="Stake"
+              value={`${stake.toLocaleString()} pts`}
+              hint="Win 2× · BJ 2.5×"
+            />
+          )}
           <div className="mx-1 h-8 w-px shrink-0 bg-[var(--color-surface-border)]" />
           <div className="flex shrink-0 items-center gap-1.5">
             <ActionBtn
