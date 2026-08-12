@@ -261,14 +261,8 @@ function AuthedLayout() {
 
 
 
-  const tableMode = isArcadeTablePath(location.pathname);
 
-  // Immersive cabinet: hide sportsbook chrome so the table owns the viewport.
-  useEffect(() => {
-    if (tableMode) document.documentElement.setAttribute("data-arcade-table", "");
-    else document.documentElement.removeAttribute("data-arcade-table");
-    return () => document.documentElement.removeAttribute("data-arcade-table");
-  }, [tableMode]);
+
 
   return (
     <TourProvider>
