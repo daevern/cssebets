@@ -26,11 +26,11 @@ export function ArcadeTableRail({
     <div
       data-arcade-table-rail
       className={cn(
-        "sticky top-0 z-40 -mx-3 mb-1 flex items-center gap-2 border-b px-3 py-1.5 backdrop-blur-md md:-mx-6 md:px-6",
+        "sticky top-0 z-40 -mx-3 mb-1 flex items-center gap-2 border-b px-3 py-1.5 md:-mx-6 md:px-6",
         className,
       )}
       style={{
-        background: "rgba(0,0,0,.72)",
+        background: t.hud.plaqueBg,
         borderColor: t.hud.plaqueBorder,
       }}
     >
@@ -58,9 +58,8 @@ export function ArcadeTableRail({
       <div
         className="shrink-0 rounded-[5px] border px-2 py-1 text-right"
         style={{
-          background: t.hud.plaqueBg,
+          background: t.stageBg,
           borderColor: t.hud.plaqueBorder,
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,.07)",
         }}
         title="Published theoretical RTP — payouts are decided by the server"
       >

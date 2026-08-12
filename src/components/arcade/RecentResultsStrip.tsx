@@ -37,7 +37,6 @@ export function RecentResultsStrip({
       style={{
         background: t.hud.plaqueBg,
         borderColor: t.hud.plaqueBorder,
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,.06)",
       }}
     >
       <span
@@ -65,10 +64,10 @@ export function RecentResultsStrip({
               it.tone === "hot"
                 ? { background: t.accent }
                 : it.tone === "win"
-                  ? { background: `${t.accent}33`, boxShadow: `inset 0 0 0 1px ${t.accent}66` }
+                  ? { background: `${t.accent}28`, border: `1px solid ${t.accent}55` }
                   : {
-                      background: "rgba(0,0,0,.35)",
-                      boxShadow: `inset 0 0 0 1px ${t.hud.plaqueBorder}`,
+                      background: "rgba(0,0,0,.3)",
+                      border: `1px solid ${t.hud.plaqueBorder}`,
                     }
             }
           >

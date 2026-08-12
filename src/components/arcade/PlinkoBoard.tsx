@@ -372,28 +372,11 @@ export function PlinkoBoard({
     <div className="relative w-full overflow-hidden" style={{ background: boardBg ?? "transparent" }}>
       {/* Board title — neon cabinet marquee */}
       <div className="pointer-events-none relative z-10 flex items-center justify-center gap-2 pb-2 pt-3 sm:pb-3 sm:pt-4">
-        <span
-          aria-hidden
-          className="h-2 w-2 shrink-0 rounded-full sm:h-2.5 sm:w-2.5"
-          style={{
-            background: "radial-gradient(circle at 34% 30%, #f4ffff, #33cfff 70%)",
-            boxShadow: "0 0 8px rgba(41,196,255,.9)",
-          }}
-        />
-        <span
-          className="font-display text-base font-black uppercase tracking-[0.12em] text-white sm:text-xl"
-          style={{ textShadow: "0 0 12px rgba(90,140,255,.75), 0 0 26px rgba(255,47,146,.35)" }}
-        >
-          Plin<span style={{ color: "#29c4ff" }}>ko</span>
+        <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#8f9bff]" />
+        <span className="font-display text-base font-black uppercase tracking-[0.12em] text-white sm:text-xl">
+          Plin<span style={{ color: "#8f9bff" }}>ko</span>
         </span>
-        <span
-          aria-hidden
-          className="h-2 w-2 shrink-0 rounded-full sm:h-2.5 sm:w-2.5"
-          style={{
-            background: "radial-gradient(circle at 34% 30%, #f4ffff, #33cfff 70%)",
-            boxShadow: "0 0 8px rgba(41,196,255,.9)",
-          }}
-        />
+        <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#8f9bff]" />
       </div>
 
       {(riskOptions?.length || modeOptions?.length || rowOptions?.length) && (
@@ -402,7 +385,7 @@ export function PlinkoBoard({
             <div
               role="tablist"
               aria-label="Risk"
-              className="flex shrink-0 items-center gap-1 rounded-full border border-[rgba(41,196,255,.32)] bg-[#0a1140]/80 p-1 backdrop-blur-sm"
+              className="flex shrink-0 items-center gap-1 rounded-full border border-[rgba(143,155,255,.32)] bg-[#12182e] p-1"
             >
               {riskOptions.map((o) => {
                 const active = o.key === risk;
@@ -417,7 +400,7 @@ export function PlinkoBoard({
                     className={cn(
                       "h-8 min-w-[54px] rounded-full px-2.5 text-[10px] font-bold uppercase tracking-[0.04em] transition-all disabled:opacity-40 sm:min-w-[62px] sm:px-3",
                       active
-                        ? "bg-gradient-to-b from-[#33cfff] to-[#1668d8] text-[#03102b] shadow-[0_0_12px_-2px_rgba(41,196,255,.7)]"
+                        ? "bg-[#8f9bff] text-[#080a18]"
                         : "text-[#8fb8ff] hover:bg-[rgba(41,196,255,.15)] hover:text-white",
                     )}
                   >
@@ -433,7 +416,7 @@ export function PlinkoBoard({
               <div
                 role="tablist"
                 aria-label="Bet mode"
-                className="flex shrink-0 items-center gap-1 rounded-full border border-[rgba(255,47,146,.3)] bg-[#0a1140]/80 p-1 backdrop-blur-sm"
+                className="flex shrink-0 items-center gap-1 rounded-full border border-[rgba(143,155,255,.28)] bg-[#12182e] p-1"
               >
                 {modeOptions.map((o) => {
                   const active = o.key === mode;
@@ -448,7 +431,7 @@ export function PlinkoBoard({
                       className={cn(
                         "h-8 min-w-[54px] rounded-full px-2.5 text-[10px] font-bold uppercase tracking-[0.04em] transition-all disabled:opacity-40 sm:min-w-[62px] sm:px-3",
                         active
-                          ? "bg-gradient-to-b from-[#ff5fb0] to-[#d21a72] text-white shadow-[0_0_12px_-2px_rgba(255,47,146,.7)]"
+                          ? "bg-[#8f9bff] text-[#080a18]"
                           : "text-[#f0a3cb] hover:bg-[rgba(255,47,146,.15)] hover:text-white",
                       )}
                     >
@@ -463,7 +446,7 @@ export function PlinkoBoard({
               <div
                 role="tablist"
                 aria-label="Rows"
-                className="flex shrink-0 items-center gap-0.5 rounded-full border border-[rgba(154,92,255,.35)] bg-[#0a1140]/80 p-1 backdrop-blur-sm"
+                className="flex shrink-0 items-center gap-0.5 rounded-full border border-[rgba(143,155,255,.28)] bg-[#12182e] p-1"
               >
                 {rowOptions.map((r) => {
                   const active = r === rows;
@@ -478,7 +461,7 @@ export function PlinkoBoard({
                       className={cn(
                         "h-7 w-7 rounded-full text-[10px] font-bold tabular-nums transition-all disabled:opacity-40 sm:h-8 sm:w-8 sm:text-[11px]",
                         active
-                          ? "bg-gradient-to-b from-[#b58cff] to-[#6a2fe0] text-white shadow-[0_0_12px_-2px_rgba(154,92,255,.7)]"
+                          ? "bg-[#8f9bff] text-[#080a18]"
                           : "text-[#b9a6ff] hover:bg-[rgba(154,92,255,.16)] hover:text-white",
                       )}
                     >

@@ -35,7 +35,6 @@ import { useArcadeSound } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 import { SettlePlaque, useSettleBeat } from "@/components/arcade/SettlePlaque";
-import { SurfaceGrain } from "@/components/arcade/ArcadeHud";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 
 export const Route = createFileRoute("/_authenticated/arcade/roulette")({
@@ -371,20 +370,14 @@ function RoulettePage() {
       <div className="relative isolate">
       <ArcadeGlow game="roulette" className="-top-8 -bottom-8" />
       <div
-        className="relative z-10 border shadow-[0_18px_40px_-24px_rgba(0,0,0,0.9)]"
+        className="relative z-10 border"
         style={{
           background: ARCADE_THEMES.roulette.feltOrBoardFill,
-          borderColor: ARCADE_THEMES.roulette.railColor,
-          borderWidth: 6,
-          borderRadius: "50% 50% 16px 16px / 26% 26% 16px 16px",
-          boxShadow:
-            "0 18px 40px -24px rgba(0,0,0,.9), inset 0 0 0 2px rgba(255,215,106,.35)",
+          borderColor: ARCADE_THEMES.roulette.hud.plaqueBorder,
+          borderWidth: 2,
+          borderRadius: "16px",
         }}
       >
-        <SurfaceGrain
-          game="roulette"
-          radius="50% 50% 16px 16px / 26% 26% 16px 16px"
-        />
         <SettlePlaque
           game="roulette"
           show={beat && winningPocket != null}
@@ -396,29 +389,24 @@ function RoulettePage() {
           <div className="mb-4 flex items-center justify-center gap-2 pt-1">
             <span
               aria-hidden
-              className="h-2.5 w-2.5 rotate-45 rounded-[1px]"
-              style={{ background: "#c8102e", boxShadow: "0 0 0 1px rgba(255,255,255,.55)" }}
+              className="h-2 w-2 rotate-45 rounded-[1px]"
+              style={{ background: "#c8102e" }}
             />
-            <span
-              className="font-display text-base font-black uppercase tracking-[0.12em] text-white sm:text-xl"
-              style={{ textShadow: "0 2px 6px rgba(0,0,0,.55)" }}
-            >
-              Rou<span style={{ color: "#ffd76a" }}>lette</span>
+            <span className="font-display text-base font-black uppercase tracking-[0.12em] text-white sm:text-xl">
+              Rou<span style={{ color: "#e8c258" }}>lette</span>
             </span>
             <span
               aria-hidden
-              className="h-2.5 w-2.5 rotate-45 rounded-[1px]"
-              style={{ background: "#10161a", boxShadow: "0 0 0 1px rgba(255,255,255,.55)" }}
+              className="h-2 w-2 rotate-45 rounded-[1px]"
+              style={{ background: "#10161a" }}
             />
           </div>
           <ArcadeEntrance game="roulette" className="mx-auto w-full max-w-[280px]">
-            {/* wheel well ring cut into the felt */}
             <div
-              className="relative rounded-full p-2"
+              className="relative rounded-full border p-2"
               style={{
-                background: "rgba(0,0,0,0.35)",
-                boxShadow:
-                  "inset 0 2px 10px rgba(0,0,0,0.65), 0 0 0 2px rgba(255,255,255,0.35)",
+                background: "#06140c",
+                borderColor: "rgba(232,194,88,.35)",
               }}
             >
               <RouletteWheel

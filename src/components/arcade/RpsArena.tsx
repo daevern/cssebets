@@ -133,31 +133,23 @@ function FlipCard({
   return (
     <div
       className={cn(
-        "aspect-[3/4] w-full rounded-[6px] [perspective:700px]",
+        "relative aspect-[3/4] w-full overflow-hidden rounded-[6px] border border-[var(--color-surface-border)]",
         active && shaking && "animate-[rps-shake_0.36s_ease-in-out_infinite]",
+        active && "ring-2 ring-[var(--color-neon)]",
       )}
     >
-      <div
-        className="relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d]"
-        style={{ transform: faceUp ? "rotateY(180deg)" : "rotateY(0deg)" }}
-      >
+      {!faceUp ? (
+        <CardBack dim={!active} />
+      ) : (
         <div
           className={cn(
-            "absolute inset-0 overflow-hidden rounded-[6px] [backface-visibility:hidden]",
-            active && "ring-2 ring-[var(--color-neon)]",
-          )}
-        >
-          <CardBack dim={!active} />
-        </div>
-        <div
-          className={cn(
-            "absolute inset-0 grid place-items-center overflow-hidden rounded-[6px] bg-[var(--color-surface-2)] [backface-visibility:hidden] [transform:rotateY(180deg)]",
+            "absolute inset-0 grid place-items-center bg-[var(--color-surface-2)]",
             toneRing(tone),
           )}
         >
           <HandGlyph move={move} className={cn("h-[62%] w-[62%]", toneText(tone))} />
         </div>
-      </div>
+      )}
     </div>
   );
 }

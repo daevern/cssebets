@@ -32,8 +32,6 @@ export function ArcadeIdleCue({
         style={{
           background: t.hud.plaqueBg,
           borderColor: t.hud.plaqueBorder,
-          boxShadow: "inset 0 1px 0 rgba(255,255,255,.07)",
-          animation: "arcadePedestalBreathe 2.8s ease-in-out infinite",
         }}
       >
         {children}

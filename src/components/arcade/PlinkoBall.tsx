@@ -1,6 +1,6 @@
 import { memo } from "react";
 
-/** Cyan/blue arcade ball (SVG, rendered inside the board's <svg>). */
+/** Flat 2D arcade ball (SVG). */
 function PlinkoBallImpl({
   cx,
   cy,
@@ -12,21 +12,12 @@ function PlinkoBallImpl({
   fill?: string | null;
   accent?: string | null;
 }) {
+  const body = fill ?? "#8f9bff";
+  const rim = accent ?? "#c9d1ff";
   return (
     <g>
-      <circle cx={cx} cy={cy} r={16} fill="url(#ballGlow)" />
-      <circle cx={cx} cy={cy} r={9} fill={accent ?? "#33CFFF"} opacity={0.35} />
-      <circle cx={cx} cy={cy} r={7} fill="url(#ballBody)" />
-      <circle
-        cx={cx}
-        cy={cy}
-        r={7}
-        fill="none"
-        stroke={fill ? (accent ?? "#33CFFF") : "#33CFFF"}
-        strokeWidth={1.2}
-        strokeOpacity={0.9}
-      />
-      <circle cx={cx - 2.2} cy={cy - 2.4} r={2.2} fill="#F4FFFF" />
+      <circle cx={cx} cy={cy} r={7} fill={body} />
+      <circle cx={cx} cy={cy} r={7} fill="none" stroke={rim} strokeWidth={1.2} />
     </g>
   );
 }

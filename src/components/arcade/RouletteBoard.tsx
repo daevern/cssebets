@@ -36,33 +36,15 @@ const cellBase =
 function Stack({ amount }: { amount?: number }) {
   if (!amount) return null;
   const p = paletteFor(amount);
-  // Layer count reads as physical thickness, not a badge number.
-  const layers = Math.min(4, 1 + Math.floor(Math.log10(Math.max(1, amount))));
   return (
-    <span className="pointer-events-none absolute -right-1 -top-1 h-5 w-5">
-      <span
-        aria-hidden
-        className="absolute left-1/2 top-[74%] h-1 w-4 -translate-x-1/2 rounded-full"
-        style={{ background: "rgba(0,0,0,.5)", filter: "blur(1.5px)" }}
-      />
-      {Array.from({ length: layers }, (_, i) => (
-        <span
-          key={i}
-          aria-hidden
-          className="absolute inset-x-0 h-4 rounded-full"
-          style={{
-            bottom: 2 + i * 2,
-            background: p.face,
-            boxShadow: `0 0 0 1.5px ${p.edge}, inset 0 1px 0 rgba(255,255,255,.4)`,
-          }}
-        />
-      ))}
-      <span
-        className="absolute inset-x-0 grid h-4 place-items-center text-[8px] font-bold leading-none tabular-nums"
-        style={{ bottom: 2 + (layers - 1) * 2, color: p.ink }}
-      >
-        {amount}
-      </span>
+    <span className="pointer-events-none absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full px-0.5 text-[8px] font-bold tabular-nums"
+      style={{
+        background: p.face,
+        color: p.ink,
+        boxShadow: `0 0 0 1.5px ${p.edge}`,
+      }}
+    >
+      {amount}
     </span>
   );
 }

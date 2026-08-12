@@ -198,19 +198,6 @@ export function ArcadeResultDialog({
             <ConfettiBurst count={tier === "mega" ? 30 : 16} palette={theme?.particles} />
           )}
 
-          {isWin && tier !== "small" && (
-            <div
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-32 w-32 -translate-x-1/2 -translate-y-1/2 rounded-full"
-              style={{
-                background: theme
-                  ? `radial-gradient(circle, ${theme.glow} 0%, transparent 70%)`
-                  : "radial-gradient(circle, color-mix(in srgb, var(--color-neon) 42%, transparent) 0%, transparent 70%)",
-                filter: "blur(14px)",
-              }}
-            />
-          )}
-
           <div
             className={cn(
               "relative font-display font-black leading-none tabular-nums",

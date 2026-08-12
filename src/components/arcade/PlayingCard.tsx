@@ -29,14 +29,14 @@ export function CsseCardBack({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "relative h-full w-full overflow-hidden rounded-[6px] bg-[#f4f6f3] p-[7%] shadow-[0_2px_6px_rgba(0,0,0,.45)]",
+        "relative h-full w-full overflow-hidden rounded-[6px] border border-black/15 bg-[#f4f6f3] p-[7%]",
         className,
       )}
     >
       <div
         className="relative h-full w-full overflow-hidden rounded-[4px]"
         style={{
-          background: "linear-gradient(160deg, #1d5b41 0%, #0f3d2c 55%, #0a2c20 100%)",
+          background: "#0f3d2c",
         }}
       >
         {/* Diamond lattice weave */}
@@ -130,32 +130,22 @@ export function PlayingCard({
   return (
     <div
       ref={boxRef}
-      className={cn("relative shrink-0 select-none [perspective:900px]", className)}
+      className={cn("relative shrink-0 select-none", className)}
       style={{
         height: h,
         width: w,
         zIndex: travelling ? 30 : undefined,
         transform: travelling
-          ? `translate(${from?.x ?? 0}px, ${from?.y ?? -18}px) rotate(-34deg) scale(0.94)`
-          : "translate(0px, 0px) rotate(0deg) scale(1)",
-        // No transition while parked at the shoe — only the flight animates.
-        transition: travelling ? "none" : `transform ${CARD_SLIDE_MS}ms cubic-bezier(.18,.72,.28,1)`,
+          ? `translate(${from?.x ?? 0}px, ${from?.y ?? -18}px) scale(0.96)`
+          : "translate(0px, 0px) scale(1)",
+        transition: travelling ? "none" : `transform ${CARD_SLIDE_MS}ms ease-out`,
         willChange: "transform",
       }}
     >
-
-
-      <div
-        className="relative h-full w-full [transform-style:preserve-3d]"
-        style={{
-          transform: showFace ? "rotateY(0deg)" : "rotateY(180deg)",
-          transition: `transform ${CARD_FLIP_MS}ms cubic-bezier(.2,.8,.25,1)`,
-        }}
-      >
-        {/* Face */}
+      {showFace ? (
         <div
           className={cn(
-            "absolute inset-0 flex flex-col justify-between rounded-[6px] border border-black/10 bg-[#f7f7f2] px-1.5 py-1 shadow-[0_2px_6px_rgba(0,0,0,.45)] [backface-visibility:hidden]",
+            "absolute inset-0 flex flex-col justify-between rounded-[6px] border border-black/15 bg-[#f7f7f2] px-1.5 py-1",
             red ? "text-[#d92b3a]" : "text-[#101418]",
           )}
         >
@@ -169,12 +159,11 @@ export function PlayingCard({
             {rank ? rankLabel(rank) : ""}
           </span>
         </div>
-
-        {/* Back */}
-        <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+      ) : (
+        <div className="absolute inset-0">
           <CsseCardBack />
         </div>
-      </div>
+      )}
     </div>
   );
 }

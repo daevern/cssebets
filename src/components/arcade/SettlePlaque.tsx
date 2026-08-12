@@ -28,14 +28,13 @@ export function SettlePlaque({
       aria-live="polite"
       className={cn(
         "pointer-events-none absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2",
-        "rounded-[8px] border px-4 py-2 text-center backdrop-blur-sm",
+        "rounded-[6px] border px-4 py-2 text-center",
         "motion-safe:[animation:arcadeSettlePlaque_360ms_ease-out]",
         className,
       )}
       style={{
         background: t.hud.plaqueBg,
         borderColor: t.accent,
-        boxShadow: `0 0 24px -6px ${t.glow}, inset 0 1px 0 rgba(255,255,255,.12)`,
       }}
     >
       <div

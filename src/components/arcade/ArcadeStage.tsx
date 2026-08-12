@@ -1,8 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { ArcadeSoundToggle } from "@/components/arcade/ArcadeSoundToggle";
-import { SurfaceGrain } from "@/components/arcade/ArcadeHud";
-import { CabinetLight } from "@/components/arcade/ArcadeGlow";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import type { ArcadeGameKey } from "@/lib/arcade/sound";
 
@@ -111,14 +109,13 @@ export function ArcadeStage({
   return (
     <div
       ref={outerRef}
-      className={cn("relative w-full overflow-hidden", game && "rounded-[18px]", className)}
+      className={cn("relative w-full overflow-hidden", game && "rounded-[12px]", className)}
       style={{
         height: avail || undefined,
         background: game ? ARCADE_THEMES[game].stageBg : undefined,
+        border: game ? `1px solid ${ARCADE_THEMES[game].hud.plaqueBorder}` : undefined,
       }}
     >
-      {game && <SurfaceGrain game={game} radius="18px" />}
-      {game && <CabinetLight game={game} />}
       <ArcadeSoundToggle className="absolute right-2 top-2 z-30" />
       <div
         ref={innerRef}

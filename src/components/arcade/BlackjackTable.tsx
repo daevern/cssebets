@@ -8,7 +8,6 @@ import {
 } from "@/components/arcade/PlayingCard";
 import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
 import { formatTotal, handValue } from "@/lib/arcade/blackjack-math";
-import { SurfaceGrain } from "@/components/arcade/ArcadeHud";
 import type { BjCard } from "@/lib/arcade/blackjack.functions";
 
 export type BlackjackState = {
@@ -216,18 +215,9 @@ export function BlackjackTable({
       ref={boxRef}
       className="relative h-full overflow-hidden"
       style={{
-        background:
-          "radial-gradient(120% 90% at 50% 8%, #164d39 0%, #0e412f 42%, #0a2e22 72%, #062219 100%)",
+        background: "#0d5a38",
       }}
     >
-      {/* Felt grain — keeps the cloth from reading as a flat fill. */}
-      <SurfaceGrain game="blackjack" />
-      {/* Inset contact shadow around the rail. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{ boxShadow: "inset 0 0 60px 18px rgba(0,0,0,.55)" }}
-      />
       <FeltArt />
 
       {/* House medallion — screen-printed outline, always dead centre. */}
@@ -306,7 +296,7 @@ export function BlackjackTable({
                 style={{
                   borderColor: "rgba(224,182,74,.35)",
                   background: "rgba(0,0,0,.28)",
-                  boxShadow: "0 0 22px -10px rgba(224,182,74,.6)",
+                  boxShadow: "inset 0 0 0 1px rgba(212,176,90,.45)",
                 }}
               >
                 <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#f0e3bd]/80">

@@ -301,7 +301,6 @@ export function RouletteWheel({
                     stroke="#ffd76a"
                     strokeWidth="2.4"
                     style={{
-                      filter: "drop-shadow(0 0 5px rgba(255,215,106,.9))",
                       animation: reducedMotion
                         ? undefined
                         : "rouletteWinFlash 300ms ease-out 2",

@@ -17,7 +17,7 @@ export function ArcadeSoundToggle({ className }: { className?: string }) {
         if (!next) play("button");
       }}
       className={cn(
-        "grid h-8 w-8 place-items-center rounded-full border border-[var(--color-surface-border)] bg-black/45 text-[var(--color-ink-muted)] backdrop-blur transition-colors hover:text-[var(--color-ink)]",
+        "grid h-8 w-8 place-items-center rounded-full border border-[var(--color-surface-border)] bg-black/55 text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)]",
         !muted && "text-[var(--color-neon)]",
         className,
       )}

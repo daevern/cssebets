@@ -41,13 +41,12 @@ export function ControlDock({
     <DockCtx.Provider value={game ?? null}>
       <div
         data-arcade-console
-        className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)]/95 pb-[calc(64px+env(safe-area-inset-bottom))] backdrop-blur md:pb-[env(safe-area-inset-bottom)]"
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-surface-border)] bg-[var(--color-surface)] pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-[env(safe-area-inset-bottom)]"
         style={
           theme
             ? {
                 borderTopColor: theme.dock.border,
                 background: theme.dock.surface,
-                boxShadow: "0 -14px 32px -22px rgba(0,0,0,.95)",
               }
             : undefined
         }
@@ -130,8 +129,6 @@ export function DockPrimary({
           ? {
               background: theme.dock.primaryBg,
               color: theme.dock.primaryText,
-              boxShadow:
-                "inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 4px rgba(0,0,0,.28), 0 6px 16px -10px rgba(0,0,0,.9)",
             }
           : undefined
       }
@@ -171,8 +168,7 @@ export function DockSeg({
         theme
           ? {
               borderColor: theme.dock.chipEdge,
-              background: "rgba(0,0,0,.35)",
-              boxShadow: "inset 0 2px 6px rgba(0,0,0,.55)",
+              background: "rgba(0,0,0,.25)",
             }
           : undefined
       }
@@ -199,7 +195,6 @@ export function DockSeg({
                 ? {
                     background: theme.dock.primaryBg,
                     color: theme.dock.primaryText,
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,.4)",
                   }
                 : undefined
             }
@@ -316,7 +311,6 @@ export function DockNote({
           tone === "warn"
             ? "rgba(251,191,36,.35)"
             : (theme?.hud.plaqueBorder ?? "rgba(255,255,255,.1)"),
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,.06)",
       }}
     >
       {children}

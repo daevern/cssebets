@@ -1,11 +1,10 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { ARCADE_GRAIN_URL, ARCADE_THEMES } from "@/lib/arcade/theme";
+import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import type { ArcadeGameKey } from "@/lib/arcade/sound";
 
 /**
- * Engraved HUD plaques — the cabinet's brass read-outs, not a SaaS stat card
- * stack. Presentation only.
+ * Flat 2D HUD plaques — solid fills, hairline borders. Presentation only.
  */
 
 const HudCtx = React.createContext<ArcadeGameKey>("plinko");
@@ -26,11 +25,11 @@ export function HudBar({
         data-arcade-hud
         className={cn(
           // Default clears the sportsbook TopBar. Immersive table mode flips to top-0 via styles.css.
-          "sticky top-14 z-20 -mx-3 flex items-stretch gap-1.5 border-b px-3 py-1.5 backdrop-blur-md md:top-16",
+          "sticky top-14 z-20 -mx-3 flex items-stretch gap-1.5 border-b px-3 py-1.5 md:top-16",
           className,
         )}
         style={{
-          background: "rgba(0,0,0,.5)",
+          background: t.hud.plaqueBg,
           borderColor: t.hud.plaqueBorder,
         }}
       >
@@ -61,7 +60,6 @@ export function FairnessPlaque({
       style={{
         background: t.hud.plaqueBg,
         borderColor: t.hud.plaqueBorder,
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,.07), inset 0 -2px 6px rgba(0,0,0,.45)",
       }}
       title="Published theoretical RTP — server decides every payout"
     >
@@ -109,7 +107,6 @@ export function HudPlaque({
       style={{
         background: t.hud.plaqueBg,
         borderColor: t.hud.plaqueBorder,
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,.07), inset 0 -2px 6px rgba(0,0,0,.45)",
       }}
     >
       <div
@@ -140,42 +137,11 @@ export function HudPlaque({
   );
 }
 
-/**
- * Grain + rim-light overlay for any hero surface (felt, stone, glass).
- * Absolutely positioned; the parent needs `relative`.
- */
-export function SurfaceGrain({
-  game,
-  className,
-  radius,
-}: {
+/** Flat mode: no grain / vignette overlay. */
+export function SurfaceGrain(_props: {
   game: ArcadeGameKey;
   className?: string;
   radius?: string;
 }) {
-  const t = ARCADE_THEMES[game];
-  return (
-    <>
-      <div
-        aria-hidden
-        className={cn("pointer-events-none absolute inset-0", className)}
-        style={{
-          backgroundImage: ARCADE_GRAIN_URL,
-          backgroundSize: "120px 120px",
-          opacity: t.feltNoiseOpacity,
-          mixBlendMode: "overlay",
-          borderRadius: radius,
-        }}
-      />
-      <div
-        aria-hidden
-        className={cn("pointer-events-none absolute inset-0", className)}
-        style={{
-          borderRadius: radius,
-          boxShadow:
-            "inset 0 1px 0 rgba(255,255,255,.16), inset 0 -18px 40px rgba(0,0,0,.45)",
-        }}
-      />
-    </>
-  );
+  return null;
 }
