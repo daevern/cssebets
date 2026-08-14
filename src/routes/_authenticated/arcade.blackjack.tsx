@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 import { SettlePlaque, useSettleBeat } from "@/components/arcade/SettlePlaque";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
+import { MiniCabinetTitle } from "@/components/arcade/MiniCabinetTitle";
 import { BlackjackTable, type BlackjackState } from "@/components/arcade/BlackjackTable";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import {
@@ -318,12 +319,6 @@ function BlackjackPage() {
           value={`${todayNet > 0 ? "+" : ""}${todayNet.toLocaleString()}`}
           tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
         />
-        <Stat
-          className="flex-1"
-          label="W / L today"
-          value={`${profileQ.data?.todayWins ?? 0} / ${profileQ.data?.todayLosses ?? 0}`}
-        />
-        <Stat className="flex-1" label="Best hand" value={`${bestQ.data?.value ?? 0}`} />
         <FairnessPlaque
           game="blackjack"
           rtpLabel={arcadeFairness("blackjack").rtpLabel}
@@ -340,7 +335,9 @@ function BlackjackPage() {
       <div className="relative isolate">
         <ArcadeGlow game="blackjack" />
         <ArcadeStage game="blackjack" className="relative z-10">
-          <ArcadeEntrance game="blackjack" className="relative h-[360px] w-full md:h-[520px]">
+          <ArcadeEntrance game="blackjack" className="relative w-full">
+            <MiniCabinetTitle game="blackjack" title="Blackjack" />
+            <div className="relative h-[340px] w-full md:h-[500px]">
             <SettlePlaque
               game="blackjack"
               show={beat}
@@ -353,6 +350,7 @@ function BlackjackPage() {
             <ArcadeIdleCue game="blackjack" show={!inPlay && !busy && !resultOpen}>
               {settled ? "Deal again when ready" : "Select stake · Deal"}
             </ArcadeIdleCue>
+            </div>
           </ArcadeEntrance>
         </ArcadeStage>
       </div>

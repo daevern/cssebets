@@ -7,6 +7,7 @@ import {
   PlayingCard,
 } from "@/components/arcade/PlayingCard";
 import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
+import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import { formatTotal, handValue } from "@/lib/arcade/blackjack-math";
 import type { BjCard } from "@/lib/arcade/blackjack.functions";
 
@@ -19,50 +20,31 @@ export type BlackjackState = {
 /** Gap between consecutive cards leaving the shoe. */
 const STEP_MS = 420;
 
+const T = ARCADE_THEMES.blackjack;
+
+/** Slate-console read-out, matching Dice / Hi-Lo stat cells. */
 function Totals({ label, value, tone }: { label: string; value: string; tone?: "neon" | "muted" }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="flex h-7 items-center text-[9px] font-bold uppercase leading-none tracking-[0.32em] text-[var(--color-ink)]">
+    <div
+      className="flex items-center gap-2 rounded-[6px] border px-2.5 py-1.5"
+      style={{
+        background: "#0f212e",
+        borderColor: tone === "neon" ? T.accent : "rgba(255,255,255,.08)",
+        boxShadow: tone === "neon" ? `0 0 10px ${T.accent}33` : "none",
+      }}
+    >
+      <span className="text-[9px] font-bold uppercase leading-none tracking-[0.16em] text-white/40">
         {label}
       </span>
       <span
         className={cn(
-          "flex h-7 min-w-11 items-center justify-center rounded-[3px] border px-3 text-center font-mono text-[12px] font-bold leading-none tabular-nums transition-colors",
-          tone === "neon"
-            ? "border-[var(--color-neon)]/50 bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
-            : "border-[var(--color-surface-border)] bg-[#0b1a12] text-[var(--color-ink)]",
+          "font-display text-[15px] font-black leading-none tabular-nums transition-colors",
         )}
+        style={{ color: tone === "neon" ? T.accent : "#ffffff" }}
       >
         {value}
       </span>
     </div>
-  );
-}
-
-/** Minimal casino felt: soft arcs framing the play area. */
-function FeltArt() {
-  return (
-    <svg
-      viewBox="0 -70 1180 670"
-      preserveAspectRatio="xMidYMid meet"
-      className="pointer-events-none absolute inset-0 h-full w-full"
-      aria-hidden="true"
-    >
-      <path
-        d="M62,-40 C62,340 300,520 590,520 C880,520 1118,340 1118,-40"
-        fill="none"
-        stroke="#ffffff"
-        strokeOpacity="0.16"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M118,-40 C118,320 320,472 590,472 C860,472 1062,320 1062,-40"
-        fill="none"
-        stroke="#ffffff"
-        strokeOpacity="0.08"
-        strokeWidth="1.5"
-      />
-    </svg>
   );
 }
 
@@ -213,21 +195,17 @@ export function BlackjackTable({
   return (
     <div
       ref={boxRef}
-      className="relative h-full overflow-hidden"
-      style={{
-        background: "#0d5a38",
-      }}
+      className="relative mx-auto h-full w-full max-w-[560px] overflow-hidden rounded-[10px]"
+      style={{ background: T.feltOrBoardFill }}
     >
-      <FeltArt />
-
-      {/* House medallion — screen-printed outline, always dead centre. */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5">
-        <div className="grid h-11 w-11 place-items-center rounded-full border border-white/20 md:h-16 md:w-16">
-          <CsseMark variant="mono" className="h-6 w-6 text-white/25 md:h-9 md:w-9" />
+      {/* House medallion — quiet slate watermark, always dead centre. */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 opacity-70">
+        <div className="grid h-11 w-11 place-items-center rounded-full border border-white/10 md:h-14 md:w-14">
+          <CsseMark variant="mono" className="h-6 w-6 text-white/15 md:h-8 md:w-8" />
         </div>
         <CsseWordmark
-          size={13}
-          className="[&_span]:[color:transparent!important] [&_span]:[-webkit-text-stroke:0.7px_rgba(255,255,255,0.32)!important] md:[&_span]:[font-size:18px]"
+          size={12}
+          className="[&_span]:[color:transparent!important] [&_span]:[-webkit-text-stroke:0.7px_rgba(255,255,255,0.18)!important]"
         />
       </div>
 
@@ -249,23 +227,7 @@ export function BlackjackTable({
         <div ref={shoeRef} className="absolute inset-0" />
       </div>
 
-      <div className="relative mx-auto flex h-full w-full max-w-4xl flex-col items-stretch gap-1 px-12 pb-2 pt-2 md:gap-2 md:px-20 md:pb-4 md:pt-4 lg:px-28">
-        {/* Table title — engraved casino script */}
-        <div className="pointer-events-none flex shrink-0 items-center justify-center gap-2 pb-2 pt-0.5 md:pb-3">
-          <span aria-hidden className="text-[10px] leading-none text-white/45 md:text-xs">
-            ♠
-          </span>
-          <span
-            className="font-display text-[13px] font-black uppercase tracking-[0.16em] md:text-base"
-            style={{ color: "#f0e3bd", textShadow: "0 1px 2px rgba(0,0,0,.6)" }}
-          >
-            Black<span style={{ color: "#e0b64a" }}>jack</span>
-          </span>
-          <span aria-hidden className="text-[10px] leading-none text-white/45 md:text-xs">
-            ♦
-          </span>
-        </div>
-
+      <div className="relative mx-auto flex h-full w-full max-w-3xl flex-col items-stretch gap-1 px-10 pb-3 pt-3 md:gap-2 md:px-16 md:pb-4 md:pt-4">
         {/* Dealer */}
         <div className="flex min-h-0 flex-1 flex-col items-center justify-start gap-2">
           <Totals label="Dealer" value={dealerCards.length ? dealerTotal : "—"} />
@@ -292,14 +254,13 @@ export function BlackjackTable({
           {!cards.length && (
             <div className="pointer-events-none absolute inset-x-0 -bottom-24 flex flex-col items-center gap-2 md:-bottom-28">
               <div
-                className="rounded-full border px-4 py-1"
+                className="rounded-[6px] border px-4 py-1.5"
                 style={{
-                  borderColor: "rgba(224,182,74,.35)",
-                  background: "rgba(0,0,0,.28)",
-                  boxShadow: "inset 0 0 0 1px rgba(212,176,90,.45)",
+                  borderColor: "rgba(255,255,255,.08)",
+                  background: "#0f212e",
                 }}
               >
-                <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#f0e3bd]/80">
+                <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/40">
                   Place a bet to deal
                 </span>
               </div>
