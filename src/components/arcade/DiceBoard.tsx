@@ -193,12 +193,12 @@ export function DiceBoard({
 
       {/* stat cells */}
       <div className="mt-3 flex items-stretch gap-2">
-        <StatCell label="Multiplier" value={`${mult.toFixed(4)}×`} tone="accent" />
+        <StatCell label="Mult" value={`${mult.toFixed(4)}×`} tone="accent" />
         <StatCell
-          label={direction === "under" ? "Roll under" : "Roll over"}
+          label={direction === "under" ? "Under" : "Over"}
           value={target.toFixed(2)}
         />
-        <StatCell label="Win chance" value={`${chance.toFixed(2)}%`} />
+        <StatCell label="Chance" value={`${chance.toFixed(2)}%`} />
       </div>
     </div>
   );
