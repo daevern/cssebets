@@ -349,6 +349,7 @@ function BlackjackPage() {
             <ArcadeIdleCue game="blackjack" show={!inPlay && !busy && !resultOpen}>
               {settled ? "Deal again when ready" : "Select stake · Deal"}
             </ArcadeIdleCue>
+            </div>
           </ArcadeEntrance>
         </ArcadeStage>
       </div>
