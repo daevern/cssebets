@@ -348,19 +348,19 @@ function RpsPage() {
   return (
     <div className="flex flex-col gap-2 md:gap-3">
       <HudBar game="rps">
-        <Stat className="flex-1" label="Balance" value={<AnimatedBalance value={balance} />} />
-        <Stat
+        <HudPlaque
+          game="rps"
+          className="flex-1"
+          label="Balance"
+          value={<AnimatedBalance value={balance} />}
+        />
+        <HudPlaque
+          game="rps"
           className="flex-1"
           label="P/L today"
           value={`${todayNet > 0 ? "+" : ""}${fmt(todayNet)}`}
           tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
         />
-        <Stat
-          className="flex-1"
-          label="W / D / L"
-          value={`${profileQ.data?.todayWins ?? 0}/${profileQ.data?.todayDraws ?? 0}/${profileQ.data?.todayLosses ?? 0}`}
-        />
-        <Stat className="flex-1" label="Longest streak" value={`${bestQ.data?.value ?? 0}`} />
         <FairnessPlaque game="rps" rtpLabel={arcadeFairness("rps").rtpLabel} tag="Fair" />
       </HudBar>
 
