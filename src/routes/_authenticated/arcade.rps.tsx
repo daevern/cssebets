@@ -370,33 +370,37 @@ function RpsPage() {
         </div>
       )}
 
-      <ArcadeStage game="rps">
-      <ArcadeEntrance game="rps" className="relative">
-      <SettlePlaque
-        game="rps"
-        show={beat}
-        label="Run banked"
-        value={`${collected > 0 ? "+" : ""}${Number(collected).toLocaleString()}`}
-      />
-      <RpsArena
-        phase={phase}
-        playerMove={playerMove}
-        serverMove={(round?.serverChoice as RpsMove) ?? null}
-        outcome={round?.outcome ?? null}
-        ladder={ladder}
-        tailMultiplier={tailMult}
-        history={ladderHistory}
-        onChoose={choose}
-        canPlay={canPlay}
-      />
-      <ArcadeIdleCue
-        game="rps"
-        show={phase === "IDLE" && !busy && ladderHistory.length === 0 && !resultOpen}
-      >
-        Choose a move to open the ladder
-      </ArcadeIdleCue>
-      </ArcadeEntrance>
-      </ArcadeStage>
+      <div className="relative isolate">
+        <ArcadeGlow game="rps" />
+        <ArcadeStage game="rps" className="relative z-10">
+          <ArcadeEntrance game="rps" className="relative">
+            <MiniCabinetTitle game="rps" title="Rock–Paper–Scissors" />
+            <SettlePlaque
+              game="rps"
+              show={beat}
+              label="Run banked"
+              value={`${collected > 0 ? "+" : ""}${Number(collected).toLocaleString()}`}
+            />
+            <RpsArena
+              phase={phase}
+              playerMove={playerMove}
+              serverMove={(round?.serverChoice as RpsMove) ?? null}
+              outcome={round?.outcome ?? null}
+              ladder={ladder}
+              tailMultiplier={tailMult}
+              history={ladderHistory}
+              onChoose={choose}
+              canPlay={canPlay}
+            />
+            <ArcadeIdleCue
+              game="rps"
+              show={phase === "IDLE" && !busy && ladderHistory.length === 0 && !resultOpen}
+            >
+              Choose a move to open the ladder
+            </ArcadeIdleCue>
+          </ArcadeEntrance>
+        </ArcadeStage>
+      </div>
 
       <RecentResultsStrip
         game="rps"
