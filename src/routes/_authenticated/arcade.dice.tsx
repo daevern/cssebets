@@ -5,6 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Dices, Loader2 } from "lucide-react";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
+import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
+import { MiniCabinetTitle } from "@/components/arcade/MiniCabinetTitle";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 import { ArcadeIdleCue } from "@/components/arcade/ArcadeIdleCue";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
@@ -171,8 +173,11 @@ function DicePage() {
         </div>
       )}
 
-      <ArcadeStage game="dice">
+      <div className="relative isolate">
+        <ArcadeGlow game="dice" />
+        <ArcadeStage game="dice" className="relative z-10">
         <ArcadeEntrance game="dice" className="relative">
+          <MiniCabinetTitle game="dice" title="Dice" kicker="Target · roll · settle" />
           <SettlePlaque
             game="dice"
             show={beat}
@@ -185,6 +190,7 @@ function DicePage() {
           </ArcadeIdleCue>
         </ArcadeEntrance>
       </ArcadeStage>
+      </div>
 
       <RecentResultsStrip
         game="dice"

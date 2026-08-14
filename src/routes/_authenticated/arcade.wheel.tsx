@@ -5,6 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Loader2, RotateCw } from "lucide-react";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
+import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
+import { MiniCabinetTitle } from "@/components/arcade/MiniCabinetTitle";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 import { ArcadeIdleCue } from "@/components/arcade/ArcadeIdleCue";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
@@ -165,8 +167,11 @@ function WheelPage() {
         </div>
       )}
 
-      <ArcadeStage game="wheel">
+      <div className="relative isolate">
+        <ArcadeGlow game="wheel" />
+        <ArcadeStage game="wheel" className="relative z-10">
         <ArcadeEntrance game="wheel" className="relative">
+          <MiniCabinetTitle game="wheel" title="Fortune Wheel" kicker="Risk · spin · land" />
           <SettlePlaque
             game="wheel"
             show={beat}
@@ -179,6 +184,7 @@ function WheelPage() {
           </ArcadeIdleCue>
         </ArcadeEntrance>
       </ArcadeStage>
+      </div>
 
       <RecentResultsStrip
         game="wheel"

@@ -5,6 +5,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { HandCoins, Loader2, Play } from "lucide-react";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
+import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
+import { MiniCabinetTitle } from "@/components/arcade/MiniCabinetTitle";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 import { ArcadeIdleCue } from "@/components/arcade/ArcadeIdleCue";
 import { ArcadeResultDialog } from "@/components/arcade/ArcadeResultDialog";
@@ -219,8 +221,11 @@ function HiloPage() {
         </div>
       )}
 
-      <ArcadeStage game="hilo">
+      <div className="relative isolate">
+        <ArcadeGlow game="hilo" />
+        <ArcadeStage game="hilo" className="relative z-10">
         <ArcadeEntrance game="hilo" className="relative">
+          <MiniCabinetTitle game="hilo" title="Hi-Lo" kicker="Call · climb · collect" />
           <SettlePlaque
             game="hilo"
             show={beat}
@@ -241,6 +246,7 @@ function HiloPage() {
           </ArcadeIdleCue>
         </ArcadeEntrance>
       </ArcadeStage>
+      </div>
 
       <RecentResultsStrip
         game="hilo"
