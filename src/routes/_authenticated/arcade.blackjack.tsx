@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 import { SettlePlaque, useSettleBeat } from "@/components/arcade/SettlePlaque";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
+import { MiniCabinetTitle } from "@/components/arcade/MiniCabinetTitle";
 import { BlackjackTable, type BlackjackState } from "@/components/arcade/BlackjackTable";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import {
