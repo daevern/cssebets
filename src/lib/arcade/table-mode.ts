@@ -5,7 +5,6 @@ const TABLE_GAMES = new Set<string>([
   "roulette",
   "treasure",
   "blackjack",
-  "rps",
 ]);
 
 /** True on a live cabinet route (`/arcade/plinko` …), not the lobby. */
