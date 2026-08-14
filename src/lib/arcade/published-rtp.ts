@@ -14,6 +14,7 @@ import {
 } from "@/lib/arcade/config-registry";
 import { THEORETICAL_RTP } from "@/lib/arcade/roulette-math";
 import { DEFAULT_TARGET_RTP } from "@/lib/arcade/treasure-math";
+import { MINI_TARGET_RTP } from "@/lib/arcade/mini-math";
 
 export type FairnessInfo = {
   /** Short plaque value, e.g. "97.3%" */
@@ -63,5 +64,9 @@ export function arcadeFairness(
         tag: "Provably fair",
       };
     }
+    case "hilo":
+    case "dice":
+    case "wheel":
+      return { rtpLabel: pct(MINI_TARGET_RTP), tag: "Provably fair" };
   }
 }

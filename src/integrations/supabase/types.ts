@@ -1999,6 +1999,164 @@ export type Database = {
         }
         Relationships: []
       }
+      arcade_mini_configs: {
+        Row: {
+          announcement: string | null
+          chip_values: number[]
+          cooldown_seconds: number
+          created_at: string
+          daily_round_limit: number
+          id: string
+          maintenance_mode: boolean
+          max_multiplier: number
+          max_stake: number
+          min_stake: number
+          payload: Json
+          product: string
+          round_ttl_seconds: number
+          status: string
+          target_rtp: number
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          announcement?: string | null
+          chip_values?: number[]
+          cooldown_seconds?: number
+          created_at?: string
+          daily_round_limit?: number
+          id?: string
+          maintenance_mode?: boolean
+          max_multiplier?: number
+          max_stake?: number
+          min_stake?: number
+          payload?: Json
+          product: string
+          round_ttl_seconds?: number
+          status?: string
+          target_rtp?: number
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          announcement?: string | null
+          chip_values?: number[]
+          cooldown_seconds?: number
+          created_at?: string
+          daily_round_limit?: number
+          id?: string
+          maintenance_mode?: boolean
+          max_multiplier?: number
+          max_stake?: number
+          min_stake?: number
+          payload?: Json
+          product?: string
+          round_ttl_seconds?: number
+          status?: string
+          target_rtp?: number
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      arcade_mini_rounds: {
+        Row: {
+          client_seed: string
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string | null
+          gross_return: number
+          house_net: number
+          id: string
+          idempotency_key: string | null
+          multiplier: number
+          nonce: number
+          outcome: string | null
+          product: string
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number
+          state: Json
+          status: string
+          step_count: number
+          user_id: string
+          user_net: number
+          verification_id: string
+        }
+        Insert: {
+          client_seed?: string
+          config_id: string
+          config_version: number
+          created_at?: string
+          expires_at?: string | null
+          gross_return?: number
+          house_net?: number
+          id?: string
+          idempotency_key?: string | null
+          multiplier?: number
+          nonce?: number
+          outcome?: string | null
+          product: string
+          random_hex?: string | null
+          result_reason?: string | null
+          seed_id?: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at?: string | null
+          settled_at?: string | null
+          stake?: number
+          state?: Json
+          status?: string
+          step_count?: number
+          user_id: string
+          user_net?: number
+          verification_id?: string
+        }
+        Update: {
+          client_seed?: string
+          config_id?: string
+          config_version?: number
+          created_at?: string
+          expires_at?: string | null
+          gross_return?: number
+          house_net?: number
+          id?: string
+          idempotency_key?: string | null
+          multiplier?: number
+          nonce?: number
+          outcome?: string | null
+          product?: string
+          random_hex?: string | null
+          result_reason?: string | null
+          seed_id?: string | null
+          server_seed?: string
+          server_seed_hash?: string
+          server_seed_revealed_at?: string | null
+          settled_at?: string | null
+          stake?: number
+          state?: Json
+          status?: string
+          step_count?: number
+          user_id?: string
+          user_net?: number
+          verification_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arcade_mini_rounds_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "arcade_mini_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       arcade_plinko_games: {
         Row: {
           client_seed: string
@@ -8496,6 +8654,60 @@ export type Database = {
         }
         Returns: number
       }
+      arcade_dice_multiplier: {
+        Args: {
+          p_cap: number
+          p_direction: string
+          p_rtp: number
+          p_target: number
+        }
+        Returns: number
+      }
+      arcade_dice_play: {
+        Args: {
+          p_client_seed: string
+          p_direction: string
+          p_idempotency_key: string
+          p_stake: number
+          p_target: number
+          p_user: string
+        }
+        Returns: {
+          client_seed: string
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string | null
+          gross_return: number
+          house_net: number
+          id: string
+          idempotency_key: string | null
+          multiplier: number
+          nonce: number
+          outcome: string | null
+          product: string
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number
+          state: Json
+          status: string
+          step_count: number
+          user_id: string
+          user_net: number
+          verification_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_mini_rounds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       arcade_ensure_daily: {
         Args: { p_daily_alloc: number; p_user: string }
         Returns: {
@@ -8521,6 +8733,234 @@ export type Database = {
           p_server_seed: string
         }
         Returns: number[]
+      }
+      arcade_hilo_cashout: {
+        Args: { p_round_id: string; p_user: string }
+        Returns: {
+          client_seed: string
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string | null
+          gross_return: number
+          house_net: number
+          id: string
+          idempotency_key: string | null
+          multiplier: number
+          nonce: number
+          outcome: string | null
+          product: string
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number
+          state: Json
+          status: string
+          step_count: number
+          user_id: string
+          user_net: number
+          verification_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_mini_rounds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_hilo_draw: {
+        Args: {
+          p_cursor: number
+          p_round: Database["public"]["Tables"]["arcade_mini_rounds"]["Row"]
+        }
+        Returns: Json
+      }
+      arcade_hilo_guess: {
+        Args: { p_guess: string; p_round_id: string; p_user: string }
+        Returns: {
+          client_seed: string
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string | null
+          gross_return: number
+          house_net: number
+          id: string
+          idempotency_key: string | null
+          multiplier: number
+          nonce: number
+          outcome: string | null
+          product: string
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number
+          state: Json
+          status: string
+          step_count: number
+          user_id: string
+          user_net: number
+          verification_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_mini_rounds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_hilo_prob: {
+        Args: { p_guess: string; p_rank: number }
+        Returns: number
+      }
+      arcade_hilo_start: {
+        Args: {
+          p_client_seed: string
+          p_idempotency_key: string
+          p_stake: number
+          p_user: string
+        }
+        Returns: {
+          client_seed: string
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string | null
+          gross_return: number
+          house_net: number
+          id: string
+          idempotency_key: string | null
+          multiplier: number
+          nonce: number
+          outcome: string | null
+          product: string
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number
+          state: Json
+          status: string
+          step_count: number
+          user_id: string
+          user_net: number
+          verification_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_mini_rounds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_mini_close: {
+        Args: {
+          p_multiplier: number
+          p_outcome: string
+          p_random_hex: string
+          p_round_id: string
+          p_state: Json
+        }
+        Returns: {
+          client_seed: string
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string | null
+          gross_return: number
+          house_net: number
+          id: string
+          idempotency_key: string | null
+          multiplier: number
+          nonce: number
+          outcome: string | null
+          product: string
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number
+          state: Json
+          status: string
+          step_count: number
+          user_id: string
+          user_net: number
+          verification_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_mini_rounds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_mini_hex: {
+        Args: { p_cursor: number; p_input: string; p_server_seed: string }
+        Returns: string
+      }
+      arcade_mini_open: {
+        Args: {
+          p_client_seed: string
+          p_idempotency_key: string
+          p_max_gross: number
+          p_product: string
+          p_stake: number
+          p_state: Json
+          p_user: string
+        }
+        Returns: {
+          client_seed: string
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string | null
+          gross_return: number
+          house_net: number
+          id: string
+          idempotency_key: string | null
+          multiplier: number
+          nonce: number
+          outcome: string | null
+          product: string
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number
+          state: Json
+          status: string
+          step_count: number
+          user_id: string
+          user_net: number
+          verification_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_mini_rounds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_mini_rand: {
+        Args: { p_cursor: number; p_input: string; p_server_seed: string }
+        Returns: number
       }
       arcade_period_bucket: {
         Args: { p_period: string; p_ts: string }
@@ -8895,6 +9335,50 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "arcade_treasure_rounds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_wheel_play: {
+        Args: {
+          p_client_seed: string
+          p_idempotency_key: string
+          p_risk: string
+          p_stake: number
+          p_user: string
+        }
+        Returns: {
+          client_seed: string
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string | null
+          gross_return: number
+          house_net: number
+          id: string
+          idempotency_key: string | null
+          multiplier: number
+          nonce: number
+          outcome: string | null
+          product: string
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number
+          state: Json
+          status: string
+          step_count: number
+          user_id: string
+          user_net: number
+          verification_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_mini_rounds"
           isOneToOne: true
           isSetofReturn: false
         }
