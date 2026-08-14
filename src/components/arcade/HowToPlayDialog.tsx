@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BlackjackArt, PlinkoArt, RouletteArt, RpsArt, TreasureArt } from "./GameArt";
+import { DiceArt, HiloArt, WheelArt } from "./MiniGameArt";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import type { ArcadeGameKey } from "@/lib/arcade/sound";
 
@@ -17,6 +18,9 @@ const GAME_ART: Record<ArcadeGameKey, () => ReactNode> = {
   treasure: TreasureArt,
   blackjack: BlackjackArt,
   rps: RpsArt,
+  hilo: HiloArt,
+  dice: DiceArt,
+  wheel: WheelArt,
 };
 
 export type HowToPlayContent = {
@@ -27,10 +31,59 @@ export type HowToPlayContent = {
   cashout: string;
 };
 
-export const HOW_TO_PLAY: Record<
-  "plinko" | "roulette" | "treasure" | "blackjack" | "rps",
-  HowToPlayContent
-> = {
+export const HOW_TO_PLAY: Record<ArcadeGameKey, HowToPlayContent> = {
+  hilo: {
+    title: "How to play Hi-Lo",
+    tagline: "Call the next card higher or lower — every correct call grows your multiplier.",
+    steps: [
+      "Set your stake and press Deal. The stake leaves your wallet and the first card is turned over.",
+      "Each button shows its real chance and the multiplier it pays. Higher means higher or equal; Lower means strictly lower.",
+      "Call correctly and the new card becomes the reference card, with your multiplier compounding.",
+      "Press Collect at any time to bank stake × multiplier. One wrong call ends the run.",
+    ],
+    winning: [
+      "The buttons always add up to the whole deck, so one side is safe and cheap, the other risky and rich.",
+      "Calling the likelier side repeatedly grows slowly but survives far longer.",
+      "The run is capped at 25×, at which point it banks automatically.",
+    ],
+    cashout:
+      "Collect banks stake × current multiplier straight into your points wallet. An uncollected run is worth nothing, so bank before you get greedy.",
+  },
+  dice: {
+    title: "How to play Dice",
+    tagline: "Pick a target, pick a side, and the server rolls 0.00–99.99.",
+    steps: [
+      "Set your stake with the chips or the stake field.",
+      "Drag the slider to choose your target number, and switch between Roll under and Roll over.",
+      "The win chance and payout update live — a tighter target pays more but lands less often.",
+      "Press Roll. The result settles instantly and any win is credited to your wallet.",
+    ],
+    winning: [
+      "Every target pays exactly 96% of fair odds, so no target is better value than another.",
+      "Wide targets (like under 90) win most rolls for a small return.",
+      "Narrow targets pay up to 48× but hit rarely — size your stake accordingly.",
+    ],
+    cashout:
+      "There is nothing to cash out — each roll settles the moment it resolves and pays straight to your points wallet.",
+  },
+  wheel: {
+    title: "How to play Fortune Wheel",
+    tagline: "Twenty equal segments, one pointer — pick your risk and spin.",
+    steps: [
+      "Set your stake, then choose Low, Medium or High risk.",
+      "The wheel below shows the exact segment table you're spinning against.",
+      "Press Spin. The winning segment is fixed by the committed seed before the wheel even moves.",
+      "The segment under the pointer multiplies your stake and pays into your wallet.",
+    ],
+    winning: [
+      "Every segment is equally likely — the pointer has no bias.",
+      "Low risk returns something on most spins; high risk is mostly zeros with a 15× top prize.",
+      "All three risk tables pay the same 96% over time, so pick the swing you enjoy.",
+    ],
+    cashout:
+      "Each spin settles on its own — the payout lands in your points wallet as soon as the wheel stops.",
+  },
+
   rps: {
     title: "How to play Rock–Paper–Scissors",
     tagline: "The computer locks its move before you pick — both hands reveal at the same moment.",
