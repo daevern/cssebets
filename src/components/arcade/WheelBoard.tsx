@@ -5,20 +5,50 @@ import { WHEEL_SEGMENTS, type WheelRisk } from "@/lib/arcade/mini-math";
 
 const T = ARCADE_THEMES.wheel;
 const SPIN_MS = 4200;
-const CYAN = "#00e5ff";
+const LOSS = "#ff4d5e";
+const POINTER = "#ffffff";
 
+/** Stake-style segment tiers: green ladder for wins, red/slate for misses. */
 function colourFor(m: number, i: number): string {
-  if (m >= 10) return "#ffd76a";
-  if (m >= 4) return "#00e5ff";
-  if (m >= 1.5) return "#ff3d7f";
-  if (m >= 1) return "#a32a63";
-  if (m > 0) return "#5a1c3c";
-  return i % 2 === 0 ? "#2a1550" : "#1b0f35";
+  if (m >= 10) return "#d5ff4a";
+  if (m >= 4) return "#7bffb0";
+  if (m >= 1.5) return "#00e701";
+  if (m >= 1) return "#12a527";
+  if (m > 0) return "#155e2a";
+  return i % 2 === 0 ? "#2f4553" : "#1c2f3b";
+}
+
+function StatCell({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "accent" | "loss";
+}) {
+  return (
+    <div
+      className="flex min-w-0 flex-1 flex-col gap-1 rounded-[6px] border px-2.5 py-2"
+      style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
+    >
+      <span className="truncate text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
+        {label}
+      </span>
+      <span
+        className="font-display text-[15px] font-black tabular-nums leading-none"
+        style={{ color: tone === "accent" ? T.accent : tone === "loss" ? LOSS : "#ffffff" }}
+      >
+        {value}
+      </span>
+    </div>
+  );
 }
 
 /**
- * Fortune Wheel — neon carnival cabinet: chasing bulb ring, recoiling pointer,
- * win halo burst and a lit hub readout. Presentation only.
+ * Fortune Wheel — Stake-style slate console matching Dice/Hi-Lo: flat slate
+ * board, green-tier segments, white pointer and live stat cells.
+ * Presentation only.
  */
 export function WheelBoard({
   risk,
@@ -91,90 +121,85 @@ export function WheelBoard({
 
   const R = 118;
   const C = 136;
-  const R_INNER = 30;
-  const R_RIM = R + 12;
+  const R_INNER = 34;
+  const R_RIM = R + 10;
   const landedMult = settledIdx != null ? segments[settledIdx] : null;
-  const bigWin = landedMult != null && landedMult >= 2;
-  const bulbs = Array.from({ length: 24 }, (_, i) => i);
+  const won = landedMult != null ? landedMult >= 1 : null;
+  const bestMult = Math.max(...segments);
+  const winCount = segments.filter((m) => m >= 1).length;
+  const chance = (winCount / n) * 100;
 
   return (
     <div
-      className="relative mx-auto flex w-full max-w-[400px] flex-col items-center overflow-hidden rounded-[12px] px-2 pb-4 pt-2"
-      style={{
-        background: `radial-gradient(circle at 50% 42%, #2a1550 0%, ${T.feltOrBoardFill} 62%, #0d0620 100%)`,
-      }}
+      className="relative mx-auto w-full max-w-[460px] overflow-hidden rounded-[10px] px-4 pb-4 pt-3"
+      style={{ background: T.feltOrBoardFill }}
     >
-      <div className="relative w-[300px]">
-        {/* neon halo burst on settle */}
-        {landedMult != null ? (
+      {/* result pill */}
+      <div className="relative flex h-[70px] items-start justify-center">
+        <div
+          key={`pill-${spinKey}-${settledIdx ?? "x"}`}
+          className={cn(
+            "rounded-[8px] border px-4 py-2 text-center",
+            landedMult != null && "motion-safe:[animation:dicePillLand_360ms_ease-out]",
+          )}
+          style={{
+            background: "#0f212e",
+            borderColor: won == null ? "rgba(255,255,255,.12)" : won ? T.accent : LOSS,
+            boxShadow:
+              won == null
+                ? "none"
+                : `0 0 0 1px ${won ? "rgba(0,231,1,.25)" : "rgba(255,77,94,.25)"}`,
+          }}
+        >
           <div
-            key={`halo-${spinKey}`}
-            className="pointer-events-none absolute left-1/2 top-[152px] z-0 h-[260px] w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:[animation:wheelHaloBurst_760ms_ease-out_forwards]"
-            style={{
-              border: `2px solid ${bigWin ? CYAN : T.accent}`,
-              boxShadow: `0 0 30px ${bigWin ? "rgba(0,229,255,.5)" : "rgba(255,61,127,.4)"}`,
-            }}
-          />
-        ) : null}
+            className="font-display text-[26px] font-black tabular-nums leading-none"
+            style={{ color: won == null ? "rgba(255,255,255,.55)" : won ? T.accent : LOSS }}
+          >
+            {landedMult != null ? `${landedMult.toFixed(2)}×` : spinning ? "—" : "0.00×"}
+          </div>
+          <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/35">
+            {spinning ? "spinning" : won == null ? "ready" : won ? "win" : "bust"}
+          </div>
+        </div>
+      </div>
 
+      <div className="relative mx-auto w-[292px]">
         {/* pointer */}
         <div
           key={`kick-${kick}`}
           className={cn(
-            "absolute left-1/2 top-[2px] z-30 -translate-x-1/2",
+            "absolute left-1/2 top-0 z-30 -translate-x-1/2",
             spinning && "motion-safe:[animation:wheelPointerKick_140ms_ease-out]",
           )}
           aria-hidden
         >
           <div
-            className="mx-auto h-3 w-3 rounded-full"
-            style={{ background: CYAN, boxShadow: `0 0 10px ${CYAN}` }}
-          />
-          <div
             className="mx-auto"
             style={{
               width: 0,
               height: 0,
-              borderLeft: "10px solid transparent",
-              borderRight: "10px solid transparent",
-              borderTop: `20px solid ${CYAN}`,
-              filter: "drop-shadow(0 0 6px rgba(0,229,255,.7))",
+              borderLeft: "9px solid transparent",
+              borderRight: "9px solid transparent",
+              borderTop: `18px solid ${POINTER}`,
+              filter: "drop-shadow(0 2px 4px rgba(0,0,0,.6))",
             }}
           />
         </div>
 
         <svg
           viewBox="0 0 272 272"
-          className="mx-auto h-[292px] w-[292px]"
+          className="mx-auto h-[280px] w-[280px]"
           role="img"
           aria-label="Fortune wheel"
         >
-          <circle cx={C} cy={C} r={R_RIM + 8} fill="#0d0620" />
-          {/* chasing bulbs */}
-          {bulbs.map((i) => {
-            const a = (i / bulbs.length) * Math.PI * 2 - Math.PI / 2;
-            return (
-              <circle
-                key={i}
-                cx={C + (R_RIM + 8) * Math.cos(a)}
-                cy={C + (R_RIM + 8) * Math.sin(a)}
-                r={2.6}
-                fill={i % 2 === 0 ? CYAN : T.accent}
-                style={{
-                  animation: `wheelBulbChase 1.6s ease-in-out ${(i % 6) * 0.12}s infinite`,
-                }}
-              />
-            );
-          })}
-          <circle cx={C} cy={C} r={R_RIM} fill="#160a2c" stroke={T.accent} strokeWidth="2" />
+          <circle cx={C} cy={C} r={R_RIM + 4} fill="#0f212e" />
           <circle
             cx={C}
             cy={C}
-            r={R_RIM - 5}
-            fill="none"
-            stroke={CYAN}
-            strokeOpacity="0.35"
-            strokeWidth="1"
+            r={R_RIM}
+            fill="#1c2f3b"
+            stroke="rgba(255,255,255,.08)"
+            strokeWidth="2"
           />
 
           <g
@@ -189,22 +214,22 @@ export function WheelBoard({
               const a1 = ((i + 1) / n) * Math.PI * 2 - Math.PI / 2;
               const p = (a: number, r = R) => `${C + r * Math.cos(a)} ${C + r * Math.sin(a)}`;
               const mid = (a0 + a1) / 2;
-              const tx = C + R * 0.7 * Math.cos(mid);
-              const ty = C + R * 0.7 * Math.sin(mid);
+              const tx = C + R * 0.72 * Math.cos(mid);
+              const ty = C + R * 0.72 * Math.sin(mid);
               const lit = settledIdx === i;
               return (
                 <g key={i}>
                   <path
                     d={`M${C} ${C} L${p(a0)} A${R} ${R} 0 0 1 ${p(a1)} Z`}
                     fill={colourFor(m, i)}
-                    stroke={lit ? "#ffffff" : "rgba(0,0,0,.45)"}
-                    strokeWidth={lit ? 2 : 0.6}
+                    stroke={lit ? "#ffffff" : "rgba(15,33,46,.85)"}
+                    strokeWidth={lit ? 2 : 1}
                   />
                   {lit ? (
                     <path
                       d={`M${C} ${C} L${p(a0)} A${R} ${R} 0 0 1 ${p(a1)} Z`}
                       fill="#ffffff"
-                      fillOpacity="0.22"
+                      fillOpacity="0.18"
                     />
                   ) : null}
                   <text
@@ -214,8 +239,8 @@ export function WheelBoard({
                     dominantBaseline="middle"
                     fontSize={m >= 10 ? 9.5 : 8}
                     fontWeight="900"
-                    fill={m >= 1 ? "#12061f" : "#ffffff"}
-                    fillOpacity={m > 0 ? 1 : 0.3}
+                    fill={m >= 1 ? "#0f212e" : "#ffffff"}
+                    fillOpacity={m > 0 ? 1 : 0.35}
                     transform={`rotate(${(mid * 180) / Math.PI + 90} ${tx} ${ty})`}
                   >
                     {m > 0 ? `${m}×` : "0"}
@@ -225,13 +250,13 @@ export function WheelBoard({
             })}
           </g>
 
-          <circle cx={C} cy={C} r={R_INNER + 6} fill="#0d0620" stroke={CYAN} strokeWidth="1.4" />
+          <circle cx={C} cy={C} r={R_INNER + 5} fill="#0f212e" />
           <circle
             cx={C}
             cy={C}
             r={R_INNER}
-            fill="#1b0f35"
-            stroke={landedMult != null ? (bigWin ? CYAN : T.accent) : "rgba(255,255,255,.18)"}
+            fill="#213743"
+            stroke={won == null ? "rgba(255,255,255,.14)" : won ? T.accent : LOSS}
             strokeWidth="1.6"
           />
           <text
@@ -241,12 +266,25 @@ export function WheelBoard({
             dominantBaseline="middle"
             fontSize={landedMult != null ? 15 : 8}
             fontWeight="900"
-            fill={landedMult != null ? (bigWin ? CYAN : T.accent) : "rgba(255,255,255,.4)"}
+            fill={
+              landedMult != null
+                ? won
+                  ? T.accent
+                  : LOSS
+                : "rgba(255,255,255,.4)"
+            }
             letterSpacing={landedMult != null ? 0 : 1.4}
           >
             {landedMult != null ? `${landedMult}×` : risk.toUpperCase()}
           </text>
         </svg>
+      </div>
+
+      {/* stat cells */}
+      <div className="mt-3 flex items-stretch gap-2">
+        <StatCell label="Max" value={`${bestMult.toFixed(2)}×`} tone="accent" />
+        <StatCell label="Risk" value={risk.charAt(0).toUpperCase() + risk.slice(1)} />
+        <StatCell label="Chance" value={`${chance.toFixed(2)}%`} />
       </div>
     </div>
   );
