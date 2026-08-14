@@ -353,7 +353,9 @@ export function HiloBoard({
             ))}
           </div>
         ) : null}
+        </div>
       </div>
     </div>
+
   );
 }
