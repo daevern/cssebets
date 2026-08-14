@@ -10,9 +10,6 @@ import tileRoulette from "@/assets/arcade/tile-roulette.jpg";
 import tileTreasure from "@/assets/arcade/tile-treasure.jpg";
 import tileBlackjack from "@/assets/arcade/tile-blackjack.jpg";
 import tileRps from "@/assets/arcade/tile-rps.jpg";
-import tileHilo from "@/assets/arcade/tile-hilo.jpg";
-import tileDice from "@/assets/arcade/tile-dice.jpg";
-import tileWheel from "@/assets/arcade/tile-wheel.jpg";
 
 export const Route = createFileRoute("/_authenticated/arcade/")({
   head: () => ({
@@ -78,27 +75,7 @@ const GAMES: {
     blurb: "Commit · reveal · climb",
     tile: tileRps,
   },
-  {
-    key: "hilo",
-    to: "/arcade/hilo",
-    label: "Hi-Lo",
-    blurb: "Call · climb · collect",
-    tile: tileHilo,
-  },
-  {
-    key: "dice",
-    to: "/arcade/dice",
-    label: "Dice",
-    blurb: "Target · roll · settle",
-    tile: tileDice,
-  },
-  {
-    key: "wheel",
-    to: "/arcade/wheel",
-    label: "Fortune Wheel",
-    blurb: "Risk · spin · land",
-    tile: tileWheel,
-  },
+
 ];
 
 function ArcadeLobby() {
