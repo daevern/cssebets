@@ -255,14 +255,13 @@ export function BlackjackTable({
           {!cards.length && (
             <div className="pointer-events-none absolute inset-x-0 -bottom-24 flex flex-col items-center gap-2 md:-bottom-28">
               <div
-                className="rounded-full border px-4 py-1"
+                className="rounded-[6px] border px-4 py-1.5"
                 style={{
-                  borderColor: "rgba(224,182,74,.35)",
-                  background: "rgba(0,0,0,.28)",
-                  boxShadow: "inset 0 0 0 1px rgba(212,176,90,.45)",
+                  borderColor: "rgba(255,255,255,.08)",
+                  background: "#0f212e",
                 }}
               >
-                <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-[#f0e3bd]/80">
+                <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/40">
                   Place a bet to deal
                 </span>
               </div>
