@@ -176,125 +176,156 @@ export function HiloBoard({
   return (
     <div
       className="relative mx-auto w-full max-w-[440px] overflow-hidden rounded-[12px]"
-      style={{ background: T.feltOrBoardFill }}
+      style={{
+        background: `radial-gradient(120% 70% at 50% -10%, #3a2350 0%, ${T.feltOrBoardFill} 55%, #120a1a 100%)`,
+      }}
     >
-      {/* felt arcs */}
-      <svg
-        className="pointer-events-none absolute inset-0 h-full w-full"
-        viewBox="0 0 440 360"
-        preserveAspectRatio="none"
+      {/* velvet spotlight */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-0 h-[220px] w-[260px] -translate-x-1/2 motion-safe:[animation:hiloVelvetDrift_6s_ease-in-out_infinite]"
+        style={{
+          background:
+            "radial-gradient(closest-side, rgba(255,194,71,.22), rgba(255,194,71,0) 72%)",
+        }}
         aria-hidden
-      >
-        <path
-          d="M40 20 C40 220 140 300 220 300 C300 300 400 220 400 20"
-          fill="none"
-          stroke="rgba(255,255,255,.14)"
-          strokeWidth="1.4"
-        />
-        <path
-          d="M70 20 C70 200 150 268 220 268 C290 268 370 200 370 20"
-          fill="none"
-          stroke="rgba(255,255,255,.07)"
-          strokeWidth="1.2"
-        />
-      </svg>
+      />
 
       {/* house watermark */}
-      <div className="pointer-events-none absolute left-1/2 top-[42%] z-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 opacity-[0.18]">
-        <div className="grid h-12 w-12 place-items-center rounded-full border border-white/30">
-          <CsseMark variant="mono" className="h-7 w-7 text-white" />
-        </div>
+      <div className="pointer-events-none absolute bottom-3 right-3 z-0 flex items-center gap-1.5 opacity-[0.14]">
+        <CsseMark variant="mono" className="h-4 w-4 text-white" />
         <CsseWordmark
-          size={11}
-          className="[&_span]:[color:transparent!important] [&_span]:[-webkit-text-stroke:0.6px_rgba(255,255,255,0.55)!important]"
+          size={9}
+          className="[&_span]:[color:transparent!important] [&_span]:[-webkit-text-stroke:0.5px_rgba(255,255,255,0.6)!important]"
         />
       </div>
 
-      <div className="relative z-10 flex flex-col items-center gap-4 px-4 pb-4 pt-3">
-        {/* climb — one quiet line, not a plaque strip */}
-        <div
-          className={cn(
-            "flex w-full items-baseline justify-center gap-3",
-            climbFlash && "motion-safe:[animation:arcadeSettlePlaque_420ms_ease-out]",
-          )}
-        >
-          <span
-            className="font-display text-[28px] font-black tabular-nums leading-none"
-            style={{ color: T.accent }}
-          >
-            {multiplier.toFixed(2)}×
-          </span>
-          <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">
-            {stepCount > 0 ? `${stepCount} call${stepCount === 1 ? "" : "s"}` : "open"}
-          </span>
-          <span className="font-display text-sm font-black tabular-nums text-white/70">
-            {(stake * multiplier).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-          </span>
-        </div>
-
-        {/* cards */}
-        <div className="flex items-end justify-center gap-5 py-1">
-          <FeltCard key={revealKey} card={current} height={128} dealKey={revealKey} faceUp />
-          {lostCard ? (
-            <FeltCard
-              key={`miss-${lostCard.rank}-${lostCard.suit}-${cards.length}`}
-              card={lostCard}
-              height={100}
-              dealKey={`miss-${lostCard.rank}-${lostCard.suit}-${cards.length}`}
-              slam
-            />
-          ) : null}
-        </div>
-
-        {/* call pads */}
-        <div className="grid w-full grid-cols-2 gap-2">
-          {sides.map((s) => {
-            const p = hiloProbability(rank, s.key);
-            const step = hiloStepMultiplier(rank, s.key);
-            const dead = p <= 0;
-            const disabled = !canGuess || dead || revealLocked;
-            const pending = pendingGuess === s.key;
-            const isHigh = s.key === "higher";
+      <div className="relative z-10 flex gap-3 px-3 pb-4 pt-3">
+        {/* climb ladder rail */}
+        <div className="flex w-[54px] shrink-0 flex-col-reverse justify-end gap-1 pb-1">
+          {Array.from({ length: 6 }, (_, i) => i).map((i) => {
+            const done = i < stepCount;
+            const isNext = i === stepCount;
             return (
-              <button
-                key={s.key}
-                type="button"
-                disabled={disabled}
-                onClick={() => onGuess(s.key)}
+              <div
+                key={i}
                 className={cn(
-                  "rounded-[10px] border px-3 py-3 text-left transition-transform active:translate-y-[1px] disabled:opacity-40",
-                  pending && "animate-pulse",
+                  "h-[18px] origin-left rounded-[4px] border text-center text-[9px] font-black leading-[16px] tabular-nums",
+                  done && "motion-safe:[animation:hiloRungLight_260ms_ease-out]",
                 )}
                 style={{
-                  background: "rgba(0,0,0,.28)",
-                  borderColor: pending
+                  background: done ? "rgba(255,194,71,.22)" : "rgba(0,0,0,.3)",
+                  borderColor: done
                     ? T.accent
-                    : isHigh
-                      ? "rgba(242,166,90,.45)"
-                      : "rgba(255,255,255,.12)",
+                    : isNext
+                      ? "rgba(255,194,71,.4)"
+                      : "rgba(255,255,255,.08)",
+                  color: done ? T.accent : "rgba(255,255,255,.3)",
                 }}
               >
-                <div className="flex items-baseline justify-between gap-2">
-                  <span
-                    className="font-display text-sm font-black uppercase tracking-[0.12em]"
-                    style={{ color: isHigh ? T.accent : "#f0d8e0" }}
-                  >
-                    {s.label}
-                  </span>
-                  <span className="text-[10px] font-bold text-white/40">{s.hint}</span>
-                </div>
-                <div className="mt-1.5 flex items-baseline justify-between">
-                  <span className="font-display text-lg font-black tabular-nums text-white">
-                    {dead ? "—" : `${step.toFixed(2)}×`}
-                  </span>
-                  <span className="text-[11px] font-bold tabular-nums text-white/50">
-                    {(p * 100).toFixed(0)}%
-                  </span>
-                </div>
-              </button>
+                {done ? `${i + 1}` : isNext ? "next" : ""}
+              </div>
             );
           })}
         </div>
+
+        <div className="flex min-w-0 flex-1 flex-col items-center gap-3">
+          {/* climb readout */}
+          <div
+            className={cn(
+              "flex w-full flex-col items-center",
+              climbFlash && "motion-safe:[animation:arcadeSettlePlaque_420ms_ease-out]",
+            )}
+          >
+            <span
+              className="font-display text-[34px] font-black tabular-nums leading-none"
+              style={{ color: T.accent, textShadow: "0 0 18px rgba(255,194,71,.35)" }}
+            >
+              {multiplier.toFixed(2)}×
+            </span>
+            <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">
+              {stepCount > 0 ? `${stepCount} call${stepCount === 1 ? "" : "s"} · ` : "open · "}
+              {(stake * multiplier).toLocaleString(undefined, { maximumFractionDigits: 2 })} pts
+            </span>
+          </div>
+
+          {/* cards */}
+          <div className="flex items-end justify-center gap-4 py-1">
+            <FeltCard key={revealKey} card={current} height={128} dealKey={revealKey} faceUp />
+            {lostCard ? (
+              <FeltCard
+                key={`miss-${lostCard.rank}-${lostCard.suit}-${cards.length}`}
+                card={lostCard}
+                height={100}
+                dealKey={`miss-${lostCard.rank}-${lostCard.suit}-${cards.length}`}
+                slam
+              />
+            ) : null}
+          </div>
+
+          {/* call pads */}
+          <div className="grid w-full grid-cols-2 gap-2">
+            {sides.map((s) => {
+              const p = hiloProbability(rank, s.key);
+              const step = hiloStepMultiplier(rank, s.key);
+              const dead = p <= 0;
+              const disabled = !canGuess || dead || revealLocked;
+              const pending = pendingGuess === s.key;
+              const isHigh = s.key === "higher";
+              const tint = isHigh ? T.accent : "#c48bff";
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onGuess(s.key)}
+                  className={cn(
+                    "group relative overflow-hidden rounded-[10px] border px-3 py-2.5 text-left transition-transform active:translate-y-[1px] disabled:opacity-40",
+                    pending && "animate-pulse",
+                  )}
+                  style={{
+                    background: `linear-gradient(180deg, ${tint}1f, rgba(0,0,0,.34))`,
+                    borderColor: pending ? tint : `${tint}55`,
+                    boxShadow: pending ? `0 0 16px ${tint}44` : "none",
+                  }}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="font-display text-[15px] font-black leading-none"
+                      style={{ color: tint }}
+                      aria-hidden
+                    >
+                      {isHigh ? "▲" : "▼"}
+                    </span>
+                    <span
+                      className="font-display text-[13px] font-black uppercase tracking-[0.12em]"
+                      style={{ color: tint }}
+                    >
+                      {s.label}
+                    </span>
+                    <span className="ml-auto text-[10px] font-bold text-white/35">{s.hint}</span>
+                  </div>
+                  <div className="mt-1.5 flex items-baseline justify-between">
+                    <span className="font-display text-lg font-black tabular-nums text-white">
+                      {dead ? "—" : `${step.toFixed(2)}×`}
+                    </span>
+                    <span className="text-[11px] font-bold tabular-nums text-white/45">
+                      {(p * 100).toFixed(0)}%
+                    </span>
+                  </div>
+                  <div
+                    className="mt-1.5 h-[3px] w-full overflow-hidden rounded-full"
+                    style={{ background: "rgba(255,255,255,.08)" }}
+                  >
+                    <div
+                      className="h-full rounded-full transition-[width] duration-200"
+                      style={{ width: `${Math.round(p * 100)}%`, background: tint }}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
 
         {/* quiet trail — no section label */}
         {cards.length > 0 ? (
