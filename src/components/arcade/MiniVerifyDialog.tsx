@@ -32,17 +32,11 @@ export function MiniVerifyDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <StencilDialogContent className="max-w-md">
-        <h2
-          className="font-display text-base font-black uppercase tracking-[0.14em]"
-          style={{ color: t.accent }}
-        >
-          Provably fair
-        </h2>
-        <p className="mt-1 text-xs text-[var(--color-ink-muted)]">
-          The outcome was derived from the server seed below, which was committed (hashed) before
-          you acted. Hash the revealed seed to confirm it matches.
-        </p>
+      <StencilDialogContent
+        kicker="Provably fair"
+        title={t.label}
+        description="The outcome was derived from the server seed below, which was committed (hashed) before you acted. Hash the revealed seed to confirm it matches."
+      >
         <div className="mt-3 space-y-2">
           {rows.map((r) => (
             <div
