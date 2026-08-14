@@ -84,6 +84,9 @@ const VARIANTS: Partial<Record<ArcadeGameKey, Partial<Record<SfxMoment, SfxName>
   treasure: { "reveal-tick": "treasure-chime", trap: "treasure-blast", settle: "treasure-chime" },
   blackjack: { "reveal-tick": "card-snap", settle: "card-flip", chip: "chip" },
   rps: { step: "rps-step", collect: "rps-bank", settle: "rps-step" },
+  hilo: { "reveal-tick": "card-snap", step: "card-flip", settle: "card-flip", collect: "rps-bank" },
+  dice: { "reveal-tick": "plinko-tick", settle: "plinko-tick", "spin-start": "spin-start" },
+  wheel: { "spin-start": "roulette-spin", settle: "roulette-settle", "reveal-tick": "plinko-tick" },
 };
 
 export function sfxFor(game: ArcadeGameKey, moment: SfxMoment): SfxName {
