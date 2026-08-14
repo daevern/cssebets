@@ -1,12 +1,12 @@
-import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { HandCoins, Loader2, Swords } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
+import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
+import { MiniCabinetTitle } from "@/components/arcade/MiniCabinetTitle";
 import { SettlePlaque, useSettleBeat } from "@/components/arcade/SettlePlaque";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import {
@@ -23,7 +23,6 @@ import { rpsLadderMultiplier, type RpsMove } from "@/lib/arcade/rps-math";
 import { roundMoney } from "@/lib/accounting/money";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound } from "@/lib/arcade/sound";
-import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 import { ArcadeIdleCue } from "@/components/arcade/ArcadeIdleCue";
 import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
@@ -38,12 +37,6 @@ import {
   settleRpsRound,
 } from "@/lib/arcade/rps.functions";
 
-import * as React from "react";
-
-/** Engraved cabinet plaque bound to this game's theme. */
-const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
-  <HudPlaque game="rps" {...props} />
-);
 
 
 export const Route = createFileRoute("/_authenticated/arcade/rps")({
