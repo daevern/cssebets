@@ -322,7 +322,7 @@ function RpsArenaImpl({
 
 
   return (
-    // RPS owns the cyan identity from ARCADE_THEMES: scope the accent token
+    // RPS owns the Stake-green identity from ARCADE_THEMES: scope the accent token
     // locally so every child inherits it.
     <div
       className="relative overflow-hidden rounded-[6px] p-2.5 md:px-6"
@@ -482,7 +482,7 @@ function RpsArenaImpl({
             : "Revealing"}
       </div>
 
-      {/* Console call-pads — flat slate keys with a cyan live edge. */}
+      {/* Console call-pads — flat slate keys with a neon-green live edge. */}
       <div className="mx-auto mt-3 grid w-full max-w-[460px] grid-cols-3 gap-2">
         {RPS_MOVES.map((m) => {
           const selected = playerMove === m;
