@@ -196,21 +196,17 @@ export function BlackjackTable({
   return (
     <div
       ref={boxRef}
-      className="relative h-full overflow-hidden"
-      style={{
-        background: "#0d5a38",
-      }}
+      className="relative mx-auto h-full w-full max-w-[560px] overflow-hidden rounded-[10px]"
+      style={{ background: T.feltOrBoardFill }}
     >
-      <FeltArt />
-
-      {/* House medallion — screen-printed outline, always dead centre. */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5">
-        <div className="grid h-11 w-11 place-items-center rounded-full border border-white/20 md:h-16 md:w-16">
-          <CsseMark variant="mono" className="h-6 w-6 text-white/25 md:h-9 md:w-9" />
+      {/* House medallion — quiet slate watermark, always dead centre. */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 opacity-70">
+        <div className="grid h-11 w-11 place-items-center rounded-full border border-white/10 md:h-14 md:w-14">
+          <CsseMark variant="mono" className="h-6 w-6 text-white/15 md:h-8 md:w-8" />
         </div>
         <CsseWordmark
-          size={13}
-          className="[&_span]:[color:transparent!important] [&_span]:[-webkit-text-stroke:0.7px_rgba(255,255,255,0.32)!important] md:[&_span]:[font-size:18px]"
+          size={12}
+          className="[&_span]:[color:transparent!important] [&_span]:[-webkit-text-stroke:0.7px_rgba(255,255,255,0.18)!important]"
         />
       </div>
 
