@@ -92,10 +92,12 @@ function DicePage() {
   const [target, setTarget] = useState(50);
   const [direction, setDirection] = useState<DiceDirection>("under");
   const [roll, setRoll] = useState<number | null>(null);
+  const [scrambling, setScrambling] = useState(false);
+  const [markerProgress, setMarkerProgress] = useState(1);
   const [round, setRound] = useState<any>(null);
   const [resultOpen, setResultOpen] = useState(false);
   const [verifyId, setVerifyId] = useState<string | null>(null);
-  const { beat, run: runBeat } = useSettleBeat(340);
+  const { beat, run: runBeat } = useSettleBeat(380);
 
   useEffect(() => {
     setStake((s) => Math.min(Math.max(s, minStake), maxStake));
@@ -117,21 +119,38 @@ function DicePage() {
     onMutate: () => {
       playFor("dice", "spin-start");
       setRoll(null);
+      setScrambling(true);
+      setMarkerProgress(0);
     },
     onSuccess: (res: any) => {
       const r = res.round;
       setRound(r);
       const value = Number(r?.state?.roll ?? 0);
-      setRoll(value);
-      playFor("dice", "settle");
-      runBeat(() => setResultOpen(true));
+      // Hold the scramble beat, then land the dial and slide the marker.
+      window.setTimeout(() => {
+        setScrambling(false);
+        setRoll(value);
+        playFor("dice", "settle");
+        // Marker slide 0 → 1
+        const t0 = performance.now();
+        const slide = (now: number) => {
+          const p = Math.min(1, (now - t0) / 420);
+          setMarkerProgress(p);
+          if (p < 1) requestAnimationFrame(slide);
+          else runBeat(() => setResultOpen(true));
+        };
+        requestAnimationFrame(slide);
+      }, 720);
       qc.invalidateQueries({ queryKey: ["mini", "dice", "profile"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
     },
-    onError: (e: any) => toast.error(e?.message ?? "Could not place that roll."),
+    onError: (e: any) => {
+      setScrambling(false);
+      toast.error(e?.message ?? "Could not place that roll.");
+    },
   });
 
-  const busy = rollMut.isPending;
+  const busy = rollMut.isPending || scrambling;
   const canRoll = !busy && !cfg?.maintenance_mode && balance >= stake && stake >= minStake;
   const won = round?.outcome === "WIN";
   const todayNet = profileQ.data?.todayNet ?? 0;
@@ -155,13 +174,13 @@ function DicePage() {
         <HudPlaque
           game="dice"
           className="flex-1"
-          label="Rolls today"
-          value={`${profileQ.data?.todayRounds ?? 0}`}
+          label="Target"
+          value={`${direction === "under" ? "<" : "≥"}${target}`}
         />
         <HudPlaque
           game="dice"
           className="flex-1"
-          label="Best hit"
+          label="Best land"
           value={`${fmt(profileQ.data?.bestMultiplier ?? 0)}×`}
         />
         <FairnessPlaque game="dice" rtpLabel={arcadeFairness("dice").rtpLabel} tag="Fair" />
@@ -177,16 +196,37 @@ function DicePage() {
         <ArcadeGlow game="dice" />
         <ArcadeStage game="dice" className="relative z-10">
         <ArcadeEntrance game="dice" className="relative">
-          <MiniCabinetTitle game="dice" title="Dice" kicker="Target · roll · settle" />
+          <MiniCabinetTitle
+            game="dice"
+            title="Dice"
+            kicker="Set the band · roll the machine"
+            mark={
+              <svg viewBox="0 0 32 32" className="h-7 w-7" aria-hidden>
+                <rect x="5" y="5" width="22" height="22" rx="5" fill="currentColor" opacity="0.25" />
+                <rect x="7" y="7" width="18" height="18" rx="4" fill="currentColor" />
+                <circle cx="12" cy="12" r="1.6" fill="#04170e" />
+                <circle cx="20" cy="12" r="1.6" fill="#04170e" />
+                <circle cx="16" cy="16" r="1.6" fill="#04170e" />
+                <circle cx="12" cy="20" r="1.6" fill="#04170e" />
+                <circle cx="20" cy="20" r="1.6" fill="#04170e" />
+              </svg>
+            }
+          />
           <SettlePlaque
             game="dice"
             show={beat}
-            label={won ? "Paid" : "No win"}
+            label={won ? "Roll lands" : "Roll misses"}
             value={won ? `${fmt(Number(round?.multiplier ?? 0))}×` : "—"}
           />
-          <DiceBoard target={target} direction={direction} roll={roll} rolling={busy} />
+          <DiceBoard
+            target={target}
+            direction={direction}
+            roll={roll}
+            rolling={scrambling || rollMut.isPending}
+            markerProgress={markerProgress}
+          />
           <ArcadeIdleCue game="dice" show={!busy && roll == null && !resultOpen}>
-            Set a target, then roll
+            Pick under or over, set the target, then roll
           </ArcadeIdleCue>
         </ArcadeEntrance>
       </ArcadeStage>
@@ -248,7 +288,7 @@ function DicePage() {
           />
           <DockReadout
             className="ml-auto"
-            label="Payout"
+            label="Band pays"
             value={`${mult.toFixed(2)}×`}
             hint={`Wins ${fmt(stake * mult)}`}
           />
@@ -275,11 +315,11 @@ function DicePage() {
         <DockPrimary onClick={() => { play("button"); rollMut.mutate(); }} disabled={!canRoll} active={canRoll}>
           {busy ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Rolling
+              <Loader2 className="h-4 w-4 animate-spin" /> Machine rolling
             </>
           ) : (
             <>
-              <Dices className="h-4 w-4" /> Roll {fmt(stake)} pts
+              <Dices className="h-4 w-4" /> Roll {fmt(stake)} · {direction} {target}
             </>
           )}
         </DockPrimary>

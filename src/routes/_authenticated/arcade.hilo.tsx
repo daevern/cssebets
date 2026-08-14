@@ -203,13 +203,13 @@ function HiloPage() {
         <HudPlaque
           game="hilo"
           className="flex-1"
-          label="Calls"
-          value={`${round?.stepCount ?? 0}`}
+          label="Ladder"
+          value={`${round?.stepCount ?? 0} calls`}
         />
         <HudPlaque
           game="hilo"
           className="flex-1"
-          label="Best run"
+          label="Peak climb"
           value={`${fmt(profileQ.data?.bestMultiplier ?? 0)}×`}
         />
         <FairnessPlaque game="hilo" rtpLabel={arcadeFairness("hilo").rtpLabel} tag="Fair" />
@@ -225,11 +225,21 @@ function HiloPage() {
         <ArcadeGlow game="hilo" />
         <ArcadeStage game="hilo" className="relative z-10">
         <ArcadeEntrance game="hilo" className="relative">
-          <MiniCabinetTitle game="hilo" title="Hi-Lo" kicker="Call · climb · collect" />
+          <MiniCabinetTitle
+            game="hilo"
+            title="Hi-Lo"
+            kicker="Call the next card · climb the ladder"
+            mark={
+              <svg viewBox="0 0 32 32" className="h-7 w-7" aria-hidden>
+                <rect x="6" y="4" width="14" height="20" rx="2" fill="currentColor" opacity="0.35" />
+                <rect x="12" y="8" width="14" height="20" rx="2" fill="currentColor" />
+              </svg>
+            }
+          />
           <SettlePlaque
             game="hilo"
             show={beat}
-            label={won ? "Run banked" : "Run over"}
+            label={won ? "Called right" : "Called wrong"}
             value={won ? `${fmt(Number(settled?.multiplier ?? 0))}×` : "—"}
           />
           <HiloBoard
@@ -240,9 +250,10 @@ function HiloPage() {
             pendingGuess={pending}
             onGuess={(g) => guessMut.mutate(g)}
             lostCard={lostCard}
+            stepCount={Number(round?.stepCount ?? 0)}
           />
           <ArcadeIdleCue game="hilo" show={!live && !busy && !resultOpen}>
-            Set a stake, then deal
+            Stake in, deal a reference card, then call higher or lower
           </ArcadeIdleCue>
         </ArcadeEntrance>
       </ArcadeStage>
@@ -320,13 +331,13 @@ function HiloPage() {
             </>
           ) : canCollect ? (
             <>
-              <HandCoins className="h-4 w-4" /> Collect {fmt(runStake * multiplier)}
+              <HandCoins className="h-4 w-4" /> Bank {fmt(runStake * multiplier)}
             </>
           ) : live ? (
-            "Call higher or lower above"
+            "Use Higher / Lower on the felt"
           ) : (
             <>
-              <Play className="h-4 w-4" /> Deal {fmt(stake)} pts
+              <Play className="h-4 w-4" /> Deal reference · {fmt(stake)} pts
             </>
           )}
         </DockPrimary>

@@ -9,161 +9,140 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as PerformanceRouteImport } from './routes/performance'
-import { Route as FaqRouteImport } from './routes/faq'
-import { Route as CommunityRouteImport } from './routes/community'
-import { Route as BrandRouteImport } from './routes/brand'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as ManagementRouteRouteImport } from './routes/management/route'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ManagementUsersRouteImport } from './routes/management/users'
-import { Route as ManagementSupportRouteImport } from './routes/management/support'
-import { Route as ManagementSuperAdminRouteImport } from './routes/management/super-admin'
-import { Route as ManagementSettingsRouteImport } from './routes/management/settings'
-import { Route as ManagementLoginRouteImport } from './routes/management/login'
-import { Route as ManagementChatRouteImport } from './routes/management/chat'
-import { Route as ManagementChangePasswordRouteImport } from './routes/management/change-password'
-import { Route as ManagementAdminRouteImport } from './routes/management/admin'
-import { Route as ManagementAccessDeniedRouteImport } from './routes/management/access-denied'
-import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
-import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
-import { Route as AuthenticatedUfcRouteImport } from './routes/_authenticated/ufc'
-import { Route as AuthenticatedTrustCenterRouteImport } from './routes/_authenticated/trust-center'
-import { Route as AuthenticatedTournamentWinnerRouteImport } from './routes/_authenticated/tournament-winner'
-import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
-import { Route as AuthenticatedStoreRouteImport } from './routes/_authenticated/store'
-import { Route as AuthenticatedStatusRouteImport } from './routes/_authenticated/status'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedReferralsRouteImport } from './routes/_authenticated/referrals'
-import { Route as AuthenticatedPayoutRouteImport } from './routes/_authenticated/payout'
-import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
-import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
-import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
-import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
-import { Route as AuthenticatedF1RouteImport } from './routes/_authenticated/f1'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedChangelogRouteImport } from './routes/_authenticated/changelog'
-import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/bets'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BrandRouteImport } from './routes/brand'
+import { Route as CommunityRouteImport } from './routes/community'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ManagementRouteRouteImport } from './routes/management/route'
+import { Route as PerformanceRouteImport } from './routes/performance'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthenticatedArcadeRouteImport } from './routes/_authenticated/arcade'
-import { Route as ManagementAdminIndexRouteImport } from './routes/management/admin.index'
-import { Route as AuthenticatedUfcIndexRouteImport } from './routes/_authenticated/ufc.index'
-import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
-import { Route as AuthenticatedF1IndexRouteImport } from './routes/_authenticated/f1.index'
+import { Route as AuthenticatedBetsRouteImport } from './routes/_authenticated/bets'
+import { Route as AuthenticatedChangelogRouteImport } from './routes/_authenticated/changelog'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedF1RouteImport } from './routes/_authenticated/f1'
+import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
+import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
+import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedPayoutRouteImport } from './routes/_authenticated/payout'
+import { Route as AuthenticatedReferralsRouteImport } from './routes/_authenticated/referrals'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedStatusRouteImport } from './routes/_authenticated/status'
+import { Route as AuthenticatedStoreRouteImport } from './routes/_authenticated/store'
+import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
+import { Route as AuthenticatedTournamentWinnerRouteImport } from './routes/_authenticated/tournament-winner'
+import { Route as AuthenticatedTrustCenterRouteImport } from './routes/_authenticated/trust-center'
+import { Route as AuthenticatedUfcRouteImport } from './routes/_authenticated/ufc'
+import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as ManagementAccessDeniedRouteImport } from './routes/management/access-denied'
+import { Route as ManagementAdminRouteImport } from './routes/management/admin'
+import { Route as ManagementChangePasswordRouteImport } from './routes/management/change-password'
+import { Route as ManagementChatRouteImport } from './routes/management/chat'
+import { Route as ManagementLoginRouteImport } from './routes/management/login'
+import { Route as ManagementSettingsRouteImport } from './routes/management/settings'
+import { Route as ManagementSuperAdminRouteImport } from './routes/management/super-admin'
+import { Route as ManagementSupportRouteImport } from './routes/management/support'
+import { Route as ManagementUsersRouteImport } from './routes/management/users'
 import { Route as AuthenticatedArcadeIndexRouteImport } from './routes/_authenticated/arcade.index'
-import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
-import { Route as ManagementAdminWalletAdjustmentsRouteImport } from './routes/management/admin.wallet-adjustments'
-import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
-import { Route as ManagementAdminUfcRouteImport } from './routes/management/admin.ufc'
-import { Route as ManagementAdminTournamentRouteImport } from './routes/management/admin.tournament'
-import { Route as ManagementAdminTokenLedgerRouteImport } from './routes/management/admin.token-ledger'
-import { Route as ManagementAdminSupportOpsRouteImport } from './routes/management/admin.support-ops'
-import { Route as ManagementAdminStoreRouteImport } from './routes/management/admin.store'
-import { Route as ManagementAdminStaffRouteImport } from './routes/management/admin.staff'
-import { Route as ManagementAdminSimulationRouteImport } from './routes/management/admin.simulation'
-import { Route as ManagementAdminSettlementsRouteImport } from './routes/management/admin.settlements'
-import { Route as ManagementAdminSettingsRouteImport } from './routes/management/admin.settings'
-import { Route as ManagementAdminRiskSettingsRouteImport } from './routes/management/admin.risk-settings'
-import { Route as ManagementAdminReviewRouteImport } from './routes/management/admin.review'
-import { Route as ManagementAdminReferredUsersRouteImport } from './routes/management/admin.referred-users'
-import { Route as ManagementAdminReferralsRouteImport } from './routes/management/admin.referrals'
-import { Route as ManagementAdminReconciliationRouteImport } from './routes/management/admin.reconciliation'
-import { Route as ManagementAdminPricingBreakdownRouteImport } from './routes/management/admin.pricing-breakdown'
-import { Route as ManagementAdminPredictionsRouteImport } from './routes/management/admin.predictions'
-import { Route as ManagementAdminPointsRouteImport } from './routes/management/admin.points'
-import { Route as ManagementAdminPlReportRouteImport } from './routes/management/admin.pl-report'
-import { Route as ManagementAdminPayoutsRouteImport } from './routes/management/admin.payouts'
-import { Route as ManagementAdminOperationsRouteImport } from './routes/management/admin.operations'
-import { Route as ManagementAdminOnboardingRouteImport } from './routes/management/admin.onboarding'
-import { Route as ManagementAdminOddsProviderRouteImport } from './routes/management/admin.odds-provider'
-import { Route as ManagementAdminOddsHistoryRouteImport } from './routes/management/admin.odds-history'
-import { Route as ManagementAdminMatchesRouteImport } from './routes/management/admin.matches'
-import { Route as ManagementAdminMatchPoolsRouteImport } from './routes/management/admin.match-pools'
-import { Route as ManagementAdminMarketRulesRouteImport } from './routes/management/admin.market-rules'
-import { Route as ManagementAdminIncidentsRouteImport } from './routes/management/admin.incidents'
-import { Route as ManagementAdminHealthRouteImport } from './routes/management/admin.health'
-import { Route as ManagementAdminFootballRouteImport } from './routes/management/admin.football'
-import { Route as ManagementAdminF1RouteImport } from './routes/management/admin.f1'
-import { Route as ManagementAdminCorrelatedRiskRouteImport } from './routes/management/admin.correlated-risk'
-import { Route as ManagementAdminBlackjackRouteImport } from './routes/management/admin.blackjack'
-import { Route as ManagementAdminBankrollRouteImport } from './routes/management/admin.bankroll'
-import { Route as ManagementAdminAuditSuiteRouteImport } from './routes/management/admin.audit-suite'
-import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
-import { Route as ManagementAdminArcadeRouteImport } from './routes/management/admin.arcade'
-import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
-import { Route as ManagementAdminAlertsRouteImport } from './routes/management/admin.alerts'
-import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
-import { Route as AuthenticatedWalletTransactionListRouteImport } from './routes/_authenticated/wallet.transaction-list'
-import { Route as AuthenticatedUfcFightsRouteImport } from './routes/_authenticated/ufc.fights'
-import { Route as AuthenticatedUfcFightIdRouteImport } from './routes/_authenticated/ufc.$fightId'
-import { Route as AuthenticatedMatchesMatchIdRouteImport } from './routes/_authenticated/matches.$matchId'
-import { Route as AuthenticatedFreeBetsPlaceRouteImport } from './routes/_authenticated/free-bets.place'
-import { Route as AuthenticatedFootballUclRouteImport } from './routes/_authenticated/football/ucl'
-import { Route as AuthenticatedFootballSerieARouteImport } from './routes/_authenticated/football/serie-a'
-import { Route as AuthenticatedFootballLaLigaRouteImport } from './routes/_authenticated/football/la-liga'
-import { Route as AuthenticatedFootballEplRouteImport } from './routes/_authenticated/football/epl'
-import { Route as AuthenticatedArcadeWheelRouteImport } from './routes/_authenticated/arcade.wheel'
-import { Route as AuthenticatedArcadeTreasureRouteImport } from './routes/_authenticated/arcade.treasure'
-import { Route as AuthenticatedArcadeRpsRouteImport } from './routes/_authenticated/arcade.rps'
-import { Route as AuthenticatedArcadeRouletteRouteImport } from './routes/_authenticated/arcade.roulette'
-import { Route as AuthenticatedArcadePlinkoRouteImport } from './routes/_authenticated/arcade.plinko'
-import { Route as AuthenticatedArcadeHiloRouteImport } from './routes/_authenticated/arcade.hilo'
-import { Route as AuthenticatedArcadeDiceRouteImport } from './routes/_authenticated/arcade.dice'
 import { Route as AuthenticatedArcadeBlackjackRouteImport } from './routes/_authenticated/arcade.blackjack'
+import { Route as AuthenticatedArcadeDiceRouteImport } from './routes/_authenticated/arcade.dice'
+import { Route as AuthenticatedArcadeHiloRouteImport } from './routes/_authenticated/arcade.hilo'
+import { Route as AuthenticatedArcadePlinkoRouteImport } from './routes/_authenticated/arcade.plinko'
+import { Route as AuthenticatedArcadeRouletteRouteImport } from './routes/_authenticated/arcade.roulette'
+import { Route as AuthenticatedArcadeRpsRouteImport } from './routes/_authenticated/arcade.rps'
+import { Route as AuthenticatedArcadeTreasureRouteImport } from './routes/_authenticated/arcade.treasure'
+import { Route as AuthenticatedArcadeWheelRouteImport } from './routes/_authenticated/arcade.wheel'
+import { Route as AuthenticatedF1IndexRouteImport } from './routes/_authenticated/f1.index'
+import { Route as AuthenticatedFootballEplRouteImport } from './routes/_authenticated/football/epl'
+import { Route as AuthenticatedFootballLaLigaRouteImport } from './routes/_authenticated/football/la-liga'
+import { Route as AuthenticatedFootballSerieARouteImport } from './routes/_authenticated/football/serie-a'
+import { Route as AuthenticatedFootballUclRouteImport } from './routes/_authenticated/football/ucl'
+import { Route as AuthenticatedFreeBetsPlaceRouteImport } from './routes/_authenticated/free-bets.place'
+import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
+import { Route as AuthenticatedMatchesMatchIdRouteImport } from './routes/_authenticated/matches.$matchId'
+import { Route as AuthenticatedUfcIndexRouteImport } from './routes/_authenticated/ufc.index'
+import { Route as AuthenticatedUfcFightIdRouteImport } from './routes/_authenticated/ufc.$fightId'
+import { Route as AuthenticatedUfcFightsRouteImport } from './routes/_authenticated/ufc.fights'
+import { Route as AuthenticatedWalletTransactionListRouteImport } from './routes/_authenticated/wallet.transaction-list'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as ManagementAdminIndexRouteImport } from './routes/management/admin.index'
+import { Route as ManagementAdminAlertsRouteImport } from './routes/management/admin.alerts'
+import { Route as ManagementAdminAnalyticsRouteImport } from './routes/management/admin.analytics'
+import { Route as ManagementAdminArcadeRouteImport } from './routes/management/admin.arcade'
+import { Route as ManagementAdminAuditRouteImport } from './routes/management/admin.audit'
+import { Route as ManagementAdminAuditSuiteRouteImport } from './routes/management/admin.audit-suite'
+import { Route as ManagementAdminBankrollRouteImport } from './routes/management/admin.bankroll'
+import { Route as ManagementAdminBlackjackRouteImport } from './routes/management/admin.blackjack'
+import { Route as ManagementAdminCorrelatedRiskRouteImport } from './routes/management/admin.correlated-risk'
+import { Route as ManagementAdminF1RouteImport } from './routes/management/admin.f1'
+import { Route as ManagementAdminFootballRouteImport } from './routes/management/admin.football'
+import { Route as ManagementAdminHealthRouteImport } from './routes/management/admin.health'
+import { Route as ManagementAdminIncidentsRouteImport } from './routes/management/admin.incidents'
+import { Route as ManagementAdminMarketRulesRouteImport } from './routes/management/admin.market-rules'
+import { Route as ManagementAdminMatchPoolsRouteImport } from './routes/management/admin.match-pools'
+import { Route as ManagementAdminMatchesRouteImport } from './routes/management/admin.matches'
+import { Route as ManagementAdminOddsHistoryRouteImport } from './routes/management/admin.odds-history'
+import { Route as ManagementAdminOddsProviderRouteImport } from './routes/management/admin.odds-provider'
+import { Route as ManagementAdminOnboardingRouteImport } from './routes/management/admin.onboarding'
+import { Route as ManagementAdminOperationsRouteImport } from './routes/management/admin.operations'
+import { Route as ManagementAdminPayoutsRouteImport } from './routes/management/admin.payouts'
+import { Route as ManagementAdminPlReportRouteImport } from './routes/management/admin.pl-report'
+import { Route as ManagementAdminPointsRouteImport } from './routes/management/admin.points'
+import { Route as ManagementAdminPredictionsRouteImport } from './routes/management/admin.predictions'
+import { Route as ManagementAdminPricingBreakdownRouteImport } from './routes/management/admin.pricing-breakdown'
+import { Route as ManagementAdminReconciliationRouteImport } from './routes/management/admin.reconciliation'
+import { Route as ManagementAdminReferralsRouteImport } from './routes/management/admin.referrals'
+import { Route as ManagementAdminReferredUsersRouteImport } from './routes/management/admin.referred-users'
+import { Route as ManagementAdminReviewRouteImport } from './routes/management/admin.review'
+import { Route as ManagementAdminRiskSettingsRouteImport } from './routes/management/admin.risk-settings'
+import { Route as ManagementAdminSettingsRouteImport } from './routes/management/admin.settings'
+import { Route as ManagementAdminSettlementsRouteImport } from './routes/management/admin.settlements'
+import { Route as ManagementAdminSimulationRouteImport } from './routes/management/admin.simulation'
+import { Route as ManagementAdminStaffRouteImport } from './routes/management/admin.staff'
+import { Route as ManagementAdminStoreRouteImport } from './routes/management/admin.store'
+import { Route as ManagementAdminSupportOpsRouteImport } from './routes/management/admin.support-ops'
+import { Route as ManagementAdminTokenLedgerRouteImport } from './routes/management/admin.token-ledger'
+import { Route as ManagementAdminTournamentRouteImport } from './routes/management/admin.tournament'
+import { Route as ManagementAdminUfcRouteImport } from './routes/management/admin.ufc'
+import { Route as ManagementAdminUsersRouteImport } from './routes/management/admin.users'
+import { Route as ManagementAdminWalletAdjustmentsRouteImport } from './routes/management/admin.wallet-adjustments'
+import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
 import { Route as AuthenticatedF1RacesIndexRouteImport } from './routes/_authenticated/f1.races.index'
-import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as ApiPublicHooksUfcOddsLiveRouteImport } from './routes/api/public/hooks/ufc-odds-live'
-import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/public/hooks/sync-fixtures'
-import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
-import { Route as ApiPublicHooksOddsLiveRouteImport } from './routes/api/public/hooks/odds-live'
-import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
-import { Route as ApiPublicHooksFootballSyncRouteImport } from './routes/api/public/hooks/football-sync'
-import { Route as ApiPublicHooksFootballSettleRouteImport } from './routes/api/public/hooks/football-settle'
-import { Route as ApiPublicHooksFootballLiveRouteImport } from './routes/api/public/hooks/football-live'
-import { Route as ApiPublicHooksF1SyncRouteImport } from './routes/api/public/hooks/f1-sync'
-import { Route as ApiPublicHooksF1SettleRouteImport } from './routes/api/public/hooks/f1-settle'
-import { Route as ApiPublicHooksF1OddsRouteImport } from './routes/api/public/hooks/f1-odds'
-import { Route as ApiPublicHooksF1LiveRouteImport } from './routes/api/public/hooks/f1-live'
-import { Route as ApiPublicHooksApifootballSyncRouteImport } from './routes/api/public/hooks/apifootball-sync'
-import { Route as ApiPublicHooksApifootballPrematchRouteImport } from './routes/api/public/hooks/apifootball-prematch'
-import { Route as ApiPublicHooksApifootballLiveRouteImport } from './routes/api/public/hooks/apifootball-live'
-import { Route as ApiPublicHooksApifootballLineupsRouteImport } from './routes/api/public/hooks/apifootball-lineups'
-import { Route as ApiPublicHooksApifootballFulltimeRouteImport } from './routes/api/public/hooks/apifootball-fulltime'
-import { Route as AuthenticatedFootballMatchesMatchIdRouteImport } from './routes/_authenticated/football/matches.$matchId'
 import { Route as AuthenticatedF1RacesRaceIdRouteImport } from './routes/_authenticated/f1.races.$raceId'
+import { Route as AuthenticatedFootballMatchesMatchIdRouteImport } from './routes/_authenticated/football/matches.$matchId'
+import { Route as ApiPublicHooksApifootballFulltimeRouteImport } from './routes/api/public/hooks/apifootball-fulltime'
+import { Route as ApiPublicHooksApifootballLineupsRouteImport } from './routes/api/public/hooks/apifootball-lineups'
+import { Route as ApiPublicHooksApifootballLiveRouteImport } from './routes/api/public/hooks/apifootball-live'
+import { Route as ApiPublicHooksApifootballPrematchRouteImport } from './routes/api/public/hooks/apifootball-prematch'
+import { Route as ApiPublicHooksApifootballSyncRouteImport } from './routes/api/public/hooks/apifootball-sync'
+import { Route as ApiPublicHooksF1LiveRouteImport } from './routes/api/public/hooks/f1-live'
+import { Route as ApiPublicHooksF1OddsRouteImport } from './routes/api/public/hooks/f1-odds'
+import { Route as ApiPublicHooksF1SettleRouteImport } from './routes/api/public/hooks/f1-settle'
+import { Route as ApiPublicHooksF1SyncRouteImport } from './routes/api/public/hooks/f1-sync'
+import { Route as ApiPublicHooksFootballLiveRouteImport } from './routes/api/public/hooks/football-live'
+import { Route as ApiPublicHooksFootballSettleRouteImport } from './routes/api/public/hooks/football-settle'
+import { Route as ApiPublicHooksFootballSyncRouteImport } from './routes/api/public/hooks/football-sync'
+import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
+import { Route as ApiPublicHooksOddsLiveRouteImport } from './routes/api/public/hooks/odds-live'
+import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
+import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/public/hooks/sync-fixtures'
+import { Route as ApiPublicHooksUfcOddsLiveRouteImport } from './routes/api/public/hooks/ufc-odds-live'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PerformanceRoute = PerformanceRouteImport.update({
-  id: '/performance',
-  path: '/performance',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FaqRoute = FaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CommunityRoute = CommunityRouteImport.update({
-  id: '/community',
-  path: '/community',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BrandRoute = BrandRouteImport.update({
-  id: '/brand',
-  path: '/brand',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -171,48 +150,153 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BrandRoute = BrandRouteImport.update({
+  id: '/brand',
+  path: '/brand',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ManagementRouteRoute = ManagementRouteRouteImport.update({
   id: '/management',
   path: '/management',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const PerformanceRoute = PerformanceRouteImport.update({
+  id: '/performance',
+  path: '/performance',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ManagementUsersRoute = ManagementUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => ManagementRouteRoute,
+const AuthenticatedArcadeRoute = AuthenticatedArcadeRouteImport.update({
+  id: '/arcade',
+  path: '/arcade',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ManagementSupportRoute = ManagementSupportRouteImport.update({
-  id: '/support',
-  path: '/support',
-  getParentRoute: () => ManagementRouteRoute,
+const AuthenticatedBetsRoute = AuthenticatedBetsRouteImport.update({
+  id: '/bets',
+  path: '/bets',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ManagementSuperAdminRoute = ManagementSuperAdminRouteImport.update({
-  id: '/super-admin',
-  path: '/super-admin',
-  getParentRoute: () => ManagementRouteRoute,
+const AuthenticatedChangelogRoute = AuthenticatedChangelogRouteImport.update({
+  id: '/changelog',
+  path: '/changelog',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ManagementSettingsRoute = ManagementSettingsRouteImport.update({
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedF1Route = AuthenticatedF1RouteImport.update({
+  id: '/f1',
+  path: '/f1',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMatchesRoute = AuthenticatedMatchesRouteImport.update({
+  id: '/matches',
+  path: '/matches',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMyPredictionsRoute =
+  AuthenticatedMyPredictionsRouteImport.update({
+    id: '/my-predictions',
+    path: '/my-predictions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPayoutRoute = AuthenticatedPayoutRouteImport.update({
+  id: '/payout',
+  path: '/payout',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReferralsRoute = AuthenticatedReferralsRouteImport.update({
+  id: '/referrals',
+  path: '/referrals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStatusRoute = AuthenticatedStatusRouteImport.update({
+  id: '/status',
+  path: '/status',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedStoreRoute = AuthenticatedStoreRouteImport.update({
+  id: '/store',
+  path: '/store',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTournamentWinnerRoute =
+  AuthenticatedTournamentWinnerRouteImport.update({
+    id: '/tournament-winner',
+    path: '/tournament-winner',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTrustCenterRoute =
+  AuthenticatedTrustCenterRouteImport.update({
+    id: '/trust-center',
+    path: '/trust-center',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedUfcRoute = AuthenticatedUfcRouteImport.update({
+  id: '/ufc',
+  path: '/ufc',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManagementAccessDeniedRoute = ManagementAccessDeniedRouteImport.update({
+  id: '/access-denied',
+  path: '/access-denied',
   getParentRoute: () => ManagementRouteRoute,
 } as any)
-const ManagementLoginRoute = ManagementLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => ManagementRouteRoute,
-} as any)
-const ManagementChatRoute = ManagementChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
+const ManagementAdminRoute = ManagementAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => ManagementRouteRoute,
 } as any)
 const ManagementChangePasswordRoute =
@@ -221,140 +305,35 @@ const ManagementChangePasswordRoute =
     path: '/change-password',
     getParentRoute: () => ManagementRouteRoute,
   } as any)
-const ManagementAdminRoute = ManagementAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const ManagementChatRoute = ManagementChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => ManagementRouteRoute,
 } as any)
-const ManagementAccessDeniedRoute = ManagementAccessDeniedRouteImport.update({
-  id: '/access-denied',
-  path: '/access-denied',
+const ManagementLoginRoute = ManagementLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => ManagementRouteRoute,
 } as any)
-const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
-  id: '/email/unsubscribe',
-  path: '/email/unsubscribe',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
-  id: '/wallet',
-  path: '/wallet',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedUfcRoute = AuthenticatedUfcRouteImport.update({
-  id: '/ufc',
-  path: '/ufc',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedTrustCenterRoute =
-  AuthenticatedTrustCenterRouteImport.update({
-    id: '/trust-center',
-    path: '/trust-center',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedTournamentWinnerRoute =
-  AuthenticatedTournamentWinnerRouteImport.update({
-    id: '/tournament-winner',
-    path: '/tournament-winner',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
-  id: '/support',
-  path: '/support',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedStoreRoute = AuthenticatedStoreRouteImport.update({
-  id: '/store',
-  path: '/store',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedStatusRoute = AuthenticatedStatusRouteImport.update({
-  id: '/status',
-  path: '/status',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+const ManagementSettingsRoute = ManagementSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => AuthenticatedRouteRoute,
+  getParentRoute: () => ManagementRouteRoute,
 } as any)
-const AuthenticatedReferralsRoute = AuthenticatedReferralsRouteImport.update({
-  id: '/referrals',
-  path: '/referrals',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const ManagementSuperAdminRoute = ManagementSuperAdminRouteImport.update({
+  id: '/super-admin',
+  path: '/super-admin',
+  getParentRoute: () => ManagementRouteRoute,
 } as any)
-const AuthenticatedPayoutRoute = AuthenticatedPayoutRouteImport.update({
-  id: '/payout',
-  path: '/payout',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const ManagementSupportRoute = ManagementSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => ManagementRouteRoute,
 } as any)
-const AuthenticatedNotificationsRoute =
-  AuthenticatedNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMyPredictionsRoute =
-  AuthenticatedMyPredictionsRouteImport.update({
-    id: '/my-predictions',
-    path: '/my-predictions',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedMatchesRoute = AuthenticatedMatchesRouteImport.update({
-  id: '/matches',
-  path: '/matches',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
-  id: '/help',
-  path: '/help',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedF1Route = AuthenticatedF1RouteImport.update({
-  id: '/f1',
-  path: '/f1',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedChangelogRoute = AuthenticatedChangelogRouteImport.update({
-  id: '/changelog',
-  path: '/changelog',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedBetsRoute = AuthenticatedBetsRouteImport.update({
-  id: '/bets',
-  path: '/bets',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedArcadeRoute = AuthenticatedArcadeRouteImport.update({
-  id: '/arcade',
-  path: '/arcade',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const ManagementAdminIndexRoute = ManagementAdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const AuthenticatedUfcIndexRoute = AuthenticatedUfcIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedUfcRoute,
-} as any)
-const AuthenticatedMatchesIndexRoute =
-  AuthenticatedMatchesIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedMatchesRoute,
-  } as any)
-const AuthenticatedF1IndexRoute = AuthenticatedF1IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedF1Route,
+const ManagementUsersRoute = ManagementUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => ManagementRouteRoute,
 } as any)
 const AuthenticatedArcadeIndexRoute =
   AuthenticatedArcadeIndexRouteImport.update({
@@ -362,278 +341,60 @@ const AuthenticatedArcadeIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedArcadeRoute,
   } as any)
-const ManagementAdminWalletLedgerRoute =
-  ManagementAdminWalletLedgerRouteImport.update({
-    id: '/wallet-ledger',
-    path: '/wallet-ledger',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminWalletAdjustmentsRoute =
-  ManagementAdminWalletAdjustmentsRouteImport.update({
-    id: '/wallet-adjustments',
-    path: '/wallet-adjustments',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminUsersRoute = ManagementAdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminUfcRoute = ManagementAdminUfcRouteImport.update({
-  id: '/ufc',
-  path: '/ufc',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminTournamentRoute =
-  ManagementAdminTournamentRouteImport.update({
-    id: '/tournament',
-    path: '/tournament',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminTokenLedgerRoute =
-  ManagementAdminTokenLedgerRouteImport.update({
-    id: '/token-ledger',
-    path: '/token-ledger',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminSupportOpsRoute =
-  ManagementAdminSupportOpsRouteImport.update({
-    id: '/support-ops',
-    path: '/support-ops',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminStoreRoute = ManagementAdminStoreRouteImport.update({
-  id: '/store',
-  path: '/store',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminStaffRoute = ManagementAdminStaffRouteImport.update({
-  id: '/staff',
-  path: '/staff',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminSimulationRoute =
-  ManagementAdminSimulationRouteImport.update({
-    id: '/simulation',
-    path: '/simulation',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminSettlementsRoute =
-  ManagementAdminSettlementsRouteImport.update({
-    id: '/settlements',
-    path: '/settlements',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminSettingsRoute = ManagementAdminSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminRiskSettingsRoute =
-  ManagementAdminRiskSettingsRouteImport.update({
-    id: '/risk-settings',
-    path: '/risk-settings',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminReviewRoute = ManagementAdminReviewRouteImport.update({
-  id: '/review',
-  path: '/review',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminReferredUsersRoute =
-  ManagementAdminReferredUsersRouteImport.update({
-    id: '/referred-users',
-    path: '/referred-users',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminReferralsRoute =
-  ManagementAdminReferralsRouteImport.update({
-    id: '/referrals',
-    path: '/referrals',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminReconciliationRoute =
-  ManagementAdminReconciliationRouteImport.update({
-    id: '/reconciliation',
-    path: '/reconciliation',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminPricingBreakdownRoute =
-  ManagementAdminPricingBreakdownRouteImport.update({
-    id: '/pricing-breakdown',
-    path: '/pricing-breakdown',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminPredictionsRoute =
-  ManagementAdminPredictionsRouteImport.update({
-    id: '/predictions',
-    path: '/predictions',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminPointsRoute = ManagementAdminPointsRouteImport.update({
-  id: '/points',
-  path: '/points',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminPlReportRoute = ManagementAdminPlReportRouteImport.update({
-  id: '/pl-report',
-  path: '/pl-report',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminPayoutsRoute = ManagementAdminPayoutsRouteImport.update({
-  id: '/payouts',
-  path: '/payouts',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminOperationsRoute =
-  ManagementAdminOperationsRouteImport.update({
-    id: '/operations',
-    path: '/operations',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminOnboardingRoute =
-  ManagementAdminOnboardingRouteImport.update({
-    id: '/onboarding',
-    path: '/onboarding',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminOddsProviderRoute =
-  ManagementAdminOddsProviderRouteImport.update({
-    id: '/odds-provider',
-    path: '/odds-provider',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminOddsHistoryRoute =
-  ManagementAdminOddsHistoryRouteImport.update({
-    id: '/odds-history',
-    path: '/odds-history',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminMatchesRoute = ManagementAdminMatchesRouteImport.update({
-  id: '/matches',
-  path: '/matches',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminMatchPoolsRoute =
-  ManagementAdminMatchPoolsRouteImport.update({
-    id: '/match-pools',
-    path: '/match-pools',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminMarketRulesRoute =
-  ManagementAdminMarketRulesRouteImport.update({
-    id: '/market-rules',
-    path: '/market-rules',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminIncidentsRoute =
-  ManagementAdminIncidentsRouteImport.update({
-    id: '/incidents',
-    path: '/incidents',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminHealthRoute = ManagementAdminHealthRouteImport.update({
-  id: '/health',
-  path: '/health',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminFootballRoute = ManagementAdminFootballRouteImport.update({
-  id: '/football',
-  path: '/football',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminF1Route = ManagementAdminF1RouteImport.update({
-  id: '/f1',
-  path: '/f1',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminCorrelatedRiskRoute =
-  ManagementAdminCorrelatedRiskRouteImport.update({
-    id: '/correlated-risk',
-    path: '/correlated-risk',
-    getParentRoute: () => ManagementAdminRoute,
-  } as any)
-const ManagementAdminBlackjackRoute =
-  ManagementAdminBlackjackRouteImport.update({
+const AuthenticatedArcadeBlackjackRoute =
+  AuthenticatedArcadeBlackjackRouteImport.update({
     id: '/blackjack',
     path: '/blackjack',
-    getParentRoute: () => ManagementAdminRoute,
+    getParentRoute: () => AuthenticatedArcadeRoute,
   } as any)
-const ManagementAdminBankrollRoute = ManagementAdminBankrollRouteImport.update({
-  id: '/bankroll',
-  path: '/bankroll',
-  getParentRoute: () => ManagementAdminRoute,
+const AuthenticatedArcadeDiceRoute = AuthenticatedArcadeDiceRouteImport.update({
+  id: '/dice',
+  path: '/dice',
+  getParentRoute: () => AuthenticatedArcadeRoute,
 } as any)
-const ManagementAdminAuditSuiteRoute =
-  ManagementAdminAuditSuiteRouteImport.update({
-    id: '/audit-suite',
-    path: '/audit-suite',
-    getParentRoute: () => ManagementAdminRoute,
+const AuthenticatedArcadeHiloRoute = AuthenticatedArcadeHiloRouteImport.update({
+  id: '/hilo',
+  path: '/hilo',
+  getParentRoute: () => AuthenticatedArcadeRoute,
+} as any)
+const AuthenticatedArcadePlinkoRoute =
+  AuthenticatedArcadePlinkoRouteImport.update({
+    id: '/plinko',
+    path: '/plinko',
+    getParentRoute: () => AuthenticatedArcadeRoute,
   } as any)
-const ManagementAdminAuditRoute = ManagementAdminAuditRouteImport.update({
-  id: '/audit',
-  path: '/audit',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminArcadeRoute = ManagementAdminArcadeRouteImport.update({
-  id: '/arcade',
-  path: '/arcade',
-  getParentRoute: () => ManagementAdminRoute,
-} as any)
-const ManagementAdminAnalyticsRoute =
-  ManagementAdminAnalyticsRouteImport.update({
-    id: '/analytics',
-    path: '/analytics',
-    getParentRoute: () => ManagementAdminRoute,
+const AuthenticatedArcadeRouletteRoute =
+  AuthenticatedArcadeRouletteRouteImport.update({
+    id: '/roulette',
+    path: '/roulette',
+    getParentRoute: () => AuthenticatedArcadeRoute,
   } as any)
-const ManagementAdminAlertsRoute = ManagementAdminAlertsRouteImport.update({
-  id: '/alerts',
-  path: '/alerts',
-  getParentRoute: () => ManagementAdminRoute,
+const AuthenticatedArcadeRpsRoute = AuthenticatedArcadeRpsRouteImport.update({
+  id: '/rps',
+  path: '/rps',
+  getParentRoute: () => AuthenticatedArcadeRoute,
 } as any)
-const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
-  id: '/lovable/email/suppression',
-  path: '/lovable/email/suppression',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedArcadeTreasureRoute =
+  AuthenticatedArcadeTreasureRouteImport.update({
+    id: '/treasure',
+    path: '/treasure',
+    getParentRoute: () => AuthenticatedArcadeRoute,
+  } as any)
+const AuthenticatedArcadeWheelRoute =
+  AuthenticatedArcadeWheelRouteImport.update({
+    id: '/wheel',
+    path: '/wheel',
+    getParentRoute: () => AuthenticatedArcadeRoute,
+  } as any)
+const AuthenticatedF1IndexRoute = AuthenticatedF1IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedF1Route,
 } as any)
-const AuthenticatedWalletTransactionListRoute =
-  AuthenticatedWalletTransactionListRouteImport.update({
-    id: '/transaction-list',
-    path: '/transaction-list',
-    getParentRoute: () => AuthenticatedWalletRoute,
-  } as any)
-const AuthenticatedUfcFightsRoute = AuthenticatedUfcFightsRouteImport.update({
-  id: '/fights',
-  path: '/fights',
-  getParentRoute: () => AuthenticatedUfcRoute,
-} as any)
-const AuthenticatedUfcFightIdRoute = AuthenticatedUfcFightIdRouteImport.update({
-  id: '/$fightId',
-  path: '/$fightId',
-  getParentRoute: () => AuthenticatedUfcRoute,
-} as any)
-const AuthenticatedMatchesMatchIdRoute =
-  AuthenticatedMatchesMatchIdRouteImport.update({
-    id: '/$matchId',
-    path: '/$matchId',
-    getParentRoute: () => AuthenticatedMatchesRoute,
-  } as any)
-const AuthenticatedFreeBetsPlaceRoute =
-  AuthenticatedFreeBetsPlaceRouteImport.update({
-    id: '/free-bets/place',
-    path: '/free-bets/place',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedFootballUclRoute =
-  AuthenticatedFootballUclRouteImport.update({
-    id: '/football/ucl',
-    path: '/football/ucl',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedFootballSerieARoute =
-  AuthenticatedFootballSerieARouteImport.update({
-    id: '/football/serie-a',
-    path: '/football/serie-a',
+const AuthenticatedFootballEplRoute =
+  AuthenticatedFootballEplRouteImport.update({
+    id: '/football/epl',
+    path: '/football/epl',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedFootballLaLigaRoute =
@@ -642,56 +403,295 @@ const AuthenticatedFootballLaLigaRoute =
     path: '/football/la-liga',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedFootballEplRoute =
-  AuthenticatedFootballEplRouteImport.update({
-    id: '/football/epl',
-    path: '/football/epl',
+const AuthenticatedFootballSerieARoute =
+  AuthenticatedFootballSerieARouteImport.update({
+    id: '/football/serie-a',
+    path: '/football/serie-a',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedArcadeWheelRoute =
-  AuthenticatedArcadeWheelRouteImport.update({
-    id: '/wheel',
-    path: '/wheel',
-    getParentRoute: () => AuthenticatedArcadeRoute,
+const AuthenticatedFootballUclRoute =
+  AuthenticatedFootballUclRouteImport.update({
+    id: '/football/ucl',
+    path: '/football/ucl',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedArcadeTreasureRoute =
-  AuthenticatedArcadeTreasureRouteImport.update({
-    id: '/treasure',
-    path: '/treasure',
-    getParentRoute: () => AuthenticatedArcadeRoute,
+const AuthenticatedFreeBetsPlaceRoute =
+  AuthenticatedFreeBetsPlaceRouteImport.update({
+    id: '/free-bets/place',
+    path: '/free-bets/place',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedArcadeRpsRoute = AuthenticatedArcadeRpsRouteImport.update({
-  id: '/rps',
-  path: '/rps',
-  getParentRoute: () => AuthenticatedArcadeRoute,
+const AuthenticatedMatchesIndexRoute =
+  AuthenticatedMatchesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedMatchesRoute,
+  } as any)
+const AuthenticatedMatchesMatchIdRoute =
+  AuthenticatedMatchesMatchIdRouteImport.update({
+    id: '/$matchId',
+    path: '/$matchId',
+    getParentRoute: () => AuthenticatedMatchesRoute,
+  } as any)
+const AuthenticatedUfcIndexRoute = AuthenticatedUfcIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedUfcRoute,
 } as any)
-const AuthenticatedArcadeRouletteRoute =
-  AuthenticatedArcadeRouletteRouteImport.update({
-    id: '/roulette',
-    path: '/roulette',
-    getParentRoute: () => AuthenticatedArcadeRoute,
-  } as any)
-const AuthenticatedArcadePlinkoRoute =
-  AuthenticatedArcadePlinkoRouteImport.update({
-    id: '/plinko',
-    path: '/plinko',
-    getParentRoute: () => AuthenticatedArcadeRoute,
-  } as any)
-const AuthenticatedArcadeHiloRoute = AuthenticatedArcadeHiloRouteImport.update({
-  id: '/hilo',
-  path: '/hilo',
-  getParentRoute: () => AuthenticatedArcadeRoute,
+const AuthenticatedUfcFightIdRoute = AuthenticatedUfcFightIdRouteImport.update({
+  id: '/$fightId',
+  path: '/$fightId',
+  getParentRoute: () => AuthenticatedUfcRoute,
 } as any)
-const AuthenticatedArcadeDiceRoute = AuthenticatedArcadeDiceRouteImport.update({
-  id: '/dice',
-  path: '/dice',
-  getParentRoute: () => AuthenticatedArcadeRoute,
+const AuthenticatedUfcFightsRoute = AuthenticatedUfcFightsRouteImport.update({
+  id: '/fights',
+  path: '/fights',
+  getParentRoute: () => AuthenticatedUfcRoute,
 } as any)
-const AuthenticatedArcadeBlackjackRoute =
-  AuthenticatedArcadeBlackjackRouteImport.update({
+const AuthenticatedWalletTransactionListRoute =
+  AuthenticatedWalletTransactionListRouteImport.update({
+    id: '/transaction-list',
+    path: '/transaction-list',
+    getParentRoute: () => AuthenticatedWalletRoute,
+  } as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManagementAdminIndexRoute = ManagementAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminAlertsRoute = ManagementAdminAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminAnalyticsRoute =
+  ManagementAdminAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminArcadeRoute = ManagementAdminArcadeRouteImport.update({
+  id: '/arcade',
+  path: '/arcade',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminAuditRoute = ManagementAdminAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminAuditSuiteRoute =
+  ManagementAdminAuditSuiteRouteImport.update({
+    id: '/audit-suite',
+    path: '/audit-suite',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminBankrollRoute = ManagementAdminBankrollRouteImport.update({
+  id: '/bankroll',
+  path: '/bankroll',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminBlackjackRoute =
+  ManagementAdminBlackjackRouteImport.update({
     id: '/blackjack',
     path: '/blackjack',
-    getParentRoute: () => AuthenticatedArcadeRoute,
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminCorrelatedRiskRoute =
+  ManagementAdminCorrelatedRiskRouteImport.update({
+    id: '/correlated-risk',
+    path: '/correlated-risk',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminF1Route = ManagementAdminF1RouteImport.update({
+  id: '/f1',
+  path: '/f1',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminFootballRoute = ManagementAdminFootballRouteImport.update({
+  id: '/football',
+  path: '/football',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminHealthRoute = ManagementAdminHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminIncidentsRoute =
+  ManagementAdminIncidentsRouteImport.update({
+    id: '/incidents',
+    path: '/incidents',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminMarketRulesRoute =
+  ManagementAdminMarketRulesRouteImport.update({
+    id: '/market-rules',
+    path: '/market-rules',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminMatchPoolsRoute =
+  ManagementAdminMatchPoolsRouteImport.update({
+    id: '/match-pools',
+    path: '/match-pools',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminMatchesRoute = ManagementAdminMatchesRouteImport.update({
+  id: '/matches',
+  path: '/matches',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminOddsHistoryRoute =
+  ManagementAdminOddsHistoryRouteImport.update({
+    id: '/odds-history',
+    path: '/odds-history',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminOddsProviderRoute =
+  ManagementAdminOddsProviderRouteImport.update({
+    id: '/odds-provider',
+    path: '/odds-provider',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminOnboardingRoute =
+  ManagementAdminOnboardingRouteImport.update({
+    id: '/onboarding',
+    path: '/onboarding',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminOperationsRoute =
+  ManagementAdminOperationsRouteImport.update({
+    id: '/operations',
+    path: '/operations',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminPayoutsRoute = ManagementAdminPayoutsRouteImport.update({
+  id: '/payouts',
+  path: '/payouts',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminPlReportRoute = ManagementAdminPlReportRouteImport.update({
+  id: '/pl-report',
+  path: '/pl-report',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminPointsRoute = ManagementAdminPointsRouteImport.update({
+  id: '/points',
+  path: '/points',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminPredictionsRoute =
+  ManagementAdminPredictionsRouteImport.update({
+    id: '/predictions',
+    path: '/predictions',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminPricingBreakdownRoute =
+  ManagementAdminPricingBreakdownRouteImport.update({
+    id: '/pricing-breakdown',
+    path: '/pricing-breakdown',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminReconciliationRoute =
+  ManagementAdminReconciliationRouteImport.update({
+    id: '/reconciliation',
+    path: '/reconciliation',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminReferralsRoute =
+  ManagementAdminReferralsRouteImport.update({
+    id: '/referrals',
+    path: '/referrals',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminReferredUsersRoute =
+  ManagementAdminReferredUsersRouteImport.update({
+    id: '/referred-users',
+    path: '/referred-users',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminReviewRoute = ManagementAdminReviewRouteImport.update({
+  id: '/review',
+  path: '/review',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminRiskSettingsRoute =
+  ManagementAdminRiskSettingsRouteImport.update({
+    id: '/risk-settings',
+    path: '/risk-settings',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminSettingsRoute = ManagementAdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminSettlementsRoute =
+  ManagementAdminSettlementsRouteImport.update({
+    id: '/settlements',
+    path: '/settlements',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminSimulationRoute =
+  ManagementAdminSimulationRouteImport.update({
+    id: '/simulation',
+    path: '/simulation',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminStaffRoute = ManagementAdminStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminStoreRoute = ManagementAdminStoreRouteImport.update({
+  id: '/store',
+  path: '/store',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminSupportOpsRoute =
+  ManagementAdminSupportOpsRouteImport.update({
+    id: '/support-ops',
+    path: '/support-ops',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminTokenLedgerRoute =
+  ManagementAdminTokenLedgerRouteImport.update({
+    id: '/token-ledger',
+    path: '/token-ledger',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminTournamentRoute =
+  ManagementAdminTournamentRouteImport.update({
+    id: '/tournament',
+    path: '/tournament',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminUfcRoute = ManagementAdminUfcRouteImport.update({
+  id: '/ufc',
+  path: '/ufc',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminUsersRoute = ManagementAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
+const ManagementAdminWalletAdjustmentsRoute =
+  ManagementAdminWalletAdjustmentsRouteImport.update({
+    id: '/wallet-adjustments',
+    path: '/wallet-adjustments',
+    getParentRoute: () => ManagementAdminRoute,
+  } as any)
+const ManagementAdminWalletLedgerRoute =
+  ManagementAdminWalletLedgerRouteImport.update({
+    id: '/wallet-ledger',
+    path: '/wallet-ledger',
+    getParentRoute: () => ManagementAdminRoute,
   } as any)
 const AuthenticatedF1RacesIndexRoute =
   AuthenticatedF1RacesIndexRouteImport.update({
@@ -699,107 +699,22 @@ const AuthenticatedF1RacesIndexRoute =
     path: '/races/',
     getParentRoute: () => AuthenticatedF1Route,
   } as any)
-const LovableEmailTransactionalSendRoute =
-  LovableEmailTransactionalSendRouteImport.update({
-    id: '/lovable/email/transactional/send',
-    path: '/lovable/email/transactional/send',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedF1RacesRaceIdRoute =
+  AuthenticatedF1RacesRaceIdRouteImport.update({
+    id: '/races/$raceId',
+    path: '/races/$raceId',
+    getParentRoute: () => AuthenticatedF1Route,
   } as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedFootballMatchesMatchIdRoute =
+  AuthenticatedFootballMatchesMatchIdRouteImport.update({
+    id: '/football/matches/$matchId',
+    path: '/football/matches/$matchId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksUfcOddsLiveRoute =
-  ApiPublicHooksUfcOddsLiveRouteImport.update({
-    id: '/api/public/hooks/ufc-odds-live',
-    path: '/api/public/hooks/ufc-odds-live',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksSyncFixturesRoute =
-  ApiPublicHooksSyncFixturesRouteImport.update({
-    id: '/api/public/hooks/sync-fixtures',
-    path: '/api/public/hooks/sync-fixtures',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksReconciliationRoute =
-  ApiPublicHooksReconciliationRouteImport.update({
-    id: '/api/public/hooks/reconciliation',
-    path: '/api/public/hooks/reconciliation',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksOddsLiveRoute = ApiPublicHooksOddsLiveRouteImport.update({
-  id: '/api/public/hooks/odds-live',
-  path: '/api/public/hooks/odds-live',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHooksHealthCheckRoute =
-  ApiPublicHooksHealthCheckRouteImport.update({
-    id: '/api/public/hooks/health-check',
-    path: '/api/public/hooks/health-check',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksFootballSyncRoute =
-  ApiPublicHooksFootballSyncRouteImport.update({
-    id: '/api/public/hooks/football-sync',
-    path: '/api/public/hooks/football-sync',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksFootballSettleRoute =
-  ApiPublicHooksFootballSettleRouteImport.update({
-    id: '/api/public/hooks/football-settle',
-    path: '/api/public/hooks/football-settle',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksFootballLiveRoute =
-  ApiPublicHooksFootballLiveRouteImport.update({
-    id: '/api/public/hooks/football-live',
-    path: '/api/public/hooks/football-live',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksF1SyncRoute = ApiPublicHooksF1SyncRouteImport.update({
-  id: '/api/public/hooks/f1-sync',
-  path: '/api/public/hooks/f1-sync',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHooksF1SettleRoute = ApiPublicHooksF1SettleRouteImport.update({
-  id: '/api/public/hooks/f1-settle',
-  path: '/api/public/hooks/f1-settle',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHooksF1OddsRoute = ApiPublicHooksF1OddsRouteImport.update({
-  id: '/api/public/hooks/f1-odds',
-  path: '/api/public/hooks/f1-odds',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHooksF1LiveRoute = ApiPublicHooksF1LiveRouteImport.update({
-  id: '/api/public/hooks/f1-live',
-  path: '/api/public/hooks/f1-live',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHooksApifootballSyncRoute =
-  ApiPublicHooksApifootballSyncRouteImport.update({
-    id: '/api/public/hooks/apifootball-sync',
-    path: '/api/public/hooks/apifootball-sync',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksApifootballPrematchRoute =
-  ApiPublicHooksApifootballPrematchRouteImport.update({
-    id: '/api/public/hooks/apifootball-prematch',
-    path: '/api/public/hooks/apifootball-prematch',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksApifootballLiveRoute =
-  ApiPublicHooksApifootballLiveRouteImport.update({
-    id: '/api/public/hooks/apifootball-live',
-    path: '/api/public/hooks/apifootball-live',
+const ApiPublicHooksApifootballFulltimeRoute =
+  ApiPublicHooksApifootballFulltimeRouteImport.update({
+    id: '/api/public/hooks/apifootball-fulltime',
+    path: '/api/public/hooks/apifootball-fulltime',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksApifootballLineupsRoute =
@@ -808,23 +723,108 @@ const ApiPublicHooksApifootballLineupsRoute =
     path: '/api/public/hooks/apifootball-lineups',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksApifootballFulltimeRoute =
-  ApiPublicHooksApifootballFulltimeRouteImport.update({
-    id: '/api/public/hooks/apifootball-fulltime',
-    path: '/api/public/hooks/apifootball-fulltime',
+const ApiPublicHooksApifootballLiveRoute =
+  ApiPublicHooksApifootballLiveRouteImport.update({
+    id: '/api/public/hooks/apifootball-live',
+    path: '/api/public/hooks/apifootball-live',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedFootballMatchesMatchIdRoute =
-  AuthenticatedFootballMatchesMatchIdRouteImport.update({
-    id: '/football/matches/$matchId',
-    path: '/football/matches/$matchId',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const ApiPublicHooksApifootballPrematchRoute =
+  ApiPublicHooksApifootballPrematchRouteImport.update({
+    id: '/api/public/hooks/apifootball-prematch',
+    path: '/api/public/hooks/apifootball-prematch',
+    getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedF1RacesRaceIdRoute =
-  AuthenticatedF1RacesRaceIdRouteImport.update({
-    id: '/races/$raceId',
-    path: '/races/$raceId',
-    getParentRoute: () => AuthenticatedF1Route,
+const ApiPublicHooksApifootballSyncRoute =
+  ApiPublicHooksApifootballSyncRouteImport.update({
+    id: '/api/public/hooks/apifootball-sync',
+    path: '/api/public/hooks/apifootball-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksF1LiveRoute = ApiPublicHooksF1LiveRouteImport.update({
+  id: '/api/public/hooks/f1-live',
+  path: '/api/public/hooks/f1-live',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksF1OddsRoute = ApiPublicHooksF1OddsRouteImport.update({
+  id: '/api/public/hooks/f1-odds',
+  path: '/api/public/hooks/f1-odds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksF1SettleRoute = ApiPublicHooksF1SettleRouteImport.update({
+  id: '/api/public/hooks/f1-settle',
+  path: '/api/public/hooks/f1-settle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksF1SyncRoute = ApiPublicHooksF1SyncRouteImport.update({
+  id: '/api/public/hooks/f1-sync',
+  path: '/api/public/hooks/f1-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksFootballLiveRoute =
+  ApiPublicHooksFootballLiveRouteImport.update({
+    id: '/api/public/hooks/football-live',
+    path: '/api/public/hooks/football-live',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksFootballSettleRoute =
+  ApiPublicHooksFootballSettleRouteImport.update({
+    id: '/api/public/hooks/football-settle',
+    path: '/api/public/hooks/football-settle',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksFootballSyncRoute =
+  ApiPublicHooksFootballSyncRouteImport.update({
+    id: '/api/public/hooks/football-sync',
+    path: '/api/public/hooks/football-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksHealthCheckRoute =
+  ApiPublicHooksHealthCheckRouteImport.update({
+    id: '/api/public/hooks/health-check',
+    path: '/api/public/hooks/health-check',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksOddsLiveRoute = ApiPublicHooksOddsLiveRouteImport.update({
+  id: '/api/public/hooks/odds-live',
+  path: '/api/public/hooks/odds-live',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksReconciliationRoute =
+  ApiPublicHooksReconciliationRouteImport.update({
+    id: '/api/public/hooks/reconciliation',
+    path: '/api/public/hooks/reconciliation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksSyncFixturesRoute =
+  ApiPublicHooksSyncFixturesRouteImport.update({
+    id: '/api/public/hooks/sync-fixtures',
+    path: '/api/public/hooks/sync-fixtures',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksUfcOddsLiveRoute =
+  ApiPublicHooksUfcOddsLiveRouteImport.update({
+    id: '/api/public/hooks/ufc-odds-live',
+    path: '/api/public/hooks/ufc-odds-live',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -1622,60 +1622,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/performance': {
-      id: '/performance'
-      path: '/performance'
-      fullPath: '/performance'
-      preLoaderRoute: typeof PerformanceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/faq': {
-      id: '/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof FaqRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/community': {
-      id: '/community'
-      path: '/community'
-      fullPath: '/community'
-      preLoaderRoute: typeof CommunityRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/brand': {
-      id: '/brand'
-      path: '/brand'
-      fullPath: '/brand'
-      preLoaderRoute: typeof BrandRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/management': {
-      id: '/management'
-      path: '/management'
-      fullPath: '/management'
-      preLoaderRoute: typeof ManagementRouteRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -1685,200 +1636,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/management/users': {
-      id: '/management/users'
-      path: '/users'
-      fullPath: '/management/users'
-      preLoaderRoute: typeof ManagementUsersRouteImport
-      parentRoute: typeof ManagementRouteRoute
-    }
-    '/management/support': {
-      id: '/management/support'
-      path: '/support'
-      fullPath: '/management/support'
-      preLoaderRoute: typeof ManagementSupportRouteImport
-      parentRoute: typeof ManagementRouteRoute
-    }
-    '/management/super-admin': {
-      id: '/management/super-admin'
-      path: '/super-admin'
-      fullPath: '/management/super-admin'
-      preLoaderRoute: typeof ManagementSuperAdminRouteImport
-      parentRoute: typeof ManagementRouteRoute
-    }
-    '/management/settings': {
-      id: '/management/settings'
-      path: '/settings'
-      fullPath: '/management/settings'
-      preLoaderRoute: typeof ManagementSettingsRouteImport
-      parentRoute: typeof ManagementRouteRoute
-    }
-    '/management/login': {
-      id: '/management/login'
-      path: '/login'
-      fullPath: '/management/login'
-      preLoaderRoute: typeof ManagementLoginRouteImport
-      parentRoute: typeof ManagementRouteRoute
-    }
-    '/management/chat': {
-      id: '/management/chat'
-      path: '/chat'
-      fullPath: '/management/chat'
-      preLoaderRoute: typeof ManagementChatRouteImport
-      parentRoute: typeof ManagementRouteRoute
-    }
-    '/management/change-password': {
-      id: '/management/change-password'
-      path: '/change-password'
-      fullPath: '/management/change-password'
-      preLoaderRoute: typeof ManagementChangePasswordRouteImport
-      parentRoute: typeof ManagementRouteRoute
-    }
-    '/management/admin': {
-      id: '/management/admin'
-      path: '/admin'
-      fullPath: '/management/admin'
-      preLoaderRoute: typeof ManagementAdminRouteImport
-      parentRoute: typeof ManagementRouteRoute
-    }
-    '/management/access-denied': {
-      id: '/management/access-denied'
-      path: '/access-denied'
-      fullPath: '/management/access-denied'
-      preLoaderRoute: typeof ManagementAccessDeniedRouteImport
-      parentRoute: typeof ManagementRouteRoute
-    }
-    '/email/unsubscribe': {
-      id: '/email/unsubscribe'
-      path: '/email/unsubscribe'
-      fullPath: '/email/unsubscribe'
-      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/wallet': {
-      id: '/_authenticated/wallet'
-      path: '/wallet'
-      fullPath: '/wallet'
-      preLoaderRoute: typeof AuthenticatedWalletRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/brand': {
+      id: '/brand'
+      path: '/brand'
+      fullPath: '/brand'
+      preLoaderRoute: typeof BrandRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/ufc': {
-      id: '/_authenticated/ufc'
-      path: '/ufc'
-      fullPath: '/ufc'
-      preLoaderRoute: typeof AuthenticatedUfcRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/trust-center': {
-      id: '/_authenticated/trust-center'
-      path: '/trust-center'
-      fullPath: '/trust-center'
-      preLoaderRoute: typeof AuthenticatedTrustCenterRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/tournament-winner': {
-      id: '/_authenticated/tournament-winner'
-      path: '/tournament-winner'
-      fullPath: '/tournament-winner'
-      preLoaderRoute: typeof AuthenticatedTournamentWinnerRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/management': {
+      id: '/management'
+      path: '/management'
+      fullPath: '/management'
+      preLoaderRoute: typeof ManagementRouteRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/support': {
-      id: '/_authenticated/support'
-      path: '/support'
-      fullPath: '/support'
-      preLoaderRoute: typeof AuthenticatedSupportRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/performance': {
+      id: '/performance'
+      path: '/performance'
+      fullPath: '/performance'
+      preLoaderRoute: typeof PerformanceRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/store': {
-      id: '/_authenticated/store'
-      path: '/store'
-      fullPath: '/store'
-      preLoaderRoute: typeof AuthenticatedStoreRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/status': {
-      id: '/_authenticated/status'
-      path: '/status'
-      fullPath: '/status'
-      preLoaderRoute: typeof AuthenticatedStatusRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/referrals': {
-      id: '/_authenticated/referrals'
-      path: '/referrals'
-      fullPath: '/referrals'
-      preLoaderRoute: typeof AuthenticatedReferralsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/payout': {
-      id: '/_authenticated/payout'
-      path: '/payout'
-      fullPath: '/payout'
-      preLoaderRoute: typeof AuthenticatedPayoutRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/notifications': {
-      id: '/_authenticated/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/my-predictions': {
-      id: '/_authenticated/my-predictions'
-      path: '/my-predictions'
-      fullPath: '/my-predictions'
-      preLoaderRoute: typeof AuthenticatedMyPredictionsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/matches': {
-      id: '/_authenticated/matches'
-      path: '/matches'
-      fullPath: '/matches'
-      preLoaderRoute: typeof AuthenticatedMatchesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/help': {
-      id: '/_authenticated/help'
-      path: '/help'
-      fullPath: '/help'
-      preLoaderRoute: typeof AuthenticatedHelpRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/f1': {
-      id: '/_authenticated/f1'
-      path: '/f1'
-      fullPath: '/f1'
-      preLoaderRoute: typeof AuthenticatedF1RouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/changelog': {
-      id: '/_authenticated/changelog'
-      path: '/changelog'
-      fullPath: '/changelog'
-      preLoaderRoute: typeof AuthenticatedChangelogRouteImport
+    '/_authenticated/arcade': {
+      id: '/_authenticated/arcade'
+      path: '/arcade'
+      fullPath: '/arcade'
+      preLoaderRoute: typeof AuthenticatedArcadeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/bets': {
@@ -1888,452 +1706,200 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBetsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/arcade': {
-      id: '/_authenticated/arcade'
-      path: '/arcade'
-      fullPath: '/arcade'
-      preLoaderRoute: typeof AuthenticatedArcadeRouteImport
+    '/_authenticated/changelog': {
+      id: '/_authenticated/changelog'
+      path: '/changelog'
+      fullPath: '/changelog'
+      preLoaderRoute: typeof AuthenticatedChangelogRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/management/admin/': {
-      id: '/management/admin/'
-      path: '/'
-      fullPath: '/management/admin/'
-      preLoaderRoute: typeof ManagementAdminIndexRouteImport
-      parentRoute: typeof ManagementAdminRoute
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/ufc/': {
-      id: '/_authenticated/ufc/'
-      path: '/'
-      fullPath: '/ufc/'
-      preLoaderRoute: typeof AuthenticatedUfcIndexRouteImport
-      parentRoute: typeof AuthenticatedUfcRoute
+    '/_authenticated/f1': {
+      id: '/_authenticated/f1'
+      path: '/f1'
+      fullPath: '/f1'
+      preLoaderRoute: typeof AuthenticatedF1RouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/matches/': {
-      id: '/_authenticated/matches/'
-      path: '/'
-      fullPath: '/matches/'
-      preLoaderRoute: typeof AuthenticatedMatchesIndexRouteImport
-      parentRoute: typeof AuthenticatedMatchesRoute
+    '/_authenticated/help': {
+      id: '/_authenticated/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof AuthenticatedHelpRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/f1/': {
-      id: '/_authenticated/f1/'
-      path: '/'
-      fullPath: '/f1/'
-      preLoaderRoute: typeof AuthenticatedF1IndexRouteImport
-      parentRoute: typeof AuthenticatedF1Route
+    '/_authenticated/matches': {
+      id: '/_authenticated/matches'
+      path: '/matches'
+      fullPath: '/matches'
+      preLoaderRoute: typeof AuthenticatedMatchesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/my-predictions': {
+      id: '/_authenticated/my-predictions'
+      path: '/my-predictions'
+      fullPath: '/my-predictions'
+      preLoaderRoute: typeof AuthenticatedMyPredictionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/payout': {
+      id: '/_authenticated/payout'
+      path: '/payout'
+      fullPath: '/payout'
+      preLoaderRoute: typeof AuthenticatedPayoutRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/referrals': {
+      id: '/_authenticated/referrals'
+      path: '/referrals'
+      fullPath: '/referrals'
+      preLoaderRoute: typeof AuthenticatedReferralsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/status': {
+      id: '/_authenticated/status'
+      path: '/status'
+      fullPath: '/status'
+      preLoaderRoute: typeof AuthenticatedStatusRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/store': {
+      id: '/_authenticated/store'
+      path: '/store'
+      fullPath: '/store'
+      preLoaderRoute: typeof AuthenticatedStoreRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/support': {
+      id: '/_authenticated/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof AuthenticatedSupportRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tournament-winner': {
+      id: '/_authenticated/tournament-winner'
+      path: '/tournament-winner'
+      fullPath: '/tournament-winner'
+      preLoaderRoute: typeof AuthenticatedTournamentWinnerRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/trust-center': {
+      id: '/_authenticated/trust-center'
+      path: '/trust-center'
+      fullPath: '/trust-center'
+      preLoaderRoute: typeof AuthenticatedTrustCenterRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ufc': {
+      id: '/_authenticated/ufc'
+      path: '/ufc'
+      fullPath: '/ufc'
+      preLoaderRoute: typeof AuthenticatedUfcRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/wallet': {
+      id: '/_authenticated/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof AuthenticatedWalletRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/management/access-denied': {
+      id: '/management/access-denied'
+      path: '/access-denied'
+      fullPath: '/management/access-denied'
+      preLoaderRoute: typeof ManagementAccessDeniedRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/admin': {
+      id: '/management/admin'
+      path: '/admin'
+      fullPath: '/management/admin'
+      preLoaderRoute: typeof ManagementAdminRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/change-password': {
+      id: '/management/change-password'
+      path: '/change-password'
+      fullPath: '/management/change-password'
+      preLoaderRoute: typeof ManagementChangePasswordRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/chat': {
+      id: '/management/chat'
+      path: '/chat'
+      fullPath: '/management/chat'
+      preLoaderRoute: typeof ManagementChatRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/login': {
+      id: '/management/login'
+      path: '/login'
+      fullPath: '/management/login'
+      preLoaderRoute: typeof ManagementLoginRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/settings': {
+      id: '/management/settings'
+      path: '/settings'
+      fullPath: '/management/settings'
+      preLoaderRoute: typeof ManagementSettingsRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/super-admin': {
+      id: '/management/super-admin'
+      path: '/super-admin'
+      fullPath: '/management/super-admin'
+      preLoaderRoute: typeof ManagementSuperAdminRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/support': {
+      id: '/management/support'
+      path: '/support'
+      fullPath: '/management/support'
+      preLoaderRoute: typeof ManagementSupportRouteImport
+      parentRoute: typeof ManagementRouteRoute
+    }
+    '/management/users': {
+      id: '/management/users'
+      path: '/users'
+      fullPath: '/management/users'
+      preLoaderRoute: typeof ManagementUsersRouteImport
+      parentRoute: typeof ManagementRouteRoute
     }
     '/_authenticated/arcade/': {
       id: '/_authenticated/arcade/'
       path: '/'
       fullPath: '/arcade/'
       preLoaderRoute: typeof AuthenticatedArcadeIndexRouteImport
-      parentRoute: typeof AuthenticatedArcadeRoute
-    }
-    '/management/admin/wallet-ledger': {
-      id: '/management/admin/wallet-ledger'
-      path: '/wallet-ledger'
-      fullPath: '/management/admin/wallet-ledger'
-      preLoaderRoute: typeof ManagementAdminWalletLedgerRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/wallet-adjustments': {
-      id: '/management/admin/wallet-adjustments'
-      path: '/wallet-adjustments'
-      fullPath: '/management/admin/wallet-adjustments'
-      preLoaderRoute: typeof ManagementAdminWalletAdjustmentsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/users': {
-      id: '/management/admin/users'
-      path: '/users'
-      fullPath: '/management/admin/users'
-      preLoaderRoute: typeof ManagementAdminUsersRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/ufc': {
-      id: '/management/admin/ufc'
-      path: '/ufc'
-      fullPath: '/management/admin/ufc'
-      preLoaderRoute: typeof ManagementAdminUfcRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/tournament': {
-      id: '/management/admin/tournament'
-      path: '/tournament'
-      fullPath: '/management/admin/tournament'
-      preLoaderRoute: typeof ManagementAdminTournamentRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/token-ledger': {
-      id: '/management/admin/token-ledger'
-      path: '/token-ledger'
-      fullPath: '/management/admin/token-ledger'
-      preLoaderRoute: typeof ManagementAdminTokenLedgerRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/support-ops': {
-      id: '/management/admin/support-ops'
-      path: '/support-ops'
-      fullPath: '/management/admin/support-ops'
-      preLoaderRoute: typeof ManagementAdminSupportOpsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/store': {
-      id: '/management/admin/store'
-      path: '/store'
-      fullPath: '/management/admin/store'
-      preLoaderRoute: typeof ManagementAdminStoreRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/staff': {
-      id: '/management/admin/staff'
-      path: '/staff'
-      fullPath: '/management/admin/staff'
-      preLoaderRoute: typeof ManagementAdminStaffRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/simulation': {
-      id: '/management/admin/simulation'
-      path: '/simulation'
-      fullPath: '/management/admin/simulation'
-      preLoaderRoute: typeof ManagementAdminSimulationRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/settlements': {
-      id: '/management/admin/settlements'
-      path: '/settlements'
-      fullPath: '/management/admin/settlements'
-      preLoaderRoute: typeof ManagementAdminSettlementsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/settings': {
-      id: '/management/admin/settings'
-      path: '/settings'
-      fullPath: '/management/admin/settings'
-      preLoaderRoute: typeof ManagementAdminSettingsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/risk-settings': {
-      id: '/management/admin/risk-settings'
-      path: '/risk-settings'
-      fullPath: '/management/admin/risk-settings'
-      preLoaderRoute: typeof ManagementAdminRiskSettingsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/review': {
-      id: '/management/admin/review'
-      path: '/review'
-      fullPath: '/management/admin/review'
-      preLoaderRoute: typeof ManagementAdminReviewRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/referred-users': {
-      id: '/management/admin/referred-users'
-      path: '/referred-users'
-      fullPath: '/management/admin/referred-users'
-      preLoaderRoute: typeof ManagementAdminReferredUsersRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/referrals': {
-      id: '/management/admin/referrals'
-      path: '/referrals'
-      fullPath: '/management/admin/referrals'
-      preLoaderRoute: typeof ManagementAdminReferralsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/reconciliation': {
-      id: '/management/admin/reconciliation'
-      path: '/reconciliation'
-      fullPath: '/management/admin/reconciliation'
-      preLoaderRoute: typeof ManagementAdminReconciliationRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/pricing-breakdown': {
-      id: '/management/admin/pricing-breakdown'
-      path: '/pricing-breakdown'
-      fullPath: '/management/admin/pricing-breakdown'
-      preLoaderRoute: typeof ManagementAdminPricingBreakdownRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/predictions': {
-      id: '/management/admin/predictions'
-      path: '/predictions'
-      fullPath: '/management/admin/predictions'
-      preLoaderRoute: typeof ManagementAdminPredictionsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/points': {
-      id: '/management/admin/points'
-      path: '/points'
-      fullPath: '/management/admin/points'
-      preLoaderRoute: typeof ManagementAdminPointsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/pl-report': {
-      id: '/management/admin/pl-report'
-      path: '/pl-report'
-      fullPath: '/management/admin/pl-report'
-      preLoaderRoute: typeof ManagementAdminPlReportRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/payouts': {
-      id: '/management/admin/payouts'
-      path: '/payouts'
-      fullPath: '/management/admin/payouts'
-      preLoaderRoute: typeof ManagementAdminPayoutsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/operations': {
-      id: '/management/admin/operations'
-      path: '/operations'
-      fullPath: '/management/admin/operations'
-      preLoaderRoute: typeof ManagementAdminOperationsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/onboarding': {
-      id: '/management/admin/onboarding'
-      path: '/onboarding'
-      fullPath: '/management/admin/onboarding'
-      preLoaderRoute: typeof ManagementAdminOnboardingRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/odds-provider': {
-      id: '/management/admin/odds-provider'
-      path: '/odds-provider'
-      fullPath: '/management/admin/odds-provider'
-      preLoaderRoute: typeof ManagementAdminOddsProviderRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/odds-history': {
-      id: '/management/admin/odds-history'
-      path: '/odds-history'
-      fullPath: '/management/admin/odds-history'
-      preLoaderRoute: typeof ManagementAdminOddsHistoryRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/matches': {
-      id: '/management/admin/matches'
-      path: '/matches'
-      fullPath: '/management/admin/matches'
-      preLoaderRoute: typeof ManagementAdminMatchesRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/match-pools': {
-      id: '/management/admin/match-pools'
-      path: '/match-pools'
-      fullPath: '/management/admin/match-pools'
-      preLoaderRoute: typeof ManagementAdminMatchPoolsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/market-rules': {
-      id: '/management/admin/market-rules'
-      path: '/market-rules'
-      fullPath: '/management/admin/market-rules'
-      preLoaderRoute: typeof ManagementAdminMarketRulesRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/incidents': {
-      id: '/management/admin/incidents'
-      path: '/incidents'
-      fullPath: '/management/admin/incidents'
-      preLoaderRoute: typeof ManagementAdminIncidentsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/health': {
-      id: '/management/admin/health'
-      path: '/health'
-      fullPath: '/management/admin/health'
-      preLoaderRoute: typeof ManagementAdminHealthRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/football': {
-      id: '/management/admin/football'
-      path: '/football'
-      fullPath: '/management/admin/football'
-      preLoaderRoute: typeof ManagementAdminFootballRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/f1': {
-      id: '/management/admin/f1'
-      path: '/f1'
-      fullPath: '/management/admin/f1'
-      preLoaderRoute: typeof ManagementAdminF1RouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/correlated-risk': {
-      id: '/management/admin/correlated-risk'
-      path: '/correlated-risk'
-      fullPath: '/management/admin/correlated-risk'
-      preLoaderRoute: typeof ManagementAdminCorrelatedRiskRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/blackjack': {
-      id: '/management/admin/blackjack'
-      path: '/blackjack'
-      fullPath: '/management/admin/blackjack'
-      preLoaderRoute: typeof ManagementAdminBlackjackRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/bankroll': {
-      id: '/management/admin/bankroll'
-      path: '/bankroll'
-      fullPath: '/management/admin/bankroll'
-      preLoaderRoute: typeof ManagementAdminBankrollRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/audit-suite': {
-      id: '/management/admin/audit-suite'
-      path: '/audit-suite'
-      fullPath: '/management/admin/audit-suite'
-      preLoaderRoute: typeof ManagementAdminAuditSuiteRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/audit': {
-      id: '/management/admin/audit'
-      path: '/audit'
-      fullPath: '/management/admin/audit'
-      preLoaderRoute: typeof ManagementAdminAuditRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/arcade': {
-      id: '/management/admin/arcade'
-      path: '/arcade'
-      fullPath: '/management/admin/arcade'
-      preLoaderRoute: typeof ManagementAdminArcadeRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/analytics': {
-      id: '/management/admin/analytics'
-      path: '/analytics'
-      fullPath: '/management/admin/analytics'
-      preLoaderRoute: typeof ManagementAdminAnalyticsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/management/admin/alerts': {
-      id: '/management/admin/alerts'
-      path: '/alerts'
-      fullPath: '/management/admin/alerts'
-      preLoaderRoute: typeof ManagementAdminAlertsRouteImport
-      parentRoute: typeof ManagementAdminRoute
-    }
-    '/lovable/email/suppression': {
-      id: '/lovable/email/suppression'
-      path: '/lovable/email/suppression'
-      fullPath: '/lovable/email/suppression'
-      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/wallet/transaction-list': {
-      id: '/_authenticated/wallet/transaction-list'
-      path: '/transaction-list'
-      fullPath: '/wallet/transaction-list'
-      preLoaderRoute: typeof AuthenticatedWalletTransactionListRouteImport
-      parentRoute: typeof AuthenticatedWalletRoute
-    }
-    '/_authenticated/ufc/fights': {
-      id: '/_authenticated/ufc/fights'
-      path: '/fights'
-      fullPath: '/ufc/fights'
-      preLoaderRoute: typeof AuthenticatedUfcFightsRouteImport
-      parentRoute: typeof AuthenticatedUfcRoute
-    }
-    '/_authenticated/ufc/$fightId': {
-      id: '/_authenticated/ufc/$fightId'
-      path: '/$fightId'
-      fullPath: '/ufc/$fightId'
-      preLoaderRoute: typeof AuthenticatedUfcFightIdRouteImport
-      parentRoute: typeof AuthenticatedUfcRoute
-    }
-    '/_authenticated/matches/$matchId': {
-      id: '/_authenticated/matches/$matchId'
-      path: '/$matchId'
-      fullPath: '/matches/$matchId'
-      preLoaderRoute: typeof AuthenticatedMatchesMatchIdRouteImport
-      parentRoute: typeof AuthenticatedMatchesRoute
-    }
-    '/_authenticated/free-bets/place': {
-      id: '/_authenticated/free-bets/place'
-      path: '/free-bets/place'
-      fullPath: '/free-bets/place'
-      preLoaderRoute: typeof AuthenticatedFreeBetsPlaceRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/football/ucl': {
-      id: '/_authenticated/football/ucl'
-      path: '/football/ucl'
-      fullPath: '/football/ucl'
-      preLoaderRoute: typeof AuthenticatedFootballUclRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/football/serie-a': {
-      id: '/_authenticated/football/serie-a'
-      path: '/football/serie-a'
-      fullPath: '/football/serie-a'
-      preLoaderRoute: typeof AuthenticatedFootballSerieARouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/football/la-liga': {
-      id: '/_authenticated/football/la-liga'
-      path: '/football/la-liga'
-      fullPath: '/football/la-liga'
-      preLoaderRoute: typeof AuthenticatedFootballLaLigaRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/football/epl': {
-      id: '/_authenticated/football/epl'
-      path: '/football/epl'
-      fullPath: '/football/epl'
-      preLoaderRoute: typeof AuthenticatedFootballEplRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/arcade/wheel': {
-      id: '/_authenticated/arcade/wheel'
-      path: '/wheel'
-      fullPath: '/arcade/wheel'
-      preLoaderRoute: typeof AuthenticatedArcadeWheelRouteImport
-      parentRoute: typeof AuthenticatedArcadeRoute
-    }
-    '/_authenticated/arcade/treasure': {
-      id: '/_authenticated/arcade/treasure'
-      path: '/treasure'
-      fullPath: '/arcade/treasure'
-      preLoaderRoute: typeof AuthenticatedArcadeTreasureRouteImport
-      parentRoute: typeof AuthenticatedArcadeRoute
-    }
-    '/_authenticated/arcade/rps': {
-      id: '/_authenticated/arcade/rps'
-      path: '/rps'
-      fullPath: '/arcade/rps'
-      preLoaderRoute: typeof AuthenticatedArcadeRpsRouteImport
-      parentRoute: typeof AuthenticatedArcadeRoute
-    }
-    '/_authenticated/arcade/roulette': {
-      id: '/_authenticated/arcade/roulette'
-      path: '/roulette'
-      fullPath: '/arcade/roulette'
-      preLoaderRoute: typeof AuthenticatedArcadeRouletteRouteImport
-      parentRoute: typeof AuthenticatedArcadeRoute
-    }
-    '/_authenticated/arcade/plinko': {
-      id: '/_authenticated/arcade/plinko'
-      path: '/plinko'
-      fullPath: '/arcade/plinko'
-      preLoaderRoute: typeof AuthenticatedArcadePlinkoRouteImport
-      parentRoute: typeof AuthenticatedArcadeRoute
-    }
-    '/_authenticated/arcade/hilo': {
-      id: '/_authenticated/arcade/hilo'
-      path: '/hilo'
-      fullPath: '/arcade/hilo'
-      preLoaderRoute: typeof AuthenticatedArcadeHiloRouteImport
-      parentRoute: typeof AuthenticatedArcadeRoute
-    }
-    '/_authenticated/arcade/dice': {
-      id: '/_authenticated/arcade/dice'
-      path: '/dice'
-      fullPath: '/arcade/dice'
-      preLoaderRoute: typeof AuthenticatedArcadeDiceRouteImport
       parentRoute: typeof AuthenticatedArcadeRoute
     }
     '/_authenticated/arcade/blackjack': {
@@ -2343,6 +1909,440 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedArcadeBlackjackRouteImport
       parentRoute: typeof AuthenticatedArcadeRoute
     }
+    '/_authenticated/arcade/dice': {
+      id: '/_authenticated/arcade/dice'
+      path: '/dice'
+      fullPath: '/arcade/dice'
+      preLoaderRoute: typeof AuthenticatedArcadeDiceRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
+    '/_authenticated/arcade/hilo': {
+      id: '/_authenticated/arcade/hilo'
+      path: '/hilo'
+      fullPath: '/arcade/hilo'
+      preLoaderRoute: typeof AuthenticatedArcadeHiloRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
+    '/_authenticated/arcade/plinko': {
+      id: '/_authenticated/arcade/plinko'
+      path: '/plinko'
+      fullPath: '/arcade/plinko'
+      preLoaderRoute: typeof AuthenticatedArcadePlinkoRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
+    '/_authenticated/arcade/roulette': {
+      id: '/_authenticated/arcade/roulette'
+      path: '/roulette'
+      fullPath: '/arcade/roulette'
+      preLoaderRoute: typeof AuthenticatedArcadeRouletteRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
+    '/_authenticated/arcade/rps': {
+      id: '/_authenticated/arcade/rps'
+      path: '/rps'
+      fullPath: '/arcade/rps'
+      preLoaderRoute: typeof AuthenticatedArcadeRpsRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
+    '/_authenticated/arcade/treasure': {
+      id: '/_authenticated/arcade/treasure'
+      path: '/treasure'
+      fullPath: '/arcade/treasure'
+      preLoaderRoute: typeof AuthenticatedArcadeTreasureRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
+    '/_authenticated/arcade/wheel': {
+      id: '/_authenticated/arcade/wheel'
+      path: '/wheel'
+      fullPath: '/arcade/wheel'
+      preLoaderRoute: typeof AuthenticatedArcadeWheelRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
+    '/_authenticated/f1/': {
+      id: '/_authenticated/f1/'
+      path: '/'
+      fullPath: '/f1/'
+      preLoaderRoute: typeof AuthenticatedF1IndexRouteImport
+      parentRoute: typeof AuthenticatedF1Route
+    }
+    '/_authenticated/football/epl': {
+      id: '/_authenticated/football/epl'
+      path: '/football/epl'
+      fullPath: '/football/epl'
+      preLoaderRoute: typeof AuthenticatedFootballEplRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/football/la-liga': {
+      id: '/_authenticated/football/la-liga'
+      path: '/football/la-liga'
+      fullPath: '/football/la-liga'
+      preLoaderRoute: typeof AuthenticatedFootballLaLigaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/football/serie-a': {
+      id: '/_authenticated/football/serie-a'
+      path: '/football/serie-a'
+      fullPath: '/football/serie-a'
+      preLoaderRoute: typeof AuthenticatedFootballSerieARouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/football/ucl': {
+      id: '/_authenticated/football/ucl'
+      path: '/football/ucl'
+      fullPath: '/football/ucl'
+      preLoaderRoute: typeof AuthenticatedFootballUclRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/free-bets/place': {
+      id: '/_authenticated/free-bets/place'
+      path: '/free-bets/place'
+      fullPath: '/free-bets/place'
+      preLoaderRoute: typeof AuthenticatedFreeBetsPlaceRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/matches/': {
+      id: '/_authenticated/matches/'
+      path: '/'
+      fullPath: '/matches/'
+      preLoaderRoute: typeof AuthenticatedMatchesIndexRouteImport
+      parentRoute: typeof AuthenticatedMatchesRoute
+    }
+    '/_authenticated/matches/$matchId': {
+      id: '/_authenticated/matches/$matchId'
+      path: '/$matchId'
+      fullPath: '/matches/$matchId'
+      preLoaderRoute: typeof AuthenticatedMatchesMatchIdRouteImport
+      parentRoute: typeof AuthenticatedMatchesRoute
+    }
+    '/_authenticated/ufc/': {
+      id: '/_authenticated/ufc/'
+      path: '/'
+      fullPath: '/ufc/'
+      preLoaderRoute: typeof AuthenticatedUfcIndexRouteImport
+      parentRoute: typeof AuthenticatedUfcRoute
+    }
+    '/_authenticated/ufc/$fightId': {
+      id: '/_authenticated/ufc/$fightId'
+      path: '/$fightId'
+      fullPath: '/ufc/$fightId'
+      preLoaderRoute: typeof AuthenticatedUfcFightIdRouteImport
+      parentRoute: typeof AuthenticatedUfcRoute
+    }
+    '/_authenticated/ufc/fights': {
+      id: '/_authenticated/ufc/fights'
+      path: '/fights'
+      fullPath: '/ufc/fights'
+      preLoaderRoute: typeof AuthenticatedUfcFightsRouteImport
+      parentRoute: typeof AuthenticatedUfcRoute
+    }
+    '/_authenticated/wallet/transaction-list': {
+      id: '/_authenticated/wallet/transaction-list'
+      path: '/transaction-list'
+      fullPath: '/wallet/transaction-list'
+      preLoaderRoute: typeof AuthenticatedWalletTransactionListRouteImport
+      parentRoute: typeof AuthenticatedWalletRoute
+    }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/management/admin/': {
+      id: '/management/admin/'
+      path: '/'
+      fullPath: '/management/admin/'
+      preLoaderRoute: typeof ManagementAdminIndexRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/alerts': {
+      id: '/management/admin/alerts'
+      path: '/alerts'
+      fullPath: '/management/admin/alerts'
+      preLoaderRoute: typeof ManagementAdminAlertsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/analytics': {
+      id: '/management/admin/analytics'
+      path: '/analytics'
+      fullPath: '/management/admin/analytics'
+      preLoaderRoute: typeof ManagementAdminAnalyticsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/arcade': {
+      id: '/management/admin/arcade'
+      path: '/arcade'
+      fullPath: '/management/admin/arcade'
+      preLoaderRoute: typeof ManagementAdminArcadeRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/audit': {
+      id: '/management/admin/audit'
+      path: '/audit'
+      fullPath: '/management/admin/audit'
+      preLoaderRoute: typeof ManagementAdminAuditRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/audit-suite': {
+      id: '/management/admin/audit-suite'
+      path: '/audit-suite'
+      fullPath: '/management/admin/audit-suite'
+      preLoaderRoute: typeof ManagementAdminAuditSuiteRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/bankroll': {
+      id: '/management/admin/bankroll'
+      path: '/bankroll'
+      fullPath: '/management/admin/bankroll'
+      preLoaderRoute: typeof ManagementAdminBankrollRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/blackjack': {
+      id: '/management/admin/blackjack'
+      path: '/blackjack'
+      fullPath: '/management/admin/blackjack'
+      preLoaderRoute: typeof ManagementAdminBlackjackRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/correlated-risk': {
+      id: '/management/admin/correlated-risk'
+      path: '/correlated-risk'
+      fullPath: '/management/admin/correlated-risk'
+      preLoaderRoute: typeof ManagementAdminCorrelatedRiskRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/f1': {
+      id: '/management/admin/f1'
+      path: '/f1'
+      fullPath: '/management/admin/f1'
+      preLoaderRoute: typeof ManagementAdminF1RouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/football': {
+      id: '/management/admin/football'
+      path: '/football'
+      fullPath: '/management/admin/football'
+      preLoaderRoute: typeof ManagementAdminFootballRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/health': {
+      id: '/management/admin/health'
+      path: '/health'
+      fullPath: '/management/admin/health'
+      preLoaderRoute: typeof ManagementAdminHealthRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/incidents': {
+      id: '/management/admin/incidents'
+      path: '/incidents'
+      fullPath: '/management/admin/incidents'
+      preLoaderRoute: typeof ManagementAdminIncidentsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/market-rules': {
+      id: '/management/admin/market-rules'
+      path: '/market-rules'
+      fullPath: '/management/admin/market-rules'
+      preLoaderRoute: typeof ManagementAdminMarketRulesRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/match-pools': {
+      id: '/management/admin/match-pools'
+      path: '/match-pools'
+      fullPath: '/management/admin/match-pools'
+      preLoaderRoute: typeof ManagementAdminMatchPoolsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/matches': {
+      id: '/management/admin/matches'
+      path: '/matches'
+      fullPath: '/management/admin/matches'
+      preLoaderRoute: typeof ManagementAdminMatchesRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/odds-history': {
+      id: '/management/admin/odds-history'
+      path: '/odds-history'
+      fullPath: '/management/admin/odds-history'
+      preLoaderRoute: typeof ManagementAdminOddsHistoryRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/odds-provider': {
+      id: '/management/admin/odds-provider'
+      path: '/odds-provider'
+      fullPath: '/management/admin/odds-provider'
+      preLoaderRoute: typeof ManagementAdminOddsProviderRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/onboarding': {
+      id: '/management/admin/onboarding'
+      path: '/onboarding'
+      fullPath: '/management/admin/onboarding'
+      preLoaderRoute: typeof ManagementAdminOnboardingRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/operations': {
+      id: '/management/admin/operations'
+      path: '/operations'
+      fullPath: '/management/admin/operations'
+      preLoaderRoute: typeof ManagementAdminOperationsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/payouts': {
+      id: '/management/admin/payouts'
+      path: '/payouts'
+      fullPath: '/management/admin/payouts'
+      preLoaderRoute: typeof ManagementAdminPayoutsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/pl-report': {
+      id: '/management/admin/pl-report'
+      path: '/pl-report'
+      fullPath: '/management/admin/pl-report'
+      preLoaderRoute: typeof ManagementAdminPlReportRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/points': {
+      id: '/management/admin/points'
+      path: '/points'
+      fullPath: '/management/admin/points'
+      preLoaderRoute: typeof ManagementAdminPointsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/predictions': {
+      id: '/management/admin/predictions'
+      path: '/predictions'
+      fullPath: '/management/admin/predictions'
+      preLoaderRoute: typeof ManagementAdminPredictionsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/pricing-breakdown': {
+      id: '/management/admin/pricing-breakdown'
+      path: '/pricing-breakdown'
+      fullPath: '/management/admin/pricing-breakdown'
+      preLoaderRoute: typeof ManagementAdminPricingBreakdownRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/reconciliation': {
+      id: '/management/admin/reconciliation'
+      path: '/reconciliation'
+      fullPath: '/management/admin/reconciliation'
+      preLoaderRoute: typeof ManagementAdminReconciliationRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/referrals': {
+      id: '/management/admin/referrals'
+      path: '/referrals'
+      fullPath: '/management/admin/referrals'
+      preLoaderRoute: typeof ManagementAdminReferralsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/referred-users': {
+      id: '/management/admin/referred-users'
+      path: '/referred-users'
+      fullPath: '/management/admin/referred-users'
+      preLoaderRoute: typeof ManagementAdminReferredUsersRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/review': {
+      id: '/management/admin/review'
+      path: '/review'
+      fullPath: '/management/admin/review'
+      preLoaderRoute: typeof ManagementAdminReviewRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/risk-settings': {
+      id: '/management/admin/risk-settings'
+      path: '/risk-settings'
+      fullPath: '/management/admin/risk-settings'
+      preLoaderRoute: typeof ManagementAdminRiskSettingsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/settings': {
+      id: '/management/admin/settings'
+      path: '/settings'
+      fullPath: '/management/admin/settings'
+      preLoaderRoute: typeof ManagementAdminSettingsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/settlements': {
+      id: '/management/admin/settlements'
+      path: '/settlements'
+      fullPath: '/management/admin/settlements'
+      preLoaderRoute: typeof ManagementAdminSettlementsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/simulation': {
+      id: '/management/admin/simulation'
+      path: '/simulation'
+      fullPath: '/management/admin/simulation'
+      preLoaderRoute: typeof ManagementAdminSimulationRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/staff': {
+      id: '/management/admin/staff'
+      path: '/staff'
+      fullPath: '/management/admin/staff'
+      preLoaderRoute: typeof ManagementAdminStaffRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/store': {
+      id: '/management/admin/store'
+      path: '/store'
+      fullPath: '/management/admin/store'
+      preLoaderRoute: typeof ManagementAdminStoreRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/support-ops': {
+      id: '/management/admin/support-ops'
+      path: '/support-ops'
+      fullPath: '/management/admin/support-ops'
+      preLoaderRoute: typeof ManagementAdminSupportOpsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/token-ledger': {
+      id: '/management/admin/token-ledger'
+      path: '/token-ledger'
+      fullPath: '/management/admin/token-ledger'
+      preLoaderRoute: typeof ManagementAdminTokenLedgerRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/tournament': {
+      id: '/management/admin/tournament'
+      path: '/tournament'
+      fullPath: '/management/admin/tournament'
+      preLoaderRoute: typeof ManagementAdminTournamentRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/ufc': {
+      id: '/management/admin/ufc'
+      path: '/ufc'
+      fullPath: '/management/admin/ufc'
+      preLoaderRoute: typeof ManagementAdminUfcRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/users': {
+      id: '/management/admin/users'
+      path: '/users'
+      fullPath: '/management/admin/users'
+      preLoaderRoute: typeof ManagementAdminUsersRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/wallet-adjustments': {
+      id: '/management/admin/wallet-adjustments'
+      path: '/wallet-adjustments'
+      fullPath: '/management/admin/wallet-adjustments'
+      preLoaderRoute: typeof ManagementAdminWalletAdjustmentsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/wallet-ledger': {
+      id: '/management/admin/wallet-ledger'
+      path: '/wallet-ledger'
+      fullPath: '/management/admin/wallet-ledger'
+      preLoaderRoute: typeof ManagementAdminWalletLedgerRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/_authenticated/f1/races/': {
       id: '/_authenticated/f1/races/'
       path: '/races'
@@ -2350,130 +2350,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedF1RacesIndexRouteImport
       parentRoute: typeof AuthenticatedF1Route
     }
-    '/lovable/email/transactional/send': {
-      id: '/lovable/email/transactional/send'
-      path: '/lovable/email/transactional/send'
-      fullPath: '/lovable/email/transactional/send'
-      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/f1/races/$raceId': {
+      id: '/_authenticated/f1/races/$raceId'
+      path: '/races/$raceId'
+      fullPath: '/f1/races/$raceId'
+      preLoaderRoute: typeof AuthenticatedF1RacesRaceIdRouteImport
+      parentRoute: typeof AuthenticatedF1Route
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/football/matches/$matchId': {
+      id: '/_authenticated/football/matches/$matchId'
+      path: '/football/matches/$matchId'
+      fullPath: '/football/matches/$matchId'
+      preLoaderRoute: typeof AuthenticatedFootballMatchesMatchIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/ufc-odds-live': {
-      id: '/api/public/hooks/ufc-odds-live'
-      path: '/api/public/hooks/ufc-odds-live'
-      fullPath: '/api/public/hooks/ufc-odds-live'
-      preLoaderRoute: typeof ApiPublicHooksUfcOddsLiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/sync-fixtures': {
-      id: '/api/public/hooks/sync-fixtures'
-      path: '/api/public/hooks/sync-fixtures'
-      fullPath: '/api/public/hooks/sync-fixtures'
-      preLoaderRoute: typeof ApiPublicHooksSyncFixturesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/reconciliation': {
-      id: '/api/public/hooks/reconciliation'
-      path: '/api/public/hooks/reconciliation'
-      fullPath: '/api/public/hooks/reconciliation'
-      preLoaderRoute: typeof ApiPublicHooksReconciliationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/odds-live': {
-      id: '/api/public/hooks/odds-live'
-      path: '/api/public/hooks/odds-live'
-      fullPath: '/api/public/hooks/odds-live'
-      preLoaderRoute: typeof ApiPublicHooksOddsLiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/health-check': {
-      id: '/api/public/hooks/health-check'
-      path: '/api/public/hooks/health-check'
-      fullPath: '/api/public/hooks/health-check'
-      preLoaderRoute: typeof ApiPublicHooksHealthCheckRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/football-sync': {
-      id: '/api/public/hooks/football-sync'
-      path: '/api/public/hooks/football-sync'
-      fullPath: '/api/public/hooks/football-sync'
-      preLoaderRoute: typeof ApiPublicHooksFootballSyncRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/football-settle': {
-      id: '/api/public/hooks/football-settle'
-      path: '/api/public/hooks/football-settle'
-      fullPath: '/api/public/hooks/football-settle'
-      preLoaderRoute: typeof ApiPublicHooksFootballSettleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/football-live': {
-      id: '/api/public/hooks/football-live'
-      path: '/api/public/hooks/football-live'
-      fullPath: '/api/public/hooks/football-live'
-      preLoaderRoute: typeof ApiPublicHooksFootballLiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/f1-sync': {
-      id: '/api/public/hooks/f1-sync'
-      path: '/api/public/hooks/f1-sync'
-      fullPath: '/api/public/hooks/f1-sync'
-      preLoaderRoute: typeof ApiPublicHooksF1SyncRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/f1-settle': {
-      id: '/api/public/hooks/f1-settle'
-      path: '/api/public/hooks/f1-settle'
-      fullPath: '/api/public/hooks/f1-settle'
-      preLoaderRoute: typeof ApiPublicHooksF1SettleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/f1-odds': {
-      id: '/api/public/hooks/f1-odds'
-      path: '/api/public/hooks/f1-odds'
-      fullPath: '/api/public/hooks/f1-odds'
-      preLoaderRoute: typeof ApiPublicHooksF1OddsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/f1-live': {
-      id: '/api/public/hooks/f1-live'
-      path: '/api/public/hooks/f1-live'
-      fullPath: '/api/public/hooks/f1-live'
-      preLoaderRoute: typeof ApiPublicHooksF1LiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/apifootball-sync': {
-      id: '/api/public/hooks/apifootball-sync'
-      path: '/api/public/hooks/apifootball-sync'
-      fullPath: '/api/public/hooks/apifootball-sync'
-      preLoaderRoute: typeof ApiPublicHooksApifootballSyncRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/apifootball-prematch': {
-      id: '/api/public/hooks/apifootball-prematch'
-      path: '/api/public/hooks/apifootball-prematch'
-      fullPath: '/api/public/hooks/apifootball-prematch'
-      preLoaderRoute: typeof ApiPublicHooksApifootballPrematchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/apifootball-live': {
-      id: '/api/public/hooks/apifootball-live'
-      path: '/api/public/hooks/apifootball-live'
-      fullPath: '/api/public/hooks/apifootball-live'
-      preLoaderRoute: typeof ApiPublicHooksApifootballLiveRouteImport
+    '/api/public/hooks/apifootball-fulltime': {
+      id: '/api/public/hooks/apifootball-fulltime'
+      path: '/api/public/hooks/apifootball-fulltime'
+      fullPath: '/api/public/hooks/apifootball-fulltime'
+      preLoaderRoute: typeof ApiPublicHooksApifootballFulltimeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/apifootball-lineups': {
@@ -2483,26 +2378,131 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksApifootballLineupsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/apifootball-fulltime': {
-      id: '/api/public/hooks/apifootball-fulltime'
-      path: '/api/public/hooks/apifootball-fulltime'
-      fullPath: '/api/public/hooks/apifootball-fulltime'
-      preLoaderRoute: typeof ApiPublicHooksApifootballFulltimeRouteImport
+    '/api/public/hooks/apifootball-live': {
+      id: '/api/public/hooks/apifootball-live'
+      path: '/api/public/hooks/apifootball-live'
+      fullPath: '/api/public/hooks/apifootball-live'
+      preLoaderRoute: typeof ApiPublicHooksApifootballLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/football/matches/$matchId': {
-      id: '/_authenticated/football/matches/$matchId'
-      path: '/football/matches/$matchId'
-      fullPath: '/football/matches/$matchId'
-      preLoaderRoute: typeof AuthenticatedFootballMatchesMatchIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/api/public/hooks/apifootball-prematch': {
+      id: '/api/public/hooks/apifootball-prematch'
+      path: '/api/public/hooks/apifootball-prematch'
+      fullPath: '/api/public/hooks/apifootball-prematch'
+      preLoaderRoute: typeof ApiPublicHooksApifootballPrematchRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/f1/races/$raceId': {
-      id: '/_authenticated/f1/races/$raceId'
-      path: '/races/$raceId'
-      fullPath: '/f1/races/$raceId'
-      preLoaderRoute: typeof AuthenticatedF1RacesRaceIdRouteImport
-      parentRoute: typeof AuthenticatedF1Route
+    '/api/public/hooks/apifootball-sync': {
+      id: '/api/public/hooks/apifootball-sync'
+      path: '/api/public/hooks/apifootball-sync'
+      fullPath: '/api/public/hooks/apifootball-sync'
+      preLoaderRoute: typeof ApiPublicHooksApifootballSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/f1-live': {
+      id: '/api/public/hooks/f1-live'
+      path: '/api/public/hooks/f1-live'
+      fullPath: '/api/public/hooks/f1-live'
+      preLoaderRoute: typeof ApiPublicHooksF1LiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/f1-odds': {
+      id: '/api/public/hooks/f1-odds'
+      path: '/api/public/hooks/f1-odds'
+      fullPath: '/api/public/hooks/f1-odds'
+      preLoaderRoute: typeof ApiPublicHooksF1OddsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/f1-settle': {
+      id: '/api/public/hooks/f1-settle'
+      path: '/api/public/hooks/f1-settle'
+      fullPath: '/api/public/hooks/f1-settle'
+      preLoaderRoute: typeof ApiPublicHooksF1SettleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/f1-sync': {
+      id: '/api/public/hooks/f1-sync'
+      path: '/api/public/hooks/f1-sync'
+      fullPath: '/api/public/hooks/f1-sync'
+      preLoaderRoute: typeof ApiPublicHooksF1SyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/football-live': {
+      id: '/api/public/hooks/football-live'
+      path: '/api/public/hooks/football-live'
+      fullPath: '/api/public/hooks/football-live'
+      preLoaderRoute: typeof ApiPublicHooksFootballLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/football-settle': {
+      id: '/api/public/hooks/football-settle'
+      path: '/api/public/hooks/football-settle'
+      fullPath: '/api/public/hooks/football-settle'
+      preLoaderRoute: typeof ApiPublicHooksFootballSettleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/football-sync': {
+      id: '/api/public/hooks/football-sync'
+      path: '/api/public/hooks/football-sync'
+      fullPath: '/api/public/hooks/football-sync'
+      preLoaderRoute: typeof ApiPublicHooksFootballSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/health-check': {
+      id: '/api/public/hooks/health-check'
+      path: '/api/public/hooks/health-check'
+      fullPath: '/api/public/hooks/health-check'
+      preLoaderRoute: typeof ApiPublicHooksHealthCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/odds-live': {
+      id: '/api/public/hooks/odds-live'
+      path: '/api/public/hooks/odds-live'
+      fullPath: '/api/public/hooks/odds-live'
+      preLoaderRoute: typeof ApiPublicHooksOddsLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/reconciliation': {
+      id: '/api/public/hooks/reconciliation'
+      path: '/api/public/hooks/reconciliation'
+      fullPath: '/api/public/hooks/reconciliation'
+      preLoaderRoute: typeof ApiPublicHooksReconciliationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/sync-fixtures': {
+      id: '/api/public/hooks/sync-fixtures'
+      path: '/api/public/hooks/sync-fixtures'
+      fullPath: '/api/public/hooks/sync-fixtures'
+      preLoaderRoute: typeof ApiPublicHooksSyncFixturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/ufc-odds-live': {
+      id: '/api/public/hooks/ufc-odds-live'
+      path: '/api/public/hooks/ufc-odds-live'
+      fullPath: '/api/public/hooks/ufc-odds-live'
+      preLoaderRoute: typeof ApiPublicHooksUfcOddsLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }

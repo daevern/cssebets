@@ -149,13 +149,13 @@ function WheelPage() {
         <HudPlaque
           game="wheel"
           className="flex-1"
-          label="Spins today"
-          value={`${profileQ.data?.todayRounds ?? 0}`}
+          label="Risk"
+          value={risk}
         />
         <HudPlaque
           game="wheel"
           className="flex-1"
-          label="Best hit"
+          label="Best land"
           value={`${fmt(profileQ.data?.bestMultiplier ?? 0)}×`}
         />
         <FairnessPlaque game="wheel" rtpLabel={arcadeFairness("wheel").rtpLabel} tag="Fair" />
@@ -171,16 +171,34 @@ function WheelPage() {
         <ArcadeGlow game="wheel" />
         <ArcadeStage game="wheel" className="relative z-10">
         <ArcadeEntrance game="wheel" className="relative">
-          <MiniCabinetTitle game="wheel" title="Fortune Wheel" kicker="Risk · spin · land" />
+          <MiniCabinetTitle
+            game="wheel"
+            title="Fortune Wheel"
+            kicker="Pick a risk table · watch it land"
+            mark={
+              <svg viewBox="0 0 32 32" className="h-7 w-7" aria-hidden>
+                <circle cx="16" cy="16" r="12" fill="currentColor" opacity="0.25" />
+                <circle cx="16" cy="16" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+                <path d="M16 6 L16 16 L24 16" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                <circle cx="16" cy="16" r="2.2" fill="currentColor" />
+              </svg>
+            }
+          />
           <SettlePlaque
             game="wheel"
             show={beat}
-            label={won ? "Paid" : "No win"}
+            label={won ? "Wheel settles" : "Cold segment"}
             value={`${fmt(mult)}×`}
           />
-          <WheelBoard risk={risk} landedIndex={landed} spinKey={spinKey} onSettled={onSettled} />
+          <WheelBoard
+            risk={risk}
+            landedIndex={landed}
+            spinKey={spinKey}
+            onSettled={onSettled}
+            onTick={() => playFor("wheel", "reveal-tick")}
+          />
           <ArcadeIdleCue game="wheel" show={!busy && landed == null && !resultOpen}>
-            Pick a risk table, then spin
+            Choose low, med, or high risk — then spin the cabinet
           </ArcadeIdleCue>
         </ArcadeEntrance>
       </ArcadeStage>
@@ -241,9 +259,9 @@ function WheelPage() {
           />
           <DockReadout
             className="ml-auto"
-            label="Top prize"
+            label={`${risk} top`}
             value={`${fmt(wheelMaxMultiplier(risk))}×`}
-            hint={`Max ${fmt(stake * wheelMaxMultiplier(risk))}`}
+            hint={`Ceil ${fmt(stake * wheelMaxMultiplier(risk))}`}
           />
         </DockRow>
 
@@ -257,11 +275,11 @@ function WheelPage() {
         >
           {busy ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Spinning
+              <Loader2 className="h-4 w-4 animate-spin" /> Wheel in motion
             </>
           ) : (
             <>
-              <RotateCw className="h-4 w-4" /> Spin {fmt(stake)} pts
+              <RotateCw className="h-4 w-4" /> Spin {fmt(stake)} pts · {risk}
             </>
           )}
         </DockPrimary>
