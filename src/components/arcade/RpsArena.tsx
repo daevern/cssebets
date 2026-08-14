@@ -98,6 +98,35 @@ function CardBack({ dim }: { dim?: boolean }) {
 
 type Tone = "WIN" | "LOSS" | "DRAW" | null;
 
+/** Slate console stat cell — matches Dice / Hi-Lo / Wheel. */
+function StatCell({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "accent";
+}) {
+  return (
+    <div
+      className="flex min-w-0 flex-1 flex-col gap-1 rounded-[6px] border px-2.5 py-2"
+      style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
+    >
+      <span className="truncate text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
+        {label}
+      </span>
+      <span
+        className="font-display text-[15px] font-black tabular-nums leading-none"
+        style={{ color: tone === "accent" ? ARCADE_THEMES.rps.accent : "#ffffff" }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+
 const toneText = (t: Tone) =>
   t === "WIN"
     ? "text-[var(--color-neon)]"
@@ -316,17 +345,59 @@ function RpsArenaImpl({
 .rps-rail *{overflow-anchor:none}
 `}</style>
 
-      {/* Arena title */}
-      <div className="mb-3 flex items-center justify-center gap-2 pt-1">
-        <HandGlyph move="ROCK" className="h-4 w-4 shrink-0 text-[var(--color-neon)]/70" />
-        <span
-          className="font-display text-base font-black uppercase tracking-[0.1em] text-white sm:text-lg"
-          style={{ textShadow: "0 0 14px color-mix(in oklab, var(--color-neon) 45%, transparent)" }}
+      {/* Floating result pill — Stake-style console readout */}
+      <div className="relative mb-1 flex justify-center pt-1">
+        <div
+          key={`${animationKey}-${phase}`}
+          className={cn(
+            "relative rounded-[8px] border px-4 py-2 text-center",
+            phase === "SETTLED" && "motion-safe:[animation:dicePillLand_360ms_ease-out]",
+          )}
+          style={{
+            background: "#0f212e",
+            borderColor:
+              phase !== "SETTLED"
+                ? "rgba(255,255,255,.12)"
+                : outcome === "WIN"
+                  ? ARCADE_THEMES.rps.accent
+                  : outcome === "LOSS"
+                    ? "#ff4d5e"
+                    : "#f5c451",
+          }}
         >
-          Rock <span className="text-[var(--color-neon)]">Paper</span> Scissors
-        </span>
-        <HandGlyph move="SCISSORS" className="h-4 w-4 shrink-0 text-[var(--color-neon)]/70" />
+          <div
+            className="font-display text-[26px] font-black tabular-nums leading-none"
+            style={{
+              color:
+                phase !== "SETTLED"
+                  ? "rgba(255,255,255,.55)"
+                  : outcome === "WIN"
+                    ? ARCADE_THEMES.rps.accent
+                    : outcome === "LOSS"
+                      ? "#ff4d5e"
+                      : "#f5c451",
+            }}
+          >
+            {liveMultiplier.toFixed(2)}×
+          </div>
+          <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/35">
+            {phase === "IDLE"
+              ? "ready"
+              : phase === "SETTLED"
+                ? outcome === "WIN"
+                  ? "win"
+                  : outcome === "LOSS"
+                    ? "bust"
+                    : "push"
+                : "revealing"}
+          </div>
+          <div
+            className="absolute left-1/2 top-full h-2 w-[2px] -translate-x-1/2"
+            style={{ background: "rgba(255,255,255,.2)" }}
+          />
+        </div>
       </div>
+
 
       {/* Rail — the active column is centred; history drifts left, next waits right. */}
       <div className="relative flex items-start justify-center gap-2 pb-0.5 pt-2">
@@ -386,16 +457,22 @@ function RpsArenaImpl({
 
 
 
+      {/* Stat cells */}
+      <div className="mx-auto mt-3 flex w-full max-w-[460px] items-stretch gap-2">
+        <StatCell label="Multiplier" value={`${liveMultiplier.toFixed(2)}×`} tone="accent" />
+        <StatCell label="Next" value={`${nextMultipliers[0].toFixed(2)}×`} />
+        <StatCell label="Streak" value={`${runStep}`} />
+      </div>
+
       {/* Status line */}
       <div
         className={cn(
-          "mt-1.5 min-h-[12px] text-center font-display text-[10px] font-black uppercase tracking-[0.14em] transition-colors",
-          phase === "SETTLED" ? toneText(outcome as Tone) : "text-[var(--color-ink-muted)]",
+          "mt-2 min-h-[12px] text-center font-display text-[10px] font-black uppercase tracking-[0.14em] transition-colors",
+          phase === "SETTLED" ? toneText(outcome as Tone) : "text-white/35",
         )}
       >
         {phase === "IDLE"
           ? "Throw a hand to challenge"
-
           : phase === "SETTLED"
             ? outcome === "WIN"
               ? "You win"
@@ -405,115 +482,54 @@ function RpsArenaImpl({
             : "Revealing"}
       </div>
 
-      {/* Wiring + pedestal-mounted hand controls.
-          The wires live in the SAME width container as the button grid and use
-          the grid's own column maths, so every lead stays welded to its control
-          at any screen size (col width = (100% - 2*gap)/3, gap = 12px). */}
-      <div className="mx-auto mt-3 w-[62%] max-w-[280px] md:max-w-[330px] lg:max-w-[380px]">
-        <div className="relative h-[46px]">
-          {/* drop lead from the arena down to the bus */}
-          <span className="absolute left-1/2 top-0 h-[30px] w-[7px] -translate-x-1/2 rounded-full bg-[#5b6675]" />
-          {/* horizontal bus spanning the outer column centres */}
-          <span
-            className="absolute h-[7px] rounded-full bg-[#5b6675]"
-            style={{
-              left: "calc((100% - 24px) / 6)",
-              right: "calc((100% - 24px) / 6)",
-              top: "26px",
-            }}
-          />
-          {/* stems into each control */}
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="absolute top-[26px] h-[20px] w-[7px] -translate-x-1/2 rounded-full bg-[#5b6675]"
+      {/* Console call-pads — flat slate keys with a cyan live edge. */}
+      <div className="mx-auto mt-3 grid w-full max-w-[460px] grid-cols-3 gap-2">
+        {RPS_MOVES.map((m) => {
+          const selected = playerMove === m;
+          return (
+            <button
+              key={m}
+              type="button"
+              disabled={!canPlay}
+              onClick={() => onChoose(m)}
+              aria-label={m}
+              className={cn(
+                "group relative flex flex-col items-center gap-1.5 rounded-[6px] border px-2 py-3 transition-all duration-150",
+                "active:translate-y-[1px] disabled:pointer-events-none disabled:opacity-40",
+                selected ? "" : "hover:brightness-125",
+              )}
               style={{
-                left:
-                  i === 1
-                    ? "50%"
-                    : i === 0
-                      ? "calc((100% - 24px) / 6)"
-                      : "calc(100% - (100% - 24px) / 6)",
+                background: selected
+                  ? "color-mix(in srgb, var(--color-neon) 16%, #0f212e)"
+                  : "#0f212e",
+                borderColor: selected ? ARCADE_THEMES.rps.accent : "rgba(255,255,255,.08)",
+                boxShadow: selected
+                  ? `0 0 0 1px ${ARCADE_THEMES.rps.accent}, 0 0 18px -6px ${ARCADE_THEMES.rps.accent}`
+                  : "inset 0 -2px 0 rgba(0,0,0,.35)",
               }}
-            />
-          ))}
-        </div>
-
-        <div className="grid w-full grid-cols-3 gap-3">
-
-          {RPS_MOVES.map((m) => {
-            const selected = playerMove === m;
-            return (
-              <button
-                key={m}
-                type="button"
-                disabled={!canPlay}
-                onClick={() => onChoose(m)}
-                aria-label={m}
-                className="group relative block w-full transition-transform duration-100 active:translate-y-[2px] disabled:pointer-events-none disabled:opacity-40"
+            >
+              <HandGlyph
+                move={m}
+                className={cn(
+                  "h-8 w-8 transition-transform duration-150",
+                  selected
+                    ? "scale-110 text-[var(--color-neon)] animate-[rps-pop_0.3s_ease-out]"
+                    : "text-white/70 group-hover:text-white",
+                )}
+              />
+              <span
+                className={cn(
+                  "text-[9px] font-bold uppercase tracking-[0.16em]",
+                  selected ? "text-[var(--color-neon)]" : "text-white/40",
+                )}
               >
-                <div
-                  className="relative aspect-[1/1.06] w-full"
-                  style={
-                    phase === "IDLE" && !selected
-                      ? {
-                          animation: `arcadePedestalBreathe 1.8s ease-in-out ${RPS_MOVES.indexOf(m) * 0.22}s infinite`,
-                        }
-                      : undefined
-                  }
-                >
-                  {/* cradle arms */}
-                  <span
-                    className={cn(
-                      "absolute left-0 top-[12%] bottom-[14%] w-[15%] rounded-[7px]",
-                      selected ? "bg-[#dfe6ee]" : "bg-[#7c8899]",
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "absolute right-0 top-[12%] bottom-[14%] w-[15%] rounded-[7px]",
-                      selected ? "bg-[#dfe6ee]" : "bg-[#7c8899]",
-                    )}
-                  />
-                  {/* base slab */}
-                  <span
-                    className={cn(
-                      "absolute inset-x-0 bottom-0 h-[15%] rounded-[8px]",
-                      selected ? "bg-[#e7edf3]" : "bg-[#98a5b4]",
-                    )}
-                  />
-                  {/* green frame tile */}
-                  <div
-                    className={cn(
-                      "absolute left-[7%] right-[7%] top-0 bottom-[20%] rounded-[16px] p-[8%] transition-colors",
-                      selected
-                        ? "bg-[color-mix(in_srgb,var(--color-neon)_92%,white)] shadow-[0_0_18px_0_color-mix(in_srgb,var(--color-neon)_45%,transparent)]"
-                        : "bg-[var(--color-neon)] group-hover:bg-[color-mix(in_srgb,var(--color-neon)_82%,white)]",
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "grid h-full w-full place-items-center rounded-[9px]",
-                        selected ? "bg-[#2b3440]" : "bg-[#3b4553]",
-                      )}
-                    >
-                      <HandGlyph
-                        move={m}
-                        className={cn(
-                          "h-[64%] w-[64%] transition-transform duration-100",
-                          selected
-                            ? "scale-110 text-white animate-[rps-pop_0.3s_ease-out]"
-                            : "text-[#f2f5f8]",
-                        )}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+                {m === "SCISSORS" ? "Scissors" : m === "PAPER" ? "Paper" : "Rock"}
+              </span>
+            </button>
+          );
+        })}
       </div>
+
 
 
 
