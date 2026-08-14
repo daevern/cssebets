@@ -64,20 +64,64 @@ function useLiveMultiplier(startedAt: string | null, growth: number, running: bo
 const VIEW_W = 420;
 const VIEW_H = 190;
 
-/** Exponential curve path drawn up to `progress` of the visible window. */
+/** Cold → hot heat ramp: the higher the multiplier, the hotter the curve. */
+const HEAT: Array<[number, [number, number, number]]> = [
+  [1.0, [56, 189, 248]], // ice blue
+  [1.5, [45, 212, 191]], // teal
+  [2.0, [74, 222, 128]], // green
+  [3.0, [250, 204, 21]], // amber
+  [5.0, [251, 146, 60]], // orange
+  [10.0, [244, 63, 94]], // hot red
+  [25.0, [255, 0, 128]], // magenta blowout
+];
+
+function heatColor(m: number, alpha = 1): string {
+  const v = Math.max(1, m);
+  let lo = HEAT[0];
+  let hi = HEAT[HEAT.length - 1];
+  for (let i = 0; i < HEAT.length - 1; i++) {
+    if (v >= HEAT[i][0] && v <= HEAT[i + 1][0]) {
+      lo = HEAT[i];
+      hi = HEAT[i + 1];
+      break;
+    }
+  }
+  const t = hi[0] === lo[0] ? 0 : (v - lo[0]) / (hi[0] - lo[0]);
+  const c = lo[1].map((x, i) => Math.round(x + (hi[1][i] - x) * Math.min(1, Math.max(0, t))));
+  return `rgba(${c[0]},${c[1]},${c[2]},${alpha})`;
+}
+
+/**
+ * Exponential curve path drawn up to `progress` of the visible window.
+ * The horizontal window is deliberately compressed as the run gets longer,
+ * so the tail whips near-vertical — pure presentation, payouts are unchanged.
+ */
 function curvePath(progress: number, span: number, growth: number): string {
   const points: string[] = [];
-  const steps = 44;
+  const steps = 56;
+  const head = crashMultiplierAt(progress * span, growth);
+  // Tight headroom keeps the nose pinned to the ceiling → steeper read.
+  const topM = Math.max(1.35, head * 1.03);
   for (let i = 0; i <= steps; i++) {
     const t = (progress * span * i) / steps;
     const x = (t / span) * VIEW_W;
     const m = crashMultiplierAt(t, growth);
-    const topM = Math.max(2, crashMultiplierAt(progress * span, growth) * 1.15);
-    const y = VIEW_H - ((m - 1) / (topM - 1)) * (VIEW_H - 16) - 6;
+    // Power easing bends the mid-section down so the finish looks explosive.
+    const norm = Math.pow(Math.max(0, (m - 1) / Math.max(0.001, topM - 1)), 1.45);
+    const y = VIEW_H - norm * (VIEW_H - 18) - 6;
     points.push(`${x.toFixed(1)},${Math.max(4, y).toFixed(1)}`);
   }
   return `M ${points.join(" L ")}`;
 }
+
+/** Tip coordinates of the drawn curve (for the rocket dot). */
+function curveTip(span: number, growth: number): { x: number; y: number } {
+  const head = crashMultiplierAt(span, growth);
+  const topM = Math.max(1.35, head * 1.03);
+  const norm = Math.pow(Math.max(0, (head - 1) / Math.max(0.001, topM - 1)), 1.45);
+  return { x: VIEW_W, y: Math.max(4, VIEW_H - norm * (VIEW_H - 18) - 6) };
+}
+
 
 /**
  * Crash playfield — Stake-style slate console: rising curve, floating
