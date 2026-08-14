@@ -19,50 +19,32 @@ export type BlackjackState = {
 /** Gap between consecutive cards leaving the shoe. */
 const STEP_MS = 420;
 
+const T = ARCADE_THEMES.blackjack;
+const LOSS = "#ff4d5e";
+
+/** Slate-console read-out, matching Dice / Hi-Lo stat cells. */
 function Totals({ label, value, tone }: { label: string; value: string; tone?: "neon" | "muted" }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="flex h-7 items-center text-[9px] font-bold uppercase leading-none tracking-[0.32em] text-[var(--color-ink)]">
+    <div
+      className="flex items-center gap-2 rounded-[6px] border px-2.5 py-1.5"
+      style={{
+        background: "#0f212e",
+        borderColor: tone === "neon" ? T.accent : "rgba(255,255,255,.08)",
+        boxShadow: tone === "neon" ? `0 0 10px ${T.accent}33` : "none",
+      }}
+    >
+      <span className="text-[9px] font-bold uppercase leading-none tracking-[0.16em] text-white/40">
         {label}
       </span>
       <span
         className={cn(
-          "flex h-7 min-w-11 items-center justify-center rounded-[3px] border px-3 text-center font-mono text-[12px] font-bold leading-none tabular-nums transition-colors",
-          tone === "neon"
-            ? "border-[var(--color-neon)]/50 bg-[var(--color-neon)]/10 text-[var(--color-neon)]"
-            : "border-[var(--color-surface-border)] bg-[#0b1a12] text-[var(--color-ink)]",
+          "font-display text-[15px] font-black leading-none tabular-nums transition-colors",
         )}
+        style={{ color: tone === "neon" ? T.accent : "#ffffff" }}
       >
         {value}
       </span>
     </div>
-  );
-}
-
-/** Minimal casino felt: soft arcs framing the play area. */
-function FeltArt() {
-  return (
-    <svg
-      viewBox="0 -70 1180 670"
-      preserveAspectRatio="xMidYMid meet"
-      className="pointer-events-none absolute inset-0 h-full w-full"
-      aria-hidden="true"
-    >
-      <path
-        d="M62,-40 C62,340 300,520 590,520 C880,520 1118,340 1118,-40"
-        fill="none"
-        stroke="#ffffff"
-        strokeOpacity="0.16"
-        strokeWidth="1.5"
-      />
-      <path
-        d="M118,-40 C118,320 320,472 590,472 C860,472 1062,320 1062,-40"
-        fill="none"
-        stroke="#ffffff"
-        strokeOpacity="0.08"
-        strokeWidth="1.5"
-      />
-    </svg>
   );
 }
 
