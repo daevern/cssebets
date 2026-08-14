@@ -80,21 +80,23 @@ function CardBack({ dim }: { dim?: boolean }) {
   return (
     <div
       className={cn(
-        "relative h-full w-full rounded-[4px] border border-[var(--color-neon)]/40 bg-[var(--color-surface-2)]",
-        dim && "opacity-75",
+        "relative h-full w-full rounded-[4px] border border-white/10",
+        dim && "opacity-70",
       )}
       style={{
+        background: "#0f212e",
         backgroundImage:
-          "repeating-linear-gradient(45deg, color-mix(in srgb, var(--color-neon) 22%, transparent) 0 4px, transparent 4px 8px)",
+          "repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0 4px, transparent 4px 8px)",
       }}
     >
-      <div className="absolute inset-[5px] rounded-[2px] border border-[var(--color-neon)]/30" />
-      <div className="absolute inset-0 grid place-items-center text-[var(--color-neon)]">
+      <div className="absolute inset-[5px] rounded-[2px] border border-white/[.07]" />
+      <div className="absolute inset-0 grid place-items-center text-white/25">
         <CsseMark variant="mono" className="h-[42%] w-[42%]" />
       </div>
     </div>
   );
 }
+
 
 type Tone = "WIN" | "LOSS" | "DRAW" | null;
 
