@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { HelpCircle, ShieldCheck } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { HowToPlayDialog, HOW_TO_PLAY } from "@/components/arcade/HowToPlayDialog";
 import { CsseWordmark } from "@/components/brand/CsseMark";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
