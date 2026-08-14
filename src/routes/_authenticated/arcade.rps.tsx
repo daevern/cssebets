@@ -75,11 +75,6 @@ const REVEAL_FLIP_MS = 620;
 function RpsPage() {
   const qc = useQueryClient();
   const { play, playFor } = useArcadeSound("rps");
-  const bestFn = useServerFn(getArcadePersonalBest);
-  const bestQ = useQuery({
-    queryKey: ["rps", "personal-best"],
-    queryFn: () => bestFn({ data: { game: "rps" } }),
-  });
   const fetchConfig = useServerFn(getRpsConfig);
   const fetchProfile = useServerFn(getRpsProfile);
   const prepareFn = useServerFn(prepareRpsRound);
