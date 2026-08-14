@@ -21,7 +21,6 @@ export type BlackjackState = {
 const STEP_MS = 420;
 
 const T = ARCADE_THEMES.blackjack;
-const LOSS = "#ff4d5e";
 
 /** Slate-console read-out, matching Dice / Hi-Lo stat cells. */
 function Totals({ label, value, tone }: { label: string; value: string; tone?: "neon" | "muted" }) {
