@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BlackjackArt, PlinkoArt, RouletteArt, RpsArt, TreasureArt } from "./GameArt";
-import { DiceArt, HiloArt, WheelArt } from "./MiniGameArt";
+import { CrashArt, DiceArt, HiloArt, KenoArt, WheelArt } from "./MiniGameArt";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import type { ArcadeGameKey } from "@/lib/arcade/sound";
 
@@ -21,6 +21,8 @@ const GAME_ART: Record<ArcadeGameKey, () => ReactNode> = {
   hilo: HiloArt,
   dice: DiceArt,
   wheel: WheelArt,
+  keno: KenoArt,
+  crash: CrashArt,
 };
 
 export type HowToPlayContent = {
@@ -32,6 +34,37 @@ export type HowToPlayContent = {
 };
 
 export const HOW_TO_PLAY: Record<ArcadeGameKey, HowToPlayContent> = {
+  keno: {
+    title: "How to play Keno",
+    tagline: "Mark up to ten numbers on a forty-ball board — the house draws ten.",
+    steps: [
+      "Pick a risk table. Classic pays smaller wins more often; High pays almost nothing until you land a big cluster.",
+      "Mark between one and ten numbers, then set your stake. The paytable under the board updates live for the ticket you are holding.",
+      "Press Play. Ten balls are drawn from the committed seed and revealed one at a time.",
+    ],
+    winning: [
+      "Your payout depends only on how many of your marked numbers are drawn — position and order never matter.",
+      "Every table is built to return 96% of stakes over time, whichever risk you pick.",
+      "The top payout on any ticket is capped at 1,000× your stake.",
+    ],
+    cashout: "Tickets settle instantly — the return lands in your points wallet as soon as the last ball is revealed.",
+  },
+  crash: {
+    title: "How to play Crash",
+    tagline: "A multiplier climbs from 1.00× — bank it before the run busts.",
+    steps: [
+      "Set your stake, and optionally an auto cash-out multiplier.",
+      "Press Launch. The stake leaves your wallet and the curve starts climbing immediately.",
+      "Hit Cash out before the run busts. The multiplier is read from the server clock, so the payout is the same wherever you are.",
+    ],
+    winning: [
+      "Your return is your stake multiplied by the multiplier you banked.",
+      "The bust point is fixed by a seed committed before you launch — it never reacts to your cash-out.",
+      "The chance of surviving to any multiplier is 0.96 ÷ that multiplier, which is what holds the 96% return.",
+      "Runs top out at 100× — reaching the cap pays the cap.",
+    ],
+    cashout: "An auto cash-out settles for you the moment the curve touches your target, even if you lose connection. Runs left open are settled by the server at their true outcome.",
+  },
   hilo: {
     title: "How to play Hi-Lo",
     tagline: "Deal a reference card, call higher or lower, and climb the multiplier ladder.",

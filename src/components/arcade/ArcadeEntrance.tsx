@@ -16,6 +16,8 @@ const DURATIONS: Record<ArcadeGameKey, number> = {
   hilo: 280,
   dice: 280,
   wheel: 280,
+  keno: 280,
+  crash: 280,
 };
 
 const KEYFRAMES = `

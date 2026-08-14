@@ -36,7 +36,9 @@ export type ArcadeGameKey =
   | "rps"
   | "hilo"
   | "dice"
-  | "wheel";
+  | "wheel"
+  | "keno"
+  | "crash";
 
 const STORAGE_KEY = "arcade_sound_muted";
 const POOL_SIZE = 2;
@@ -87,6 +89,8 @@ const VARIANTS: Partial<Record<ArcadeGameKey, Partial<Record<SfxMoment, SfxName>
   hilo: { "reveal-tick": "card-snap", step: "card-flip", settle: "card-flip", collect: "rps-bank" },
   dice: { "reveal-tick": "plinko-tick", settle: "plinko-tick", "spin-start": "spin-start" },
   wheel: { "spin-start": "roulette-spin", settle: "roulette-settle", "reveal-tick": "plinko-tick" },
+  keno: { "reveal-tick": "treasure-chime", settle: "treasure-chime", "spin-start": "spin-start" },
+  crash: { "spin-start": "spin-start", step: "rps-step", collect: "rps-bank", settle: "plinko-tick" },
 };
 
 export function sfxFor(game: ArcadeGameKey, moment: SfxMoment): SfxName {

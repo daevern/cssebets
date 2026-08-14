@@ -13,6 +13,8 @@ import tileRps from "@/assets/arcade/tile-rps.jpg";
 import tileHilo from "@/assets/arcade/tile-hilo.jpg";
 import tileDice from "@/assets/arcade/tile-dice.jpg";
 import tileWheel from "@/assets/arcade/tile-wheel.jpg";
+import tileKeno from "@/assets/arcade/tile-keno.jpg";
+import tileCrash from "@/assets/arcade/tile-crash.jpg";
 
 export const Route = createFileRoute("/_authenticated/arcade/")({
   head: () => ({
@@ -98,6 +100,20 @@ const GAMES: {
     label: "Fortune Wheel",
     blurb: "Pick a risk table · watch it land",
     tile: tileWheel,
+  },
+  {
+    key: "keno",
+    to: "/arcade/keno",
+    label: "Keno",
+    blurb: "Mark your numbers · watch the draw",
+    tile: tileKeno,
+  },
+  {
+    key: "crash",
+    to: "/arcade/crash",
+    label: "Crash",
+    blurb: "Ride the curve · bank before it busts",
+    tile: tileCrash,
   },
 
 ];

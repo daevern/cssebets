@@ -109,8 +109,10 @@ import { Route as AuthenticatedArcadeTreasureRouteImport } from './routes/_authe
 import { Route as AuthenticatedArcadeRpsRouteImport } from './routes/_authenticated/arcade.rps'
 import { Route as AuthenticatedArcadeRouletteRouteImport } from './routes/_authenticated/arcade.roulette'
 import { Route as AuthenticatedArcadePlinkoRouteImport } from './routes/_authenticated/arcade.plinko'
+import { Route as AuthenticatedArcadeKenoRouteImport } from './routes/_authenticated/arcade.keno'
 import { Route as AuthenticatedArcadeHiloRouteImport } from './routes/_authenticated/arcade.hilo'
 import { Route as AuthenticatedArcadeDiceRouteImport } from './routes/_authenticated/arcade.dice'
+import { Route as AuthenticatedArcadeCrashRouteImport } from './routes/_authenticated/arcade.crash'
 import { Route as AuthenticatedArcadeBlackjackRouteImport } from './routes/_authenticated/arcade.blackjack'
 import { Route as AuthenticatedF1RacesIndexRouteImport } from './routes/_authenticated/f1.races.index'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
@@ -677,6 +679,11 @@ const AuthenticatedArcadePlinkoRoute =
     path: '/plinko',
     getParentRoute: () => AuthenticatedArcadeRoute,
   } as any)
+const AuthenticatedArcadeKenoRoute = AuthenticatedArcadeKenoRouteImport.update({
+  id: '/keno',
+  path: '/keno',
+  getParentRoute: () => AuthenticatedArcadeRoute,
+} as any)
 const AuthenticatedArcadeHiloRoute = AuthenticatedArcadeHiloRouteImport.update({
   id: '/hilo',
   path: '/hilo',
@@ -687,6 +694,12 @@ const AuthenticatedArcadeDiceRoute = AuthenticatedArcadeDiceRouteImport.update({
   path: '/dice',
   getParentRoute: () => AuthenticatedArcadeRoute,
 } as any)
+const AuthenticatedArcadeCrashRoute =
+  AuthenticatedArcadeCrashRouteImport.update({
+    id: '/crash',
+    path: '/crash',
+    getParentRoute: () => AuthenticatedArcadeRoute,
+  } as any)
 const AuthenticatedArcadeBlackjackRoute =
   AuthenticatedArcadeBlackjackRouteImport.update({
     id: '/blackjack',
@@ -867,8 +880,10 @@ export interface FileRoutesByFullPath {
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
   '/arcade/blackjack': typeof AuthenticatedArcadeBlackjackRoute
+  '/arcade/crash': typeof AuthenticatedArcadeCrashRoute
   '/arcade/dice': typeof AuthenticatedArcadeDiceRoute
   '/arcade/hilo': typeof AuthenticatedArcadeHiloRoute
+  '/arcade/keno': typeof AuthenticatedArcadeKenoRoute
   '/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
   '/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
   '/arcade/rps': typeof AuthenticatedArcadeRpsRoute
@@ -989,8 +1004,10 @@ export interface FileRoutesByTo {
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
   '/arcade/blackjack': typeof AuthenticatedArcadeBlackjackRoute
+  '/arcade/crash': typeof AuthenticatedArcadeCrashRoute
   '/arcade/dice': typeof AuthenticatedArcadeDiceRoute
   '/arcade/hilo': typeof AuthenticatedArcadeHiloRoute
+  '/arcade/keno': typeof AuthenticatedArcadeKenoRoute
   '/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
   '/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
   '/arcade/rps': typeof AuthenticatedArcadeRpsRoute
@@ -1118,8 +1135,10 @@ export interface FileRoutesById {
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
   '/_authenticated/arcade/blackjack': typeof AuthenticatedArcadeBlackjackRoute
+  '/_authenticated/arcade/crash': typeof AuthenticatedArcadeCrashRoute
   '/_authenticated/arcade/dice': typeof AuthenticatedArcadeDiceRoute
   '/_authenticated/arcade/hilo': typeof AuthenticatedArcadeHiloRoute
+  '/_authenticated/arcade/keno': typeof AuthenticatedArcadeKenoRoute
   '/_authenticated/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
   '/_authenticated/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
   '/_authenticated/arcade/rps': typeof AuthenticatedArcadeRpsRoute
@@ -1247,8 +1266,10 @@ export interface FileRouteTypes {
     | '/management/support'
     | '/management/users'
     | '/arcade/blackjack'
+    | '/arcade/crash'
     | '/arcade/dice'
     | '/arcade/hilo'
+    | '/arcade/keno'
     | '/arcade/plinko'
     | '/arcade/roulette'
     | '/arcade/rps'
@@ -1369,8 +1390,10 @@ export interface FileRouteTypes {
     | '/management/support'
     | '/management/users'
     | '/arcade/blackjack'
+    | '/arcade/crash'
     | '/arcade/dice'
     | '/arcade/hilo'
+    | '/arcade/keno'
     | '/arcade/plinko'
     | '/arcade/roulette'
     | '/arcade/rps'
@@ -1497,8 +1520,10 @@ export interface FileRouteTypes {
     | '/management/support'
     | '/management/users'
     | '/_authenticated/arcade/blackjack'
+    | '/_authenticated/arcade/crash'
     | '/_authenticated/arcade/dice'
     | '/_authenticated/arcade/hilo'
+    | '/_authenticated/arcade/keno'
     | '/_authenticated/arcade/plinko'
     | '/_authenticated/arcade/roulette'
     | '/_authenticated/arcade/rps'
@@ -2322,6 +2347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedArcadePlinkoRouteImport
       parentRoute: typeof AuthenticatedArcadeRoute
     }
+    '/_authenticated/arcade/keno': {
+      id: '/_authenticated/arcade/keno'
+      path: '/keno'
+      fullPath: '/arcade/keno'
+      preLoaderRoute: typeof AuthenticatedArcadeKenoRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
     '/_authenticated/arcade/hilo': {
       id: '/_authenticated/arcade/hilo'
       path: '/hilo'
@@ -2334,6 +2366,13 @@ declare module '@tanstack/react-router' {
       path: '/dice'
       fullPath: '/arcade/dice'
       preLoaderRoute: typeof AuthenticatedArcadeDiceRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
+    '/_authenticated/arcade/crash': {
+      id: '/_authenticated/arcade/crash'
+      path: '/crash'
+      fullPath: '/arcade/crash'
+      preLoaderRoute: typeof AuthenticatedArcadeCrashRouteImport
       parentRoute: typeof AuthenticatedArcadeRoute
     }
     '/_authenticated/arcade/blackjack': {
@@ -2509,8 +2548,10 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedArcadeRouteChildren {
   AuthenticatedArcadeBlackjackRoute: typeof AuthenticatedArcadeBlackjackRoute
+  AuthenticatedArcadeCrashRoute: typeof AuthenticatedArcadeCrashRoute
   AuthenticatedArcadeDiceRoute: typeof AuthenticatedArcadeDiceRoute
   AuthenticatedArcadeHiloRoute: typeof AuthenticatedArcadeHiloRoute
+  AuthenticatedArcadeKenoRoute: typeof AuthenticatedArcadeKenoRoute
   AuthenticatedArcadePlinkoRoute: typeof AuthenticatedArcadePlinkoRoute
   AuthenticatedArcadeRouletteRoute: typeof AuthenticatedArcadeRouletteRoute
   AuthenticatedArcadeRpsRoute: typeof AuthenticatedArcadeRpsRoute
@@ -2521,8 +2562,10 @@ interface AuthenticatedArcadeRouteChildren {
 
 const AuthenticatedArcadeRouteChildren: AuthenticatedArcadeRouteChildren = {
   AuthenticatedArcadeBlackjackRoute: AuthenticatedArcadeBlackjackRoute,
+  AuthenticatedArcadeCrashRoute: AuthenticatedArcadeCrashRoute,
   AuthenticatedArcadeDiceRoute: AuthenticatedArcadeDiceRoute,
   AuthenticatedArcadeHiloRoute: AuthenticatedArcadeHiloRoute,
+  AuthenticatedArcadeKenoRoute: AuthenticatedArcadeKenoRoute,
   AuthenticatedArcadePlinkoRoute: AuthenticatedArcadePlinkoRoute,
   AuthenticatedArcadeRouletteRoute: AuthenticatedArcadeRouletteRoute,
   AuthenticatedArcadeRpsRoute: AuthenticatedArcadeRpsRoute,

@@ -13,7 +13,7 @@ import { requireApprovedMember } from "@/lib/access-control";
  * payout or balance.
  */
 
-const miniProduct = z.enum(["hilo", "dice", "wheel"]);
+const miniProduct = z.enum(["hilo", "dice", "wheel", "keno", "crash"]);
 
 /** Stake bounds, chip denominations and published payout tables. */
 export const getMiniConfig = createServerFn({ method: "GET" })
@@ -243,6 +243,119 @@ export const getActiveHilo = createServerFn({ method: "GET" })
       .select("*")
       .eq("user_id", userId)
       .eq("product", "hilo")
+      .eq("status", "ACTIVE")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return { round: publicMiniRound(row) };
+  });
+
+/** One Keno ticket — marked numbers in, ten drawn balls out, settled at once. */
+export const playKeno = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        stake: z.number().positive(),
+        risk: z.enum(["classic", "medium", "high"]),
+        picks: z.array(z.number().int().min(1).max(40)).min(1).max(10),
+        clientSeed: z.string().min(4).max(128),
+        idempotencyKey: z.string().min(8).max(128),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { userId } = context;
+    await requireApprovedMember(context);
+    const { enforceMiniRateLimit, mapMiniError, publicMiniRound } = await import(
+      "@/lib/arcade/mini.server"
+    );
+    await enforceMiniRateLimit("keno", userId);
+
+    const picks = Array.from(new Set(data.picks)).sort((a, b) => a - b);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await (supabaseAdmin as any).rpc("arcade_keno_play", {
+      p_user: userId,
+      p_stake: data.stake,
+      p_risk: data.risk,
+      p_picks: picks,
+      p_client_seed: data.clientSeed,
+      p_idempotency_key: data.idempotencyKey,
+    });
+    if (error) throw new Error(mapMiniError("keno", error.message));
+    return { round: publicMiniRound(Array.isArray(row) ? row[0] : row) };
+  });
+
+/** Opens a Crash run: the stake leaves the wallet and the curve starts. */
+export const startCrash = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        stake: z.number().positive(),
+        autoCashout: z.number().min(1.01).max(100).nullable().optional(),
+        clientSeed: z.string().min(4).max(128),
+        idempotencyKey: z.string().min(8).max(128),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { userId } = context;
+    await requireApprovedMember(context);
+    const { enforceMiniRateLimit, mapMiniError, publicMiniRound } = await import(
+      "@/lib/arcade/mini.server"
+    );
+    await enforceMiniRateLimit("crash", userId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await (supabaseAdmin as any).rpc("arcade_crash_start", {
+      p_user: userId,
+      p_stake: data.stake,
+      p_auto: data.autoCashout ?? null,
+      p_client_seed: data.clientSeed,
+      p_idempotency_key: data.idempotencyKey,
+    });
+    if (error) throw new Error(mapMiniError("crash", error.message));
+    return { round: publicMiniRound(Array.isArray(row) ? row[0] : row) };
+  });
+
+/**
+ * Banks the live Crash run. The multiplier is read from the server clock —
+ * the browser never sends one.
+ */
+export const cashoutCrash = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ roundId: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    const { userId } = context;
+    await requireApprovedMember(context);
+    const { mapMiniError, publicMiniRound } = await import("@/lib/arcade/mini.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await (supabaseAdmin as any).rpc("arcade_crash_cashout", {
+      p_user: userId,
+      p_round_id: data.roundId,
+    });
+    if (error) throw new Error(mapMiniError("crash", error.message));
+    return { round: publicMiniRound(Array.isArray(row) ? row[0] : row) };
+  });
+
+/**
+ * Recovers an in-flight Crash run and settles any run whose curve already
+ * reached its crash point (refresh, tab close, connection drop).
+ */
+export const getActiveCrash = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { publicMiniRound } = await import("@/lib/arcade/mini.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const db = supabaseAdmin as any;
+    await db.rpc("arcade_crash_sweep", { p_user: userId });
+    const { data: row } = await db
+      .from("arcade_mini_rounds")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("product", "crash")
       .eq("status", "ACTIVE")
       .order("created_at", { ascending: false })
       .limit(1)

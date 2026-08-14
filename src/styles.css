@@ -354,3 +354,9 @@ html[data-arcade-table] [data-arcade-console] {
   [style*="arcadePedestalBreathe"] { animation: none !important; }
 }
 
+
+@keyframes kenoHitPop {
+  0% { transform: scale(0.82); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}

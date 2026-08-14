@@ -8654,6 +8654,137 @@ export type Database = {
         }
         Returns: number
       }
+      arcade_crash_cashout: {
+        Args: { p_round_id: string; p_user: string }
+        Returns: {
+          client_seed: string
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string | null
+          gross_return: number
+          house_net: number
+          id: string
+          idempotency_key: string | null
+          multiplier: number
+          nonce: number
+          outcome: string | null
+          product: string
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number
+          state: Json
+          status: string
+          step_count: number
+          user_id: string
+          user_net: number
+          verification_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_mini_rounds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_crash_point: {
+        Args: {
+          p_cap: number
+          p_edge: number
+          p_round: Database["public"]["Tables"]["arcade_mini_rounds"]["Row"]
+        }
+        Returns: number
+      }
+      arcade_crash_resolve: {
+        Args: {
+          p_round: Database["public"]["Tables"]["arcade_mini_rounds"]["Row"]
+        }
+        Returns: {
+          client_seed: string
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string | null
+          gross_return: number
+          house_net: number
+          id: string
+          idempotency_key: string | null
+          multiplier: number
+          nonce: number
+          outcome: string | null
+          product: string
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number
+          state: Json
+          status: string
+          step_count: number
+          user_id: string
+          user_net: number
+          verification_id: string
+        }
+        SetofOptions: {
+          from: "arcade_mini_rounds"
+          to: "arcade_mini_rounds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_crash_start: {
+        Args: {
+          p_auto: number
+          p_client_seed: string
+          p_idempotency_key: string
+          p_stake: number
+          p_user: string
+        }
+        Returns: {
+          client_seed: string
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string | null
+          gross_return: number
+          house_net: number
+          id: string
+          idempotency_key: string | null
+          multiplier: number
+          nonce: number
+          outcome: string | null
+          product: string
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number
+          state: Json
+          status: string
+          step_count: number
+          user_id: string
+          user_net: number
+          verification_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_mini_rounds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_crash_sweep: { Args: { p_user: string }; Returns: undefined }
       arcade_dice_multiplier: {
         Args: {
           p_cap: number
@@ -8825,6 +8956,59 @@ export type Database = {
         Args: {
           p_client_seed: string
           p_idempotency_key: string
+          p_stake: number
+          p_user: string
+        }
+        Returns: {
+          client_seed: string
+          config_id: string
+          config_version: number
+          created_at: string
+          expires_at: string | null
+          gross_return: number
+          house_net: number
+          id: string
+          idempotency_key: string | null
+          multiplier: number
+          nonce: number
+          outcome: string | null
+          product: string
+          random_hex: string | null
+          result_reason: string | null
+          seed_id: string | null
+          server_seed: string
+          server_seed_hash: string
+          server_seed_revealed_at: string | null
+          settled_at: string | null
+          stake: number
+          state: Json
+          status: string
+          step_count: number
+          user_id: string
+          user_net: number
+          verification_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_mini_rounds"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      arcade_keno_draw: {
+        Args: {
+          p_draws: number
+          p_pool: number
+          p_round: Database["public"]["Tables"]["arcade_mini_rounds"]["Row"]
+        }
+        Returns: number[]
+      }
+      arcade_keno_play: {
+        Args: {
+          p_client_seed: string
+          p_idempotency_key: string
+          p_picks: number[]
+          p_risk: string
           p_stake: number
           p_user: string
         }
@@ -9054,6 +9238,39 @@ export type Database = {
           p_version: number
         }
         Returns: Json
+      }
+      arcade_publish_mini_config: {
+        Args: {
+          p_admin: string
+          p_patch: Json
+          p_product: string
+          p_reason: string
+        }
+        Returns: {
+          announcement: string | null
+          chip_values: number[]
+          cooldown_seconds: number
+          created_at: string
+          daily_round_limit: number
+          id: string
+          maintenance_mode: boolean
+          max_multiplier: number
+          max_stake: number
+          min_stake: number
+          payload: Json
+          product: string
+          round_ttl_seconds: number
+          status: string
+          target_rtp: number
+          updated_at: string
+          version: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "arcade_mini_configs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       arcade_publish_roulette_config: {
         Args: { p_admin: string; p_patch: Json; p_reason: string }
