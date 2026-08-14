@@ -63,5 +63,9 @@ export function arcadeFairness(
         tag: "Provably fair",
       };
     }
+    case "hilo":
+    case "dice":
+    case "wheel":
+      return { rtpLabel: pct(MINI_TARGET_RTP), tag: "Provably fair" };
   }
 }
