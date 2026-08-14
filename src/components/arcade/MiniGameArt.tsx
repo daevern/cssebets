@@ -85,3 +85,54 @@ export function WheelArt() {
     </svg>
   );
 }
+
+export function KenoArt() {
+  const cells = Array.from({ length: 40 }, (_, i) => i);
+  const hits = new Set([3, 9, 14, 22, 27, 31]);
+  return (
+    <svg viewBox="0 0 240 170" className="h-full w-full" role="img" aria-label="Keno demo">
+      <rect width="240" height="170" fill="#0f212e" />
+      <g transform="translate(24 26)">
+        {cells.map((i) => {
+          const x = (i % 8) * 24;
+          const y = Math.floor(i / 8) * 24;
+          const hit = hits.has(i);
+          return (
+            <rect
+              key={i}
+              x={x}
+              y={y}
+              width="20"
+              height="20"
+              rx="4"
+              fill={hit ? "#00e701" : "#213743"}
+              stroke={hit ? "#00e701" : "rgba(255,255,255,.08)"}
+            />
+          );
+        })}
+      </g>
+      <rect x="24" y="146" width="192" height="8" rx="4" fill="#213743" />
+      <rect x="24" y="146" width="96" height="8" rx="4" fill="#00e701" fillOpacity="0.7" />
+    </svg>
+  );
+}
+
+export function CrashArt() {
+  return (
+    <svg viewBox="0 0 240 170" className="h-full w-full" role="img" aria-label="Crash demo">
+      <rect width="240" height="170" fill="#0f212e" />
+      <defs>
+        <linearGradient id="crashArtFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#00e701" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#00e701" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d="M20 150 C90 148 140 120 190 30 L190 150 Z" fill="url(#crashArtFill)" />
+      <path d="M20 150 C90 148 140 120 190 30" fill="none" stroke="#00e701" strokeWidth="5" strokeLinecap="round" />
+      <circle cx="190" cy="30" r="7" fill="#00e701" />
+      <text x="120" y="72" textAnchor="middle" fontSize="30" fontWeight="900" fill="#ffffff" fillOpacity="0.92">
+        4.21x
+      </text>
+    </svg>
+  );
+}

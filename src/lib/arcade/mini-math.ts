@@ -11,8 +11,9 @@
  * published house edge independently of the database.
  */
 
-export type MiniProduct = "hilo" | "dice" | "wheel";
+export type MiniProduct = "hilo" | "dice" | "wheel" | "keno" | "crash";
 export type WheelRisk = "low" | "medium" | "high";
+export type KenoRisk = "classic" | "medium" | "high";
 export type DiceDirection = "under" | "over";
 export type HiloGuess = "higher" | "lower";
 
@@ -110,4 +111,125 @@ export function hiloCardLabel(card: { rank: number; suit: number }): string {
 
 export function hiloIsRed(card: { suit: number }): boolean {
   return card.suit === 1 || card.suit === 2;
+}
+
+/* ------------------------------------------------------------------ */
+/* Keno                                                                */
+/* ------------------------------------------------------------------ */
+
+export const KENO_POOL = 40;
+export const KENO_DRAWS = 10;
+export const KENO_MAX_PICKS = 10;
+export const KENO_RISKS: KenoRisk[] = ["classic", "medium", "high"];
+
+/**
+ * Published Keno paytables — index = hits, value = multiplier on the stake.
+ * Must stay byte-identical to `arcade_mini_configs.payload->'paytables'`.
+ */
+export const KENO_PAYTABLES: Record<KenoRisk, Record<number, number[]>> = {
+  classic: {
+    1: [0, 3.84],
+    2: [0, 1.67, 5.44],
+    3: [0, 0, 5.02, 22.5],
+    4: [0, 0, 2.62, 7.52, 43.8],
+    5: [0, 0, 0, 7.66, 28.4, 209],
+    6: [0, 0, 0, 4.24, 11.9, 56, 517],
+    7: [0, 0, 0, 0, 12.9, 46.1, 271, 1000],
+    8: [0, 0, 0, 0, 7.18, 20.9, 93.6, 695, 1000],
+    9: [0, 0, 0, 0, 0, 23.5, 86, 486, 1000, 1000],
+    10: [0, 0, 0, 0, 0, 13, 40.6, 188, 1000, 1000, 1000],
+  },
+  medium: {
+    1: [0, 3.84],
+    2: [0, 0, 16.6],
+    3: [0, 0, 4.27, 31],
+    4: [0, 0, 0, 15.2, 157],
+    5: [0, 0, 0, 0, 64.2, 900],
+    6: [0, 0, 0, 0, 23.2, 179, 1000],
+    7: [0, 0, 0, 0, 0, 104, 1000, 1000],
+    8: [0, 0, 0, 0, 0, 41.6, 302, 1000, 1000],
+    9: [0, 0, 0, 0, 0, 0, 245, 1000, 1000, 1000],
+    10: [0, 0, 0, 0, 0, 0, 84, 637, 1000, 1000, 1000],
+  },
+  high: {
+    1: [0, 3.84],
+    2: [0, 0, 16.6],
+    3: [0, 0, 0, 79],
+    4: [0, 0, 0, 0, 417],
+    5: [0, 0, 0, 0, 60.2, 1000],
+    6: [0, 0, 0, 0, 0, 459, 1000],
+    7: [0, 0, 0, 0, 0, 104, 1000, 1000],
+    8: [0, 0, 0, 0, 0, 34.3, 384, 1000, 1000],
+    9: [0, 0, 0, 0, 0, 0, 245, 1000, 1000, 1000],
+    10: [0, 0, 0, 0, 0, 0, 68.9, 815, 1000, 1000, 1000],
+  },
+};
+
+function choose(n: number, k: number): number {
+  if (k < 0 || k > n) return 0;
+  let r = 1;
+  for (let i = 0; i < k; i++) r = (r * (n - i)) / (i + 1);
+  return r;
+}
+
+/** Chance of exactly `hits` matches when `picks` numbers are marked. */
+export function kenoHitChance(picks: number, hits: number): number {
+  return (
+    (choose(picks, hits) * choose(KENO_POOL - picks, KENO_DRAWS - hits)) /
+    choose(KENO_POOL, KENO_DRAWS)
+  );
+}
+
+export function kenoPaytable(risk: KenoRisk, picks: number): number[] {
+  return KENO_PAYTABLES[risk][picks] ?? [0];
+}
+
+/** Exact expected return of one Keno ticket, per point staked. */
+export function kenoRtp(risk: KenoRisk, picks: number): number {
+  return kenoPaytable(risk, picks).reduce((a, m, hits) => a + m * kenoHitChance(picks, hits), 0);
+}
+
+export function kenoMaxMultiplier(risk: KenoRisk, picks: number): number {
+  return Math.max(...kenoPaytable(risk, picks));
+}
+
+/* ------------------------------------------------------------------ */
+/* Crash                                                               */
+/* ------------------------------------------------------------------ */
+
+export const CRASH_HOUSE_EDGE = 0.04;
+export const CRASH_GROWTH_PER_SECOND = 0.12;
+export const CRASH_MIN_CASHOUT = 1.01;
+export const CRASH_CAP = 100;
+
+/** Multiplier shown at `seconds` into a run — mirrors the server clock. */
+export function crashMultiplierAt(
+  seconds: number,
+  growth: number = CRASH_GROWTH_PER_SECOND,
+  cap: number = CRASH_CAP,
+): number {
+  if (seconds <= 0) return 1;
+  return Math.min(cap, Math.floor(Math.exp(growth * seconds) * 100) / 100);
+}
+
+/** Seconds the curve needs to reach `multiplier`. */
+export function crashSecondsFor(
+  multiplier: number,
+  growth: number = CRASH_GROWTH_PER_SECOND,
+): number {
+  return Math.log(Math.max(multiplier, 1.0000001)) / growth;
+}
+
+/** Chance a run survives to `multiplier` — `(1 - edge) / multiplier`. */
+export function crashSurvivalChance(
+  multiplier: number,
+  edge: number = CRASH_HOUSE_EDGE,
+): number {
+  if (multiplier <= 1) return 1;
+  return Math.min(1, (1 - edge) / multiplier);
+}
+
+/** Expected return of holding for `multiplier`, per point staked. */
+export function crashRtp(multiplier: number, edge: number = CRASH_HOUSE_EDGE): number {
+  return crashSurvivalChance(multiplier, edge) * multiplier;
 }
