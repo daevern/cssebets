@@ -27,19 +27,19 @@ function TreasureTileImpl({ index, state, pending, disabled, onClick }: Treasure
 
   const fill =
     state === "safe"
-      ? "#6a1fb0"
+      ? "#0e2b17"
       : state === "trap"
-        ? "#5a1230"
+        ? "#3a1620"
         : state === "exposed"
-          ? "#2a1430"
-          : "#5a2aa8";
+          ? "#1b2b34"
+          : "#2f4553";
 
   const border =
     state === "safe"
-      ? "rgba(216,155,255,.7)"
+      ? "rgba(0,231,1,.65)"
       : state === "trap"
-        ? "rgba(255,110,140,.65)"
-        : "rgba(186,120,255,.35)";
+        ? "rgba(255,90,110,.6)"
+        : "rgba(255,255,255,.08)";
 
   return (
     <button
@@ -50,7 +50,7 @@ function TreasureTileImpl({ index, state, pending, disabled, onClick }: Treasure
       disabled={disabled || isOpen || pending}
       onClick={onClick}
       className={cn(
-        "group relative aspect-square min-h-[44px] select-none overflow-hidden rounded-[10px]",
+        "group relative aspect-square min-h-[44px] select-none overflow-hidden rounded-[6px]",
         "grid place-items-center transition-opacity duration-150",
         !isOpen && !disabled && "hover:opacity-90 active:opacity-80",
         pending && "animate-pulse",

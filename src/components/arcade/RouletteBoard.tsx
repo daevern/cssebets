@@ -21,14 +21,14 @@ import { paletteFor } from "@/components/arcade/CasinoChip";
 export type PlaceBet = (betType: BetTypeKey, label: string, pockets: number[]) => void;
 
 /* Classic casino felt — green cloth, white hairlines, solid red/black pockets. */
-const FELT_BG = "#0a6b3d";
-const FELT_BORDER = "rgba(255,255,255,0.55)";
+const FELT_BG = "#213743";
+const FELT_BORDER = "rgba(255,255,255,0.14)";
 const CELL_BG = "rgba(255,255,255,0.06)";
 const RED_INK = "#ffffff";
-const RED_CELL_BG = "#c8102e";
-const RED_CELL_BORDER = "rgba(255,255,255,0.6)";
-const BLACK_CELL_BG = "#10161a";
-const BLACK_CELL_BORDER = "rgba(255,255,255,0.6)";
+const RED_CELL_BG = "#d0455a";
+const RED_CELL_BORDER = "rgba(255,255,255,0.18)";
+const BLACK_CELL_BG = "#16242e";
+const BLACK_CELL_BORDER = "rgba(255,255,255,0.18)";
 
 const cellBase =
   "relative grid place-items-center rounded-[4px] border font-display font-bold tabular-nums transition-colors disabled:opacity-40";

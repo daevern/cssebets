@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
+import { MiniCabinetTitle } from "@/components/arcade/MiniCabinetTitle";
 import { TreasureGrid } from "@/components/arcade/TreasureGrid";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import {
@@ -275,7 +276,7 @@ function TreasurePage() {
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-1 md:gap-3">
       <HudBar game="treasure">
         <Stat className="flex-1" label="Balance" value={<AnimatedBalance value={balance} />} />
         <Stat
@@ -284,8 +285,6 @@ function TreasurePage() {
           value={`${currentMult.toFixed(2)}×`}
           accent={safeReveals > 0}
         />
-        <Stat className="flex-1" label="Found" value={`${safeReveals}`} />
-        <Stat className="flex-1" label="Deepest dig" value={`${bestQ.data?.value ?? 0}`} />
         <FairnessPlaque
           game="treasure"
           rtpLabel={arcadeFairness("treasure").rtpLabel}
@@ -293,11 +292,11 @@ function TreasurePage() {
         />
       </HudBar>
 
-      {/* Violet spill sits outside the stage, which clips its own children. */}
       <div className="relative isolate">
       <ArcadeGlow game="treasure" />
       <ArcadeStage game="treasure" className="relative z-10">
       <ArcadeEntrance game="treasure">
+      <MiniCabinetTitle game="treasure" title="Treasure Grid" />
       <div className="relative">
         <SettlePlaque
           game="treasure"
@@ -349,10 +348,10 @@ function TreasurePage() {
               className={cn(
                 "shrink-0 rounded-[4px] px-2.5 py-1 text-center",
                 reached
-                  ? "bg-[var(--color-neon)]/15 text-[var(--color-neon)]"
+                  ? "bg-[#00e701]/15 text-[#00e701]"
                   : next
-                    ? "bg-[var(--color-surface-2)] text-[var(--color-ink)]"
-                    : "bg-[var(--color-surface-2)]/50 text-[var(--color-ink-muted)]",
+                    ? "bg-[#0f212e] text-white"
+                    : "bg-[#0f212e]/60 text-white/45",
               )}
             >
               <div className="text-[8px] font-bold uppercase tracking-[0.18em] opacity-70">

@@ -26,13 +26,13 @@ function sector(
 }
 
 const COLOUR_FILL: Record<string, string> = {
-  green: "var(--color-neon)",
-  red: "#e0374a",
-  black: "#1a1f25",
+  green: "#00e701",
+  red: "#d0455a",
+  black: "#16242e",
 };
 
 const WOOD_RIM = "url(#woodRim)";
-const WOOD_RIM_STROKE = "#2a1a0d";
+const WOOD_RIM_STROKE = "rgba(255,255,255,.08)";
 
 
 export function RouletteWheel({
@@ -209,17 +209,17 @@ export function RouletteWheel({
       <svg viewBox="0 0 200 200" className="h-full w-full">
         <defs>
           <radialGradient id="woodRim" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-            <stop offset="0%" stopColor="#5C3A1E" />
-            <stop offset="20%" stopColor="#8B5A2B" />
-            <stop offset="40%" stopColor="#3E2712" />
-            <stop offset="55%" stopColor="#A0703F" />
-            <stop offset="75%" stopColor="#4A2E16" />
-            <stop offset="100%" stopColor="#8B5A2B" />
+            <stop offset="0%" stopColor="#2f4553" />
+            <stop offset="20%" stopColor="#3d5665" />
+            <stop offset="40%" stopColor="#213743" />
+            <stop offset="55%" stopColor="#557086" />
+            <stop offset="75%" stopColor="#26404f" />
+            <stop offset="100%" stopColor="#3d5665" />
           </radialGradient>
           <linearGradient id="goldRing" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ffeaad" />
-            <stop offset="45%" stopColor="#d4a747" />
-            <stop offset="100%" stopColor="#7a5a1c" />
+            <stop offset="0%" stopColor="#b6ffc4" />
+            <stop offset="45%" stopColor="#00e701" />
+            <stop offset="100%" stopColor="#046b14" />
           </linearGradient>
           <radialGradient id="hubSpec" cx="38%" cy="30%" r="70%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="0.35" />
@@ -249,7 +249,7 @@ export function RouletteWheel({
               : { animation: "rouletteRimBreathe 4.5s ease-in-out infinite" }
           }
         />
-        <circle cx={cx} cy={cy} r="90" fill="var(--color-surface-2)" stroke="#1f7a4a" strokeWidth="3" />
+        <circle cx={cx} cy={cy} r="90" fill="var(--color-surface-2)" stroke="#2f4553" strokeWidth="3" />
 
 
         <g
@@ -296,7 +296,7 @@ export function RouletteWheel({
                   <path
                     d={sector(cx, cy, 88, 56, start, end)}
                     fill="none"
-                    stroke="#ffd76a"
+                    stroke="#00e701"
                     strokeWidth="2.4"
                     style={{
                       animation: reducedMotion
@@ -313,7 +313,7 @@ export function RouletteWheel({
                   transform={`rotate(${mid} ${label.x} ${label.y})`}
                   fontSize="6.5"
                   fontWeight="700"
-                  fill={colour === "green" ? "#06110a" : "#f4f7f5"}
+                  fill={colour === "green" ? "#03210a" : "#f4f7f5"}
                 >
                   {n}
                 </text>
