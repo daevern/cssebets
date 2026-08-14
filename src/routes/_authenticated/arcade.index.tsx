@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { HelpCircle, ShieldCheck } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { HowToPlayDialog, HOW_TO_PLAY } from "@/components/arcade/HowToPlayDialog";
 import { CsseWordmark } from "@/components/brand/CsseMark";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
@@ -114,14 +114,6 @@ function ArcadeLobby() {
             Originals
           </h1>
         </div>
-        <p className="max-w-xl text-[12px] leading-relaxed text-[var(--color-ink-muted)]">
-          Flat tables. Provably fair. Points settle to your wallet — every round
-          can be verified in your browser.
-        </p>
-        <div className="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-          <ShieldCheck className="h-3 w-3" />
-          Server decides every payout
-        </div>
       </header>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -152,12 +144,10 @@ function ArcadeLobby() {
                   }}
                 />
                 <div className="absolute inset-x-0 bottom-0 px-2.5 pb-3 text-center">
-                  <div
-                    className="text-[9px] font-bold uppercase tracking-[0.2em]"
-                    style={{ color: t.accent }}
-                  >
-                    CSSE
+                  <div className="flex justify-center">
+                    <CsseWordmark size={13} />
                   </div>
+
                   <h2 className="mt-0.5 text-[13px] font-black uppercase leading-[1.15] tracking-[0.04em] text-white">
                     {label}
                   </h2>
