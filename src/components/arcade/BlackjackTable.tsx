@@ -228,23 +228,7 @@ export function BlackjackTable({
         <div ref={shoeRef} className="absolute inset-0" />
       </div>
 
-      <div className="relative mx-auto flex h-full w-full max-w-4xl flex-col items-stretch gap-1 px-12 pb-2 pt-2 md:gap-2 md:px-20 md:pb-4 md:pt-4 lg:px-28">
-        {/* Table title — engraved casino script */}
-        <div className="pointer-events-none flex shrink-0 items-center justify-center gap-2 pb-2 pt-0.5 md:pb-3">
-          <span aria-hidden className="text-[10px] leading-none text-white/45 md:text-xs">
-            ♠
-          </span>
-          <span
-            className="font-display text-[13px] font-black uppercase tracking-[0.16em] md:text-base"
-            style={{ color: "#f0e3bd", textShadow: "0 1px 2px rgba(0,0,0,.6)" }}
-          >
-            Black<span style={{ color: "#e0b64a" }}>jack</span>
-          </span>
-          <span aria-hidden className="text-[10px] leading-none text-white/45 md:text-xs">
-            ♦
-          </span>
-        </div>
-
+      <div className="relative mx-auto flex h-full w-full max-w-3xl flex-col items-stretch gap-1 px-10 pb-3 pt-3 md:gap-2 md:px-16 md:pb-4 md:pt-4">
         {/* Dealer */}
         <div className="flex min-h-0 flex-1 flex-col items-center justify-start gap-2">
           <Totals label="Dealer" value={dealerCards.length ? dealerTotal : "—"} />
