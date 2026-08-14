@@ -318,12 +318,6 @@ function BlackjackPage() {
           value={`${todayNet > 0 ? "+" : ""}${todayNet.toLocaleString()}`}
           tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
         />
-        <Stat
-          className="flex-1"
-          label="W / L today"
-          value={`${profileQ.data?.todayWins ?? 0} / ${profileQ.data?.todayLosses ?? 0}`}
-        />
-        <Stat className="flex-1" label="Best hand" value={`${bestQ.data?.value ?? 0}`} />
         <FairnessPlaque
           game="blackjack"
           rtpLabel={arcadeFairness("blackjack").rtpLabel}
