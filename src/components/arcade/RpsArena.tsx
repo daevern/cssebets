@@ -98,6 +98,35 @@ function CardBack({ dim }: { dim?: boolean }) {
 
 type Tone = "WIN" | "LOSS" | "DRAW" | null;
 
+/** Slate console stat cell — matches Dice / Hi-Lo / Wheel. */
+function StatCell({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "accent";
+}) {
+  return (
+    <div
+      className="flex min-w-0 flex-1 flex-col gap-1 rounded-[6px] border px-2.5 py-2"
+      style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
+    >
+      <span className="truncate text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
+        {label}
+      </span>
+      <span
+        className="font-display text-[15px] font-black tabular-nums leading-none"
+        style={{ color: tone === "accent" ? ARCADE_THEMES.rps.accent : "#ffffff" }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+
 const toneText = (t: Tone) =>
   t === "WIN"
     ? "text-[var(--color-neon)]"
