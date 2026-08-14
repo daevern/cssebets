@@ -218,28 +218,29 @@ export const ARCADE_THEMES: Record<ArcadeGameKey, ArcadeTheme> = {
   wheel: {
     key: "wheel",
     label: "Fortune Wheel",
-    accent: "#ff3d7f",
-    glow: "rgba(255,61,127,.18)",
+    accent: "#00e701",
+    glow: "rgba(0,231,1,.16)",
     backdrop: "transparent",
-    stageBg: "#100722",
-    feltOrBoardFill: "#1b0f35",
+    stageBg: "#0f212e",
+    feltOrBoardFill: "#213743",
     feltNoiseOpacity: 0,
-    railColor: "#2e1b56",
-    rimMetal: "#00e5ff",
+    railColor: "#2f4553",
+    rimMetal: "#557086",
     dock: {
-      border: "rgba(255,61,127,.32)",
-      surface: "#140a28",
-      primaryBg: "#ff3d7f",
-      primaryText: "#22040f",
-      chipEdge: "rgba(0,229,255,.45)",
+      border: "rgba(0,231,1,.3)",
+      surface: "#0f212e",
+      primaryBg: "#00e701",
+      primaryText: "#03210a",
+      chipEdge: "rgba(0,231,1,.4)",
     },
     hud: {
-      plaqueBg: "#1b0f35",
-      plaqueBorder: "rgba(0,229,255,.22)",
+      plaqueBg: "#213743",
+      plaqueBorder: "rgba(255,255,255,.1)",
       labelTracking: "0.18em",
     },
-    particles: ["#ff3d7f", "#00e5ff", "#ffd76a", "#ffffff"],
+    particles: ["#00e701", "#ffffff", "#2f4553", "#7bffb0"],
   },
+
 
 };
 
