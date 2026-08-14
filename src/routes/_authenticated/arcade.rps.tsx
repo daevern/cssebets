@@ -1,12 +1,12 @@
-import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { HandCoins, Loader2, Swords } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
+import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
+import { MiniCabinetTitle } from "@/components/arcade/MiniCabinetTitle";
 import { SettlePlaque, useSettleBeat } from "@/components/arcade/SettlePlaque";
 import { ChipRack } from "@/components/arcade/ChipRack";
 import {
@@ -23,7 +23,6 @@ import { rpsLadderMultiplier, type RpsMove } from "@/lib/arcade/rps-math";
 import { roundMoney } from "@/lib/accounting/money";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound } from "@/lib/arcade/sound";
-import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
 import { ArcadeIdleCue } from "@/components/arcade/ArcadeIdleCue";
 import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
@@ -38,12 +37,6 @@ import {
   settleRpsRound,
 } from "@/lib/arcade/rps.functions";
 
-import * as React from "react";
-
-/** Engraved cabinet plaque bound to this game's theme. */
-const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
-  <HudPlaque game="rps" {...props} />
-);
 
 
 export const Route = createFileRoute("/_authenticated/arcade/rps")({
@@ -82,11 +75,6 @@ const REVEAL_FLIP_MS = 620;
 function RpsPage() {
   const qc = useQueryClient();
   const { play, playFor } = useArcadeSound("rps");
-  const bestFn = useServerFn(getArcadePersonalBest);
-  const bestQ = useQuery({
-    queryKey: ["rps", "personal-best"],
-    queryFn: () => bestFn({ data: { game: "rps" } }),
-  });
   const fetchConfig = useServerFn(getRpsConfig);
   const fetchProfile = useServerFn(getRpsProfile);
   const prepareFn = useServerFn(prepareRpsRound);
@@ -360,19 +348,19 @@ function RpsPage() {
   return (
     <div className="flex flex-col gap-2 md:gap-3">
       <HudBar game="rps">
-        <Stat className="flex-1" label="Balance" value={<AnimatedBalance value={balance} />} />
-        <Stat
+        <HudPlaque
+          game="rps"
+          className="flex-1"
+          label="Balance"
+          value={<AnimatedBalance value={balance} />}
+        />
+        <HudPlaque
+          game="rps"
           className="flex-1"
           label="P/L today"
           value={`${todayNet > 0 ? "+" : ""}${fmt(todayNet)}`}
           tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
         />
-        <Stat
-          className="flex-1"
-          label="W / D / L"
-          value={`${profileQ.data?.todayWins ?? 0}/${profileQ.data?.todayDraws ?? 0}/${profileQ.data?.todayLosses ?? 0}`}
-        />
-        <Stat className="flex-1" label="Longest streak" value={`${bestQ.data?.value ?? 0}`} />
         <FairnessPlaque game="rps" rtpLabel={arcadeFairness("rps").rtpLabel} tag="Fair" />
       </HudBar>
 
@@ -382,33 +370,37 @@ function RpsPage() {
         </div>
       )}
 
-      <ArcadeStage game="rps">
-      <ArcadeEntrance game="rps" className="relative">
-      <SettlePlaque
-        game="rps"
-        show={beat}
-        label="Run banked"
-        value={`${collected > 0 ? "+" : ""}${Number(collected).toLocaleString()}`}
-      />
-      <RpsArena
-        phase={phase}
-        playerMove={playerMove}
-        serverMove={(round?.serverChoice as RpsMove) ?? null}
-        outcome={round?.outcome ?? null}
-        ladder={ladder}
-        tailMultiplier={tailMult}
-        history={ladderHistory}
-        onChoose={choose}
-        canPlay={canPlay}
-      />
-      <ArcadeIdleCue
-        game="rps"
-        show={phase === "IDLE" && !busy && ladderHistory.length === 0 && !resultOpen}
-      >
-        Choose a move to open the ladder
-      </ArcadeIdleCue>
-      </ArcadeEntrance>
-      </ArcadeStage>
+      <div className="relative isolate">
+        <ArcadeGlow game="rps" />
+        <ArcadeStage game="rps" className="relative z-10">
+          <ArcadeEntrance game="rps" className="relative">
+            <MiniCabinetTitle game="rps" title="Rock–Paper–Scissors" />
+            <SettlePlaque
+              game="rps"
+              show={beat}
+              label="Run banked"
+              value={`${collected > 0 ? "+" : ""}${Number(collected).toLocaleString()}`}
+            />
+            <RpsArena
+              phase={phase}
+              playerMove={playerMove}
+              serverMove={(round?.serverChoice as RpsMove) ?? null}
+              outcome={round?.outcome ?? null}
+              ladder={ladder}
+              tailMultiplier={tailMult}
+              history={ladderHistory}
+              onChoose={choose}
+              canPlay={canPlay}
+            />
+            <ArcadeIdleCue
+              game="rps"
+              show={phase === "IDLE" && !busy && ladderHistory.length === 0 && !resultOpen}
+            >
+              Choose a move to open the ladder
+            </ArcadeIdleCue>
+          </ArcadeEntrance>
+        </ArcadeStage>
+      </div>
 
       <RecentResultsStrip
         game="rps"
