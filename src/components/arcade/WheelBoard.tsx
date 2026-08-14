@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
+import { CsseMark } from "@/components/brand/CsseMark";
 import { WHEEL_SEGMENTS, type WheelRisk } from "@/lib/arcade/mini-math";
 
 const T = ARCADE_THEMES.wheel;
@@ -15,8 +16,8 @@ function colourFor(m: number, i: number): string {
 }
 
 /**
- * Fortune Wheel cabinet. Landing segment is server-decided before motion;
- * rotation is presentation that settles on it.
+ * Fortune Wheel — one composition: pointer + wheel + hub mark.
+ * Risk table lives in the dock; no legend strip on the stage.
  */
 export function WheelBoard({
   risk,
@@ -26,12 +27,9 @@ export function WheelBoard({
   onTick,
 }: {
   risk: WheelRisk;
-  /** Server-decided winning segment, or null when idle. */
   landedIndex: number | null;
-  /** Changes once per spin so the same segment can be replayed. */
   spinKey: number;
   onSettled: () => void;
-  /** Fires as segments pass the pointer during the spin (audio cue). */
   onTick?: () => void;
 }) {
   const segments = WHEEL_SEGMENTS[risk];
@@ -53,7 +51,6 @@ export function WheelBoard({
     angleRef.current = target;
     setAngle(target);
 
-    // Approximate segment ticks from eased progress (presentation only).
     const t0 = performance.now();
     lastSegRef.current = -1;
     let lastTickAt = 0;
@@ -65,7 +62,6 @@ export function WheelBoard({
       const seg = Math.floor(underPointer / segAngle) % n;
       if (seg !== lastSegRef.current) {
         lastSegRef.current = seg;
-        // Throttle so early fast rotation isn't a machine-gun of SFX.
         if (p > 0.04 && p < 0.9 && now - lastTickAt > 90) {
           lastTickAt = now;
           onTick?.();
@@ -87,150 +83,105 @@ export function WheelBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spinKey]);
 
-  const R = 112;
-  const C = 130;
-  const R_INNER = 22;
-  const R_RIM = R + 14;
-
-  const unique = Array.from(new Set(segments)).sort((a, b) => b - a);
+  const R = 118;
+  const C = 136;
+  const R_INNER = 26;
+  const R_RIM = R + 12;
+  const landedMult = settledIdx != null ? segments[settledIdx] : null;
 
   return (
-    <div className="mx-auto flex w-full max-w-[420px] flex-col items-center gap-3 px-3 py-2">
-      <div
-        className="relative rounded-[16px] border px-2 pb-3 pt-2"
-        style={{
-          background: T.feltOrBoardFill,
-          borderColor: T.railColor,
-          boxShadow: `inset 0 0 0 1px ${T.rimMetal}33`,
-        }}
-      >
-        <div className="mb-1 flex items-center justify-between px-2">
-          <span className="text-[8px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
-            Cabinet · {risk}
-          </span>
-          <span className="font-display text-[10px] font-black uppercase tracking-[0.14em]" style={{ color: T.accent }}>
-            20 segments
-          </span>
-        </div>
-
-        <div className="relative mx-auto w-[268px]">
-          {/* pointer */}
-          <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2" aria-hidden>
-            <div
-              className="mx-auto h-3 w-3 rounded-full border"
-              style={{ background: T.accent, borderColor: T.rimMetal }}
-            />
-            <div
-              className="mx-auto"
-              style={{
-                width: 0,
-                height: 0,
-                borderLeft: "10px solid transparent",
-                borderRight: "10px solid transparent",
-                borderTop: `20px solid ${T.accent}`,
-                filter: "drop-shadow(0 2px 0 rgba(0,0,0,.45))",
-              }}
-            />
-          </div>
-
-          <svg viewBox="0 0 260 260" className="h-[268px] w-[268px]" role="img" aria-label="Fortune wheel">
-            {/* outer rim */}
-            <circle cx={C} cy={C} r={R_RIM} fill="#1a0a10" stroke={T.rimMetal} strokeWidth="3.5" />
-            <circle cx={C} cy={C} r={R_RIM - 5} fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="1" />
-            {/* rim studs */}
-            {Array.from({ length: 24 }).map((_, i) => {
-              const a = (i / 24) * Math.PI * 2 - Math.PI / 2;
-              const x = C + (R_RIM - 2) * Math.cos(a);
-              const y = C + (R_RIM - 2) * Math.sin(a);
-              return <circle key={i} cx={x} cy={y} r="1.4" fill={T.accent} fillOpacity="0.55" />;
-            })}
-
-            <g
-              style={{
-                transform: `rotate(${angle}deg)`,
-                transformOrigin: `${C}px ${C}px`,
-                transition: `transform ${SPIN_MS}ms cubic-bezier(.08,.7,.12,1)`,
-              }}
-            >
-              {segments.map((m, i) => {
-                const a0 = (i / n) * Math.PI * 2 - Math.PI / 2;
-                const a1 = ((i + 1) / n) * Math.PI * 2 - Math.PI / 2;
-                const p = (a: number, r = R) => `${C + r * Math.cos(a)} ${C + r * Math.sin(a)}`;
-                const mid = (a0 + a1) / 2;
-                const tx = C + R * 0.7 * Math.cos(mid);
-                const ty = C + R * 0.7 * Math.sin(mid);
-                const lit = settledIdx === i;
-                return (
-                  <g key={i}>
-                    <path
-                      d={`M${C} ${C} L${p(a0)} A${R} ${R} 0 0 1 ${p(a1)} Z`}
-                      fill={colourFor(m, i)}
-                      stroke={lit ? T.accent : "rgba(0,0,0,.4)"}
-                      strokeWidth={lit ? 2.2 : 0.7}
-                    />
-                    {lit && (
-                      <path
-                        d={`M${C} ${C} L${p(a0)} A${R} ${R} 0 0 1 ${p(a1)} Z`}
-                        fill={T.accent}
-                        fillOpacity="0.22"
-                      />
-                    )}
-                    <text
-                      x={tx}
-                      y={ty}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize={m >= 10 ? 9 : 8}
-                      fontWeight="900"
-                      fill={m >= 1 ? "#1a0a10" : "#ffffff"}
-                      fillOpacity={m > 0 ? 1 : 0.35}
-                      transform={`rotate(${(mid * 180) / Math.PI + 90} ${tx} ${ty})`}
-                    >
-                      {m > 0 ? `${m}×` : "0"}
-                    </text>
-                  </g>
-                );
-              })}
-            </g>
-
-            {/* hub */}
-            <circle cx={C} cy={C} r={R_INNER + 6} fill="#12060c" stroke={T.rimMetal} strokeWidth="2" />
-            <circle cx={C} cy={C} r={R_INNER} fill={T.stageBg} stroke={T.accent} strokeWidth="1.5" />
-            <text
-              x={C}
-              y={C + 1}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize="8"
-              fontWeight="900"
-              fill={T.accent}
-              letterSpacing="0.12em"
-            >
-              CSSE
-            </text>
-          </svg>
-        </div>
-      </div>
-
-      {/* risk legend */}
-      <div
-        className="flex w-full flex-wrap items-center justify-center gap-1.5 rounded-[10px] border px-2 py-2"
-        style={{ background: T.hud.plaqueBg, borderColor: T.hud.plaqueBorder }}
-      >
-        {unique.map((m) => (
-          <span
-            key={m}
-            className="rounded-[5px] px-2 py-1 text-[11px] font-black tabular-nums"
+    <div
+      className="relative mx-auto flex w-full max-w-[400px] flex-col items-center gap-3 overflow-hidden rounded-[12px] px-2 pb-4 pt-3"
+      style={{ background: T.feltOrBoardFill }}
+    >
+      <div className="relative w-[280px]">
+        <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2" aria-hidden>
+          <div
+            className="mx-auto h-2.5 w-2.5 rounded-full"
+            style={{ background: T.accent }}
+          />
+          <div
+            className="mx-auto"
             style={{
-              background: colourFor(m, 0),
-              color: m >= 1 ? "#1a0a10" : "#ffffff",
-              boxShadow: settledIdx != null && segments[settledIdx] === m ? `0 0 0 1.5px ${T.accent}` : undefined,
+              width: 0,
+              height: 0,
+              borderLeft: "9px solid transparent",
+              borderRight: "9px solid transparent",
+              borderTop: `18px solid ${T.accent}`,
+            }}
+          />
+        </div>
+
+        <svg viewBox="0 0 272 272" className="h-[280px] w-[280px]" role="img" aria-label="Fortune wheel">
+          <circle cx={C} cy={C} r={R_RIM} fill="#14080e" stroke={T.rimMetal} strokeWidth="3" />
+          <circle cx={C} cy={C} r={R_RIM - 4.5} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="1" />
+
+          <g
+            style={{
+              transform: `rotate(${angle}deg)`,
+              transformOrigin: `${C}px ${C}px`,
+              transition: `transform ${SPIN_MS}ms cubic-bezier(.08,.7,.12,1)`,
             }}
           >
-            {m}×
-          </span>
-        ))}
+            {segments.map((m, i) => {
+              const a0 = (i / n) * Math.PI * 2 - Math.PI / 2;
+              const a1 = ((i + 1) / n) * Math.PI * 2 - Math.PI / 2;
+              const p = (a: number, r = R) => `${C + r * Math.cos(a)} ${C + r * Math.sin(a)}`;
+              const mid = (a0 + a1) / 2;
+              const tx = C + R * 0.68 * Math.cos(mid);
+              const ty = C + R * 0.68 * Math.sin(mid);
+              const lit = settledIdx === i;
+              return (
+                <g key={i}>
+                  <path
+                    d={`M${C} ${C} L${p(a0)} A${R} ${R} 0 0 1 ${p(a1)} Z`}
+                    fill={colourFor(m, i)}
+                    stroke={lit ? T.accent : "rgba(0,0,0,.35)"}
+                    strokeWidth={lit ? 2 : 0.6}
+                  />
+                  {lit ? (
+                    <path
+                      d={`M${C} ${C} L${p(a0)} A${R} ${R} 0 0 1 ${p(a1)} Z`}
+                      fill={T.accent}
+                      fillOpacity="0.2"
+                    />
+                  ) : null}
+                  <text
+                    x={tx}
+                    y={ty}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize={m >= 10 ? 9 : 8}
+                    fontWeight="900"
+                    fill={m >= 1 ? "#1a0a10" : "#ffffff"}
+                    fillOpacity={m > 0 ? 1 : 0.32}
+                    transform={`rotate(${(mid * 180) / Math.PI + 90} ${tx} ${ty})`}
+                  >
+                    {m > 0 ? `${m}×` : "0"}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+
+          <circle cx={C} cy={C} r={R_INNER + 5} fill="#12060c" stroke={T.rimMetal} strokeWidth="1.8" />
+          <circle cx={C} cy={C} r={R_INNER} fill={T.stageBg} stroke={T.accent} strokeWidth="1.2" />
+        </svg>
+
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+          <CsseMark variant="mono" className="h-5 w-5" style={{ color: T.accent }} />
+        </div>
       </div>
+
+      {landedMult != null ? (
+        <div className="font-display text-lg font-black tabular-nums" style={{ color: T.accent }}>
+          {landedMult}×
+        </div>
+      ) : (
+        <div className="text-[9px] font-bold uppercase tracking-[0.22em] text-white/35">
+          {risk} table
+        </div>
+      )}
     </div>
   );
 }

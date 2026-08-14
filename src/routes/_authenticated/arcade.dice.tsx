@@ -171,18 +171,6 @@ function DicePage() {
           value={`${todayNet > 0 ? "+" : ""}${fmt(todayNet)}`}
           tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
         />
-        <HudPlaque
-          game="dice"
-          className="flex-1"
-          label="Target"
-          value={`${direction === "under" ? "<" : "≥"}${target}`}
-        />
-        <HudPlaque
-          game="dice"
-          className="flex-1"
-          label="Best land"
-          value={`${fmt(profileQ.data?.bestMultiplier ?? 0)}×`}
-        />
         <FairnessPlaque game="dice" rtpLabel={arcadeFairness("dice").rtpLabel} tag="Fair" />
       </HudBar>
 
@@ -196,22 +184,7 @@ function DicePage() {
         <ArcadeGlow game="dice" />
         <ArcadeStage game="dice" className="relative z-10">
         <ArcadeEntrance game="dice" className="relative">
-          <MiniCabinetTitle
-            game="dice"
-            title="Dice"
-            kicker="Set the band · roll the machine"
-            mark={
-              <svg viewBox="0 0 32 32" className="h-7 w-7" aria-hidden>
-                <rect x="5" y="5" width="22" height="22" rx="5" fill="currentColor" opacity="0.25" />
-                <rect x="7" y="7" width="18" height="18" rx="4" fill="currentColor" />
-                <circle cx="12" cy="12" r="1.6" fill="#04170e" />
-                <circle cx="20" cy="12" r="1.6" fill="#04170e" />
-                <circle cx="16" cy="16" r="1.6" fill="#04170e" />
-                <circle cx="12" cy="20" r="1.6" fill="#04170e" />
-                <circle cx="20" cy="20" r="1.6" fill="#04170e" />
-              </svg>
-            }
-          />
+          <MiniCabinetTitle game="dice" title="Dice" />
           <SettlePlaque
             game="dice"
             show={beat}
@@ -226,7 +199,7 @@ function DicePage() {
             markerProgress={markerProgress}
           />
           <ArcadeIdleCue game="dice" show={!busy && roll == null && !resultOpen}>
-            Pick under or over, set the target, then roll
+            Set band, then roll
           </ArcadeIdleCue>
         </ArcadeEntrance>
       </ArcadeStage>
@@ -288,7 +261,7 @@ function DicePage() {
           />
           <DockReadout
             className="ml-auto"
-            label="Band pays"
+            label="Pays"
             value={`${mult.toFixed(2)}×`}
             hint={`Wins ${fmt(stake * mult)}`}
           />
@@ -315,11 +288,11 @@ function DicePage() {
         <DockPrimary onClick={() => { play("button"); rollMut.mutate(); }} disabled={!canRoll} active={canRoll}>
           {busy ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" /> Machine rolling
+              <Loader2 className="h-4 w-4 animate-spin" /> Rolling
             </>
           ) : (
             <>
-              <Dices className="h-4 w-4" /> Roll {fmt(stake)} · {direction} {target}
+              <Dices className="h-4 w-4" /> Roll · {fmt(stake)}
             </>
           )}
         </DockPrimary>

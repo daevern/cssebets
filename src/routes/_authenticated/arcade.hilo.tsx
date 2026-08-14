@@ -200,18 +200,6 @@ function HiloPage() {
           value={`${todayNet > 0 ? "+" : ""}${fmt(todayNet)}`}
           tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
         />
-        <HudPlaque
-          game="hilo"
-          className="flex-1"
-          label="Ladder"
-          value={`${round?.stepCount ?? 0} calls`}
-        />
-        <HudPlaque
-          game="hilo"
-          className="flex-1"
-          label="Peak climb"
-          value={`${fmt(profileQ.data?.bestMultiplier ?? 0)}×`}
-        />
         <FairnessPlaque game="hilo" rtpLabel={arcadeFairness("hilo").rtpLabel} tag="Fair" />
       </HudBar>
 
@@ -225,17 +213,7 @@ function HiloPage() {
         <ArcadeGlow game="hilo" />
         <ArcadeStage game="hilo" className="relative z-10">
         <ArcadeEntrance game="hilo" className="relative">
-          <MiniCabinetTitle
-            game="hilo"
-            title="Hi-Lo"
-            kicker="Call the next card · climb the ladder"
-            mark={
-              <svg viewBox="0 0 32 32" className="h-7 w-7" aria-hidden>
-                <rect x="6" y="4" width="14" height="20" rx="2" fill="currentColor" opacity="0.35" />
-                <rect x="12" y="8" width="14" height="20" rx="2" fill="currentColor" />
-              </svg>
-            }
-          />
+          <MiniCabinetTitle game="hilo" title="Hi-Lo" />
           <SettlePlaque
             game="hilo"
             show={beat}
@@ -259,7 +237,7 @@ function HiloPage() {
             stepCount={Number(round?.stepCount ?? 0)}
           />
           <ArcadeIdleCue game="hilo" show={!live && !busy && !resultOpen}>
-            Stake in, deal a reference card, then call higher or lower
+            Deal, then call
           </ArcadeIdleCue>
         </ArcadeEntrance>
       </ArcadeStage>
@@ -340,10 +318,10 @@ function HiloPage() {
               <HandCoins className="h-4 w-4" /> Bank {fmt(runStake * multiplier)}
             </>
           ) : live ? (
-            "Use Higher / Lower on the felt"
+            "Call on the felt"
           ) : (
             <>
-              <Play className="h-4 w-4" /> Deal reference · {fmt(stake)} pts
+              <Play className="h-4 w-4" /> Deal · {fmt(stake)}
             </>
           )}
         </DockPrimary>
