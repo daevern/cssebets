@@ -114,14 +114,6 @@ function ArcadeLobby() {
             Originals
           </h1>
         </div>
-        <p className="max-w-xl text-[12px] leading-relaxed text-[var(--color-ink-muted)]">
-          Flat tables. Provably fair. Points settle to your wallet — every round
-          can be verified in your browser.
-        </p>
-        <div className="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-          <ShieldCheck className="h-3 w-3" />
-          Server decides every payout
-        </div>
       </header>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
