@@ -2,8 +2,6 @@ import type { ArcadeGameKey } from "@/lib/arcade/sound";
 
 const TABLE_GAMES = new Set<string>([
   "plinko",
-  "roulette",
-  "treasure",
 ]);
 
 /** True on a live cabinet route (`/arcade/plinko` …), not the lobby. */

@@ -27,6 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
+import { MiniCabinetTitle } from "@/components/arcade/MiniCabinetTitle";
 import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
 import { RecentResultsStrip } from "@/components/arcade/RecentResultsStrip";
 import { ArcadeVerifyCue } from "@/components/arcade/ArcadeVerifyCue";
@@ -324,7 +325,6 @@ function RoulettePage() {
       <HudBar game="roulette">
         <HudPlaque
           className="flex-1"
-          hero
           label="Balance"
           value={<AnimatedBalance value={balance} />}
         />
@@ -339,11 +339,6 @@ function RoulettePage() {
                 ? "down"
                 : undefined
           }
-        />
-        <HudPlaque
-          className="flex-1"
-          label="Biggest single hit"
-          value={fmt(Number(bestQ.data?.value ?? 0))}
         />
         <FairnessPlaque
           game="roulette"
@@ -375,8 +370,8 @@ function RoulettePage() {
         style={{
           background: ARCADE_THEMES.roulette.feltOrBoardFill,
           borderColor: ARCADE_THEMES.roulette.hud.plaqueBorder,
-          borderWidth: 2,
-          borderRadius: "16px",
+          borderWidth: 1,
+          borderRadius: "12px",
         }}
       >
         <SettlePlaque
@@ -387,27 +382,13 @@ function RoulettePage() {
         />
         {/* felt head */}
         <div className="relative px-3 pt-3 pb-2">
-          <div className="mb-4 flex items-center justify-center gap-2 pt-1">
-            <span
-              aria-hidden
-              className="h-2 w-2 rotate-45 rounded-[1px]"
-              style={{ background: "#c8102e" }}
-            />
-            <span className="font-display text-base font-black uppercase tracking-[0.12em] text-white sm:text-xl">
-              Rou<span style={{ color: "#e8c258" }}>lette</span>
-            </span>
-            <span
-              aria-hidden
-              className="h-2 w-2 rotate-45 rounded-[1px]"
-              style={{ background: "#10161a" }}
-            />
-          </div>
+          <MiniCabinetTitle game="roulette" title="Roulette" />
           <ArcadeEntrance game="roulette" className="mx-auto w-full max-w-[280px]">
             <div
               className="relative rounded-full border p-2"
               style={{
-                background: "#06140c",
-                borderColor: "rgba(232,194,88,.35)",
+                background: "#0f212e",
+                borderColor: "rgba(255,255,255,.08)",
               }}
             >
               <RouletteWheel

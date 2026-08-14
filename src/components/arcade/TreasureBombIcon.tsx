@@ -11,14 +11,14 @@ function TreasureBombIconImpl({
   className?: string;
   bright?: boolean;
 }) {
-  const body = bright ? "#5a1e7d" : "#2a0f49";
-  const shade = bright ? "#33094f" : "#170627";
+  const body = bright ? "#3c5568" : "#24384a";
+  const shade = bright ? "#1b2c3a" : "#141f29";
   const face = bright ? "rgba(255,180,255,.5)" : "rgba(180,120,255,.22)";
   return (
     <svg viewBox="0 0 100 100" className={className} aria-hidden focusable="false">
       <defs>
         <radialGradient id="tbombBody" cx="36%" cy="30%" r="78%">
-          <stop offset="0%" stopColor={bright ? "#8b3fc0" : "#43206b"} />
+          <stop offset="0%" stopColor={bright ? "#557086" : "#2f4553"} />
           <stop offset="60%" stopColor={body} />
           <stop offset="100%" stopColor={shade} />
         </radialGradient>
