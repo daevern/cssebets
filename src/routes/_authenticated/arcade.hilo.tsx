@@ -239,7 +239,13 @@ function HiloPage() {
           <SettlePlaque
             game="hilo"
             show={beat}
-            label={won ? "Called right" : "Called wrong"}
+            label={
+              won
+                ? settled?.state?.collected
+                  ? "Run banked"
+                  : "Called right"
+                : "Called wrong"
+            }
             value={won ? `${fmt(Number(settled?.multiplier ?? 0))}×` : "—"}
           />
           <HiloBoard

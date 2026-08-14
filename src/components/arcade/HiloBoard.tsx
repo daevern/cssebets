@@ -37,21 +37,29 @@ function FeltCard({
 }) {
   const w = Math.round(height * 0.7);
   const red = card ? hiloIsRed(card) : false;
-  const [flying, setFlying] = useState(true);
-  const [flipped, setFlipped] = useState(false);
+  const hasFace = Boolean(card) && faceUp;
+  // Start face-down only when there is a card to reveal — empty "?" slots stay still.
+  const [flying, setFlying] = useState(hasFace);
+  const [flipped, setFlipped] = useState(!hasFace);
 
   useEffect(() => {
+    // Depend on dealKey only — parent remaps `card` objects every render, and
+    // re-running this effect was endlessly flipping the reference face.
+    if (!hasFace) {
+      setFlying(false);
+      setFlipped(true);
+      return;
+    }
     setFlying(true);
     setFlipped(false);
     const slide = window.setTimeout(() => setFlying(false), 40);
-    const flip = window.setTimeout(() => {
-      if (faceUp && card) setFlipped(true);
-    }, 280);
+    const flip = window.setTimeout(() => setFlipped(true), 280);
     return () => {
       window.clearTimeout(slide);
       window.clearTimeout(flip);
     };
-  }, [dealKey, faceUp, card]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dealKey is the reveal identity
+  }, [dealKey]);
 
   const showFace = Boolean(card) && faceUp && flipped;
 
@@ -167,11 +175,15 @@ export function HiloBoard({
   lostCard: HiloCard | null;
   stepCount?: number;
 }) {
-  const shoeRef = useRef<HTMLDivElement | null>(null);
   const current = cards.length ? cards[cards.length - 1] : null;
   const rank = current?.rank ?? 6;
   const prevMult = useRef(multiplier);
   const [climbFlash, setClimbFlash] = useState(false);
+  /** Hold calls until the reference card finishes its deal/flip beat. */
+  const [revealLocked, setRevealLocked] = useState(false);
+  const revealKey = current
+    ? `c-${cards.length}-${current.rank}-${current.suit}`
+    : "empty";
 
   useEffect(() => {
     if (multiplier > prevMult.current && multiplier > 1) {
@@ -182,6 +194,16 @@ export function HiloBoard({
     }
     prevMult.current = multiplier;
   }, [multiplier]);
+
+  useEffect(() => {
+    if (!current || lostCard) {
+      setRevealLocked(false);
+      return;
+    }
+    setRevealLocked(true);
+    const t = window.setTimeout(() => setRevealLocked(false), 360);
+    return () => window.clearTimeout(t);
+  }, [revealKey, current, lostCard]);
 
   const sides: {
     key: HiloGuess;
@@ -242,7 +264,7 @@ export function HiloBoard({
 
       {/* felt table */}
       <div
-        className="relative w-full overflow-hidden rounded-[14px] border px-3 pb-3 pt-4"
+        className="relative w-full overflow-visible rounded-[14px] border px-3 pb-3 pt-4"
         style={{
           background: T.feltOrBoardFill,
           borderColor: T.railColor,
@@ -272,7 +294,7 @@ export function HiloBoard({
 
         <div className="relative flex items-end justify-center gap-4">
           {/* shoe */}
-          <div ref={shoeRef} className="relative mb-1 shrink-0" aria-hidden>
+          <div className="relative mb-1 shrink-0" aria-hidden>
             <div
               className="absolute left-1 top-1 h-[72px] w-[50px] rounded-[6px] border border-black/30 opacity-50"
               style={{ background: "#0f3d2c" }}
@@ -297,14 +319,11 @@ export function HiloBoard({
               Reference
             </span>
             <FeltCard
+              key={revealKey}
               card={current}
               height={118}
-              dealKey={
-                current
-                  ? `c-${cards.length}-${current.rank}-${current.suit}`
-                  : "empty"
-              }
-              faceUp={Boolean(current)}
+              dealKey={revealKey}
+              faceUp
             />
           </div>
 
@@ -314,9 +333,10 @@ export function HiloBoard({
                 Miss
               </span>
               <FeltCard
+                key={`miss-${lostCard.rank}-${lostCard.suit}-${cards.length}`}
                 card={lostCard}
                 height={96}
-                dealKey={`miss-${lostCard.rank}-${lostCard.suit}`}
+                dealKey={`miss-${lostCard.rank}-${lostCard.suit}-${cards.length}`}
                 slam
               />
             </div>
@@ -337,7 +357,7 @@ export function HiloBoard({
           const p = hiloProbability(rank, s.key);
           const step = hiloStepMultiplier(rank, s.key);
           const dead = p <= 0;
-          const disabled = !canGuess || dead;
+          const disabled = !canGuess || dead || revealLocked;
           const pending = pendingGuess === s.key;
           const isHigh = s.key === "higher";
           return (
