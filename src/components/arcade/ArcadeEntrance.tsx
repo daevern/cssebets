@@ -13,6 +13,9 @@ const DURATIONS: Record<ArcadeGameKey, number> = {
   treasure: 280,
   blackjack: 280,
   rps: 280,
+  hilo: 280,
+  dice: 280,
+  wheel: 280,
 };
 
 const KEYFRAMES = `

@@ -28,7 +28,15 @@ export const SFX_NAMES = [
 ] as const;
 
 export type SfxName = (typeof SFX_NAMES)[number];
-export type ArcadeGameKey = "plinko" | "roulette" | "treasure" | "blackjack" | "rps";
+export type ArcadeGameKey =
+  | "plinko"
+  | "roulette"
+  | "treasure"
+  | "blackjack"
+  | "rps"
+  | "hilo"
+  | "dice"
+  | "wheel";
 
 const STORAGE_KEY = "arcade_sound_muted";
 const POOL_SIZE = 2;
