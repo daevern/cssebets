@@ -316,17 +316,59 @@ function RpsArenaImpl({
 .rps-rail *{overflow-anchor:none}
 `}</style>
 
-      {/* Arena title */}
-      <div className="mb-3 flex items-center justify-center gap-2 pt-1">
-        <HandGlyph move="ROCK" className="h-4 w-4 shrink-0 text-[var(--color-neon)]/70" />
-        <span
-          className="font-display text-base font-black uppercase tracking-[0.1em] text-white sm:text-lg"
-          style={{ textShadow: "0 0 14px color-mix(in oklab, var(--color-neon) 45%, transparent)" }}
+      {/* Floating result pill — Stake-style console readout */}
+      <div className="relative mb-1 flex justify-center pt-1">
+        <div
+          key={`${animationKey}-${phase}`}
+          className={cn(
+            "relative rounded-[8px] border px-4 py-2 text-center",
+            phase === "SETTLED" && "motion-safe:[animation:dicePillLand_360ms_ease-out]",
+          )}
+          style={{
+            background: "#0f212e",
+            borderColor:
+              phase !== "SETTLED"
+                ? "rgba(255,255,255,.12)"
+                : outcome === "WIN"
+                  ? ARCADE_THEMES.rps.accent
+                  : outcome === "LOSS"
+                    ? "#ff4d5e"
+                    : "#f5c451",
+          }}
         >
-          Rock <span className="text-[var(--color-neon)]">Paper</span> Scissors
-        </span>
-        <HandGlyph move="SCISSORS" className="h-4 w-4 shrink-0 text-[var(--color-neon)]/70" />
+          <div
+            className="font-display text-[26px] font-black tabular-nums leading-none"
+            style={{
+              color:
+                phase !== "SETTLED"
+                  ? "rgba(255,255,255,.55)"
+                  : outcome === "WIN"
+                    ? ARCADE_THEMES.rps.accent
+                    : outcome === "LOSS"
+                      ? "#ff4d5e"
+                      : "#f5c451",
+            }}
+          >
+            {liveMultiplier.toFixed(2)}×
+          </div>
+          <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/35">
+            {phase === "IDLE"
+              ? "ready"
+              : phase === "SETTLED"
+                ? outcome === "WIN"
+                  ? "win"
+                  : outcome === "LOSS"
+                    ? "bust"
+                    : "push"
+                : "revealing"}
+          </div>
+          <div
+            className="absolute left-1/2 top-full h-2 w-[2px] -translate-x-1/2"
+            style={{ background: "rgba(255,255,255,.2)" }}
+          />
+        </div>
       </div>
+
 
       {/* Rail — the active column is centred; history drifts left, next waits right. */}
       <div className="relative flex items-start justify-center gap-2 pb-0.5 pt-2">
