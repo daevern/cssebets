@@ -334,7 +334,9 @@ function BlackjackPage() {
       <div className="relative isolate">
         <ArcadeGlow game="blackjack" />
         <ArcadeStage game="blackjack" className="relative z-10">
-          <ArcadeEntrance game="blackjack" className="relative h-[360px] w-full md:h-[520px]">
+          <ArcadeEntrance game="blackjack" className="relative w-full">
+            <MiniCabinetTitle game="blackjack" title="Blackjack" />
+            <div className="relative h-[340px] w-full md:h-[500px]">
             <SettlePlaque
               game="blackjack"
               show={beat}
