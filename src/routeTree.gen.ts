@@ -104,10 +104,13 @@ import { Route as AuthenticatedFootballUclRouteImport } from './routes/_authenti
 import { Route as AuthenticatedFootballSerieARouteImport } from './routes/_authenticated/football/serie-a'
 import { Route as AuthenticatedFootballLaLigaRouteImport } from './routes/_authenticated/football/la-liga'
 import { Route as AuthenticatedFootballEplRouteImport } from './routes/_authenticated/football/epl'
+import { Route as AuthenticatedArcadeWheelRouteImport } from './routes/_authenticated/arcade.wheel'
 import { Route as AuthenticatedArcadeTreasureRouteImport } from './routes/_authenticated/arcade.treasure'
 import { Route as AuthenticatedArcadeRpsRouteImport } from './routes/_authenticated/arcade.rps'
 import { Route as AuthenticatedArcadeRouletteRouteImport } from './routes/_authenticated/arcade.roulette'
 import { Route as AuthenticatedArcadePlinkoRouteImport } from './routes/_authenticated/arcade.plinko'
+import { Route as AuthenticatedArcadeHiloRouteImport } from './routes/_authenticated/arcade.hilo'
+import { Route as AuthenticatedArcadeDiceRouteImport } from './routes/_authenticated/arcade.dice'
 import { Route as AuthenticatedArcadeBlackjackRouteImport } from './routes/_authenticated/arcade.blackjack'
 import { Route as AuthenticatedF1RacesIndexRouteImport } from './routes/_authenticated/f1.races.index'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
@@ -645,6 +648,12 @@ const AuthenticatedFootballEplRoute =
     path: '/football/epl',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedArcadeWheelRoute =
+  AuthenticatedArcadeWheelRouteImport.update({
+    id: '/wheel',
+    path: '/wheel',
+    getParentRoute: () => AuthenticatedArcadeRoute,
+  } as any)
 const AuthenticatedArcadeTreasureRoute =
   AuthenticatedArcadeTreasureRouteImport.update({
     id: '/treasure',
@@ -668,6 +677,16 @@ const AuthenticatedArcadePlinkoRoute =
     path: '/plinko',
     getParentRoute: () => AuthenticatedArcadeRoute,
   } as any)
+const AuthenticatedArcadeHiloRoute = AuthenticatedArcadeHiloRouteImport.update({
+  id: '/hilo',
+  path: '/hilo',
+  getParentRoute: () => AuthenticatedArcadeRoute,
+} as any)
+const AuthenticatedArcadeDiceRoute = AuthenticatedArcadeDiceRouteImport.update({
+  id: '/dice',
+  path: '/dice',
+  getParentRoute: () => AuthenticatedArcadeRoute,
+} as any)
 const AuthenticatedArcadeBlackjackRoute =
   AuthenticatedArcadeBlackjackRouteImport.update({
     id: '/blackjack',
@@ -848,10 +867,13 @@ export interface FileRoutesByFullPath {
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
   '/arcade/blackjack': typeof AuthenticatedArcadeBlackjackRoute
+  '/arcade/dice': typeof AuthenticatedArcadeDiceRoute
+  '/arcade/hilo': typeof AuthenticatedArcadeHiloRoute
   '/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
   '/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
   '/arcade/rps': typeof AuthenticatedArcadeRpsRoute
   '/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
+  '/arcade/wheel': typeof AuthenticatedArcadeWheelRoute
   '/football/epl': typeof AuthenticatedFootballEplRoute
   '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -967,10 +989,13 @@ export interface FileRoutesByTo {
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
   '/arcade/blackjack': typeof AuthenticatedArcadeBlackjackRoute
+  '/arcade/dice': typeof AuthenticatedArcadeDiceRoute
+  '/arcade/hilo': typeof AuthenticatedArcadeHiloRoute
   '/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
   '/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
   '/arcade/rps': typeof AuthenticatedArcadeRpsRoute
   '/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
+  '/arcade/wheel': typeof AuthenticatedArcadeWheelRoute
   '/football/epl': typeof AuthenticatedFootballEplRoute
   '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -1093,10 +1118,13 @@ export interface FileRoutesById {
   '/management/support': typeof ManagementSupportRoute
   '/management/users': typeof ManagementUsersRoute
   '/_authenticated/arcade/blackjack': typeof AuthenticatedArcadeBlackjackRoute
+  '/_authenticated/arcade/dice': typeof AuthenticatedArcadeDiceRoute
+  '/_authenticated/arcade/hilo': typeof AuthenticatedArcadeHiloRoute
   '/_authenticated/arcade/plinko': typeof AuthenticatedArcadePlinkoRoute
   '/_authenticated/arcade/roulette': typeof AuthenticatedArcadeRouletteRoute
   '/_authenticated/arcade/rps': typeof AuthenticatedArcadeRpsRoute
   '/_authenticated/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
+  '/_authenticated/arcade/wheel': typeof AuthenticatedArcadeWheelRoute
   '/_authenticated/football/epl': typeof AuthenticatedFootballEplRoute
   '/_authenticated/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/_authenticated/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -1219,10 +1247,13 @@ export interface FileRouteTypes {
     | '/management/support'
     | '/management/users'
     | '/arcade/blackjack'
+    | '/arcade/dice'
+    | '/arcade/hilo'
     | '/arcade/plinko'
     | '/arcade/roulette'
     | '/arcade/rps'
     | '/arcade/treasure'
+    | '/arcade/wheel'
     | '/football/epl'
     | '/football/la-liga'
     | '/football/serie-a'
@@ -1338,10 +1369,13 @@ export interface FileRouteTypes {
     | '/management/support'
     | '/management/users'
     | '/arcade/blackjack'
+    | '/arcade/dice'
+    | '/arcade/hilo'
     | '/arcade/plinko'
     | '/arcade/roulette'
     | '/arcade/rps'
     | '/arcade/treasure'
+    | '/arcade/wheel'
     | '/football/epl'
     | '/football/la-liga'
     | '/football/serie-a'
@@ -1463,10 +1497,13 @@ export interface FileRouteTypes {
     | '/management/support'
     | '/management/users'
     | '/_authenticated/arcade/blackjack'
+    | '/_authenticated/arcade/dice'
+    | '/_authenticated/arcade/hilo'
     | '/_authenticated/arcade/plinko'
     | '/_authenticated/arcade/roulette'
     | '/_authenticated/arcade/rps'
     | '/_authenticated/arcade/treasure'
+    | '/_authenticated/arcade/wheel'
     | '/_authenticated/football/epl'
     | '/_authenticated/football/la-liga'
     | '/_authenticated/football/serie-a'
@@ -2250,6 +2287,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFootballEplRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/arcade/wheel': {
+      id: '/_authenticated/arcade/wheel'
+      path: '/wheel'
+      fullPath: '/arcade/wheel'
+      preLoaderRoute: typeof AuthenticatedArcadeWheelRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
     '/_authenticated/arcade/treasure': {
       id: '/_authenticated/arcade/treasure'
       path: '/treasure'
@@ -2276,6 +2320,20 @@ declare module '@tanstack/react-router' {
       path: '/plinko'
       fullPath: '/arcade/plinko'
       preLoaderRoute: typeof AuthenticatedArcadePlinkoRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
+    '/_authenticated/arcade/hilo': {
+      id: '/_authenticated/arcade/hilo'
+      path: '/hilo'
+      fullPath: '/arcade/hilo'
+      preLoaderRoute: typeof AuthenticatedArcadeHiloRouteImport
+      parentRoute: typeof AuthenticatedArcadeRoute
+    }
+    '/_authenticated/arcade/dice': {
+      id: '/_authenticated/arcade/dice'
+      path: '/dice'
+      fullPath: '/arcade/dice'
+      preLoaderRoute: typeof AuthenticatedArcadeDiceRouteImport
       parentRoute: typeof AuthenticatedArcadeRoute
     }
     '/_authenticated/arcade/blackjack': {
@@ -2451,19 +2509,25 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedArcadeRouteChildren {
   AuthenticatedArcadeBlackjackRoute: typeof AuthenticatedArcadeBlackjackRoute
+  AuthenticatedArcadeDiceRoute: typeof AuthenticatedArcadeDiceRoute
+  AuthenticatedArcadeHiloRoute: typeof AuthenticatedArcadeHiloRoute
   AuthenticatedArcadePlinkoRoute: typeof AuthenticatedArcadePlinkoRoute
   AuthenticatedArcadeRouletteRoute: typeof AuthenticatedArcadeRouletteRoute
   AuthenticatedArcadeRpsRoute: typeof AuthenticatedArcadeRpsRoute
   AuthenticatedArcadeTreasureRoute: typeof AuthenticatedArcadeTreasureRoute
+  AuthenticatedArcadeWheelRoute: typeof AuthenticatedArcadeWheelRoute
   AuthenticatedArcadeIndexRoute: typeof AuthenticatedArcadeIndexRoute
 }
 
 const AuthenticatedArcadeRouteChildren: AuthenticatedArcadeRouteChildren = {
   AuthenticatedArcadeBlackjackRoute: AuthenticatedArcadeBlackjackRoute,
+  AuthenticatedArcadeDiceRoute: AuthenticatedArcadeDiceRoute,
+  AuthenticatedArcadeHiloRoute: AuthenticatedArcadeHiloRoute,
   AuthenticatedArcadePlinkoRoute: AuthenticatedArcadePlinkoRoute,
   AuthenticatedArcadeRouletteRoute: AuthenticatedArcadeRouletteRoute,
   AuthenticatedArcadeRpsRoute: AuthenticatedArcadeRpsRoute,
   AuthenticatedArcadeTreasureRoute: AuthenticatedArcadeTreasureRoute,
+  AuthenticatedArcadeWheelRoute: AuthenticatedArcadeWheelRoute,
   AuthenticatedArcadeIndexRoute: AuthenticatedArcadeIndexRoute,
 }
 
