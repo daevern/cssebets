@@ -300,8 +300,57 @@ html[data-arcade-table] [data-arcade-console] {
   0% { transform: translateX(-120%) skewX(-18deg); }
   100% { transform: translateX(220%) skewX(-18deg); }
 }
+/* ---- Dice (Stake-style slate + neon green) ---- */
+@keyframes dicePillLand {
+  0% { transform: translate(-50%, -14px) scale(.82); opacity: 0; }
+  55% { transform: translate(-50%, 2px) scale(1.12); opacity: 1; }
+  75% { transform: translate(-50%, -3px) scale(.97); }
+  100% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+}
+@keyframes diceTrackShock {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  45% { transform: translateX(3px); }
+  70% { transform: translateX(-1.5px); }
+}
+@keyframes diceBandSweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ---- Hi-Lo (velvet ladder) ---- */
+@keyframes hiloRungLight {
+  0% { transform: scaleX(.4); opacity: 0; }
+  100% { transform: scaleX(1); opacity: 1; }
+}
+@keyframes hiloVelvetDrift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: .5; }
+  50% { transform: translate3d(0, -6px, 0) scale(1.04); opacity: .8; }
+}
+
+/* ---- Wheel (neon carnival) ---- */
+@keyframes wheelPointerKick {
+  0% { transform: translateY(0) rotate(0deg); }
+  30% { transform: translateY(-7px) rotate(-9deg); }
+  60% { transform: translateY(2px) rotate(4deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+@keyframes wheelHaloBurst {
+  0% { transform: scale(.86); opacity: .85; }
+  100% { transform: scale(1.22); opacity: 0; }
+}
+@keyframes wheelBulbChase {
+  0%, 100% { opacity: .25; }
+  50% { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [style*="rouletteRimBreathe"],
   [style*="arcadeSpecularCrawl"],
+  [style*="diceBandSweep"],
+  [style*="hiloVelvetDrift"],
+  [style*="wheelBulbChase"],
+  [style*="wheelHaloBurst"],
   [style*="arcadePedestalBreathe"] { animation: none !important; }
 }
+

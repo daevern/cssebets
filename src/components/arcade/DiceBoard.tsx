@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
-import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
 import { diceMultiplier, diceWinChance, type DiceDirection } from "@/lib/arcade/mini-math";
 
 const T = ARCADE_THEMES.dice;
+const LOSS = "#ff4d5e";
 
 /** Presentation scramble while waiting / landing — never invents the final roll. */
 function useScramble(rolling: boolean, final: number | null) {
@@ -38,9 +38,36 @@ function useScramble(rolling: boolean, final: number | null) {
   return display;
 }
 
+function StatCell({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "accent" | "loss";
+}) {
+  return (
+    <div
+      className="flex min-w-0 flex-1 flex-col gap-1 rounded-[6px] border px-2.5 py-2"
+      style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
+    >
+      <span className="truncate text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
+        {label}
+      </span>
+      <span
+        className="font-display text-[15px] font-black tabular-nums leading-none"
+        style={{ color: tone === "accent" ? T.accent : tone === "loss" ? LOSS : "#ffffff" }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
 /**
- * Dice playfield — one green composition: dial, win band, land marker.
- * Odds live in the dock; no plaque strip on the table.
+ * Dice playfield — Stake-style slate console: floating result pill, split
+ * win/lose rail, 0-100 ruler and live stat cells. Presentation only.
  */
 export function DiceBoard({
   target,
@@ -57,92 +84,121 @@ export function DiceBoard({
 }) {
   const chance = diceWinChance(target, direction) * 100;
   const mult = diceMultiplier(target, direction);
-  const won = roll == null || rolling ? null : direction === "under" ? roll < target : roll >= target;
+  const landed = roll != null && !rolling;
+  const won = !landed ? null : direction === "under" ? roll! < target : roll! >= target;
   const readout = useScramble(rolling, rolling ? null : roll);
   const markerLeft = roll == null ? target : roll * markerProgress + target * (1 - markerProgress);
+  const pillLeft = Math.min(93, Math.max(7, markerLeft));
 
   return (
     <div
-      className="relative mx-auto w-full max-w-[440px] overflow-hidden rounded-[12px]"
+      className="relative mx-auto w-full max-w-[460px] overflow-hidden rounded-[10px] px-4 pb-4 pt-3"
       style={{ background: T.feltOrBoardFill }}
     >
-      <div className="pointer-events-none absolute left-1/2 top-[38%] z-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 opacity-[0.16]">
-        <div className="grid h-12 w-12 place-items-center rounded-full border border-white/30">
-          <CsseMark variant="mono" className="h-7 w-7 text-white" />
-        </div>
-        <CsseWordmark
-          size={11}
-          className="[&_span]:[color:transparent!important] [&_span]:[-webkit-text-stroke:0.6px_rgba(255,255,255,0.55)!important]"
-        />
-      </div>
-
-      <div className="relative z-10 flex flex-col items-center gap-5 px-4 pb-5 pt-5">
-        {/* dial */}
+      {/* result pill rail */}
+      <div className="relative h-[86px]">
         <div
+          key={landed ? `${roll}-${markerProgress >= 1}` : "idle"}
           className={cn(
-            "relative grid h-[120px] w-full max-w-[260px] place-items-center rounded-[14px] border",
-            rolling && "motion-safe:animate-pulse",
+            "absolute top-3 -translate-x-1/2 rounded-[8px] border px-3 py-2 text-center",
+            landed && markerProgress >= 1 && "motion-safe:[animation:dicePillLand_360ms_ease-out]",
           )}
           style={{
-            background: "#04120c",
-            borderColor:
-              won == null ? "rgba(255,255,255,.1)" : won ? T.accent : "rgba(255,120,120,.5)",
-            boxShadow: "inset 0 2px 0 rgba(255,255,255,.04), inset 0 -3px 0 rgba(0,0,0,.35)",
+            left: `${pillLeft}%`,
+            background: "#0f212e",
+            borderColor: won == null ? "rgba(255,255,255,.12)" : won ? T.accent : LOSS,
+            boxShadow:
+              won == null
+                ? "none"
+                : `0 0 0 1px ${won ? "rgba(0,231,1,.25)" : "rgba(255,77,94,.25)"}`,
+            transition: "left 120ms linear",
           }}
         >
           <div
-            className="font-display text-[48px] font-black tabular-nums leading-none tracking-tight"
+            className="font-display text-[26px] font-black tabular-nums leading-none"
             style={{
-              color:
-                roll == null && !rolling
-                  ? "rgba(255,255,255,.28)"
-                  : won === false
-                    ? "#ff8a8a"
-                    : T.accent,
+              color: won == null ? "rgba(255,255,255,.55)" : won ? T.accent : LOSS,
             }}
           >
             {readout}
           </div>
-        </div>
-
-        {/* track — the instrument */}
-        <div className="w-full">
+          <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.18em] text-white/35">
+            {rolling ? "rolling" : won == null ? "ready" : won ? "win" : "bust"}
+          </div>
           <div
-            className="relative h-6 w-full overflow-hidden rounded-full border"
-            style={{ background: "rgba(0,0,0,.5)", borderColor: "rgba(255,255,255,.1)" }}
-          >
+            className="absolute left-1/2 top-full h-2 w-[2px] -translate-x-1/2"
+            style={{ background: won == null ? "rgba(255,255,255,.2)" : won ? T.accent : LOSS }}
+          />
+        </div>
+      </div>
+
+      {/* rail */}
+      <div
+        className={cn(
+          "relative",
+          landed && won === false && "motion-safe:[animation:diceTrackShock_260ms_ease-out]",
+        )}
+      >
+        <div
+          className="relative h-[18px] w-full overflow-hidden rounded-full"
+          style={{ background: LOSS, boxShadow: "inset 0 2px 4px rgba(0,0,0,.45)" }}
+        >
+          <div
+            className="absolute inset-y-0 transition-[left,width] duration-200"
+            style={{
+              left: direction === "under" ? 0 : `${target}%`,
+              width: direction === "under" ? `${target}%` : `${100 - target}%`,
+              background: T.accent,
+            }}
+          />
+          {rolling && (
             <div
-              className="absolute inset-y-0 transition-[left,width] duration-200"
+              className="absolute inset-y-0 w-1/3 motion-safe:[animation:diceBandSweep_900ms_linear_infinite]"
               style={{
-                left: direction === "under" ? 0 : `${target}%`,
-                width: direction === "under" ? `${target}%` : `${100 - target}%`,
-                background: T.accent,
-                opacity: 0.42,
+                background:
+                  "linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent)",
               }}
             />
+          )}
+          {/* thumb */}
+          <div
+            className="absolute top-1/2 z-20 h-[26px] w-[12px] -translate-x-1/2 -translate-y-1/2 rounded-[4px] border transition-[left] duration-200"
+            style={{
+              left: `${target}%`,
+              background: "#ffffff",
+              borderColor: "rgba(0,0,0,.35)",
+              boxShadow: "0 2px 6px rgba(0,0,0,.5)",
+            }}
+          />
+          {landed && (
             <div
-              className="absolute top-0 z-10 h-full w-[2px] -translate-x-1/2"
-              style={{ left: `${target}%`, background: T.accent }}
+              className="absolute top-1/2 z-10 h-[26px] w-[3px] -translate-x-1/2 -translate-y-1/2 rounded-full"
+              style={{
+                left: `${Math.min(100, Math.max(0, markerLeft))}%`,
+                background: "#ffffff",
+              }}
             />
-            {roll != null && !rolling && (
-              <div
-                className="absolute top-0 z-20 h-full w-[2px] -translate-x-1/2"
-                style={{
-                  left: `${Math.min(100, Math.max(0, markerLeft))}%`,
-                  background: won ? "#ffffff" : "#ff8a8a",
-                }}
-              />
-            )}
-          </div>
-          <div className="mt-2 flex items-center justify-between px-0.5">
-            <span className="font-display text-[11px] font-black tabular-nums" style={{ color: T.accent }}>
-              {direction === "under" ? "<" : "≥"} {target}
-            </span>
-            <span className="text-[10px] font-bold tabular-nums text-white/45">
-              {chance.toFixed(1)}% · {mult.toFixed(2)}×
-            </span>
-          </div>
+          )}
         </div>
+
+        {/* ruler */}
+        <div className="mt-1.5 flex justify-between px-[1px]">
+          {[0, 25, 50, 75, 100].map((n) => (
+            <span key={n} className="text-[9px] font-bold tabular-nums text-white/30">
+              {n}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* stat cells */}
+      <div className="mt-3 flex items-stretch gap-2">
+        <StatCell label="Mult" value={`${mult.toFixed(4)}×`} tone="accent" />
+        <StatCell
+          label={direction === "under" ? "Under" : "Over"}
+          value={target.toFixed(2)}
+        />
+        <StatCell label="Chance" value={`${chance.toFixed(2)}%`} />
       </div>
     </div>
   );
