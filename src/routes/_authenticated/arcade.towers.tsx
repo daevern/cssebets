@@ -222,7 +222,7 @@ function TowersPage() {
 
       <div className="relative isolate">
         <ArcadeGlow game="towers" />
-        <ArcadeStage game="towers" className="relative z-10">
+        <ArcadeStage game="towers" className="relative z-10" maxScale={1.6}>
           <ArcadeEntrance game="towers" className="relative">
             <MiniCabinetTitle game="towers" title="Dragon Towers" />
             <SettlePlaque

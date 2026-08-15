@@ -16,12 +16,12 @@ const BUST = "#c0142c";
 const STONE = "#2a3a4a";
 const STONE_DEEP = "#22303e";
 
-/** Cream dragon egg with speckles — shown on tiles that hid a dragon. */
+/** Cream dragon egg with speckles — revealed on a tile you cleared safely. */
 function DragonEgg({ delay = 0 }: { delay?: number }) {
   return (
     <svg
       viewBox="0 0 24 30"
-      className="h-[22px] w-[18px] motion-safe:[animation:towersEggPop_320ms_ease-out_both]"
+      className="h-[26px] w-[21px] motion-safe:[animation:towersEggPop_320ms_ease-out_both]"
       style={{ animationDelay: `${delay}ms` }}
       aria-hidden
     >
@@ -38,6 +38,21 @@ function DragonEgg({ delay = 0 }: { delay?: number }) {
     </svg>
   );
 }
+
+/** Dim dragon skull marker — where a dragon was hiding (shown once settled). */
+function DragonMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[20px] w-[20px] opacity-70" aria-hidden>
+      <path
+        d="M12 3c4.4 0 7.5 2.9 7.5 6.7 0 2.6-1.4 4.3-3 5.4l.4 3-2.6-1.3-2.3.9-2.3-.9L7.1 18l.4-3c-1.6-1.1-3-2.8-3-5.4C4.5 5.9 7.6 3 12 3Z"
+        fill="#7d2230"
+      />
+      <circle cx="9.4" cy="10" r="1.6" fill="#ff6b3d" />
+      <circle cx="14.6" cy="10" r="1.6" fill="#ff6b3d" />
+    </svg>
+  );
+}
+
 
 /** Fire bomb / explosion that erupts on the tile you got wrong. */
 function FireBlast() {
@@ -190,7 +205,7 @@ export function TowersBoard({
   return (
     <div
       className={cn(
-        "relative mx-auto w-full max-w-[420px] overflow-hidden rounded-[14px] px-3 pb-3 pt-3",
+        "relative mx-auto w-full max-w-[520px] overflow-hidden rounded-[14px] px-3 pb-3 pt-3",
         boom && "motion-safe:[animation:towersShake_420ms_ease-in-out]",
       )}
       style={{
@@ -226,7 +241,7 @@ export function TowersBoard({
           return (
             <div key={row} className="flex items-center gap-2">
               <span
-                className="w-11 shrink-0 text-right font-display text-[10px] font-black tabular-nums"
+                className="w-12 shrink-0 text-right font-display text-[12px] font-black tabular-nums"
                 style={{
                   color: done ? SAFE : live ? "#ffffff" : "rgba(255,255,255,.3)",
                 }}
@@ -235,26 +250,27 @@ export function TowersBoard({
               </span>
               <div
                 className={cn(
-                  "grid flex-1 gap-[5px]",
+                  "grid flex-1 gap-[6px]",
                   live && "motion-safe:[animation:towersRowLight_1.6s_ease-in-out_infinite]",
                 )}
                 style={{ gridTemplateColumns: `repeat(${shape.tiles}, minmax(0,1fr))` }}
               >
+
                 {Array.from({ length: shape.tiles }, (_, tile) => {
                   const isDragon = dragons?.includes(tile) ?? false;
                   const isPick = picked === tile;
                   const bust = isBustRow && isPick;
                   const safePick = done && isPick && !bust;
                   const clickable = Boolean(live) && !disabled;
-                  const showEgg = isDragon && !bust && (done || isBustRow || Boolean(tower));
+                  const settled = Boolean(tower) || isBustRow;
+                  // Dragons that were never picked are only unmasked once settled.
+                  const showDragonMark = isDragon && !bust && settled;
 
-                  const base = live
+                  const base = safePick
                     ? `linear-gradient(180deg, ${SAFE} 0%, ${SAFE_DEEP} 100%)`
-                    : safePick
-                      ? `linear-gradient(180deg, ${SAFE} 0%, ${SAFE_DEEP} 100%)`
-                      : bust
-                        ? `linear-gradient(180deg, #e5233c 0%, ${BUST} 100%)`
-                        : `linear-gradient(180deg, ${STONE} 0%, ${STONE_DEEP} 100%)`;
+                    : bust
+                      ? `linear-gradient(180deg, #e5233c 0%, ${BUST} 100%)`
+                      : `linear-gradient(180deg, ${STONE} 0%, ${STONE_DEEP} 100%)`;
 
                   return (
                     <button
@@ -264,34 +280,39 @@ export function TowersBoard({
                       onClick={() => onPick(tile)}
                       aria-label={`Row ${row + 1}, tile ${tile + 1}`}
                       className={cn(
-                        "relative grid h-9 place-items-center overflow-visible rounded-[5px] transition-transform duration-150",
-                        clickable && "hover:brightness-110 active:scale-95",
-                        (safePick || showEgg || bust) &&
+                        "relative grid h-12 place-items-center overflow-visible rounded-[6px] transition-transform duration-150",
+                        clickable && "hover:brightness-125 active:scale-95",
+                        (safePick || showDragonMark || bust) &&
                           "motion-safe:[animation:towersTileReveal_280ms_ease-out_both]",
                       )}
                       style={{
                         background: base,
+                        border: live
+                          ? `1px solid rgba(46,232,63,.75)`
+                          : "1px solid rgba(255,255,255,.05)",
                         boxShadow: live
-                          ? "inset 0 -3px 0 rgba(0,0,0,.28), 0 0 12px rgba(46,232,63,.28)"
+                          ? "inset 0 -3px 0 rgba(0,0,0,.28), inset 0 0 14px rgba(46,232,63,.18), 0 0 12px rgba(46,232,63,.22)"
                           : bust
                             ? "inset 0 -3px 0 rgba(0,0,0,.35), 0 0 18px rgba(224,35,60,.5)"
                             : "inset 0 -3px 0 rgba(0,0,0,.32)",
-                        opacity: done || live || bust || showEgg ? 1 : 0.9,
+                        opacity: done || live || bust || settled ? 1 : 0.9,
                       }}
                     >
                       {/* dragon-scale texture */}
                       <span
-                        className="pointer-events-none absolute inset-0 rounded-[5px] opacity-[.22]"
+                        className="pointer-events-none absolute inset-0 rounded-[6px] opacity-[.22]"
                         style={{
                           backgroundImage:
                             "repeating-linear-gradient(45deg, rgba(255,255,255,.35) 0 1px, transparent 1px 7px), repeating-linear-gradient(-45deg, rgba(0,0,0,.3) 0 1px, transparent 1px 7px)",
                         }}
                       />
-                      {showEgg ? <DragonEgg delay={tile * 60} /> : null}
+                      {safePick ? <DragonEgg /> : null}
+                      {showDragonMark ? <DragonMark /> : null}
                       {bust ? <FireBlast /> : null}
                     </button>
                   );
                 })}
+
               </div>
             </div>
           );
