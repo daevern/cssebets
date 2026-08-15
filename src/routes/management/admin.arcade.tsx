@@ -292,7 +292,10 @@ function AdminArcadePage() {
               </table>
             </div>
           </Section>
+
+          <MiniEngineSection windowHours={windowHours} enabled={enabled} />
         </>
+
       ) : (
         <GameTab
           game={tab}
