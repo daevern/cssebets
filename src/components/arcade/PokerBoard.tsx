@@ -196,18 +196,25 @@ export function PokerBoard({
         style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
       >
         <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
-          {stage === "final" ? "Result" : stage === "deal" ? "Hold and draw" : "Deal to begin"}
+          {stage === "final"
+            ? revealed
+              ? "Result"
+              : "Drawing…"
+            : stage === "deal"
+              ? "Hold and draw"
+              : "Deal to begin"}
         </span>
         <span
           className="font-display text-[14px] font-black tabular-nums"
           style={{ color: paying ? T.accent : "#ffffff" }}
         >
-          {category
+          {revealed && category
             ? `${POKER_CATEGORY_LABELS[category]}${
                 paying ? ` · ${(POKER_PAYTABLE[category] * stake).toFixed(2)}` : ""
               }`
             : "—"}
         </span>
+
       </div>
     </div>
   );
