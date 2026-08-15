@@ -38,6 +38,8 @@ export function PokerBoard({
   stake,
   onToggleHold,
   disabled,
+  roundKey,
+  revealed = true,
 }: {
   /** Server card codes 0–51; empty before the first deal. */
   hand: number[];
@@ -49,9 +51,14 @@ export function PokerBoard({
   stake: number;
   onToggleHold: (index: number) => void;
   disabled?: boolean;
+  /** Changes per round so cards remount and re-deal. */
+  roundKey?: string;
+  /** False while the draw flip is still playing — hides the outcome. */
+  revealed?: boolean;
 }) {
   const paying = category && POKER_PAYTABLE[category] > 0 ? category : null;
-  const isFinal = stage === "final";
+  const isFinal = stage === "final" && revealed;
+
 
   return (
     <div
