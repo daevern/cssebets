@@ -205,7 +205,7 @@ export function TowersBoard({
   return (
     <div
       className={cn(
-        "relative mx-auto w-full max-w-[420px] overflow-hidden rounded-[14px] px-3 pb-3 pt-3",
+        "relative mx-auto w-full max-w-[520px] overflow-hidden rounded-[14px] px-3 pb-3 pt-3",
         boom && "motion-safe:[animation:towersShake_420ms_ease-in-out]",
       )}
       style={{
