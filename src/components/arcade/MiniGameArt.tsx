@@ -136,3 +136,49 @@ export function CrashArt() {
     </svg>
   );
 }
+
+export function TowersArt() {
+  const rows = [0, 1, 2, 3, 4];
+  return (
+    <svg viewBox="0 0 240 170" className="h-full w-full" role="img" aria-label="Dragon Towers demo">
+      <rect width="240" height="170" fill="#0f212e" />
+      {rows.map((r) => (
+        <g key={r} transform={`translate(60 ${132 - r * 26})`}>
+          {[0, 1, 2].map((c) => {
+            const safe = (r + c) % 3 === 1 && r < 3;
+            return (
+              <rect
+                key={c}
+                x={c * 42}
+                y={0}
+                width="36"
+                height="18"
+                rx="4"
+                fill={safe ? "#00e701" : "#213743"}
+                stroke={safe ? "#00e701" : "rgba(255,255,255,.08)"}
+              />
+            );
+          })}
+        </g>
+      ))}
+      <path d="M96 26c14-8 30-8 44 0l6-8 3 10 8 3-9 5c-2 12-14 18-30 18s-26-8-28-18l-8-4 9-3 5-3Z" fill="#00e701" />
+    </svg>
+  );
+}
+
+export function PokerArt() {
+  return (
+    <svg viewBox="0 0 240 170" className="h-full w-full" role="img" aria-label="Video Poker demo">
+      <rect width="240" height="170" fill="#0f212e" />
+      {[0, 1, 2, 3, 4].map((i) => (
+        <g key={i} transform={`translate(${22 + i * 42} 38)`}>
+          <rect width="34" height="52" rx="5" fill="#ffffff" />
+          <circle cx="17" cy="26" r="7" fill={i % 2 === 0 ? "#e5384f" : "#0f212e"} />
+          {i < 2 ? <rect x="0" y="58" width="34" height="7" rx="3" fill="#00e701" /> : null}
+        </g>
+      ))}
+      <rect x="22" y="126" width="196" height="8" rx="4" fill="#213743" />
+      <rect x="22" y="126" width="78" height="8" rx="4" fill="#00e701" fillOpacity="0.7" />
+    </svg>
+  );
+}

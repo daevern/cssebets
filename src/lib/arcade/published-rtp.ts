@@ -69,6 +69,8 @@ export function arcadeFairness(
     case "wheel":
     case "keno":
     case "crash":
+    case "towers":
+    case "poker":
       return { rtpLabel: pct(MINI_TARGET_RTP), tag: "Provably fair" };
   }
 }

@@ -266,3 +266,164 @@ export const arcadeAdminRounds = createServerFn({ method: "POST" })
       raw: r,
     }));
   });
+
+/** CSSE Originals mini-engine products (single `arcade_mini_rounds` table). */
+export const MINI_PRODUCTS = [
+  "hilo",
+  "dice",
+  "wheel",
+  "keno",
+  "crash",
+  "towers",
+  "poker",
+] as const;
+export type MiniAdminProduct = (typeof MINI_PRODUCTS)[number];
+
+export type MiniAdminStats = {
+  product: MiniAdminProduct;
+  liveRounds: number;
+  livePlayers: number;
+  liveStake: number;
+  rounds: number;
+  players: number;
+  staked: number;
+  paid: number;
+  houseNet: number;
+  margin: number | null;
+};
+
+/**
+ * Live + windowed performance and published config for every mini-engine
+ * product, plus the most recent rounds across all of them.
+ */
+export const miniAdminOverview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ windowHours: z.number().int().min(1).max(720).default(24) }).parse(i ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const db = await assertStaff(context);
+    const since = new Date(Date.now() - data.windowHours * 3600_000).toISOString();
+
+    const [{ data: liveRows }, { data: windowRows }, { data: configRows }, { data: recentRows }] =
+      await Promise.all([
+        db
+          .from("arcade_mini_rounds")
+          .select("product, user_id, stake")
+          .eq("status", "ACTIVE")
+          .limit(1000),
+        db
+          .from("arcade_mini_rounds")
+          .select("product, user_id, stake, gross_return, status")
+          .gte("created_at", since)
+          .limit(1000),
+        db
+          .from("arcade_mini_configs")
+          .select(
+            "id, product, version, status, min_stake, max_stake, target_rtp, max_multiplier, round_ttl_seconds, daily_round_limit, cooldown_seconds, maintenance_mode, announcement",
+          )
+          .eq("status", "active"),
+        db
+          .from("arcade_mini_rounds")
+          .select(
+            "id, product, user_id, stake, gross_return, multiplier, outcome, status, created_at",
+          )
+          .order("created_at", { ascending: false })
+          .limit(60),
+      ]);
+
+    const stats = new Map<string, MiniAdminStats>();
+    const livePlayers = new Map<string, Set<string>>();
+    const players = new Map<string, Set<string>>();
+    for (const p of MINI_PRODUCTS) {
+      stats.set(p, {
+        product: p,
+        liveRounds: 0,
+        livePlayers: 0,
+        liveStake: 0,
+        rounds: 0,
+        players: 0,
+        staked: 0,
+        paid: 0,
+        houseNet: 0,
+        margin: null,
+      });
+      livePlayers.set(p, new Set());
+      players.set(p, new Set());
+    }
+
+    for (const r of (liveRows ?? []) as any[]) {
+      const s = stats.get(r.product);
+      if (!s) continue;
+      s.liveRounds += 1;
+      s.liveStake += Number(r.stake ?? 0);
+      livePlayers.get(r.product)!.add(String(r.user_id));
+    }
+    for (const r of (windowRows ?? []) as any[]) {
+      const s = stats.get(r.product);
+      if (!s) continue;
+      s.rounds += 1;
+      s.staked += Number(r.stake ?? 0);
+      s.paid += Number(r.gross_return ?? 0);
+      players.get(r.product)!.add(String(r.user_id));
+    }
+    for (const s of stats.values()) {
+      s.livePlayers = livePlayers.get(s.product)!.size;
+      s.players = players.get(s.product)!.size;
+      s.houseNet = Math.round((s.staked - s.paid) * 100) / 100;
+      s.margin = s.staked > 0 ? s.houseNet / s.staked : null;
+    }
+
+    const ids = Array.from(new Set((recentRows ?? []).map((r: any) => r.user_id)));
+    const { data: profiles } = ids.length
+      ? await db.from("profiles").select("id, display_name").in("id", ids)
+      : { data: [] as any[] };
+    const nameOf = new Map<string, string | null>(
+      (profiles ?? []).map((p: any) => [String(p.id), (p.display_name ?? null) as string | null]),
+    );
+
+    return {
+      windowHours: data.windowHours,
+      generatedAt: new Date().toISOString(),
+      stats: Array.from(stats.values()),
+      configs: (configRows ?? []) as any[],
+      recent: ((recentRows ?? []) as any[]).map((r) => ({
+        id: String(r.id),
+        product: String(r.product) as MiniAdminProduct,
+        userId: String(r.user_id),
+        username: nameOf.get(String(r.user_id)) ?? null,
+        stake: Number(r.stake ?? 0),
+        payout: Number(r.gross_return ?? 0),
+        multiplier: Number(r.multiplier ?? 0),
+        result: (r.outcome ?? r.status ?? null) as string | null,
+        createdAt: String(r.created_at),
+      })),
+    };
+  });
+
+/** Publish a new versioned config for one mini-engine product. */
+export const miniAdminPublishConfig = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        product: z.enum(MINI_PRODUCTS),
+        patch: z.record(
+          z.string(),
+          z.union([z.string(), z.number(), z.boolean()]),
+        ),
+        reason: z.string().trim().min(4).max(500),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const db = await assertStaff(context, { write: true });
+    const { error } = await db.rpc("arcade_publish_mini_config", {
+      p_admin: context.userId,
+      p_product: data.product,
+      p_patch: data.patch,
+      p_reason: data.reason,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

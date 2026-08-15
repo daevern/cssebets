@@ -13,7 +13,7 @@ import { requireApprovedMember } from "@/lib/access-control";
  * payout or balance.
  */
 
-const miniProduct = z.enum(["hilo", "dice", "wheel", "keno", "crash"]);
+const miniProduct = z.enum(["hilo", "dice", "wheel", "keno", "crash", "towers", "poker"]);
 
 /** Stake bounds, chip denominations and published payout tables. */
 export const getMiniConfig = createServerFn({ method: "GET" })
@@ -356,6 +356,170 @@ export const getActiveCrash = createServerFn({ method: "GET" })
       .select("*")
       .eq("user_id", userId)
       .eq("product", "crash")
+      .eq("status", "ACTIVE")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return { round: publicMiniRound(row) };
+  });
+
+/** Opens a Dragon Towers climb: the stake leaves the wallet, row 1 is armed. */
+export const startTowers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        stake: z.number().positive(),
+        difficulty: z.enum(["easy", "medium", "hard", "nightmare"]),
+        clientSeed: z.string().min(4).max(128),
+        idempotencyKey: z.string().min(8).max(128),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { userId } = context;
+    await requireApprovedMember(context);
+    const { enforceMiniRateLimit, mapMiniError, publicMiniRound } = await import(
+      "@/lib/arcade/mini.server"
+    );
+    await enforceMiniRateLimit("towers", userId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await (supabaseAdmin as any).rpc("arcade_towers_start", {
+      p_user: userId,
+      p_stake: data.stake,
+      p_difficulty: data.difficulty,
+      p_client_seed: data.clientSeed,
+      p_idempotency_key: data.idempotencyKey,
+    });
+    if (error) throw new Error(mapMiniError("towers", error.message));
+    return { round: publicMiniRound(Array.isArray(row) ? row[0] : row) };
+  });
+
+/** Picks one tile on the live tower row. A dragon ends the climb. */
+export const pickTowers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ roundId: z.string().uuid(), tile: z.number().int().min(0).max(7) }).parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { userId } = context;
+    await requireApprovedMember(context);
+    const { mapMiniError, publicMiniRound } = await import("@/lib/arcade/mini.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await (supabaseAdmin as any).rpc("arcade_towers_pick", {
+      p_user: userId,
+      p_round_id: data.roundId,
+      p_tile: data.tile,
+    });
+    if (error) throw new Error(mapMiniError("towers", error.message));
+    return { round: publicMiniRound(Array.isArray(row) ? row[0] : row) };
+  });
+
+/** Banks the climb at the current multiplier. */
+export const cashoutTowers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ roundId: z.string().uuid() }).parse(i))
+  .handler(async ({ context, data }) => {
+    const { userId } = context;
+    await requireApprovedMember(context);
+    const { mapMiniError, publicMiniRound } = await import("@/lib/arcade/mini.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await (supabaseAdmin as any).rpc("arcade_towers_cashout", {
+      p_user: userId,
+      p_round_id: data.roundId,
+    });
+    if (error) throw new Error(mapMiniError("towers", error.message));
+    return { round: publicMiniRound(Array.isArray(row) ? row[0] : row) };
+  });
+
+/** Recovers an in-flight tower after a refresh or connection drop. */
+export const getActiveTowers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { publicMiniRound } = await import("@/lib/arcade/mini.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await (supabaseAdmin as any)
+      .from("arcade_mini_rounds")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("product", "towers")
+      .eq("status", "ACTIVE")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return { round: publicMiniRound(row) };
+  });
+
+/** Deals the opening five-card Video Poker hand. */
+export const dealPoker = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        stake: z.number().positive(),
+        clientSeed: z.string().min(4).max(128),
+        idempotencyKey: z.string().min(8).max(128),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { userId } = context;
+    await requireApprovedMember(context);
+    const { enforceMiniRateLimit, mapMiniError, publicMiniRound } = await import(
+      "@/lib/arcade/mini.server"
+    );
+    await enforceMiniRateLimit("poker", userId);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await (supabaseAdmin as any).rpc("arcade_poker_deal", {
+      p_user: userId,
+      p_stake: data.stake,
+      p_client_seed: data.clientSeed,
+      p_idempotency_key: data.idempotencyKey,
+    });
+    if (error) throw new Error(mapMiniError("poker", error.message));
+    return { round: publicMiniRound(Array.isArray(row) ? row[0] : row) };
+  });
+
+/** Replaces every card that is not held and settles the hand. */
+export const drawPoker = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        roundId: z.string().uuid(),
+        holds: z.array(z.number().int().min(0).max(4)).max(5),
+      })
+      .parse(i),
+  )
+  .handler(async ({ context, data }) => {
+    const { userId } = context;
+    await requireApprovedMember(context);
+    const { mapMiniError, publicMiniRound } = await import("@/lib/arcade/mini.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await (supabaseAdmin as any).rpc("arcade_poker_draw", {
+      p_user: userId,
+      p_round_id: data.roundId,
+      p_holds: Array.from(new Set(data.holds)).sort((a, b) => a - b),
+    });
+    if (error) throw new Error(mapMiniError("poker", error.message));
+    return { round: publicMiniRound(Array.isArray(row) ? row[0] : row) };
+  });
+
+/** Recovers a dealt-but-undrawn poker hand after a refresh. */
+export const getActivePoker = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { userId } = context;
+    const { publicMiniRound } = await import("@/lib/arcade/mini.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await (supabaseAdmin as any)
+      .from("arcade_mini_rounds")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("product", "poker")
       .eq("status", "ACTIVE")
       .order("created_at", { ascending: false })
       .limit(1)
