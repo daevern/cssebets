@@ -134,7 +134,10 @@ export function PokerBoard({
           const face = card == null ? null : pokerCardFace(card);
           const held = holds.includes(i);
           const canHold = stage === "deal" && !disabled && card != null;
-          
+          /** Only freshly drawn cards deal in and flip on the draw. */
+          const isDraw = stage === "final" && card != null && !held;
+          const dealDelay = stage === "final" ? i * 130 : i * 110;
+          const flipAt = dealDelay + 560;
           return (
             <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
               <button
@@ -153,16 +156,29 @@ export function PokerBoard({
                   borderRadius: 8,
                 }}
               >
-
-                <PlayingCard
+                <div
                   key={`${i}-${card ?? "x"}-${roundKey ?? ""}`}
-                  rank={face?.rank ?? null}
-                  suit={face?.suit ?? null}
-                  faceUp={face != null}
-                  height={84}
-                  dealDelay={i * 110}
-                  className="mx-auto"
-                />
+                  style={{
+                    perspective: 700,
+                    borderRadius: 8,
+                    ...(isDraw
+                      ? {
+                          animation: `pokerDrawFlip 420ms ${flipAt}ms cubic-bezier(.2,.7,.3,1) both, pokerNewPulse 900ms ${flipAt + 260}ms ease-out`,
+                        }
+                      : null),
+                  }}
+                >
+                  <PlayingCard
+                    rank={face?.rank ?? null}
+                    suit={face?.suit ?? null}
+                    faceUp={face != null}
+                    height={84}
+                    dealDelay={dealDelay}
+                    flipDelay={flipAt}
+                    className="mx-auto"
+                  />
+                </div>
+
               </button>
 
               <span
