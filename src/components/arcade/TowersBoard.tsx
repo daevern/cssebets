@@ -261,15 +261,15 @@ export function TowersBoard({
                   const bust = isBustRow && isPick;
                   const safePick = done && isPick && !bust;
                   const clickable = Boolean(live) && !disabled;
-                  const showEgg = isDragon && !bust && (done || isBustRow || Boolean(tower));
+                  const settled = Boolean(tower) || isBustRow;
+                  // Dragons that were never picked are only unmasked once settled.
+                  const showDragonMark = isDragon && !bust && settled;
 
-                  const base = live
+                  const base = safePick
                     ? `linear-gradient(180deg, ${SAFE} 0%, ${SAFE_DEEP} 100%)`
-                    : safePick
-                      ? `linear-gradient(180deg, ${SAFE} 0%, ${SAFE_DEEP} 100%)`
-                      : bust
-                        ? `linear-gradient(180deg, #e5233c 0%, ${BUST} 100%)`
-                        : `linear-gradient(180deg, ${STONE} 0%, ${STONE_DEEP} 100%)`;
+                    : bust
+                      ? `linear-gradient(180deg, #e5233c 0%, ${BUST} 100%)`
+                      : `linear-gradient(180deg, ${STONE} 0%, ${STONE_DEEP} 100%)`;
 
                   return (
                     <button
@@ -279,34 +279,39 @@ export function TowersBoard({
                       onClick={() => onPick(tile)}
                       aria-label={`Row ${row + 1}, tile ${tile + 1}`}
                       className={cn(
-                        "relative grid h-9 place-items-center overflow-visible rounded-[5px] transition-transform duration-150",
-                        clickable && "hover:brightness-110 active:scale-95",
-                        (safePick || showEgg || bust) &&
+                        "relative grid h-12 place-items-center overflow-visible rounded-[6px] transition-transform duration-150",
+                        clickable && "hover:brightness-125 active:scale-95",
+                        (safePick || showDragonMark || bust) &&
                           "motion-safe:[animation:towersTileReveal_280ms_ease-out_both]",
                       )}
                       style={{
                         background: base,
+                        border: live
+                          ? `1px solid rgba(46,232,63,.75)`
+                          : "1px solid rgba(255,255,255,.05)",
                         boxShadow: live
-                          ? "inset 0 -3px 0 rgba(0,0,0,.28), 0 0 12px rgba(46,232,63,.28)"
+                          ? "inset 0 -3px 0 rgba(0,0,0,.28), inset 0 0 14px rgba(46,232,63,.18), 0 0 12px rgba(46,232,63,.22)"
                           : bust
                             ? "inset 0 -3px 0 rgba(0,0,0,.35), 0 0 18px rgba(224,35,60,.5)"
                             : "inset 0 -3px 0 rgba(0,0,0,.32)",
-                        opacity: done || live || bust || showEgg ? 1 : 0.9,
+                        opacity: done || live || bust || settled ? 1 : 0.9,
                       }}
                     >
                       {/* dragon-scale texture */}
                       <span
-                        className="pointer-events-none absolute inset-0 rounded-[5px] opacity-[.22]"
+                        className="pointer-events-none absolute inset-0 rounded-[6px] opacity-[.22]"
                         style={{
                           backgroundImage:
                             "repeating-linear-gradient(45deg, rgba(255,255,255,.35) 0 1px, transparent 1px 7px), repeating-linear-gradient(-45deg, rgba(0,0,0,.3) 0 1px, transparent 1px 7px)",
                         }}
                       />
-                      {showEgg ? <DragonEgg delay={tile * 60} /> : null}
+                      {safePick ? <DragonEgg /> : null}
+                      {showDragonMark ? <DragonMark /> : null}
                       {bust ? <FireBlast /> : null}
                     </button>
                   );
                 })}
+
               </div>
             </div>
           );
