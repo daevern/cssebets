@@ -38,6 +38,8 @@ export function PokerBoard({
   stake,
   onToggleHold,
   disabled,
+  roundKey,
+  revealed = true,
 }: {
   /** Server card codes 0–51; empty before the first deal. */
   hand: number[];
@@ -49,9 +51,16 @@ export function PokerBoard({
   stake: number;
   onToggleHold: (index: number) => void;
   disabled?: boolean;
+  /** Changes per round so cards remount and re-deal. */
+  roundKey?: string;
+  /** False while the draw flip is still playing — hides the outcome. */
+  revealed?: boolean;
 }) {
-  const paying = category && POKER_PAYTABLE[category] > 0 ? category : null;
-  const isFinal = stage === "final";
+  const paying =
+    revealed && category && POKER_PAYTABLE[category] > 0 ? category : null;
+
+  const isFinal = stage === "final" && revealed;
+
 
   return (
     <div
@@ -125,7 +134,7 @@ export function PokerBoard({
           const face = card == null ? null : pokerCardFace(card);
           const held = holds.includes(i);
           const canHold = stage === "deal" && !disabled && card != null;
-          const replaced = isFinal && card != null && !held;
+          
           return (
             <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
               <button
@@ -144,26 +153,18 @@ export function PokerBoard({
                   borderRadius: 8,
                 }}
               >
-                <div
-                  key={`${i}-${card ?? "x"}-${stage}`}
-                  style={
-                    replaced
-                      ? {
-                          animation: `pokerDrawFlip 420ms ${i * 80}ms cubic-bezier(.2,.7,.3,1) both, pokerNewPulse 900ms ${i * 80 + 300}ms ease-out`,
-                          borderRadius: 8,
-                        }
-                      : undefined
-                  }
-                >
-                  <PlayingCard
-                    rank={face?.rank ?? null}
-                    suit={face?.suit ?? null}
-                    faceUp={face != null}
-                    height={84}
-                    className="mx-auto"
-                  />
-                </div>
+
+                <PlayingCard
+                  key={`${i}-${card ?? "x"}-${roundKey ?? ""}`}
+                  rank={face?.rank ?? null}
+                  suit={face?.suit ?? null}
+                  faceUp={face != null}
+                  height={84}
+                  dealDelay={i * 110}
+                  className="mx-auto"
+                />
               </button>
+
               <span
                 className="w-full rounded-[4px] py-0.5 text-center text-[8px] font-black uppercase tracking-[0.18em]"
                 style={{
@@ -195,18 +196,25 @@ export function PokerBoard({
         style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
       >
         <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
-          {stage === "final" ? "Result" : stage === "deal" ? "Hold and draw" : "Deal to begin"}
+          {stage === "final"
+            ? revealed
+              ? "Result"
+              : "Drawing…"
+            : stage === "deal"
+              ? "Hold and draw"
+              : "Deal to begin"}
         </span>
         <span
           className="font-display text-[14px] font-black tabular-nums"
           style={{ color: paying ? T.accent : "#ffffff" }}
         >
-          {category
+          {revealed && category
             ? `${POKER_CATEGORY_LABELS[category]}${
                 paying ? ` · ${(POKER_PAYTABLE[category] * stake).toFixed(2)}` : ""
               }`
             : "—"}
         </span>
+
       </div>
     </div>
   );

@@ -59,6 +59,8 @@ export const Route = createFileRoute("/_authenticated/arcade/poker")({
 
 const fmt = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 const newKey = () => `poker_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+/** Slide (480ms) + stagger (4x110ms) + flip settle for the last card. */
+const POKER_REVEAL_MS = 1150;
 const newSeed = () => Math.random().toString(36).slice(2, 16);
 
 function PokerPage() {
@@ -99,6 +101,7 @@ function PokerPage() {
   const [round, setRound] = useState<any>(null);
   const [holds, setHolds] = useState<number[]>([]);
   const [resultOpen, setResultOpen] = useState(false);
+  const [revealed, setRevealed] = useState(true);
   const [verifyId, setVerifyId] = useState<string | null>(null);
   const { beat, run: runBeat } = useSettleBeat(380);
 
@@ -140,6 +143,7 @@ function PokerPage() {
     onSuccess: (res: any) => {
       setRound(res.round);
       setResultOpen(false);
+      setRevealed(true);
       playFor("poker", "reveal-tick");
       qc.invalidateQueries({ queryKey: ["mini", "poker", "profile"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
@@ -151,9 +155,15 @@ function PokerPage() {
     mutationFn: () => drawFn({ data: { roundId: round.id, holds } }),
     onSuccess: (res: any) => {
       const r = res.round;
+      setRevealed(false);
       setRound(r);
-      playFor("poker", "settle");
-      runBeat(() => setResultOpen(true));
+      // Let every replaced card slide out of the shoe and flip before we
+      // announce the outcome.
+      window.setTimeout(() => {
+        setRevealed(true);
+        playFor("poker", "settle");
+        runBeat(() => setResultOpen(true));
+      }, POKER_REVEAL_MS);
       qc.invalidateQueries({ queryKey: ["mini", "poker", "profile"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
     },
@@ -208,6 +218,8 @@ function PokerPage() {
               category={category}
               stake={stake}
               disabled={busy}
+              roundKey={round?.id ?? "idle"}
+              revealed={revealed}
               onToggleHold={(i) => {
                 play("chip");
                 setHolds((prev) =>
