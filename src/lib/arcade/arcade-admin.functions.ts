@@ -378,7 +378,9 @@ export const miniAdminOverview = createServerFn({ method: "POST" })
     const { data: profiles } = ids.length
       ? await db.from("profiles").select("id, display_name").in("id", ids)
       : { data: [] as any[] };
-    const nameOf = new Map((profiles ?? []).map((p: any) => [p.id, p.display_name]));
+    const nameOf = new Map<string, string | null>(
+      (profiles ?? []).map((p: any) => [String(p.id), (p.display_name ?? null) as string | null]),
+    );
 
     return {
       windowHours: data.windowHours,
@@ -389,7 +391,7 @@ export const miniAdminOverview = createServerFn({ method: "POST" })
         id: String(r.id),
         product: String(r.product) as MiniAdminProduct,
         userId: String(r.user_id),
-        username: nameOf.get(r.user_id) ?? null,
+        username: nameOf.get(String(r.user_id)) ?? null,
         stake: Number(r.stake ?? 0),
         payout: Number(r.gross_return ?? 0),
         multiplier: Number(r.multiplier ?? 0),
