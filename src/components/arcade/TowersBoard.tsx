@@ -148,11 +148,11 @@ export function TowersBoard({
 
       <div className="mt-3 flex items-stretch gap-2">
         {[
-          { label: "Difficulty", value: shape.label },
-          { label: "Safe odds", value: `${(towersSafeChance(difficulty) * 100).toFixed(0)}%` },
+          { label: "Level", value: shape.label },
+          { label: "Safe", value: `${(towersSafeChance(difficulty) * 100).toFixed(0)}%` },
           { label: "Row", value: `${Math.min(currentRow + (active ? 1 : 0), rows)}/${rows}` },
           {
-            label: "Multiplier",
+            label: "Mult",
             value: multiplier > 0 ? `${multiplier.toFixed(2)}×` : "—",
             accent: multiplier > 1,
           },
