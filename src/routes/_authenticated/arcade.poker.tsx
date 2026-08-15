@@ -227,9 +227,6 @@ function PokerPage() {
                 );
               }}
             />
-            <ArcadeIdleCue game="poker" show={!live && !busy && !resultOpen}>
-              Set a stake and deal
-            </ArcadeIdleCue>
           </ArcadeEntrance>
         </ArcadeStage>
       </div>
