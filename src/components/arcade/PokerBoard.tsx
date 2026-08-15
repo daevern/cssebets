@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { rankLabel, suitSymbol, isRedSuit } from "@/lib/arcade/blackjack-math";
 import { PlayingCard } from "@/components/arcade/PlayingCard";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import {
@@ -30,6 +31,7 @@ const SHORT: Record<string, string> = {
  */
 export function PokerBoard({
   hand,
+  dealt,
   holds,
   stage,
   category,
@@ -39,6 +41,8 @@ export function PokerBoard({
 }: {
   /** Server card codes 0–51; empty before the first deal. */
   hand: number[];
+  /** The pre-draw hand, so replaced cards can be shown side by side. */
+  dealt?: number[];
   holds: number[];
   stage: "idle" | "deal" | "final";
   category: PokerCategory | null;
@@ -47,6 +51,7 @@ export function PokerBoard({
   disabled?: boolean;
 }) {
   const paying = category && POKER_PAYTABLE[category] > 0 ? category : null;
+  const isFinal = stage === "final";
 
   return (
     <div
@@ -80,6 +85,39 @@ export function PokerBoard({
         })}
       </div>
 
+      {/* dealt-hand recap so the swap is visible after the draw */}
+      {isFinal && dealt && dealt.length === 5 ? (
+        <div
+          className="mb-2 flex items-center justify-center gap-2 rounded-[6px] border px-2 py-1"
+          style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
+        >
+          <span className="text-[8px] font-black uppercase tracking-[0.16em] text-white/35">
+            Dealt
+          </span>
+          {dealt.map((c, i) => {
+            const f = pokerCardFace(c);
+            const kept = holds.includes(i);
+            return (
+              <span
+                key={`${i}-${c}`}
+                className="font-mono text-[11px] font-bold tabular-nums"
+                style={{
+                  color: kept
+                    ? isRedSuit(f.suit)
+                      ? "#ff8a8a"
+                      : "rgba(255,255,255,.8)"
+                    : "rgba(255,255,255,.28)",
+                  textDecoration: kept ? "none" : "line-through",
+                }}
+              >
+                {rankLabel(f.rank)}
+                {suitSymbol(f.suit)}
+              </span>
+            );
+          })}
+        </div>
+      ) : null}
+
       {/* hand */}
       <div className="flex items-end justify-center gap-1.5">
         {Array.from({ length: 5 }, (_, i) => {
@@ -87,6 +125,7 @@ export function PokerBoard({
           const face = card == null ? null : pokerCardFace(card);
           const held = holds.includes(i);
           const canHold = stage === "deal" && !disabled && card != null;
+          const replaced = isFinal && card != null && !held;
           return (
             <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
               <button
@@ -98,29 +137,53 @@ export function PokerBoard({
                 className={cn(
                   "w-full rounded-[6px] transition-transform",
                   canHold && "active:scale-95",
-                  held && "-translate-y-1",
+                  held && !isFinal && "-translate-y-1",
                 )}
                 style={{
-                  boxShadow: held ? `0 0 0 2px ${T.accent}` : "none",
+                  boxShadow: held && !isFinal ? `0 0 0 2px ${T.accent}` : "none",
                   borderRadius: 8,
                 }}
               >
-                <PlayingCard
-                  rank={face?.rank ?? null}
-                  suit={face?.suit ?? null}
-                  faceUp={face != null}
-                  height={84}
-                  className="mx-auto"
-                />
+                <div
+                  key={`${i}-${card ?? "x"}-${stage}`}
+                  style={
+                    replaced
+                      ? {
+                          animation: `pokerDrawFlip 420ms ${i * 80}ms cubic-bezier(.2,.7,.3,1) both, pokerNewPulse 900ms ${i * 80 + 300}ms ease-out`,
+                          borderRadius: 8,
+                        }
+                      : undefined
+                  }
+                >
+                  <PlayingCard
+                    rank={face?.rank ?? null}
+                    suit={face?.suit ?? null}
+                    faceUp={face != null}
+                    height={84}
+                    className="mx-auto"
+                  />
+                </div>
               </button>
               <span
                 className="w-full rounded-[4px] py-0.5 text-center text-[8px] font-black uppercase tracking-[0.18em]"
                 style={{
-                  background: held ? T.accent : "rgba(255,255,255,.05)",
-                  color: held ? "#03210a" : "rgba(255,255,255,.35)",
+                  background: isFinal
+                    ? held
+                      ? "rgba(255,255,255,.12)"
+                      : "#ffb703"
+                    : held
+                      ? T.accent
+                      : "rgba(255,255,255,.05)",
+                  color: isFinal
+                    ? held
+                      ? "rgba(255,255,255,.6)"
+                      : "#2a1a00"
+                    : held
+                      ? "#03210a"
+                      : "rgba(255,255,255,.35)",
                 }}
               >
-                Hold
+                {isFinal ? (held ? "Kept" : "New") : "Hold"}
               </span>
             </div>
           );
@@ -148,3 +211,4 @@ export function PokerBoard({
     </div>
   );
 }
+
