@@ -241,7 +241,7 @@ export function TowersBoard({
           return (
             <div key={row} className="flex items-center gap-2">
               <span
-                className="w-11 shrink-0 text-right font-display text-[10px] font-black tabular-nums"
+                className="w-12 shrink-0 text-right font-display text-[12px] font-black tabular-nums"
                 style={{
                   color: done ? SAFE : live ? "#ffffff" : "rgba(255,255,255,.3)",
                 }}
@@ -250,11 +250,12 @@ export function TowersBoard({
               </span>
               <div
                 className={cn(
-                  "grid flex-1 gap-[5px]",
+                  "grid flex-1 gap-[6px]",
                   live && "motion-safe:[animation:towersRowLight_1.6s_ease-in-out_infinite]",
                 )}
                 style={{ gridTemplateColumns: `repeat(${shape.tiles}, minmax(0,1fr))` }}
               >
+
                 {Array.from({ length: shape.tiles }, (_, tile) => {
                   const isDragon = dragons?.includes(tile) ?? false;
                   const isPick = picked === tile;
