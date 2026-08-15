@@ -151,26 +151,18 @@ export function PokerBoard({
                   borderRadius: 8,
                 }}
               >
-                <div
-                  key={`${i}-${card ?? "x"}-${stage}`}
-                  style={
-                    replaced
-                      ? {
-                          animation: `pokerDrawFlip 420ms ${i * 80}ms cubic-bezier(.2,.7,.3,1) both, pokerNewPulse 900ms ${i * 80 + 300}ms ease-out`,
-                          borderRadius: 8,
-                        }
-                      : undefined
-                  }
-                >
-                  <PlayingCard
-                    rank={face?.rank ?? null}
-                    suit={face?.suit ?? null}
-                    faceUp={face != null}
-                    height={84}
-                    className="mx-auto"
-                  />
-                </div>
+              >
+                <PlayingCard
+                  key={`${i}-${card ?? "x"}-${roundKey ?? ""}`}
+                  rank={face?.rank ?? null}
+                  suit={face?.suit ?? null}
+                  faceUp={face != null}
+                  height={84}
+                  dealDelay={i * 110}
+                  className="mx-auto"
+                />
               </button>
+
               <span
                 className="w-full rounded-[4px] py-0.5 text-center text-[8px] font-black uppercase tracking-[0.18em]"
                 style={{
