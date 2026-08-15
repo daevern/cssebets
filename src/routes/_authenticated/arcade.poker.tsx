@@ -161,6 +161,7 @@ function PokerPage() {
     onSuccess: (res: any) => {
       const r = res.round;
       if (r?.outcome === "VOID") {
+        qc.setQueryData(["mini", "poker", "active"], { round: null });
         setRound(null);
         setHolds([]);
         setRevealed(true);
@@ -186,6 +187,7 @@ function PokerPage() {
     onError: (e: any) => {
       const message = e?.message ?? "Could not draw.";
       if (message.includes("expired")) {
+        qc.setQueryData(["mini", "poker", "active"], { round: null });
         setRound(null);
         setHolds([]);
         setRevealed(true);
