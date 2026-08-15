@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { rankLabel, suitSymbol, isRedSuit } from "@/lib/arcade/blackjack-math";
 import { PlayingCard } from "@/components/arcade/PlayingCard";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import {
@@ -101,11 +102,16 @@ export function PokerBoard({
                 key={`${i}-${c}`}
                 className="font-mono text-[11px] font-bold tabular-nums"
                 style={{
-                  color: kept ? "rgba(255,255,255,.75)" : "rgba(255,255,255,.3)",
+                  color: kept
+                    ? isRedSuit(f.suit)
+                      ? "#ff8a8a"
+                      : "rgba(255,255,255,.8)"
+                    : "rgba(255,255,255,.28)",
                   textDecoration: kept ? "none" : "line-through",
                 }}
               >
-                {f.label ?? `${f.rank}`}
+                {rankLabel(f.rank)}
+                {suitSymbol(f.suit)}
               </span>
             );
           })}
