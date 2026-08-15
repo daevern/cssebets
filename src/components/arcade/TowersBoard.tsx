@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import {
@@ -8,24 +9,137 @@ import {
 } from "@/lib/arcade/mini-math";
 
 const T = ARCADE_THEMES.towers;
-const LOSS = "#ff4d5e";
 
-function DragonGlyph({ color }: { color: string }) {
+const SAFE = "#2ee83f";
+const SAFE_DEEP = "#17b527";
+const BUST = "#c0142c";
+const STONE = "#2a3a4a";
+const STONE_DEEP = "#22303e";
+
+/** Cream dragon egg with speckles — shown on tiles that hid a dragon. */
+function DragonEgg({ delay = 0 }: { delay?: number }) {
   return (
-    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden>
-      <path
-        d="M3 14c3-6 8-8 13-8l2-3 1 4 2 1-3 2c0 5-4 8-9 8H4l2-2-3-2Z"
-        fill={color}
-      />
-      <circle cx="15" cy="7.5" r="1" fill="#0f212e" />
+    <svg
+      viewBox="0 0 24 30"
+      className="h-[22px] w-[18px] motion-safe:[animation:towersEggPop_320ms_ease-out_both]"
+      style={{ animationDelay: `${delay}ms` }}
+      aria-hidden
+    >
+      <ellipse cx="12" cy="18" rx="11" ry="12" fill="#f3ece1" />
+      <path d="M12 6c5 3 8 7.5 8 12a8 8 0 0 1-1 4c1.5-8-2.5-13-7-16Z" fill="#d9d0c2" />
+      <path d="M12 6C7 9 4 13.5 4 18c0 1.4.3 2.7.8 3.9C3.4 14 7.5 9 12 6Z" fill="#ffffff" />
+      <g fill="#b9ae9c" opacity=".85">
+        <circle cx="9" cy="14" r="1.1" />
+        <circle cx="14.5" cy="17" r="1.4" />
+        <circle cx="10.5" cy="21" r="1.2" />
+        <circle cx="15" cy="23.5" r="0.9" />
+        <circle cx="7.5" cy="19" r="0.7" />
+      </g>
     </svg>
   );
 }
 
+/** Fire bomb / explosion that erupts on the tile you got wrong. */
+function FireBlast() {
+  return (
+    <span className="pointer-events-none absolute inset-0 grid place-items-center overflow-visible">
+      {/* shock ring */}
+      <span
+        className="absolute h-10 w-10 rounded-full motion-safe:[animation:towersBoom_420ms_ease-out_both]"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(255,236,150,.95) 0%, rgba(255,138,32,.75) 42%, rgba(214,20,44,0) 72%)",
+        }}
+      />
+      {/* embers */}
+      {[-14, -6, 4, 13].map((x, i) => (
+        <span
+          key={x}
+          className="absolute h-1 w-1 rounded-full motion-safe:[animation:towersEmberRise_720ms_ease-out_both]"
+          style={{
+            left: `calc(50% + ${x}px)`,
+            background: i % 2 ? "#ffd166" : "#ff7b29",
+            animationDelay: `${120 + i * 70}ms`,
+          }}
+        />
+      ))}
+      {/* flame + bomb */}
+      <svg
+        viewBox="0 0 24 24"
+        className="relative h-[22px] w-[22px] motion-safe:[animation:towersFlameFlicker_520ms_ease-in-out_infinite]"
+        aria-hidden
+      >
+        <path
+          d="M12 2c1.2 3.3-.6 4.6-1.9 6.2-1.4 1.7-2.6 3-2.6 5.4A6.5 6.5 0 0 0 18.5 14c0-3.4-2-5-3.2-6.7-.5 1-1.3 1.6-2 1.9.6-2.6.3-5.2-1.3-7.2Z"
+          fill="#ffb01f"
+        />
+        <path
+          d="M12 10c.9 1.6.2 2.4-.6 3.4-.7.9-1.1 1.6-1.1 2.6a2.9 2.9 0 0 0 5.7.3c0-1.9-1.4-3.6-4-6.3Z"
+          fill="#fff0b8"
+        />
+      </svg>
+    </span>
+  );
+}
+
+/** Stone battlement crown with the sleeping dragon perched on top. */
+function DragonCrown() {
+  return (
+    <div className="relative -mx-3 -mt-3 mb-2 h-[86px] overflow-hidden">
+      <svg viewBox="0 0 360 86" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMax slice" aria-hidden>
+        <defs>
+          <linearGradient id="twStone" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#7d8b9c" />
+            <stop offset="1" stopColor="#4c5b6d" />
+          </linearGradient>
+          <linearGradient id="twSky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#152232" />
+            <stop offset="1" stopColor="#0d1826" />
+          </linearGradient>
+        </defs>
+        <rect width="360" height="86" fill="url(#twSky)" />
+        <circle cx="300" cy="20" r="13" fill="#22344a" opacity=".8" />
+        {/* dragon silhouette wings */}
+        <g className="motion-safe:[animation:towersDragonBreathe_5s_ease-in-out_infinite]" style={{ transformOrigin: "180px 60px" }}>
+          <path
+            d="M180 12c-26 0-46 10-64 26 12-4 20-4 28 1-14 3-26 10-34 20h64Z"
+            fill="#55647a"
+            opacity=".85"
+          />
+          <path
+            d="M180 12c26 0 46 10 64 26-12-4-20-4-28 1 14 3 26 10 34 20h-64Z"
+            fill="#55647a"
+            opacity=".85"
+          />
+          {/* head */}
+          <path
+            d="M180 6c14 0 24 8 26 20 1 8-4 14-10 18-5 3-11 5-16 5s-11-2-16-5c-6-4-11-10-10-18 2-12 12-20 26-20Z"
+            fill="url(#twStone)"
+          />
+          <path d="M166 12l-8-8 3 12Zm28 0l8-8-3 12Z" fill="#8b99aa" />
+          <path d="M172 34c3 3 5 4 8 4s5-1 8-4c-2 5-5 7-8 7s-6-2-8-7Z" fill="#33404f" />
+          <g className="motion-safe:[animation:towersEyeGlow_2.4s_ease-in-out_infinite]">
+            <circle cx="172" cy="26" r="2.4" fill="#8fe3ff" />
+            <circle cx="188" cy="26" r="2.4" fill="#8fe3ff" />
+          </g>
+        </g>
+        {/* battlements */}
+        <g fill="url(#twStone)">
+          {Array.from({ length: 12 }, (_, i) => (
+            <rect key={i} x={4 + i * 30} y={56} width="22" height="14" rx="2" />
+          ))}
+          <rect x="0" y="68" width="360" height="18" rx="3" />
+        </g>
+        <rect x="0" y="68" width="360" height="4" fill="#93a1b2" opacity=".55" />
+      </svg>
+    </div>
+  );
+}
+
 /**
- * Dragon Towers playfield — eight rows climbed bottom-up. Presentation only:
- * the server owns the dragon layout and every multiplier shown here mirrors
- * the published maths.
+ * Dragon Towers playfield — eight rows climbed bottom-up inside a stone keep.
+ * Presentation only: the server owns the dragon layout and every multiplier
+ * shown here mirrors the published maths.
  */
 export function TowersBoard({
   difficulty,
@@ -60,39 +174,87 @@ export function TowersBoard({
   const shape = TOWERS_DIFFICULTIES[difficulty];
   const order = Array.from({ length: rows }, (_, i) => rows - 1 - i);
 
+  // Fire the shake/scorch flash once, the moment a dragon bites.
+  const [boom, setBoom] = useState(false);
+  const lastBust = useRef<number | null>(null);
+  useEffect(() => {
+    if (bustedRow != null && lastBust.current !== bustedRow) {
+      lastBust.current = bustedRow;
+      setBoom(true);
+      const t = setTimeout(() => setBoom(false), 700);
+      return () => clearTimeout(t);
+    }
+    if (bustedRow == null) lastBust.current = null;
+  }, [bustedRow]);
+
   return (
     <div
-      className="relative mx-auto w-full max-w-[420px] overflow-hidden rounded-[10px] px-3 pb-3 pt-3"
-      style={{ background: T.feltOrBoardFill }}
+      className={cn(
+        "relative mx-auto w-full max-w-[420px] overflow-hidden rounded-[14px] px-3 pb-3 pt-3",
+        boom && "motion-safe:[animation:towersShake_420ms_ease-in-out]",
+      )}
+      style={{
+        background: `linear-gradient(180deg, #16202c 0%, ${T.feltOrBoardFill} 40%)`,
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,.05)",
+      }}
     >
-      <div className="flex flex-col gap-1.5">
+      <DragonCrown />
+
+      {/* scorch flash over the whole keep */}
+      {boom && (
+        <span
+          className="pointer-events-none absolute inset-0 z-20 motion-safe:[animation:towersScorchFlash_620ms_ease-out_both]"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 60%, rgba(255,140,40,.55), rgba(192,20,44,.25) 45%, transparent 72%)",
+          }}
+        />
+      )}
+
+      <div
+        className="relative flex flex-col gap-[5px] rounded-[10px] p-[6px]"
+        style={{ background: "#16202c", boxShadow: "inset 0 0 0 2px rgba(255,255,255,.04)" }}
+      >
         {order.map((row) => {
           const done = row < currentRow;
           const live = active && row === currentRow;
           const rowMultiplier = towersMultiplierAt(difficulty, row + 1);
           const dragons = tower?.[row] ?? revealed[row] ?? null;
           const picked = picks[row];
+          const isBustRow = bustedRow === row;
 
           return (
             <div key={row} className="flex items-center gap-2">
               <span
-                className="w-12 shrink-0 text-right font-display text-[10px] font-black tabular-nums"
+                className="w-11 shrink-0 text-right font-display text-[10px] font-black tabular-nums"
                 style={{
-                  color: done ? T.accent : live ? "#ffffff" : "rgba(255,255,255,.32)",
+                  color: done ? SAFE : live ? "#ffffff" : "rgba(255,255,255,.3)",
                 }}
               >
                 {rowMultiplier.toFixed(2)}×
               </span>
               <div
-                className="grid flex-1 gap-1.5"
+                className={cn(
+                  "grid flex-1 gap-[5px]",
+                  live && "motion-safe:[animation:towersRowLight_1.6s_ease-in-out_infinite]",
+                )}
                 style={{ gridTemplateColumns: `repeat(${shape.tiles}, minmax(0,1fr))` }}
               >
                 {Array.from({ length: shape.tiles }, (_, tile) => {
                   const isDragon = dragons?.includes(tile) ?? false;
                   const isPick = picked === tile;
-                  const bust = bustedRow === row && isPick;
-                  const safePick = done && isPick;
+                  const bust = isBustRow && isPick;
+                  const safePick = done && isPick && !bust;
                   const clickable = Boolean(live) && !disabled;
+                  const showEgg = isDragon && !bust && (done || isBustRow || Boolean(tower));
+
+                  const base = live
+                    ? `linear-gradient(180deg, ${SAFE} 0%, ${SAFE_DEEP} 100%)`
+                    : safePick
+                      ? `linear-gradient(180deg, ${SAFE} 0%, ${SAFE_DEEP} 100%)`
+                      : bust
+                        ? `linear-gradient(180deg, #e5233c 0%, ${BUST} 100%)`
+                        : `linear-gradient(180deg, ${STONE} 0%, ${STONE_DEEP} 100%)`;
 
                   return (
                     <button
@@ -102,41 +264,31 @@ export function TowersBoard({
                       onClick={() => onPick(tile)}
                       aria-label={`Row ${row + 1}, tile ${tile + 1}`}
                       className={cn(
-                        "grid h-8 place-items-center rounded-[6px] border font-display text-[11px] font-black transition-transform",
-                        clickable && "active:scale-95",
-                        live && "motion-safe:animate-pulse",
-                        bust && "motion-safe:[animation:kenoHitPop_320ms_ease-out]",
+                        "relative grid h-9 place-items-center overflow-visible rounded-[5px] transition-transform duration-150",
+                        clickable && "hover:brightness-110 active:scale-95",
+                        (safePick || showEgg || bust) &&
+                          "motion-safe:[animation:towersTileReveal_280ms_ease-out_both]",
                       )}
                       style={{
-                        background: bust
-                          ? LOSS
-                          : safePick
-                            ? T.accent
-                            : isDragon
-                              ? "rgba(255,77,94,.16)"
-                              : live
-                                ? "#0f212e"
-                                : "#1b2f3c",
-                        borderColor: bust
-                          ? LOSS
-                          : safePick
-                            ? T.accent
-                            : live
-                              ? T.accent
-                              : isDragon
-                                ? "rgba(255,77,94,.35)"
-                                : "rgba(255,255,255,.06)",
-                        color: safePick ? "#03210a" : "#ffffff",
-                        opacity: done || live || dragons ? 1 : 0.55,
+                        background: base,
+                        boxShadow: live
+                          ? "inset 0 -3px 0 rgba(0,0,0,.28), 0 0 12px rgba(46,232,63,.28)"
+                          : bust
+                            ? "inset 0 -3px 0 rgba(0,0,0,.35), 0 0 18px rgba(224,35,60,.5)"
+                            : "inset 0 -3px 0 rgba(0,0,0,.32)",
+                        opacity: done || live || bust || showEgg ? 1 : 0.9,
                       }}
                     >
-                      {isDragon ? (
-                        <DragonGlyph color={bust ? "#3b0710" : LOSS} />
-                      ) : safePick ? (
-                        "✓"
-                      ) : (
-                        ""
-                      )}
+                      {/* dragon-scale texture */}
+                      <span
+                        className="pointer-events-none absolute inset-0 rounded-[5px] opacity-[.22]"
+                        style={{
+                          backgroundImage:
+                            "repeating-linear-gradient(45deg, rgba(255,255,255,.35) 0 1px, transparent 1px 7px), repeating-linear-gradient(-45deg, rgba(0,0,0,.3) 0 1px, transparent 1px 7px)",
+                        }}
+                      />
+                      {showEgg ? <DragonEgg delay={tile * 60} /> : null}
+                      {bust ? <FireBlast /> : null}
                     </button>
                   );
                 })}
