@@ -3,7 +3,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Layers, Sparkles } from "lucide-react";
+import { Loader2, Layers, RefreshCw, Sparkles } from "lucide-react";
+import { Dialog } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { StencilDialogContent } from "@/components/wallet/StencilDialog";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
 import { ArcadeGlow } from "@/components/arcade/ArcadeGlow";
 import { MiniCabinetTitle } from "@/components/arcade/MiniCabinetTitle";
@@ -101,6 +104,7 @@ function PokerPage() {
   const [round, setRound] = useState<any>(null);
   const [holds, setHolds] = useState<number[]>([]);
   const [resultOpen, setResultOpen] = useState(false);
+  const [expiredOpen, setExpiredOpen] = useState(false);
   const [revealed, setRevealed] = useState(true);
   const [verifyId, setVerifyId] = useState<string | null>(null);
   const { beat, run: runBeat } = useSettleBeat(380);
@@ -143,6 +147,7 @@ function PokerPage() {
     onSuccess: (res: any) => {
       setRound(res.round);
       setResultOpen(false);
+      setExpiredOpen(false);
       setRevealed(true);
       playFor("poker", "reveal-tick");
       qc.invalidateQueries({ queryKey: ["mini", "poker", "profile"] });
@@ -155,6 +160,18 @@ function PokerPage() {
     mutationFn: () => drawFn({ data: { roundId: round.id, holds } }),
     onSuccess: (res: any) => {
       const r = res.round;
+      if (r?.outcome === "VOID") {
+        qc.setQueryData(["mini", "poker", "active"], { round: null });
+        setRound(null);
+        setHolds([]);
+        setRevealed(true);
+        setResultOpen(false);
+        setExpiredOpen(true);
+        qc.invalidateQueries({ queryKey: ["mini", "poker", "active"] });
+        qc.invalidateQueries({ queryKey: ["mini", "poker", "profile"] });
+        qc.invalidateQueries({ queryKey: ["wallet"] });
+        return;
+      }
       setRevealed(false);
       setRound(r);
       // Let every replaced card slide out of the shoe and flip before we
@@ -167,7 +184,21 @@ function PokerPage() {
       qc.invalidateQueries({ queryKey: ["mini", "poker", "profile"] });
       qc.invalidateQueries({ queryKey: ["wallet"] });
     },
-    onError: (e: any) => toast.error(e?.message ?? "Could not draw."),
+    onError: (e: any) => {
+      const message = e?.message ?? "Could not draw.";
+      if (message.includes("expired")) {
+        qc.setQueryData(["mini", "poker", "active"], { round: null });
+        setRound(null);
+        setHolds([]);
+        setRevealed(true);
+        setExpiredOpen(true);
+        qc.invalidateQueries({ queryKey: ["mini", "poker", "active"] });
+        qc.invalidateQueries({ queryKey: ["mini", "poker", "profile"] });
+        qc.invalidateQueries({ queryKey: ["wallet"] });
+        return;
+      }
+      toast.error(message);
+    },
   });
 
   const busy = dealMut.isPending || drawMut.isPending;
@@ -262,6 +293,29 @@ function PokerPage() {
         onOpenChange={(v) => !v && setVerifyId(null)}
         round={round}
       />
+
+      <Dialog open={expiredOpen} onOpenChange={setExpiredOpen}>
+        <StencilDialogContent
+          kicker="Video Poker"
+          title="That hand expired"
+          description="Your stake has been returned. Start a fresh hand when you're ready."
+          footer={
+            <Button
+              type="button"
+              onClick={() => dealMut.mutate()}
+              disabled={dealMut.isPending || balance < stake}
+              className="h-11 rounded-full px-5 font-display text-[11px] font-bold uppercase tracking-[0.08em]"
+            >
+              {dealMut.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4" />
+              )}
+              Deal new round
+            </Button>
+          }
+        />
+      </Dialog>
 
       <ControlDock game="poker">
         <DockRow scroll>
