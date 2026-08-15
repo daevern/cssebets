@@ -164,6 +164,7 @@ export function PokerBoard({
                     ...(isDraw
                       ? {
                           animation: `pokerDrawFlip 420ms ${flipAt}ms cubic-bezier(.2,.7,.3,1) both, pokerNewPulse 900ms ${flipAt + 260}ms ease-out`,
+                          animationFillMode: "forwards, none",
                         }
                       : null),
                   }}
