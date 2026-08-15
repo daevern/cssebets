@@ -110,7 +110,8 @@ function TowersPage() {
   const [round, setRound] = useState<any>(null);
   const [resultOpen, setResultOpen] = useState(false);
   const [verifyId, setVerifyId] = useState<string | null>(null);
-  const { beat, run: runBeat } = useSettleBeat(380);
+  // Long enough for the fire blast / egg reveal to finish before the popup.
+  const { beat, run: runBeat } = useSettleBeat(900);
 
   useEffect(() => {
     setStake((s) => Math.min(Math.max(s, minStake), maxStake));
