@@ -151,7 +151,7 @@ export function PokerBoard({
                   borderRadius: 8,
                 }}
               >
-              >
+
                 <PlayingCard
                   key={`${i}-${card ?? "x"}-${roundKey ?? ""}`}
                   rank={face?.rank ?? null}
