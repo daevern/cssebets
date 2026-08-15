@@ -13,7 +13,7 @@ import { requireApprovedMember } from "@/lib/access-control";
  * payout or balance.
  */
 
-const miniProduct = z.enum(["hilo", "dice", "wheel", "keno", "crash"]);
+const miniProduct = z.enum(["hilo", "dice", "wheel", "keno", "crash", "towers", "poker"]);
 
 /** Stake bounds, chip denominations and published payout tables. */
 export const getMiniConfig = createServerFn({ method: "GET" })

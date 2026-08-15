@@ -8,6 +8,8 @@ const LABEL: Record<MiniProduct, string> = {
   wheel: "Fortune Wheel",
   keno: "Keno",
   crash: "Crash",
+  towers: "Dragon Towers",
+  poker: "Video Poker",
 };
 
 export function mapMiniError(product: MiniProduct, message: string): string {
@@ -28,6 +30,9 @@ export function mapMiniError(product: MiniProduct, message: string): string {
   if (m.includes("IMPOSSIBLE_GUESS")) return "That call cannot win — pick the other side.";
   if (m.includes("INVALID_TARGET")) return "Pick a target between 2 and 98.";
   if (m.includes("INVALID_PICKS")) return "Pick between 1 and 10 numbers.";
+  if (m.includes("INVALID_DIFFICULTY")) return "That tower difficulty is not available.";
+  if (m.includes("INVALID_TILE")) return "Pick a tile on the current row.";
+  if (m.includes("TOWER_COMPLETE")) return "The tower is already topped out.";
   if (m.includes("INVALID_AUTO_CASHOUT")) return "That auto cash-out is outside the table limits.";
   if (m.includes("ROUND_IN_PROGRESS")) return "You already have a run in flight.";
   if (m.includes("INVALID_DIRECTION") || m.includes("INVALID_GUESS") || m.includes("INVALID_RISK"))
