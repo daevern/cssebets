@@ -15,6 +15,8 @@ import tileDice from "@/assets/arcade/tile-dice.jpg";
 import tileWheel from "@/assets/arcade/tile-wheel.jpg";
 import tileKeno from "@/assets/arcade/tile-keno.jpg";
 import tileCrash from "@/assets/arcade/tile-crash.jpg";
+import tileTowers from "@/assets/arcade/tile-towers.jpg";
+import tilePoker from "@/assets/arcade/tile-poker.jpg";
 
 export const Route = createFileRoute("/_authenticated/arcade/")({
   head: () => ({
@@ -114,6 +116,20 @@ const GAMES: {
     label: "Crash",
     blurb: "Ride the curve · bank before it busts",
     tile: tileCrash,
+  },
+  {
+    key: "towers",
+    to: "/arcade/towers",
+    label: "Dragon Towers",
+    blurb: "Climb the rows · dodge the dragons",
+    tile: tileTowers,
+  },
+  {
+    key: "poker",
+    to: "/arcade/poker",
+    label: "Video Poker",
+    blurb: "Hold what helps · draw the rest",
+    tile: tilePoker,
   },
 
 ];
