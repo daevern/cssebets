@@ -11,6 +11,19 @@ import {
 
 const T = ARCADE_THEMES.poker;
 
+/** Compact paytable labels so nine rows fit a phone without truncating. */
+const SHORT: Record<string, string> = {
+  royal_flush: "Royal",
+  straight_flush: "Str flush",
+  four: "Quads",
+  full_house: "Full house",
+  flush: "Flush",
+  straight: "Straight",
+  three: "Trips",
+  two_pair: "Two pair",
+  jacks_or_better: "Jacks+",
+};
+
 /**
  * Video Poker felt — five cards with hold toggles and the live paytable.
  * Display only: the server deals, draws and classifies every hand.
@@ -54,7 +67,7 @@ export function PokerBoard({
               style={{ background: hit ? "rgba(0,231,1,.14)" : "transparent" }}
             >
               <span className="truncate text-[9px] font-bold uppercase tracking-[0.06em] text-white/45">
-                {POKER_CATEGORY_LABELS[c]}
+                {SHORT[c] ?? POKER_CATEGORY_LABELS[c]}
               </span>
               <span
                 className="font-display text-[11px] font-black tabular-nums"
