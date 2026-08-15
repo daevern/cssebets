@@ -56,7 +56,9 @@ export function PokerBoard({
   /** False while the draw flip is still playing — hides the outcome. */
   revealed?: boolean;
 }) {
-  const paying = category && POKER_PAYTABLE[category] > 0 ? category : null;
+  const paying =
+    revealed && category && POKER_PAYTABLE[category] > 0 ? category : null;
+
   const isFinal = stage === "final" && revealed;
 
 
