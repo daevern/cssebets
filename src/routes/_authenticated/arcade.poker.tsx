@@ -59,8 +59,8 @@ export const Route = createFileRoute("/_authenticated/arcade/poker")({
 
 const fmt = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 const newKey = () => `poker_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
-/** Slide (480ms) + stagger (4x110ms) + flip settle for the last card. */
-const POKER_REVEAL_MS = 1150;
+/** Stagger (4x130ms) + slide (560ms) + flip (420ms) for the last drawn card. */
+const POKER_REVEAL_MS = 1750;
 const newSeed = () => Math.random().toString(36).slice(2, 16);
 
 function PokerPage() {
