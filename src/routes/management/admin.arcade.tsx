@@ -12,7 +12,11 @@ import {
   arcadeAdminPublishConfig,
   arcadeAdminRounds,
   arcadeAdminSnapshot,
+  miniAdminOverview,
+  miniAdminPublishConfig,
+  MINI_PRODUCTS,
   type ArcadeGame,
+  type MiniAdminProduct,
 } from "@/lib/arcade/arcade-admin.functions";
 
 export const Route = createFileRoute("/management/admin/arcade")({
@@ -522,5 +526,211 @@ function ConfigEditor({
         </Button>
       </div>
     </Section>
+  );
+}
+
+const MINI_LABELS: Record<MiniAdminProduct, string> = {
+  hilo: "Hi-Lo",
+  dice: "Dice",
+  wheel: "Fortune Wheel",
+  keno: "Keno",
+  crash: "Crash",
+  towers: "Dragon Towers",
+  poker: "Video Poker",
+};
+
+const MINI_FIELDS: { key: string; label: string }[] = [
+  { key: "min_stake", label: "Min stake" },
+  { key: "max_stake", label: "Max stake" },
+  { key: "max_multiplier", label: "Max multiplier" },
+  { key: "daily_round_limit", label: "Daily rounds" },
+  { key: "cooldown_seconds", label: "Cooldown (s)" },
+  { key: "round_ttl_seconds", label: "Round TTL (s)" },
+];
+
+/** CSSE Originals mini engine — Hi-Lo, Dice, Wheel, Keno, Crash, Towers, Poker. */
+function MiniEngineSection({ windowHours, enabled }: { windowHours: number; enabled: boolean }) {
+  const qc = useQueryClient();
+  const overviewFn = useServerFn(miniAdminOverview);
+  const publishFn = useServerFn(miniAdminPublishConfig);
+  const [product, setProduct] = useState<MiniAdminProduct>("towers");
+
+  const q = useQuery({
+    queryKey: ["arcade-admin", "mini", windowHours],
+    queryFn: () => overviewFn({ data: { windowHours } }),
+    enabled,
+    refetchInterval: 8000,
+  });
+
+  const configs = (q.data?.configs ?? []) as any[];
+  const cfg = configs.find((c) => c.product === product) ?? null;
+  const recent = (q.data?.recent ?? []).filter((r) => r.product === product);
+
+  const setMaintenance = useMutation({
+    mutationFn: async (on: boolean) => {
+      await publishFn({
+        data: {
+          product,
+          patch: { maintenance_mode: on },
+          reason: on ? "Admin paused the table" : "Admin resumed the table",
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Published");
+      qc.invalidateQueries({ queryKey: ["arcade-admin", "mini"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Publish failed"),
+  });
+
+  return (
+    <>
+      <Section title={`CSSE Originals — last ${q.data?.windowHours ?? windowHours}h`}>
+        <div className="overflow-x-auto border border-[var(--color-surface-border)]">
+          <table className="w-full min-w-[720px] text-xs">
+            <thead className="bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]">
+              <tr className="text-left">
+                <th className="px-2 py-2">Game</th>
+                <th className="px-2 py-2">Live players</th>
+                <th className="px-2 py-2">Open rounds</th>
+                <th className="px-2 py-2">Stake at risk</th>
+                <th className="px-2 py-2">Rounds</th>
+                <th className="px-2 py-2">Players</th>
+                <th className="px-2 py-2">Staked</th>
+                <th className="px-2 py-2">Paid</th>
+                <th className="px-2 py-2">House net</th>
+                <th className="px-2 py-2">Margin</th>
+                <th className="px-2 py-2">State</th>
+              </tr>
+            </thead>
+            <tbody className="font-mono tabular-nums">
+              {(q.data?.stats ?? []).map((s) => {
+                const c = configs.find((x) => x.product === s.product);
+                return (
+                  <tr key={s.product} className="border-t border-[var(--color-surface-border)]">
+                    <td className="px-2 py-2 font-sans font-semibold text-[var(--color-ink)]">
+                      {MINI_LABELS[s.product]}
+                    </td>
+                    <td className="px-2 py-2">{fmt(s.livePlayers)}</td>
+                    <td className="px-2 py-2">{fmt(s.liveRounds)}</td>
+                    <td className="px-2 py-2">{fmt(s.liveStake, 2)}</td>
+                    <td className="px-2 py-2">{fmt(s.rounds)}</td>
+                    <td className="px-2 py-2">{fmt(s.players)}</td>
+                    <td className="px-2 py-2">{fmt(s.staked, 2)}</td>
+                    <td className="px-2 py-2">{fmt(s.paid, 2)}</td>
+                    <td className={`px-2 py-2 ${s.houseNet >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                      {fmt(s.houseNet, 2)}
+                    </td>
+                    <td className="px-2 py-2">
+                      {s.margin === null ? "—" : `${(s.margin * 100).toFixed(2)}%`}
+                    </td>
+                    <td className="px-2 py-2 font-sans">
+                      {c?.maintenance_mode ? (
+                        <span className="text-amber-400">Paused</span>
+                      ) : (
+                        <span className="text-emerald-400">Live · v{c?.version ?? "—"}</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Section>
+
+      <Section title="Originals risk controls">
+        <div className="flex flex-wrap gap-1">
+          {MINI_PRODUCTS.map((p) => (
+            <Button
+              key={p}
+              size="sm"
+              variant={product === p ? "default" : "ghost"}
+              onClick={() => setProduct(p)}
+            >
+              {MINI_LABELS[p]}
+            </Button>
+          ))}
+        </div>
+
+        {!cfg ? (
+          <p className="text-[11px] text-[var(--color-ink-muted)]">No active config published.</p>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-ink-muted)]">
+              <span>
+                Active v{cfg.version} · target RTP {(Number(cfg.target_rtp) * 100).toFixed(2)}%
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={setMaintenance.isPending}
+                onClick={() => setMaintenance.mutate(!cfg.maintenance_mode)}
+              >
+                {cfg.maintenance_mode ? "Resume table" : "Pause table"}
+              </Button>
+            </div>
+
+            <ConfigEditor
+              title={`${MINI_LABELS[product]} limits`}
+              note="Publishing retires the current version and activates a new one. Every change is audited."
+              fields={MINI_FIELDS.map((f) => ({
+                key: f.key,
+                label: f.label,
+                value: cfg[f.key] === null || cfg[f.key] === undefined ? null : Number(cfg[f.key]),
+              }))}
+              onSubmit={async (patch, reason) => {
+                await publishFn({ data: { product, patch, reason } });
+                toast.success("Published");
+                qc.invalidateQueries({ queryKey: ["arcade-admin", "mini"] });
+              }}
+            />
+          </>
+        )}
+      </Section>
+
+      <Section title={`${MINI_LABELS[product]} — recent rounds`}>
+        <div className="overflow-x-auto border border-[var(--color-surface-border)]">
+          <table className="w-full min-w-[560px] text-xs">
+            <thead className="bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]">
+              <tr className="text-left">
+                <th className="px-2 py-2">When</th>
+                <th className="px-2 py-2">Player</th>
+                <th className="px-2 py-2">Stake</th>
+                <th className="px-2 py-2">Payout</th>
+                <th className="px-2 py-2">Net</th>
+                <th className="px-2 py-2">Multiplier</th>
+                <th className="px-2 py-2">Result</th>
+              </tr>
+            </thead>
+            <tbody className="font-mono tabular-nums">
+              {recent.length === 0 ? (
+                <tr>
+                  <td className="px-2 py-3 font-sans text-[var(--color-ink-muted)]" colSpan={7}>
+                    No rounds yet.
+                  </td>
+                </tr>
+              ) : (
+                recent.map((r) => (
+                  <tr key={r.id} className="border-t border-[var(--color-surface-border)]">
+                    <td className="px-2 py-1.5">{new Date(r.createdAt).toLocaleTimeString()}</td>
+                    <td className="px-2 py-1.5 font-sans">{r.username ?? r.userId.slice(0, 8)}</td>
+                    <td className="px-2 py-1.5">{fmt(r.stake, 2)}</td>
+                    <td className="px-2 py-1.5">{fmt(r.payout, 2)}</td>
+                    <td
+                      className={`px-2 py-1.5 ${r.payout - r.stake >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                    >
+                      {fmt(r.payout - r.stake, 2)}
+                    </td>
+                    <td className="px-2 py-1.5">{fmt(r.multiplier, 2)}×</td>
+                    <td className="px-2 py-1.5 font-sans">{r.result ?? "—"}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Section>
+    </>
   );
 }
