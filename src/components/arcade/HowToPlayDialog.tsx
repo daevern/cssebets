@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BlackjackArt, PlinkoArt, RouletteArt, RpsArt, TreasureArt } from "./GameArt";
-import { CrashArt, DiceArt, HiloArt, KenoArt, WheelArt } from "./MiniGameArt";
+import { CrashArt, DiceArt, HiloArt, KenoArt, PokerArt, TowersArt, WheelArt } from "./MiniGameArt";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import type { ArcadeGameKey } from "@/lib/arcade/sound";
 
@@ -23,6 +23,8 @@ const GAME_ART: Record<ArcadeGameKey, () => ReactNode> = {
   wheel: WheelArt,
   keno: KenoArt,
   crash: CrashArt,
+  towers: TowersArt,
+  poker: PokerArt,
 };
 
 export type HowToPlayContent = {
@@ -34,6 +36,37 @@ export type HowToPlayContent = {
 };
 
 export const HOW_TO_PLAY: Record<ArcadeGameKey, HowToPlayContent> = {
+  towers: {
+    title: "How to play Dragon Towers",
+    tagline: "Climb eight rows — one tile per row hides a dragon.",
+    steps: [
+      "Pick a difficulty. Easy hides one dragon behind four tiles; Nightmare hides three behind four.",
+      "Set your stake and press Climb. The stake leaves your wallet and the bottom row lights up.",
+      "Choose one tile on the live row. A safe tile lifts your multiplier and unlocks the row above.",
+      "Press Bank at any time to collect stake x multiplier. Touch a dragon and the climb ends.",
+    ],
+    winning: [
+      "Each safe row multiplies your total by 0.96 x tiles / safe tiles, so harder towers climb faster.",
+      "Clearing all eight rows tops the tower out and banks automatically.",
+      "The whole dragon layout is fixed by a seed committed before your first pick and revealed when the round ends.",
+    ],
+    cashout: "Banking settles instantly. A dragon ends the round with no return, and the full tower is revealed so you can verify it.",
+  },
+  poker: {
+    title: "How to play Video Poker",
+    tagline: "Jacks or Better — hold what helps, draw the rest.",
+    steps: [
+      "Set your stake and press Deal. Five cards come off a shuffled 52-card deck.",
+      "Tap any cards you want to keep — held cards lift and light up.",
+      "Press Draw. Every card you did not hold is replaced from the same deck and the hand is scored.",
+    ],
+    winning: [
+      "A pair of jacks or better pays 1x; the ladder runs up through two pair, trips, straight, flush, full house, quads and straight flush.",
+      "A royal flush pays the top 250x.",
+      "The whole deck order is fixed by a seed committed before the deal, so your holds cannot change what comes next.",
+    ],
+    cashout: "Hands settle the moment you draw — the return lands in your points wallet immediately.",
+  },
   keno: {
     title: "How to play Keno",
     tagline: "Mark up to ten numbers on a forty-ball board — the house draws ten.",
