@@ -134,7 +134,7 @@ export function PokerBoard({
           const face = card == null ? null : pokerCardFace(card);
           const held = holds.includes(i);
           const canHold = stage === "deal" && !disabled && card != null;
-          const replaced = isFinal && card != null && !held;
+          
           return (
             <div key={i} className="flex flex-1 flex-col items-center gap-1.5">
               <button
