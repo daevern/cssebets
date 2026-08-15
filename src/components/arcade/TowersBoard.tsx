@@ -16,12 +16,12 @@ const BUST = "#c0142c";
 const STONE = "#2a3a4a";
 const STONE_DEEP = "#22303e";
 
-/** Cream dragon egg with speckles — shown on tiles that hid a dragon. */
+/** Cream dragon egg with speckles — revealed on a tile you cleared safely. */
 function DragonEgg({ delay = 0 }: { delay?: number }) {
   return (
     <svg
       viewBox="0 0 24 30"
-      className="h-[22px] w-[18px] motion-safe:[animation:towersEggPop_320ms_ease-out_both]"
+      className="h-[26px] w-[21px] motion-safe:[animation:towersEggPop_320ms_ease-out_both]"
       style={{ animationDelay: `${delay}ms` }}
       aria-hidden
     >
@@ -38,6 +38,21 @@ function DragonEgg({ delay = 0 }: { delay?: number }) {
     </svg>
   );
 }
+
+/** Dim dragon skull marker — where a dragon was hiding (shown once settled). */
+function DragonMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[20px] w-[20px] opacity-70" aria-hidden>
+      <path
+        d="M12 3c4.4 0 7.5 2.9 7.5 6.7 0 2.6-1.4 4.3-3 5.4l.4 3-2.6-1.3-2.3.9-2.3-.9L7.1 18l.4-3c-1.6-1.1-3-2.8-3-5.4C4.5 5.9 7.6 3 12 3Z"
+        fill="#7d2230"
+      />
+      <circle cx="9.4" cy="10" r="1.6" fill="#ff6b3d" />
+      <circle cx="14.6" cy="10" r="1.6" fill="#ff6b3d" />
+    </svg>
+  );
+}
+
 
 /** Fire bomb / explosion that erupts on the tile you got wrong. */
 function FireBlast() {
