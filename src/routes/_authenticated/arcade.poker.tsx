@@ -122,7 +122,13 @@ function PokerPage() {
       ? "deal"
       : "final";
   const hand: number[] = ((state.final_hand ?? state.hand ?? []) as any[]).map((c) => Number(c));
+  const dealtHand: number[] = ((state.dealt ?? state.hand ?? []) as any[]).map((c) => Number(c));
   const category = (state.category ?? null) as PokerCategory | null;
+  /** After settlement the server's hold list is the source of truth. */
+  const shownHolds: number[] =
+    stage === "final" && Array.isArray(state.holds)
+      ? (state.holds as any[]).map((h) => Number(h))
+      : holds;
 
   const dealMut = useMutation({
     mutationFn: () =>
@@ -196,7 +202,8 @@ function PokerPage() {
             />
             <PokerBoard
               hand={hand}
-              holds={holds}
+              dealt={dealtHand}
+              holds={shownHolds}
               stage={stage}
               category={category}
               stake={stake}
