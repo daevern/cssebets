@@ -70,9 +70,11 @@ verification.
 
 Money movement runs on a double-entry accounting ledger with liability
 reservations, a 2-decimal half-up rounding policy and automated invariant
-tests (§7.6). **Status today (since Phase B, 2026-08-06): arcade (Plinko,
-Roulette, Treasure Grid, Blackjack) and sports (football, F1, UFC) are
-all LIVE on the unified journal**, with capacity enforced from
+tests (§7.6). **Status today (since Phase B, 2026-08-06): the full arcade
+lobby (12 CSSE Originals including Plinko, Roulette, Treasure Grid,
+Blackjack, Dice, Keno, Wheel, Hi-Lo, Crash, Towers, Poker, RPS) and sports
+(football, F1, UFC) are all LIVE on the unified journal**, with capacity
+enforced from
 `accounting_available_reserve()` for every product. `platform_bankroll`
 is retained as a LEGACY display/reconciliation cache only — it is written
 for historical continuity but no placement or settlement decision reads
@@ -179,7 +181,8 @@ PWA install prompts are suppressed.
 | `/dashboard` | Home: next fixture, next race (F1) and next fight (UFC) cards, engagement tiles, wallet snapshot, referral panel. |
 | `/f1`, `/f1/races`, `/f1/races/:raceId` | F1 season hub, race index and race markets/analytics. |
 | `/ufc`, `/ufc/fights`, `/ufc/:fightId` | UFC event hub, full card index and fight markets. |
-| `/arcade` + `/arcade/{plinko,roulette,treasure,blackjack}` | House-banked arcade games. |
+| `/arcade` + `/arcade/{plinko,roulette,treasure,blackjack,dice,keno,wheel,hilo,crash,towers,poker,rps}` | House-banked arcade (12 CSSE Originals). |
+| `/leagues`, `/leagues/:leagueId` | Private leagues: standings (multi-sport), activity, invite codes, chat. |
 | `/matches` | List of upcoming/live fixtures grouped by day. |
 | `/matches/:matchId` | Full market grid (`MarketTabs.tsx`), analytics card, free-bet redemption, prediction placement. |
 | `/my-predictions` | Every ticket the user has placed with status (pending / won / lost / void) and payout. |
@@ -282,10 +285,10 @@ The CSSEBets house does **not** copy bookmaker odds. Steps
 Margin is **not** a code constant — the canonical value is
 `platform_settings.margin_pct` (currently **25**), and
 `apply_margin_to_real` gates whether it is applied to the real world at
-all. **Status: `apply_margin_to_real` is currently `false`**, i.e. real
-markets are priced at raw fair probabilities with zero house edge; the
-25 % figure only takes effect when the flag is switched back on. Always
-read the live row (§7.1) before quoting a margin anywhere.
+all. **Status: Phase B defaults `apply_margin_to_real = true` on fresh
+DBs** (migration `20260817210000_phase_b_risk_hardening`); confirm the
+live row on `/management/admin/risk-settings` after deploy and refresh
+odds. Always read the live row (§7.1) before quoting a margin anywhere.
 
 Same algorithm applies to N-way outrights (`applyOutrightMargin`).
 
@@ -322,21 +325,27 @@ Sourced from **API-MMA** via `src/lib/apimma.server.ts` and
 - `runUfcEventDiscovery` + `runUfcOddsSync` keep the active event and its
   **full card** (main + co-main + prelims) current; fights upsert on
   `ufc_fights.apimma_fight_id`.
-- Markets: fight winner, method of victory, round groups, total rounds.
+- Markets: **Fight Winner (moneyline) is the only public market.** Method /
+  round / total-rounds rows may exist for admin grading but are
+  `is_active=false` for members — the MMA fights feed does not return
+  finish method or round, so those props are not sold publicly.
 - Pages: `/ufc`, `/ufc/fights` (Live / Upcoming / Completed),
   `/ufc/:fightId`.
 
 ### 4.7 Arcade (`src/lib/arcade/`, `src/components/arcade/`)
 
 House-banked instant games, all provably fair (server-side seeded
-shuffle/RNG with a verify dialog per game):
+shuffle/RNG with a verify dialog per game). Lobby lists **twelve** CSSE
+Originals:
 
 | Game | Server fns | Notes |
 |---|---|---|
 | Plinko | `plinko.functions.ts` | Cosmetics + configurable risk rows |
 | Roulette | `roulette.functions.ts`, `roulette-math.ts` | European wheel |
 | Treasure Grid | `treasure.functions.ts`, `treasure-math.ts` | Mines-style grid |
-| Blackjack | `blackjack.functions.ts`, `blackjack-math.ts` | Insurance, splits, pre-deal exposure ceiling (Phase 7) |
+| Blackjack | `blackjack.functions.ts`, `blackjack-math.ts` | Insurance, splits, pre-deal exposure ceiling |
+| Dice / Keno / Wheel / Hi-Lo | `mini.functions.ts`, `mini-math.ts` | Mini tables sharing the mini engine |
+| Crash / Towers / Poker / RPS | dedicated modules under `src/lib/arcade/` | Flagship craft tables |
 
 Every round debits/credits the real wallet atomically and posts to the
 accounting journals with a liability reservation held for the maximum
@@ -538,7 +547,7 @@ a snapshot taken 2026-07-31 — re-read the row rather than trusting it.
 | Field | Code fallback | Live (2026-07-31) | Purpose |
 |---|---|---|---|
 | `margin_pct` | 25 | 25 | House overround target |
-| `apply_margin_to_real` | true | **false** | False = raw fair odds, zero house edge |
+| `apply_margin_to_real` | true | **true** (Phase B default) | Fresh DBs set true via `20260817210000_phase_b_risk_hardening`; confirm on live `/management/admin/risk-settings` after deploy |
 | `exposure_cap_pct` | 0.6 | 0.6 | `worst_case_liability ≤ bankroll × this` |
 | `max_stake_per_bet` | 5000 | **50000** | Hard cap per ticket (0 = off) |
 | `max_potential_payout` | 50000 | **100000** | Hard cap on stake × odds |

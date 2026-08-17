@@ -6,6 +6,7 @@ import {
   getWalletBalance,
   latestSportsBet,
   seedFootball1x2,
+  seedFootballBtts,
 } from "./helpers/supabaseAdmin";
 import { postFootballSettle } from "./helpers/settleHook";
 
@@ -79,6 +80,61 @@ test.describe("football settle E2E", () => {
       await expect(page.getByText(/betting is closed|markets closed|finished/i).first()).toBeVisible({
         timeout: 20_000,
       }).catch(() => undefined);
+    } finally {
+      await cleanupFootballSeed(seed.eventId, seed.marketId).catch(() => undefined);
+    }
+  });
+
+  test("btts yes → finish 2-1 → settle → won", async ({ page }) => {
+    test.setTimeout(120_000);
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      test.skip(true, "SUPABASE_SERVICE_ROLE_KEY required to seed sports events");
+    }
+
+    const seed = await seedFootballBtts();
+    try {
+      await loginAsGuest(page);
+      await page.goto(`/football/matches/${seed.eventId}`);
+      await expect(page.getByText(/E2E BTTS Home/i).first()).toBeVisible({
+        timeout: 30_000,
+      });
+
+      await page
+        .getByRole("button", { name: /Yes/i })
+        .filter({ hasText: /1\.9/ })
+        .first()
+        .click();
+
+      const lock = page.getByRole("button", { name: /lock prediction/i });
+      await expect(lock).toBeEnabled({ timeout: 15_000 });
+      await lock.click();
+      await expect(page.getByText(/bet placed/i)).toBeVisible({ timeout: 20_000 });
+
+      await expect
+        .poll(async () => latestSportsBet(seed.eventId), { timeout: 20_000 })
+        .not.toBeNull();
+
+      const bet = await latestSportsBet(seed.eventId);
+      expect(String(bet!.selection_key).toLowerCase()).toBe("yes");
+      const userId = bet!.user_id as string;
+      const stake = Number(bet!.stake ?? 10);
+      const afterPlace = await getWalletBalance(userId);
+
+      await finishFootballEvent(seed.eventId, 2, 1);
+      const settle = await postFootballSettle();
+      expect(settle.ok).toBe(true);
+
+      await expect
+        .poll(async () => (await latestSportsBet(seed.eventId))?.status, {
+          timeout: 30_000,
+        })
+        .toBe("won");
+
+      const finalBet = await latestSportsBet(seed.eventId);
+      const expectedPayout =
+        Math.round(stake * Number(finalBet!.accepted_odds ?? seed.yesOdds) * 100) / 100;
+      expect(Number(finalBet!.actual_payout ?? 0)).toBeCloseTo(expectedPayout, 1);
+      expect(await getWalletBalance(userId)).toBeCloseTo(afterPlace + expectedPayout, 1);
     } finally {
       await cleanupFootballSeed(seed.eventId, seed.marketId).catch(() => undefined);
     }

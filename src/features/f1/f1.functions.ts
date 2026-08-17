@@ -316,12 +316,23 @@ export const adminSettleF1Race = createServerFn({ method: "POST" })
 export const adminSettleF1Championship = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) =>
-    z.object({ season: z.number().int(), force: z.boolean().optional() }).parse(i),
+    z
+      .object({
+        season: z.number().int(),
+        force: z.boolean().optional(),
+        driverWinnerKey: z.string().min(1).max(80).optional(),
+        constructorWinnerKey: z.string().min(1).max(80).optional(),
+      })
+      .parse(i),
   )
   .handler(async ({ data, context }) => {
     await requireAdmin(context.supabase, context.userId);
     const { settleF1ChampionshipSeason } = await import("./services/f1Settlement.server");
-    return await settleF1ChampionshipSeason(data.season, { force: data.force === true });
+    return await settleF1ChampionshipSeason(data.season, {
+      force: data.force === true,
+      driverWinnerKey: data.driverWinnerKey,
+      constructorWinnerKey: data.constructorWinnerKey,
+    });
   });
 
 export const adminF1SyncRuns = createServerFn({ method: "GET" })

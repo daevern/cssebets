@@ -184,14 +184,38 @@ runner.
 - [x] F1 championship settle path + season place UI
 - [x] Money mutators gated with `requireApprovedMember` (edit/cancel,
       free-bets, top-up, payout)
+- [x] Ephemeral migration dry-run + `phase_b_ops_selftest()` in CI
+      (`.github/workflows/e2e.yml` seeds vault `cron_hook_secret` and asserts
+      margin / capacity / inactive UFC props)
+- [x] Cron jobs rescheduled via `reschedule_cron_hooks_with_vault()`
+      (`20260817220000_phase_b_cron_vault_and_ops_selftest.sql`) — includes
+      football-settle, f1-settle, health-check
+- [x] Club football BTTS settle E2E + WC `matches`/`predictions` settle E2E
+- [x] F1 championship offline settle E2E
+- [x] Arcade settle E2E expanded (dice, keno, plinko, wheel)
+- [x] Leagues / referrals / top-up UI E2E smoke
+- [x] League sport filters + member chat
 
 ### Still required once against real production
 
+1. Set Lovable/Cloudflare env **`CRON_HOOK_SECRET`** to a long random value.
+2. In the live SQL editor (service role):
+   ```sql
+   select vault.create_secret('<same value>', 'cron_hook_secret', 'Cron hook auth');
+   -- optional: select vault.create_secret('https://your-host', 'app_base_url', 'Public app URL');
+   select public.reschedule_cron_hooks_with_vault();
+   select * from public.phase_b_ops_selftest();
+   ```
+3. Spot-check unauthenticated `POST /api/public/hooks/health-check` → 401
+   and authed → 200; confirm `/management/admin/health` ages move.
+4. Confirm risk UI: `apply_margin_to_real` on, arcade
+   `capacity_enforced` / `arcade_config_selftest()` green, reconciliation OK.
+
+Historical checklist items retained below:
+
 - [ ] `CRON_HOOK_SECRET` set in production env (not the CI placeholder)
-- [ ] All pg_cron `net.http_post` jobs send `x-cron-secret` (or Bearer)
-      matching that production secret — prefer Vault secret `cron_hook_secret`
-      (see `supabase/migrations/20260817210100_cron_vault_header_docs.sql`;
-      never commit the live value)
+- [ ] Run `reschedule_cron_hooks_with_vault()` after creating Vault
+      `cron_hook_secret` (+ optional `app_base_url`)
 - [ ] Spot-check unauthenticated `health-check` → 401 and authenticated →
       200 on the live host
 - [ ] `/management/admin/health` shows recent ages when crons are live

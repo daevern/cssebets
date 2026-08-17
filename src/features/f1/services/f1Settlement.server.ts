@@ -213,12 +213,13 @@ function keyifyName(s: string) {
  */
 export async function settleF1ChampionshipSeason(
   season: number,
-  opts: { force?: boolean } = {},
+  opts: {
+    force?: boolean;
+    /** Offline / E2E standings — skips live API when both provided. */
+    driverWinnerKey?: string | null;
+    constructorWinnerKey?: string | null;
+  } = {},
 ) {
-  const { fetchF1DriverStandings, fetchF1TeamStandings } = await import(
-    "../adapters/apiF1Adapter.server"
-  );
-
   const { count: remaining } = await (supabaseAdmin as any)
     .from("f1_races")
     .select("id", { count: "exact", head: true })
@@ -229,10 +230,19 @@ export async function settleF1ChampionshipSeason(
     return { ok: false as const, error: "season_not_complete", remaining: remaining ?? 0 };
   }
 
-  const drivers = await fetchF1DriverStandings(season);
-  const teams = await fetchF1TeamStandings(season);
-  const driverWinner = drivers[0]?.driver?.name ? keyifyName(drivers[0].driver.name) : null;
-  const teamWinner = teams[0]?.team?.name ? keyifyName(teams[0].team.name) : null;
+  let driverWinner = opts.driverWinnerKey ? keyifyName(opts.driverWinnerKey) : null;
+  let teamWinner = opts.constructorWinnerKey ? keyifyName(opts.constructorWinnerKey) : null;
+
+  if (!driverWinner || !teamWinner) {
+    const { fetchF1DriverStandings, fetchF1TeamStandings } = await import(
+      "../adapters/apiF1Adapter.server"
+    );
+    const drivers = await fetchF1DriverStandings(season);
+    const teams = await fetchF1TeamStandings(season);
+    driverWinner = driverWinner ?? (drivers[0]?.driver?.name ? keyifyName(drivers[0].driver.name) : null);
+    teamWinner = teamWinner ?? (teams[0]?.team?.name ? keyifyName(teams[0].team.name) : null);
+  }
+
   if (!driverWinner && !teamWinner) {
     return { ok: false as const, error: "no_standings" };
   }

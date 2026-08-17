@@ -1,10 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PublicShell } from "@/routes/about";
 import { BrandText } from "@/components/brand/CsseMark";
 import {
   CommunityGrowthSection,
   RecentPlatformActivity,
 } from "@/components/landing/TrustSections";
+import { getPublicPlatformPulse } from "@/lib/trust-public.functions";
 
 export const Route = createFileRoute("/community")({
   head: () => ({
@@ -29,16 +32,38 @@ export const Route = createFileRoute("/community")({
 });
 
 function CommunityPage() {
+  const pulseFn = useServerFn(getPublicPlatformPulse);
+  const pulse = useQuery({
+    queryKey: ["public", "platform-pulse"],
+    queryFn: () => pulseFn({}),
+    staleTime: 60_000,
+  });
+  const members = pulse.data?.registered_members;
+  const bets = pulse.data?.bets_placed;
+
   return (
     <PublicShell title="Community" kicker="Play with friends">
       <p>
         <BrandText /> is a closed community points club. Guests can try the demo wallet;
         real points unlock after staff approve your account.
       </p>
+      {(members != null || bets != null) && (
+        <p className="not-prose text-sm text-[var(--color-ink-muted)]">
+          Live pulse:{" "}
+          <span className="font-semibold text-[var(--color-ink)]">
+            {members != null ? `${Number(members).toLocaleString()} members` : "—"}
+          </span>
+          {" · "}
+          <span className="font-semibold text-[var(--color-ink)]">
+            {bets != null ? `${Number(bets).toLocaleString()} bets placed` : "—"}
+          </span>
+        </p>
+      )}
       <h3>Leagues</h3>
       <p>
         Create a private league and share an invite code, or join a friend&apos;s club.
-        Standings rank members by settled World Cup prediction points.
+        Standings rank members across World Cup predictions plus football, F1, and UFC
+        net P/L — filter by sport on the league page.
       </p>
       <p className="not-prose">
         <Link

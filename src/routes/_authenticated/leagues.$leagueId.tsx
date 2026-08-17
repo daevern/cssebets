@@ -1,32 +1,71 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Copy, Link2 } from "lucide-react";
-import { getLeagueActivity, getLeagueStandings } from "@/lib/leagues.functions";
+import { Copy, Link2, Send } from "lucide-react";
+import {
+  getLeagueActivity,
+  getLeagueStandings,
+  listLeagueMessages,
+  postLeagueMessage,
+} from "@/lib/leagues.functions";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_authenticated/leagues/$leagueId")({
   head: () => ({ meta: [{ title: "League — CSSEBets" }] }),
   component: LeagueDetailPage,
 });
 
+type SportFilter = "all" | "wc" | "football" | "f1" | "ufc";
+
+const SPORT_CHIPS: { key: SportFilter; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "wc", label: "WC" },
+  { key: "football", label: "Football" },
+  { key: "f1", label: "F1" },
+  { key: "ufc", label: "UFC" },
+];
+
 function LeagueDetailPage() {
   const { leagueId } = Route.useParams();
+  const qc = useQueryClient();
+  const [sport, setSport] = useState<SportFilter>("all");
+  const [draft, setDraft] = useState("");
+
   const standingsFn = useServerFn(getLeagueStandings);
   const activityFn = useServerFn(getLeagueActivity);
+  const listMsgFn = useServerFn(listLeagueMessages);
+  const postMsgFn = useServerFn(postLeagueMessage);
+
   const q = useQuery({
-    queryKey: ["league", leagueId],
-    queryFn: () => standingsFn({ data: { leagueId } }),
+    queryKey: ["league", leagueId, sport],
+    queryFn: () => standingsFn({ data: { leagueId, sport } }),
   });
   const activityQ = useQuery({
     queryKey: ["league-activity", leagueId],
     queryFn: () => activityFn({ data: { leagueId } }),
   });
+  const messagesQ = useQuery({
+    queryKey: ["league-messages", leagueId],
+    queryFn: () => listMsgFn({ data: { leagueId } }),
+    refetchInterval: 15_000,
+  });
+
+  const postMut = useMutation({
+    mutationFn: () => postMsgFn({ data: { leagueId, body: draft } }),
+    onSuccess: () => {
+      setDraft("");
+      qc.invalidateQueries({ queryKey: ["league-messages", leagueId] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not send message"),
+  });
 
   const league = q.data?.league;
   const standings = q.data?.standings ?? [];
   const activity = activityQ.data?.activity ?? [];
+  const messages = messagesQ.data?.messages ?? [];
 
   const inviteLink =
     typeof window !== "undefined" && league?.invite_code
@@ -84,6 +123,23 @@ function LeagueDetailPage() {
       <p className="text-sm text-[var(--color-ink-muted)]">
         Multi-sport standings: World Cup predictions plus net P/L from settled football, F1, and UFC tickets.
       </p>
+
+      <div className="flex flex-wrap gap-1.5">
+        {SPORT_CHIPS.map((chip) => (
+          <button
+            key={chip.key}
+            type="button"
+            onClick={() => setSport(chip.key)}
+            className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] transition-colors ${
+              sport === chip.key
+                ? "border-[var(--color-neon)]/50 bg-[var(--color-neon)]/15 text-[var(--color-neon)]"
+                : "border-[var(--color-line)] text-[var(--color-ink-muted)] hover:border-[var(--color-neon)]/30"
+            }`}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
 
       <div className="overflow-hidden rounded-xl border border-[var(--color-line)]">
         <table className="w-full text-left text-sm">
@@ -177,6 +233,47 @@ function LeagueDetailPage() {
             <p className="text-sm text-[var(--color-ink-muted)]">No settled tickets yet.</p>
           )}
         </ul>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+          League chat
+        </h2>
+        <div className="rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)]/40">
+          <ul className="max-h-64 space-y-2 overflow-y-auto px-3 py-3">
+            {messages.map((m) => (
+              <li key={m.id} className="text-sm">
+                <span className="font-medium text-[var(--color-ink)]">
+                  {m.isYou ? "You" : m.displayName}
+                </span>
+                <span className="mx-1.5 text-[var(--color-ink-muted)]">·</span>
+                <span className="text-[var(--color-ink-muted)]">{m.body}</span>
+              </li>
+            ))}
+            {!messagesQ.isLoading && !messages.length && (
+              <p className="text-sm text-[var(--color-ink-muted)]">No messages yet — say hello.</p>
+            )}
+          </ul>
+          <form
+            className="flex gap-2 border-t border-[var(--color-line)] p-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (draft.trim().length < 1 || postMut.isPending) return;
+              postMut.mutate();
+            }}
+          >
+            <Input
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="Message the league"
+              maxLength={500}
+              className="flex-1"
+            />
+            <Button type="submit" disabled={draft.trim().length < 1 || postMut.isPending} size="icon">
+              <Send className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
       </section>
     </div>
   );

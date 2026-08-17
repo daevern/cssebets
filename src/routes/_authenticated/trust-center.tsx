@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { IconShield, IconTimeline } from "@/components/trust/TrustIcons";
 import { BrandText } from "@/components/brand/CsseMark";
+import { ActivityFeed } from "@/components/trust/ActivityFeed";
 import {
   getPlatformPulse,
   getPayoutPerformance,
@@ -139,6 +140,8 @@ function TrustCenter() {
       wide
     >
       <LiveStrip />
+
+      <ActivityFeed />
 
       <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
         This page is maintained by the <BrandText /> team to answer common questions about

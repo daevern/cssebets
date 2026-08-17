@@ -7,7 +7,7 @@ on:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
 
@@ -31,6 +31,32 @@ jobs:
       # hosted project. Destroyed with the runner at the end of the job.
       - name: Start local Supabase
         run: supabase start --exclude edge-runtime,vector,imgproxy,logflare,studio
+
+      - name: Verify migrations applied (ops selftest)
+        run: |
+          set -euo pipefail
+          DB_URL=$(supabase status -o json | jq -r '.DB_URL // .db_url // empty')
+          if [ -z "$DB_URL" ]; then
+            echo "::error::No DB_URL from supabase status"
+            exit 1
+          fi
+          # Seed vault cron secret when Vault is available (matches CRON_HOOK_SECRET).
+          psql "$DB_URL" -v ON_ERROR_STOP=0 <<'SQL' || true
+          DO $$
+          BEGIN
+            PERFORM vault.create_secret('e2e-cron-secret-for-ci', 'cron_hook_secret', 'CI cron hook secret');
+          EXCEPTION WHEN OTHERS THEN
+            RAISE NOTICE 'vault seed skipped: %', SQLERRM;
+          END $$;
+          SELECT public.reschedule_cron_hooks_with_vault();
+          SQL
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -c "SELECT check_name, passed, detail FROM public.phase_b_ops_selftest();"
+          FAILS=$(psql "$DB_URL" -Atc "SELECT count(*) FROM public.phase_b_ops_selftest() WHERE NOT passed")
+          if [ "$FAILS" != "0" ]; then
+            echo "::error::phase_b_ops_selftest failed ($FAILS checks)"
+            exit 1
+          fi
+          echo "phase_b_ops_selftest: all passed"
 
       - name: Export local Supabase connection details
         run: |

@@ -13,7 +13,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
-import { WalletCreditCard } from "@/components/wallet/WalletCard";
+import { WalletCreditCard, WalletActions } from "@/components/wallet/WalletCard";
 
 
 export const Route = createFileRoute("/_authenticated/wallet")({
@@ -126,6 +126,10 @@ function WalletPage() {
           balance={wallet.data?.balance ?? 0}
           reference={myProfile.data?.reference ?? wallet.data?.publicReference ?? null}
         />
+      </div>
+
+      <div className="mx-auto w-full max-w-sm">
+        <WalletActions />
       </div>
 
 

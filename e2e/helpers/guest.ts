@@ -43,3 +43,28 @@ export async function waitForBalanceChange(
     .not.toBe(previous);
   return readBalance(page);
 }
+
+/** Read the Supabase auth user id from the browser session (localStorage). */
+export async function getSessionUserId(page: Page): Promise<string> {
+  const userId = await page.evaluate(() => {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.includes("auth-token")) continue;
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      try {
+        const parsed = JSON.parse(raw) as {
+          user?: { id?: string };
+          currentSession?: { user?: { id?: string } };
+        };
+        const id = parsed?.user?.id ?? parsed?.currentSession?.user?.id;
+        if (id) return id;
+      } catch {
+        /* ignore */
+      }
+    }
+    return null;
+  });
+  if (!userId) throw new Error("Could not read Supabase session user id from localStorage");
+  return userId;
+}

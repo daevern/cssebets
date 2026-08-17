@@ -101,10 +101,18 @@ function netPl(won: boolean, payout: number, stake: number) {
 
 export const getLeagueStandings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: unknown) => z.object({ leagueId: z.string().uuid() }).parse(i))
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        leagueId: z.string().uuid(),
+        sport: z.enum(["all", "wc", "football", "f1", "ufc"]).optional().default("all"),
+      })
+      .parse(i),
+  )
   .handler(async ({ data, context }) => {
     await requireApprovedMember(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const sport = data.sport ?? "all";
 
     const { data: mine } = await (supabaseAdmin as any)
       .from("league_members")
@@ -131,6 +139,7 @@ export const getLeagueStandings = createServerFn({ method: "GET" })
     if (userIds.length === 0) {
       return {
         league: league as { id: string; name: string; invite_code: string; created_at: string },
+        sport,
         standings: [],
       };
     }
@@ -140,27 +149,40 @@ export const getLeagueStandings = createServerFn({ method: "GET" })
       .select("id, display_name")
       .in("id", userIds);
 
+    const includeWc = sport === "all" || sport === "wc";
+    const includeFootball = sport === "all" || sport === "football";
+    const includeF1 = sport === "all" || sport === "f1";
+    const includeUfc = sport === "all" || sport === "ufc";
+
     const [predsRes, sportsRes, f1Res, ufcRes] = await Promise.all([
-      (supabaseAdmin as any)
-        .from("predictions")
-        .select("user_id, points, status")
-        .in("user_id", userIds)
-        .eq("is_simulation", false),
-      (supabaseAdmin as any)
-        .from("sports_bets")
-        .select("user_id, stake, actual_payout, status")
-        .in("user_id", userIds)
-        .in("status", ["won", "lost"]),
-      (supabaseAdmin as any)
-        .from("f1_bets")
-        .select("user_id, stake, potential_payout, status")
-        .in("user_id", userIds)
-        .in("status", ["won", "lost"]),
-      (supabaseAdmin as any)
-        .from("ufc_bets")
-        .select("user_id, stake, potential_payout, payout, status")
-        .in("user_id", userIds)
-        .in("status", ["won", "lost"]),
+      includeWc
+        ? (supabaseAdmin as any)
+            .from("predictions")
+            .select("user_id, points, status")
+            .in("user_id", userIds)
+            .eq("is_simulation", false)
+        : Promise.resolve({ data: [] }),
+      includeFootball
+        ? (supabaseAdmin as any)
+            .from("sports_bets")
+            .select("user_id, stake, actual_payout, status")
+            .in("user_id", userIds)
+            .in("status", ["won", "lost"])
+        : Promise.resolve({ data: [] }),
+      includeF1
+        ? (supabaseAdmin as any)
+            .from("f1_bets")
+            .select("user_id, stake, potential_payout, status")
+            .in("user_id", userIds)
+            .in("status", ["won", "lost"])
+        : Promise.resolve({ data: [] }),
+      includeUfc
+        ? (supabaseAdmin as any)
+            .from("ufc_bets")
+            .select("user_id, stake, potential_payout, payout, status")
+            .in("user_id", userIds)
+            .in("status", ["won", "lost"])
+        : Promise.resolve({ data: [] }),
     ]);
 
     const points = new Map<string, { points: number; bets: number; wins: number }>();
@@ -217,6 +239,7 @@ export const getLeagueStandings = createServerFn({ method: "GET" })
 
     return {
       league: league as { id: string; name: string; invite_code: string; created_at: string },
+      sport,
       standings,
     };
   });
@@ -338,4 +361,90 @@ export const getLeagueActivity = createServerFn({ method: "GET" })
 
     activity.sort((a, b) => new Date(b.settledAt).getTime() - new Date(a.settledAt).getTime());
     return { activity: activity.slice(0, 20) };
+  });
+
+async function assertLeagueMember(supabaseAdmin: any, leagueId: string, userId: string) {
+  const { data: mine } = await supabaseAdmin
+    .from("league_members")
+    .select("league_id")
+    .eq("league_id", leagueId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!mine) throw new Error("You are not in that league.");
+}
+
+export const listLeagueMessages = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ leagueId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await requireApprovedMember(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertLeagueMember(supabaseAdmin, data.leagueId, context.userId);
+
+    const { data: rows, error } = await (supabaseAdmin as any)
+      .from("league_messages")
+      .select("id, league_id, user_id, body, created_at")
+      .eq("league_id", data.leagueId)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    if (error) throw new Error(error.message);
+
+    const userIds = [...new Set((rows ?? []).map((r: any) => r.user_id as string))];
+    const { data: profiles } = userIds.length
+      ? await (supabaseAdmin as any)
+          .from("profiles")
+          .select("id, display_name")
+          .in("id", userIds)
+      : { data: [] };
+    const nameById = new Map<string, string>(
+      (profiles ?? []).map((p: any) => [p.id as string, (p.display_name as string) ?? "Member"]),
+    );
+
+    const messages = [...(rows ?? [])]
+      .reverse()
+      .map((r: any) => ({
+        id: r.id as string,
+        userId: r.user_id as string,
+        displayName: nameById.get(r.user_id as string) ?? "Member",
+        body: r.body as string,
+        createdAt: r.created_at as string,
+        isYou: r.user_id === context.userId,
+      }));
+
+    return { messages };
+  });
+
+export const postLeagueMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        leagueId: z.string().uuid(),
+        body: z.string().trim().min(1).max(500),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    await requireApprovedMember(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await assertLeagueMember(supabaseAdmin, data.leagueId, context.userId);
+
+    const { data: row, error } = await (supabaseAdmin as any)
+      .from("league_messages")
+      .insert({
+        league_id: data.leagueId,
+        user_id: context.userId,
+        body: data.body,
+      })
+      .select("id, league_id, user_id, body, created_at")
+      .single();
+    if (error) throw new Error(error.message);
+    return {
+      message: {
+        id: row.id as string,
+        userId: row.user_id as string,
+        body: row.body as string,
+        createdAt: row.created_at as string,
+      },
+    };
   });

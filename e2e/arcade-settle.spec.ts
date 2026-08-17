@@ -57,4 +57,37 @@ test.describe("arcade settle E2E", () => {
     const after = await waitForBalanceChange(page, before);
     expect(after).not.toBe(before);
   });
+
+  test("plinko drop settles and updates wallet balance", async ({ page }) => {
+    await page.goto("/arcade/plinko");
+    await expect(page.getByTestId("hud-balance")).toBeVisible({ timeout: 30_000 });
+
+    const before = await readBalance(page);
+    const drop = page.getByRole("button", { name: /bet ·|bet/i });
+    await expect(drop).toBeEnabled({ timeout: 20_000 });
+    await drop.click();
+
+    // Plinko settles in-place (no result dialog) once the ball lands.
+    const after = await waitForBalanceChange(page, before, { timeout: 60_000 });
+    expect(after).not.toBe(before);
+  });
+
+  test("wheel spin settles and updates wallet balance", async ({ page }) => {
+    await page.goto("/arcade/wheel");
+    await expect(page.getByTestId("hud-balance")).toBeVisible({ timeout: 30_000 });
+
+    const before = await readBalance(page);
+    const spin = page.getByRole("button", { name: /spin/i });
+    await expect(spin).toBeEnabled({ timeout: 20_000 });
+    await spin.click();
+
+    await expect(page.getByTestId("arcade-result-dialog")).toBeVisible({ timeout: 60_000 });
+    await expect(
+      page.getByRole("heading", { name: /landed it|cold segment/i }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: /continue/i }).click();
+
+    const after = await waitForBalanceChange(page, before);
+    expect(after).not.toBe(before);
+  });
 });
