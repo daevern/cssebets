@@ -50,7 +50,7 @@ export async function suspendStaleFootballMarkets(): Promise<SuspensionResult> {
   const now = Date.now();
   for (const m of (openMarkets ?? []) as any[]) {
     const ts = new Date(m.last_odds_update_at).getTime();
-    const maxAgeMs = Number(m.stale_after_seconds ?? 600) * 1000;
+    const maxAgeMs = Number(m.stale_after_seconds ?? 10800) * 1000;
     if (Number.isFinite(ts) && now - ts > maxAgeMs) staleIds.push(m.id);
   }
 
