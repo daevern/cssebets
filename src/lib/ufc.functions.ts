@@ -278,9 +278,21 @@ export const adminSyncUfc = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await requireAdmin(context.supabase, context.userId);
-    const { runUfcOddsSync } = await import("@/lib/ufc-odds.server");
-    return await runUfcOddsSync({ force: true });
+    const { runUfcEventDiscovery, runUfcOddsSync } = await import("@/lib/ufc-odds.server");
+    const discovery = await runUfcEventDiscovery({ force: true });
+    const odds = await runUfcOddsSync({ force: true, maxEvents: 5 });
+    return { ...odds, discovery };
   });
+
+/** Admin diagnostics: is the feed plan blocking future dates? when did jobs last run? */
+export const adminUfcFeedDiagnostics = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { getUfcFeedDiagnostics } = await import("@/lib/ufc-odds.server");
+    return await getUfcFeedDiagnostics();
+  });
+
 
 export const adminSetUfcCard = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
