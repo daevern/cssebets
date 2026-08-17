@@ -131,11 +131,14 @@ export const getFootballMatch = createServerFn({ method: "GET" })
       },
     };
 
-    // Compute derived "freshness" status client-side so the UI can show
-    // "Market Suspended" even if the periodic sweep hasn't flipped the
-    // status column yet. Everything computed here is a hint — the server
-    // still enforces on bet placement.
+    // Mirror the freshness sweep: stale odds only suspend live events or
+    // fixtures within 12 hours of kickoff. Distant fixtures rotate through a
+    // slower odds sync and must not appear paused between refreshes.
     const nowMs = Date.now();
+    const kickoffMs = new Date((ev as any).scheduled_at).getTime();
+    const freshnessApplies =
+      (ev as any).status === "live" ||
+      (Number.isFinite(kickoffMs) && kickoffMs <= nowMs + 12 * 60 * 60 * 1000);
     const normalizedMarkets: (FootballMarket & {
       lastOddsUpdateAt: string | null;
       isStale: boolean;
@@ -144,7 +147,10 @@ export const getFootballMatch = createServerFn({ method: "GET" })
       const lastMs = m.last_odds_update_at ? new Date(m.last_odds_update_at).getTime() : null;
       const maxAgeMs = Number(m.stale_after_seconds ?? 10800) * 1000;
       const isStale =
-        m.status === "open" && lastMs != null && nowMs - lastMs > maxAgeMs;
+        freshnessApplies &&
+        m.status === "open" &&
+        lastMs != null &&
+        nowMs - lastMs > maxAgeMs;
       return {
         id: m.id,
         key: m.market_key,
@@ -345,7 +351,7 @@ export const placeFootballBet = createServerFn({ method: "POST" })
     // here so the UI gets a clean freshness error instead of a generic one.
     const { data: mkt } = await (supabaseAdmin as any)
       .from("sports_markets")
-      .select("status, last_odds_update_at, stale_after_seconds, suspension_reason")
+      .select("status, last_odds_update_at, stale_after_seconds, suspension_reason, sports_events (scheduled_at, status)")
       .eq("id", data.marketId)
       .maybeSingle();
     if (!mkt) throw new Error("This market is no longer available.");
@@ -356,7 +362,12 @@ export const placeFootballBet = createServerFn({ method: "POST" })
           : "This market is not accepting bets right now.",
       );
     }
-    if (mkt.last_odds_update_at) {
+    const event = Array.isArray(mkt.sports_events) ? mkt.sports_events[0] : mkt.sports_events;
+    const kickoffMs = event?.scheduled_at ? new Date(event.scheduled_at).getTime() : Number.NaN;
+    const freshnessApplies =
+      event?.status === "live" ||
+      (Number.isFinite(kickoffMs) && kickoffMs <= Date.now() + 12 * 60 * 60 * 1000);
+    if (freshnessApplies && mkt.last_odds_update_at) {
       const age = Date.now() - new Date(mkt.last_odds_update_at).getTime();
       const maxAge = Number(mkt.stale_after_seconds ?? 10800) * 1000;
       if (age > maxAge) {
