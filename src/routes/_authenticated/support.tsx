@@ -215,6 +215,7 @@ function SupportPage() {
               variant="ghost"
               size="icon"
               type="button"
+              aria-label="Attach file"
               onClick={() => fileRef.current?.click()}
               disabled={sending}
               title="Attach file"
@@ -224,6 +225,8 @@ function SupportPage() {
             </Button>
             <input
               ref={fileRef}
+              id="support-attachment"
+              aria-label="Attach a file to your support message"
               type="file"
               className="hidden"
               accept="image/*,application/pdf"

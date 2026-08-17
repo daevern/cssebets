@@ -50,6 +50,7 @@ export const Route = createFileRoute("/register")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://cssebets.com/register" }],
   }),
   component: RegisterPage,
 });

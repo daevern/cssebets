@@ -12,6 +12,7 @@ export const Route = createFileRoute("/about")({
       { name: "twitter:image", content: "https://cssebets.com/og-image.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://cssebets.com/about" }],
   }),
   component: AboutPage,
 });
