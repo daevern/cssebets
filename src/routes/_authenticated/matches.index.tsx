@@ -10,7 +10,24 @@ import { PageFooter } from "@/components/ui/page-footer";
 import { useEffect, useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/matches/")({
-  head: () => ({ meta: [{ title: "Markets — CSSEBets" }] }),
+  head: () => ({
+    meta: [
+      { title: "Markets — CSSEBets" },
+      {
+        name: "description",
+        content:
+          "Browse live, upcoming and completed football markets on CSSEBets — real-time odds on every fixture, goal and key moment.",
+      },
+      { property: "og:title", content: "Live football markets — CSSEBets" },
+      {
+        property: "og:description",
+        content:
+          "Browse live, upcoming and completed football markets on CSSEBets — real-time odds on every fixture, goal and key moment.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: MatchesPage,
 });
 

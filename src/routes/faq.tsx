@@ -14,6 +14,7 @@ export const Route = createFileRoute("/faq")({
       { name: "twitter:image", content: "https://cssebets.com/og-image.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
+    links: [{ rel: "canonical", href: "https://cssebets.com/faq" }],
   }),
   component: HelpPage,
 });
