@@ -128,8 +128,34 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "manifest", href: "/manifest.webmanifest" },
     ],
-
-
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "Organization",
+              "@id": "https://cssebets.com/#organization",
+              name: "CSSEBets",
+              url: "https://cssebets.com/",
+              description:
+                "Prediction markets on football, F1 and UFC, plus provably fair arcade games.",
+              logo: "https://cssebets.com/og-image.jpg",
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://cssebets.com/#website",
+              name: "CSSEBets",
+              url: "https://cssebets.com/",
+              description:
+                "Trade live prediction markets on football, F1 and UFC, or play provably fair arcade games. One wallet, real-time odds, and community-driven pricing.",
+              publisher: { "@id": "https://cssebets.com/#organization" },
+            },
+          ],
+        }),
+      },
+    ],
   }),
   shellComponent: RootShell,
   component: RootComponent,
