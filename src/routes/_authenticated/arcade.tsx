@@ -19,6 +19,9 @@ export const Route = createFileRoute("/_authenticated/arcade")({
         content:
           "CSSE Originals — five flat, provably fair tables. Server decides every payout.",
       },
+          { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
+      { name: "twitter:image", content: "https://cssebets.com/og-image.jpg" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ArcadeLayout,

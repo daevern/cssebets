@@ -17,6 +17,9 @@ export const Route = createFileRoute("/brand")({
         content:
           "CSSEBets brand identity: logo system, color palette, typography, and usage guidelines.",
       },
+          { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
+      { name: "twitter:image", content: "https://cssebets.com/og-image.jpg" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: BrandPage,
