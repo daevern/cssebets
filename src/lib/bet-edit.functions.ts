@@ -28,8 +28,8 @@ export const editPendingBetStake = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => EditSchema.parse(input))
   .handler(async ({ data, context }) => {
     await requireApprovedMember(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: result, error } = await (supabaseAdmin as any).rpc("edit_pending_bet_stake", {
+    const { rpcEditPendingBetStake } = await import("@/lib/supabase-rpc.server");
+    const { data: result, error } = await rpcEditPendingBetStake({
       p_user_id: context.userId,
       p_prediction_id: data.predictionId,
       p_new_stake: data.newStake,
@@ -43,8 +43,8 @@ export const cancelPendingBet = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => CancelSchema.parse(input))
   .handler(async ({ data, context }) => {
     await requireApprovedMember(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: result, error } = await (supabaseAdmin as any).rpc("cancel_pending_bet", {
+    const { rpcCancelPendingBet } = await import("@/lib/supabase-rpc.server");
+    const { data: result, error } = await rpcCancelPendingBet({
       p_user_id: context.userId,
       p_prediction_id: data.predictionId,
     });

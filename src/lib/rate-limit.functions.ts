@@ -62,8 +62,8 @@ export async function enforceRateLimit(scope: string, action: RateLimitAction) {
   let data: unknown = null;
   let error: { message: string } | null = null;
   try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const result = await (supabaseAdmin as any).rpc("check_rate_limit", {
+    const { rpcCheckRateLimit } = await import("@/lib/supabase-rpc.server");
+    const result = await rpcCheckRateLimit({
       p_scope: scope,
       p_action: action,
       p_max: cfg.max,

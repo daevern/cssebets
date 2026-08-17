@@ -17,12 +17,12 @@ export const getMySavedBankAccounts = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const { data, error } = await supabase
-      .from("saved_bank_accounts" as any)
+      .from("saved_bank_accounts")
       .select("id, bank_name, account_number, account_holder_name, created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    const accounts = (data ?? []).map((r: any) => {
+    const accounts = (data ?? []).map((r) => {
       const num = String(r.account_number ?? "");
       const last4 = num.slice(-4);
       return {
@@ -48,7 +48,7 @@ export const addSavedBankAccount = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: row, error } = await supabase
-      .from("saved_bank_accounts" as any)
+      .from("saved_bank_accounts")
       .insert({
         user_id: userId,
         bank_name: data.bankName,
@@ -58,12 +58,12 @@ export const addSavedBankAccount = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) {
-      if ((error as any).code === "23505") {
+      if (error.code === "23505") {
         throw new Error("You've already saved that bank account.");
       }
       throw new Error(error.message);
     }
-    return { id: (row as any).id as string };
+    return { id: row.id as string };
   });
 
 export const deleteSavedBankAccount = createServerFn({ method: "POST" })
@@ -72,7 +72,7 @@ export const deleteSavedBankAccount = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { error } = await supabase
-      .from("saved_bank_accounts" as any)
+      .from("saved_bank_accounts")
       .delete()
       .eq("id", data.id)
       .eq("user_id", userId);

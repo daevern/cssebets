@@ -1,7 +1,12 @@
 import { createStart, createMiddleware } from "@tanstack/react-start";
+import {
+  sentryGlobalFunctionMiddleware,
+  sentryGlobalRequestMiddleware,
+} from "@sentry/tanstackstart-react";
 
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+import { captureServerException } from "@/lib/sentry.report.server";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -11,6 +16,7 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
       throw error;
     }
     console.error(error);
+    captureServerException(error, { area: "request_middleware" });
     return new Response(renderErrorPage(), {
       status: 500,
       headers: { "content-type": "text/html; charset=utf-8" },
@@ -19,6 +25,7 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 });
 
 export const startInstance = createStart(() => ({
-  functionMiddleware: [attachSupabaseAuth],
-  requestMiddleware: [errorMiddleware],
+  // Sentry first so request/server-fn failures are attributed before auth.
+  functionMiddleware: [sentryGlobalFunctionMiddleware, attachSupabaseAuth],
+  requestMiddleware: [sentryGlobalRequestMiddleware, errorMiddleware],
 }));

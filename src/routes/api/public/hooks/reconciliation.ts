@@ -12,19 +12,24 @@ export const Route = createFileRoute("/api/public/hooks/reconciliation")({
         const denied = requireCronAuth(request);
         if (denied) return denied;
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: report, error } = await supabaseAdmin.rpc("run_reconciliation_check" as any);
+        const { captureServerException } = await import("@/lib/sentry.report.server");
+        const { data: report, error } = await supabaseAdmin.rpc("run_reconciliation_check");
         if (error) {
+          captureServerException(error, { area: "reconciliation_hook" });
           return new Response(JSON.stringify({ ok: false, error: error.message }), {
             status: 500,
             headers: { "content-type": "application/json" },
           });
         }
-        const r: any = report;
+        const r = report as {
+          overall_status?: string;
+          drift_check_count?: number;
+        } | null;
         if (r?.overall_status === "DRIFT") {
           await supabaseAdmin.from("audit_log").insert({
             action: "reconciliation.drift_detected",
             entity: "system",
-            metadata: r,
+            metadata: report,
             reason: `Drift in ${r.drift_check_count} check(s)`,
           });
         }
@@ -33,20 +38,31 @@ export const Route = createFileRoute("/api/public/hooks/reconciliation")({
         // both worlds and raises an operational alert on any drift.
         const sportsReconciliation: Record<string, unknown> = {};
         for (const env of ["PRODUCTION", "SIMULATION"] as const) {
-          const { data: rec, error: recErr } = await (supabaseAdmin as any).rpc(
+          const { data: rec, error: recErr } = await supabaseAdmin.rpc(
             "sports_journal_reconciliation",
             { p_env: env },
           );
           sportsReconciliation[env] = recErr ? { error: recErr.message } : rec;
-          const drift = recErr || !(rec as any)?.ok;
+          const recOk =
+            !!rec &&
+            typeof rec === "object" &&
+            !Array.isArray(rec) &&
+            (rec as { ok?: boolean }).ok === true;
+          const drift = Boolean(recErr) || !recOk;
           if (drift) {
-            await (supabaseAdmin as any).from("operational_alerts").insert({
+            captureServerException(recErr ?? new Error(`sports_journal_reconciliation drift ${env}`), {
+              area: "reconciliation_hook",
+              tags: { environment: env },
+            });
+            await supabaseAdmin.from("operational_alerts").insert({
               level: "critical",
               category: "accounting",
               title: "Sports journal reconciliation drift",
               message: `Sports accounting reconciliation failed for ${env}`,
               status: "open",
-              metadata: recErr ? { error: recErr.message, environment: env } : rec,
+              metadata: recErr
+                ? { error: recErr.message, environment: env }
+                : (rec as import("@/integrations/supabase/types").Json),
             });
           }
         }

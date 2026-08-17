@@ -8,6 +8,10 @@
 //
 // Every admin surface should read through this helper.
 
+import type { AppSupabase } from "@/lib/supabase-rpc.server";
+import { rpcAccountingBankrollReconciliation } from "@/lib/supabase-rpc.server";
+import type { Json } from "@/integrations/supabase/types";
+
 export type AuthoritativeBankroll = {
   /** Journal HOUSE_BANKROLL balance — canonical. */
   balance: number;
@@ -39,25 +43,35 @@ const EMPTY: AuthoritativeBankroll = {
   ok: false,
 };
 
+function asRecord(value: Json | null | undefined): Record<string, Json | undefined> {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, Json | undefined>;
+  }
+  return {};
+}
+
+function num(value: Json | undefined, fallback = 0): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : Number(value ?? fallback) || fallback;
+}
+
 export async function readAuthoritativeBankroll(
-  supabaseAdmin: any,
+  _supabaseAdmin?: AppSupabase,
   environment: "PRODUCTION" | "SIMULATION" | "TEST" = "PRODUCTION",
 ): Promise<AuthoritativeBankroll> {
-  const { data, error } = await supabaseAdmin.rpc("accounting_bankroll_reconciliation", {
-    p_environment: environment,
-  });
+  const { data, error } = await rpcAccountingBankrollReconciliation(environment, _supabaseAdmin);
   if (error || !data) return EMPTY;
-  const auth = (data as any).authoritative ?? {};
-  const legacy = (data as any).legacy ?? {};
+  const root = asRecord(data);
+  const auth = asRecord(root.authoritative ?? null);
+  const legacy = asRecord(root.legacy ?? null);
   return {
-    balance: Number(auth.house_bankroll ?? 0),
-    payable: Number(auth.payouts_payable ?? 0),
-    reservedLiability: Number(auth.active_reserved_liability ?? 0),
-    availableReserve: Number(auth.available_reserve ?? 0),
-    legacyBalance: Number(legacy.balance ?? 0),
-    legacyUpdatedAt: legacy.updated_at ?? null,
-    delta: Number((data as any).delta_journal_minus_legacy ?? 0),
-    generatedAt: (data as any).generated_at ?? null,
+    balance: num(auth.house_bankroll),
+    payable: num(auth.payouts_payable),
+    reservedLiability: num(auth.active_reserved_liability),
+    availableReserve: num(auth.available_reserve),
+    legacyBalance: num(legacy.balance),
+    legacyUpdatedAt: typeof legacy.updated_at === "string" ? legacy.updated_at : null,
+    delta: num(root.delta_journal_minus_legacy),
+    generatedAt: typeof root.generated_at === "string" ? root.generated_at : null,
     ok: true,
   };
 }

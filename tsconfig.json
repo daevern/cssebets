@@ -13,13 +13,15 @@
     "verbatimModuleSyntax": false,
     "noEmit": true,
 
-    /* Linting */
+    /* Linting — keep money paths honest without noUncheckedIndexedAccess (too noisy repo-wide) */
     "skipLibCheck": true,
     "strict": true,
+    "noImplicitOverride": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
+    "noPropertyAccessFromIndexSignature": false,
     "paths": {
       "@/*": ["./src/*"]
     }

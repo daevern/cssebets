@@ -18,6 +18,8 @@ export const Route = createFileRoute("/api/public/hooks/football-settle")({
             headers: { "content-type": "application/json" },
           });
         } catch (error) {
+          const { captureServerException } = await import("@/lib/sentry.report.server");
+          captureServerException(error, { area: "football_settle_hook" });
           const message = error instanceof Error ? error.message : String(error);
           return new Response(JSON.stringify({ ok: false, error: message }), {
             status: 500,

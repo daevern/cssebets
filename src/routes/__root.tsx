@@ -12,6 +12,8 @@ import { CsseLogoLoader } from "@/components/brand/CsseLogoAnimated";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import * as Sentry from "@sentry/tanstackstart-react";
+import { sentryEnabled } from "@/lib/sentry.config";
 import { supabase } from "@/integrations/supabase/client";
 import { captureReferralFromUrl } from "@/lib/referral-code";
 import { Toaster } from "sonner";
@@ -46,6 +48,11 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    if (sentryEnabled()) {
+      Sentry.captureException(error, {
+        tags: { boundary: "tanstack_root_error_component" },
+      });
+    }
   }, [error]);
 
   return (

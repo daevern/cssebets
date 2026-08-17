@@ -60,6 +60,23 @@
 3. Rotate exposed secrets through Lovable Cloud settings.
 4. Capture timeline in the incident notes; do not delete audit rows.
 
+### Observability (Sentry)
+
+Set these in Lovable / Cloudflare env (and `VITE_*` for the browser bundle):
+
+| Variable | Where | Purpose |
+|---|---|---|
+| `SENTRY_DSN` | Worker / server | Server + cron error/perf reporting via `@sentry/cloudflare` |
+| `VITE_SENTRY_DSN` | Client build | Browser errors + router tracing (`@sentry/tanstackstart-react`) |
+| `SENTRY_ENVIRONMENT` | optional | e.g. `production` / `staging` (defaults to `MODE` / `NODE_ENV`) |
+| `SENTRY_TRACES_SAMPLE_RATE` | optional | `0`–`1`, default `0.2` |
+| `VITE_SENTRY_TRACES_SAMPLE_RATE` | optional | Client override for the same |
+
+If DSN is unset, Sentry no-ops (safe for local/CI). Settlement hooks
+(`football-settle`, `f1-settle`, `reconciliation`) and money RPCs tag events
+with `area` for filtering. Root React errors still report to Lovable and also
+to Sentry when enabled.
+
 ## Cron hook authentication (required)
 
 All `/api/public/hooks/*` endpoints require a shared secret. Unauthenticated

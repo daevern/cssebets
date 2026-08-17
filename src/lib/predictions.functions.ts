@@ -29,6 +29,8 @@ export const submitPrediction = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { rpcPlaceBetAtomic } = await import("@/lib/supabase-rpc.server");
+    const { captureServerException } = await import("@/lib/sentry.report.server");
 
     // Server-side odds validation: never trust client-supplied odds.
     // For matches with stored reference_odds, validate the submitted odds against the
@@ -42,7 +44,12 @@ export const submitPrediction = createServerFn({ method: "POST" })
         .eq("id", data.matchId)
         .maybeSingle();
 
-      const refOdds = (match as any)?.reference_odds as Record<string, any> | null;
+      const refOdds =
+        match?.reference_odds &&
+        typeof match.reference_odds === "object" &&
+        !Array.isArray(match.reference_odds)
+          ? (match.reference_odds as Record<string, unknown>)
+          : null;
 
       const { data: snap } = await supabaseAdmin
         .from("match_odds_snapshots")
@@ -51,7 +58,7 @@ export const submitPrediction = createServerFn({ method: "POST" })
         .order("sampled_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      snapshotId = (snap as any)?.id ?? null;
+      snapshotId = snap?.id ?? null;
 
       const withinTolerance = (a: number, b: number) =>
         Number.isFinite(a) && Number.isFinite(b) && a >= 1 && b >= 1 && Math.abs(a - b) / b <= 0.15;
@@ -59,7 +66,14 @@ export const submitPrediction = createServerFn({ method: "POST" })
       if (data.market === "result") {
         const key = data.outcome === "HOME" ? "home" : data.outcome === "DRAW" ? "draw" : data.outcome === "AWAY" ? "away" : null;
         const refVal = key && refOdds ? Number(refOdds[key]) : NaN;
-        const snapVal = key && snap ? Number((snap as any)[`${key}_odds`]) : NaN;
+        const snapVal =
+          key === "home" && snap
+            ? Number(snap.home_odds)
+            : key === "draw" && snap
+              ? Number(snap.draw_odds)
+              : key === "away" && snap
+                ? Number(snap.away_odds)
+                : NaN;
         const candidates = [refVal, snapVal].filter((v) => Number.isFinite(v) && v >= 1);
         if (candidates.length === 0) throw new Error("Odds for this market are not available.");
         const best = candidates.find((v) => withinTolerance(data.referenceOdds, v));
@@ -67,8 +81,12 @@ export const submitPrediction = createServerFn({ method: "POST" })
         trustedOdds = best;
       } else {
         if (!refOdds) throw new Error("Odds for this market are not available.");
-        const marketOdds = typeof refOdds === "object" ? (refOdds as any)[data.market]?.[data.outcome] : null;
-        if (typeof marketOdds !== "number" || !Number.isFinite(marketOdds) || marketOdds < 1) {
+        const marketBucket = refOdds[data.market];
+        const marketOdds =
+          marketBucket && typeof marketBucket === "object" && !Array.isArray(marketBucket)
+            ? Number((marketBucket as Record<string, unknown>)[data.outcome])
+            : NaN;
+        if (!Number.isFinite(marketOdds) || marketOdds < 1) {
           throw new Error("Odds for this market are not available.");
         }
         if (!withinTolerance(data.referenceOdds, marketOdds)) {
@@ -90,11 +108,11 @@ export const submitPrediction = createServerFn({ method: "POST" })
       const { data: outright } = await supabaseAdmin
         .from("tournament_outrights")
         .select("odds")
-        .eq("tournament_key", (t as any).key)
+        .eq("tournament_key", t.key)
         .ilike("team", data.outcome)
         .maybeSingle();
       if (!outright) throw new Error("This team is not available in tournament odds.");
-      const serverOdds = Number((outright as any).odds);
+      const serverOdds = Number(outright.odds);
       if (!Number.isFinite(serverOdds) || serverOdds < 1) {
         throw new Error("Tournament odds unavailable for this team.");
       }
@@ -108,15 +126,15 @@ export const submitPrediction = createServerFn({ method: "POST" })
     // Atomic: wallet debit + prediction insert + platform credit + exposure check + liability recalc.
     // p_client_request_id provides idempotency: a duplicate submission with the same key returns the
     // existing prediction id instead of creating/charging a second bet.
-    const { data: predId, error } = await (supabaseAdmin as any).rpc("place_bet_atomic", {
+    const { data: predId, error } = await rpcPlaceBetAtomic({
       p_user_id: userId,
       p_match_id: data.matchId,
       p_market: data.market,
       p_outcome: data.outcome,
       p_odds: trustedOdds,
       p_stake: data.virtualStake,
-      p_snapshot_id: snapshotId,
-      p_client_request_id: data.clientRequestId ?? null,
+      p_snapshot_id: snapshotId ?? undefined,
+      p_client_request_id: data.clientRequestId ?? undefined,
     });
 
     if (error) {
@@ -150,6 +168,11 @@ export const submitPrediction = createServerFn({ method: "POST" })
       if (msg.includes("USER_MATCH_PAYOUT_EXCEEDED")) throw new Error("You've reached your maximum potential return on this match.");
       if (msg.includes("USER_DAILY_PAYOUT_EXCEEDED")) throw new Error("You've reached your 24-hour potential return limit. Try again later.");
       if (msg.includes("USER_CORRELATED_PAYOUT_EXCEEDED")) throw new Error("This pick is too similar to your other bets on this match. Lower the stake or choose a different market.");
+      captureServerException(error, {
+        area: "place_bet",
+        tags: { market: data.market },
+        extra: { outcome: data.outcome, stake: data.virtualStake },
+      });
       throw new Error(msg || "Could not place bet.");
     }
 
@@ -158,7 +181,7 @@ export const submitPrediction = createServerFn({ method: "POST" })
       user_id: userId,
       action: "prediction.submit",
       entity: "prediction",
-      entity_id: predId as any,
+      entity_id: typeof predId === "string" ? predId : null,
       metadata: {
         market: data.market,
         outcome: data.outcome,
