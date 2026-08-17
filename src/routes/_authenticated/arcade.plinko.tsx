@@ -302,10 +302,6 @@ function PlinkoPage() {
                 typeof window !== "undefined" &&
                 window.matchMedia("(prefers-reduced-motion: reduce)").matches
               }
-              ballColor={equipped.data?.ball?.preview_color ?? null}
-              ballAccent={equipped.data?.ball?.preview_accent ?? null}
-              boardColor={equipped.data?.board?.preview_color ?? null}
-              boardAccent={equipped.data?.board?.preview_accent ?? null}
             />
             <ArcadeIdleCue game="plinko" show={activeBalls.length === 0 && !lastGame && !pending}>
               Pick a chip, then drop
