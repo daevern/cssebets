@@ -39,19 +39,35 @@ export async function suspendStaleFootballMarkets(): Promise<SuspensionResult> {
   }
 
   // 2) Suspend markets whose odds are older than their per-market threshold.
-  // We do this in one query using a computed condition on last_odds_update_at.
-  const { data: openMarkets } = await supabaseAdmin
-    .from("sports_markets" as any)
-    .select("id, last_odds_update_at, stale_after_seconds")
-    .eq("status", "open")
-    .not("last_odds_update_at", "is", null);
+  // IMPORTANT: staleness only matters close to kickoff (or in-play). Far-off
+  // fixtures are refreshed on a slow rotation by the odds batch, so applying
+  // the same short threshold to them suspends healthy pre-match markets.
+  const NEAR_KICKOFF_MS = 12 * 3600_000;
+  const now = Date.now();
+
+  const { data: soonEvents } = await supabaseAdmin
+    .from("sports_events" as any)
+    .select("id, scheduled_at, status")
+    .eq("sport_code", "football")
+    .in("status", ["scheduled", "live"])
+    .lt("scheduled_at", new Date(now + NEAR_KICKOFF_MS).toISOString());
+
+  const soonIds = ((soonEvents ?? []) as any[]).map((e) => e.id);
 
   const staleIds: string[] = [];
-  const now = Date.now();
-  for (const m of (openMarkets ?? []) as any[]) {
-    const ts = new Date(m.last_odds_update_at).getTime();
-    const maxAgeMs = Number(m.stale_after_seconds ?? 10800) * 1000;
-    if (Number.isFinite(ts) && now - ts > maxAgeMs) staleIds.push(m.id);
+  if (soonIds.length) {
+    const { data: openMarkets } = await supabaseAdmin
+      .from("sports_markets" as any)
+      .select("id, last_odds_update_at, stale_after_seconds")
+      .eq("status", "open")
+      .in("sports_event_id", soonIds)
+      .not("last_odds_update_at", "is", null);
+
+    for (const m of (openMarkets ?? []) as any[]) {
+      const ts = new Date(m.last_odds_update_at).getTime();
+      const maxAgeMs = Number(m.stale_after_seconds ?? 10800) * 1000;
+      if (Number.isFinite(ts) && now - ts > maxAgeMs) staleIds.push(m.id);
+    }
   }
 
   if (staleIds.length) {
