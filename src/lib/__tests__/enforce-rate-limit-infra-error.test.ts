@@ -13,7 +13,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/integrations/supabase/client.server", () => ({
   get supabaseAdmin(): never {
     throw new Error(
-      "Missing Supabase environment variable(s): SUPABASE_SERVICE_ROLE_KEY. Connect Supabase in Lovable Cloud.",
+      "Missing Supabase environment variable(s): SUPABASE_SERVICE_ROLE_KEY. Connect the backend.",
     );
   },
 }));
