@@ -29,7 +29,7 @@ export const getFootballMarketHistory = createServerFn({ method: "POST" })
 
     const { data: markets } = await (supabaseAdmin as any)
       .from("sports_markets")
-      .select("id, market_key, display_name, sort_order, sports_market_selections (selection_key, display_name)")
+      .select("id, market_key, display_name, sort_order, sports_market_selections (selection_key, display_name, decimal_odds)")
       .eq("sports_event_id", data.matchId)
       .order("sort_order", { ascending: true });
 
@@ -117,25 +117,23 @@ export const getFootballMarketHistory = createServerFn({ method: "POST" })
 
     // Always append current live selections so LIVE chart has a price even
     // before snapshot history is dense (same seed pattern as UFC/F1).
-    const liveSels = (chosenRow.sports_market_selections ?? []) as Array<{
+    const liveSels = ((chosenRow.sports_market_selections ?? []) as Array<{
       selection_key: string;
-      decimal_odds: number;
-    }>;
+      decimal_odds: number | null;
+    }>).filter((s) => Number(s.decimal_odds) > 1);
     if (liveSels.length) {
       const t = new Date().toISOString();
-      const inv = liveSels.reduce(
-        (s, e) => s + (Number(e.decimal_odds) > 0 ? 1 / Number(e.decimal_odds) : 0),
-        0,
-      );
+      const inv = liveSels.reduce((s, e) => s + 1 / Number(e.decimal_odds), 0);
       for (const e of liveSels) {
         const odds = Number(e.decimal_odds);
-        const raw = odds > 0 ? 1 / odds : 0;
+        const raw = 1 / odds;
         const arr = bySel.get(e.selection_key) ?? [];
         arr.push({ t, odds, prob: inv > 0 ? raw / inv : 0 });
         bySel.set(e.selection_key, arr);
       }
       if (!times.includes(t)) times.push(t);
     }
+
 
     const seriesKeyFor = (k: string) => {
       const s = k.toLowerCase();
