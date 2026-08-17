@@ -20,6 +20,8 @@ import {
   DockPrimary,
   DockReadout,
   DockRow,
+  DockSeg,
+
 
 } from "@/components/arcade/ControlDock";
 import { cn } from "@/lib/utils";
