@@ -126,7 +126,13 @@ export async function runUfcOddsApiSync(
   }
 
   const now = Date.now();
-  const upcoming = raw.filter((e) => new Date(e.commence_time).getTime() > now - 6 * 60 * 60 * 1000);
+  // Horizon guard: the feed parks undated future bouts on placeholder dates
+  // (e.g. 31 Dec), which would otherwise cluster into a fake card.
+  const horizon = now + 60 * 24 * 60 * 60 * 1000;
+  const upcoming = raw.filter((e) => {
+    const t = new Date(e.commence_time).getTime();
+    return t > now - 6 * 60 * 60 * 1000 && t < horizon;
+  });
   const minBouts = opts.minBouts ?? 6;
   const cards = clusterCards(upcoming)
     .filter((c) => c.length >= minBouts)
