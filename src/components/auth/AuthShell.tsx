@@ -103,29 +103,35 @@ export function AuthShell({
 
       {/* Right column — form */}
       <main className="flex h-[100dvh] flex-col overflow-hidden px-5 py-4 sm:px-10 lg:px-14 lg:py-5">
-        <Link to="/" className="mb-3 flex items-center gap-3 lg:hidden">
+        <Link
+          to="/"
+          className="mb-3 flex items-center gap-3 lg:hidden"
+          style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
+        >
           <CsseAppIcon size={30} />
           <CsseWordmark size={16} />
         </Link>
 
         {topSlot && <div className="mx-auto w-full max-w-[400px] shrink-0">{topSlot}</div>}
 
-        <div className="mx-auto flex w-full max-w-[400px] min-h-0 flex-1 flex-col justify-start overflow-y-auto pt-2">
-          {eyebrow && (
-            <span className="mb-1.5 text-xs font-medium text-[var(--color-neon)]">
-              {eyebrow}
-            </span>
-          )}
-          <h1 className="text-[28px] font-semibold leading-tight tracking-tight">
-            {title}
-          </h1>
-          {subtitle && (
-            <p className="mt-1.5 text-sm leading-relaxed text-[var(--color-ink-muted)]">
-              {subtitle}
-            </p>
-          )}
-          <div className="mt-4">{children}</div>
-          {footer && <div className="mt-5">{footer}</div>}
+        <div className="mx-auto flex w-full max-w-[400px] min-h-0 flex-1 flex-col overflow-hidden pt-2">
+          <div className="shrink-0">
+            {eyebrow && (
+              <span className="mb-1.5 text-xs font-medium text-[var(--color-neon)]">
+                {eyebrow}
+              </span>
+            )}
+            <h1 className="text-[28px] font-semibold leading-tight tracking-tight">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="mt-1.5 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+                {subtitle}
+              </p>
+            )}
+          </div>
+          <div className="mt-4 min-h-0 flex-1 overflow-hidden">{children}</div>
+          {footer && <div className="mt-5 shrink-0">{footer}</div>}
         </div>
 
         <p className="mx-auto mt-4 w-full max-w-[400px] shrink-0 text-xs text-[var(--color-ink-muted)]">
