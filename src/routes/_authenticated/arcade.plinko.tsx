@@ -379,6 +379,33 @@ function PlinkoPage() {
         <FlatCosmeticsStrip disabled={locked} />
 
         <DockRow scroll>
+          <DockSeg
+            options={RISK_OPTIONS.map((r) => ({ key: r.key, label: r.label }))}
+            value={riskMode}
+            onChange={(k) => setRiskMode(k as RiskMode)}
+            disabled={locked}
+          />
+          <DockSeg
+            options={[
+              { key: "manual", label: "Manual" },
+              { key: "auto", label: "Auto" },
+            ]}
+            value={mode}
+            onChange={(k) => setMode(k as BetMode)}
+            disabled={locked}
+          />
+          <DockSeg
+            className="ml-auto"
+            options={ROW_OPTIONS.map((r) => ({ key: String(r), label: String(r) }))}
+            value={String(rows)}
+            onChange={(k) => setRows(Number(k) as RowsCount)}
+            disabled={locked}
+          />
+        </DockRow>
+
+
+
+        <DockRow scroll>
           <ChipRack
             game="plinko"
             values={CHIP_VALUES}
