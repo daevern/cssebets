@@ -92,7 +92,6 @@ function PlinkoPage() {
   const profileFn = useServerFn(getPlinkoProfile);
   const dropFn = useServerFn(placePlinkoDrop);
   const batchFn = useServerFn(placePlinkoDropBatch);
-  const equippedFn = useServerFn(getEquippedCosmetics);
 
   const config = useQuery({ queryKey: ["plinko-config"], queryFn: () => configFn({}) });
   const profile = useQuery({
@@ -100,7 +99,6 @@ function PlinkoPage() {
     queryFn: () => profileFn({}),
     refetchOnWindowFocus: true,
   });
-  const equipped = useQuery({ queryKey: ["plinko-equipped"], queryFn: () => equippedFn({}) });
   const bestFn = useServerFn(getArcadePersonalBest);
   const bestQ = useQuery({
     queryKey: ["plinko", "personal-best"],
