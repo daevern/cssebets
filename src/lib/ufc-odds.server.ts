@@ -1301,19 +1301,25 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
   }
   await writeUfcFeedState({ last_discovery_at: new Date(now).toISOString() });
 
-  // Scan the rolling window for UFC-tagged fights. UFC cards land on
-  // Sat/Sun (UTC) almost exclusively, so probe those days first and only
-  // spend remaining calls on weekdays — keeps us inside the daily quota.
-  const days: string[] = [];
+  // Scan the rolling window for UFC-tagged fights. Order matters: free feed
+  // plans only expose today ±1 day, so probe the near days FIRST (those always
+  // succeed and keep fight-night data flowing), then weekends — UFC cards land
+  // on Sat/Sun (UTC) almost exclusively — then remaining weekdays. On a paid
+  // plan the whole window is scanned; on a free plan we still get the near days
+  // before the provider refuses and we stop wasting quota.
+  const near: string[] = [];
+  const weekends: string[] = [];
   const weekdays: string[] = [];
   for (let d = 0; d < DISCOVERY_WINDOW_DAYS; d++) {
     const dt = new Date(now + d * 24 * 60 * 60 * 1000);
     const iso = dt.toISOString().slice(0, 10);
     const dow = dt.getUTCDay();
-    if (dow === 6 || dow === 0) days.push(iso);
+    if (d <= 1) near.push(iso);
+    else if (dow === 6 || dow === 0) weekends.push(iso);
     else weekdays.push(iso);
   }
-  const schedule = [...days, ...weekdays].slice(0, DISCOVERY_MAX_CALLS);
+  const schedule = [...near, ...weekends, ...weekdays].slice(0, DISCOVERY_MAX_CALLS);
+
 
   const buckets = new Map<string, { name: string; startsAt: string }>();
   let planLimited = false;
