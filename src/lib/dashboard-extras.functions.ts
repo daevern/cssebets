@@ -52,7 +52,7 @@ export type NextFootballMatch = {
 } | null;
 
 export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler(
-  async (): Promise<{ nextRace: NextF1Race; nextFight: NextUfcFight; nextFootball: NextFootballMatch }> => {
+  async (): Promise<{ nextRace: NextF1Race; nextFight: NextUfcFight; nextFootball: NextFootballMatch; nextFootballMatches: NonNullable<NextFootballMatch>[] }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
 
