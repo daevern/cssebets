@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { getPlinkoConfig, getPlinkoProfile, placePlinkoDrop } from "@/lib/arcade/plinko.functions";
 import { placePlinkoDropBatch } from "@/lib/arcade/plinko-phase2.functions";
 import { PlinkoBoard } from "@/components/arcade/PlinkoBoard";
-import { getEquippedCosmetics } from "@/lib/arcade/plinko-cosmetics.functions";
 import { HowItWorksDialog } from "@/components/arcade/HowItWorksDialog";
 import { VerifyDialog } from "@/components/arcade/VerifyDialog";
 import type { PlinkoGame, RiskMode, RowsCount } from "@/components/arcade/types";
