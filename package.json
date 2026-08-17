@@ -1,5 +1,6 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "cssebets",
+  "description": "CSSEBets — prediction markets for the FIFA World Cup 2026, football, F1, UFC and CSSE Originals.",
   "private": true,
   "sideEffects": false,
   "type": "module",
