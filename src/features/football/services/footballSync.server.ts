@@ -406,10 +406,22 @@ export async function syncFootballLiveScores(): Promise<{ updated: number; recon
     // Reconcile the recent window: the live feed only returns in-play fixtures,
     // so matches that started or finished between polls would otherwise stay
     // stuck on "scheduled" and never appear in Live/Completed.
+    // Only spend a provider call when we actually have unresolved past kickoffs.
+    const { count: pending } = await supabaseAdmin
+      .from("sports_events" as any)
+      .select("id", { count: "exact", head: true })
+      .eq("sport_code", "football")
+      .eq("competition_code", cfg.code)
+      .in("status", ["scheduled", "live", "halftime"])
+      .lt("scheduled_at", new Date().toISOString())
+      .gte("scheduled_at", new Date(Date.now() - 3 * 86400_000).toISOString());
+    if (!pending) continue;
+
     const recent = await afFetchFixtures(cfg.apiFootballLeagueId, cfg.currentSeason, {
       from: day(-3),
       to: day(1),
     });
+
     if (recent.ok) {
       for (const f of recent.data) {
         if (await applyFixtureState(f)) reconciled++;
