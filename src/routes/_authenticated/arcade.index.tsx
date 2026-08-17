@@ -148,10 +148,6 @@ function ArcadeLobby() {
             Originals
           </h1>
         </div>
-        <p className="max-w-xl text-[12px] leading-relaxed text-[var(--color-ink-muted)]">
-          Twelve house games for the community points club. Server decides every payout —
-          provably fair, one wallet.
-        </p>
       </header>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
