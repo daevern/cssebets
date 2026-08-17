@@ -37,5 +37,13 @@ export default defineConfig({
     url: BASE_URL,
     reuseExistingServer: true,
     timeout: 60_000,
+    env: {
+      ...process.env,
+      // When Playwright starts the server itself, forward the cron secret so
+      // ops-phase-a + settle helpers exercise the same fail-closed path as CI.
+      ...(process.env.CRON_HOOK_SECRET
+        ? { CRON_HOOK_SECRET: process.env.CRON_HOOK_SECRET }
+        : {}),
+    },
   },
 });

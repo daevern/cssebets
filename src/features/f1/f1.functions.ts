@@ -2,6 +2,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { enforceRateLimit, isRateLimitError } from "@/lib/rate-limit.functions";
+import { requireApprovedMember } from "@/lib/access-control";
 
 
 async function requireAdmin(sb: any, userId: string) {
@@ -226,6 +228,14 @@ export const placeF1RaceBet = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
+    await requireApprovedMember(context);
+    try {
+      await enforceRateLimit(`user:${context.userId}`, "bet_placement");
+    } catch (e) {
+      if (isRateLimitError(e)) throw new Error("Too many requests. Please try again later.");
+      throw e;
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: betId, error } = await (supabaseAdmin as any).rpc("place_f1_race_bet_atomic", {
       p_user_id: context.userId,
@@ -256,6 +266,14 @@ export const placeF1ChampionshipBet = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
+    await requireApprovedMember(context);
+    try {
+      await enforceRateLimit(`user:${context.userId}`, "bet_placement");
+    } catch (e) {
+      if (isRateLimitError(e)) throw new Error("Too many requests. Please try again later.");
+      throw e;
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: betId, error } = await (supabaseAdmin as any).rpc("place_f1_championship_bet_atomic", {
       p_user_id: context.userId,

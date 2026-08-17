@@ -49,6 +49,8 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
             echo "VITE_SUPABASE_URL=$API_URL"
             echo "VITE_SUPABASE_PUBLISHABLE_KEY=$ANON_KEY"
+            # Fixed CI secret — proves fail-closed cron auth + settle/health hooks.
+            echo "CRON_HOOK_SECRET=e2e-cron-secret-for-ci"
           } >> "$GITHUB_ENV"
 
       - name: Start app dev server
@@ -66,6 +68,7 @@ jobs:
         run: npx playwright test
         env:
           PLAYWRIGHT_BASE_URL: http://127.0.0.1:8080
+          CRON_HOOK_SECRET: e2e-cron-secret-for-ci
 
       - name: Upload dev server log
         if: always()

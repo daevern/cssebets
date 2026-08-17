@@ -132,6 +132,31 @@ export async function runHealthChecks() {
     };
   }));
 
+  checks.push(await timed("ufc_sync", async () => {
+    const { data, error } = await (supabaseAdmin as any)
+      .from("ufc_feed_state")
+      .select("last_discovery_at, last_odds_at, plan_limited, updated_at")
+      .eq("id", true)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) return { status: "degraded" as const, metadata: { reason: "no ufc_feed_state row" } };
+    const last = data.last_odds_at ?? data.last_discovery_at ?? data.updated_at;
+    const age = ageMinutes(last);
+    return {
+      status:
+        data.plan_limited || (age != null && age > 180)
+          ? ("degraded" as const)
+          : ("ok" as const),
+      metadata: {
+        last,
+        age_minutes: age,
+        plan_limited: data.plan_limited,
+        last_discovery_at: data.last_discovery_at,
+        last_odds_at: data.last_odds_at,
+      },
+    };
+  }));
+
   checks.push(await timed("health_cron_heartbeat", async () => {
     const { data, error } = await supabaseAdmin
       .from("health_check_runs")

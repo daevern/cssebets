@@ -3,6 +3,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { enforceRateLimit, isRateLimitError } from "@/lib/rate-limit.functions";
+import { requireApprovedMember } from "@/lib/access-control";
 import type { FootballCompetitionCode } from "./config/footballCompetitions";
 import type { FootballMatch, FootballMarket, FootballBet } from "./types/football";
 
@@ -344,6 +346,14 @@ export const placeFootballBet = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    await requireApprovedMember(context);
+    try {
+      await enforceRateLimit(`user:${userId}`, "bet_placement");
+    } catch (e) {
+      if (isRateLimitError(e)) throw new Error("Too many requests. Please try again later.");
+      throw e;
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Pre-flight: refuse bets on non-open / stale markets before we touch the

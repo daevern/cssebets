@@ -7,6 +7,7 @@ import {
   seedUfcMoneyline,
   settleUfcFightWinner,
 } from "./helpers/supabaseAdmin";
+import { postUfcSettle } from "./helpers/settleHook";
 
 test.describe("UFC settle E2E", () => {
   test("place moneyline → auto_settle winner → wallet payout", async ({ page }) => {
@@ -42,6 +43,12 @@ test.describe("UFC settle E2E", () => {
       await expect
         .poll(async () => (await latestUfcBet(seed.fightId))?.status, { timeout: 30_000 })
         .toBe("won");
+
+      // Cron hook smoke (may settle 0 additional fights — already graded via RPC).
+      if (process.env.CRON_HOOK_SECRET) {
+        const hook = await postUfcSettle();
+        expect(hook.ok).toBe(true);
+      }
 
       const finalBet = await latestUfcBet(seed.fightId);
       const payout = Number(finalBet!.payout ?? finalBet!.potential_payout ?? 0);

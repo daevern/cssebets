@@ -154,13 +154,35 @@ on `supabase/config.toml` or a specific migration if it fails.
 
 ## Go-live checklist (Phase A)
 
-- [ ] `CRON_HOOK_SECRET` set in production env
+### Proven automatically by CI (`.github/workflows/e2e.yml`)
+
+Ephemeral local Supabase + Playwright. The job sets a fixed
+`CRON_HOOK_SECRET=e2e-cron-secret-for-ci` on the app process and the test
+runner.
+
+- [x] Cron secret required for hooks — unauthenticated
+      `POST /api/public/hooks/health-check` → **401** (`e2e/ops-phase-a.spec.ts`)
+- [x] Authenticated health-check → **200** and inserts `health_check_runs`
+- [x] Settle hook smoke (football / F1 / UFC) returns **200** with secret
+- [x] Football / F1 settle E2E grades seeded fixtures through the real hooks
+      (`e2e/football-settle.spec.ts`, `e2e/f1-settle.spec.ts`)
+- [x] UFC moneyline settle E2E (RPC grade + `ufc-settle` hook smoke)
+- [x] Club football / F1 / UFC **place** calls `requireApprovedMember` +
+      `bet_placement` rate limit (same pattern as WC `submitPrediction` /
+      `placeMarketBet`)
+- [x] Guest upgrade E2E: convert → pending wall → service-role approve
+      (`e2e/guest-upgrade.spec.ts`)
+- [x] Admin health UI includes cron freshness for `football_sync`,
+      `football_settle`, `f1_sync`, `ufc_sync`, `health_cron_heartbeat`
+
+### Still required once against real production
+
+- [ ] `CRON_HOOK_SECRET` set in production env (not the CI placeholder)
 - [ ] All pg_cron `net.http_post` jobs send `x-cron-secret` (or Bearer)
-- [ ] Unauthenticated POST to `/api/public/hooks/health-check` returns 401
-- [ ] Authenticated cron POST returns 200 and writes `health_check_runs`
-- [ ] `/management/admin/health` shows cron freshness cards (football_sync,
-      football_settle, f1_sync, health_cron_heartbeat) with recent ages when
-      crons are live
+      matching that production secret
+- [ ] Spot-check unauthenticated `health-check` → 401 and authenticated →
+      200 on the live host
+- [ ] `/management/admin/health` shows recent ages when crons are live
 - [ ] `accounting_migration_flags.capacity_enforced = true` for
       plinko, rps, blackjack, roulette, treasure
 - [ ] Reviewed `apply_margin_to_real` on `/management/admin/risk-settings`
@@ -202,9 +224,8 @@ on `supabase/config.toml` or a specific migration if it fails.
       `placeRouletteSpin`, `startTreasureRound`, `startBlackjackHand`) —
       previously the "pending approval" gate was UI-only, so a pending
       user with a valid session could wager real wallet points on arcade
-      before an admin approved them (sports betting already enforced this
-      via `submitPrediction` / `placeMarketBet`, now refactored onto the
-      same shared `src/lib/access-control.ts` helper)
+      before an admin approved them (WC sports + club football / F1 / UFC
+      place handlers now share `src/lib/access-control.ts`)
 
 ## Reference
 - `/docs/BACKUP_RECOVERY.md` — recovery checklist

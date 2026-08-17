@@ -347,3 +347,39 @@ export async function cleanupUfcSeed(eventId: string, fightId: string) {
   await sb.from("ufc_fights").delete().eq("id", fightId);
   await sb.from("ufc_events").delete().eq("id", eventId);
 }
+
+/** Look up auth.users id by email (service role). */
+export async function findAuthUserIdByEmail(email: string): Promise<string> {
+  const sb = adminClient();
+  const normalized = email.trim().toLowerCase();
+  const { data, error } = await sb.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  if (error) throw new Error(`listUsers: ${error.message}`);
+  const user = (data.users ?? []).find((u) => (u.email ?? "").toLowerCase() === normalized);
+  if (!user) throw new Error(`No auth user for ${email}`);
+  return user.id;
+}
+
+/** Mirror admin approveUser: pending → member, clear simulation flags. */
+export async function approveUserAsAdmin(userId: string) {
+  const sb = adminClient();
+  await sb.from("user_roles").delete().eq("user_id", userId).eq("role", "pending");
+  const { error } = await sb.from("user_roles").upsert(
+    { user_id: userId, role: "member" },
+    { onConflict: "user_id,role" },
+  );
+  if (error) throw new Error(`approve member role: ${error.message}`);
+  await sb.from("profiles").update({ is_simulation: false }).eq("id", userId);
+  await sb.from("wallets").update({ is_simulation: false }).eq("user_id", userId);
+}
+
+export async function userHasRole(userId: string, role: string): Promise<boolean> {
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", role)
+    .maybeSingle();
+  if (error) throw new Error(`user_roles: ${error.message}`);
+  return Boolean(data);
+}
