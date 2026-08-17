@@ -7112,6 +7112,8 @@ export type Database = {
           event_key: string
           id: string
           is_active: boolean
+          last_sync_error: string | null
+          last_synced_at: string | null
           name: string
           starts_at: string
           updated_at: string
@@ -7121,6 +7123,8 @@ export type Database = {
           event_key: string
           id?: string
           is_active?: boolean
+          last_sync_error?: string | null
+          last_synced_at?: string | null
           name: string
           starts_at: string
           updated_at?: string
@@ -7130,8 +7134,43 @@ export type Database = {
           event_key?: string
           id?: string
           is_active?: boolean
+          last_sync_error?: string | null
+          last_synced_at?: string | null
           name?: string
           starts_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ufc_feed_state: {
+        Row: {
+          created_at: string
+          id: boolean
+          last_discovery_at: string | null
+          last_odds_at: string | null
+          last_result: Json | null
+          plan_limited: boolean
+          plan_message: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: boolean
+          last_discovery_at?: string | null
+          last_odds_at?: string | null
+          last_result?: Json | null
+          plan_limited?: boolean
+          plan_message?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: boolean
+          last_discovery_at?: string | null
+          last_odds_at?: string | null
+          last_result?: Json | null
+          plan_limited?: boolean
+          plan_message?: string | null
           updated_at?: string
         }
         Relationships: []
