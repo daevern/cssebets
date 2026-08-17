@@ -57,9 +57,15 @@ function MyPredictionsPage() {
   const uid = user?.id;
   const isDemoGuest = useIsDemoGuest();
   // Demo guests get a clean slate on every refresh: tickets from an earlier
-  // page load are hidden, mirroring the 1,000-point wallet reset.
+  // page load are hidden, mirroring the 1,000-point wallet reset. The cut-off
+  // is this page load itself, so a refresh always empties the slate.
+  const sessionStartMs =
+    typeof performance !== "undefined" && performance.timeOrigin
+      ? performance.timeOrigin
+      : DEMO_SESSION_START_MS;
   const inSession = (ts: string | null | undefined) =>
-    !isDemoGuest || (ts ? new Date(ts).getTime() >= DEMO_SESSION_START_MS - 60_000 : true);
+    !isDemoGuest || (ts ? new Date(ts).getTime() >= sessionStartMs - 5_000 : true);
+
 
   const { data, isLoading } = useQuery({
     queryKey: ["my-predictions", uid],
