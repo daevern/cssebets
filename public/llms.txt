@@ -1,0 +1,19 @@
+# CSSEBets
+
+> CSSEBets is a prediction market and arcade platform: trade live markets on football, Formula 1 and UFC, or play provably fair arcade games from one wallet.
+
+Markets are priced from a global odds feed and updated in near real-time. Every stake, settlement and payout is auditable in the player's wallet history. Arcade games are server-authoritative and provably fair.
+
+## Pages
+
+- [Home](/): What CSSEBets is, live markets and featured fixtures.
+- [About](/about): How the platform works and who it's for.
+- [Help & FAQ](/faq): Funding a wallet, placing bets, and getting paid.
+- [Community](/community): Leagues, referrals and live platform activity.
+- [Performance](/performance): Settlement speed, payout timelines and platform health.
+- [Brand](/brand): Logo system, colour palette and typography guidelines.
+
+## Optional
+
+- [Sign in](/auth): Account sign-in.
+- [Create account](/register): Account registration.
