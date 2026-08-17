@@ -121,7 +121,6 @@ import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lova
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksUfcSettleRouteImport } from './routes/api/public/hooks/ufc-settle'
-import { Route as ApiPublicHooksUfcOddsLiveRouteImport } from './routes/api/public/hooks/ufc-odds-live'
 import { Route as ApiPublicHooksUfcOddsRouteImport } from './routes/api/public/hooks/ufc-odds'
 import { Route as ApiPublicHooksUfcDiscoveryRouteImport } from './routes/api/public/hooks/ufc-discovery'
 import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/public/hooks/sync-fixtures'
@@ -752,12 +751,6 @@ const ApiPublicHooksUfcSettleRoute = ApiPublicHooksUfcSettleRouteImport.update({
   path: '/api/public/hooks/ufc-settle',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksUfcOddsLiveRoute =
-  ApiPublicHooksUfcOddsLiveRouteImport.update({
-    id: '/api/public/hooks/ufc-odds-live',
-    path: '/api/public/hooks/ufc-odds-live',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicHooksUfcOddsRoute = ApiPublicHooksUfcOddsRouteImport.update({
   id: '/api/public/hooks/ufc-odds',
   path: '/api/public/hooks/ufc-odds',
@@ -1000,7 +993,6 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/api/public/hooks/ufc-discovery': typeof ApiPublicHooksUfcDiscoveryRoute
   '/api/public/hooks/ufc-odds': typeof ApiPublicHooksUfcOddsRoute
-  '/api/public/hooks/ufc-odds-live': typeof ApiPublicHooksUfcOddsLiveRoute
   '/api/public/hooks/ufc-settle': typeof ApiPublicHooksUfcSettleRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -1129,7 +1121,6 @@ export interface FileRoutesByTo {
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/api/public/hooks/ufc-discovery': typeof ApiPublicHooksUfcDiscoveryRoute
   '/api/public/hooks/ufc-odds': typeof ApiPublicHooksUfcOddsRoute
-  '/api/public/hooks/ufc-odds-live': typeof ApiPublicHooksUfcOddsLiveRoute
   '/api/public/hooks/ufc-settle': typeof ApiPublicHooksUfcSettleRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -1265,7 +1256,6 @@ export interface FileRoutesById {
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/api/public/hooks/ufc-discovery': typeof ApiPublicHooksUfcDiscoveryRoute
   '/api/public/hooks/ufc-odds': typeof ApiPublicHooksUfcOddsRoute
-  '/api/public/hooks/ufc-odds-live': typeof ApiPublicHooksUfcOddsLiveRoute
   '/api/public/hooks/ufc-settle': typeof ApiPublicHooksUfcSettleRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -1401,7 +1391,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-fixtures'
     | '/api/public/hooks/ufc-discovery'
     | '/api/public/hooks/ufc-odds'
-    | '/api/public/hooks/ufc-odds-live'
     | '/api/public/hooks/ufc-settle'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -1530,7 +1519,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-fixtures'
     | '/api/public/hooks/ufc-discovery'
     | '/api/public/hooks/ufc-odds'
-    | '/api/public/hooks/ufc-odds-live'
     | '/api/public/hooks/ufc-settle'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -1665,7 +1653,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-fixtures'
     | '/api/public/hooks/ufc-discovery'
     | '/api/public/hooks/ufc-odds'
-    | '/api/public/hooks/ufc-odds-live'
     | '/api/public/hooks/ufc-settle'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -1704,7 +1691,6 @@ export interface RootRouteChildren {
   ApiPublicHooksSyncFixturesRoute: typeof ApiPublicHooksSyncFixturesRoute
   ApiPublicHooksUfcDiscoveryRoute: typeof ApiPublicHooksUfcDiscoveryRoute
   ApiPublicHooksUfcOddsRoute: typeof ApiPublicHooksUfcOddsRoute
-  ApiPublicHooksUfcOddsLiveRoute: typeof ApiPublicHooksUfcOddsLiveRoute
   ApiPublicHooksUfcSettleRoute: typeof ApiPublicHooksUfcSettleRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -2497,13 +2483,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksUfcSettleRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/ufc-odds-live': {
-      id: '/api/public/hooks/ufc-odds-live'
-      path: '/api/public/hooks/ufc-odds-live'
-      fullPath: '/api/public/hooks/ufc-odds-live'
-      preLoaderRoute: typeof ApiPublicHooksUfcOddsLiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/hooks/ufc-odds': {
       id: '/api/public/hooks/ufc-odds'
       path: '/api/public/hooks/ufc-odds'
@@ -2953,7 +2932,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSyncFixturesRoute: ApiPublicHooksSyncFixturesRoute,
   ApiPublicHooksUfcDiscoveryRoute: ApiPublicHooksUfcDiscoveryRoute,
   ApiPublicHooksUfcOddsRoute: ApiPublicHooksUfcOddsRoute,
-  ApiPublicHooksUfcOddsLiveRoute: ApiPublicHooksUfcOddsLiveRoute,
   ApiPublicHooksUfcSettleRoute: ApiPublicHooksUfcSettleRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
