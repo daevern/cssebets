@@ -182,6 +182,7 @@ export async function runUfcOddsApiSync(
       if (!price) continue;
 
       const isMain = bout.id === main.id;
+      const isCoMain = !!coMain && bout.id === coMain.id;
       const { data: fightRow, error: fightErr } = await (supabaseAdmin as any)
         .from("ufc_fights")
         .upsert(
