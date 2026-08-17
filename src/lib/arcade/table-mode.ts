@@ -1,8 +1,7 @@
 import type { ArcadeGameKey } from "@/lib/arcade/sound";
 
-const TABLE_GAMES = new Set<string>([
-  "plinko",
-]);
+const TABLE_GAMES = new Set<string>([]);
+
 
 /** True on a live cabinet route (`/arcade/plinko` …), not the lobby. */
 export function isArcadeTablePath(pathname: string): boolean {

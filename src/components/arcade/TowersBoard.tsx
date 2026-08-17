@@ -53,7 +53,6 @@ function DragonMark() {
   );
 }
 
-
 /** Fire bomb / explosion that erupts on the tile you got wrong. */
 function FireBlast() {
   return (
@@ -97,12 +96,16 @@ function FireBlast() {
   );
 }
 
-/** Stone battlement crown with the sleeping dragon perched on top. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function DragonCrown() {
+/** Stone battlement crown that caps the keep (no dragon). */
+function CastleCrown() {
   return (
-    <div className="relative -mx-3 -mt-3 mb-2 h-[86px] overflow-hidden">
-      <svg viewBox="0 0 360 86" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMax slice" aria-hidden>
+    <div className="relative -mx-3 -mt-3 mb-2 h-[64px] overflow-hidden rounded-t-[14px]">
+      <svg
+        viewBox="0 0 360 64"
+        className="absolute inset-0 h-full w-full"
+        preserveAspectRatio="xMidYMax slice"
+        aria-hidden
+      >
         <defs>
           <linearGradient id="twStone" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#7d8b9c" />
@@ -113,40 +116,23 @@ function DragonCrown() {
             <stop offset="1" stopColor="#0d1826" />
           </linearGradient>
         </defs>
-        <rect width="360" height="86" fill="url(#twSky)" />
-        <circle cx="300" cy="20" r="13" fill="#22344a" opacity=".8" />
-        {/* dragon silhouette wings */}
-        <g className="motion-safe:[animation:towersDragonBreathe_5s_ease-in-out_infinite]" style={{ transformOrigin: "180px 60px" }}>
-          <path
-            d="M180 12c-26 0-46 10-64 26 12-4 20-4 28 1-14 3-26 10-34 20h64Z"
-            fill="#55647a"
-            opacity=".85"
-          />
-          <path
-            d="M180 12c26 0 46 10 64 26-12-4-20-4-28 1 14 3 26 10 34 20h-64Z"
-            fill="#55647a"
-            opacity=".85"
-          />
-          {/* head */}
-          <path
-            d="M180 6c14 0 24 8 26 20 1 8-4 14-10 18-5 3-11 5-16 5s-11-2-16-5c-6-4-11-10-10-18 2-12 12-20 26-20Z"
-            fill="url(#twStone)"
-          />
-          <path d="M166 12l-8-8 3 12Zm28 0l8-8-3 12Z" fill="#8b99aa" />
-          <path d="M172 34c3 3 5 4 8 4s5-1 8-4c-2 5-5 7-8 7s-6-2-8-7Z" fill="#33404f" />
-          <g className="motion-safe:[animation:towersEyeGlow_2.4s_ease-in-out_infinite]">
-            <circle cx="172" cy="26" r="2.4" fill="#8fe3ff" />
-            <circle cx="188" cy="26" r="2.4" fill="#8fe3ff" />
-          </g>
+        <rect width="360" height="64" fill="url(#twSky)" />
+        <circle cx="300" cy="16" r="11" fill="#22344a" opacity=".8" />
+        {/* towers on both flanks */}
+        <g fill="url(#twStone)" opacity=".9">
+          <rect x="12" y="18" width="30" height="28" rx="2" />
+          <rect x="318" y="18" width="30" height="28" rx="2" />
+          <path d="M12 18l15-10 15 10Z" />
+          <path d="M318 18l15-10 15 10Z" />
         </g>
         {/* battlements */}
         <g fill="url(#twStone)">
           {Array.from({ length: 12 }, (_, i) => (
-            <rect key={i} x={4 + i * 30} y={56} width="22" height="14" rx="2" />
+            <rect key={i} x={4 + i * 30} y={34} width="22" height="14" rx="2" />
           ))}
-          <rect x="0" y="68" width="360" height="18" rx="3" />
+          <rect x="0" y="46" width="360" height="18" rx="3" />
         </g>
-        <rect x="0" y="68" width="360" height="4" fill="#93a1b2" opacity=".55" />
+        <rect x="0" y="46" width="360" height="4" fill="#93a1b2" opacity=".55" />
       </svg>
     </div>
   );
@@ -214,8 +200,7 @@ export function TowersBoard({
         boxShadow: "inset 0 0 0 1px rgba(255,255,255,.05)",
       }}
     >
-
-
+      <CastleCrown />
 
       {/* scorch flash over the whole keep */}
       {boom && (
@@ -257,7 +242,6 @@ export function TowersBoard({
                 )}
                 style={{ gridTemplateColumns: `repeat(${shape.tiles}, minmax(0,1fr))` }}
               >
-
                 {Array.from({ length: shape.tiles }, (_, tile) => {
                   const isDragon = dragons?.includes(tile) ?? false;
                   const isPick = picked === tile;
@@ -314,7 +298,6 @@ export function TowersBoard({
                     </button>
                   );
                 })}
-
               </div>
             </div>
           );
