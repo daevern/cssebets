@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { getPlinkoConfig, getPlinkoProfile, placePlinkoDrop } from "@/lib/arcade/plinko.functions";
 import { placePlinkoDropBatch } from "@/lib/arcade/plinko-phase2.functions";
 import { PlinkoBoard } from "@/components/arcade/PlinkoBoard";
-import { getEquippedCosmetics } from "@/lib/arcade/plinko-cosmetics.functions";
 import { HowItWorksDialog } from "@/components/arcade/HowItWorksDialog";
 import { VerifyDialog } from "@/components/arcade/VerifyDialog";
 import type { PlinkoGame, RiskMode, RowsCount } from "@/components/arcade/types";
@@ -36,7 +35,6 @@ import { MiniCabinetTitle } from "@/components/arcade/MiniCabinetTitle";
 import * as React from "react";
 import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
 import { ArcadeVerifyCue } from "@/components/arcade/ArcadeVerifyCue";
-import { FlatCosmeticsStrip } from "@/components/arcade/FlatCosmeticsStrip";
 import { RecentResultsStrip } from "@/components/arcade/RecentResultsStrip";
 import { arcadeFairness } from "@/lib/arcade/published-rtp";
 import type { ConfigVersion, PlinkoRisk, PlinkoRows } from "@/lib/arcade/config-registry";
@@ -93,7 +91,6 @@ function PlinkoPage() {
   const profileFn = useServerFn(getPlinkoProfile);
   const dropFn = useServerFn(placePlinkoDrop);
   const batchFn = useServerFn(placePlinkoDropBatch);
-  const equippedFn = useServerFn(getEquippedCosmetics);
 
   const config = useQuery({ queryKey: ["plinko-config"], queryFn: () => configFn({}) });
   const profile = useQuery({
@@ -101,7 +98,6 @@ function PlinkoPage() {
     queryFn: () => profileFn({}),
     refetchOnWindowFocus: true,
   });
-  const equipped = useQuery({ queryKey: ["plinko-equipped"], queryFn: () => equippedFn({}) });
   const bestFn = useServerFn(getArcadePersonalBest);
   const bestQ = useQuery({
     queryKey: ["plinko", "personal-best"],
@@ -305,10 +301,6 @@ function PlinkoPage() {
                 typeof window !== "undefined" &&
                 window.matchMedia("(prefers-reduced-motion: reduce)").matches
               }
-              ballColor={equipped.data?.ball?.preview_color ?? null}
-              ballAccent={equipped.data?.ball?.preview_accent ?? null}
-              boardColor={equipped.data?.board?.preview_color ?? null}
-              boardAccent={equipped.data?.board?.preview_accent ?? null}
             />
             <ArcadeIdleCue game="plinko" show={activeBalls.length === 0 && !lastGame && !pending}>
               Pick a chip, then drop
@@ -335,8 +327,6 @@ function PlinkoPage() {
       <VerifyDialog open={verifyOpen} onOpenChange={setVerifyOpen} gameId={lastGame?.id ?? null} />
 
       <ControlDock game="plinko">
-        <FlatCosmeticsStrip disabled={locked} />
-
         <DockRow scroll>
           <DockSeg
             options={RISK_OPTIONS.map((r) => ({ key: r.key, label: r.label }))}
