@@ -354,10 +354,38 @@ export async function syncFootballOddsBatch(opts: {
 }
 
 // ---------- LIVE ----------
-export async function syncFootballLiveScores(): Promise<{ updated: number }> {
+async function applyFixtureState(f: any): Promise<boolean> {
+  const providerId = String(f.fixture.id);
+  const { data: mapping } = await supabaseAdmin
+    .from("sports_event_provider_mappings" as any)
+    .select("sports_event_id")
+    .eq("provider", "api-football")
+    .eq("provider_event_id", providerId)
+    .maybeSingle();
+  if (!mapping) return false;
+  const statusMap = afStatusToInternal(f.fixture.status.short);
+  await supabaseAdmin
+    .from("sports_events" as any)
+    .update({
+      status: statusMap.status,
+      live_minute: f.fixture.status.elapsed,
+      home_score: f.goals.home,
+      away_score: f.goals.away,
+      ht_home_score: f.score?.halftime?.home ?? null,
+      ht_away_score: f.score?.halftime?.away ?? null,
+    })
+    .eq("id", (mapping as any).sports_event_id);
+  return true;
+}
+
+export async function syncFootballLiveScores(): Promise<{ updated: number; reconciled: number }> {
   const { id: runId, skipped } = await startSyncRun("api-football", "live");
-  if (skipped) return { updated: 0 };
+  if (skipped) return { updated: 0, reconciled: 0 };
   let updated = 0;
+  let reconciled = 0;
+  const day = (offset: number) =>
+    new Date(Date.now() + offset * 86400_000).toISOString().slice(0, 10);
+
   for (const cfg of Object.values(FOOTBALL_COMPETITIONS)) {
     const { data: flag } = await supabaseAdmin
       .from("sports_feature_flags" as any)
@@ -365,32 +393,28 @@ export async function syncFootballLiveScores(): Promise<{ updated: number }> {
       .eq("key", cfg.featureFlagKey)
       .maybeSingle();
     if (!(flag as any)?.enabled) continue;
+
     const live = await afFetchLiveFixtures(cfg.apiFootballLeagueId);
-    if (!live.ok) continue;
-    for (const f of live.data) {
-      const providerId = String(f.fixture.id);
-      const { data: mapping } = await supabaseAdmin
-        .from("sports_event_provider_mappings" as any)
-        .select("sports_event_id")
-        .eq("provider", "api-football")
-        .eq("provider_event_id", providerId)
-        .maybeSingle();
-      if (!mapping) continue;
-      const statusMap = afStatusToInternal(f.fixture.status.short);
-      await supabaseAdmin
-        .from("sports_events" as any)
-        .update({
-          status: statusMap.status,
-          live_minute: f.fixture.status.elapsed,
-          home_score: f.goals.home,
-          away_score: f.goals.away,
-          ht_home_score: f.score?.halftime?.home ?? null,
-          ht_away_score: f.score?.halftime?.away ?? null,
-        })
-        .eq("id", (mapping as any).sports_event_id);
-      updated++;
+    if (live.ok) {
+      for (const f of live.data) {
+        if (await applyFixtureState(f)) updated++;
+      }
+    }
+
+    // Reconcile the recent window: the live feed only returns in-play fixtures,
+    // so matches that started or finished between polls would otherwise stay
+    // stuck on "scheduled" and never appear in Live/Completed.
+    const recent = await afFetchFixtures(cfg.apiFootballLeagueId, cfg.currentSeason, {
+      from: day(-3),
+      to: day(1),
+    });
+    if (recent.ok) {
+      for (const f of recent.data) {
+        if (await applyFixtureState(f)) reconciled++;
+      }
     }
   }
-  await finishSyncRun(runId, "success", { records_updated: updated });
-  return { updated };
+  await finishSyncRun(runId, "success", { records_updated: updated + reconciled });
+  return { updated, reconciled };
 }
+
