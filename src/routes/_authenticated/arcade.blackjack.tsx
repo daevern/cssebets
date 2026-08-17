@@ -71,7 +71,6 @@ export const Route = createFileRoute("/_authenticated/arcade/blackjack")({
       { name: "twitter:card", content: "summary_large_image" },
           { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
       { name: "twitter:image", content: "https://cssebets.com/og-image.jpg" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: BlackjackPage,
