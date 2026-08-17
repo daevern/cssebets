@@ -197,7 +197,7 @@ export function TowersBoard({
         boxShadow: "inset 0 0 0 1px rgba(255,255,255,.05)",
       }}
     >
-
+      <CastleCrown />
 
 
       {/* scorch flash over the whole keep */}
