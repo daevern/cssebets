@@ -213,7 +213,8 @@ export function TowersBoard({
         boxShadow: "inset 0 0 0 1px rgba(255,255,255,.05)",
       }}
     >
-      <DragonCrown />
+
+
 
       {/* scorch flash over the whole keep */}
       {boom && (
