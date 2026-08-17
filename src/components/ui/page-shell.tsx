@@ -33,10 +33,12 @@ export function PageShell({
         className={`relative mx-auto flex ${wide ? "max-w-3xl" : "max-w-md md:max-w-2xl"} flex-col gap-5 px-4 py-5 md:py-8`}
       >
         <section className="space-y-2">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
-            <Radio className="h-3 w-3" />
-            {kicker}
-          </div>
+          {kicker && (
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.32em] text-[var(--color-neon)]">
+              <Radio className="h-3 w-3" />
+              {kicker}
+            </div>
+          )}
           <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight md:text-4xl">
             {title}
             {titleAccent && (
