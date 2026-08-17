@@ -64,6 +64,7 @@ export function WalletCreditCard({
   balance: number;
   reference?: string | null;
 }) {
+  const isDemoGuest = useIsDemoGuest();
   const number = deriveWalletNumber(createdAt, userId);
   const validThru = deriveValidThru(createdAt);
   const memberSince = deriveMemberSince(createdAt);
