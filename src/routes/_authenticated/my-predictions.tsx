@@ -15,6 +15,7 @@ import { flagPredictionForReview } from "@/lib/predictions-flag.functions";
 import { toast } from "sonner";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { teamFlagUrl } from "@/lib/country-flags";
+import { DEMO_SESSION_START_MS, useIsDemoGuest } from "@/components/wallet/DemoWalletBootstrap";
 
 export const Route = createFileRoute("/_authenticated/my-predictions")({
   head: () => ({ meta: [{ title: "Picks — CSSEBets" }] }),
@@ -54,6 +55,12 @@ function MyPredictionsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const uid = user?.id;
+  const isDemoGuest = useIsDemoGuest();
+  // Demo guests get a clean slate on every refresh: tickets from an earlier
+  // page load are hidden, mirroring the 1,000-point wallet reset.
+  const inSession = (ts: string | null | undefined) =>
+    !isDemoGuest || (ts ? new Date(ts).getTime() >= DEMO_SESSION_START_MS - 60_000 : true);
+
   const { data, isLoading } = useQuery({
     queryKey: ["my-predictions", uid],
     enabled: !!uid,
@@ -141,6 +148,29 @@ function MyPredictionsPage() {
     },
   });
 
+  // Club football / other sportsbook bets (sports_bets). Guests bet in the
+  // simulation environment, so their tickets show here too until they refresh.
+  const { data: sportsBets } = useQuery({
+    queryKey: ["my-sports-bets", uid],
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sports_bets")
+        .select(
+          "*, sports_events(event_name, home_name, away_name, home_logo, away_logo, scheduled_at, status)",
+        )
+        .eq("user_id", uid!)
+        .order("placed_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+
+
   const { data: f1DriversMap } = useQuery({
     queryKey: ["my-f1-drivers-map"],
     staleTime: 5 * 60_000,
@@ -197,11 +227,27 @@ function MyPredictionsPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "f1_championship_bets", filter: `user_id=eq.${uid}` }, () => {
         qc.invalidateQueries({ queryKey: ["my-f1-champ-bets", uid] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "sports_bets", filter: `user_id=eq.${uid}` }, () => {
+        qc.invalidateQueries({ queryKey: ["my-sports-bets", uid] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [qc, uid]);
 
-  const hasAny = (data?.length ?? 0) + (ufcBets?.length ?? 0) + (f1Bets?.length ?? 0) + (f1ChampBets?.length ?? 0) > 0;
+  const visiblePredictions = (data ?? []).filter((p: any) => inSession(p.created_at));
+  const visibleUfc = (ufcBets ?? []).filter((b: any) => inSession(b.placed_at));
+  const visibleF1 = (f1Bets ?? []).filter((b: any) => inSession(b.created_at ?? b.placed_at));
+  const visibleF1Champ = (f1ChampBets ?? []).filter((b: any) => inSession(b.created_at));
+  const visibleSports = (sportsBets ?? []).filter((b: any) => inSession(b.placed_at));
+
+  const hasAny =
+    visiblePredictions.length +
+      visibleUfc.length +
+      visibleF1.length +
+      visibleF1Champ.length +
+      visibleSports.length >
+    0;
+
 
 
   return (
@@ -226,11 +272,13 @@ function MyPredictionsPage() {
         </StencilPanel>
       ) : (
         <div className="space-y-3">
-          {(f1Bets ?? []).map((b) => <F1BetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
-          {(f1ChampBets ?? []).map((b) => <F1ChampBetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
-          {(ufcBets ?? []).map((b) => <UfcBetRow key={b.id} b={b} />)}
-          {(data ?? []).map((p) => <PredictionRow key={p.id} p={p} />)}
+          {visibleSports.map((b) => <SportsBetRow key={b.id} b={b} />)}
+          {visibleF1.map((b) => <F1BetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
+          {visibleF1Champ.map((b) => <F1ChampBetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
+          {visibleUfc.map((b) => <UfcBetRow key={b.id} b={b} />)}
+          {visiblePredictions.map((p) => <PredictionRow key={p.id} p={p} />)}
         </div>
+
 
       )}
     </PageShell>
@@ -931,3 +979,89 @@ function F1ChampBetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Recor
 
 
 
+
+/**
+ * Sportsbook ticket (club football, and any other `sports_bets` product).
+ * Shown for real users and for demo guests alike — a guest's tickets live in
+ * the simulation environment and disappear when their session resets.
+ */
+function SportsBetRow({ b }: { b: any }) {
+  const ev = b.sports_events;
+  const stakeN = Number(b.stake);
+  const oddsN = Number(b.accepted_odds);
+  const payoutN = Number(b.potential_payout ?? stakeN * oddsN);
+  const profit = (payoutN - stakeN).toFixed(2);
+  const ticketId = String(b.id).replace(/-/g, "").slice(0, 10).toUpperCase();
+  const status = b.status === "open" ? "pending" : (b.status ?? "pending");
+  const kickoffLabel = ev?.scheduled_at
+    ? new Date(ev.scheduled_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+    : "—";
+  const statusTone =
+    status === "won" ? "text-[var(--color-neon)] border-[var(--color-neon)]/60 bg-[var(--color-neon)]/10"
+    : status === "lost" ? "text-destructive border-destructive/60 bg-destructive/10"
+    : "text-[var(--color-ink-muted)] border-[var(--color-surface-border)] bg-[var(--color-surface)]/40";
+
+  return (
+    <StencilPanel
+      accent={status === "won"}
+      kicker={<><span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-neon)] animate-pulse" /> Match Ticket</>}
+      meta={`#${ticketId}`}
+    >
+      <div className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)] mb-2">Fixture</div>
+            <div className="flex items-center gap-3">
+              {ev?.home_logo ? (
+                <img src={ev.home_logo} alt={ev?.home_name ?? ""} className="h-8 w-8 object-contain" loading="lazy" />
+              ) : null}
+              <div className="min-w-0">
+                <div className="font-display font-bold text-base leading-tight truncate">
+                  {ev?.home_name && ev?.away_name ? `${ev.home_name} vs ${ev.away_name}` : (ev?.event_name ?? "Fixture")}
+                </div>
+                <div className="text-[11px] text-[var(--color-ink-muted)] truncate">
+                  {String(b.competition_code ?? "").toUpperCase()} · {kickoffLabel}
+                </div>
+              </div>
+              {ev?.away_logo ? (
+                <img src={ev.away_logo} alt={ev?.away_name ?? ""} className="h-8 w-8 object-contain" loading="lazy" />
+              ) : null}
+            </div>
+          </div>
+          <div className={`shrink-0 border px-2 py-1 text-[10px] uppercase tracking-[0.22em] font-bold ${statusTone}`}>
+            {status}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="border border-dashed border-[var(--color-surface-border)] px-2.5 py-1.5">
+            <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">Market</div>
+            <div className="font-medium truncate">{humanizeMarket(b.market_key)}</div>
+          </div>
+          <div className="border border-dashed border-[var(--color-surface-border)] px-2.5 py-1.5">
+            <div className="text-[9px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">Selection</div>
+            <div className="font-medium truncate">{humanizeMarket(b.selection_key)}</div>
+          </div>
+        </div>
+
+        <div className="border-t border-dashed border-[var(--color-surface-border)]" />
+
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">Stake</div>
+            <div className="font-mono font-semibold tabular-nums">{stakeN.toFixed(2)}</div>
+          </div>
+          <div>
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">Odds</div>
+            <div className="font-mono font-semibold tabular-nums">{oddsN.toFixed(2)}</div>
+          </div>
+          <div className="text-right">
+            <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-neon)]">Potential</div>
+            <div className="font-mono font-bold text-[var(--color-neon)] text-lg leading-tight tabular-nums">{payoutN.toFixed(2)}</div>
+            <div className="text-[10px] text-[var(--color-ink-muted)] tabular-nums">+{profit} profit</div>
+          </div>
+        </div>
+      </div>
+    </StencilPanel>
+  );
+}

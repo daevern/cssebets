@@ -14,6 +14,14 @@ import { useAuth } from "@/hooks/use-auth";
  */
 let didResetThisPageLoad = false;
 
+/**
+ * Timestamp of the current browser page load. Guest (demo) activity placed
+ * before this moment belongs to a previous demo session and is hidden from the
+ * UI, so a refresh gives the guest a clean slate alongside the 1,000 reset.
+ */
+export const DEMO_SESSION_START_MS = Date.now();
+
+
 export function DemoWalletBootstrap() {
   const { user } = useAuth();
   const reset = useServerFn(resetDemoWallet);
