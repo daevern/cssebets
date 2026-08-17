@@ -925,39 +925,58 @@ async function syncH2H(fightRowId: string, aId: number, bId: number, currentApim
 }
 
 
-export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<UfcSyncResult> {
-  const key = process.env.API_FOOTBALL_KEY?.trim();
-  if (!key) return { ok: false, skipped: "API_FOOTBALL_KEY not set" };
+// ---------------------------------------------------------------------------
+// Feed bookkeeping (persisted so throttles survive worker restarts).
+// ---------------------------------------------------------------------------
+type UfcFeedState = {
+  last_discovery_at: string | null;
+  last_odds_at: string | null;
+  plan_limited: boolean;
+  plan_message: string | null;
+};
 
-  const { data: event } = await (supabaseAdmin as any)
-    .from("ufc_events")
-    .select("id, event_key, name, starts_at")
-    .eq("is_active", true)
-    .order("starts_at", { ascending: true })
-    .limit(1)
+export async function readUfcFeedState(): Promise<UfcFeedState> {
+  const { data } = await (supabaseAdmin as any)
+    .from("ufc_feed_state")
+    .select("last_discovery_at, last_odds_at, plan_limited, plan_message")
+    .eq("id", true)
     .maybeSingle();
-  if (!event) return { ok: true, skipped: "no active event" };
+  return (
+    data ?? { last_discovery_at: null, last_odds_at: null, plan_limited: false, plan_message: null }
+  );
+}
 
-  // Cost guard: only hit API within ±5 days of event start (or force).
-  const startsAt = new Date(event.starts_at).getTime();
-  const withinWindow = Math.abs(startsAt - Date.now()) < 5 * 24 * 60 * 60 * 1000;
-  if (!opts.force && !withinWindow) return { ok: true, skipped: "outside event window" };
+async function writeUfcFeedState(patch: Record<string, unknown>) {
+  await (supabaseAdmin as any)
+    .from("ufc_feed_state")
+    .upsert({ id: true, ...patch }, { onConflict: "id" });
+}
 
+/** Refresh cadence for a card, based on how close it is to starting. */
+function oddsFreshnessMsFor(startsAtIso: string) {
+  const delta = new Date(startsAtIso).getTime() - Date.now();
+  if (delta < 6 * 60 * 60 * 1000) return 4 * 60 * 1000;       // fight week/night: 4 min
+  if (delta < 48 * 60 * 60 * 1000) return 30 * 60 * 1000;      // next two days: 30 min
+  if (delta < 10 * 24 * 60 * 60 * 1000) return 3 * 60 * 60 * 1000; // next 10 days: 3h
+  return 12 * 60 * 60 * 1000;                                  // far out: twice a day
+}
 
+type UfcEventRow = { id: string; event_key: string; name: string; starts_at: string; last_synced_at?: string | null };
+
+/** Sync one event's card: fighters, fights, odds, H2H, live stats. */
+async function syncEventCard(event: UfcEventRow): Promise<{ fights: number; markets: number; skipped?: string }> {
   const allFights = await findEventFights(event.starts_at);
-  if (!allFights.length) return { ok: true, skipped: "no UFC fights found near event date" };
+  if (!allFights.length) return { fights: 0, markets: 0, skipped: "no UFC fights found near event date" };
 
   const card = pickCard(allFights, event.starts_at);
-  if (!card.length) return { ok: true, skipped: "no card cluster matched" };
+  if (!card.length) return { fights: 0, markets: 0, skipped: "no card cluster matched" };
 
   // API-MMA marks the main-card fights with is_main. The final two main-card
   // fights can share the same timestamp, so use the event title slug to keep
   // the named headline bout as main event.
   const { mainFight, coMainFight } = pickMainAndCoMain(card);
 
-  // Include the full main card, not just headliner + co-main. API-MMA's
-  // `is_main` flag marks every main-card bout; fall back to the whole card
-  // cluster if the feed hasn't tagged them yet.
+  // Include the full main card, not just headliner + co-main.
   const mainCardFights = card.filter((f) => f.is_main);
   const fullCard = mainCardFights.length >= 2 ? mainCardFights : card;
 
@@ -973,7 +992,6 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
 
   let totalMarkets = 0;
   for (const t of targets) {
-    // Upsert fighters (with detail enrichment)
     await upsertFighter(t.f.fighters.first.id, t.f.fighters.first.name, t.f.fighters.first.logo);
     await upsertFighter(t.f.fighters.second.id, t.f.fighters.second.name, t.f.fighters.second.logo);
 
@@ -986,34 +1004,113 @@ export async function runUfcOddsSync(opts: { force?: boolean } = {}): Promise<Uf
 
     totalMarkets += await syncOddsForFight(fightRow, t.f.id, t.f.date);
     await syncH2H(fightRow.id, t.f.fighters.first.id, t.f.fighters.second.id, t.f.id);
-    // Live stats only when fight is in progress. Post-fight stats don't
-    // change, so re-pulling FT/AFT every tick just burns quota.
     if (t.f.status.short === "LIVE") {
       await syncFightStats(fightRow.id, t.f.id);
     }
   }
 
-  // Cleanup: demote any fights on this event that aren't in the current card
-  // (stale seed data, cancelled fights, replaced cards) to card_position='other'
-  // so the /ufc page only shows real, current main + co-main.
+  // Demote fights on this event that aren't on the current card (stale seed
+  // data, cancelled fights, replaced cards) and close their markets.
   const keepIds = targets.map((t) => t.f.id);
-  await (supabaseAdmin as any)
+  const { data: dropped } = await (supabaseAdmin as any)
     .from("ufc_fights")
     .update({ card_position: "other" })
     .eq("event_id", event.id)
     .in("card_position", ["main", "co_main"])
-    .not("apimma_fight_id", "in", `(${keepIds.join(",")})`);
+    .not("apimma_fight_id", "in", `(${keepIds.join(",")})`)
+    .select("id");
+
+  // Cancelled bouts shouldn't keep tradeable markets open.
+  const cancelledIds = card.filter((f) => f.status.short === "CANC").map((f) => f.id);
+  if (cancelledIds.length) {
+    const { data: cancelledRows } = await (supabaseAdmin as any)
+      .from("ufc_fights")
+      .select("id")
+      .eq("event_id", event.id)
+      .in("apimma_fight_id", cancelledIds);
+    const ids = [...(cancelledRows ?? []).map((r: any) => r.id), ...((dropped ?? []).map((r: any) => r.id))];
+    if (ids.length) {
+      await (supabaseAdmin as any)
+        .from("ufc_fight_markets")
+        .update({ is_active: false })
+        .in("fight_id", ids);
+    }
+  }
 
   await (supabaseAdmin as any).from("audit_log").insert({
     user_id: null,
     action: "ufc.odds_sync",
     entity: "ufc_events",
     entity_id: event.id,
-    metadata: { fights: targets.length, markets: totalMarkets, provider: "api-mma" },
+    metadata: { event: event.name, fights: targets.length, markets: totalMarkets, provider: "api-mma" },
   });
 
-  return { ok: true, fights: targets.length, markets: totalMarkets };
+  return { fights: targets.length, markets: totalMarkets };
 }
+
+/**
+ * Refresh every upcoming UFC card (not just one "active" event), budgeting
+ * feed calls by how soon each card starts. Mirrors how football/F1 refresh
+ * all upcoming fixtures automatically.
+ */
+export async function runUfcOddsSync(
+  opts: { force?: boolean; maxEvents?: number } = {},
+): Promise<UfcSyncResult> {
+  const key = process.env.API_FOOTBALL_KEY?.trim();
+  if (!key) return { ok: false, skipped: "API_FOOTBALL_KEY not set" };
+
+  const cutoffIso = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
+  const { data: events } = await (supabaseAdmin as any)
+    .from("ufc_events")
+    .select("id, event_key, name, starts_at, last_synced_at")
+    .gt("starts_at", cutoffIso)
+    .order("starts_at", { ascending: true })
+    .limit(12);
+
+  const upcoming = (events ?? []) as UfcEventRow[];
+  if (!upcoming.length) return { ok: true, skipped: "no upcoming events" };
+
+  const due = upcoming.filter((e) => {
+    if (opts.force) return true;
+    if (!e.last_synced_at) return true;
+    return Date.now() - new Date(e.last_synced_at).getTime() >= oddsFreshnessMsFor(e.starts_at);
+  });
+  if (!due.length) return { ok: true, skipped: "all upcoming cards fresh" };
+
+  const budget = Math.max(1, opts.maxEvents ?? 3);
+  let fights = 0;
+  let markets = 0;
+  let planMessage: string | null = null;
+
+  for (const event of due.slice(0, budget)) {
+    try {
+      const res = await syncEventCard(event);
+      fights += res.fights;
+      markets += res.markets;
+      await (supabaseAdmin as any)
+        .from("ufc_events")
+        .update({ last_synced_at: new Date().toISOString(), last_sync_error: res.skipped ?? null })
+        .eq("id", event.id);
+    } catch (e) {
+      const message = (e as Error).message;
+      if (e instanceof ApiMmaPlanError) planMessage = message;
+      console.warn("[ufc-odds] event sync failed", event.name, message);
+      await (supabaseAdmin as any)
+        .from("ufc_events")
+        .update({ last_synced_at: new Date().toISOString(), last_sync_error: message })
+        .eq("id", event.id);
+      if (e instanceof ApiMmaPlanError) break; // plan/quota problem: stop burning calls
+    }
+  }
+
+  await writeUfcFeedState({
+    last_odds_at: new Date().toISOString(),
+    ...(planMessage ? { plan_limited: true, plan_message: planMessage } : {}),
+  });
+
+  return { ok: true, fights, markets, ...(planMessage ? { skipped: planMessage } : {}) };
+}
+
 
 // ---------------------------------------------------------------------------
 // Auto-settle winner markets (moneyline + three_way) from the MMA feed.
