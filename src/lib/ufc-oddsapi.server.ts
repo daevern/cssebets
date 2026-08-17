@@ -81,22 +81,16 @@ function clusterCards(events: OddsApiEvent[]) {
 }
 
 /**
- * Headline bout heuristic: the main event draws the widest bookmaker coverage
- * and is usually last on the card. Score both, prefer coverage.
+ * Card order heuristic: the feed has no card-position field, so we order by
+ * start time (main event closes the show) and use bookmaker coverage as the
+ * tiebreak — headline bouts are priced by the most books.
  */
-function pickMainEvent(card: OddsApiEvent[]) {
-  let best = card[0]!;
-  let bestScore = -1;
-  for (const ev of card) {
-    const books = (ev.bookmakers ?? []).length;
-    const late = new Date(ev.commence_time).getTime() / 1e13; // tiebreak only
-    const score = books + late;
-    if (score > bestScore) {
-      bestScore = score;
-      best = ev;
-    }
-  }
-  return best;
+function orderCard(card: OddsApiEvent[]) {
+  return [...card].sort((a, b) => {
+    const t = new Date(b.commence_time).getTime() - new Date(a.commence_time).getTime();
+    if (t !== 0) return t;
+    return (b.bookmakers ?? []).length - (a.bookmakers ?? []).length;
+  });
 }
 
 function cardKey(startsAt: string) {
