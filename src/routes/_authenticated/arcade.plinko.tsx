@@ -303,7 +303,8 @@ function PlinkoPage() {
       <div className="relative isolate">
       <ArcadeGlow game="plinko" />
       <ArcadeStage game="plinko" className="relative z-10">
-      <ArcadeEntrance game="plinko">
+      <ArcadeEntrance game="plinko" className="relative">
+        <MiniCabinetTitle game="plinko" title="Plinko" />
         <div className="relative flex flex-col justify-start">
         <div
           className="arcade-stage relative w-full overflow-hidden rounded-2xl max-md:rounded-none"
@@ -312,20 +313,6 @@ function PlinkoPage() {
               "linear-gradient(90deg, transparent 0%, #000 2.5%, #000 97.5%, transparent 100%)",
           }}
         >
-          {activeBalls.length === 0 && !lastGame && !pending && (
-            <div className="pointer-events-none absolute inset-x-0 top-2 z-20 flex justify-center">
-              <span
-                className="rounded-full border px-3 py-1 text-[9px] font-bold uppercase tracking-[0.22em] backdrop-blur-sm motion-safe:animate-[fade-in_.4s_ease-out]"
-                style={{
-                  background: "rgba(10,13,32,.72)",
-                  borderColor: "rgba(143,155,255,.35)",
-                  color: "#8f9bff",
-                }}
-              >
-                Pick a chip, then drop
-              </span>
-            </div>
-          )}
           <SettlePlaque
             game="plinko"
             show={beat && plaqueMult != null}
@@ -345,18 +332,6 @@ function PlinkoPage() {
             ballAccent={equipped.data?.ball?.preview_accent ?? null}
             boardColor={equipped.data?.board?.preview_color ?? null}
             boardAccent={equipped.data?.board?.preview_accent ?? null}
-            riskOptions={RISK_OPTIONS.map((r) => ({ key: r.key, label: r.label }))}
-            risk={riskMode}
-            onRiskChange={(v) => setRiskMode(v as RiskMode)}
-            modeOptions={[
-              { key: "manual", label: "Manual" },
-              { key: "auto", label: "Auto" },
-            ]}
-            mode={mode}
-            onModeChange={(v) => setMode(v as BetMode)}
-            rowOptions={ROW_OPTIONS}
-            onRowsChange={(r) => setRows(r as RowsCount)}
-            controlsDisabled={locked}
           />
           {/* Soft edge fade so the cabinet dissolves into the page instead of ending in a hard box. */}
           <div
@@ -368,27 +343,29 @@ function PlinkoPage() {
             }}
           />
         </div>
-
-
-
-        <RecentResultsStrip
-          game="plinko"
-          empty="No drops yet"
-          items={recent.slice(0, 12).map((m, i) => ({
-            key: `${i}-${m}`,
-            label: `${m.toFixed(m >= 100 ? 0 : 2)}×`,
-            tone: m >= 5 ? "hot" : m >= 1 ? "win" : "loss",
-          }))}
-          trailing={
-            lastGame && !busy ? (
-              <ArcadeVerifyCue game="plinko" onClick={() => setVerifyOpen(true)} />
-            ) : null
-          }
-        />
       </div>
+        <ArcadeIdleCue game="plinko" show={activeBalls.length === 0 && !lastGame && !pending}>
+          Pick a chip, then drop
+        </ArcadeIdleCue>
       </ArcadeEntrance>
       </ArcadeStage>
       </div>
+
+      <RecentResultsStrip
+        game="plinko"
+        empty="No drops yet"
+        items={recent.slice(0, 12).map((m, i) => ({
+          key: `${i}-${m}`,
+          label: `${m.toFixed(m >= 100 ? 0 : 2)}×`,
+          tone: m >= 5 ? "hot" : m >= 1 ? "win" : "loss",
+        }))}
+        trailing={
+          lastGame && !busy ? (
+            <ArcadeVerifyCue game="plinko" onClick={() => setVerifyOpen(true)} />
+          ) : null
+        }
+      />
+
 
 
 
