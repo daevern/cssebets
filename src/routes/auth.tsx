@@ -170,16 +170,16 @@ function LoginPage() {
               className={authInputClass}
             />
           </AuthField>
-
-          <div className="flex items-center gap-3 py-1">
-            <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
-            <span className="text-xs text-[var(--color-ink-muted)]">or</span>
-            <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
-          </div>
         </div>
 
         <div className="shrink-0 space-y-3 pt-4">
           <AuthSubmit loading={loading}>{loading ? "Signing in…" : "Sign in"}</AuthSubmit>
+
+          <div className="flex items-center gap-3">
+            <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
+            <span className="text-xs text-[var(--color-ink-muted)]">or</span>
+            <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
+          </div>
 
           <button
             type="button"
