@@ -1033,7 +1033,7 @@ function TeamBlock({ name, goals = [], align = "left", accent = "home" }: { name
     <div className="flex flex-col items-center gap-2">
       <div className={`relative h-14 w-20 overflow-hidden border ${accentCls}`}>
         {url ? (
-          <img src={url} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
+          <img src={url} alt={`${name} badge`} className="h-full w-full object-contain p-1" loading="lazy" />
         ) : (
           <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[11px] font-black uppercase tracking-wider">
             {name.slice(0, 3)}
