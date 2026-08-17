@@ -83,15 +83,7 @@ export function PlinkoBoard({
   ballAccent,
   boardColor,
   boardAccent,
-  riskOptions,
-  risk,
-  onRiskChange,
-  modeOptions,
-  mode,
-  onModeChange,
-  rowOptions,
-  onRowsChange,
-  controlsDisabled,
+}: Props) {
 }: Props) {
   const ballFill = ballColor ?? "#ffffff";
   const ballStroke = ballAccent ?? "#8f9bff";
