@@ -327,8 +327,6 @@ function PlinkoPage() {
       <VerifyDialog open={verifyOpen} onOpenChange={setVerifyOpen} gameId={lastGame?.id ?? null} />
 
       <ControlDock game="plinko">
-        <FlatCosmeticsStrip disabled={locked} />
-
         <DockRow scroll>
           <DockSeg
             options={RISK_OPTIONS.map((r) => ({ key: r.key, label: r.label }))}
