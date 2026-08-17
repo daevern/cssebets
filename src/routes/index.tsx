@@ -7,18 +7,18 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "CSSEBets – The FIFA World Cup 2026 Prediction Market" },
+      { title: "CSSEBets – Sports Prediction Markets & Arcade Games" },
       {
         name: "description",
         content:
-          "Trade live markets on every match, goal, lineup, and key moment with dynamic, community-driven pricing.",
+          "Trade live prediction markets on football, F1 and UFC, or play provably fair arcade games. One wallet, real-time odds, and community-driven pricing.",
       },
-      { property: "og:title", content: "CSSEBets – The FIFA World Cup 2026 Prediction Market" },
+      { property: "og:title", content: "CSSEBets – Sports Prediction Markets & Arcade Games" },
       { property: "og:type", content: "website" },
       {
         property: "og:description",
         content:
-          "Trade live markets on every match, goal, lineup, and key moment with dynamic, community-driven pricing.",
+          "Trade live prediction markets on football, F1 and UFC, or play provably fair arcade games. One wallet, real-time odds, and community-driven pricing.",
       },
       { property: "og:url", content: "https://cssebets.com/" },
       { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
