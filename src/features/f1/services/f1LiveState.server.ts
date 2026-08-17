@@ -65,3 +65,43 @@ export async function refreshF1LiveRaceState(raceId: string) {
     .maybeSingle();
   return data;
 }
+
+/**
+ * Append current open-market odds as new snapshot rows so the Kalshi-style
+ * MarketAnalyticsCard LIVE window keeps ticking (same idea as WC match_odds_snapshots).
+ */
+export async function sampleF1OpenMarketSnapshots(opts: {
+  withinHours?: number;
+} = {}): Promise<{ races: number; snapshots: number }> {
+  const withinHours = opts.withinHours ?? 72;
+  const now = Date.now();
+  const fromIso = new Date(now - 4 * 3600_000).toISOString();
+  const toIso = new Date(now + withinHours * 3600_000).toISOString();
+
+  const { data: races } = await (supabaseAdmin as any)
+    .from("f1_races")
+    .select("id")
+    .gte("starts_at", fromIso)
+    .lte("starts_at", toIso)
+    .neq("status", "finished")
+    .limit(12);
+
+  let snapshots = 0;
+  for (const race of (races ?? []) as Array<{ id: string }>) {
+    const { data: markets } = await (supabaseAdmin as any)
+      .from("f1_race_markets")
+      .select("id, odds, status")
+      .eq("race_id", race.id)
+      .eq("status", "open");
+    const rows = ((markets ?? []) as Array<{ id: string; odds: number }>)
+      .filter((m) => Number(m.odds) > 1)
+      .map((m) => ({ market_id: m.id, odds: Number(m.odds) }));
+    if (!rows.length) continue;
+    for (let i = 0; i < rows.length; i += 500) {
+      const chunk = rows.slice(i, i + 500);
+      const { error } = await (supabaseAdmin as any).from("f1_race_odds_snapshots").insert(chunk);
+      if (!error) snapshots += chunk.length;
+    }
+  }
+  return { races: races?.length ?? 0, snapshots };
+}

@@ -184,7 +184,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
         historyFn={getF1CardMarketHistory}
         tradesFn={getF1CardRecentTrades}
         queryNamespace="f1"
-        realtime={false}
+        realtime
       />
 
       <div className="mb-4 mt-3 h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />

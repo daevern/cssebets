@@ -774,21 +774,10 @@ async function syncOddsForFight(fightRow: {
   if (mErr) throw new Error(`market save failed: ${mErr.message}`);
 
 
-  // De-dupe snapshots
-  const { data: last } = await (supabaseAdmin as any)
-    .from("ufc_market_snapshots")
-    .select("market_type, selection_key, odds")
-    .eq("fight_id", fightRow.id)
-    .order("sampled_at", { ascending: false })
-    .limit(50);
-  const lastMap = new Map<string, number>();
-  for (const r of (last ?? []) as any[]) {
-    const k = `${r.market_type}::${r.selection_key}`;
-    if (!lastMap.has(k)) lastMap.set(k, Number(r.odds));
-  }
-  const fresh = snapshots.filter((s) => lastMap.get(`${s.market_type}::${s.selection_key}`) !== s.odds);
-  if (fresh.length) {
-    await (supabaseAdmin as any).from("ufc_market_snapshots").insert(fresh);
+  // Always append a snapshot sample each sync (World Cup style). Skipping
+  // unchanged prices left UFC graphs static between rare moves.
+  if (snapshots.length) {
+    await (supabaseAdmin as any).from("ufc_market_snapshots").insert(snapshots);
   }
   return upserts.length;
 }
@@ -958,8 +947,9 @@ async function writeUfcFeedState(patch: Record<string, unknown>) {
 /** Refresh cadence for a card, based on how close it is to starting. */
 function oddsFreshnessMsFor(startsAtIso: string) {
   const delta = new Date(startsAtIso).getTime() - Date.now();
-  if (delta < 6 * 60 * 60 * 1000) return 4 * 60 * 1000;       // fight week/night: 4 min
-  if (delta < 48 * 60 * 60 * 1000) return 30 * 60 * 1000;      // next two days: 30 min
+  // Fight night / live window: ~1 min so MarketAnalyticsCard LIVE ticks like WC.
+  if (delta < 6 * 60 * 60 * 1000) return 60 * 1000;
+  if (delta < 48 * 60 * 60 * 1000) return 5 * 60 * 1000;       // next two days: 5 min
   if (delta < 10 * 24 * 60 * 60 * 1000) return 3 * 60 * 60 * 1000; // next 10 days: 3h
   return 12 * 60 * 60 * 1000;                                  // far out: twice a day
 }

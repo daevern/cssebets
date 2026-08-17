@@ -336,29 +336,6 @@ export function MarketAnalyticsCard({
             : data.marketLabel}
         </h2>
 
-        {data && data.availableMarkets.length > 1 && (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {data.availableMarkets.map((m) => {
-              const active = (market ?? data.market) === m.key;
-              return (
-                <button
-                  key={m.key}
-                  type="button"
-                  onClick={() => setMarket(m.key)}
-                  aria-pressed={active}
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight transition-colors ${
-                    active
-                      ? "bg-white/15 text-white ring-1 ring-white/30"
-                      : "text-white/45 hover:text-white/80"
-                  }`}
-                >
-                  {m.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
         {/* Legend — minimal */}
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
           {filteredSeries.map((s, idx) => {

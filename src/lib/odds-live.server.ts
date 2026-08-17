@@ -1,10 +1,11 @@
 // Server-only: pull live in-play 1X2 odds from API-Football and persist as
-// match_odds_snapshots + reference_odds updates. Falls back to The Odds API
-// for any live fixture API-Football doesn't cover.
+// match_odds_snapshots (World Cup) + sports_odds_snapshots (club football).
+// Falls back to The Odds API for any WC fixture API-Football doesn't cover.
 //
 // A single API-Football /odds/live call returns odds for every in-play fixture
 // worldwide, so the cost is 1 request per poll regardless of how many matches
-// are live simultaneously.
+// are live simultaneously. That dense poll cadence is what makes the Kalshi-style
+// MarketAnalyticsCard LIVE window move every minute/second.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { apiFootballGet } from "@/lib/apifootball.server";
 import { apply3WayMargin } from "@/lib/odds-margin.server";
@@ -47,6 +48,7 @@ export type LiveOddsSyncResult = {
   skipped?: string;
   processed?: number;
   updated?: number;
+  footballUpdated?: number;
   fallbackAttempted?: number;
   quota?: any;
 };
@@ -54,19 +56,61 @@ export type LiveOddsSyncResult = {
 export async function runLiveOddsSync(): Promise<LiveOddsSyncResult> {
   const now = new Date();
   const start = new Date(now.getTime() - 3 * 60 * 60 * 1000).toISOString();
+  const nowIso = now.toISOString();
 
-  const { data: live } = await (supabaseAdmin as any)
-    .from("matches")
-    .select("id, apifootball_fixture_id, home_team, away_team, margin_disabled, kickoff_at")
+  const [{ data: liveWc }, { data: liveFootball }] = await Promise.all([
+    (supabaseAdmin as any)
+      .from("matches")
+      .select("id, apifootball_fixture_id, home_team, away_team, margin_disabled, kickoff_at")
+      .neq("status", "finished")
+      .gt("kickoff_at", start)
+      .lt("kickoff_at", nowIso),
+    (supabaseAdmin as any)
+      .from("sports_events")
+      .select("id, scheduled_at, status")
+      .eq("sport_code", "football")
+      .in("status", ["live", "in_play", "1H", "2H", "HT", "ET", "PEN", "BT"])
+      .gt("scheduled_at", start)
+      .lt("scheduled_at", nowIso),
+  ]);
+
+  // Also treat club fixtures that kicked off in the last 3h and aren't finished
+  // as live — status strings vary by sync path.
+  const { data: recentlyStarted } = await (supabaseAdmin as any)
+    .from("sports_events")
+    .select("id, scheduled_at, status")
+    .eq("sport_code", "football")
     .neq("status", "finished")
-    .gt("kickoff_at", start)
-    .lt("kickoff_at", now.toISOString());
+    .neq("status", "postponed")
+    .neq("status", "cancelled")
+    .gt("scheduled_at", start)
+    .lt("scheduled_at", nowIso);
 
-  if (!live?.length) return { ok: true, skipped: "no live fixtures" };
+  const footballById = new Map<string, any>();
+  for (const e of [...(liveFootball ?? []), ...(recentlyStarted ?? [])] as any[]) {
+    footballById.set(e.id, e);
+  }
+  const footballEvents = [...footballById.values()];
 
-  const fixtureIds = new Set<number>(
-    (live as any[]).map((m) => Number(m.apifootball_fixture_id)).filter((n) => Number.isFinite(n) && n > 0),
-  );
+  if (!liveWc?.length && !footballEvents.length) {
+    return { ok: true, skipped: "no live fixtures" };
+  }
+
+  // Resolve api-football fixture ids for club events.
+  const footballIds = footballEvents.map((e) => e.id);
+  const { data: mappings } = footballIds.length
+    ? await (supabaseAdmin as any)
+        .from("sports_event_provider_mappings")
+        .select("sports_event_id, provider_event_id")
+        .eq("provider", "api-football")
+        .in("sports_event_id", footballIds)
+    : { data: [] as any[] };
+
+  const fixtureToFootball = new Map<number, string>();
+  for (const m of (mappings ?? []) as any[]) {
+    const fid = Number(m.provider_event_id);
+    if (Number.isFinite(fid) && fid > 0) fixtureToFootball.set(fid, m.sports_event_id);
+  }
 
   // Single global call — 1 quota unit.
   const resp = await apiFootballGet<LiveOddsRow[]>(`/odds/live`);
@@ -79,26 +123,33 @@ export async function runLiveOddsSync(): Promise<LiveOddsSyncResult> {
   }
 
   let updated = 0;
+  let footballUpdated = 0;
   let fallbackAttempted = 0;
-  const nowIso = new Date().toISOString();
 
-  for (const m of live as any[]) {
+  for (const m of (liveWc ?? []) as any[]) {
     const fid = Number(m.apifootball_fixture_id);
     const row = Number.isFinite(fid) ? rowsByFixture.get(fid) : undefined;
     const raw = row ? extract1X2(row) : null;
 
     if (!raw) {
-      // Fallback to The Odds API for just this fixture — narrow use only.
       fallbackAttempted++;
       const fallback = await fetchFallbackOdds(m.home_team, m.away_team, m.kickoff_at);
       if (!fallback) continue;
-      await persistOdds(m, fallback, nowIso, "the-odds-api-live");
+      await persistWcOdds(m, fallback, nowIso, "the-odds-api-live");
       updated++;
       continue;
     }
 
-    await persistOdds(m, raw, nowIso, "api-football-live");
+    await persistWcOdds(m, raw, nowIso, "api-football-live");
     updated++;
+  }
+
+  for (const [fid, eventId] of fixtureToFootball) {
+    const row = rowsByFixture.get(fid);
+    const raw = row ? extract1X2(row) : null;
+    if (!raw) continue;
+    const ok = await persistFootballOdds(eventId, raw, nowIso);
+    if (ok) footballUpdated++;
   }
 
   await (supabaseAdmin as any).from("audit_log").insert({
@@ -106,19 +157,26 @@ export async function runLiveOddsSync(): Promise<LiveOddsSyncResult> {
     action: "odds.live_sync",
     entity: "matches",
     entity_id: null,
-    metadata: { updated, live_count: live.length, fallback_attempted: fallbackAttempted },
+    metadata: {
+      updated,
+      football_updated: footballUpdated,
+      live_count: (liveWc ?? []).length,
+      football_live_count: footballEvents.length,
+      fallback_attempted: fallbackAttempted,
+    },
   });
 
   return {
     ok: true,
-    processed: live.length,
+    processed: (liveWc ?? []).length + footballEvents.length,
     updated,
+    footballUpdated,
     fallbackAttempted,
     quota: "quota" in resp ? resp.quota : undefined,
   };
 }
 
-async function persistOdds(
+async function persistWcOdds(
   match: { id: string; margin_disabled?: boolean | null },
   raw: { home: number; draw: number; away: number },
   nowIso: string,
@@ -153,6 +211,73 @@ async function persistOdds(
   } catch (e) {
     console.log(`[odds-live] regenerate markets failed for ${match.id}: ${(e as Error).message}`);
   }
+}
+
+/** Club football: always stamp provider_ts=now so each poll creates a graph point. */
+async function persistFootballOdds(
+  eventId: string,
+  raw: { home: number; draw: number; away: number },
+  nowIso: string,
+): Promise<boolean> {
+  const { data: market, error: mErr } = await (supabaseAdmin as any)
+    .from("sports_markets")
+    .upsert(
+      {
+        sports_event_id: eventId,
+        market_key: "match_result",
+        display_name: "Match Result",
+        category: "Match",
+        period: "full",
+        line: null,
+        provider: "api-football",
+        status: "open",
+        sort_order: 1,
+        provider_odds_ts: nowIso,
+        last_odds_update_at: nowIso,
+        suspension_reason: null,
+      },
+      { onConflict: "sports_event_id,market_key,period,line" },
+    )
+    .select("id")
+    .single();
+  if (mErr || !market?.id) return false;
+  const marketId = market.id as string;
+
+  const sels = [
+    { selection_key: "home", display_name: "Home", decimal_odds: raw.home, sort_order: 1 },
+    { selection_key: "draw", display_name: "Draw", decimal_odds: raw.draw, sort_order: 2 },
+    { selection_key: "away", display_name: "Away", decimal_odds: raw.away, sort_order: 3 },
+  ];
+
+  for (const sel of sels) {
+    await (supabaseAdmin as any)
+      .from("sports_market_selections")
+      .upsert(
+        {
+          sports_market_id: marketId,
+          selection_key: sel.selection_key,
+          display_name: sel.display_name,
+          line: null,
+          decimal_odds: sel.decimal_odds,
+          status: "open",
+          sort_order: sel.sort_order,
+        },
+        { onConflict: "sports_market_id,selection_key" },
+      );
+
+    await (supabaseAdmin as any).from("sports_odds_snapshots").insert({
+      sports_event_id: eventId,
+      sports_market_id: marketId,
+      market_key: "match_result",
+      selection_key: sel.selection_key,
+      provider: "api-football-live",
+      decimal_odds: sel.decimal_odds,
+      // Unique per poll so the Kalshi LIVE chart gets a new point every tick
+      // (even when the price is flat), matching World Cup match_odds_snapshots.
+      provider_ts: nowIso,
+    });
+  }
+  return true;
 }
 
 // Narrow fallback: single Odds API call, filtered to the one fixture we need.

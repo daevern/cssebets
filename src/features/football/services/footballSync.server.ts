@@ -236,7 +236,11 @@ export async function syncFootballOddsForEvent(eventId: string): Promise<{
 
   const markets = normalizeOdds(payload);
   const now = new Date().toISOString();
-  const providerTs = payload.update ?? now;
+  // Stamp every successful poll with "now" so the Kalshi LIVE chart gets a
+  // new history point each sync (same as World Cup match_odds_snapshots).
+  // Using the provider's update timestamp would collapse identical polls via
+  // sports_odds_snapshots_dedupe_idx and leave a flat/static graph.
+  const providerTs = now;
   let count = 0;
 
   for (const m of markets) {
@@ -317,13 +321,15 @@ export async function syncFootballOddsBatch(opts: {
 
   // Pick scheduled events in the next 7 days whose latest odds snapshot is stale
 
+  // Include live fixtures so in-play odds keep feeding the market graph
+  // (World Cup does this via odds-live; club football must not stop at kickoff).
   const { data: events } = await supabaseAdmin
     .from("sports_events" as any)
-    .select("id, scheduled_at, updated_at")
+    .select("id, scheduled_at, updated_at, status")
     .eq("sport_code", "football")
-    .eq("status", "scheduled")
-    .gt("scheduled_at", new Date().toISOString())
+    .in("status", ["scheduled", "live", "in_play", "1H", "2H", "HT"])
     .lt("scheduled_at", horizon)
+    .gt("scheduled_at", new Date(Date.now() - 3 * 3600_000).toISOString())
     .order("scheduled_at", { ascending: true })
     .limit(maxEvents * 3);
 

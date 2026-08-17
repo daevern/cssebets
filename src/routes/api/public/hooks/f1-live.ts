@@ -34,7 +34,9 @@ export const Route = createFileRoute("/api/public/hooks/f1-live")({
           await (supabaseAdmin as any).rpc("close_started_f1_race_markets");
 
           // Refresh live state cache for active races.
-          const { refreshF1LiveRaceState } = await import("@/features/f1/services/f1LiveState.server");
+          const { refreshF1LiveRaceState, sampleF1OpenMarketSnapshots } = await import(
+            "@/features/f1/services/f1LiveState.server"
+          );
           let refreshed = 0;
           for (const r of races ?? []) {
             try {
@@ -44,9 +46,12 @@ export const Route = createFileRoute("/api/public/hooks/f1-live")({
               // best-effort per race
             }
           }
-          return new Response(JSON.stringify({ ok: true, races: races?.length ?? 0, refreshed }), {
-            headers: { "content-type": "application/json" },
-          });
+          // Dense odds samples for the Kalshi market-movement chart.
+          const sampled = await sampleF1OpenMarketSnapshots({ withinHours: 72 });
+          return new Response(
+            JSON.stringify({ ok: true, races: races?.length ?? 0, refreshed, sampled }),
+            { headers: { "content-type": "application/json" } },
+          );
         } catch (e) {
           return new Response(JSON.stringify({ ok: false, error: (e as Error).message }), {
             status: 500,
