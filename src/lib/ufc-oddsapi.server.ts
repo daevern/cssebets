@@ -139,7 +139,9 @@ export async function runUfcOddsApiSync(
 
   for (const card of cards) {
     const startsAt = card[0]!.commence_time;
-    const main = pickMainEvent(card);
+    const ordered = orderCard(card); // [main, co-main, ...]
+    const main = ordered[0]!;
+    const coMain = ordered[1];
     const event_key = cardKey(startsAt);
     const name = `UFC Fight Night: ${main.home_team} vs ${main.away_team}`;
 
