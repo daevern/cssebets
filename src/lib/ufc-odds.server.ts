@@ -1284,7 +1284,9 @@ function slugifyEventKey(slug: string) {
 
 const DISCOVERY_WINDOW_DAYS = 45;
 const DISCOVERY_MAX_CALLS = 46;
+const DISCOVERY_BACKFILL_DAYS = 2;
 const DISCOVERY_THROTTLE_MS = 25 * 60 * 1000;
+
 
 export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Promise<UfcDiscoveryResult> {
   const key = process.env.API_FOOTBALL_KEY?.trim();
