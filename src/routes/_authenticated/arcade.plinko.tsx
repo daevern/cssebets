@@ -21,8 +21,6 @@ import {
   DockReadout,
   DockRow,
   DockSeg,
-
-
 } from "@/components/arcade/ControlDock";
 import { cn } from "@/lib/utils";
 import { ArcadeStage } from "@/components/arcade/ArcadeStage";
@@ -47,8 +45,6 @@ import type { ConfigVersion, PlinkoRisk, PlinkoRows } from "@/lib/arcade/config-
 const Stat = (props: Omit<React.ComponentProps<typeof HudPlaque>, "game">) => (
   <HudPlaque game="plinko" {...props} />
 );
-
-
 
 export const Route = createFileRoute("/_authenticated/arcade/plinko")({
   head: () => ({
@@ -154,7 +150,6 @@ function PlinkoPage() {
   const totalCost = Math.round(stakePerBall * ballCount * 100) / 100;
   const canAfford = balance >= totalCost;
   const busy = activeBalls.length > 0;
-
 
   const adjustBalance = (delta: number) => {
     qc.setQueryData(["plinko-profile"], (prev: any) => {
@@ -322,7 +317,6 @@ function PlinkoPage() {
         </ArcadeStage>
       </div>
 
-
       <RecentResultsStrip
         game="plinko"
         empty="No drops yet"
@@ -337,9 +331,6 @@ function PlinkoPage() {
           ) : null
         }
       />
-
-
-
 
       <VerifyDialog open={verifyOpen} onOpenChange={setVerifyOpen} gameId={lastGame?.id ?? null} />
 
@@ -370,8 +361,6 @@ function PlinkoPage() {
             disabled={locked}
           />
         </DockRow>
-
-
 
         <DockRow scroll>
           <ChipRack
@@ -477,10 +466,6 @@ function PlinkoPage() {
           </DockNote>
         )}
       </ControlDock>
-
     </div>
   );
 }
-
-
-

@@ -53,7 +53,6 @@ function DragonMark() {
   );
 }
 
-
 /** Fire bomb / explosion that erupts on the tile you got wrong. */
 function FireBlast() {
   return (
@@ -101,7 +100,12 @@ function FireBlast() {
 function CastleCrown() {
   return (
     <div className="relative -mx-3 -mt-3 mb-2 h-[64px] overflow-hidden rounded-t-[14px]">
-      <svg viewBox="0 0 360 64" className="absolute inset-0 h-full w-full" preserveAspectRatio="xMidYMax slice" aria-hidden>
+      <svg
+        viewBox="0 0 360 64"
+        className="absolute inset-0 h-full w-full"
+        preserveAspectRatio="xMidYMax slice"
+        aria-hidden
+      >
         <defs>
           <linearGradient id="twStone" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#7d8b9c" />
@@ -133,7 +137,6 @@ function CastleCrown() {
     </div>
   );
 }
-
 
 /**
  * Dragon Towers playfield — eight rows climbed bottom-up inside a stone keep.
@@ -199,7 +202,6 @@ export function TowersBoard({
     >
       <CastleCrown />
 
-
       {/* scorch flash over the whole keep */}
       {boom && (
         <span
@@ -240,7 +242,6 @@ export function TowersBoard({
                 )}
                 style={{ gridTemplateColumns: `repeat(${shape.tiles}, minmax(0,1fr))` }}
               >
-
                 {Array.from({ length: shape.tiles }, (_, tile) => {
                   const isDragon = dragons?.includes(tile) ?? false;
                   const isPick = picked === tile;
@@ -297,7 +298,6 @@ export function TowersBoard({
                     </button>
                   );
                 })}
-
               </div>
             </div>
           );
