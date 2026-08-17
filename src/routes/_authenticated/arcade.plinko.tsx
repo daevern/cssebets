@@ -258,7 +258,7 @@ function PlinkoPage() {
 
   return (
     <div className="flex flex-col gap-2">
-      <HudBar game="plinko" className="items-start">
+      <HudBar game="plinko">
         <Stat className="flex-1" label="Balance" value={<AnimatedBalance value={balance} />} />
         <Stat
           className="flex-1"
@@ -276,11 +276,6 @@ function PlinkoPage() {
                 : "—"
           }
         />
-        <Stat
-          className="flex-1"
-          label="Highest multiplier"
-          value={`${Number(bestQ.data?.value ?? 0).toFixed(2)}×`}
-        />
         <FairnessPlaque
           game="plinko"
           rtpLabel={
@@ -292,68 +287,41 @@ function PlinkoPage() {
           }
           tag="Fair"
         />
-        <div className="flex w-14 shrink-0 flex-col items-stretch gap-1">
-          <HowItWorksDialog
-            rows={rows}
-            riskMode={riskMode}
-            slots={slots}
-            configVersion={currentProfile?.version}
-          />
-        </div>
       </HudBar>
-
 
       {/* Colour spill lives OUTSIDE the stage: ArcadeStage clips its children. */}
       <div className="relative isolate">
-      <ArcadeGlow game="plinko" />
-      <ArcadeStage game="plinko" className="relative z-10">
-      <ArcadeEntrance game="plinko" className="relative">
-        <MiniCabinetTitle game="plinko" title="Plinko" />
-        <div className="relative flex flex-col justify-start">
-        <div
-          className="arcade-stage relative w-full overflow-hidden rounded-2xl max-md:rounded-none"
-          style={{
-            maskImage:
-              "linear-gradient(90deg, transparent 0%, #000 2.5%, #000 97.5%, transparent 100%)",
-          }}
-        >
-          <SettlePlaque
-            game="plinko"
-            show={beat && plaqueMult != null}
-            label={(plaqueMult ?? 0) >= 1 ? "Payout" : "Landed"}
-            value={`${Number(plaqueMult ?? 0).toFixed(2)}×`}
-          />
-          <PlinkoBoard
-            rows={rows}
-            slots={slots}
-            activeBalls={activeBalls}
-            onBallLanded={onBallLanded}
-            reducedMotion={
-              typeof window !== "undefined" &&
-              window.matchMedia("(prefers-reduced-motion: reduce)").matches
-            }
-            ballColor={equipped.data?.ball?.preview_color ?? null}
-            ballAccent={equipped.data?.ball?.preview_accent ?? null}
-            boardColor={equipped.data?.board?.preview_color ?? null}
-            boardAccent={equipped.data?.board?.preview_accent ?? null}
-          />
-          {/* Soft edge fade so the cabinet dissolves into the page instead of ending in a hard box. */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-16 md:hidden"
-            style={{
-              background:
-                "linear-gradient(to bottom, rgba(7,8,13,0) 0%, rgba(7,8,13,0.55) 55%, rgba(7,8,13,0.95) 100%)",
-            }}
-          />
-        </div>
+        <ArcadeGlow game="plinko" />
+        <ArcadeStage game="plinko" className="relative z-10">
+          <ArcadeEntrance game="plinko" className="relative">
+            <MiniCabinetTitle game="plinko" title="Plinko" />
+            <SettlePlaque
+              game="plinko"
+              show={beat && plaqueMult != null}
+              label={(plaqueMult ?? 0) >= 1 ? "Payout" : "Landed"}
+              value={`${Number(plaqueMult ?? 0).toFixed(2)}×`}
+            />
+            <PlinkoBoard
+              rows={rows}
+              slots={slots}
+              activeBalls={activeBalls}
+              onBallLanded={onBallLanded}
+              reducedMotion={
+                typeof window !== "undefined" &&
+                window.matchMedia("(prefers-reduced-motion: reduce)").matches
+              }
+              ballColor={equipped.data?.ball?.preview_color ?? null}
+              ballAccent={equipped.data?.ball?.preview_accent ?? null}
+              boardColor={equipped.data?.board?.preview_color ?? null}
+              boardAccent={equipped.data?.board?.preview_accent ?? null}
+            />
+            <ArcadeIdleCue game="plinko" show={activeBalls.length === 0 && !lastGame && !pending}>
+              Pick a chip, then drop
+            </ArcadeIdleCue>
+          </ArcadeEntrance>
+        </ArcadeStage>
       </div>
-        <ArcadeIdleCue game="plinko" show={activeBalls.length === 0 && !lastGame && !pending}>
-          Pick a chip, then drop
-        </ArcadeIdleCue>
-      </ArcadeEntrance>
-      </ArcadeStage>
-      </div>
+
 
       <RecentResultsStrip
         game="plinko"
