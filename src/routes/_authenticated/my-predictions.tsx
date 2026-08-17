@@ -73,6 +73,7 @@ function MyPredictionsPage() {
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
     staleTime: 0,
+    refetchInterval: 10_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("predictions")
@@ -90,6 +91,7 @@ function MyPredictionsPage() {
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
     staleTime: 0,
+    refetchInterval: 10_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ufc_bets")
@@ -126,6 +128,7 @@ function MyPredictionsPage() {
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
     staleTime: 0,
+    refetchInterval: 10_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("f1_bets")
@@ -143,6 +146,7 @@ function MyPredictionsPage() {
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
     staleTime: 0,
+    refetchInterval: 10_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("f1_championship_bets")
@@ -162,6 +166,7 @@ function MyPredictionsPage() {
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
     staleTime: 0,
+    refetchInterval: 10_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("sports_bets")
