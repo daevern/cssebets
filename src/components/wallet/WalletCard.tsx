@@ -13,6 +13,7 @@ import { getMyWallet } from "@/lib/wallet.functions";
 import { CashoutSheet } from "@/components/wallet/CashoutSheet";
 import { TopUpAmountModal } from "@/components/wallet/TopUpAmountModal";
 import { TopUpInstructionsModal } from "@/components/wallet/TopUpInstructionsModal";
+import { useIsDemoGuest } from "@/components/wallet/DemoWalletBootstrap";
 
 /* ---------------- helpers ---------------- */
 
