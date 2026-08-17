@@ -262,7 +262,7 @@ function MyPredictionsPage() {
 
 
   return (
-    <PageShell kicker="FIFA WORLD CUP · 2026" title="Your" titleAccent="Picks">
+    <PageShell title="Your" titleAccent="Picks">
       {isLoading ? (
         <StencilPanel>
           <div className="grid place-items-center py-12">
