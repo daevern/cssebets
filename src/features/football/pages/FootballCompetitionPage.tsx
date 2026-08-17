@@ -84,18 +84,30 @@ export function FootballCompetitionPage({ code }: { code: FootballCompetitionCod
     const l: FootballMatch[] = [];
     const u: FootballMatch[] = [];
     const c: FootballMatch[] = [];
+    // A fixture whose kickoff has passed is never "upcoming". The provider feed
+    // can lag (or be rate-limited) and leave rows on `scheduled`, so bucket by
+    // clock time as a fallback: in-window → Live, past the window → Completed.
+    const MATCH_WINDOW = 2.5 * 60 * 60 * 1000;
     for (const m of arr) {
       const k = new Date(m.kickoffAt).getTime();
       if (m.status === "finished") {
         if (k >= backstop) c.push(m);
         continue;
       }
+      if (m.status === "postponed" || m.status === "cancelled") continue;
       if (m.status === "live" || m.status === "halftime") {
         l.push(m);
         continue;
       }
-      if (k >= now) u.push(m);
+      if (k >= now) {
+        u.push(m);
+      } else if (now - k < MATCH_WINDOW) {
+        l.push(m);
+      } else if (k >= backstop) {
+        c.push(m);
+      }
     }
+
     const asc = (a: FootballMatch, b: FootballMatch) =>
       new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime();
     l.sort(asc);
