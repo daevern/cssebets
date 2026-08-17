@@ -54,6 +54,12 @@ function MyPredictionsPage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const uid = user?.id;
+  const isDemoGuest = useIsDemoGuest();
+  // Demo guests get a clean slate on every refresh: tickets from an earlier
+  // page load are hidden, mirroring the 1,000-point wallet reset.
+  const inSession = (ts: string | null | undefined) =>
+    !isDemoGuest || (ts ? new Date(ts).getTime() >= DEMO_SESSION_START_MS - 60_000 : true);
+
   const { data, isLoading } = useQuery({
     queryKey: ["my-predictions", uid],
     enabled: !!uid,
