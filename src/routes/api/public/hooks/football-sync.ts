@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/public/hooks/football-sync")({
             "@/features/football/services/footballSync.server"
           );
           const fixtures = await syncAllFootballFixtures();
-          const odds = await syncFootballOddsBatch({ maxEvents: 12, freshnessMinutes: 10 });
+          const odds = await syncFootballOddsBatch({ maxEvents: 25, freshnessMinutes: 10 });
           return new Response(JSON.stringify({ ok: true, fixtures, odds }), {
             headers: { "content-type": "application/json" },
           });
