@@ -113,7 +113,9 @@ export async function syncFootballFixtures(
   let created = 0;
   let updated = 0;
 
-  const from = new Date().toISOString().slice(0, 10);
+  // Look back 3 days so recently played fixtures keep their status/scores fresh.
+  const from = new Date(Date.now() - 3 * 86400_000).toISOString().slice(0, 10);
+
   const to = new Date(Date.now() + daysAhead * 86400_000).toISOString().slice(0, 10);
   const res = await afFetchFixtures(cfg.apiFootballLeagueId, cfg.currentSeason, { from, to });
   if (!res.ok) {
