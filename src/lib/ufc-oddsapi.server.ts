@@ -180,7 +180,13 @@ export async function runUfcOddsApiSync(
       }
       eventId = ins.id;
     } else {
-      await (supabaseAdmin as any).from("ufc_events").update({ is_active: true }).eq("id", eventId);
+      // Only rename cards we created ourselves — never overwrite an official
+      // API-Sports name like "UFC 331".
+      const owned = String(existing?.event_key ?? "").startsWith("oddsapi-");
+      await (supabaseAdmin as any)
+        .from("ufc_events")
+        .update({ is_active: true, ...(owned ? { name } : {}) })
+        .eq("id", eventId);
     }
 
     for (const bout of card) {
