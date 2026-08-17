@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { rankLabel, suitSymbol, isRedSuit } from "@/lib/arcade/blackjack-math";
 import { PlayingCard } from "@/components/arcade/PlayingCard";
+import { ArcadeHouseMark } from "@/components/arcade/ArcadeHouseMark";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import {
   POKER_CATEGORY_LABELS,
@@ -11,6 +12,7 @@ import {
 } from "@/lib/arcade/mini-math";
 
 const T = ARCADE_THEMES.poker;
+const INK = "#06140e";
 
 /** Compact paytable labels so nine rows fit a phone without truncating. */
 const SHORT: Record<string, string> = {
@@ -61,16 +63,19 @@ export function PokerBoard({
 
   const isFinal = stage === "final" && revealed;
 
-
   return (
     <div
       className="relative mx-auto w-full max-w-[460px] overflow-hidden rounded-[10px] px-3 pb-3 pt-3"
-      style={{ background: T.feltOrBoardFill }}
+      style={{
+        background: T.feltOrBoardFill,
+        boxShadow: `inset 0 0 0 1px rgba(255,255,255,.06), inset 0 0 0 8px ${T.stageBg}`,
+      }}
     >
-      {/* paytable */}
+      <ArcadeHouseMark opacity={0.5} className="top-[58%]" />
+
       <div
-        className="mb-3 grid grid-cols-3 gap-1 rounded-[6px] border p-1.5 sm:grid-cols-3"
-        style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
+        className="relative z-10 mb-4 grid grid-cols-3 gap-1 rounded-[6px] border p-1.5"
+        style={{ background: T.stageBg, borderColor: "rgba(255,255,255,.08)" }}
       >
         {POKER_PAY_ROWS.map((c) => {
           const hit = paying === c;
@@ -78,14 +83,14 @@ export function PokerBoard({
             <div
               key={c}
               className="flex min-w-0 items-center justify-between gap-1 rounded-[4px] px-1.5 py-1"
-              style={{ background: hit ? "rgba(0,231,1,.14)" : "transparent" }}
+              style={{ background: hit ? `${T.accent}24` : "transparent" }}
             >
-              <span className="truncate text-[9px] font-bold uppercase tracking-[0.06em] text-white/45">
+              <span className="truncate text-[9px] font-bold uppercase tracking-[0.06em] text-white/40">
                 {SHORT[c] ?? POKER_CATEGORY_LABELS[c]}
               </span>
               <span
                 className="font-display text-[11px] font-black tabular-nums"
-                style={{ color: hit ? T.accent : "rgba(255,255,255,.7)" }}
+                style={{ color: hit ? T.accent : "rgba(255,255,255,.55)" }}
               >
                 {POKER_PAYTABLE[c]}×
               </span>
@@ -94,11 +99,10 @@ export function PokerBoard({
         })}
       </div>
 
-      {/* dealt-hand recap so the swap is visible after the draw */}
       {isFinal && dealt && dealt.length === 5 ? (
         <div
-          className="mb-2 flex items-center justify-center gap-2 rounded-[6px] border px-2 py-1"
-          style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
+          className="relative z-10 mb-3 flex items-center justify-center gap-2 rounded-[6px] border px-2 py-1"
+          style={{ background: T.stageBg, borderColor: "rgba(255,255,255,.08)" }}
         >
           <span className="text-[8px] font-black uppercase tracking-[0.16em] text-white/35">
             Dealt
@@ -127,14 +131,12 @@ export function PokerBoard({
         </div>
       ) : null}
 
-      {/* hand */}
-      <div className="flex items-end justify-center gap-1.5">
+      <div className="relative z-10 flex items-end justify-center gap-2 px-1">
         {Array.from({ length: 5 }, (_, i) => {
           const card = hand[i];
           const face = card == null ? null : pokerCardFace(card);
           const held = holds.includes(i);
           const canHold = stage === "deal" && !disabled && card != null;
-          /** Only freshly drawn cards deal in and flip on the draw. */
           const isDraw = stage === "final" && card != null && !held;
           const dealDelay = stage === "final" ? i * 130 : i * 110;
           const flipAt = dealDelay + 560;
@@ -179,7 +181,6 @@ export function PokerBoard({
                     className="mx-auto"
                   />
                 </div>
-
               </button>
 
               <span
@@ -197,7 +198,7 @@ export function PokerBoard({
                       ? "rgba(255,255,255,.6)"
                       : "#2a1a00"
                     : held
-                      ? "#03210a"
+                      ? INK
                       : "rgba(255,255,255,.35)",
                 }}
               >
@@ -209,8 +210,8 @@ export function PokerBoard({
       </div>
 
       <div
-        className="mt-3 flex items-center justify-between gap-2 rounded-[6px] border px-3 py-2"
-        style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
+        className="relative z-10 mt-3 flex items-center justify-between gap-2 rounded-[6px] border px-3 py-2"
+        style={{ background: T.stageBg, borderColor: "rgba(255,255,255,.08)" }}
       >
         <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
           {stage === "final"
@@ -231,9 +232,7 @@ export function PokerBoard({
               }`
             : "—"}
         </span>
-
       </div>
     </div>
   );
 }
-

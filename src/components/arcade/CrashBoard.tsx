@@ -7,6 +7,7 @@ import {
   crashSecondsFor,
   crashSurvivalChance,
 } from "@/lib/arcade/mini-math";
+import { ArcadeHouseMark } from "@/components/arcade/ArcadeHouseMark";
 
 const T = ARCADE_THEMES.crash;
 const LOSS = "#ff4d5e";
@@ -15,7 +16,7 @@ function StatCell({ label, value, tone }: { label: string; value: string; tone?:
   return (
     <div
       className="flex min-w-0 flex-1 flex-col gap-1 rounded-[6px] border px-2.5 py-2"
-      style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
+      style={{ background: T.stageBg, borderColor: "rgba(255,255,255,.08)" }}
     >
       <span className="truncate text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
         {label}
@@ -166,15 +167,18 @@ export function CrashBoard({
       style={{
         background: T.feltOrBoardFill,
         boxShadow: running
-          ? `inset 0 0 ${40 + intensity * 90}px ${heatColor(shown, 0.05 + intensity * 0.22)}`
-          : undefined,
+          ? `inset 0 0 0 1px rgba(255,255,255,.06), inset 0 0 ${40 + intensity * 90}px ${heatColor(shown, 0.05 + intensity * 0.22)}`
+          : "inset 0 0 0 1px rgba(255,255,255,.06)",
       }}
     >
+      <ArcadeHouseMark opacity={0.45} className="top-[42%]" />
+
       <div
         className={cn(
-          "relative",
+          "relative z-10 rounded-[8px] border px-1 pt-1",
           running && intensity > 0.55 && "motion-safe:[animation:diceTrackShock_420ms_ease-in-out_infinite]",
         )}
+        style={{ borderColor: "rgba(255,255,255,.06)", background: T.stageBg }}
       >
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
@@ -205,7 +209,6 @@ export function CrashBoard({
             />
           ))}
           <path d={`${path} L ${VIEW_W},${VIEW_H} L 0,${VIEW_H} Z`} fill="url(#crashFill)" />
-          {/* Soft heat bloom underneath the stroke. */}
           <path
             d={path}
             fill="none"
@@ -224,8 +227,24 @@ export function CrashBoard({
           {running && (
             <>
               <circle cx={tip.x} cy={tip.y} r={10 + intensity * 8} fill={heatColor(shown, 0.22)} />
-              <circle cx={tip.x} cy={tip.y} r={4 + intensity * 2} fill={color} />
+              <circle
+                cx={tip.x}
+                cy={tip.y}
+                r={4 + intensity * 2}
+                fill={color}
+                className="motion-safe:[animation:towersRowLight_1.4s_ease-in-out_infinite]"
+              />
             </>
+          )}
+          {!running && !busted && !banked && (
+            <circle
+              cx={18}
+              cy={VIEW_H - 14}
+              r={5}
+              fill={T.accent}
+              fillOpacity={0.55}
+              className="motion-safe:[animation:towersRowLight_1.8s_ease-in-out_infinite]"
+            />
           )}
         </svg>
 
@@ -251,8 +270,7 @@ export function CrashBoard({
         </div>
       </div>
 
-
-      <div className="mt-2 flex items-stretch gap-2">
+      <div className="relative z-10 mt-2 flex items-stretch gap-2">
         <StatCell
           label="Chance now"
           value={`${(crashSurvivalChance(Math.max(shown, 1.01)) * 100).toFixed(1)}%`}

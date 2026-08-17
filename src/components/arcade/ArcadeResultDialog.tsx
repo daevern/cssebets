@@ -186,7 +186,7 @@ export function ArcadeResultDialog({
           </>
         }
       >
-        <div className="relative pb-2 text-center">
+        <div className="relative pb-2 text-center" data-testid="arcade-result-dialog">
           {theme && (
             <div
               aria-hidden
@@ -199,6 +199,7 @@ export function ArcadeResultDialog({
           )}
 
           <div
+            data-testid="arcade-result-net"
             className={cn(
               "relative font-display font-black leading-none tabular-nums",
               colour,

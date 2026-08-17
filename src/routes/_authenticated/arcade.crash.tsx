@@ -213,7 +213,8 @@ function CrashPage() {
   }, [active, round?.id]);
 
   const won = round?.outcome === "WIN";
-  const todayNet = profileQ.data?.todayNet ?? 0;
+  const lastBust = (profileQ.data?.recent ?? []).find((r: any) => r.outcome !== "WIN");
+  const lastPeak = (profileQ.data?.recent ?? [])[0];
   const canLaunch =
     !active && !startMut.isPending && !cfg?.maintenance_mode && balance >= stake && stake >= minStake;
 
@@ -222,16 +223,31 @@ function CrashPage() {
       <HudBar game="crash">
         <HudPlaque
           game="crash"
-          className="flex-1"
+          className="flex-[1.35]"
           label="Balance"
+          hero
           value={<AnimatedBalance value={balance} />}
         />
         <HudPlaque
           game="crash"
           className="flex-1"
-          label="P/L today"
-          value={`${todayNet > 0 ? "+" : ""}${fmt(todayNet)}`}
-          tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
+          label="Last"
+          value={
+            lastPeak
+              ? `${fmt(Number(lastPeak.multiplier ?? lastPeak.state?.crash_point ?? 0))}×`
+              : "—"
+          }
+          tone={lastPeak?.outcome === "WIN" ? "up" : lastPeak ? "down" : undefined}
+        />
+        <HudPlaque
+          game="crash"
+          className="flex-1"
+          label="Peak"
+          value={
+            lastBust
+              ? `${fmt(Number(lastBust.state?.crash_point ?? lastBust.multiplier ?? 0))}×`
+              : "—"
+          }
         />
         <FairnessPlaque game="crash" rtpLabel={arcadeFairness("crash").rtpLabel} tag="Fair" />
       </HudBar>
@@ -251,7 +267,13 @@ function CrashPage() {
               game="crash"
               show={beat}
               label={won ? "Banked" : "Busted"}
-              value={won ? `${fmt(Number(round?.multiplier ?? 0))}×` : "—"}
+              value={
+                won
+                  ? `${fmt(Number(round?.multiplier ?? 0))}×`
+                  : crashedAt
+                    ? `${fmt(crashedAt)}×`
+                    : "0×"
+              }
             />
             <CrashBoard
               startedAt={startedAt}
@@ -261,8 +283,17 @@ function CrashPage() {
               autoCashout={autoOn ? autoTarget : null}
               growth={growth}
             />
-            <ArcadeIdleCue game="crash" show={!active && !startMut.isPending && !resultOpen}>
+            <ArcadeIdleCue
+              game="crash"
+              show={!active && !startMut.isPending && !resultOpen && !autoOn}
+            >
               Set your stake, then launch
+            </ArcadeIdleCue>
+            <ArcadeIdleCue
+              game="crash"
+              show={!active && !startMut.isPending && !resultOpen && autoOn}
+            >
+              Auto arms at {autoTarget.toFixed(2)}×
             </ArcadeIdleCue>
           </ArcadeEntrance>
         </ArcadeStage>
@@ -381,7 +412,7 @@ function CrashPage() {
               </>
             ) : (
               <>
-                <Rocket className="h-4 w-4" /> Launch · {fmt(stake)}
+                <Rocket className="h-4 w-4" /> {round && !active ? "LAUNCH AGAIN" : `Launch · ${fmt(stake)}`}
               </>
             )}
           </DockPrimary>
@@ -390,6 +421,7 @@ function CrashPage() {
         {balance < stake && !active ? (
           <DockNote>Not enough points for this stake</DockNote>
         ) : null}
+        {active ? <DockNote>Cash out before the run busts</DockNote> : null}
       </ControlDock>
     </div>
   );

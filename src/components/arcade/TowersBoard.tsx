@@ -7,6 +7,7 @@ import {
   towersSafeChance,
   type TowersDifficulty,
 } from "@/lib/arcade/mini-math";
+import { ArcadeHouseMark } from "@/components/arcade/ArcadeHouseMark";
 
 const T = ARCADE_THEMES.towers;
 
@@ -197,9 +198,10 @@ export function TowersBoard({
       )}
       style={{
         background: `linear-gradient(180deg, #16202c 0%, ${T.feltOrBoardFill} 40%)`,
-        boxShadow: "inset 0 0 0 1px rgba(255,255,255,.05)",
+        boxShadow: "inset 0 0 0 1px rgba(255,255,255,.05), inset 0 0 0 6px rgba(0,0,0,.18)",
       }}
     >
+      <ArcadeHouseMark opacity={0.5} className="top-[48%]" />
       <CastleCrown />
 
       {/* scorch flash over the whole keep */}
@@ -214,7 +216,7 @@ export function TowersBoard({
       )}
 
       <div
-        className="relative flex flex-col gap-[5px] rounded-[10px] p-[6px]"
+        className="relative z-10 flex flex-col gap-[5px] rounded-[10px] p-[6px]"
         style={{ background: "#16202c", boxShadow: "inset 0 0 0 2px rgba(255,255,255,.04)" }}
       >
         {order.map((row) => {
@@ -304,7 +306,9 @@ export function TowersBoard({
         })}
       </div>
 
-      <div className="mt-3 flex items-stretch gap-2">
+      <div
+        className="relative z-10 mt-3 flex items-stretch gap-2"
+      >
         {[
           { label: "Level", value: shape.label },
           { label: "Safe", value: `${(towersSafeChance(difficulty) * 100).toFixed(0)}%` },
@@ -317,14 +321,14 @@ export function TowersBoard({
         ].map((s) => (
           <div
             key={s.label}
-            className="flex min-w-0 flex-1 flex-col gap-1 rounded-[6px] border px-2.5 py-2"
-            style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
+            className="flex min-w-0 flex-1 flex-col gap-1 rounded-[6px] border px-2 py-1.5"
+            style={{ background: T.stageBg, borderColor: "rgba(255,255,255,.08)" }}
           >
-            <span className="truncate text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
+            <span className="truncate text-[8px] font-bold uppercase tracking-[0.16em] text-white/40">
               {s.label}
             </span>
             <span
-              className="truncate font-display text-[14px] font-black tabular-nums leading-none"
+              className="truncate font-display text-[13px] font-black tabular-nums leading-none"
               style={{ color: s.accent ? T.accent : "#ffffff" }}
             >
               {s.value}

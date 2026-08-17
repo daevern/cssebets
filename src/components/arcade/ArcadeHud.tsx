@@ -104,6 +104,7 @@ export function HudPlaque({
   return (
     <div
       className={cn("min-w-0 rounded-[5px] border px-2.5 py-1", className)}
+      data-testid={label === "Balance" ? "hud-balance" : undefined}
       style={{
         background: t.hud.plaqueBg,
         borderColor: t.hud.plaqueBorder,

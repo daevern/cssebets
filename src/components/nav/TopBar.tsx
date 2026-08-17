@@ -141,7 +141,10 @@ function DesktopBar({ balance, loading }: { balance?: number | null; loading?: b
           <div className="grid h-5 w-5 place-items-center rounded-full bg-[var(--color-neon)]/10 text-[var(--color-neon)]">
             <Wallet className="h-3 w-3" />
           </div>
-          <span className="font-display text-[13px] font-bold tabular-nums">
+          <span
+            data-testid="topbar-balance"
+            className="font-display text-[13px] font-bold tabular-nums"
+          >
             {loading ? "..." : (balance ?? 0).toLocaleString()}
           </span>
         </button>

@@ -27,7 +27,7 @@ export function AnimatedBalance({
     minimumFractionDigits,
   });
   return (
-    <span className={className}>
+    <span className={className} data-testid="animated-balance">
       {prefixSign && value > 0 ? "+" : ""}
       {text}
     </span>

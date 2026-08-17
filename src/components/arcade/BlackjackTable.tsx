@@ -6,7 +6,7 @@ import {
   CsseCardBack,
   PlayingCard,
 } from "@/components/arcade/PlayingCard";
-import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
+import { ArcadeHouseMark } from "@/components/arcade/ArcadeHouseMark";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import { formatTotal, handValue } from "@/lib/arcade/blackjack-math";
 import type { BjCard } from "@/lib/arcade/blackjack.functions";
@@ -198,16 +198,7 @@ export function BlackjackTable({
       className="relative mx-auto h-full w-full max-w-[560px] overflow-hidden rounded-[10px]"
       style={{ background: T.feltOrBoardFill }}
     >
-      {/* House medallion — quiet slate watermark, always dead centre. */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1.5 opacity-70">
-        <div className="grid h-11 w-11 place-items-center rounded-full border border-white/10 md:h-14 md:w-14">
-          <CsseMark variant="mono" className="h-6 w-6 text-white/15 md:h-8 md:w-8" />
-        </div>
-        <CsseWordmark
-          size={12}
-          className="[&_span]:[color:transparent!important] [&_span]:[-webkit-text-stroke:0.7px_rgba(255,255,255,0.18)!important]"
-        />
-      </div>
+      <ArcadeHouseMark className="z-20" />
 
 
       {/* Shoe — every card is dealt out of this stack. */}

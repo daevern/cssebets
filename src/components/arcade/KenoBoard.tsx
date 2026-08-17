@@ -1,15 +1,17 @@
 import { cn } from "@/lib/utils";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import { kenoHitChance, kenoPaytable, type KenoRisk } from "@/lib/arcade/mini-math";
+import { ArcadeHouseMark } from "@/components/arcade/ArcadeHouseMark";
 
 const T = ARCADE_THEMES.keno;
 const LOSS = "#ff4d5e";
+const INK = "#041018";
 
 function StatCell({ label, value, tone }: { label: string; value: string; tone?: "accent" | "loss" }) {
   return (
     <div
       className="flex min-w-0 flex-1 flex-col gap-1 rounded-[6px] border px-2.5 py-2"
-      style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
+      style={{ background: T.stageBg, borderColor: "rgba(255,255,255,.08)" }}
     >
       <span className="truncate text-[9px] font-bold uppercase tracking-[0.16em] text-white/40">
         {label}
@@ -25,9 +27,8 @@ function StatCell({ label, value, tone }: { label: string; value: string; tone?:
 }
 
 /**
- * Keno playfield — Stake-style slate console: 40-number grid, sequenced ball
- * reveal and a live paytable rail. Presentation only; the server decides the
- * draw and the payout.
+ * Keno playfield — slate ticket board with house watermark and sequenced draw.
+ * Presentation only; the server decides the draw and the payout.
  */
 export function KenoBoard({
   picks,
@@ -52,17 +53,24 @@ export function KenoBoard({
   const table = kenoPaytable(risk, Math.max(picks.length, 1));
   const hits = shown.filter((n) => picks.includes(n)).length;
   const drawing = drawn.length > 0 && revealed < drawn.length;
+  const latest = shown.length ? shown[shown.length - 1] : null;
 
   return (
     <div
       className="relative mx-auto w-full max-w-[460px] overflow-hidden rounded-[10px] px-3 pb-3 pt-3"
-      style={{ background: T.feltOrBoardFill }}
+      style={{
+        background: T.feltOrBoardFill,
+        boxShadow: `inset 0 0 0 1px rgba(255,255,255,.06), inset 0 0 0 8px ${T.stageBg}`,
+      }}
     >
-      <div className="grid grid-cols-8 gap-1.5">
+      <ArcadeHouseMark opacity={0.55} />
+
+      <div className="relative z-10 grid grid-cols-8 gap-1.5">
         {Array.from({ length: 40 }, (_, i) => i + 1).map((n) => {
           const picked = picks.includes(n);
           const isDrawn = shown.includes(n);
           const hit = picked && isDrawn;
+          const justLanded = latest === n && drawing;
           return (
             <button
               key={n}
@@ -73,9 +81,10 @@ export function KenoBoard({
                 "relative grid aspect-square place-items-center rounded-[6px] border font-display text-[13px] font-black tabular-nums transition-transform",
                 !disabled && "active:scale-95",
                 hit && "motion-safe:[animation:kenoHitPop_320ms_ease-out]",
+                justLanded && "motion-safe:[animation:kenoHitPop_280ms_ease-out]",
               )}
               style={{
-                background: hit ? T.accent : isDrawn ? "#2f4553" : picked ? "#0f212e" : "#1b2f3c",
+                background: hit ? T.accent : isDrawn ? "#2a4558" : picked ? T.stageBg : "#152838",
                 borderColor: hit
                   ? T.accent
                   : picked
@@ -83,7 +92,7 @@ export function KenoBoard({
                     : isDrawn
                       ? "rgba(255,255,255,.22)"
                       : "rgba(255,255,255,.06)",
-                color: hit ? "#03210a" : picked ? T.accent : isDrawn ? "#ffffff" : "rgba(255,255,255,.5)",
+                color: hit ? INK : picked ? T.accent : isDrawn ? "#ffffff" : "rgba(255,255,255,.5)",
                 boxShadow: hit ? `0 0 0 1px ${T.accent}` : "none",
               }}
               aria-pressed={picked}
@@ -95,16 +104,16 @@ export function KenoBoard({
         })}
       </div>
 
-      {/* paytable rail */}
-      <div className="mt-3 flex gap-1 overflow-hidden rounded-[6px] border p-1"
-        style={{ background: "#0f212e", borderColor: "rgba(255,255,255,.08)" }}
+      <div
+        className="relative z-10 mt-3 flex gap-1 overflow-hidden rounded-[6px] border p-1"
+        style={{ background: T.stageBg, borderColor: "rgba(255,255,255,.08)" }}
       >
         {table.map((m, h) => (
           <div
             key={h}
             className="flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-[4px] px-0.5 py-1"
             style={{
-              background: h === hits && shown.length > 0 ? "rgba(0,231,1,.14)" : "transparent",
+              background: h === hits && shown.length > 0 ? `${T.accent}24` : "transparent",
             }}
           >
             <span
@@ -120,9 +129,13 @@ export function KenoBoard({
         ))}
       </div>
 
-      <div className="mt-2 flex items-stretch gap-2">
+      <div className="relative z-10 mt-2 flex items-stretch gap-2">
         <StatCell label="Marked" value={`${picks.length}/10`} />
-        <StatCell label="Hits" value={shown.length ? String(hits) : "—"} tone={hits > 0 ? "accent" : undefined} />
+        <StatCell
+          label="Hits"
+          value={shown.length ? String(hits) : "—"}
+          tone={hits > 0 ? "accent" : undefined}
+        />
         <StatCell
           label={drawing ? "Drawing" : "Pays"}
           value={multiplier == null ? "—" : `${multiplier}×`}

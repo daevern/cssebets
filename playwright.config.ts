@@ -10,7 +10,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   workers: 1,
   reporter: [["list"], ["html", { open: "never", outputFolder: "playwright-report" }]],
-  timeout: 30_000,
+  timeout: 60_000,
   // Dev server (not a production build) compiles each route on first
   // request, which can take several seconds — give assertions enough
   // headroom that a cold Vite compile isn't mistaken for a real bug.

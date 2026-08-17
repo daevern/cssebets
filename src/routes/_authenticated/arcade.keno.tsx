@@ -177,7 +177,6 @@ function KenoPage() {
   const canPlay =
     !busy && !cfg?.maintenance_mode && picks.length > 0 && balance >= stake && stake >= minStake;
   const won = round?.outcome === "WIN";
-  const todayNet = profileQ.data?.todayNet ?? 0;
   const settledMultiplier = drawing ? null : round ? Number(round.multiplier ?? 0) : null;
 
   return (
@@ -185,16 +184,33 @@ function KenoPage() {
       <HudBar game="keno">
         <HudPlaque
           game="keno"
-          className="flex-1"
+          className="flex-[1.35]"
           label="Balance"
+          hero
           value={<AnimatedBalance value={balance} />}
         />
         <HudPlaque
           game="keno"
           className="flex-1"
-          label="P/L today"
-          value={`${todayNet > 0 ? "+" : ""}${fmt(todayNet)}`}
-          tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
+          label="Marked"
+          value={`${picks.length}/10`}
+        />
+        <HudPlaque
+          game="keno"
+          className="flex-1"
+          label="Hits"
+          value={
+            drawn.length && revealed
+              ? String(drawn.slice(0, revealed).filter((n) => picks.includes(n)).length)
+              : "—"
+          }
+          tone={
+            drawn.length &&
+            revealed &&
+            drawn.slice(0, revealed).some((n) => picks.includes(n))
+              ? "up"
+              : undefined
+          }
         />
         <FairnessPlaque game="keno" rtpLabel={arcadeFairness("keno").rtpLabel} tag="Fair" />
       </HudBar>
@@ -213,8 +229,12 @@ function KenoPage() {
             <SettlePlaque
               game="keno"
               show={beat}
-              label={won ? "Ticket pays" : "No pay"}
-              value={won ? `${fmt(Number(round?.multiplier ?? 0))}×` : "—"}
+              label={
+                won
+                  ? `${Number(round?.state?.hits ?? 0)} hit${Number(round?.state?.hits ?? 0) === 1 ? "" : "s"}`
+                  : "Miss"
+              }
+              value={`${fmt(Number(round?.multiplier ?? 0))}×`}
             />
             <KenoBoard
               picks={picks}
@@ -227,6 +247,9 @@ function KenoPage() {
             />
             <ArcadeIdleCue game="keno" show={!busy && picks.length === 0 && !resultOpen}>
               Mark up to 10 numbers
+            </ArcadeIdleCue>
+            <ArcadeIdleCue game="keno" show={!busy && picks.length > 0 && !resultOpen && !drawing}>
+              Pick risk · then Play
             </ArcadeIdleCue>
           </ArcadeEntrance>
         </ArcadeStage>
@@ -333,7 +356,7 @@ function KenoPage() {
             </>
           ) : (
             <>
-              <Target className="h-4 w-4" /> Play · {fmt(stake)}
+              <Target className="h-4 w-4" /> {round ? "DRAW AGAIN" : `Play · ${fmt(stake)}`}
             </>
           )}
         </DockPrimary>

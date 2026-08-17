@@ -105,7 +105,6 @@ function TowersPage() {
       ? cfg.chip_values.map((c: any) => Number(c))
       : [1, 5, 10, 25, 50];
   const balance = profileQ.data?.balance ?? 0;
-  const todayNet = profileQ.data?.todayNet ?? 0;
 
   const [stake, setStake] = useState(5);
   const [difficulty, setDifficulty] = useState<TowersDifficulty>("easy");
@@ -196,22 +195,30 @@ function TowersPage() {
   const canStart =
     !busy && !live && !cfg?.maintenance_mode && balance >= stake && stake >= minStake;
   const won = round?.outcome === "WIN";
+  const settleRows = Number(round?.stepCount ?? 0);
 
   return (
     <div className="flex flex-col gap-2 md:gap-3">
       <HudBar game="towers">
         <HudPlaque
           game="towers"
-          className="flex-1"
+          className="flex-[1.35]"
           label="Balance"
+          hero
           value={<AnimatedBalance value={balance} />}
         />
         <HudPlaque
           game="towers"
           className="flex-1"
-          label="P/L today"
-          value={`${todayNet > 0 ? "+" : ""}${fmt(todayNet)}`}
-          tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
+          label="Mult"
+          value={multiplier > 0 ? `${fmt(multiplier)}×` : "—"}
+          tone={multiplier > 1 ? "up" : undefined}
+        />
+        <HudPlaque
+          game="towers"
+          className="flex-1"
+          label="Row"
+          value={`${Math.min(currentRow + (live ? 1 : 0), TOWERS_ROWS)}/${TOWERS_ROWS}`}
         />
         <FairnessPlaque game="towers" rtpLabel={arcadeFairness("towers").rtpLabel} tag="Fair" />
       </HudBar>
@@ -230,8 +237,8 @@ function TowersPage() {
             <SettlePlaque
               game="towers"
               show={beat}
-              label={won ? "Banked" : "Dragon"}
-              value={won ? `${fmt(Number(round?.multiplier ?? 0))}×` : "—"}
+              label={won ? "Banked" : `Dragon · row ${settleRows || 1}`}
+              value={`${fmt(Number(round?.multiplier ?? 0))}×`}
             />
             <TowersBoard
               difficulty={difficulty}
@@ -251,7 +258,7 @@ function TowersPage() {
               }}
             />
             <ArcadeIdleCue game="towers" show={!live && !busy && !resultOpen}>
-              Set a stake and climb
+              {TOWERS_DIFFICULTIES[difficulty].label} · climb when ready
             </ArcadeIdleCue>
           </ArcadeEntrance>
         </ArcadeStage>
@@ -357,7 +364,7 @@ function TowersPage() {
               </>
             ) : (
               <>
-                <MoveUp className="h-4 w-4" /> Climb · {fmt(stake)}
+                <MoveUp className="h-4 w-4" /> {round && !live ? "CLIMB AGAIN" : `Climb · ${fmt(stake)}`}
               </>
             )}
           </DockPrimary>

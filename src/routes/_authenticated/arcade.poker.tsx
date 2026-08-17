@@ -100,7 +100,6 @@ function PokerPage() {
       ? cfg.chip_values.map((c: any) => Number(c))
       : [1, 5, 10, 25, 50];
   const balance = profileQ.data?.balance ?? 0;
-  const todayNet = profileQ.data?.todayNet ?? 0;
 
   const [stake, setStake] = useState(5);
   const [round, setRound] = useState<any>(null);
@@ -212,16 +211,34 @@ function PokerPage() {
       <HudBar game="poker">
         <HudPlaque
           game="poker"
-          className="flex-1"
+          className="flex-[1.35]"
           label="Balance"
+          hero
           value={<AnimatedBalance value={balance} />}
         />
         <HudPlaque
           game="poker"
           className="flex-1"
-          label="P/L today"
-          value={`${todayNet > 0 ? "+" : ""}${fmt(todayNet)}`}
-          tone={todayNet > 0 ? "up" : todayNet < 0 ? "down" : undefined}
+          label="Hand"
+          value={
+            revealed && category
+              ? POKER_CATEGORY_LABELS[category]
+              : live
+                ? "Holding"
+                : "—"
+          }
+          tone={won ? "up" : round && !live && !won ? "down" : undefined}
+        />
+        <HudPlaque
+          game="poker"
+          className="flex-1"
+          label="Pays"
+          value={
+            round && !live
+              ? `${fmt(Number(round.multiplier ?? 0))}×`
+              : "—"
+          }
+          tone={won ? "up" : undefined}
         />
         <FairnessPlaque game="poker" rtpLabel={arcadeFairness("poker").rtpLabel} tag="Fair" />
       </HudBar>
@@ -240,8 +257,14 @@ function PokerPage() {
             <SettlePlaque
               game="poker"
               show={beat}
-              label={won ? "Hand pays" : "No pay"}
-              value={won ? `${fmt(Number(round?.multiplier ?? 0))}×` : "—"}
+              label={
+                won
+                  ? category
+                    ? POKER_CATEGORY_LABELS[category]
+                    : "Hand pays"
+                  : "No hand"
+              }
+              value={`${fmt(Number(round?.multiplier ?? 0))}×`}
             />
             <PokerBoard
               hand={hand}
@@ -260,6 +283,12 @@ function PokerPage() {
                 );
               }}
             />
+            <ArcadeIdleCue game="poker" show={!live && !busy && !resultOpen}>
+              Select stake · Deal
+            </ArcadeIdleCue>
+            <ArcadeIdleCue game="poker" show={Boolean(live) && !busy && !resultOpen}>
+              Hold cards · then Draw
+            </ArcadeIdleCue>
           </ArcadeEntrance>
         </ArcadeStage>
       </div>
@@ -372,13 +401,12 @@ function PokerPage() {
               </>
             ) : (
               <>
-                <Layers className="h-4 w-4" /> Deal · {fmt(stake)}
+                <Layers className="h-4 w-4" /> {round && !live ? "DEAL AGAIN" : `Deal · ${fmt(stake)}`}
               </>
             )}
           </DockPrimary>
         )}
 
-        {live ? <DockNote>Tap cards to hold, then draw</DockNote> : null}
         {!live && balance < stake ? <DockNote>Not enough points for this stake</DockNote> : null}
       </ControlDock>
     </div>
