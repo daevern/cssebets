@@ -1,5 +1,5 @@
 // CSSEBets dedicated push service worker.
-// Push-only (no offline caching) — safe in Lovable preview per the PWA skill.
+// Push-only service worker (no offline caching).
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();

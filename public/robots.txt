@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /management/
+
+Sitemap: https://cssebets.com/sitemap.xml

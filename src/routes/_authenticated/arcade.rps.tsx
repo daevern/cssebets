@@ -56,6 +56,8 @@ export const Route = createFileRoute("/_authenticated/arcade/rps")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+          { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
+      { name: "twitter:image", content: "https://cssebets.com/og-image.jpg" },
     ],
   }),
   component: RpsPage,
