@@ -279,9 +279,11 @@ export const adminSyncUfc = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await requireAdmin(context.supabase, context.userId);
     const { runUfcEventDiscovery, runUfcOddsSync } = await import("@/lib/ufc-odds.server");
+    const { runUfcOddsApiSync } = await import("@/lib/ufc-oddsapi.server");
+    const oddsapi = await runUfcOddsApiSync();
     const discovery = await runUfcEventDiscovery({ force: true });
     const odds = await runUfcOddsSync({ force: true, maxEvents: 5 });
-    return { ...odds, discovery };
+    return { ...odds, discovery, oddsapi };
   });
 
 /** Admin diagnostics: is the feed plan blocking future dates? when did jobs last run? */
