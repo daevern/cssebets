@@ -185,8 +185,9 @@ export const getFootballRecentTrades = createServerFn({ method: "POST" })
     const status = (ev?.status ?? null) as string | null;
     const hs = ev?.home_score == null ? null : Number(ev.home_score);
     const as = ev?.away_score == null ? null : Number(ev.away_score);
-    let winningOutcome: "HOME" | "DRAW" | "AWAY" | null = null;
-    if (status === "finished" && hs != null && as != null) {
+    let winningOutcome: string | null = null;
+    const finished = !!status && ["finished", "FT", "AET", "PEN", "final", "completed"].includes(status);
+    if (finished && hs != null && as != null) {
       winningOutcome = hs > as ? "HOME" : as > hs ? "AWAY" : "DRAW";
     }
 

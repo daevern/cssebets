@@ -209,7 +209,15 @@ export type RecentTradesPayload = {
   matchStatus: string | null;
   homeScore: number | null;
   awayScore: number | null;
-  winningOutcome: "HOME" | "DRAW" | "AWAY" | null;
+  /** Exclusive-market winner (1X2 / moneyline / race winner). */
+  winningOutcome: string | null;
+  /**
+   * Multi-winner freeze (e.g. F1 podium/top-5): each listed series key snaps
+   * to 100%, all others to 0%. Prefer this over `winningOutcome` when set.
+   */
+  winningOutcomes?: string[] | null;
+  /** Per-market freeze keys (F1 multi market types). */
+  winnersByMarket?: Record<string, string[]> | null;
 };
 
 async function buildRecentTrades(
@@ -251,7 +259,7 @@ async function buildRecentTrades(
   const status = (match?.status ?? null) as string | null;
   const hs = match?.home_score == null ? null : Number(match.home_score);
   const as = match?.away_score == null ? null : Number(match.away_score);
-  let winningOutcome: "HOME" | "DRAW" | "AWAY" | null = null;
+  let winningOutcome: string | null = null;
   const finished = status && ["finished", "FT", "AET", "PEN"].includes(status);
   if (finished && hs != null && as != null) {
     winningOutcome = hs > as ? "HOME" : as > hs ? "AWAY" : "DRAW";

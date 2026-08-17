@@ -1,4 +1,8 @@
-// Minimal dark prediction-market movement chart.
+// Standard Kalshi-style prediction-market movement chart (World Cup reference).
+// Use this for EVERY sport detail page (WC, club football, UFC, F1, future NBA…).
+// Sport-specific data comes from historyFn / tradesFn adapters that return
+// MarketHistoryPayload + RecentTradesPayload — same implied-prob %, LIVE ranges,
+// realtime invalidation, and 100%/0% freeze at settle.
 // Full-width, edge-to-edge on mobile. No card, no y-axis, dashed horizontal grid only.
 // Preserves the app's outcome color meaning: HOME=green, DRAW=blue, AWAY=pink.
 import { useEffect, useMemo, useState } from "react";
@@ -25,11 +29,25 @@ const COLOR_FALLBACK = ["#22C55E", "#3B82F6", "#EC4899", "#F59E0B", "#A78BFA", "
 
 function colorForSeries(key: string, idx: number): string {
   const k = key.toUpperCase();
-  if (k === "HOME" || k.startsWith("HOME_") || k === "YES" || k === "OVER" || k.startsWith("OVER_")) return COLOR_HOME;
+  if (
+    k === "HOME" || k === "A" || k === "FIGHTER_A" ||
+    k.startsWith("HOME_") || k === "YES" || k === "OVER" || k.startsWith("OVER_")
+  ) return COLOR_HOME;
   if (k === "DRAW" || k === "X") return COLOR_DRAW;
-  if (k === "AWAY" || k.startsWith("AWAY_") || k === "NO" || k === "UNDER" || k.startsWith("UNDER_")) return COLOR_AWAY;
+  if (
+    k === "AWAY" || k === "B" || k === "FIGHTER_B" ||
+    k.startsWith("AWAY_") || k === "NO" || k === "UNDER" || k.startsWith("UNDER_")
+  ) return COLOR_AWAY;
   return COLOR_FALLBACK[idx % COLOR_FALLBACK.length];
 }
+
+const FINISHED_STATUSES = new Set([
+  "finished", "FT", "AET", "PEN", "final", "completed", "complete", "ended",
+]);
+
+const WHO_WILL_WIN_MARKETS = new Set([
+  "match_result", "moneyline", "race_winner", "1x2", "match_winner", "h2h",
+]);
 
 const ABBREV_OVERRIDES: Record<string, string> = {
   "United States": "USA",
@@ -98,6 +116,12 @@ function pointTime(p: { t: string }): number { return new Date(p.t).getTime(); }
 /* ------------------------------------------------------------------ */
 /* Component                                                           */
 /* ------------------------------------------------------------------ */
+export type MarketRealtimeChannel = {
+  table: string;
+  /** Postgres changes filter, e.g. `match_id=eq.${id}` or `fight_id=eq.${id}`. */
+  filter: string;
+};
+
 export function MarketAnalyticsCard({
   matchId,
   publicMode = false,
@@ -105,15 +129,21 @@ export function MarketAnalyticsCard({
   tradesFn: tradesFnOverride,
   queryNamespace,
   realtime = true,
+  realtimeChannels,
 }: {
   matchId: string;
   publicMode?: boolean;
-  /** Override the odds-history source (e.g. club football). */
+  /** Override the odds-history source (e.g. club football / UFC / F1). */
   historyFn?: any;
   /** Override the trade-tape source. */
   tradesFn?: any;
   queryNamespace?: string;
   realtime?: boolean;
+  /**
+   * Snapshot tables to watch. Defaults to World Cup
+   * `match_odds_snapshots` + `market_odds_snapshots`.
+   */
+  realtimeChannels?: MarketRealtimeChannel[];
 }) {
   const fn = useServerFn(historyFn ?? (publicMode ? getMarketHistoryPublic : getMarketHistory));
   const ns = queryNamespace ?? (publicMode ? "pub" : "auth");
@@ -139,8 +169,7 @@ export function MarketAnalyticsCard({
     refetchInterval: 5_000,
     staleTime: 2_000,
   });
-  const isFinished = !!tq.data?.matchStatus && ["finished", "FT", "AET", "PEN"].includes(tq.data.matchStatus);
-  const winningOutcome = tq.data?.winningOutcome ?? null;
+  const isFinished = !!tq.data?.matchStatus && FINISHED_STATUSES.has(String(tq.data.matchStatus));
 
   // Finished matches have no LIVE tape — snap the range to ALL so the frozen final chart is visible.
   useEffect(() => {
@@ -149,34 +178,41 @@ export function MarketAnalyticsCard({
 
   useEffect(() => {
     if (publicMode || !realtime) return;
-    const ch = supabase
-      .channel(`market-history-${matchId}`)
-      .on("postgres_changes",
-        { event: "INSERT", schema: "public", table: "match_odds_snapshots", filter: `match_id=eq.${matchId}` },
-        () => qc.invalidateQueries({ queryKey: ["market-history", matchId] }))
-      .on("postgres_changes",
-        { event: "INSERT", schema: "public", table: "market_odds_snapshots", filter: `match_id=eq.${matchId}` },
-        () => qc.invalidateQueries({ queryKey: ["market-history", matchId] }))
-      .subscribe();
+    const channels: MarketRealtimeChannel[] = realtimeChannels?.length
+      ? realtimeChannels
+      : [
+          { table: "match_odds_snapshots", filter: `match_id=eq.${matchId}` },
+          { table: "market_odds_snapshots", filter: `match_id=eq.${matchId}` },
+        ];
+    let ch = supabase.channel(`market-history-${ns}-${matchId}`);
+    for (const c of channels) {
+      ch = ch.on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: c.table, filter: c.filter },
+        () => qc.invalidateQueries({ queryKey: ["market-history", matchId] }),
+      );
+    }
+    ch.subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [matchId, qc, publicMode, realtime]);
+  }, [matchId, qc, publicMode, realtime, realtimeChannels, ns]);
 
 
   const data = q.data;
 
-  // Auto-fallback + default to match_result
+  const winningKeys = useMemo(() => {
+    const byMarket = data?.market ? tq.data?.winnersByMarket?.[data.market] : undefined;
+    if (Array.isArray(byMarket) && byMarket.length) return byMarket;
+    const multi = tq.data?.winningOutcomes?.filter(Boolean) ?? [];
+    if (multi.length) return multi;
+    const one = tq.data?.winningOutcome;
+    return one ? [one] : [];
+  }, [data?.market, tq.data?.winningOutcome, tq.data?.winningOutcomes, tq.data?.winnersByMarket]);
+
+  // Prefer the server-chosen market; fall back to first available.
   useEffect(() => {
-    if (!data || !data.availableMarkets.length) return;
-    const cutoff = Date.now() - RANGE_MS["1D"]!;
-    const currentFresh = data.series.some((s) => s.points.some((p) => new Date(p.t).getTime() >= cutoff));
-    if (currentFresh) return;
-    if (market && market !== "match_result" && data.availableMarkets.some((m) => m.key === "match_result")) {
-      setMarket("match_result");
-    }
-  }, [data, market]);
-  useEffect(() => {
-    if (!data || market || !data.availableMarkets.some((m) => m.key === "match_result")) return;
-    if (data.market !== "match_result") setMarket("match_result");
+    if (!data || market) return;
+    if (data.market) setMarket(data.market);
+    else if (data.availableMarkets[0]?.key) setMarket(data.availableMarkets[0].key);
   }, [data, market]);
 
   const { chartData, filteredSeries, latestByKey } = useMemo(() => {
@@ -227,19 +263,23 @@ export function MarketAnalyticsCard({
       latestByKey: lastValueBy,
     };
 
-    // Freeze at match end: force winner=100, others=0 for match_result.
-    if (isFinished && winningOutcome && data.market === "match_result" && result.chartData.length > 0) {
+    // Freeze at event end: winners → 100%, losers → 0% (Kalshi-style resolve).
+    if (isFinished && winningKeys.length > 0 && result.chartData.length > 0) {
       const seriesKeys = result.filteredSeries.map((s) => s.key);
-      const finalRow: ChartRow = { t: result.chartData.at(-1)!.t };
-      for (const k of seriesKeys) finalRow[k] = k === winningOutcome ? 100 : 0;
-      result.chartData = [...result.chartData.slice(0, -1), finalRow];
-      const latest = new Map<string, number>();
-      for (const k of seriesKeys) latest.set(k, k === winningOutcome ? 100 : 0);
-      result.latestByKey = latest;
+      const winSet = new Set(winningKeys.map((k) => k.toUpperCase()));
+      const matchesAny = seriesKeys.some((k) => winSet.has(k.toUpperCase()));
+      if (matchesAny) {
+        const finalRow: ChartRow = { t: result.chartData.at(-1)!.t };
+        for (const k of seriesKeys) finalRow[k] = winSet.has(k.toUpperCase()) ? 100 : 0;
+        result.chartData = [...result.chartData.slice(0, -1), finalRow];
+        const latest = new Map<string, number>();
+        for (const k of seriesKeys) latest.set(k, winSet.has(k.toUpperCase()) ? 100 : 0);
+        result.latestByKey = latest;
+      }
     }
 
     return result;
-  }, [data, range, liveSeconds, now, isFinished, winningOutcome]);
+  }, [data, range, liveSeconds, now, isFinished, winningKeys]);
 
 
   const yDomain = useMemo<[number, number]>(() => {
@@ -291,8 +331,33 @@ export function MarketAnalyticsCard({
       {/* Header — title only */}
       <div className="px-4 pt-5 md:px-6 md:pt-6">
         <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
-          {data?.market === "match_result" || !data ? "Who will win?" : data.marketLabel}
+          {!data || WHO_WILL_WIN_MARKETS.has(data.market)
+            ? "Who will win?"
+            : data.marketLabel}
         </h2>
+
+        {data && data.availableMarkets.length > 1 && (
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            {data.availableMarkets.map((m) => {
+              const active = (market ?? data.market) === m.key;
+              return (
+                <button
+                  key={m.key}
+                  type="button"
+                  onClick={() => setMarket(m.key)}
+                  aria-pressed={active}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight transition-colors ${
+                    active
+                      ? "bg-white/15 text-white ring-1 ring-white/30"
+                      : "text-white/45 hover:text-white/80"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Legend — minimal */}
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">

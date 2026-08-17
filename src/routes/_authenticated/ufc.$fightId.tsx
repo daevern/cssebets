@@ -3,11 +3,11 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getUfcFightDetail, getUfcMarketHistory, placeUfcBet } from "@/lib/ufc.functions";
-import { UfcTradeTape } from "@/components/ufc/UfcTradeTape";
+import { getUfcFightDetail, placeUfcBet } from "@/lib/ufc.functions";
+import { MarketAnalyticsCard } from "@/components/matches/MarketAnalyticsCard";
+import { getUfcCardMarketHistory, getUfcCardRecentTrades } from "@/lib/ufc-market-history.functions";
 import { Loader2, ArrowUpRight, X, Activity, Users, History } from "lucide-react";
 import { toast } from "sonner";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Customized } from "recharts";
 import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { UfcBadge } from "@/components/brand/SportBadge";
@@ -42,17 +42,11 @@ function UfcFightDetailPage() {
   const { fightId } = Route.useParams();
   const qc = useQueryClient();
   const detailFn = useServerFn(getUfcFightDetail);
-  const historyFn = useServerFn(getUfcMarketHistory);
 
   const { data, isLoading } = useQuery({
     queryKey: ["ufc-fight-detail", fightId],
     queryFn: () => detailFn({ data: { fightId } }),
     refetchInterval: 10_000,
-  });
-  const { data: history } = useQuery({
-    queryKey: ["ufc-market-history", fightId],
-    queryFn: () => historyFn({ data: { fightId } }),
-    refetchInterval: 15_000,
   });
 
   useEffect(() => {
@@ -81,10 +75,7 @@ function UfcFightDetailPage() {
         ) : !data.fight ? (
           <div className="py-16 text-center text-sm text-[var(--color-ink-muted)]">Fight not found.</div>
         ) : (
-          <FightAnalytics
-            data={data as any}
-            history={(history?.snapshots ?? []) as any[]}
-          />
+          <FightAnalytics data={data as any} />
         )}
 
         <footer className="mt-6 flex items-center justify-between border-t border-[var(--color-surface-border)]/40 pt-6 text-[10px] font-medium tracking-[0.02em] text-[var(--color-ink-muted)]">
@@ -96,7 +87,7 @@ function UfcFightDetailPage() {
   );
 }
 
-function FightAnalytics({ data, history }: { data: any; history: any[] }) {
+function FightAnalytics({ data }: { data: any }) {
   const { fight, fighterA, fighterB, markets, stats, h2h, event } = data;
   const isLive = fight.status && !["scheduled", "finished", "void"].includes(fight.status);
   const isFinished = fight.status === "finished";
@@ -113,8 +104,16 @@ function FightAnalytics({ data, history }: { data: any; history: any[] }) {
 
       <FightHero fight={fight} fighterA={fighterA} fighterB={fighterB} isLive={isLive} isFinished={isFinished} />
 
-      {/* Market analytics — historical odds movement, mirrors MarketAnalyticsCard placement */}
-      <MarketMovementSection markets={markets} snapshots={history} />
+      <MarketAnalyticsCard
+        matchId={fight.id}
+        historyFn={getUfcCardMarketHistory}
+        tradesFn={getUfcCardRecentTrades}
+        queryNamespace="ufc"
+        realtime
+        realtimeChannels={[
+          { table: "ufc_market_snapshots", filter: `fight_id=eq.${fight.id}` },
+        ]}
+      />
 
       {/* Take a position — mirrors football MarketTabs section header */}
       {!isFinished && (
@@ -142,10 +141,6 @@ function FightAnalytics({ data, history }: { data: any; history: any[] }) {
           <LiveStatsCompare stats={stats} homeName={fight.fighter_a} awayName={fight.fighter_b} />
         </AnalysisSection>
       )}
-
-      {/* Anonymised live bet tape */}
-      <UfcTradeTape fightId={fight.id} />
-
 
       {/* H2H + recent form */}
       <H2HSection h2h={h2h} fight={fight} />
@@ -601,224 +596,6 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
     </div>
   );
 }
-
-/* ---------- Market movement — 1:1 with football MarketAnalyticsCard ---------- */
-
-const MOVEMENT_COLORS = ["#22C55E", "#EC4899", "#3B82F6", "#F59E0B", "#A78BFA", "#FB7185", "#10B981", "#F97316"];
-
-function colorForUfcKey(key: string, idx: number): string {
-  if (key === "a") return "#22C55E";
-  if (key === "b") return "#EC4899";
-  return MOVEMENT_COLORS[idx % MOVEMENT_COLORS.length];
-}
-
-function abbrevUfcLabel(label: string): string {
-  const t = label.trim();
-  const parts = t.split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0] + (parts[2]?.[0] ?? parts[1][1] ?? "")).toUpperCase().slice(0, 3);
-  return t.slice(0, 3).toUpperCase();
-}
-
-function MarketMovementSection({ markets, snapshots }: { markets: Market[]; snapshots: any[] }) {
-  // Market movement chart is moneyline-only (mirrors football MarketAnalyticsCard).
-  const tab: MarketType = "moneyline";
-  const [hidden, setHidden] = useState<Record<string, boolean>>({});
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-
-  const filtered = snapshots.filter((s) => s.market_type === tab);
-  const keys = Array.from(new Set(filtered.map((s) => s.selection_key)));
-  const labelFor = (k: string) => markets.find((m) => m.market_type === tab && m.selection_key === k)?.label ?? k;
-
-
-
-
-  // Build implied-probability series so the chart matches football (0–100%).
-  // If only a single snapshot exists we still want a visible flat line, so
-  // synthesize a second point at "now" from the current market prices.
-  const rows = (() => {
-    const grouped = new Map<number, Record<string, number>>();
-    for (const s of filtered) {
-      const t = Math.round(new Date(s.sampled_at).getTime() / 30000) * 30000;
-      const g = grouped.get(t) ?? {};
-      g[s.selection_key] = Number(s.odds);
-      grouped.set(t, g);
-    }
-    const out: any[] = [];
-    for (const [t, g] of grouped) {
-      const invSum = Object.values(g).reduce((a, o) => a + (o > 1 ? 1 / o : 0), 0);
-      const row: any = { t };
-      for (const k of Object.keys(g)) {
-        const inv = g[k] > 1 ? 1 / g[k] : 0;
-        row[k] = invSum > 0 ? Math.round((inv / invSum) * 100) : 0;
-      }
-      out.push(row);
-    }
-    out.sort((a, b) => a.t - b.t);
-
-    // Anchor a synthetic point at "now" using latest market prices so a
-    // flat line renders even with only one snapshot in history.
-    const currentMarkets = markets.filter((m) => m.market_type === tab && m.is_active);
-    if (currentMarkets.length) {
-      const invSum = currentMarkets.reduce((a, m) => a + (m.odds > 1 ? 1 / Number(m.odds) : 0), 0);
-      const now = Date.now();
-      const nowRow: any = { t: now };
-      for (const m of currentMarkets) {
-        const inv = m.odds > 1 ? 1 / Number(m.odds) : 0;
-        nowRow[m.selection_key] = invSum > 0 ? Math.round((inv / invSum) * 100) : 0;
-      }
-      if (out.length === 0) {
-        // Backdate a duplicate 30 min back so the chart shows a horizontal line.
-        out.push({ ...nowRow, t: now - 30 * 60_000 });
-        out.push(nowRow);
-      } else if (out[out.length - 1].t < now - 30_000) {
-        out.push(nowRow);
-      }
-    }
-    return out;
-  })();
-
-  const allKeys = Array.from(new Set(rows.flatMap((r) => Object.keys(r).filter((k) => k !== "t"))));
-  const effectiveKeys = keys.length ? keys : allKeys;
-  const latestByKey = new Map<string, number>();
-  const last = rows.at(-1);
-  if (last) for (const k of effectiveKeys) if (typeof last[k] === "number") latestByKey.set(k, last[k]);
-
-  const visibleKeys = effectiveKeys.filter((k) => !hidden[k]);
-
-  return (
-    <section className="relative -mx-4 bg-[var(--surface)] md:mx-0">
-      <div className="px-4 pt-5 md:px-6 md:pt-6">
-        <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
-          Who will win?
-        </h2>
-
-
-        {/* Legend — minimal, matches MarketAnalyticsCard */}
-        {effectiveKeys.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
-            {effectiveKeys.map((k, idx) => {
-              const off = !!hidden[k];
-              const v = latestByKey.get(k);
-              return (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => setHidden((h) => ({ ...h, [k]: !h[k] }))}
-                  className={`inline-flex items-center gap-1.5 bg-transparent p-0 transition-opacity ${
-                    off ? "opacity-40" : "opacity-100 hover:opacity-80"
-                  }`}
-                  aria-pressed={!off}
-                >
-                  <span className="h-2 w-2 rounded-full" style={{ background: colorForUfcKey(k, idx) }} />
-                  <span className="font-medium tracking-tight text-white/85">{labelFor(k)}</span>
-                  {typeof v === "number" && (
-                    <span className="font-mono text-white/60">{v}%</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Chart — full width, edge-to-edge, no y-axis, dashed grid only,
-          endpoint labels on the right (mirrors football MarketAnalyticsCard) */}
-      <div className="relative mt-3 h-[340px] w-full sm:h-[380px] md:h-[420px]">
-        {rows.length === 0 ? (
-          <div className="grid h-full place-items-center text-[10px] font-bold uppercase tracking-[0.28em] text-white/40">
-            Movement history warming up…
-          </div>
-        ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart
-              data={rows}
-              margin={{ top: 12, right: 84, bottom: 8, left: 0 }}
-              onMouseMove={(state: any) => {
-                if (state && typeof state.activeTooltipIndex === "number") setActiveIndex(state.activeTooltipIndex);
-              }}
-              onMouseLeave={() => setActiveIndex(null)}
-            >
-              <CartesianGrid strokeDasharray="3 6" stroke="#ffffff" strokeOpacity={0.28} vertical={false} />
-              <XAxis
-                dataKey="t"
-                stroke="#ffffff"
-                strokeOpacity={0.15}
-                tick={{ fontSize: 10, fill: "rgba(255,255,255,0.4)" }}
-                tickLine={false}
-                axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
-                tickFormatter={(v) => new Date(v).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
-                minTickGap={48}
-              />
-              <YAxis hide domain={[0, 100]} width={0} padding={{ top: 0, bottom: 0 }} />
-              <Tooltip
-                content={() => null}
-                cursor={{ stroke: "rgba(255,255,255,0.28)", strokeWidth: 1, strokeDasharray: "3 4" }}
-              />
-              {visibleKeys.map((k) => (
-                <Line
-                  key={k}
-                  type="linear"
-                  dataKey={k}
-                  stroke={colorForUfcKey(k, effectiveKeys.indexOf(k))}
-                  strokeWidth={2.25}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  dot={false}
-                  activeDot={false}
-                  isAnimationActive={false}
-                  connectNulls
-                />
-              ))}
-              <Customized
-                component={(cprops: any) => {
-                  const yAxis = Object.values(cprops.yAxisMap ?? {})[0] as any;
-                  const yScale = yAxis?.scale;
-                  const offset = cprops.offset ?? { left: 0, top: 0, width: 0, height: 0 };
-                  if (!yScale || !rows.length) return null;
-                  const idx = activeIndex != null ? activeIndex : rows.length - 1;
-                  const row = rows[idx];
-                  if (!row) return null;
-                  const rightX = offset.left + offset.width;
-                  return (
-                    <g>
-                      {visibleKeys.map((k) => {
-                        const raw = row[k];
-                        const v = typeof raw === "number" ? raw : Number(raw);
-                        if (!Number.isFinite(v)) return null;
-                        const y = yScale(v);
-                        const color = colorForUfcKey(k, effectiveKeys.indexOf(k));
-                        const xAxis = Object.values(cprops.xAxisMap ?? {})[0] as any;
-                        const xScale = xAxis?.scale;
-                        const cx = xScale ? xScale(row.t) : rightX;
-                        return (
-                          <g key={`ep-${k}`}>
-                            <circle cx={cx} cy={y} r={4.5} fill={color} />
-                            <circle cx={cx} cy={y} r={9} fill={color} opacity={0.18} />
-                            <text x={rightX + 6} y={y - 4} fill={color} fontSize={13} fontWeight={800} style={{ letterSpacing: "0.02em" }}>
-                              {abbrevUfcLabel(labelFor(k))}
-                            </text>
-                            <text x={rightX + 6} y={y + 12} fill={color} fontSize={15} fontWeight={800} style={{ letterSpacing: "-0.01em" }}>
-                              {`${Math.round(v)}%`}
-                            </text>
-                          </g>
-                        );
-                      })}
-                    </g>
-                  );
-                }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        )}
-      </div>
-
-      {/* Divider — matches football MarketAnalyticsCard footer divider */}
-      <div className="mt-6 h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
-    </section>
-  );
-}
-
-
 
 /* ---------- Tale of tape ---------- */
 

@@ -27,7 +27,10 @@ export function FootballMatchDetailsPage({ matchId }: { matchId: string }) {
           historyFn={getFootballMarketHistory}
           tradesFn={getFootballRecentTrades}
           queryNamespace="football"
-          realtime={false}
+          realtime
+          realtimeChannels={[
+            { table: "sports_odds_snapshots", filter: `sports_event_id=eq.${matchId}` },
+          ]}
         />
       }
       marketsSlot={<FootballMarketTabs matchId={matchId} />}

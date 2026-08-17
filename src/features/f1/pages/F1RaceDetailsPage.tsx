@@ -2,19 +2,11 @@ import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
-import { Loader2, ArrowLeft, ArrowUpRight, X, ChevronDown, Check } from "lucide-react";
+import { Loader2, ArrowLeft, ArrowUpRight, X } from "lucide-react";
 import { toast } from "sonner";
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Customized,
-} from "recharts";
-import { getF1Race, placeF1RaceBet, getF1MarketHistories, getF1LiveRaceState, getF1RaceAnalytics } from "../f1.functions";
+import { getF1Race, placeF1RaceBet, getF1LiveRaceState } from "../f1.functions";
+import { MarketAnalyticsCard } from "@/components/matches/MarketAnalyticsCard";
+import { getF1CardMarketHistory, getF1CardRecentTrades } from "../f1-market-history.functions";
 import { LiveRaceStats } from "../components/LiveRaceStats";
 import { F1PostRaceAnalytics } from "../components/F1PostRaceAnalytics";
 import { getMyWallet } from "@/lib/wallet.functions";
@@ -30,15 +22,6 @@ type SubTab =
   | "head_to_head"
   | "fastest_lap"
   | "top_constructor_race";
-type Range = "1D" | "1W" | "1M" | "ALL";
-
-const RANGE_HOURS: Record<Range, number> = {
-  "1D": 24,
-  "1W": 24 * 7,
-  "1M": 24 * 30,
-  ALL: 24 * 365,
-};
-
 const SUB_TABS_TOP: { id: SubTab; label: string }[] = [
   { id: "top_5_finish", label: "Top 5 Finishers" },
   { id: "podium", label: "Podium Finishers" },
@@ -51,39 +34,12 @@ const SUB_TABS_SPECIALS: { id: SubTab; label: string }[] = [
   { id: "top_constructor_race", label: "Top Constructor" },
 ];
 
-const SECTION_TITLES: Partial<Record<SubTab, string>> = {
-  top_5_finish: "Who will finish top 5?",
-  podium: "Who will finish top 3?",
-  points_finish: "Who will finish in the points?",
-  head_to_head: "Which teammate finishes ahead?",
-  fastest_lap: "Who sets the fastest lap?",
-  top_constructor_race: "Which team scores the most points?",
-};
-
 const MIN_STAKE = 10;
 const MAX_STAKE = 50000;
 
-const CHART_PALETTE = [
-  "#22C55E",
-  "#3B82F6",
-  "#EC4899",
-  "#F59E0B",
-  "#A78BFA",
-  "#FB7185",
-  "#38BDF8",
-  "#F97316",
-];
-
-function computeProbabilities(markets: any[]): Record<string, number> {
-  const invSum = markets.reduce((s, m) => s + 1 / Number(m.odds), 0) || 1;
-  const out: Record<string, number> = {};
-  for (const m of markets) out[m.id] = 1 / Number(m.odds) / invSum;
-  return out;
-}
-
-function oddsToPct(o: number) {
-  if (!o || o <= 1) return 0;
-  return Math.min(100, Math.max(0, (1 / o) * 100));
+function impliedPct(odds: number) {
+  if (!odds || odds <= 1) return 0;
+  return Math.round((1 / odds) * 100);
 }
 
 function formatBegin(iso: string) {
@@ -98,14 +54,8 @@ function formatBegin(iso: string) {
   return `Begins on ${weekday} · ${dateStr}, ${timeStr}`;
 }
 
-function impliedPct(odds: number) {
-  if (!odds || odds <= 1) return 0;
-  return Math.round((1 / odds) * 100);
-}
-
 export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const getRace = useServerFn(getF1Race);
-  const getHistories = useServerFn(getF1MarketHistories);
   const place = useServerFn(placeF1RaceBet);
   const walletFn = useServerFn(getMyWallet);
   const { user } = useAuth();
@@ -127,22 +77,15 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
 
   const [topTab, setTopTab] = useState<TopTab>("top_finishers");
   const [subTab, setSubTab] = useState<SubTab>("top_5_finish");
-  const [range, setRange] = useState<Range>("ALL");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [hidden, setHidden] = useState<Record<string, boolean>>({});
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setSubTab(topTab === "top_finishers" ? "top_5_finish" : "head_to_head");
     setSelectedId(null);
-    setHidden({});
-    setActiveIndex(null);
   }, [topTab]);
 
   useEffect(() => {
     setSelectedId(null);
-    setHidden({});
-    setActiveIndex(null);
   }, [subTab]);
 
   const race: any = q.data?.race;
@@ -150,17 +93,6 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   const teams: any[] = q.data?.teams ?? [];
   const teamByKey = useMemo(() => Object.fromEntries(teams.map((t) => [t.team_key, t])), [teams]);
   const driverByKey = useMemo(() => Object.fromEntries(drivers.map((d) => [d.driver_key, d])), [drivers]);
-
-  // Post-race: fetch classification so we can pin the final chart value to the actual outcome.
-  const isFinished = race?.status === "finished";
-  const analyticsFn = useServerFn(getF1RaceAnalytics);
-  const analyticsQ = useQuery({
-    queryKey: ["f1-race-analytics", raceId],
-    queryFn: () => analyticsFn({ data: { raceId } }),
-    enabled: isFinished,
-    staleTime: 60_000,
-  });
-
 
   const grouped = useMemo(() => {
     const g: Record<SubTab, any[]> = {
@@ -177,188 +109,6 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   }, [q.data]);
 
   const currentMarkets = grouped[subTab];
-  const probabilities = useMemo(() => computeProbabilities(currentMarkets), [currentMarkets]);
-
-  // Top ~6 for the chart. Each becomes a filterable series.
-  const chartMarkets = useMemo(() => currentMarkets.slice(0, 6), [currentMarkets]);
-  const chartIds = chartMarkets.map((m) => m.id);
-
-  const chartQ = useQuery({
-    queryKey: ["f1-histories", chartIds.join(","), range],
-    queryFn: () => getHistories({ data: { marketIds: chartIds, rangeHours: RANGE_HOURS[range] } }),
-    enabled: chartIds.length > 0,
-    refetchInterval: 60_000,
-  });
-
-  // Seed the legend to show only the top 3 favourites by default whenever the
-  // market set changes (subTab switch or fresh race data). User toggles after
-  // that are preserved until the next reset.
-  const chartIdsKey = chartIds.join(",");
-  useEffect(() => {
-    if (chartIds.length === 0) return;
-    const next: Record<string, boolean> = {};
-    chartIds.forEach((id, idx) => {
-      if (idx >= 3) next[id] = true;
-    });
-    setHidden(next);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chartIdsKey]);
-
-  const seriesMeta = useMemo(
-    () =>
-      chartMarkets.map((m: any, i) => {
-        const drv = driverByKey[m.selection_key];
-        return {
-          id: m.id as string,
-          key: `k_${m.id}`,
-          label: drv?.name ?? m.label,
-          short: (drv?.abbr ?? m.label).toString().slice(0, 3).toUpperCase(),
-          color: CHART_PALETTE[i % CHART_PALETTE.length],
-          currentPct: impliedPct(Number(m.odds)),
-        };
-      }),
-    [chartMarkets, driverByKey],
-  );
-
-  // Post-race outcome per chart market → forces final chart value to 100% (won) or 0% (lost).
-  const winnerByMarketId = useMemo(() => {
-    const out: Record<string, boolean> = {};
-    if (!isFinished || !analyticsQ.data) return out;
-    const cls: any[] = (analyticsQ.data as any).classification ?? [];
-    const flDriver: any = (analyticsQ.data as any).fastestLap?.driver ?? null;
-    const keyify = (s: string) => (s ?? "").toString().toLowerCase().normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
-    const posByKey: Record<string, number> = {};
-    const teamPoints: Record<string, { pts: number; bestPos: number }> = {};
-    for (const r of cls) {
-      const k = keyify(r.driver?.name ?? "");
-      if (k && r.position) posByKey[k] = r.position;
-      const tk = keyify(r.team?.name ?? "");
-      if (tk) {
-        const cur = teamPoints[tk] ?? { pts: 0, bestPos: 999 };
-        cur.pts += Number(r.points ?? 0);
-        cur.bestPos = Math.min(cur.bestPos, r.position ?? 999);
-        teamPoints[tk] = cur;
-      }
-    }
-    const winnerKey = Object.entries(posByKey).find(([, p]) => p === 1)?.[0] ?? null;
-    const podium = new Set(Object.entries(posByKey).filter(([, p]) => p <= 3).map(([k]) => k));
-    const top5 = new Set(Object.entries(posByKey).filter(([, p]) => p <= 5).map(([k]) => k));
-    const top10 = new Set(Object.entries(posByKey).filter(([, p]) => p <= 10).map(([k]) => k));
-    const topTeam = Object.entries(teamPoints).sort((a, b) =>
-      b[1].pts !== a[1].pts ? b[1].pts - a[1].pts : a[1].bestPos - b[1].bestPos,
-    )[0]?.[0] ?? null;
-    const flKey = flDriver?.name ? keyify(flDriver.name) : null;
-    for (const m of chartMarkets) {
-      const sel = m.selection_key;
-      switch (m.market_type) {
-        case "race_winner": out[m.id] = sel === winnerKey; break;
-        case "podium_finish": out[m.id] = podium.has(sel); break;
-        case "top_5_finish": out[m.id] = top5.has(sel); break;
-        case "top_10_finish": out[m.id] = top10.has(sel); break;
-        case "fastest_lap": out[m.id] = flKey != null && sel === flKey; break;
-        case "top_constructor_race": out[m.id] = sel === topTeam; break;
-        case "teammate_h2h": {
-          const a = posByKey[sel] ?? 999;
-          const b = posByKey[m.secondary_selection_key] ?? 999;
-          out[m.id] = a < b; break;
-        }
-      }
-    }
-    return out;
-  }, [isFinished, analyticsQ.data, chartMarkets]);
-
-  // Build per-series points restricted to the selected range, then merge onto shared timeline.
-
-  const { chartData, yDomain } = useMemo(() => {
-    const byMarket = chartQ.data?.byMarket ?? {};
-    const now = Date.now();
-    const windowMs = RANGE_HOURS[range] * 3600_000;
-
-    const perSeries: Record<string, { t: number; y: number }[]> = {};
-    for (const s of seriesMeta) {
-      const raw = (byMarket[s.id] ?? [])
-        .map((p: any) => ({ t: new Date(p.snapshot_at).getTime(), y: oddsToPct(Number(p.odds)) }))
-        .sort((a: any, b: any) => a.t - b.t);
-
-      const cutoff = range === "ALL" ? -Infinity : now - windowMs;
-      const inWin = raw.filter((p) => p.t >= cutoff);
-
-      // Anchor at cutoff with the last-known value before the window so the line doesn't jump in.
-      const before = raw.filter((p) => p.t < cutoff).at(-1);
-      const anchor = range !== "ALL" && before ? [{ t: cutoff, y: before.y }] : [];
-
-      // Always end at "now" (or at settled_at for finished races) with the final observed value.
-      const latest = inWin.at(-1) ?? before ?? { t: now, y: s.currentPct };
-      const finalY = isFinished && s.id in winnerByMarketId
-        ? (winnerByMarketId[s.id] ? 100 : 0)
-        : latest.y;
-      const tailT = isFinished && race?.settled_at ? new Date(race.settled_at).getTime() : now;
-      const tail = { t: tailT, y: finalY };
-
-      const merged = [...anchor, ...inWin];
-      if (merged.length === 0) merged.push({ t: cutoff === -Infinity ? tailT - 3600_000 : cutoff, y: s.currentPct });
-      if (merged[merged.length - 1].t < tailT) merged.push(tail);
-      else merged[merged.length - 1] = tail;
-      perSeries[s.id] = merged;
-    }
-
-
-    // Merge on a shared timeline with forward-fill.
-    const times = new Set<number>();
-    for (const arr of Object.values(perSeries)) for (const p of arr) times.add(p.t);
-    const sortedT = [...times].sort((a, b) => a - b);
-    const cursors: Record<string, number> = {};
-    const last: Record<string, number> = {};
-    const rows: Record<string, number | string>[] = [];
-    for (const t of sortedT) {
-      const row: Record<string, number | string> = { t };
-      for (const s of seriesMeta) {
-        const arr = perSeries[s.id] ?? [];
-        let idx = cursors[s.id] ?? 0;
-        while (idx < arr.length && arr[idx].t <= t) {
-          last[s.id] = arr[idx].y;
-          idx++;
-        }
-        cursors[s.id] = idx;
-        if (last[s.id] != null) row[s.key] = last[s.id];
-      }
-      rows.push(row);
-    }
-
-    // y domain padded around the visible values so movement reads clearly.
-    const values: number[] = [];
-    for (const r of rows) for (const s of seriesMeta) {
-      const v = r[s.key];
-      if (typeof v === "number" && Number.isFinite(v)) values.push(v);
-    }
-    let domain: [number, number] = [0, 100];
-    if (values.length) {
-      const min = Math.min(...values);
-      const max = Math.max(...values);
-      const spread = Math.max(max - min, 4);
-      const pad = spread * 0.35;
-      domain = [Math.max(0, Math.floor(min - pad)), Math.min(100, Math.ceil(max + pad))];
-    }
-    return { chartData: rows, yDomain: domain };
-  }, [chartQ.data, seriesMeta, range, isFinished, winnerByMarketId, race?.settled_at]);
-
-  const visibleSeries = seriesMeta.filter((s) => !hidden[s.id]);
-  const scrubIdx = activeIndex != null ? activeIndex : Math.max(0, chartData.length - 1);
-  const splitData = useMemo(() => {
-    return chartData.map((row, i) => {
-      const out: Record<string, number | string> = { t: row.t as number };
-      for (const s of seriesMeta) {
-        const v = row[s.key];
-        if (typeof v === "number") {
-          if (i <= scrubIdx) out[`${s.key}__a`] = v;
-          if (i >= scrubIdx) out[`${s.key}__d`] = v;
-        }
-      }
-      return out;
-    });
-  }, [chartData, seriesMeta, scrubIdx]);
-
 
   const placeMut = useMutation({
     mutationFn: async (stakeValue: number) => {
@@ -429,170 +179,13 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
 
 
 
-      {/* Market Movement — recharts, football-analytics style */}
-      <section className="relative -mx-4 bg-[var(--color-surface)] md:mx-0">
-        <div className="px-4 pt-5 md:px-6 md:pt-6">
-          <h2 className="font-display text-[22px] font-semibold tracking-tight text-white md:text-[26px]">
-            {SECTION_TITLES[subTab] ?? "Market movement"}
-          </h2>
-
-          {/* Driver selector — collapsed dropdown; click a chip to toggle on/off */}
-          <DriverLegendDropdown
-            series={seriesMeta}
-            hidden={hidden}
-            onToggle={(id) => setHidden((h) => ({ ...h, [id]: !h[id] }))}
-            onAll={() => setHidden({})}
-            onNone={() => setHidden(Object.fromEntries(seriesMeta.map((s) => [s.id, true])))}
-          />
-
-        </div>
-
-        <div className="relative mt-3 h-[300px] w-full sm:h-[340px] md:h-[380px]">
-          {chartQ.isLoading ? (
-            <div className="grid h-full place-items-center text-[10px] font-bold uppercase tracking-[0.28em] text-white/40">
-              Loading market history…
-            </div>
-          ) : chartData.length === 0 ? (
-            <div className="grid h-full place-items-center text-xs text-[var(--color-ink-muted)]">
-              No market movement recorded yet.
-            </div>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart
-                data={splitData}
-                margin={{ top: 12, right: 84, bottom: 8, left: 0 }}
-                onMouseMove={(state: any) => {
-                  if (state && typeof state.activeTooltipIndex === "number") {
-                    setActiveIndex(state.activeTooltipIndex);
-                  }
-                }}
-                onMouseLeave={() => setActiveIndex(null)}
-              >
-                <CartesianGrid strokeDasharray="3 6" stroke="#ffffff" strokeOpacity={0.28} vertical={false} />
-                <XAxis
-                  dataKey="t"
-                  stroke="#ffffff"
-                  strokeOpacity={0.15}
-                  tick={false}
-                  tickLine={false}
-                  axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
-                  minTickGap={48}
-                />
-                <YAxis hide domain={yDomain} width={0} padding={{ top: 0, bottom: 0 }} />
-                <Tooltip
-                  content={() => null}
-                  cursor={{ stroke: "rgba(255,255,255,0.28)", strokeWidth: 1, strokeDasharray: "3 4" }}
-                />
-                {visibleSeries.map((s) => (
-                  <Line
-                    key={`${s.id}-dim`}
-                    type="linear"
-                    dataKey={`${s.key}__d`}
-                    stroke={s.color}
-                    strokeOpacity={0.22}
-                    strokeWidth={2.25}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    dot={false}
-                    activeDot={false}
-                    isAnimationActive={false}
-                    connectNulls
-                  />
-                ))}
-                {visibleSeries.map((s) => (
-                  <Line
-                    key={`${s.id}-active`}
-                    type="linear"
-                    dataKey={`${s.key}__a`}
-                    name={s.label}
-                    stroke={s.color}
-                    strokeWidth={2.25}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    dot={false}
-                    activeDot={false}
-                    isAnimationActive={false}
-                    connectNulls
-                  />
-                ))}
-                <Customized
-                  component={(cprops: any) => {
-                    const yAxis = Object.values(cprops.yAxisMap ?? {})[0] as any;
-                    const yScale = yAxis?.scale;
-                    const offset = cprops.offset ?? { left: 0, top: 0, width: 0, height: 0 };
-                    if (!yScale || !chartData.length) return null;
-                    const idx = activeIndex != null ? activeIndex : chartData.length - 1;
-                    const row = chartData[idx];
-                    if (!row) return null;
-                    const rightX = offset.left + offset.width;
-                    return (
-                      <g>
-                        {visibleSeries.map((s) => {
-                          const raw = row[s.key];
-                          const v = typeof raw === "number" ? raw : Number(raw);
-                          if (!Number.isFinite(v)) return null;
-                          const y = yScale(v);
-                          const xAxis = Object.values(cprops.xAxisMap ?? {})[0] as any;
-                          const xScale = xAxis?.scale;
-                          const cx = xScale ? xScale(row.t) : rightX;
-                          return (
-                            <g key={`ep-${s.id}`}>
-                              <circle cx={cx} cy={y} r={4.5} fill={s.color} />
-                              <circle cx={cx} cy={y} r={9} fill={s.color} opacity={0.18} />
-                              <text
-                                x={rightX + 6}
-                                y={y - 4}
-                                fill={s.color}
-                                fontSize={13}
-                                fontWeight={800}
-                                style={{ letterSpacing: "0.02em" }}
-                              >
-                                {s.short}
-                              </text>
-                              <text
-                                x={rightX + 6}
-                                y={y + 12}
-                                fill={s.color}
-                                fontSize={15}
-                                fontWeight={800}
-                                style={{ letterSpacing: "-0.01em" }}
-                              >
-                                {`${Math.round(v)}%`}
-                              </text>
-                            </g>
-                          );
-                        })}
-                      </g>
-                    );
-                  }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-
-        {/* Range selector — spans the chart width, aligned with the x-axis */}
-        <div className="mt-2 w-full pl-4 pr-[84px] md:pl-6">
-          <div className="flex items-center justify-between">
-            {(Object.keys(RANGE_HOURS) as Range[]).map((r) => {
-              const active = r === range;
-              return (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setRange(r)}
-                  aria-pressed={active}
-                  className={`inline-flex items-center gap-1.5 text-[12px] font-medium tracking-tight transition-colors ${
-                    active ? "text-white" : "text-white/50 hover:text-white/80"
-                  }`}
-                >
-                  {r}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      <MarketAnalyticsCard
+        matchId={raceId}
+        historyFn={getF1CardMarketHistory}
+        tradesFn={getF1CardRecentTrades}
+        queryNamespace="f1"
+        realtime={false}
+      />
 
       <div className="mb-4 mt-3 h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
 
@@ -805,7 +398,6 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
         market={slipMarket}
         driverName={selectedDriver?.name ?? null}
         raceName={race.name}
-        sectionTitle={SECTION_TITLES[subTab] ?? ""}
         balance={balance}
         noBalance={noBalance}
         isPending={placeMut.isPending}
@@ -825,7 +417,7 @@ type F1BetSlipProps = {
   market: any | null;
   driverName: string | null;
   raceName: string;
-  sectionTitle: string;
+  sectionTitle?: string;
   balance: number;
   noBalance: boolean;
   isPending: boolean;
@@ -875,7 +467,7 @@ const F1BetSlip = memo(function F1BetSlip({
             Your prediction
           </div>
           <div className="truncate text-[11px] text-[var(--color-ink-muted)]">
-            {raceName} · {sectionTitle}
+            {raceName}{sectionTitle ? ` · ${sectionTitle}` : ""}
           </div>
           {market && (
             <div className="text-[13px] leading-snug text-[var(--color-ink)]">
@@ -967,96 +559,6 @@ const F1BetSlip = memo(function F1BetSlip({
   );
 });
 
-
-type LegendSeries = { id: string; label: string; color: string; currentPct: number };
-
-function DriverLegendDropdown({
-  series,
-  hidden,
-  onToggle,
-  onAll,
-  onNone,
-}: {
-  series: LegendSeries[];
-  hidden: Record<string, boolean>;
-  onToggle: (id: string) => void;
-  onAll: () => void;
-  onNone: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const shownCount = series.filter((s) => !hidden[s.id]).length;
-
-  return (
-    <div className="relative mt-4">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="inline-flex items-center gap-2 rounded-md border border-[var(--color-surface-border)] bg-black/40 px-3 py-2 text-[12px] font-semibold text-[var(--color-ink)] hover:border-[var(--color-neon)]/60"
-      >
-        <span>Drivers on chart</span>
-        <span className="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[11px] text-white/80">
-          {shownCount}/{series.length}
-        </span>
-        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-
-      {open && (
-        <div className="absolute left-0 z-30 mt-2 w-72 rounded-lg border border-[var(--color-surface-border)] bg-[#050A08] p-2 shadow-2xl">
-          <div className="mb-2 flex items-center justify-between border-b border-[var(--color-surface-border)]/60 px-1 pb-2 text-[11px]">
-            <span className="font-semibold uppercase tracking-wider text-[var(--color-ink-muted)]">
-              Toggle drivers
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={onAll}
-                className="font-semibold text-[var(--color-neon)] hover:underline"
-              >
-                All
-              </button>
-              <button
-                type="button"
-                onClick={onNone}
-                className="font-semibold text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
-              >
-                None
-              </button>
-            </div>
-          </div>
-          <div className="max-h-72 overflow-y-auto">
-            {series.map((s) => {
-              const on = !hidden[s.id];
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => onToggle(s.id)}
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-white/5"
-                >
-                  <span
-                    className="grid h-4 w-4 shrink-0 place-items-center rounded border"
-                    style={{
-                      borderColor: on ? s.color : "rgba(255,255,255,0.2)",
-                      background: on ? s.color : "transparent",
-                    }}
-                  >
-                    {on && <Check className="h-3 w-3 text-black" strokeWidth={3} />}
-                  </span>
-                  <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
-                  <span className={`flex-1 truncate font-medium ${on ? "text-white" : "text-white/50"}`}>
-                    {s.label}
-                  </span>
-                  <span className="font-mono text-[11px] text-white/60">{s.currentPct}%</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 function F1YourPicksSummary({ raceId, raceName, finished }: { raceId: string; raceName: string; finished: boolean }) {
   const { user } = useAuth();
