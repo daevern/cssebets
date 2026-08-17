@@ -17,6 +17,7 @@ import { captureReferralFromUrl } from "@/lib/referral-code";
 import { Toaster } from "sonner";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { useAuth } from "@/hooks/use-auth";
+import { DemoWalletBootstrap } from "@/components/wallet/DemoWalletBootstrap";
 
 function NotFoundComponent() {
   return (
