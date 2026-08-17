@@ -60,6 +60,15 @@ export const approveUser = createServerFn({ method: "POST" })
     );
     if (error) throw new Error(error.message);
 
+    await supabaseAdmin
+      .from("profiles")
+      .update({ is_simulation: false })
+      .eq("id", data.targetUserId);
+    await supabaseAdmin
+      .from("wallets")
+      .update({ is_simulation: false })
+      .eq("user_id", data.targetUserId);
+
     // add to default league
     const { data: league } = await supabaseAdmin.from("leagues").select("id").limit(1).single();
     if (league) {

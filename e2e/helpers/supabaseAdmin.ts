@@ -156,3 +156,194 @@ export async function cleanupFootballSeed(eventId: string, marketId: string) {
   await sb.from("sports_markets").delete().eq("id", marketId);
   await sb.from("sports_events").delete().eq("id", eventId);
 }
+
+export type SeededF1Top5 = {
+  raceId: string;
+  marketId: string;
+  driverKey: string;
+  odds: number;
+};
+
+export async function seedF1Top5(overrides: Partial<SeededF1Top5> = {}): Promise<SeededF1Top5> {
+  const sb = adminClient();
+  const raceId = overrides.raceId ?? randomUUID();
+  const marketId = overrides.marketId ?? randomUUID();
+  const driverKey = overrides.driverKey ?? "e2e_driver";
+  const odds = overrides.odds ?? 2.1;
+  const startsAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
+  const raceKey = `e2e_${raceId.replace(/-/g, "").slice(0, 12)}`;
+
+  await sb.from("f1_drivers").upsert(
+    {
+      driver_key: driverKey,
+      name: "E2E Driver",
+      abbr: "E2E",
+      active: true,
+    },
+    { onConflict: "driver_key" },
+  );
+
+  const { error: raceErr } = await sb.from("f1_races").insert({
+    id: raceId,
+    race_key: raceKey,
+    season: new Date().getUTCFullYear(),
+    round: 99,
+    name: "E2E Grand Prix",
+    starts_at: startsAt,
+    status: "scheduled",
+    provider_id: null,
+    settled_at: null,
+    results: null,
+  });
+  if (raceErr) throw new Error(`seed f1_races: ${raceErr.message}`);
+
+  const { error: mktErr } = await sb.from("f1_race_markets").insert({
+    id: marketId,
+    race_id: raceId,
+    market_type: "top_5_finish",
+    selection_key: driverKey,
+    label: "E2E Driver",
+    odds,
+    status: "open",
+  });
+  if (mktErr) throw new Error(`seed f1_race_markets: ${mktErr.message}`);
+
+  return { raceId, marketId, driverKey, odds };
+}
+
+/** Seed results + move start into the past so cron settle can grade without a live API. */
+export async function finishF1RaceWithSeededResults(raceId: string, winnerDriverKey: string) {
+  const sb = adminClient();
+  const past = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString();
+  const { error } = await sb
+    .from("f1_races")
+    .update({
+      starts_at: past,
+      results: [
+        {
+          position: 1,
+          points: 25,
+          driver: { name: "E2E Driver", key: winnerDriverKey },
+          team: { name: "E2E Team" },
+        },
+      ],
+    })
+    .eq("id", raceId);
+  if (error) throw new Error(`finish f1_races: ${error.message}`);
+}
+
+export async function latestF1Bet(raceId: string) {
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("f1_bets")
+    .select("id, user_id, status, stake, odds_locked, potential_payout, selection_key, market_type")
+    .eq("race_id", raceId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`f1_bets: ${error.message}`);
+  return data;
+}
+
+export async function cleanupF1Seed(raceId: string, marketId: string) {
+  const sb = adminClient();
+  await sb.from("f1_bets").delete().eq("race_id", raceId);
+  await sb.from("f1_race_markets").delete().eq("id", marketId);
+  await sb.from("f1_races").delete().eq("id", raceId);
+}
+
+export type SeededUfcMoneyline = {
+  eventId: string;
+  fightId: string;
+  oddsA: number;
+  oddsB: number;
+};
+
+export async function seedUfcMoneyline(
+  overrides: Partial<SeededUfcMoneyline> = {},
+): Promise<SeededUfcMoneyline> {
+  const sb = adminClient();
+  const eventId = overrides.eventId ?? randomUUID();
+  const fightId = overrides.fightId ?? randomUUID();
+  const oddsA = overrides.oddsA ?? 2.1;
+  const oddsB = overrides.oddsB ?? 1.8;
+  const startsAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { error: evErr } = await sb.from("ufc_events").insert({
+    id: eventId,
+    event_key: `e2e_ufc_${eventId.replace(/-/g, "").slice(0, 12)}`,
+    name: "E2E UFC Card",
+    starts_at: startsAt,
+    is_active: true,
+  });
+  if (evErr) throw new Error(`seed ufc_events: ${evErr.message}`);
+
+  const { error: fightErr } = await sb.from("ufc_fights").insert({
+    id: fightId,
+    event_id: eventId,
+    fighter_a: "E2E Alpha",
+    fighter_b: "E2E Bravo",
+    commence_time: startsAt,
+    card_position: "main",
+    scheduled_rounds: 3,
+    status: "scheduled",
+    winner: null,
+    settled_at: null,
+  });
+  if (fightErr) throw new Error(`seed ufc_fights: ${fightErr.message}`);
+
+  const { error: mktErr } = await sb.from("ufc_fight_markets").insert([
+    {
+      fight_id: fightId,
+      market_type: "moneyline",
+      selection_key: "a",
+      label: "E2E Alpha",
+      odds: oddsA,
+      is_active: true,
+    },
+    {
+      fight_id: fightId,
+      market_type: "moneyline",
+      selection_key: "b",
+      label: "E2E Bravo",
+      odds: oddsB,
+      is_active: true,
+    },
+  ]);
+  if (mktErr) throw new Error(`seed ufc_fight_markets: ${mktErr.message}`);
+
+  return { eventId, fightId, oddsA, oddsB };
+}
+
+/** Deterministic moneyline settle via RPC (no live MMA feed). */
+export async function settleUfcFightWinner(fightId: string, winner: "a" | "b" | "draw") {
+  const sb = adminClient();
+  const past = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  await sb.from("ufc_fights").update({ commence_time: past }).eq("id", fightId);
+  const { error } = await sb.rpc("auto_settle_ufc_winner_atomic", {
+    p_fight_id: fightId,
+    p_winner: winner,
+  });
+  if (error) throw new Error(`auto_settle_ufc_winner_atomic: ${error.message}`);
+}
+
+export async function latestUfcBet(fightId: string) {
+  const sb = adminClient();
+  const { data, error } = await sb
+    .from("ufc_bets")
+    .select("id, user_id, status, stake, odds_locked, potential_payout, payout, selection_key, market_type")
+    .eq("fight_id", fightId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`ufc_bets: ${error.message}`);
+  return data;
+}
+
+export async function cleanupUfcSeed(eventId: string, fightId: string) {
+  const sb = adminClient();
+  await sb.from("ufc_bets").delete().eq("fight_id", fightId);
+  await sb.from("ufc_fight_markets").delete().eq("fight_id", fightId);
+  await sb.from("ufc_fights").delete().eq("id", fightId);
+  await sb.from("ufc_events").delete().eq("id", eventId);
+}

@@ -110,12 +110,16 @@ function RegisterPage() {
   const [confirm, setConfirm] = useState("");
   const [referralInput, setReferralInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isGuestUpgrade, setIsGuestUpgrade] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     captureReferralFromUrl();
     const stored = getStoredReferralCode();
     if (stored) setReferralInput(stored);
+    void supabase.auth.getSession().then(({ data }) => {
+      setIsGuestUpgrade(Boolean(data.session?.user?.is_anonymous));
+    });
   }, []);
 
   function resolveReferralCode(): string | null {
@@ -185,16 +189,40 @@ function RegisterPage() {
 
       await checkAuthRateLimit({ data: isEmail ? { email: authEmail } : { phone: p } });
 
+      const {
+        data: { session: existing },
+      } = await supabase.auth.getSession();
+      const upgradingGuest = Boolean(existing?.user?.is_anonymous);
+
+      const meta = {
+        display_name: displayName.trim(),
+        ...(isEmail ? {} : { phone_number: p }),
+        ...(refCode ? { referral_code: refCode } : {}),
+      };
+
+      if (upgradingGuest) {
+        const { error: upErr } = await supabase.auth.updateUser({
+          email: authEmail,
+          password,
+          data: meta,
+        });
+        if (upErr) throw upErr;
+
+        const { finalizeGuestUpgrade } = await import("@/lib/guest-upgrade.functions");
+        await finalizeGuestUpgrade({ data: { displayName: displayName.trim() } });
+
+        clearStoredReferralCode();
+        toast.success("Demo account upgraded. Waiting for admin approval.");
+        navigate({ to: "/dashboard" });
+        return;
+      }
+
       const { data: signUp, error } = await supabase.auth.signUp({
         email: authEmail,
         password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: {
-            display_name: displayName.trim(),
-            ...(isEmail ? {} : { phone_number: p }),
-            ...(refCode ? { referral_code: refCode } : {}),
-          },
+          data: meta,
         },
       });
       if (error) throw error;
@@ -245,9 +273,13 @@ function RegisterPage() {
   return (
     <AuthShell
       topSlot={<StepProgress step={step} />}
-      eyebrow="Create account"
+      eyebrow={isGuestUpgrade ? "Upgrade demo account" : "Create account"}
       title={copy.title}
-      subtitle={copy.subtitle}
+      subtitle={
+        isGuestUpgrade && step === 0
+          ? "Keep this session — we'll convert your practice account and wait for staff approval before real points."
+          : copy.subtitle
+      }
       footer={
         <p className="text-sm text-[var(--color-ink-muted)]">
           Already have an account?{" "}

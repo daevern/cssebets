@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import { CsseCardBack } from "@/components/arcade/PlayingCard";
+import { ArcadeHouseMark } from "@/components/arcade/ArcadeHouseMark";
 import {
   HILO_RANKS,
   HILO_SUITS,
@@ -200,10 +201,14 @@ export function HiloBoard({
   return (
     <div
       className="relative mx-auto w-full max-w-[460px] overflow-hidden rounded-[10px] px-4 pb-4 pt-3"
-      style={{ background: T.feltOrBoardFill }}
+      style={{
+        background: T.feltOrBoardFill,
+        boxShadow: `inset 0 0 0 1px rgba(255,255,255,.06), inset 0 0 0 8px ${T.stageBg}`,
+      }}
     >
+      <ArcadeHouseMark opacity={0.5} />
       {/* result pill */}
-      <div className="relative flex h-[76px] items-start justify-center">
+      <div className="relative z-10 flex h-[76px] items-start justify-center">
         <div
           className={cn(
             "rounded-[8px] border px-4 py-2 text-center",

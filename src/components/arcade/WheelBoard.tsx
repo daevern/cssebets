@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import { WHEEL_SEGMENTS, type WheelRisk } from "@/lib/arcade/mini-math";
+import { ArcadeHouseMark } from "@/components/arcade/ArcadeHouseMark";
 
 const T = ARCADE_THEMES.wheel;
 const SPIN_MS = 4200;
@@ -118,9 +119,13 @@ export function WheelBoard({
   return (
     <div
       className="relative mx-auto w-full max-w-[460px] overflow-hidden rounded-[10px] px-4 pb-4 pt-4"
-      style={{ background: T.feltOrBoardFill }}
+      style={{
+        background: T.feltOrBoardFill,
+        boxShadow: `inset 0 0 0 1px rgba(255,255,255,.06), inset 0 0 0 8px ${T.stageBg}`,
+      }}
     >
-      <div className="relative mx-auto w-[292px]">
+      <ArcadeHouseMark opacity={0.45} />
+      <div className="relative z-10 mx-auto w-[292px]">
         {/* pointer */}
         <div
           key={`kick-${kick}`}
@@ -188,7 +193,7 @@ export function WheelBoard({
       </div>
 
       {/* legend rail */}
-      <div className="mt-3 flex items-stretch gap-1.5">
+      <div className="relative z-10 mt-3 flex items-stretch gap-1.5">
         {legend.map((m) => {
           const active = landedMult != null && landedMult === m;
           return (

@@ -46,7 +46,9 @@ export function PendingApproval({
           <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
             CSSEBets reviews every new account by hand to keep the markets clean.
             {email ? ` We'll notify ${email} the moment you're approved.` : ""} It
-            usually takes a few hours.
+            usually takes a few hours. If you upgraded from a demo session, your user
+            id stays the same — practice tickets stay history; real points start at
+            zero until approval.
           </p>
 
           {/* Status ladder */}

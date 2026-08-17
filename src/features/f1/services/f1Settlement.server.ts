@@ -9,34 +9,51 @@ function keyify(s: string) {
 export async function settleF1RaceById(raceId: string) {
   const { data: race } = await (supabaseAdmin as any)
     .from("f1_races")
-    .select("id, race_key, provider_id, status, settled_at")
+    .select("id, race_key, provider_id, status, settled_at, results, fastest_lap")
     .eq("id", raceId)
     .single();
   if (!race) throw new Error("race not found");
   if (race.status === "finished" && race.settled_at) return { ok: true, alreadySettled: true };
-  if (!race.provider_id) throw new Error("no provider_id");
 
-  const results = await fetchF1RaceResults(race.provider_id);
-  if (!results.length) return { ok: false, error: "no results yet" };
-
-  // Order by position
-  const ordered = results
-    .filter((r) => r.position != null)
-    .sort((a, b) => (a.position ?? 999) - (b.position ?? 999));
+  // Prefer seeded / stored results (E2E + offline) over a live provider pull.
+  let ordered: any[] = [];
+  let fastestLapTop: any = race.fastest_lap ?? null;
+  const seeded = Array.isArray(race.results) ? race.results : null;
+  if (seeded && seeded.length > 0) {
+    ordered = seeded
+      .filter((r: any) => r.position != null || r.driver?.name)
+      .sort((a: any, b: any) => (a.position ?? 999) - (b.position ?? 999));
+  } else {
+    if (!race.provider_id) throw new Error("no provider_id");
+    const results = await fetchF1RaceResults(race.provider_id);
+    if (!results.length) return { ok: false, error: "no results yet" };
+    ordered = results
+      .filter((r) => r.position != null)
+      .sort((a, b) => (a.position ?? 999) - (b.position ?? 999));
+    if (!ordered.length) return { ok: false, error: "no ranked results yet" };
+    try {
+      const fl = await fetchF1FastestLap(race.provider_id);
+      const top = fl.sort((a, b) => (a.position ?? 999) - (b.position ?? 999))[0];
+      if (top?.driver?.name) fastestLapTop = top;
+    } catch {
+      fastestLapTop = null;
+    }
+  }
 
   if (!ordered.length) return { ok: false, error: "no ranked results yet" };
 
-  const winner = ordered[0]?.driver.name ? keyify(ordered[0].driver.name) : null;
-  const podium = new Set(ordered.slice(0, 3).map((r) => keyify(r.driver.name)));
-  const top5 = new Set(ordered.slice(0, 5).map((r) => keyify(r.driver.name)));
-  const pointsFinishers = new Set(ordered.slice(0, 10).map((r) => keyify(r.driver.name)));
+  const winner = ordered[0]?.driver?.name ? keyify(ordered[0].driver.name) : null;
+  const podium = new Set(ordered.slice(0, 3).map((r: any) => keyify(r.driver.name)));
+  const top5 = new Set(ordered.slice(0, 5).map((r: any) => keyify(r.driver.name)));
+  const pointsFinishers = new Set(ordered.slice(0, 10).map((r: any) => keyify(r.driver.name)));
   const positionByKey: Record<string, number> = {};
   for (const r of ordered) positionByKey[keyify(r.driver.name)] = r.position!;
 
-  // Constructor points total per team in this race
   const teamPoints: Record<string, { pts: number; bestPos: number }> = {};
   for (const r of ordered) {
-    const tk = keyify(r.team.name);
+    const teamName = r.team?.name ?? r.constructor?.name;
+    if (!teamName) continue;
+    const tk = keyify(teamName);
     const cur = teamPoints[tk] ?? { pts: 0, bestPos: 999 };
     cur.pts += Number(r.points ?? 0);
     cur.bestPos = Math.min(cur.bestPos, r.position ?? 999);
@@ -47,19 +64,7 @@ export async function settleF1RaceById(raceId: string) {
     return a[1].bestPos - b[1].bestPos;
   })[0]?.[0] ?? null;
 
-  // Fastest lap — only settle when provider returns a result.
-  let fastestLapKey: string | null = null;
-  let fastestLapTop: any = null;
-  try {
-    const fl = await fetchF1FastestLap(race.provider_id);
-    const top = fl.sort((a, b) => (a.position ?? 999) - (b.position ?? 999))[0];
-    if (top?.driver?.name) {
-      fastestLapKey = keyify(top.driver.name);
-      fastestLapTop = top;
-    }
-  } catch {
-    fastestLapKey = null;
-  }
+  const fastestLapKey = fastestLapTop?.driver?.name ? keyify(fastestLapTop.driver.name) : null;
 
   await (supabaseAdmin as any)
     .from("f1_races")
@@ -95,7 +100,6 @@ export async function settleF1RaceById(raceId: string) {
       .eq("id", m.id);
     settled++;
 
-    // Settle bets on this market
     const { data: bets } = await (supabaseAdmin as any)
       .from("f1_bets")
       .select("id, user_id, stake, potential_payout, status")

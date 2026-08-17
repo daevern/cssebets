@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ARCADE_THEMES } from "@/lib/arcade/theme";
 import { diceMultiplier, diceWinChance, type DiceDirection } from "@/lib/arcade/mini-math";
+import { ArcadeHouseMark } from "@/components/arcade/ArcadeHouseMark";
 
 const T = ARCADE_THEMES.dice;
 const LOSS = "#ff4d5e";
@@ -93,10 +94,14 @@ export function DiceBoard({
   return (
     <div
       className="relative mx-auto w-full max-w-[460px] overflow-hidden rounded-[10px] px-4 pb-4 pt-3"
-      style={{ background: T.feltOrBoardFill }}
+      style={{
+        background: T.feltOrBoardFill,
+        boxShadow: `inset 0 0 0 1px rgba(255,255,255,.06), inset 0 0 0 8px ${T.stageBg}`,
+      }}
     >
+      <ArcadeHouseMark opacity={0.5} />
       {/* result pill rail */}
-      <div className="relative h-[86px]">
+      <div className="relative z-10 h-[86px]">
         <div
           key={landed ? `${roll}-${markerProgress >= 1}` : "idle"}
           className={cn(

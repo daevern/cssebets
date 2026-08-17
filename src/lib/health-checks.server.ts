@@ -75,6 +75,79 @@ export async function runHealthChecks() {
     return { status: (count ?? 0) > 50 ? "degraded" : "ok", metadata: { pending: count ?? 0 } };
   }));
 
+  const ageMinutes = (iso: string | null | undefined) =>
+    iso ? (Date.now() - new Date(iso).getTime()) / 60_000 : null;
+
+  checks.push(await timed("football_sync", async () => {
+    const { data, error } = await (supabaseAdmin as any)
+      .from("sports_sync_runs")
+      .select("finished_at, started_at, status, job_type")
+      .eq("sport_code", "football")
+      .order("started_at", { ascending: false })
+      .limit(1);
+    if (error) throw new Error(error.message);
+    const row = (data ?? [])[0];
+    if (!row) return { status: "degraded" as const, metadata: { reason: "no football sync runs yet" } };
+    const last = row.finished_at ?? row.started_at;
+    const age = ageMinutes(last);
+    return {
+      status: age != null && age > 90 ? ("degraded" as const) : ("ok" as const),
+      metadata: { last, age_minutes: age, job_type: row.job_type, run_status: row.status },
+    };
+  }));
+
+  checks.push(await timed("football_settle", async () => {
+    const { data, error } = await (supabaseAdmin as any)
+      .from("sports_settlement_runs")
+      .select("created_at, status, finished_at")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) throw new Error(error.message);
+    const row = (data ?? [])[0];
+    if (!row) {
+      return { status: "ok" as const, metadata: { reason: "no settlement runs yet (idle ok)" } };
+    }
+    const last = row.finished_at ?? row.created_at;
+    const age = ageMinutes(last);
+    return {
+      status: row.status === "failed" ? ("degraded" as const) : ("ok" as const),
+      metadata: { last, age_minutes: age, run_status: row.status },
+    };
+  }));
+
+  checks.push(await timed("f1_sync", async () => {
+    const { data, error } = await (supabaseAdmin as any)
+      .from("f1_sync_runs")
+      .select("finished_at, started_at, status, task")
+      .order("started_at", { ascending: false })
+      .limit(1);
+    if (error) throw new Error(error.message);
+    const row = (data ?? [])[0];
+    if (!row) return { status: "degraded" as const, metadata: { reason: "no f1 sync runs yet" } };
+    const last = row.finished_at ?? row.started_at;
+    const age = ageMinutes(last);
+    return {
+      status: age != null && age > 180 ? ("degraded" as const) : ("ok" as const),
+      metadata: { last, age_minutes: age, task: row.task, run_status: row.status },
+    };
+  }));
+
+  checks.push(await timed("health_cron_heartbeat", async () => {
+    const { data, error } = await supabaseAdmin
+      .from("health_check_runs")
+      .select("created_at")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) throw new Error(error.message);
+    const last = (data ?? [])[0]?.created_at ?? null;
+    const age = ageMinutes(last);
+    // Before this run persists, last may be stale — still useful for ops.
+    return {
+      status: age != null && age > 20 ? ("degraded" as const) : ("ok" as const),
+      metadata: { last, age_minutes: age, expected_cadence: "≈5m via /api/public/hooks/health-check" },
+    };
+  }));
+
   // Persist
   const rows = checks.map((c) => ({
     check_name: c.name, status: c.status, duration_ms: c.duration_ms,

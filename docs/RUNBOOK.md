@@ -158,6 +158,9 @@ on `supabase/config.toml` or a specific migration if it fails.
 - [ ] All pg_cron `net.http_post` jobs send `x-cron-secret` (or Bearer)
 - [ ] Unauthenticated POST to `/api/public/hooks/health-check` returns 401
 - [ ] Authenticated cron POST returns 200 and writes `health_check_runs`
+- [ ] `/management/admin/health` shows cron freshness cards (football_sync,
+      football_settle, f1_sync, health_cron_heartbeat) with recent ages when
+      crons are live
 - [ ] `accounting_migration_flags.capacity_enforced = true` for
       plinko, rps, blackjack, roulette, treasure
 - [ ] Reviewed `apply_margin_to_real` on `/management/admin/risk-settings`
