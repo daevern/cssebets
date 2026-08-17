@@ -5,10 +5,18 @@ export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
       { title: "About — CSSEBets" },
-      { name: "description", content: "What CSSEBets is, how it works, and who it's for." },
+      {
+        name: "description",
+        content:
+          "CSSEBets is a closed community points club for sports markets and house arcade — who it's for and how it works.",
+      },
       { property: "og:title", content: "About CSSEBets" },
-      { property: "og:description", content: "What CSSEBets is, how it works, and who it's for." },
-          { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
+      {
+        property: "og:description",
+        content:
+          "CSSEBets is a closed community points club for sports markets and house arcade — who it's for and how it works.",
+      },
+      { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
       { name: "twitter:image", content: "https://cssebets.com/og-image.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -19,23 +27,47 @@ export const Route = createFileRoute("/about")({
 
 function AboutPage() {
   return (
-    <PublicShell title="About" kicker="What is CSSEBets?">
+    <PublicShell title="About" kicker="Who this is for">
       <p>
-        <BrandText /> is a prediction market for the FIFA World Cup 2026. Players stake
-        prediction points on match outcomes across a wide catalogue of markets — match
-        result, over/under, both teams to score, corners, cards, correct score, and more.
+        <BrandText /> is a <strong>closed community points club</strong> built around the FIFA
+        World Cup 2026 and ongoing football, Formula 1 and UFC. Members stake{" "}
+        <strong>community points</strong> — not a public casino deposit product — on live markets
+        and house arcade games from one wallet.
       </p>
-      <p>
-        Odds are sourced from a global bookmaker feed and updated in near real-time. Every
-        stake, settlement, and payout is auditable in the player's wallet history.
-      </p>
+
+      <h3>Who it's for</h3>
+      <ul>
+        <li>Members of a private sports community who want shared tipping and arcade play.</li>
+        <li>Players who want live odds, clear settlements, and an auditable points wallet.</li>
+        <li>Guests who want to try the app with practice points before joining as a member.</li>
+      </ul>
+
+      <h3>What you can do</h3>
+      <ul>
+        <li>
+          <strong>Sports markets</strong> — football, F1 and UFC fixtures with match result,
+          totals, BTTS and more, priced from a live odds feed.
+        </li>
+        <li>
+          <strong>CSSE Originals</strong> — house arcade games (Plinko, Roulette, Blackjack, Keno,
+          Crash and more) that are server-authoritative and provably fair.
+        </li>
+        <li>
+          <strong>One wallet</strong> — every stake, settlement and payout shows in your history.
+        </li>
+      </ul>
+
       <h3>How to get started</h3>
       <ol>
-        <li>Register a free account.</li>
-        <li>Request points to fund your wallet.</li>
-        <li>Open a fixture, pick a market, lock a prediction.</li>
-        <li>Winning bets credit your wallet automatically at full time.</li>
+        <li>Open the app as a guest (practice points) or register for a member account.</li>
+        <li>Fund or reset your points wallet as your community rules allow.</li>
+        <li>Lock a sports prediction or play a CSSE Original from the arcade.</li>
+        <li>Winning settlements credit your wallet automatically.</li>
       </ol>
+
+      <p className="text-[var(--color-ink-muted)]">
+        <BrandText /> is for community play with points. Only stake what you can afford to lose.
+      </p>
     </PublicShell>
   );
 }
@@ -91,7 +123,9 @@ export function PublicShell({
           <Link to="/" className="flex items-center gap-2 hover:text-[var(--color-ink)]">
             <CsseLogo size={16} />
           </Link>
-          <span>© {new Date().getFullYear()} <BrandText /></span>
+          <span>
+            © {new Date().getFullYear()} <BrandText />
+          </span>
         </footer>
       </main>
     </div>

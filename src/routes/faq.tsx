@@ -7,9 +7,17 @@ export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
       { title: "Help — CSSEBets" },
-      { name: "description", content: "How to use CSSEBets — funding your wallet, placing bets, and getting paid." },
+      {
+        name: "description",
+        content:
+          "How CSSEBets works for community members — wallet points, sports markets, arcade originals, and payouts.",
+      },
       { property: "og:title", content: "CSSEBets help & FAQ" },
-      { property: "og:description", content: "How to use CSSEBets — funding your wallet, placing bets, and getting paid." },
+      {
+        property: "og:description",
+        content:
+          "How CSSEBets works for community members — wallet points, sports markets, arcade originals, and payouts.",
+      },
           { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
       { name: "twitter:image", content: "https://cssebets.com/og-image.jpg" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -22,16 +30,28 @@ export const Route = createFileRoute("/faq")({
 function HelpPage() {
   return (
     <PublicShell title="Help" kicker="FAQ & how-to">
+      <h3>What is CSSEBets?</h3>
+      <p>
+        A closed community points club: stake community points on football, F1 and UFC markets,
+        or play CSSE Originals arcade games from one wallet. Guests can try practice points;
+        members play under community funding rules. It is not a public casino.
+      </p>
       <h3>Funding my wallet</h3>
       <p>
         Submit a point request from the Wallet page with proof of transfer. An admin
-        reviews it and credits your wallet — usually within a few hours.
+        reviews it and credits your wallet — usually within a few hours. Guests can reset
+        practice points from the demo wallet controls.
       </p>
       <h3>Placing a bet</h3>
       <p>
         Open a fixture, tap a market (e.g. Match Result, Over/Under 2.5), select an
         outcome, choose your stake, and lock the prediction. Your potential payout is
         shown before you confirm.
+      </p>
+      <h3>Arcade (CSSE Originals)</h3>
+      <p>
+        Open Arcade from the app nav. Every original is server-authoritative and provably
+        fair — the house commits the result before the animation plays.
       </p>
       <h3>Free bets</h3>
       <p>
@@ -49,7 +69,7 @@ function HelpPage() {
         real person will reply. <Link to="/register" className="text-[var(--color-neon)] hover:underline">Create an account</Link> to get started, or <Link to="/auth" className="text-[var(--color-neon)] hover:underline">log in</Link>.
       </p>
       <p className="text-[var(--color-ink-muted)]">
-        <BrandText /> is a prediction-market platform. Only play with what you can afford
+        <BrandText /> is for community play with points. Only stake what you can afford
         to lose.
       </p>
       <div className="not-prose -mx-4 mt-8">

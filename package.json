@@ -1,6 +1,6 @@
 {
   "name": "cssebets",
-  "description": "CSSEBets — prediction markets for the FIFA World Cup 2026, football, F1, UFC and CSSE Originals.",
+  "description": "CSSEBets — closed community points club for FIFA World Cup 2026 sports markets, F1, UFC and CSSE Originals arcade.",
   "private": true,
   "sideEffects": false,
   "type": "module",

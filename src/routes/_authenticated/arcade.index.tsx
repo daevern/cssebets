@@ -25,13 +25,13 @@ export const Route = createFileRoute("/_authenticated/arcade/")({
       {
         name: "description",
         content:
-          "Five house originals — flat, minimal, provably fair. Server decides every payout.",
+          "Twelve CSSE Originals — server-authoritative, provably fair house arcade for the community points club.",
       },
       { property: "og:title", content: "CSSE Originals — Arcade | cssebets" },
       {
         property: "og:description",
         content:
-          "Plinko, Roulette, Treasure Grid, Blackjack and Rock–Paper–Scissors — CSSE Originals.",
+          "Plinko, Roulette, Blackjack, Keno, Crash, Towers and more — CSSE Originals on one wallet.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -148,6 +148,10 @@ function ArcadeLobby() {
             Originals
           </h1>
         </div>
+        <p className="max-w-xl text-[12px] leading-relaxed text-[var(--color-ink-muted)]">
+          Twelve house games for the community points club. Server decides every payout —
+          provably fair, one wallet.
+        </p>
       </header>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">

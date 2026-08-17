@@ -10,9 +10,9 @@ export const Route = createFileRoute("/community")({
   head: () => ({
     meta: [
       { title: "Community — CSSEBets" },
-      { name: "description", content: "Meet the CSSEBets community — players, leagues, referrals and live platform activity." },
+      { name: "description", content: "The CSSEBets community — members, leagues, referrals and live club activity." },
       { property: "og:title", content: "The CSSEBets community" },
-      { property: "og:description", content: "Meet the CSSEBets community — players, leagues, referrals and live platform activity." },
+      { property: "og:description", content: "The CSSEBets community — members, leagues, referrals and live club activity." },
           { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
       { name: "twitter:image", content: "https://cssebets.com/og-image.jpg" },
       { name: "twitter:card", content: "summary_large_image" },

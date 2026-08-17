@@ -7,18 +7,18 @@ export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "CSSEBets – Sports Prediction Markets & Arcade Games" },
+      { title: "CSSEBets – Community Sports Markets & House Arcade" },
       {
         name: "description",
         content:
-          "Trade live prediction markets on football, F1 and UFC, or play provably fair arcade games. One wallet, real-time odds, and community-driven pricing.",
+          "A closed community points club. Stake community points on football, F1 and UFC, or play CSSE Originals arcade games — one wallet, live odds, auditable settlements.",
       },
-      { property: "og:title", content: "CSSEBets – Sports Prediction Markets & Arcade Games" },
+      { property: "og:title", content: "CSSEBets – Community Sports Markets & House Arcade" },
       { property: "og:type", content: "website" },
       {
         property: "og:description",
         content:
-          "Trade live prediction markets on football, F1 and UFC, or play provably fair arcade games. One wallet, real-time odds, and community-driven pricing.",
+          "A closed community points club. Stake community points on football, F1 and UFC, or play CSSE Originals arcade games — one wallet, live odds, auditable settlements.",
       },
       { property: "og:url", content: "https://cssebets.com/" },
       { property: "og:image", content: "https://cssebets.com/og-image.jpg" },
