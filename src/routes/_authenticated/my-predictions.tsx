@@ -15,6 +15,7 @@ import { flagPredictionForReview } from "@/lib/predictions-flag.functions";
 import { toast } from "sonner";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { teamFlagUrl } from "@/lib/country-flags";
+import { DEMO_SESSION_START_MS, useIsDemoGuest } from "@/components/wallet/DemoWalletBootstrap";
 
 export const Route = createFileRoute("/_authenticated/my-predictions")({
   head: () => ({ meta: [{ title: "Picks — CSSEBets" }] }),
