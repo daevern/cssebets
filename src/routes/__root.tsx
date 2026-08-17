@@ -170,6 +170,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthSync />
+      <DemoWalletBootstrap />
       <InitialLoadGate>
         <Suspense fallback={<CsseLogoLoader />}>
           <Outlet />
