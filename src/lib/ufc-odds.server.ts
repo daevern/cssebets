@@ -1329,8 +1329,17 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
   let planLimited = false;
   let planMessage: string | undefined;
   let scanned = 0;
+  // When the feed refuses a date it tells us the window it *will* serve
+  // ("try from 2026-08-16 to 2026-08-18"). Narrow the remaining probes to that
+  // window instead of aborting — otherwise one out-of-range day (e.g. a past
+  // date we scan to catch last night's card) kills the whole run.
+  let allowedFrom: string | null = null;
+  let allowedTo: string | null = null;
 
-  for (const day of schedule) {
+  const queue = [...schedule];
+  for (let i = 0; i < queue.length; i++) {
+    const day = queue[i]!;
+    if (allowedFrom && allowedTo && (day < allowedFrom || day > allowedTo)) continue;
     try {
       const fights = await fetchFightsByDate(day);
       scanned++;
@@ -1350,15 +1359,20 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
     } catch (e) {
       const message = (e as Error).message;
       if (e instanceof ApiMmaPlanError) {
-        // Free plans only expose a ±1 day window; further probes just burn
-        // quota. Record it so the admin surface can explain the gap.
         planLimited = true;
         planMessage = message;
-        break;
+        const range = message.match(/from (\d{4}-\d{2}-\d{2}) to (\d{4}-\d{2}-\d{2})/);
+        if (range) {
+          allowedFrom = range[1]!;
+          allowedTo = range[2]!;
+          continue; // keep scanning the dates the plan does serve
+        }
+        break; // unparseable plan/quota refusal: stop burning calls
       }
       console.warn("[ufc-discovery] date fetch failed", day, message);
     }
   }
+
 
   for (const [event_key, v] of buckets) {
     await (supabaseAdmin as any)
