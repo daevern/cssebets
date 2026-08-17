@@ -234,12 +234,18 @@ function MyPredictionsPage() {
     return () => { supabase.removeChannel(ch); };
   }, [qc, uid]);
 
+  const visiblePredictions = (data ?? []).filter((p: any) => inSession(p.created_at));
+  const visibleUfc = (ufcBets ?? []).filter((b: any) => inSession(b.placed_at));
+  const visibleF1 = (f1Bets ?? []).filter((b: any) => inSession(b.created_at ?? b.placed_at));
+  const visibleF1Champ = (f1ChampBets ?? []).filter((b: any) => inSession(b.created_at));
+  const visibleSports = (sportsBets ?? []).filter((b: any) => inSession(b.placed_at));
+
   const hasAny =
-    (data?.length ?? 0) +
-      (ufcBets?.length ?? 0) +
-      (f1Bets?.length ?? 0) +
-      (f1ChampBets?.length ?? 0) +
-      (sportsBets?.length ?? 0) >
+    visiblePredictions.length +
+      visibleUfc.length +
+      visibleF1.length +
+      visibleF1Champ.length +
+      visibleSports.length >
     0;
 
 
