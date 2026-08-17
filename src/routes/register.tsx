@@ -256,164 +256,167 @@ function RegisterPage() {
         </p>
       }
     >
-      <form onSubmit={step === STEPS.length - 1 ? finish : next} className="space-y-4">
+      <form onSubmit={step === STEPS.length - 1 ? finish : next} className="flex h-full flex-col">
+        <div className="flex-1 space-y-4 overflow-y-auto pr-1">
+          {step === 0 && (
+            <AuthField label="Name" htmlFor="name">
+              <input
+                id="name"
+                autoFocus
+                required
+                maxLength={40}
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="e.g. NightTrader"
+                className={authInputClass}
+              />
+            </AuthField>
+          )}
 
-        {step === 0 && (
-          <AuthField label="Name" htmlFor="name">
-            <input
-              id="name"
-              autoFocus
-              required
-              maxLength={40}
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="e.g. NightTrader"
-              className={authInputClass}
-            />
-          </AuthField>
-        )}
+          {step === 1 && (
+            <>
+              <button
+                type="button"
+                onClick={signUpWithGoogle}
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[15px] font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)]"
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
+                  <path
+                    fill="#4285F4"
+                    d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"
+                  />
+                  <path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.6V6.7H1.4a12 12 0 0 0 0 10.8l4-3.1z" />
+                  <path
+                    fill="#EA4335"
+                    d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.7l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"
+                  />
+                </svg>
+                Continue with Google
+              </button>
 
-        {step === 1 && (
-          <>
-            <button
-              type="button"
-              onClick={signUpWithGoogle}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] text-[15px] font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-neon)]"
-            >
-              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
-                <path
-                  fill="#4285F4"
-                  d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 24c3.2 0 5.9-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0 0 12 24z"
-                />
-                <path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.6V6.7H1.4a12 12 0 0 0 0 10.8l4-3.1z" />
-                <path
-                  fill="#EA4335"
-                  d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.7l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"
-                />
-              </svg>
-              Continue with Google
-            </button>
+              <div className="flex items-center gap-3">
+                <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
+                <span className="text-xs text-[var(--color-ink-muted)]">or</span>
+                <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
+              </div>
 
-            <div className="flex items-center gap-3">
-              <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
-              <span className="text-xs text-[var(--color-ink-muted)]">or</span>
-              <span className="h-px flex-1 bg-[var(--color-surface-border)]" />
-            </div>
+              <AuthSegmented
+                value={channel}
+                onChange={setChannel}
+                options={[
+                  { value: "email", label: "Email" },
+                  { value: "phone", label: "Phone" },
+                ]}
+              />
 
-            <AuthSegmented
-              value={channel}
-              onChange={setChannel}
-              options={[
-                { value: "email", label: "Email" },
-                { value: "phone", label: "Phone" },
-              ]}
-            />
+              {channel === "email" ? (
+                <AuthField label="Email" htmlFor="email">
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    autoFocus
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={authInputClass}
+                  />
+                </AuthField>
+              ) : (
+                <AuthField
+                  label="Phone"
+                  htmlFor="phone"
+                  hint="You'll sign in with this number and password."
+                >
+                  <input
+                    id="phone"
+                    type="tel"
+                    required
+                    inputMode="tel"
+                    placeholder="+60123456789"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className={authInputClass}
+                  />
+                </AuthField>
+              )}
+            </>
+          )}
 
-            {channel === "email" ? (
-              <AuthField label="Email" htmlFor="email">
+          {step === 2 && (
+            <div className="grid gap-4">
+              <AuthField label="Password" htmlFor="password">
                 <input
-                  id="email"
-                  type="email"
+                  id="password"
+                  type="password"
                   required
                   autoFocus
-                  autoComplete="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  minLength={8}
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className={authInputClass}
                 />
               </AuthField>
-            ) : (
-              <AuthField
-                label="Phone"
-                htmlFor="phone"
-                hint="You'll sign in with this number and password."
-              >
+              <AuthField label="Confirm password" htmlFor="confirm">
                 <input
-                  id="phone"
-                  type="tel"
+                  id="confirm"
+                  type="password"
                   required
-                  inputMode="tel"
-                  placeholder="+60123456789"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  minLength={8}
+                  autoComplete="new-password"
+                  placeholder="••••••••"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
                   className={authInputClass}
                 />
               </AuthField>
-            )}
-          </>
-        )}
+            </div>
+          )}
 
-        {step === 2 && (
-          <div className="grid gap-4">
-            <AuthField label="Password" htmlFor="password">
+          {step === 3 && (
+            <AuthField label="Referral code" htmlFor="referral" hint="Leave blank if you don't have one.">
               <input
-                id="password"
-                type="password"
-                required
+                id="referral"
                 autoFocus
-                minLength={8}
-                autoComplete="new-password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={referralInput}
+                onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
+                placeholder="e.g. 9W928VQ"
+                maxLength={12}
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
                 className={authInputClass}
               />
             </AuthField>
-            <AuthField label="Confirm password" htmlFor="confirm">
-              <input
-                id="confirm"
-                type="password"
-                required
-                minLength={8}
-                autoComplete="new-password"
-                placeholder="••••••••"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                className={authInputClass}
-              />
-            </AuthField>
-          </div>
-        )}
+          )}
+        </div>
 
-        {step === 3 && (
-          <AuthField label="Referral code" htmlFor="referral" hint="Leave blank if you don't have one.">
-            <input
-              id="referral"
-              autoFocus
-              value={referralInput}
-              onChange={(e) => setReferralInput(e.target.value.toUpperCase())}
-              placeholder="e.g. 9W928VQ"
-              maxLength={12}
-              autoCapitalize="characters"
-              autoCorrect="off"
-              spellCheck={false}
-              className={authInputClass}
-            />
-          </AuthField>
-        )}
+        <div className="shrink-0 space-y-3 pt-4">
+          <AuthSubmit loading={loading}>
+            {step === STEPS.length - 1
+              ? loading
+                ? "Creating account…"
+                : "Create account"
+              : "Continue"}
+          </AuthSubmit>
 
-        <AuthSubmit loading={loading}>
-          {step === STEPS.length - 1
-            ? loading
-              ? "Creating account…"
-              : "Create account"
-            : "Continue"}
-        </AuthSubmit>
-
-        {step > 0 && (
-          <button
-            type="button"
-            onClick={() => setStep((s) => Math.max(0, s - 1))}
-            className="h-10 w-full rounded-lg text-[13px] font-medium text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)]"
-          >
-            ← Back
-          </button>
-        )}
+          {step > 0 && (
+            <button
+              type="button"
+              onClick={() => setStep((s) => Math.max(0, s - 1))}
+              className="h-10 w-full rounded-lg text-[13px] font-medium text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-ink)]"
+            >
+              ← Back
+            </button>
+          )}
+        </div>
       </form>
     </AuthShell>
   );
