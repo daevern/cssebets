@@ -585,7 +585,7 @@ function ScoreTeam({ name, flag }: { name: string; flag: string | null }) {
     <div className="flex items-center justify-center">
       <div className="relative h-14 w-20 shrink-0 overflow-hidden sm:h-20 sm:w-28 md:h-24 md:w-32">
         {flag ? (
-          <img src={flag} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
+          <img src={flag} alt={`${name} badge`} className="h-full w-full object-contain" loading="lazy" />
         ) : (
           <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[11px] font-semibold uppercase tracking-wider">
             {name.slice(0, 3)}
