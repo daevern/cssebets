@@ -13,7 +13,7 @@ export function PageShell({
   children,
   wide = false,
 }: {
-  kicker: string;
+  kicker?: string;
   title: ReactNode;
   titleAccent?: ReactNode;
   children: ReactNode;
