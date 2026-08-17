@@ -5,7 +5,7 @@
 // realtime invalidation, and 100%/0% freeze at settle.
 // Full-width, edge-to-edge on mobile. No card, no y-axis, dashed horizontal grid only.
 // Preserves the app's outcome color meaning: HOME=green, DRAW=blue, AWAY=pink.
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LiveTradeTape } from "@/components/matches/LiveTradeTape";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -18,6 +18,9 @@ import {
   getRecentTrades, getRecentTradesPublic,
   type MarketHistoryPayload, type MarketSeries, type RecentTradesPayload,
 } from "@/lib/market-history.functions";
+
+/** One LIVE tape sample: unix ms + implied % per series key. */
+type LiveTapeRow = { tMs: number } & Record<string, number>;
 
 /* ------------------------------------------------------------------ */
 /* Color system — HOME=green, DRAW=blue, AWAY=pink.                    */
@@ -154,20 +157,24 @@ export function MarketAnalyticsCard({
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
   const now = useNowTick(1000);
+  // Kalshi/WC LIVE feel: record last known % every second so the time-axis
+  // scrolls even between sparse server snapshots (football/UFC/F1).
+  const latestPctRef = useRef<Map<string, number>>(new Map());
+  const [liveTape, setLiveTape] = useState<LiveTapeRow[]>([]);
 
   const q = useQuery({
     queryKey: ["market-history", matchId, market ?? "default", ns],
     queryFn: () => fn({ data: { matchId, market } }) as Promise<MarketHistoryPayload>,
-    refetchInterval: 5_000,
-    staleTime: 2_000,
+    refetchInterval: range === "LIVE" ? 2_000 : 15_000,
+    staleTime: 1_000,
   });
 
   const tradesFn = useServerFn(tradesFnOverride ?? (publicMode ? getRecentTradesPublic : getRecentTrades));
   const tq = useQuery({
     queryKey: ["market-trades", matchId, ns],
     queryFn: () => tradesFn({ data: { matchId } }) as Promise<RecentTradesPayload>,
-    refetchInterval: 5_000,
-    staleTime: 2_000,
+    refetchInterval: range === "LIVE" ? 2_000 : 15_000,
+    staleTime: 1_000,
   });
   const isFinished = !!tq.data?.matchStatus && FINISHED_STATUSES.has(String(tq.data.matchStatus));
 
@@ -215,13 +222,115 @@ export function MarketAnalyticsCard({
     else if (data.availableMarkets[0]?.key) setMarket(data.availableMarkets[0].key);
   }, [data, market]);
 
-  const { chartData, filteredSeries, latestByKey } = useMemo(() => {
-    const empty = { chartData: [] as ChartRow[], filteredSeries: [] as MarketSeries[], latestByKey: new Map<string, number>() };
+  // Reset LIVE tape when switching event, or when the user changes market.
+  const prevMarketRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    setLiveTape([]);
+    latestPctRef.current = new Map();
+  }, [matchId]);
+  useEffect(() => {
+    if (prevMarketRef.current && market && prevMarketRef.current !== market) {
+      setLiveTape([]);
+      latestPctRef.current = new Map();
+    }
+    prevMarketRef.current = market;
+  }, [market]);
+
+  // Keep latest implied % from server history (updates every ~2s in LIVE).
+  useEffect(() => {
+    if (!data?.series?.length) return;
+    const m = new Map<string, number>();
+    for (const s of data.series) {
+      const last = s.points.at(-1);
+      if (last) m.set(s.key, pctFromPoint(last));
+    }
+    if (m.size) latestPctRef.current = m;
+  }, [data]);
+
+  // Merge server snapshots into the LIVE tape whenever history refreshes.
+  useEffect(() => {
+    if (!data?.series?.length || isFinished) return;
+    const cutoff = Date.now() - liveSeconds * 1000;
+    setLiveTape((prev) => {
+      const byT = new Map<number, LiveTapeRow>();
+      for (const row of prev) {
+        if (row.tMs >= cutoff) byT.set(row.tMs, { ...row });
+      }
+      for (const s of data.series) {
+        for (const p of s.points) {
+          const tMs = pointTime(p);
+          if (tMs < cutoff) continue;
+          const row = byT.get(tMs) ?? ({ tMs } as LiveTapeRow);
+          row[s.key] = pctFromPoint(p);
+          byT.set(tMs, row);
+        }
+      }
+      return [...byT.values()].sort((a, b) => a.tMs - b.tMs);
+    });
+  }, [data, liveSeconds, isFinished]);
+
+  // Every second in LIVE: stamp current prices at "now" so the axis scrolls
+  // left exactly like Kalshi / World Cup market movement.
+  useEffect(() => {
+    if (isFinished || range !== "LIVE") return;
+    if (latestPctRef.current.size === 0) return;
+    const row = { tMs: now } as LiveTapeRow;
+    for (const [k, v] of latestPctRef.current) row[k] = v;
+    const cutoff = now - liveSeconds * 1000;
+    setLiveTape((prev) => {
+      const trimmed = prev.filter((p) => p.tMs >= cutoff && p.tMs < now - 400);
+      return [...trimmed, row];
+    });
+  }, [now, isFinished, range, liveSeconds]);
+
+  const seriesKeys = useMemo(
+    () => (data?.series ?? []).map((s) => s.key),
+    [data],
+  );
+
+  const { chartData, filteredSeries, latestByKey, xDomain } = useMemo(() => {
+    const empty = {
+      chartData: [] as ChartRow[],
+      filteredSeries: [] as MarketSeries[],
+      latestByKey: new Map<string, number>(),
+      xDomain: null as [number, number] | null,
+    };
     if (!data) return empty;
 
-    // Unified time-series build for every range — LIVE uses a user-selected
-    // window (30s/1m/10m/30m/60m/90m). Real snapshots come from match_odds_snapshots
-    // (written by the live-odds cron every ~15s during in-play matches). No synthetic points.
+    const lastValueBy = new Map<string, number>();
+    for (const s of data.series) {
+      const last = s.points.at(-1);
+      if (last) lastValueBy.set(s.key, pctFromPoint(last));
+    }
+
+    // LIVE: time-scrolling tape (Kalshi). Other ranges: historical snapshots only.
+    if (range === "LIVE" && !isFinished) {
+      const domain: [number, number] = [now - liveSeconds * 1000, now];
+      const chart: ChartRow[] = liveTape.map((row) => {
+        const out: ChartRow = { t: new Date(row.tMs).toISOString(), tMs: row.tMs };
+        for (const k of seriesKeys) {
+          const v = row[k];
+          if (typeof v === "number") out[k] = v;
+        }
+        return out;
+      });
+      // Ensure a point at domain start so the line spans the full window.
+      if (chart.length && (chart[0].tMs as number) > domain[0] + 1000) {
+        const first = chart[0];
+        const anchor: ChartRow = { t: new Date(domain[0]).toISOString(), tMs: domain[0] };
+        for (const k of seriesKeys) {
+          if (typeof first[k] === "number") anchor[k] = first[k];
+        }
+        chart.unshift(anchor);
+      }
+      return {
+        chartData: chart,
+        filteredSeries: data.series.map((s) => ({ ...s, points: s.points })),
+        latestByKey: lastValueBy,
+        xDomain: domain,
+      };
+    }
+
     const windowMs = range === "LIVE" ? liveSeconds * 1000 : RANGE_MS[range];
     const cutoff = windowMs == null ? 0 : now - windowMs;
 
@@ -235,51 +344,46 @@ export function MarketAnalyticsCard({
       return { ...s, points: [...anchor, ...inWin] };
     });
 
-    const lastValueBy = new Map<string, number>();
-    for (const s of data.series) {
-      const last = s.points.at(-1);
-      if (last) lastValueBy.set(s.key, pctFromPoint(last));
-    }
-
     const byTime = new Map<number, ChartRow>();
     for (const s of filtered) {
       for (const p of s.points) {
         const key = pointTime(p);
-        const row = byTime.get(key) ?? { t: new Date(key).toISOString() };
+        const row = byTime.get(key) ?? { t: new Date(key).toISOString(), tMs: key };
         row[s.key] = pctFromPoint(p);
         byTime.set(key, row);
       }
     }
-    if (!isFinished && lastValueBy.size > 0 && (windowMs == null || windowMs > 0)) {
-      const tick: ChartRow = { t: new Date(now).toISOString() };
-      for (const [k, v] of lastValueBy) tick[k] = v;
-      byTime.set(now, tick);
-    }
 
-    const chart = [...byTime.entries()].sort((a, b) => a[0] - b[0]).map(([, r]) => r);
-    let result: { chartData: ChartRow[]; filteredSeries: MarketSeries[]; latestByKey: Map<string, number> } = {
+    let chart = [...byTime.entries()].sort((a, b) => a[0] - b[0]).map(([, r]) => r);
+    let result: {
+      chartData: ChartRow[];
+      filteredSeries: MarketSeries[];
+      latestByKey: Map<string, number>;
+      xDomain: [number, number] | null;
+    } = {
       chartData: chart,
       filteredSeries: filtered,
       latestByKey: lastValueBy,
+      xDomain: null,
     };
 
     // Freeze at event end: winners → 100%, losers → 0% (Kalshi-style resolve).
     if (isFinished && winningKeys.length > 0 && result.chartData.length > 0) {
-      const seriesKeys = result.filteredSeries.map((s) => s.key);
+      const keys = result.filteredSeries.map((s) => s.key);
       const winSet = new Set(winningKeys.map((k) => k.toUpperCase()));
-      const matchesAny = seriesKeys.some((k) => winSet.has(k.toUpperCase()));
+      const matchesAny = keys.some((k) => winSet.has(k.toUpperCase()));
       if (matchesAny) {
-        const finalRow: ChartRow = { t: result.chartData.at(-1)!.t };
-        for (const k of seriesKeys) finalRow[k] = winSet.has(k.toUpperCase()) ? 100 : 0;
+        const finalRow: ChartRow = { ...result.chartData.at(-1)! };
+        for (const k of keys) finalRow[k] = winSet.has(k.toUpperCase()) ? 100 : 0;
         result.chartData = [...result.chartData.slice(0, -1), finalRow];
         const latest = new Map<string, number>();
-        for (const k of seriesKeys) latest.set(k, winSet.has(k.toUpperCase()) ? 100 : 0);
+        for (const k of keys) latest.set(k, winSet.has(k.toUpperCase()) ? 100 : 0);
         result.latestByKey = latest;
       }
     }
 
     return result;
-  }, [data, range, liveSeconds, now, isFinished, winningKeys]);
+  }, [data, range, liveSeconds, now, isFinished, winningKeys, liveTape, seriesKeys]);
 
 
   const yDomain = useMemo<[number, number]>(() => {
@@ -298,7 +402,7 @@ export function MarketAnalyticsCard({
   const scrubIdx = activeIndex != null ? activeIndex : Math.max(0, chartData.length - 1);
   const splitData = useMemo(() => {
     return chartData.map((row, i) => {
-      const out: ChartRow = { t: row.t as string };
+      const out: ChartRow = { t: row.t as string, tMs: row.tMs as number };
       for (const s of filteredSeries) {
         const v = row[s.key];
         if (typeof v === "number") {
@@ -384,7 +488,7 @@ export function MarketAnalyticsCard({
           <div className="grid h-full place-items-center text-[10px] font-bold uppercase tracking-[0.28em] text-white/40">
             Loading market history…
           </div>
-        ) : !data || data.availableMarkets.length === 0 || chartData.length === 0 ? (
+        ) : !data || (data.series.length === 0 && data.availableMarkets.length === 0) || chartData.length === 0 ? (
           <EmptyGraph />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
@@ -405,7 +509,10 @@ export function MarketAnalyticsCard({
                 vertical={false}
               />
               <XAxis
-                dataKey="t"
+                dataKey={xDomain ? "tMs" : "t"}
+                type={xDomain ? "number" : "category"}
+                domain={xDomain ?? undefined}
+                allowDataOverflow={!!xDomain}
                 stroke="#ffffff"
                 strokeOpacity={0.15}
                 tick={false}
@@ -476,7 +583,8 @@ export function MarketAnalyticsCard({
                         const color = colorForSeries(s.key, i);
                         const xAxis = Object.values(cprops.xAxisMap ?? {})[0] as any;
                         const xScale = xAxis?.scale;
-                        const cx = xScale ? xScale(row.t) : rightX;
+                        const xKey = xDomain ? row.tMs : row.t;
+                        const cx = xScale ? xScale(xKey) : rightX;
                         return (
                           <g key={`ep-${s.key}`}>
                             <circle cx={cx} cy={y} r={4.5} fill={color} />

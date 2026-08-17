@@ -115,6 +115,28 @@ export const getFootballMarketHistory = createServerFn({ method: "POST" })
       }
     }
 
+    // Always append current live selections so LIVE chart has a price even
+    // before snapshot history is dense (same seed pattern as UFC/F1).
+    const liveSels = (chosenRow.sports_market_selections ?? []) as Array<{
+      selection_key: string;
+      decimal_odds: number;
+    }>;
+    if (liveSels.length) {
+      const t = new Date().toISOString();
+      const inv = liveSels.reduce(
+        (s, e) => s + (Number(e.decimal_odds) > 0 ? 1 / Number(e.decimal_odds) : 0),
+        0,
+      );
+      for (const e of liveSels) {
+        const odds = Number(e.decimal_odds);
+        const raw = odds > 0 ? 1 / odds : 0;
+        const arr = bySel.get(e.selection_key) ?? [];
+        arr.push({ t, odds, prob: inv > 0 ? raw / inv : 0 });
+        bySel.set(e.selection_key, arr);
+      }
+      if (!times.includes(t)) times.push(t);
+    }
+
     const seriesKeyFor = (k: string) => {
       const s = k.toLowerCase();
       if (s === "home" || s.startsWith("over_") || s === "yes") return s === "home" ? "HOME" : k.toUpperCase();
@@ -132,6 +154,15 @@ export const getFootballMarketHistory = createServerFn({ method: "POST" })
       .sort((a, b) => (b.points.at(-1)?.prob ?? 0) - (a.points.at(-1)?.prob ?? 0));
     if (series.length > 6) series = series.slice(0, 6);
 
+    // Ensure availableMarkets is non-empty when we have live series so the
+    // chart isn't treated as empty.
+    const marketsOut =
+      availableMarkets.length > 0
+        ? availableMarkets
+        : series.length
+          ? [{ key: chosenRow.market_key as string, label: chosenRow.display_name as string, count: series[0].points.length }]
+          : [];
+
     return {
       homeTeam,
       awayTeam,
@@ -139,7 +170,7 @@ export const getFootballMarketHistory = createServerFn({ method: "POST" })
       market: chosenRow.market_key,
       marketLabel: chosenRow.display_name,
       sourceLabel: "Global bookmaker market",
-      availableMarkets,
+      availableMarkets: marketsOut,
       series,
       updatedAt: times.at(-1) ?? null,
     };
