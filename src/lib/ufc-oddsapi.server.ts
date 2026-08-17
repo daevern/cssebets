@@ -192,7 +192,7 @@ export async function runUfcOddsApiSync(
             fighter_a: bout.home_team,
             fighter_b: bout.away_team,
             commence_time: bout.commence_time,
-            card_position: isMain ? "main" : "other",
+            card_position: isMain ? "main" : isCoMain ? "co-main" : "other",
             scheduled_rounds: isMain ? 5 : 3,
           },
           { onConflict: "odds_api_event_id" },
