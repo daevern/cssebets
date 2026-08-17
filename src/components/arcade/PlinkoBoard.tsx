@@ -84,7 +84,6 @@ export function PlinkoBoard({
   boardColor,
   boardAccent,
 }: Props) {
-}: Props) {
   const ballFill = ballColor ?? "#ffffff";
   const ballStroke = ballAccent ?? "#8f9bff";
   const boardBg = boardColor ?? null;
