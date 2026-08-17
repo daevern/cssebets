@@ -1256,16 +1256,19 @@ export async function runUfcAutoSettle(): Promise<UfcAutoSettleResult> {
 }
 
 // ---------------------------------------------------------------------------
-// Auto-discover UFC events from API-MMA. Scans the next 21 days of /fights,
-// groups by event slug, upserts into ufc_events, and activates the next
-// upcoming card (event considered finished 6h after starts_at). Runs before
-// each odds/settle tick so admins never have to hand-manage events.
+// Auto-discover UFC events from API-MMA. Scans a rolling window of /fights,
+// groups by event slug, and keeps EVERY upcoming card in ufc_events active
+// (an event is "finished" 6h after starts_at). Multi-event, like football/F1 —
+// admins never hand-manage events.
 // ---------------------------------------------------------------------------
 export type UfcDiscoveryResult = {
   ok: boolean;
   skipped?: string;
   discovered?: number;
-  activated?: string | null;
+  upcoming?: number;
+  planLimited?: boolean;
+  planMessage?: string;
+  scannedDays?: number;
   error?: string;
 };
 
@@ -1279,26 +1282,48 @@ function slugifyEventKey(slug: string) {
     .slice(0, 80);
 }
 
-// In-process throttle: discovery is idempotent but hits ~21 API calls, so cap
-// to once per 30 minutes per worker instance.
-let lastDiscoveryAt = 0;
+const DISCOVERY_WINDOW_DAYS = 45;
+const DISCOVERY_MAX_CALLS = 46;
+const DISCOVERY_THROTTLE_MS = 25 * 60 * 1000;
 
 export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Promise<UfcDiscoveryResult> {
   const key = process.env.API_FOOTBALL_KEY?.trim();
   if (!key) return { ok: false, skipped: "API_FOOTBALL_KEY not set" };
 
   const now = Date.now();
-  if (!opts.force && now - lastDiscoveryAt < 30 * 60 * 1000) {
+  const state = await readUfcFeedState();
+  if (
+    !opts.force &&
+    state.last_discovery_at &&
+    now - new Date(state.last_discovery_at).getTime() < DISCOVERY_THROTTLE_MS
+  ) {
     return { ok: true, skipped: "throttled" };
   }
-  lastDiscoveryAt = now;
+  await writeUfcFeedState({ last_discovery_at: new Date(now).toISOString() });
 
-  // Scan next 21 days for any UFC-tagged fights.
+  // Scan the rolling window for UFC-tagged fights. UFC cards land on
+  // Sat/Sun (UTC) almost exclusively, so probe those days first and only
+  // spend remaining calls on weekdays — keeps us inside the daily quota.
+  const days: string[] = [];
+  const weekdays: string[] = [];
+  for (let d = 0; d < DISCOVERY_WINDOW_DAYS; d++) {
+    const dt = new Date(now + d * 24 * 60 * 60 * 1000);
+    const iso = dt.toISOString().slice(0, 10);
+    const dow = dt.getUTCDay();
+    if (dow === 6 || dow === 0) days.push(iso);
+    else weekdays.push(iso);
+  }
+  const schedule = [...days, ...weekdays].slice(0, DISCOVERY_MAX_CALLS);
+
   const buckets = new Map<string, { name: string; startsAt: string }>();
-  for (let d = 0; d < 21; d++) {
-    const day = new Date(now + d * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  let planLimited = false;
+  let planMessage: string | undefined;
+  let scanned = 0;
+
+  for (const day of schedule) {
     try {
       const fights = await fetchFightsByDate(day);
+      scanned++;
       for (const f of fights) {
         if (!f.slug?.toUpperCase().startsWith("UFC")) continue;
         if (f.status.short === "CANC") continue;
@@ -1313,57 +1338,72 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
         }
       }
     } catch (e) {
-      console.warn("[ufc-discovery] date fetch failed", day, (e as Error).message);
+      const message = (e as Error).message;
+      if (e instanceof ApiMmaPlanError) {
+        // Free plans only expose a ±1 day window; further probes just burn
+        // quota. Record it so the admin surface can explain the gap.
+        planLimited = true;
+        planMessage = message;
+        break;
+      }
+      console.warn("[ufc-discovery] date fetch failed", day, message);
     }
   }
-
-  if (buckets.size === 0) return { ok: true, discovered: 0, activated: null };
 
   for (const [event_key, v] of buckets) {
     await (supabaseAdmin as any)
       .from("ufc_events")
-      .upsert(
-        { event_key, name: v.name, starts_at: v.startsAt },
-        { onConflict: "event_key" },
-      );
+      .upsert({ event_key, name: v.name, starts_at: v.startsAt }, { onConflict: "event_key" });
   }
 
-  // Pick the active event: soonest starts_at whose end (starts_at + 6h) is
-  // still in the future.
+  // "Active" now means "not finished" — every upcoming card stays visible.
   const cutoffIso = new Date(now - 6 * 60 * 60 * 1000).toISOString();
-  const { data: candidate } = await (supabaseAdmin as any)
-    .from("ufc_events")
-    .select("id, name")
-    .gt("starts_at", cutoffIso)
-    .order("starts_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  await (supabaseAdmin as any).from("ufc_events").update({ is_active: true }).gt("starts_at", cutoffIso).eq("is_active", false);
+  await (supabaseAdmin as any).from("ufc_events").update({ is_active: false }).lte("starts_at", cutoffIso).eq("is_active", true);
 
-  if (candidate?.id) {
-    await (supabaseAdmin as any)
-      .from("ufc_events")
-      .update({ is_active: false })
-      .neq("id", candidate.id)
-      .eq("is_active", true);
-    await (supabaseAdmin as any)
-      .from("ufc_events")
-      .update({ is_active: true })
-      .eq("id", candidate.id);
-  } else {
-    await (supabaseAdmin as any).from("ufc_events").update({ is_active: false }).eq("is_active", true);
-  }
+  const { count: upcoming } = await (supabaseAdmin as any)
+    .from("ufc_events")
+    .select("id", { count: "exact", head: true })
+    .gt("starts_at", cutoffIso);
+
+  await writeUfcFeedState({
+    plan_limited: planLimited,
+    plan_message: planLimited ? (planMessage ?? null) : null,
+    last_result: { discovered: buckets.size, upcoming: upcoming ?? 0, scannedDays: scanned },
+  });
 
   try {
     await (supabaseAdmin as any).from("audit_log").insert({
       user_id: null,
       action: "ufc.event_discovery",
       entity: "ufc_events",
-      entity_id: candidate?.id ?? null,
-      metadata: { discovered: buckets.size, activated: candidate?.name ?? null },
+      entity_id: null,
+      metadata: { discovered: buckets.size, upcoming: upcoming ?? 0, scanned, planLimited },
     });
   } catch {}
 
-  return { ok: true, discovered: buckets.size, activated: candidate?.name ?? null };
+  return {
+    ok: true,
+    discovered: buckets.size,
+    upcoming: upcoming ?? 0,
+    scannedDays: scanned,
+    planLimited,
+    ...(planMessage ? { planMessage } : {}),
+  };
 }
+
+/** Admin diagnostics: feed plan/quota + discovery bookkeeping. */
+export async function getUfcFeedDiagnostics() {
+  const [state, status] = await Promise.all([readUfcFeedState(), fetchMmaStatus()]);
+  const cutoffIso = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
+  const { data: events } = await (supabaseAdmin as any)
+    .from("ufc_events")
+    .select("name, starts_at, last_synced_at, last_sync_error")
+    .gt("starts_at", cutoffIso)
+    .order("starts_at", { ascending: true })
+    .limit(10);
+  return { state, account: status, upcoming: events ?? [] };
+}
+
 
 
