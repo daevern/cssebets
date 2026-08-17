@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -17,18 +17,23 @@ export const Route = createFileRoute("/_authenticated/leagues/")({
       },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    join: typeof s.join === "string" && s.join.trim() ? s.join.trim().toUpperCase() : undefined,
+  }),
   component: LeaguesIndexPage,
 });
 
 function LeaguesIndexPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const { join: joinParam } = Route.useSearch();
   const listFn = useServerFn(listMyLeagues);
   const createFn = useServerFn(createLeague);
   const joinFn = useServerFn(joinLeagueByCode);
 
   const [name, setName] = useState("");
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(joinParam ?? "");
+  const autoJoinTried = useRef(false);
 
   const q = useQuery({
     queryKey: ["my-leagues"],
@@ -46,7 +51,7 @@ function LeaguesIndexPage() {
   });
 
   const joinMut = useMutation({
-    mutationFn: () => joinFn({ data: { code } }),
+    mutationFn: (joinCode: string) => joinFn({ data: { code: joinCode } }),
     onSuccess: (res) => {
       toast.success(`Joined ${res.league.name}`);
       qc.invalidateQueries({ queryKey: ["my-leagues"] });
@@ -55,12 +60,22 @@ function LeaguesIndexPage() {
     onError: (e: any) => toast.error(e?.message ?? "Could not join league"),
   });
 
+  useEffect(() => {
+    if (joinParam) setCode(joinParam);
+  }, [joinParam]);
+
+  useEffect(() => {
+    if (!joinParam || joinParam.length < 4 || autoJoinTried.current || joinMut.isPending) return;
+    autoJoinTried.current = true;
+    joinMut.mutate(joinParam);
+  }, [joinParam]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-3 py-6">
       <div>
         <h1 className="font-display text-2xl font-black tracking-tight">Leagues</h1>
         <p className="mt-1 text-sm text-[var(--color-ink-muted)]">
-          Private clubs for friends. Standings use World Cup prediction points.
+          Private clubs for friends. Standings combine World Cup predictions with multi-sport net P/L.
         </p>
       </div>
 
@@ -98,9 +113,9 @@ function LeaguesIndexPage() {
           />
           <Button
             disabled={code.trim().length < 4 || joinMut.isPending}
-            onClick={() => joinMut.mutate()}
+            onClick={() => joinMut.mutate(code)}
           >
-            Join
+            {joinMut.isPending ? "Joining…" : "Join"}
           </Button>
         </div>
       </section>

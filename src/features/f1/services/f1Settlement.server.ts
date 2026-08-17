@@ -185,5 +185,116 @@ export async function runF1AutoSettle() {
       results.push({ raceId: r.id, ok: false, error: e.message });
     }
   }
-  return { checked: races.length, results };
+
+  // When every race for the current season is finished, grade championship outrights.
+  let championship: unknown = null;
+  try {
+    const season = new Date().getUTCFullYear();
+    championship = await settleF1ChampionshipSeason(season);
+  } catch (e: any) {
+    championship = { ok: false, error: e?.message ?? String(e) };
+  }
+
+  return { checked: races.length, results, championship };
 }
+
+function keyifyName(s: string) {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
+}
+
+/**
+ * Settle open championship outrights when the season has no remaining races
+ * (or when force=true for admin). Grades against live driver/constructor standings.
+ */
+export async function settleF1ChampionshipSeason(
+  season: number,
+  opts: { force?: boolean } = {},
+) {
+  const { fetchF1DriverStandings, fetchF1TeamStandings } = await import(
+    "../adapters/apiF1Adapter.server"
+  );
+
+  const { count: remaining } = await (supabaseAdmin as any)
+    .from("f1_races")
+    .select("id", { count: "exact", head: true })
+    .eq("season", season)
+    .neq("status", "finished");
+
+  if (!opts.force && (remaining ?? 0) > 0) {
+    return { ok: false as const, error: "season_not_complete", remaining: remaining ?? 0 };
+  }
+
+  const drivers = await fetchF1DriverStandings(season);
+  const teams = await fetchF1TeamStandings(season);
+  const driverWinner = drivers[0]?.driver?.name ? keyifyName(drivers[0].driver.name) : null;
+  const teamWinner = teams[0]?.team?.name ? keyifyName(teams[0].team.name) : null;
+  if (!driverWinner && !teamWinner) {
+    return { ok: false as const, error: "no_standings" };
+  }
+
+  const { data: markets } = await (supabaseAdmin as any)
+    .from("f1_championship_markets")
+    .select("id, market_type, selection_key, status")
+    .eq("season", season)
+    .eq("status", "open");
+
+  let settled = 0;
+  for (const m of markets ?? []) {
+    let winning: boolean | null = null;
+    if (m.market_type === "drivers" && driverWinner) {
+      winning = m.selection_key === driverWinner;
+    } else if (m.market_type === "constructors" && teamWinner) {
+      winning = m.selection_key === teamWinner;
+    }
+    if (winning === null) continue;
+
+    await (supabaseAdmin as any)
+      .from("f1_championship_markets")
+      .update({ winning, status: "settled", settled_at: new Date().toISOString() })
+      .eq("id", m.id);
+    settled++;
+
+    const { data: bets } = await (supabaseAdmin as any)
+      .from("f1_championship_bets")
+      .select("id, user_id, stake, potential_payout, status")
+      .eq("market_id", m.id)
+      .eq("status", "open");
+
+    for (const bet of bets ?? []) {
+      const newStatus = winning ? "won" : "lost";
+      const { data: updatedBets, error: betUpdateError } = await (supabaseAdmin as any)
+        .from("f1_championship_bets")
+        .update({ status: newStatus, settled_at: new Date().toISOString() })
+        .eq("id", bet.id)
+        .eq("status", "open")
+        .select("id");
+      if (betUpdateError) throw new Error(`f1 champ bet settlement failed: ${betUpdateError.message}`);
+      if (winning && (updatedBets?.length ?? 0) > 0) {
+        const { error: walletError } = await (supabaseAdmin as any).rpc("wallet_apply_change", {
+          p_user_id: bet.user_id,
+          p_type: "credit",
+          p_amount: bet.potential_payout,
+          p_reference_type: "bet_settlement",
+          p_reference_id: bet.id,
+          p_note: "F1 championship win payout",
+          p_is_simulation: false,
+        });
+        if (walletError) throw new Error(`f1 championship payout failed: ${walletError.message}`);
+      }
+    }
+  }
+
+  return {
+    ok: true as const,
+    settled,
+    driverWinner,
+    teamWinner,
+    remaining: remaining ?? 0,
+  };
+}
+

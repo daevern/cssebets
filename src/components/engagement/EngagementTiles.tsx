@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Coins, Gift, Users2, Copy, Check, ArrowUpRight } from "lucide-react";
+import { Coins, Gift, Users2, Copy, Check, ArrowUpRight, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { getMyEngagementSummary } from "@/lib/engagement.functions";
+import { claimDailyReward, getMyEngagementSummary } from "@/lib/engagement.functions";
 import { getMyReferralOverview } from "@/lib/referrals.functions";
 import { listMyFreeBets } from "@/lib/freebets.functions";
 import { buildReferralLink } from "@/lib/referral-link";
@@ -13,9 +13,11 @@ import { useAuth } from "@/hooks/use-auth";
 export function EngagementTiles() {
   const { user } = useAuth();
   const uid = user?.id ?? "anon";
+  const qc = useQueryClient();
   const eFn = useServerFn(getMyEngagementSummary);
   const rFn = useServerFn(getMyReferralOverview);
   const fbFn = useServerFn(listMyFreeBets);
+  const claimFn = useServerFn(claimDailyReward);
 
   const engagement = useQuery({ queryKey: ["engagement-summary", uid], queryFn: () => eFn(), staleTime: 30_000, enabled: !!user });
   const referral = useQuery({ queryKey: ["referral-overview", uid], queryFn: () => rFn(), staleTime: 30_000, enabled: !!user });
@@ -23,9 +25,19 @@ export function EngagementTiles() {
 
   const tokens = engagement.data?.tokens.balance ?? 0;
   const levelLabel = engagement.data?.level.label ?? "Rookie";
+  const canClaimToday = !!engagement.data?.canClaimToday;
   const refCode = referral.data?.referralCode ?? null;
   const invites = referral.data?.totalReferrals ?? 0;
   const availableFB = freeBets.data?.available?.length ?? 0;
+
+  const claimMut = useMutation({
+    mutationFn: () => claimFn({}),
+    onSuccess: (res) => {
+      toast.success(`Claimed ${res.amount} CSSE tokens`);
+      qc.invalidateQueries({ queryKey: ["engagement-summary", uid] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const [copied, setCopied] = useState(false);
   async function copyRef() {
@@ -49,6 +61,18 @@ export function EngagementTiles() {
         </h2>
         <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--neon)]">{levelLabel}</span>
       </header>
+
+      {canClaimToday ? (
+        <button
+          type="button"
+          disabled={claimMut.isPending}
+          onClick={() => claimMut.mutate()}
+          className="mb-3 flex w-full items-center justify-between rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)]/10 px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--neon)] transition-colors hover:bg-[var(--neon)]/15 disabled:opacity-50"
+        >
+          <span>Claim daily tokens</span>
+          {claimMut.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Gift className="h-3.5 w-3.5" />}
+        </button>
+      ) : null}
 
       <div className="grid grid-cols-3 gap-2">
         <Link

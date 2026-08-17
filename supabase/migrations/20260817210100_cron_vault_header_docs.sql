@@ -1,0 +1,12 @@
+-- Ops helper: rotate pg_cron hook headers to use Vault secret `cron_hook_secret`.
+-- DO NOT put the real secret in migrations. Run manually in the SQL editor after:
+--   select vault.create_secret('<value>', 'cron_hook_secret', 'CRON_HOOK_SECRET for net.http_post');
+--
+-- Then for each job that posts to /api/public/hooks/*, unschedule + reschedule with:
+--   headers := jsonb_build_object(
+--     'Content-Type', 'application/json',
+--     'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'cron_hook_secret')
+--   )
+--
+-- See docs/RUNBOOK.md → Cron hook authentication / Phase A go-live.
+SELECT 1;

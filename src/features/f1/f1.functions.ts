@@ -313,6 +313,17 @@ export const adminSettleF1Race = createServerFn({ method: "POST" })
     return await settleF1RaceById(data.raceId);
   });
 
+export const adminSettleF1Championship = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ season: z.number().int(), force: z.boolean().optional() }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { settleF1ChampionshipSeason } = await import("./services/f1Settlement.server");
+    return await settleF1ChampionshipSeason(data.season, { force: data.force === true });
+  });
+
 export const adminF1SyncRuns = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceRateLimit, isRateLimitError } from "@/lib/rate-limit.functions";
+import { requireApprovedMember } from "@/lib/access-control";
 
 const PROOF_BUCKET = "point-request-proofs";
 
@@ -55,6 +56,7 @@ export const createDraftPointRequest = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => AmountSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await requireApprovedMember(context);
     const { data: inserted, error } = await supabase
       .from("point_requests")
       .insert({
@@ -121,6 +123,7 @@ export const submitPointRequest = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    await requireApprovedMember(context);
     try { await enforceRateLimit(`user:${userId}`, "point_request_submit"); }
     catch (e) { if (isRateLimitError(e)) throw new Error("Too many requests. Please try again later."); throw e; }
     const { data: row, error: e1 } = await supabase

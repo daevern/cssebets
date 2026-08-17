@@ -37,13 +37,6 @@ const SPORTS: Sport[] = [
     logo: "https://www.google.com/s2/favicons?domain=ufc.com&sz=128",
     tint: "rgba(212,162,74,0.10)",
   },
-  {
-    key: "nba",
-    label: "NBA",
-    tagline: "Spread, totals, player props",
-    logo: "https://www.google.com/s2/favicons?domain=nba.com&sz=128",
-    tint: "rgba(201,8,42,0.10)",
-  },
 ];
 
 export function SportCategoryGrid() {

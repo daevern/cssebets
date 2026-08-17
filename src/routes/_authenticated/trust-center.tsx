@@ -1,7 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { IconShield, IconTimeline } from "@/components/trust/TrustIcons";
 import { BrandText } from "@/components/brand/CsseMark";
+import {
+  getPlatformPulse,
+  getPayoutPerformance,
+  getPlatformStatus,
+} from "@/lib/trust.functions";
 
 export const Route = createFileRoute("/_authenticated/trust-center")({
   head: () => ({
@@ -23,6 +30,106 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+function LiveStrip() {
+  const pulseFn = useServerFn(getPlatformPulse);
+  const payoutFn = useServerFn(getPayoutPerformance);
+  const statusFn = useServerFn(getPlatformStatus);
+
+  const pulse = useQuery({
+    queryKey: ["trust-pulse"],
+    queryFn: () => pulseFn({}),
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  });
+  const payout = useQuery({
+    queryKey: ["trust-payout-perf"],
+    queryFn: () => payoutFn({}),
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  });
+  const status = useQuery({
+    queryKey: ["trust-platform-status"],
+    queryFn: () => statusFn({}),
+    staleTime: 60_000,
+    refetchInterval: 120_000,
+  });
+
+  const members = pulse.data?.registered_members;
+  const bets = pulse.data?.bets_placed ?? payout.data?.bets_placed;
+  const hours = pulse.data?.avg_payout_processing_hours;
+  const services = status.data ?? [];
+  const worst =
+    services.find((s) => s.status === "offline") ??
+    services.find((s) => s.status === "degraded") ??
+    services.find((s) => s.status === "operational") ??
+    null;
+  const statusLabel = worst
+    ? worst.status === "operational"
+      ? "All systems go"
+      : worst.status === "degraded"
+        ? "Degraded"
+        : worst.status === "offline"
+          ? "Offline"
+          : "Unknown"
+    : status.isLoading
+      ? "…"
+      : "Unknown";
+  const statusTone =
+    worst?.status === "operational"
+      ? "text-[var(--color-neon)]"
+      : worst?.status === "degraded"
+        ? "text-amber-400"
+        : worst?.status === "offline"
+          ? "text-rose-400"
+          : "text-[var(--color-ink-muted)]";
+
+  const fmt = (n: number | null | undefined) =>
+    n == null || Number.isNaN(Number(n)) ? "—" : Number(n).toLocaleString();
+
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <StripStat label="Members" value={pulse.isLoading ? "…" : fmt(members)} />
+      <StripStat label="Bets placed" value={pulse.isLoading && payout.isLoading ? "…" : fmt(bets)} />
+      <StripStat
+        label="Payout hours"
+        value={
+          pulse.isLoading
+            ? "…"
+            : hours == null
+              ? "—"
+              : `${Number(hours).toFixed(1)}h`
+        }
+      />
+      <StripStat label="Platform" value={statusLabel} valueClassName={statusTone} />
+    </div>
+  );
+}
+
+function StripStat({
+  label,
+  value,
+  valueClassName,
+}: {
+  label: string;
+  value: string;
+  valueClassName?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] px-3 py-2.5">
+      <div className="text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--color-ink-muted)]">
+        {label}
+      </div>
+      <div
+        className={`mt-1 font-display text-base font-bold tabular-nums tracking-tight ${
+          valueClassName ?? "text-[var(--color-ink)]"
+        }`}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
 function TrustCenter() {
   return (
     <PageShell
@@ -31,6 +138,8 @@ function TrustCenter() {
       titleAccent="in plain English."
       wide
     >
+      <LiveStrip />
+
       <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
         This page is maintained by the <BrandText /> team to answer common questions about
         how we handle points, bets, payouts, and security. It is not an independent

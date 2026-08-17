@@ -86,6 +86,19 @@ export const joinLeagueByCode = createServerFn({ method: "POST" })
     return { league: league as { id: string; name: string; invite_code: string } };
   });
 
+function ensureStanding(map: Map<string, { points: number; bets: number; wins: number }>, id: string) {
+  let row = map.get(id);
+  if (!row) {
+    row = { points: 0, bets: 0, wins: 0 };
+    map.set(id, row);
+  }
+  return row;
+}
+
+function netPl(won: boolean, payout: number, stake: number) {
+  return (won ? payout : 0) - stake;
+}
+
 export const getLeagueStandings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ leagueId: z.string().uuid() }).parse(i))
@@ -115,25 +128,76 @@ export const getLeagueStandings = createServerFn({ method: "GET" })
     if (memErr) throw new Error(memErr.message);
 
     const userIds = (members ?? []).map((m: any) => m.user_id as string);
+    if (userIds.length === 0) {
+      return {
+        league: league as { id: string; name: string; invite_code: string; created_at: string },
+        standings: [],
+      };
+    }
+
     const { data: profiles } = await (supabaseAdmin as any)
       .from("profiles")
       .select("id, display_name")
       .in("id", userIds);
 
-    const { data: preds } = await (supabaseAdmin as any)
-      .from("predictions")
-      .select("user_id, points, status")
-      .in("user_id", userIds)
-      .eq("is_simulation", false);
+    const [predsRes, sportsRes, f1Res, ufcRes] = await Promise.all([
+      (supabaseAdmin as any)
+        .from("predictions")
+        .select("user_id, points, status")
+        .in("user_id", userIds)
+        .eq("is_simulation", false),
+      (supabaseAdmin as any)
+        .from("sports_bets")
+        .select("user_id, stake, actual_payout, status")
+        .in("user_id", userIds)
+        .in("status", ["won", "lost"]),
+      (supabaseAdmin as any)
+        .from("f1_bets")
+        .select("user_id, stake, potential_payout, status")
+        .in("user_id", userIds)
+        .in("status", ["won", "lost"]),
+      (supabaseAdmin as any)
+        .from("ufc_bets")
+        .select("user_id, stake, potential_payout, payout, status")
+        .in("user_id", userIds)
+        .in("status", ["won", "lost"]),
+    ]);
 
     const points = new Map<string, { points: number; bets: number; wins: number }>();
     for (const id of userIds) points.set(id, { points: 0, bets: 0, wins: 0 });
-    for (const p of preds ?? []) {
-      const row = points.get(p.user_id as string);
-      if (!row) continue;
+
+    for (const p of predsRes.data ?? []) {
+      const row = ensureStanding(points, p.user_id as string);
       row.bets += 1;
       row.points += Number(p.points ?? 0);
       if (p.status === "won") row.wins += 1;
+    }
+    for (const b of sportsRes.data ?? []) {
+      const row = ensureStanding(points, b.user_id as string);
+      const stake = Number(b.stake ?? 0);
+      const payout = Number(b.actual_payout ?? 0);
+      const won = b.status === "won";
+      row.bets += 1;
+      row.points += netPl(won, payout, stake);
+      if (won) row.wins += 1;
+    }
+    for (const b of f1Res.data ?? []) {
+      const row = ensureStanding(points, b.user_id as string);
+      const stake = Number(b.stake ?? 0);
+      const payout = Number(b.potential_payout ?? 0);
+      const won = b.status === "won";
+      row.bets += 1;
+      row.points += netPl(won, payout, stake);
+      if (won) row.wins += 1;
+    }
+    for (const b of ufcRes.data ?? []) {
+      const row = ensureStanding(points, b.user_id as string);
+      const stake = Number(b.stake ?? 0);
+      const payout = Number(b.payout ?? b.potential_payout ?? 0);
+      const won = b.status === "won";
+      row.bets += 1;
+      row.points += netPl(won, payout, stake);
+      if (won) row.wins += 1;
     }
 
     const nameById = new Map<string, string>(
@@ -155,4 +219,123 @@ export const getLeagueStandings = createServerFn({ method: "GET" })
       league: league as { id: string; name: string; invite_code: string; created_at: string },
       standings,
     };
+  });
+
+export const getLeagueActivity = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ leagueId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await requireApprovedMember(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: mine } = await (supabaseAdmin as any)
+      .from("league_members")
+      .select("league_id")
+      .eq("league_id", data.leagueId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!mine) throw new Error("You are not in that league.");
+
+    const { data: members, error: memErr } = await (supabaseAdmin as any)
+      .from("league_members")
+      .select("user_id")
+      .eq("league_id", data.leagueId);
+    if (memErr) throw new Error(memErr.message);
+
+    const userIds = (members ?? []).map((m: any) => m.user_id as string);
+    if (userIds.length === 0) return { activity: [] as const };
+
+    const { data: profiles } = await (supabaseAdmin as any)
+      .from("profiles")
+      .select("id, display_name")
+      .in("id", userIds);
+    const nameById = new Map<string, string>(
+      (profiles ?? []).map((p: any) => [p.id as string, (p.display_name as string) ?? "Member"]),
+    );
+
+    const [predsRes, sportsRes, f1Res, ufcRes] = await Promise.all([
+      (supabaseAdmin as any)
+        .from("predictions")
+        .select("user_id, points, status, settled_at, created_at")
+        .in("user_id", userIds)
+        .eq("is_simulation", false)
+        .in("status", ["won", "lost"])
+        .order("settled_at", { ascending: false })
+        .limit(40),
+      (supabaseAdmin as any)
+        .from("sports_bets")
+        .select("user_id, stake, actual_payout, status, settled_at")
+        .in("user_id", userIds)
+        .in("status", ["won", "lost"])
+        .order("settled_at", { ascending: false })
+        .limit(40),
+      (supabaseAdmin as any)
+        .from("f1_bets")
+        .select("user_id, stake, potential_payout, status, settled_at")
+        .in("user_id", userIds)
+        .in("status", ["won", "lost"])
+        .order("settled_at", { ascending: false })
+        .limit(40),
+      (supabaseAdmin as any)
+        .from("ufc_bets")
+        .select("user_id, stake, potential_payout, payout, status, settled_at")
+        .in("user_id", userIds)
+        .in("status", ["won", "lost"])
+        .order("settled_at", { ascending: false })
+        .limit(40),
+    ]);
+
+    type ActivityRow = {
+      displayName: string;
+      sport: string;
+      result: "won" | "lost";
+      pointsDelta: number;
+      settledAt: string;
+    };
+
+    const activity: ActivityRow[] = [];
+
+    for (const p of predsRes.data ?? []) {
+      const result = p.status === "won" ? "won" : "lost";
+      activity.push({
+        displayName: nameById.get(p.user_id as string) ?? "Member",
+        sport: "World Cup",
+        result,
+        pointsDelta: Number(p.points ?? 0),
+        settledAt: (p.settled_at ?? p.created_at) as string,
+      });
+    }
+    for (const b of sportsRes.data ?? []) {
+      const won = b.status === "won";
+      activity.push({
+        displayName: nameById.get(b.user_id as string) ?? "Member",
+        sport: "Football",
+        result: won ? "won" : "lost",
+        pointsDelta: netPl(won, Number(b.actual_payout ?? 0), Number(b.stake ?? 0)),
+        settledAt: b.settled_at as string,
+      });
+    }
+    for (const b of f1Res.data ?? []) {
+      const won = b.status === "won";
+      activity.push({
+        displayName: nameById.get(b.user_id as string) ?? "Member",
+        sport: "F1",
+        result: won ? "won" : "lost",
+        pointsDelta: netPl(won, Number(b.potential_payout ?? 0), Number(b.stake ?? 0)),
+        settledAt: b.settled_at as string,
+      });
+    }
+    for (const b of ufcRes.data ?? []) {
+      const won = b.status === "won";
+      activity.push({
+        displayName: nameById.get(b.user_id as string) ?? "Member",
+        sport: "UFC",
+        result: won ? "won" : "lost",
+        pointsDelta: netPl(won, Number(b.payout ?? b.potential_payout ?? 0), Number(b.stake ?? 0)),
+        settledAt: b.settled_at as string,
+      });
+    }
+
+    activity.sort((a, b) => new Date(b.settledAt).getTime() - new Date(a.settledAt).getTime());
+    return { activity: activity.slice(0, 20) };
   });

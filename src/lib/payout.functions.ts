@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireApprovedMember } from "@/lib/access-control";
 
 const BUCKET = "payout-proofs";
 
@@ -120,53 +121,36 @@ export const createPayoutRequest = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId, claims } = context;
+    const { userId, claims } = context;
+    await requireApprovedMember(context);
 
     // Demo guests hold practice points only — never withdrawable.
     if ((claims as any)?.is_anonymous === true) {
       throw new Error("Demo points can't be withdrawn. Create an account to play for real.");
     }
 
-
-
-    // Block if user already has an active payout
-    const { data: existing } = await supabase
-      .from("payout_requests")
-      .select("id, status")
-      .eq("user_id", userId)
-      .in("status", ["pending", "approved", "proof_uploaded"])
-      .maybeSingle();
-    if (existing) throw new Error("You already have an active payout request.");
-
-    // Check balance
-    const { data: wallet } = await supabase
-      .from("wallets")
-      .select("balance")
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (!wallet || Number(wallet.balance) < data.amount) {
-      throw new Error("Insufficient balance.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: payoutId, error } = await (supabaseAdmin as any).rpc("payout_create_atomic", {
+      p_user_id: userId,
+      p_bank_name: data.bankName,
+      p_bank_account_number: data.bankAccountNumber,
+      p_amount: data.amount,
+    });
+    if (error) {
+      const m = error.message || "";
+      if (m.includes("ACTIVE_PAYOUT_EXISTS")) throw new Error("You already have an active payout request.");
+      if (m.includes("INSUFFICIENT_BALANCE")) throw new Error("Insufficient balance.");
+      if (m.includes("INVALID_AMOUNT")) throw new Error("Invalid payout amount.");
+      throw new Error(m || "Could not create payout request.");
     }
 
-    const { data: inserted, error } = await supabase
-      .from("payout_requests")
-      .insert({
-        user_id: userId,
-        bank_name: data.bankName,
-        bank_account_number: data.bankAccountNumber,
-        amount: data.amount,
-        status: "pending",
-      })
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
     const { dispatchNotification } = await import("@/lib/notifications.server");
     await dispatchNotification({
       eventType: "admin_new_cashout",
       relatedRecordType: "payout_request",
-      relatedRecordId: inserted.id,
+      relatedRecordId: payoutId,
     });
-    return { id: inserted.id };
+    return { id: payoutId as string };
   });
 
 export const userConfirmPayoutProof = createServerFn({ method: "POST" })
@@ -174,6 +158,7 @@ export const userConfirmPayoutProof = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ payoutId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    await requireApprovedMember(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.rpc("payout_user_confirm" as any, {
       p_payout_id: data.payoutId,
@@ -218,6 +203,7 @@ export const userRejectPayoutProof = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    await requireApprovedMember(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: rpcErr } = await supabaseAdmin.rpc("payout_user_reject_atomic" as any, {
       p_payout_id: data.payoutId,
@@ -377,17 +363,14 @@ export const adminRejectPayout = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!row) throw new Error("Not found");
     if (row.status !== "pending") throw new Error(`Cannot reject: status=${row.status}`);
-    const { error } = await supabaseAdmin
-      .from("payout_requests")
-      .update({
-        status: "rejected_by_admin",
-        rejection_reason: data.reason,
-        reviewed_by: userId,
-        rejected_by: userId,
-        rejected_at: new Date().toISOString(),
-      } as any)
-      .eq("id", data.payoutId);
+
+    const { error } = await supabaseAdmin.rpc("payout_admin_reject_atomic" as any, {
+      p_payout_id: data.payoutId,
+      p_admin_id: userId,
+      p_reason: data.reason,
+    });
     if (error) throw new Error(error.message);
+
     await supabaseAdmin.from("audit_log").insert({
       user_id: userId,
       target_user_id: (row as any).user_id ?? null,

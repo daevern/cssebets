@@ -172,22 +172,32 @@ runner.
       `placeMarketBet`)
 - [x] Guest upgrade E2E: convert → pending wall → service-role approve
       (`e2e/guest-upgrade.spec.ts`)
+- [x] Approved-member wallet + payout hold E2E
+      (`e2e/wallet-payout.spec.ts` — create holds balance, admin reject releases)
 - [x] Admin health UI includes cron freshness for `football_sync`,
       `football_settle`, `f1_sync`, `ufc_sync`, `health_cron_heartbeat`
+- [x] Fresh DBs default `apply_margin_to_real = true` and arcade
+      `capacity_enforced = true` via `20260817210000_phase_b_risk_hardening.sql`
+- [x] Payout hold-on-create (`payout_create_atomic`) + admin reject refund
+- [x] UFC method/round/total_rounds not public-bettable (moneyline only;
+      admin settle retained)
+- [x] F1 championship settle path + season place UI
+- [x] Money mutators gated with `requireApprovedMember` (edit/cancel,
+      free-bets, top-up, payout)
 
 ### Still required once against real production
 
 - [ ] `CRON_HOOK_SECRET` set in production env (not the CI placeholder)
 - [ ] All pg_cron `net.http_post` jobs send `x-cron-secret` (or Bearer)
-      matching that production secret
+      matching that production secret — prefer Vault secret `cron_hook_secret`
+      (see `supabase/migrations/20260817210100_cron_vault_header_docs.sql`;
+      never commit the live value)
 - [ ] Spot-check unauthenticated `health-check` → 401 and authenticated →
       200 on the live host
 - [ ] `/management/admin/health` shows recent ages when crons are live
-- [ ] `accounting_migration_flags.capacity_enforced = true` for
-      plinko, rps, blackjack, roulette, treasure
-- [ ] Reviewed `apply_margin_to_real` on `/management/admin/risk-settings`
-      (warning banner visible when off)
-- [ ] `bun run test` / CI green
+- [ ] Confirm prod `apply_margin_to_real` and `capacity_enforced` match the
+      Phase B migration defaults (odds refresh after margin flip)
+- [ ] `bun run test` / CI green on ephemeral Supabase (first full migration dry-run)
 - [ ] Reconciliation `overall_status = OK`
 - [ ] `select * from arcade_config_selftest();` all rows `passed = true`
       (includes `min_stake_floor_consistent` — every arcade table must
@@ -225,7 +235,8 @@ runner.
       previously the "pending approval" gate was UI-only, so a pending
       user with a valid session could wager real wallet points on arcade
       before an admin approved them (WC sports + club football / F1 / UFC
-      place handlers now share `src/lib/access-control.ts`)
+      place + wallet/payout/edit/freebet mutators now share
+      `src/lib/access-control.ts`)
 
 ## Reference
 - `/docs/BACKUP_RECOVERY.md` — recovery checklist

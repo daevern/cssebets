@@ -1,12 +1,18 @@
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, ChevronRight, Loader2 } from "lucide-react";
-import { listF1Races, getF1Race } from "../f1.functions";
+import { ArrowUpRight, ChevronRight, Loader2, X } from "lucide-react";
+import { toast } from "sonner";
+import { listF1Races, getF1Race, listF1ChampionshipMarkets, placeF1ChampionshipBet } from "../f1.functions";
+import { getMyWallet } from "@/lib/wallet.functions";
+import { useAuth } from "@/hooks/use-auth";
 import { teamFlagUrl } from "@/lib/country-flags";
 import { PageFooter } from "@/components/ui/page-footer";
 import { F1Badge } from "@/components/brand/SportBadge";
+
+const MIN_STAKE = 10;
+const MAX_STAKE = 50_000;
 
 function CountryFlag({ country, w = 36, h = 24 }: { country?: string | null; w?: number; h?: number }) {
   const url = country ? teamFlagUrl(country, 160) : null;
@@ -82,12 +88,72 @@ type RaceRow = {
 
 const ROW_TONES = ["home", "away", "draw"] as const;
 
+type ChampMarket = {
+  id: string;
+  season: number;
+  market_type: string;
+  selection_key: string;
+  label: string;
+  odds: number;
+  status: string;
+};
+
 export function F1SeasonPage() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const listRaces = useServerFn(listF1Races);
+  const listChamp = useServerFn(listF1ChampionshipMarkets);
+  const placeChamp = useServerFn(placeF1ChampionshipBet);
+  const walletFn = useServerFn(getMyWallet);
+
   const racesQ = useQuery({ queryKey: ["f1-races"], queryFn: () => listRaces(), refetchInterval: 60_000 });
 
   const races: RaceRow[] = racesQ.data?.races ?? [];
   const season = racesQ.data?.season ?? new Date().getUTCFullYear();
+
+  const champQ = useQuery({
+    queryKey: ["f1-champ-markets", season],
+    queryFn: () => listChamp({ data: { season } }),
+    enabled: !!season,
+    staleTime: 60_000,
+  });
+
+  const wallet = useQuery({
+    queryKey: ["my-wallet", user?.id],
+    queryFn: () => walletFn({}),
+    enabled: !!user?.id,
+    staleTime: 15_000,
+  });
+  const balance = Number(wallet.data?.balance ?? 0);
+
+  const [selected, setSelected] = useState<ChampMarket | null>(null);
+  const [stake, setStake] = useState("100");
+
+  const placeMut = useMutation({
+    mutationFn: async () => {
+      if (!selected) throw new Error("No selection");
+      const stakeValue = Number(stake);
+      if (!Number.isFinite(stakeValue) || stakeValue < MIN_STAKE) {
+        throw new Error(`Minimum stake is ${MIN_STAKE} points.`);
+      }
+      if (stakeValue > MAX_STAKE) throw new Error(`Maximum stake is ${MAX_STAKE.toLocaleString()} points.`);
+      if (stakeValue > balance) throw new Error("Insufficient points");
+      return placeChamp({
+        data: {
+          marketId: selected.id,
+          stake: stakeValue,
+          maxOdds: Number(selected.odds) * 1.05,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Championship bet locked");
+      setSelected(null);
+      qc.invalidateQueries({ queryKey: ["my-wallet"] });
+      qc.invalidateQueries({ queryKey: ["f1-champ-markets", season] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not place bet"),
+  });
 
   const { featured, upcoming } = useMemo(() => {
     const open = races
@@ -96,6 +162,25 @@ export function F1SeasonPage() {
     const [next, ...rest] = open;
     return { featured: next ?? null, upcoming: rest };
   }, [races]);
+
+  const markets: ChampMarket[] = (champQ.data?.markets ?? []).map((m: any) => ({
+    ...m,
+    odds: Number(m.odds),
+  }));
+  const drivers = markets.filter((m) => m.market_type === "drivers");
+  const constructors = markets.filter((m) => m.market_type === "constructors");
+
+  const stakeNum = Number(stake) || 0;
+  const odds = selected ? Number(selected.odds) : 0;
+  const potentialReturn = selected ? stakeNum * odds : 0;
+  const overBalance = stakeNum > balance && stakeNum > 0;
+  const canSubmit =
+    !!selected &&
+    !placeMut.isPending &&
+    stakeNum >= MIN_STAKE &&
+    stakeNum <= MAX_STAKE &&
+    !overBalance &&
+    balance > 0;
 
   if (racesQ.isLoading) {
     return (
@@ -106,7 +191,10 @@ export function F1SeasonPage() {
   }
 
   return (
-    <div className="flex flex-col gap-8 px-4 pt-5 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-6 text-[var(--color-ink)]">
+    <div
+      className="flex flex-col gap-8 px-4 pt-5 pb-[calc(60px+env(safe-area-inset-bottom))] md:pb-6 text-[var(--color-ink)]"
+      style={{ paddingBottom: selected ? "calc(env(safe-area-inset-bottom) + 14rem)" : undefined }}
+    >
       <header className="space-y-2">
         <nav
           aria-label="Breadcrumb"
@@ -120,6 +208,13 @@ export function F1SeasonPage() {
         </nav>
       </header>
 
+      <ChampionshipOutrights
+        loading={champQ.isLoading}
+        drivers={drivers}
+        constructors={constructors}
+        selectedId={selected?.id ?? null}
+        onSelect={(m) => setSelected(m)}
+      />
 
       {upcoming.length > 0 && (
         <section className="space-y-3">
@@ -154,7 +249,162 @@ export function F1SeasonPage() {
         )}
       </section>
 
+      {selected && (
+        <div
+          className="fixed inset-x-0 z-50 mx-auto max-w-2xl space-y-2 rounded-t-lg border border-[var(--color-neon)]/40 bg-[#050A08]/98 p-3.5 shadow-[0_-8px_24px_rgba(0,0,0,0.6)] backdrop-blur"
+          style={{ bottom: "calc(72px + env(safe-area-inset-bottom))" }}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-neon)]">
+                Championship · {selected.market_type}
+              </div>
+              <div className="mt-0.5 truncate text-[13px] font-semibold text-[var(--color-ink)]">
+                {selected.label}{" "}
+                <span className="font-display tabular-nums text-[var(--color-neon)]">
+                  {odds.toFixed(2)}x
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              aria-label="Clear selection"
+              className="shrink-0 rounded-full p-1 text-[var(--color-ink-muted)] hover:bg-white/5"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={stake}
+              onChange={(e) => setStake(e.target.value.replace(/\D/g, ""))}
+              className="flex-1 min-w-0 rounded-md border border-[var(--color-surface-border)] bg-black px-3 py-2.5 font-display text-base font-bold tabular-nums text-[var(--color-ink)] outline-none focus:border-[var(--color-neon)]"
+              placeholder={`Points (${MIN_STAKE}+)`}
+            />
+            <button
+              type="button"
+              disabled={!canSubmit}
+              onClick={() => placeMut.mutate()}
+              className="flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-[var(--color-neon)] px-4 py-2.5 text-[12px] font-bold text-black disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {placeMut.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : overBalance ? (
+                "Over balance"
+              ) : (
+                <>
+                  Lock <ArrowUpRight className="h-3.5 w-3.5" />
+                </>
+              )}
+            </button>
+          </div>
+          <div className="flex items-center justify-between text-[11px] text-[var(--color-ink-muted)]">
+            <span>
+              Return{" "}
+              <span className="font-display font-bold tabular-nums text-[var(--color-ink)]">
+                {potentialReturn.toFixed(2)}
+              </span>
+            </span>
+            <span>
+              Bal{" "}
+              <span className="font-bold tabular-nums text-[var(--color-ink)]">{balance.toFixed(2)}</span>
+            </span>
+          </div>
+        </div>
+      )}
+
       <PageFooter />
+    </div>
+  );
+}
+
+function ChampionshipOutrights({
+  loading,
+  drivers,
+  constructors,
+  selectedId,
+  onSelect,
+}: {
+  loading: boolean;
+  drivers: ChampMarket[];
+  constructors: ChampMarket[];
+  selectedId: string | null;
+  onSelect: (m: ChampMarket) => void;
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="flex items-center gap-2 text-[15px] font-bold tracking-tight text-[var(--color-ink)]">
+        <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-neon)]" />
+        Championship outrights
+      </h2>
+      {loading ? (
+        <div className="grid h-20 place-items-center rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)]">
+          <Loader2 className="h-4 w-4 animate-spin text-[var(--color-ink-muted)]" />
+        </div>
+      ) : drivers.length === 0 && constructors.length === 0 ? (
+        <div className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-6 text-center text-sm text-[var(--color-ink-muted)]">
+          Championship markets open once standings odds are synced.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {drivers.length > 0 && (
+            <ChampGroup title="Drivers' championship" markets={drivers} selectedId={selectedId} onSelect={onSelect} />
+          )}
+          {constructors.length > 0 && (
+            <ChampGroup title="Constructors' championship" markets={constructors} selectedId={selectedId} onSelect={onSelect} />
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ChampGroup({
+  title,
+  markets,
+  selectedId,
+  onSelect,
+}: {
+  title: string;
+  markets: ChampMarket[];
+  selectedId: string | null;
+  onSelect: (m: ChampMarket) => void;
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)]">
+      <div className="border-b border-[var(--color-surface-border)] px-3.5 py-2.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
+        {title}
+      </div>
+      <div className="divide-y divide-[var(--color-surface-border)]">
+        {markets.map((m) => {
+          const active = m.id === selectedId;
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => onSelect(m)}
+              className={`flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left transition-colors ${
+                active ? "bg-[var(--color-neon)]/10" : "hover:bg-white/[0.02]"
+              }`}
+            >
+              <span className="truncate text-[13px] font-semibold text-[var(--color-ink)]">{m.label}</span>
+              <span
+                className={`shrink-0 rounded-md border px-2.5 py-1 font-display text-[13px] font-bold tabular-nums ${
+                  active
+                    ? "border-[var(--color-neon)] bg-[var(--color-neon)] text-black"
+                    : "border-[var(--color-neon)]/40 text-[var(--color-neon)]"
+                }`}
+              >
+                {Number(m.odds).toFixed(2)}x
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -236,18 +236,13 @@ export const placeUfcBet = createServerFn({ method: "POST" })
       throw e;
     }
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    // Method-of-victory market locks 30 minutes before commence_time so we
-    // never accept bets against stale synthetic prices near walk-outs.
-    if (data.marketType === "method") {
-      const { data: f } = await (supabaseAdmin as any)
-        .from("ufc_fights").select("commence_time").eq("id", data.fightId).maybeSingle();
-      const commenceMs = f?.commence_time ? new Date(f.commence_time).getTime() : 0;
-      if (commenceMs && (commenceMs - Date.now()) <= 30 * 60 * 1000) {
-        throw new Error("Method of Victory market is closed (locks 30 minutes before the fight).");
-      }
+    // Method / round / totals are admin-grade only — the MMA feed does not
+    // return finish method or round, so public betting is disabled.
+    if (data.marketType !== "moneyline") {
+      throw new Error("Only Fight Winner markets are open for betting right now.");
     }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: market } = await (supabaseAdmin as any)
       .from("ufc_fight_markets")

@@ -22,12 +22,17 @@ export const getMyEngagementSummary = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     const { data: w } = await (supabase as any)
       .from("csse_token_wallets")
-      .select("balance, lifetime_earned, lifetime_spent")
+      .select("balance, lifetime_earned, lifetime_spent, last_daily_claim_on")
       .eq("user_id", userId).maybeSingle();
-    const wallet = w ?? { balance: 0, lifetime_earned: 0, lifetime_spent: 0 };
+    const wallet = w ?? { balance: 0, lifetime_earned: 0, lifetime_spent: 0, last_daily_claim_on: null };
     const lifetime = Number(wallet.lifetime_earned ?? 0);
     let level: (typeof LEVELS)[number] = LEVELS[0];
     for (const l of LEVELS) if (lifetime >= l.min) level = l;
+    const utcToday = new Date().toISOString().slice(0, 10);
+    const lastClaim = wallet.last_daily_claim_on
+      ? String(wallet.last_daily_claim_on).slice(0, 10)
+      : null;
+    const canClaimToday = lastClaim !== utcToday;
     return {
       tokens: {
         balance: Number(wallet.balance ?? 0),
@@ -36,14 +41,23 @@ export const getMyEngagementSummary = createServerFn({ method: "GET" })
       },
       level,
       levels: LEVELS,
-      canClaimToday: false,
+      canClaimToday,
     };
   });
 
-// Legacy stub; kept so any lingering callers don't crash.
 export const claimDailyReward = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => ({ disabled: true as const }));
+  .handler(async ({ context }) => {
+    const { data, error } = await (context.supabase as any).rpc("claim_daily_csse_tokens");
+    if (error) {
+      const m = error.message ?? "";
+      if (/ALREADY_CLAIMED/i.test(m)) throw new Error("Already claimed today.");
+      if (/AUTH_REQUIRED/i.test(m)) throw new Error("Sign in to claim.");
+      throw new Error(m || "Could not claim daily reward.");
+    }
+    const amount = Number((data as any)?.amount ?? 10);
+    return { amount, day: (data as any)?.day ?? null };
+  });
 
 export const listMyTokenTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

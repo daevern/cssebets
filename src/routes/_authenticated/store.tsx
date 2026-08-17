@@ -10,9 +10,10 @@ import {
   TrendingUp,
   Lock,
   CircleDot,
+  Gift,
 } from "lucide-react";
 import { listStoreItems, purchaseFreeBet, listMyFreeBets } from "@/lib/freebets.functions";
-import { getMyEngagementSummary } from "@/lib/engagement.functions";
+import { claimDailyReward, getMyEngagementSummary } from "@/lib/engagement.functions";
 
 export const Route = createFileRoute("/_authenticated/store")({
   component: StorePage,
@@ -37,6 +38,7 @@ function StorePage() {
   const summaryFn = useServerFn(getMyEngagementSummary);
   const myFbFn = useServerFn(listMyFreeBets);
   const buyFn = useServerFn(purchaseFreeBet);
+  const claimFn = useServerFn(claimDailyReward);
 
   const items = useQuery({ queryKey: ["store-items"], queryFn: () => listFn() });
   const summary = useQuery({ queryKey: ["engagement-summary"], queryFn: () => summaryFn() });
@@ -52,7 +54,17 @@ function StorePage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const claim = useMutation({
+    mutationFn: () => claimFn({}),
+    onSuccess: (res) => {
+      toast.success(`Claimed ${res.amount} CSSE tokens`);
+      qc.invalidateQueries({ queryKey: ["engagement-summary"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const balance = summary.data?.tokens.balance ?? 0;
+  const canClaimToday = !!summary.data?.canClaimToday;
   const list: StoreItem[] = (items.data ?? []) as StoreItem[];
 
   // Best-value = highest stake per CSSE spent.
@@ -98,6 +110,18 @@ function StorePage() {
           </div>
         </div>
       </header>
+
+      {canClaimToday ? (
+        <button
+          type="button"
+          disabled={claim.isPending}
+          onClick={() => claim.mutate()}
+          className="flex w-full items-center justify-between rounded-xl border border-[var(--color-neon)]/50 bg-[var(--color-neon)]/10 px-4 py-3 text-[12px] font-bold uppercase tracking-[0.16em] text-[var(--color-neon)] transition-colors hover:bg-[var(--color-neon)]/15 disabled:opacity-50"
+        >
+          <span>Claim daily CSSE tokens</span>
+          {claim.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="h-4 w-4" />}
+        </button>
+      ) : null}
 
       {/* Featured — highest stake per CSSE */}
       {featured && (

@@ -652,13 +652,44 @@ export const getReauthStatus = createServerFn({ method: "GET" })
 export const issueReauth = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) =>
-    z.object({ password: z.string().min(1).max(200) }).parse(i),
+    z
+      .object({
+        password: z.string().min(1).max(200),
+        totpCode: z.string().trim().min(6).max(12).optional(),
+      })
+      .parse(i),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId, claims } = context;
     await requireTier(supabase, userId, ADMIN_TIERS);
     const email = (claims as any)?.email;
     if (!email) throw new Error("No email on session");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: reauthRow } = await supabaseAdmin
+      .from("admin_reauth")
+      .select("two_factor_placeholder")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const requireTotp = !!reauthRow?.two_factor_placeholder;
+
+    if (requireTotp) {
+      if (!data.totpCode) throw new Error("Authenticator code required");
+      const { data: factors, error: listErr } = await supabase.auth.mfa.listFactors();
+      if (listErr) throw new Error(listErr.message);
+      const totp = (factors?.totp ?? []).find((f) => f.status === "verified") ?? (factors?.totp ?? [])[0];
+      if (!totp) throw new Error("Enroll an authenticator first");
+      const { data: challenge, error: challengeErr } = await supabase.auth.mfa.challenge({
+        factorId: totp.id,
+      });
+      if (challengeErr || !challenge) throw new Error(challengeErr?.message ?? "MFA challenge failed");
+      const { error: verifyErr } = await supabase.auth.mfa.verify({
+        factorId: totp.id,
+        challengeId: challenge.id,
+        code: data.totpCode,
+      });
+      if (verifyErr) throw new Error("Invalid authenticator code");
+    }
 
     const { createClient } = await import("@supabase/supabase-js");
     const verifier = createClient(
@@ -669,7 +700,6 @@ export const issueReauth = createServerFn({ method: "POST" })
     const { error } = await verifier.auth.signInWithPassword({ email, password: data.password });
     if (error) throw new Error("Password incorrect");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const expires = new Date(Date.now() + REAUTH_WINDOW_MS).toISOString();
     await supabaseAdmin
       .from("admin_reauth")
@@ -684,6 +714,16 @@ export const setTwoFactorPlaceholder = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await requireTier(supabase, userId, ADMIN_TIERS);
+
+    if (data.enabled) {
+      const { data: factors, error } = await supabase.auth.mfa.listFactors();
+      if (error) throw new Error(error.message);
+      const hasTotp =
+        (factors?.totp ?? []).some((f) => f.status === "verified") ||
+        (factors?.totp ?? []).length > 0;
+      if (!hasTotp) throw new Error("Enroll an authenticator first");
+    }
+
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: existing } = await supabaseAdmin
       .from("admin_reauth").select("user_id").eq("user_id", userId).maybeSingle();

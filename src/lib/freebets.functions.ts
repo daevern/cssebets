@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { enforceRateLimit, isRateLimitError } from "@/lib/rate-limit.functions";
+import { requireApprovedMember } from "@/lib/access-control";
 
 export const listStoreItems = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -20,6 +21,7 @@ export const purchaseFreeBet = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => z.object({ itemKey: z.string().min(1) }).parse(i))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    await requireApprovedMember(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: item } = await (supabaseAdmin as any)
@@ -74,6 +76,7 @@ export const placeFreeBet = createServerFn({ method: "POST" })
   .inputValidator((i: unknown) => PlaceSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    await requireApprovedMember(context);
 
     try { await enforceRateLimit(`user:${userId}`, "bet_placement"); }
     catch (e) {

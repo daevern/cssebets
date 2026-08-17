@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireApprovedMember } from "@/lib/access-control";
 
 const EditSchema = z.object({
   predictionId: z.string().uuid(),
@@ -26,6 +27,7 @@ export const editPendingBetStake = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => EditSchema.parse(input))
   .handler(async ({ data, context }) => {
+    await requireApprovedMember(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: result, error } = await (supabaseAdmin as any).rpc("edit_pending_bet_stake", {
       p_user_id: context.userId,
@@ -40,6 +42,7 @@ export const cancelPendingBet = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => CancelSchema.parse(input))
   .handler(async ({ data, context }) => {
+    await requireApprovedMember(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: result, error } = await (supabaseAdmin as any).rpc("cancel_pending_bet", {
       p_user_id: context.userId,
