@@ -1284,7 +1284,9 @@ function slugifyEventKey(slug: string) {
 
 const DISCOVERY_WINDOW_DAYS = 45;
 const DISCOVERY_MAX_CALLS = 46;
+const DISCOVERY_BACKFILL_DAYS = 2;
 const DISCOVERY_THROTTLE_MS = 25 * 60 * 1000;
+
 
 export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Promise<UfcDiscoveryResult> {
   const key = process.env.API_FOOTBALL_KEY?.trim();
@@ -1301,16 +1303,17 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
   }
   await writeUfcFeedState({ last_discovery_at: new Date(now).toISOString() });
 
-  // Scan the rolling window for UFC-tagged fights. Order matters: free feed
-  // plans only expose today ±1 day, so probe the near days FIRST (those always
-  // succeed and keep fight-night data flowing), then weekends — UFC cards land
-  // on Sat/Sun (UTC) almost exclusively — then remaining weekdays. On a paid
-  // plan the whole window is scanned; on a free plan we still get the near days
-  // before the provider refuses and we stop wasting quota.
+  // Scan the rolling window for UFC-tagged fights. Order matters:
+  //  * Start 2 days in the PAST. US Saturday-night cards land in the early
+  //    hours of Sunday UTC, so a "today forward" scan misses the card that is
+  //    live or about to be live right now — which is exactly how UFC 330 went
+  //    missing from the homepage.
+  //  * Probe the near days first (those are always available), then weekends
+  //    — UFC cards land on Sat/Sun UTC almost exclusively — then weekdays.
   const near: string[] = [];
   const weekends: string[] = [];
   const weekdays: string[] = [];
-  for (let d = 0; d < DISCOVERY_WINDOW_DAYS; d++) {
+  for (let d = -DISCOVERY_BACKFILL_DAYS; d < DISCOVERY_WINDOW_DAYS; d++) {
     const dt = new Date(now + d * 24 * 60 * 60 * 1000);
     const iso = dt.toISOString().slice(0, 10);
     const dow = dt.getUTCDay();
@@ -1321,12 +1324,22 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
   const schedule = [...near, ...weekends, ...weekdays].slice(0, DISCOVERY_MAX_CALLS);
 
 
+
   const buckets = new Map<string, { name: string; startsAt: string }>();
   let planLimited = false;
   let planMessage: string | undefined;
   let scanned = 0;
+  // When the feed refuses a date it tells us the window it *will* serve
+  // ("try from 2026-08-16 to 2026-08-18"). Narrow the remaining probes to that
+  // window instead of aborting — otherwise one out-of-range day (e.g. a past
+  // date we scan to catch last night's card) kills the whole run.
+  let allowedFrom: string | null = null;
+  let allowedTo: string | null = null;
 
-  for (const day of schedule) {
+  const queue = [...schedule];
+  for (let i = 0; i < queue.length; i++) {
+    const day = queue[i]!;
+    if (allowedFrom && allowedTo && (day < allowedFrom || day > allowedTo)) continue;
     try {
       const fights = await fetchFightsByDate(day);
       scanned++;
@@ -1346,15 +1359,20 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
     } catch (e) {
       const message = (e as Error).message;
       if (e instanceof ApiMmaPlanError) {
-        // Free plans only expose a ±1 day window; further probes just burn
-        // quota. Record it so the admin surface can explain the gap.
         planLimited = true;
         planMessage = message;
-        break;
+        const range = message.match(/from (\d{4}-\d{2}-\d{2}) to (\d{4}-\d{2}-\d{2})/);
+        if (range) {
+          allowedFrom = range[1]!;
+          allowedTo = range[2]!;
+          continue; // keep scanning the dates the plan does serve
+        }
+        break; // unparseable plan/quota refusal: stop burning calls
       }
       console.warn("[ufc-discovery] date fetch failed", day, message);
     }
   }
+
 
   for (const [event_key, v] of buckets) {
     await (supabaseAdmin as any)

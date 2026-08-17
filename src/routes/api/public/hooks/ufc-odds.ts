@@ -14,11 +14,14 @@ export const Route = createFileRoute("/api/public/hooks/ufc-odds")({
           const force = url.searchParams.get("force") === "1";
           const maxParam = Number(url.searchParams.get("maxEvents") ?? "");
           const { runUfcOddsSync } = await import("@/lib/ufc-odds.server");
+          const { runUfcOddsApiSync } = await import("@/lib/ufc-oddsapi.server");
           const odds = await runUfcOddsSync({
             force,
             ...(Number.isFinite(maxParam) && maxParam > 0 ? { maxEvents: maxParam } : {}),
           });
-          return new Response(JSON.stringify({ odds }), {
+          // Keeps upcoming cards priced even while the stats feed can't see them.
+          const oddsapi = await runUfcOddsApiSync();
+          return new Response(JSON.stringify({ odds, oddsapi }), {
             headers: { "content-type": "application/json" },
           });
         } catch (e) {
