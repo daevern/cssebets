@@ -65,11 +65,13 @@ export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler
         .order("starts_at", { ascending: true })
         .limit(1)
         .maybeSingle(),
+      // Soonest card that hasn't finished yet (6h grace so a live card stays up).
       (supabaseAdmin as any)
         .from("ufc_events")
         .select("id, name, starts_at, is_active")
         .eq("is_active", true)
-        .order("starts_at", { ascending: false, nullsFirst: false })
+        .gte("starts_at", new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString())
+        .order("starts_at", { ascending: true })
         .limit(1)
         .maybeSingle(),
     ]);
