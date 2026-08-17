@@ -29,7 +29,7 @@ export const getFootballMarketHistory = createServerFn({ method: "POST" })
 
     const { data: markets } = await (supabaseAdmin as any)
       .from("sports_markets")
-      .select("id, market_key, display_name, sort_order, sports_market_selections (selection_key, display_name)")
+      .select("id, market_key, display_name, sort_order, sports_market_selections (selection_key, display_name, decimal_odds)")
       .eq("sports_event_id", data.matchId)
       .order("sort_order", { ascending: true });
 
