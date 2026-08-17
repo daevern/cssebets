@@ -30,6 +30,8 @@ import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { useArcadeSound, winSfxForRatio } from "@/lib/arcade/sound";
 import { getArcadePersonalBest } from "@/lib/arcade/personal-best.functions";
 import { ArcadeEntrance } from "@/components/arcade/ArcadeEntrance";
+import { ArcadeIdleCue } from "@/components/arcade/ArcadeIdleCue";
+import { MiniCabinetTitle } from "@/components/arcade/MiniCabinetTitle";
 
 import * as React from "react";
 import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
