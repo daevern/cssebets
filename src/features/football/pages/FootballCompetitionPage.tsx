@@ -80,9 +80,6 @@ export function FootballCompetitionPage({ code }: { code: FootballCompetitionCod
 
   const { live, upcoming, completed } = useMemo(() => {
     const arr = data?.matches ?? [];
-    // Show the full upcoming matchweek(s) — covers weekend fixtures that fall
-    // just outside a strict 7-day cut-off.
-    const horizon = now + 14 * 24 * 60 * 60 * 1000;
     const backstop = now - 7 * 24 * 60 * 60 * 1000;
     const l: FootballMatch[] = [];
     const u: FootballMatch[] = [];
@@ -97,15 +94,31 @@ export function FootballCompetitionPage({ code }: { code: FootballCompetitionCod
         l.push(m);
         continue;
       }
-      if (k >= now && k <= horizon) u.push(m);
+      if (k >= now) u.push(m);
     }
     const asc = (a: FootballMatch, b: FootballMatch) =>
       new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime();
     l.sort(asc);
     u.sort(asc);
     c.sort((a, b) => new Date(b.kickoffAt).getTime() - new Date(a.kickoffAt).getTime());
-    return { live: l, upcoming: u, completed: c };
+
+    // Only show the current matchweek: cluster fixtures from the soonest kickoff
+    // and stop at the first gap of more than 3 days (i.e. next matchweek).
+    const cluster: FootballMatch[] = [];
+    const GAP = 3 * 24 * 60 * 60 * 1000;
+    for (const m of u) {
+      const k = new Date(m.kickoffAt).getTime();
+      if (!cluster.length) {
+        cluster.push(m);
+        continue;
+      }
+      const prev = new Date(cluster[cluster.length - 1]!.kickoffAt).getTime();
+      if (k - prev > GAP) break;
+      cluster.push(m);
+    }
+    return { live: l, upcoming: cluster, completed: c };
   }, [data, now]);
+
 
   const list = tab === "live" ? live : tab === "upcoming" ? upcoming : completed;
 

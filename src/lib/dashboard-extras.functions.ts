@@ -52,7 +52,7 @@ export type NextFootballMatch = {
 } | null;
 
 export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler(
-  async (): Promise<{ nextRace: NextF1Race; nextFight: NextUfcFight; nextFootball: NextFootballMatch }> => {
+  async (): Promise<{ nextRace: NextF1Race; nextFight: NextUfcFight; nextFootball: NextFootballMatch; nextFootballMatches: NonNullable<NextFootballMatch>[] }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
 
@@ -163,45 +163,61 @@ export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler
       }
     }
 
-    // Next La Liga fixture (soonest upcoming), with 1X2 reference odds.
-    let nextFootball: NextFootballMatch = null;
+    // Next fixture per enabled football competition (soonest upcoming each),
+    // with 1X2 reference odds.
+    const nextFootballMatches: NonNullable<NextFootballMatch>[] = [];
     {
-      const { data: ev } = await (supabaseAdmin as any)
+      const { data: evs } = await (supabaseAdmin as any)
         .from("sports_events")
         .select("id, competition_code, home_name, away_name, home_logo, away_logo, scheduled_at, status")
         .eq("sport_code", "football")
-        .eq("competition_code", "LA_LIGA")
         .eq("is_enabled", true)
         .gte("scheduled_at", nowIso)
         .neq("status", "finished")
         .order("scheduled_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (ev) {
-        const { data: mk } = await (supabaseAdmin as any)
+        .limit(200);
+
+      const firstPerComp: any[] = [];
+      const seen = new Set<string>();
+      for (const ev of (evs ?? []) as any[]) {
+        if (seen.has(ev.competition_code)) continue;
+        seen.add(ev.competition_code);
+        firstPerComp.push(ev);
+      }
+
+      if (firstPerComp.length) {
+        const { data: mks } = await (supabaseAdmin as any)
           .from("sports_markets")
           .select("sports_event_id, market_key, sports_market_selections (selection_key, decimal_odds)")
-          .eq("sports_event_id", ev.id)
-          .eq("market_key", "match_result")
-          .limit(1)
-          .maybeSingle();
-        const sels: Record<string, number> = {};
-        for (const s of (mk?.sports_market_selections ?? []) as any[])
-          sels[s.selection_key] = Number(s.decimal_odds);
+          .in("sports_event_id", firstPerComp.map((e) => e.id))
+          .eq("market_key", "match_result");
+        const oddsByEvent: Record<string, Record<string, number>> = {};
+        for (const mk of (mks ?? []) as any[]) {
+          const sels: Record<string, number> = oddsByEvent[mk.sports_event_id] ?? {};
+          for (const s of (mk.sports_market_selections ?? []) as any[])
+            sels[s.selection_key] = Number(s.decimal_odds);
+          oddsByEvent[mk.sports_event_id] = sels;
+        }
         const { competitionDisplayName } = await import("@/features/football/config/footballCompetitions");
-        nextFootball = {
-          id: ev.id,
-          competition_code: ev.competition_code,
-          competition_name: competitionDisplayName(ev.competition_code),
-          home_name: ev.home_name ?? "TBD",
-          away_name: ev.away_name ?? "TBD",
-          home_logo: ev.home_logo ?? null,
-          away_logo: ev.away_logo ?? null,
-          kickoff_at: ev.scheduled_at,
-          odds_home: sels.home ?? null,
-          odds_draw: sels.draw ?? null,
-          odds_away: sels.away ?? null,
-        };
+        for (const ev of firstPerComp) {
+          const sels = oddsByEvent[ev.id] ?? {};
+          nextFootballMatches.push({
+            id: ev.id,
+            competition_code: ev.competition_code,
+            competition_name: competitionDisplayName(ev.competition_code),
+            home_name: ev.home_name ?? "TBD",
+            away_name: ev.away_name ?? "TBD",
+            home_logo: ev.home_logo ?? null,
+            away_logo: ev.away_logo ?? null,
+            kickoff_at: ev.scheduled_at,
+            odds_home: sels.home ?? null,
+            odds_draw: sels.draw ?? null,
+            odds_away: sels.away ?? null,
+          });
+        }
+        nextFootballMatches.sort(
+          (a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime(),
+        );
       }
     }
 
@@ -219,7 +235,9 @@ export const getDashboardMotorAndUfc = createServerFn({ method: "GET" }).handler
           }
         : null,
       nextFight: fight,
-      nextFootball,
+      nextFootball: nextFootballMatches[0] ?? null,
+      nextFootballMatches,
     };
+
   },
 );

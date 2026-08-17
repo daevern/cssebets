@@ -142,7 +142,7 @@ export const getFootballMatch = createServerFn({ method: "GET" })
       suspensionReason: string | null;
     })[] = (markets ?? []).map((m: any) => {
       const lastMs = m.last_odds_update_at ? new Date(m.last_odds_update_at).getTime() : null;
-      const maxAgeMs = Number(m.stale_after_seconds ?? 600) * 1000;
+      const maxAgeMs = Number(m.stale_after_seconds ?? 10800) * 1000;
       const isStale =
         m.status === "open" && lastMs != null && nowMs - lastMs > maxAgeMs;
       return {
@@ -358,7 +358,7 @@ export const placeFootballBet = createServerFn({ method: "POST" })
     }
     if (mkt.last_odds_update_at) {
       const age = Date.now() - new Date(mkt.last_odds_update_at).getTime();
-      const maxAge = Number(mkt.stale_after_seconds ?? 600) * 1000;
+      const maxAge = Number(mkt.stale_after_seconds ?? 10800) * 1000;
       if (age > maxAge) {
         throw new Error("Odds are stale — please refresh and try again.");
       }
