@@ -13,6 +13,7 @@ import { getMyWallet } from "@/lib/wallet.functions";
 import { CashoutSheet } from "@/components/wallet/CashoutSheet";
 import { TopUpAmountModal } from "@/components/wallet/TopUpAmountModal";
 import { TopUpInstructionsModal } from "@/components/wallet/TopUpInstructionsModal";
+import { useIsDemoGuest } from "@/components/wallet/DemoWalletBootstrap";
 
 /* ---------------- helpers ---------------- */
 
@@ -64,6 +65,7 @@ export function WalletCreditCard({
   balance: number;
   reference?: string | null;
 }) {
+  const isDemoGuest = useIsDemoGuest();
   const number = deriveWalletNumber(createdAt, userId);
   const validThru = deriveValidThru(createdAt);
   const memberSince = deriveMemberSince(createdAt);
@@ -224,7 +226,7 @@ export function WalletCreditCard({
           </div>
           <div className="text-right">
             <div className="text-[6.5px] font-bold uppercase tracking-[0.32em] text-white/55">
-              Balance
+              {isDemoGuest ? "Demo balance" : "Balance"}
             </div>
             <div className="font-display text-base font-bold tabular-nums leading-tight text-[var(--neon)]">
               <AnimatedBalance value={balance} maximumFractionDigits={1} />
@@ -232,7 +234,13 @@ export function WalletCreditCard({
                 pts
               </span>
             </div>
+            {isDemoGuest && (
+              <div className="mt-0.5 text-[6.5px] font-bold uppercase tracking-[0.28em] text-white/55">
+                Practice only · resets on refresh
+              </div>
+            )}
           </div>
+
         </div>
 
         {/* Row 4 — cardholder + holo seal + member ID */}

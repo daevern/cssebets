@@ -9974,6 +9974,7 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      demo_guest_reset: { Args: never; Returns: number }
       edit_pending_bet_stake: {
         Args: {
           p_new_stake: number

@@ -120,7 +120,14 @@ export const createPayoutRequest = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    const { supabase, userId, claims } = context;
+
+    // Demo guests hold practice points only — never withdrawable.
+    if ((claims as any)?.is_anonymous === true) {
+      throw new Error("Demo points can't be withdrawn. Create an account to play for real.");
+    }
+
+
 
     // Block if user already has an active payout
     const { data: existing } = await supabase
