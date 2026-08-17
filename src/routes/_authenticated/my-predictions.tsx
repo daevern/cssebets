@@ -141,6 +141,29 @@ function MyPredictionsPage() {
     },
   });
 
+  // Club football / other sportsbook bets (sports_bets). Guests bet in the
+  // simulation environment, so their tickets show here too until they refresh.
+  const { data: sportsBets } = useQuery({
+    queryKey: ["my-sports-bets", uid],
+    enabled: !!uid,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+    staleTime: 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("sports_bets")
+        .select(
+          "*, sports_events(event_name, home_name, away_name, home_logo, away_logo, scheduled_at, status)",
+        )
+        .eq("user_id", uid!)
+        .order("placed_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+
+
   const { data: f1DriversMap } = useQuery({
     queryKey: ["my-f1-drivers-map"],
     staleTime: 5 * 60_000,
