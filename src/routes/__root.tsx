@@ -109,23 +109,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap",
       },
-      {
-        rel: "icon",
-        type: "image/svg+xml",
-        href:
-          "data:image/svg+xml;utf8," +
-          encodeURIComponent(
-            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#020806"/><path d="M24 7 L11 7 L4 16 L11 25 L24 25" fill="none" stroke="#ffffff" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 21 L21 14 L27 21" fill="none" stroke="#22e08a" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-          ),
-      },
-      {
-        rel: "apple-touch-icon",
-        href:
-          "data:image/svg+xml;utf8," +
-          encodeURIComponent(
-            `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#020806"/><path d="M24 7 L11 7 L4 16 L11 25 L24 25" fill="none" stroke="#ffffff" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 21 L21 14 L27 21" fill="none" stroke="#22e08a" stroke-width="3.25" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-          ),
-      },
+      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", type: "image/png", sizes: "64x64", href: "/favicon.png" },
+      { rel: "apple-touch-icon", href: "/icons/apple-touch-icon.png" },
+
       { rel: "manifest", href: "/manifest.webmanifest" },
     ],
     scripts: [
