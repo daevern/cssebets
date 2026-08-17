@@ -102,21 +102,28 @@ export function FootballCompetitionPage({ code }: { code: FootballCompetitionCod
     u.sort(asc);
     c.sort((a, b) => new Date(b.kickoffAt).getTime() - new Date(a.kickoffAt).getTime());
 
-    // Only show the current matchweek: cluster fixtures from the soonest kickoff
-    // and stop at the first gap of more than 3 days (i.e. next matchweek).
-    const cluster: FootballMatch[] = [];
-    const GAP = 3 * 24 * 60 * 60 * 1000;
-    for (const m of u) {
-      const k = new Date(m.kickoffAt).getTime();
-      if (!cluster.length) {
+    // Only show the current matchweek. Prefer the round/matchweek label when the
+    // feed provides one (e.g. "Regular Season - 1"); otherwise fall back to
+    // clustering by kickoff date until a gap of more than 3 days.
+    const firstRound = (u[0] as any)?.round as string | null | undefined;
+    let cluster: FootballMatch[] = [];
+    if (firstRound) {
+      cluster = u.filter((m) => ((m as any).round ?? null) === firstRound);
+    } else {
+      const GAP = 3 * 24 * 60 * 60 * 1000;
+      for (const m of u) {
+        const k = new Date(m.kickoffAt).getTime();
+        if (!cluster.length) {
+          cluster.push(m);
+          continue;
+        }
+        const prev = new Date(cluster[cluster.length - 1]!.kickoffAt).getTime();
+        if (k - prev > GAP) break;
         cluster.push(m);
-        continue;
       }
-      const prev = new Date(cluster[cluster.length - 1]!.kickoffAt).getTime();
-      if (k - prev > GAP) break;
-      cluster.push(m);
     }
     return { live: l, upcoming: cluster, completed: c };
+
   }, [data, now]);
 
 

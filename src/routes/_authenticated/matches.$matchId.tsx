@@ -585,7 +585,7 @@ function ScoreTeam({ name, flag }: { name: string; flag: string | null }) {
     <div className="flex items-center justify-center">
       <div className="relative h-14 w-20 shrink-0 overflow-hidden sm:h-20 sm:w-28 md:h-24 md:w-32">
         {flag ? (
-          <img src={flag} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
+          <img src={flag} alt={`${name} badge`} className="h-full w-full object-contain" loading="lazy" />
         ) : (
           <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[11px] font-semibold uppercase tracking-wider">
             {name.slice(0, 3)}
@@ -963,13 +963,13 @@ function MomentumGraph({
           {homeFlag && (
             <>
               <circle cx={FLAG_COL / 2 + 2} cy={midY - halfH / 2} r="11" fill="var(--color-surface-2)" stroke={HOME_COLOR} strokeWidth="1.2" />
-              <image href={homeFlag} x={FLAG_COL / 2 + 2 - 10} y={midY - halfH / 2 - 10} width="20" height="20" clipPath="url(#mg-flag-home)" preserveAspectRatio="xMidYMid slice" />
+              <image href={homeFlag} x={FLAG_COL / 2 + 2 - 10} y={midY - halfH / 2 - 10} width="20" height="20" clipPath="url(#mg-flag-home)" preserveAspectRatio="xMidYMid meet" />
             </>
           )}
           {awayFlag && (
             <>
               <circle cx={FLAG_COL / 2 + 2} cy={midY + halfH / 2} r="11" fill="var(--color-surface-2)" stroke={AWAY_COLOR} strokeWidth="1.2" />
-              <image href={awayFlag} x={FLAG_COL / 2 + 2 - 10} y={midY + halfH / 2 - 10} width="20" height="20" clipPath="url(#mg-flag-away)" preserveAspectRatio="xMidYMid slice" />
+              <image href={awayFlag} x={FLAG_COL / 2 + 2 - 10} y={midY + halfH / 2 - 10} width="20" height="20" clipPath="url(#mg-flag-away)" preserveAspectRatio="xMidYMid meet" />
             </>
           )}
 
@@ -1033,7 +1033,7 @@ function TeamBlock({ name, goals = [], align = "left", accent = "home" }: { name
     <div className="flex flex-col items-center gap-2">
       <div className={`relative h-14 w-20 overflow-hidden border ${accentCls}`}>
         {url ? (
-          <img src={url} alt={`${name} flag`} className="h-full w-full object-cover" loading="lazy" />
+          <img src={url} alt={`${name} badge`} className="h-full w-full object-contain p-1" loading="lazy" />
         ) : (
           <div className="grid h-full w-full place-items-center bg-[var(--color-surface)] font-display text-[11px] font-black uppercase tracking-wider">
             {name.slice(0, 3)}
