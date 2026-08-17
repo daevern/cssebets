@@ -1,0 +1,1 @@
+UPDATE public.sports_markets SET status='open', suspension_reason=NULL WHERE id='54762b84-89be-4c64-8c30-2fd4256f2d2c';
