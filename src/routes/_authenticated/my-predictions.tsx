@@ -220,11 +220,21 @@ function MyPredictionsPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "f1_championship_bets", filter: `user_id=eq.${uid}` }, () => {
         qc.invalidateQueries({ queryKey: ["my-f1-champ-bets", uid] });
       })
+      .on("postgres_changes", { event: "*", schema: "public", table: "sports_bets", filter: `user_id=eq.${uid}` }, () => {
+        qc.invalidateQueries({ queryKey: ["my-sports-bets", uid] });
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [qc, uid]);
 
-  const hasAny = (data?.length ?? 0) + (ufcBets?.length ?? 0) + (f1Bets?.length ?? 0) + (f1ChampBets?.length ?? 0) > 0;
+  const hasAny =
+    (data?.length ?? 0) +
+      (ufcBets?.length ?? 0) +
+      (f1Bets?.length ?? 0) +
+      (f1ChampBets?.length ?? 0) +
+      (sportsBets?.length ?? 0) >
+    0;
+
 
 
   return (
