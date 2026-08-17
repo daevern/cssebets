@@ -13,8 +13,12 @@ export const Route = createFileRoute("/api/public/hooks/ufc-discovery")({
           const url = new URL(request.url);
           const force = url.searchParams.get("force") === "1";
           const { runUfcEventDiscovery } = await import("@/lib/ufc-odds.server");
+          const { runUfcOddsApiSync } = await import("@/lib/ufc-oddsapi.server");
+          // The Odds API sees future cards even when the MMA stats feed's plan
+          // window doesn't, so it drives discovery + pricing for upcoming events.
+          const oddsapi = await runUfcOddsApiSync();
           const discovery = await runUfcEventDiscovery({ force });
-          return new Response(JSON.stringify({ discovery }), {
+          return new Response(JSON.stringify({ oddsapi, discovery }), {
             headers: { "content-type": "application/json" },
           });
         } catch (e) {
