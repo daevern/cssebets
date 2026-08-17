@@ -35,7 +35,6 @@ import { MiniCabinetTitle } from "@/components/arcade/MiniCabinetTitle";
 import * as React from "react";
 import { FairnessPlaque, HudBar, HudPlaque } from "@/components/arcade/ArcadeHud";
 import { ArcadeVerifyCue } from "@/components/arcade/ArcadeVerifyCue";
-import { FlatCosmeticsStrip } from "@/components/arcade/FlatCosmeticsStrip";
 import { RecentResultsStrip } from "@/components/arcade/RecentResultsStrip";
 import { arcadeFairness } from "@/lib/arcade/published-rtp";
 import type { ConfigVersion, PlinkoRisk, PlinkoRows } from "@/lib/arcade/config-registry";
