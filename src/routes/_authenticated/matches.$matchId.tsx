@@ -963,13 +963,13 @@ function MomentumGraph({
           {homeFlag && (
             <>
               <circle cx={FLAG_COL / 2 + 2} cy={midY - halfH / 2} r="11" fill="var(--color-surface-2)" stroke={HOME_COLOR} strokeWidth="1.2" />
-              <image href={homeFlag} x={FLAG_COL / 2 + 2 - 10} y={midY - halfH / 2 - 10} width="20" height="20" clipPath="url(#mg-flag-home)" preserveAspectRatio="xMidYMid slice" />
+              <image href={homeFlag} x={FLAG_COL / 2 + 2 - 10} y={midY - halfH / 2 - 10} width="20" height="20" clipPath="url(#mg-flag-home)" preserveAspectRatio="xMidYMid meet" />
             </>
           )}
           {awayFlag && (
             <>
               <circle cx={FLAG_COL / 2 + 2} cy={midY + halfH / 2} r="11" fill="var(--color-surface-2)" stroke={AWAY_COLOR} strokeWidth="1.2" />
-              <image href={awayFlag} x={FLAG_COL / 2 + 2 - 10} y={midY + halfH / 2 - 10} width="20" height="20" clipPath="url(#mg-flag-away)" preserveAspectRatio="xMidYMid slice" />
+              <image href={awayFlag} x={FLAG_COL / 2 + 2 - 10} y={midY + halfH / 2 - 10} width="20" height="20" clipPath="url(#mg-flag-away)" preserveAspectRatio="xMidYMid meet" />
             </>
           )}
 
