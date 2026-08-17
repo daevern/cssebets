@@ -10,18 +10,29 @@ async function requireAdmin(supabase: any, userId: string) {
 
 export const listUfcFights = createServerFn({ method: "GET" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  // Always derive the featured event from the latest event date so a stale
-  // still-active row from a prior card can never win the selection. We pick
-  // the row with the greatest starts_at and fall back to any active row only
-  // if nothing has a scheduled date yet.
+  // Feature the SOONEST card that hasn't finished yet (events are considered
+  // over 6h after their start). Discovery keeps every upcoming card active, so
+  // ordering ascending from the cutoff always lands on "the next event".
+  const cutoffIso = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
   const { data: events } = await (supabaseAdmin as any)
     .from("ufc_events")
     .select("id, event_key, name, starts_at, is_active")
-    .eq("is_active", true)
-    .order("starts_at", { ascending: false, nullsFirst: false })
+    .gt("starts_at", cutoffIso)
+    .order("starts_at", { ascending: true })
     .limit(1);
-  const event = (events ?? [])[0] ?? null;
+  let event = (events ?? [])[0] ?? null;
+  if (!event) {
+    // Nothing upcoming (feed gap): fall back to the most recent card so the
+    // page shows results instead of an empty state.
+    const { data: recent } = await (supabaseAdmin as any)
+      .from("ufc_events")
+      .select("id, event_key, name, starts_at, is_active")
+      .order("starts_at", { ascending: false, nullsFirst: false })
+      .limit(1);
+    event = (recent ?? [])[0] ?? null;
+  }
   if (!event) return { event: null, fights: [] };
+
 
 
   // Only include fights within the event's window (event day ± 12h).
