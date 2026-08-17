@@ -98,6 +98,7 @@ function FireBlast() {
 }
 
 /** Stone battlement crown with the sleeping dragon perched on top. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function DragonCrown() {
   return (
     <div className="relative -mx-3 -mt-3 mb-2 h-[86px] overflow-hidden">
