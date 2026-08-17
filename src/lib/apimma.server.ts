@@ -88,6 +88,34 @@ export type ApiMmaFighterRecordSummary = {
 
 import { withRetry } from "@/features/football/services/retry";
 
+/**
+ * API-Sports answers plan/quota problems with HTTP 200 + a populated `errors`
+ * object and an empty response. Silently treating that as "no fights" is what
+ * made UFC look permanently empty, so surface it as a typed error instead.
+ */
+export class ApiMmaPlanError extends Error {
+  readonly kind: "plan" | "quota" | "auth" | "other";
+  constructor(message: string, kind: ApiMmaPlanError["kind"]) {
+    super(message);
+    this.name = "ApiMmaPlanError";
+    this.kind = kind;
+  }
+}
+
+function assertNoFeedError(path: string, body: ApiMmaResponse<unknown>) {
+  const errors = body.errors as unknown;
+  if (!errors || Array.isArray(errors)) return;
+  const entries = Object.entries(errors as Record<string, string>);
+  if (entries.length === 0) return;
+  const [field, message] = entries[0]!;
+  const kind: ApiMmaPlanError["kind"] =
+    field === "plan" ? "plan"
+    : field === "requests" || field === "rateLimit" ? "quota"
+    : field === "token" || field === "key" ? "auth"
+    : "other";
+  throw new ApiMmaPlanError(`api-mma ${path}: ${field}: ${message}`, kind);
+}
+
 export async function apiMmaGet<T>(
   path: string,
   params: Record<string, string | number | undefined> = {},
@@ -103,14 +131,40 @@ export async function apiMmaGet<T>(
       headers: { "x-apisports-key": key, Accept: "application/json" },
     });
     if (!res.ok) throw new Error(`api-mma ${path} HTTP ${res.status}`);
-    return (await res.json()) as ApiMmaResponse<T>;
+    const body = (await res.json()) as ApiMmaResponse<T>;
+    assertNoFeedError(path, body);
+    return body;
   });
+}
+
+export type ApiMmaAccountStatus = {
+  plan: string | null;
+  active: boolean;
+  requestsToday: number;
+  requestLimit: number;
+};
+
+export async function fetchMmaStatus(): Promise<ApiMmaAccountStatus | null> {
+  try {
+    const r = await apiMmaGet<any>("/status");
+    const s = r.response ?? null;
+    if (!s) return null;
+    return {
+      plan: s.subscription?.plan ?? null,
+      active: Boolean(s.subscription?.active),
+      requestsToday: Number(s.requests?.current ?? 0),
+      requestLimit: Number(s.requests?.limit_day ?? 0),
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchFightsByDate(date: string) {
   const r = await apiMmaGet<ApiMmaFight[]>("/fights", { date });
   return r.response ?? [];
 }
+
 
 export async function fetchOddsForFight(fightId: number) {
   const r = await apiMmaGet<ApiMmaOddsResponse>("/odds", { fight: fightId });
