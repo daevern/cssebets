@@ -204,15 +204,13 @@ function HomePage() {
         </h1>
         {(user as any)?.is_anonymous === true && (
           <p className="max-w-md text-[13px] leading-relaxed text-[var(--ink-muted)]">
-            CSSEBets combines sports event markets with original casino arcade — built for prediction,
-            priced like a book, settled like an exchange. This demo wallet starts with{" "}
-            <span className="font-semibold text-[var(--ink)]">1,000 points</span>. Explore football,
-            Formula 1, UFC, and CSSEBets Originals. Gamble/Predict responsibly: set limits and never
-            stake more than you can afford. Find out more on the{" "}
+            You're in demo mode. This account starts with{" "}
+            <span className="font-semibold text-[var(--ink)]">1,000 points</span> to explore CSSEBets.{" "}
+            Log in or create an account to continue. Learn more on{" "}
             <Link to="/about" className="text-[var(--neon)] hover:underline">About</Link>,{" "}
             <Link to="/community" className="text-[var(--neon)] hover:underline">Community</Link>,{" "}
-            <Link to="/performance" className="text-[var(--neon)] hover:underline">Performance</Link>{" "}
-            and <Link to="/faq" className="text-[var(--neon)] hover:underline">Help</Link> pages.
+            <Link to="/performance" className="text-[var(--neon)] hover:underline">Performance</Link>,{" "}
+            and <Link to="/faq" className="text-[var(--neon)] hover:underline">Help</Link>.
           </p>
         )}
       </header>
