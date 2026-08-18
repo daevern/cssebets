@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getPendingPointRequestCount } from "@/lib/wallet.functions";
 import { getPendingPayoutCount } from "@/lib/payout.functions";
 import { getPendingUserCount } from "@/lib/admin.functions";
+import { getMyStaffRole } from "@/lib/management.functions";
 import {
   LayoutDashboard,
   Users,
@@ -181,6 +182,15 @@ function AdminLayout() {
   } as const;
   const totalBadges = badges.pendingPointRequests + badges.pendingPayouts + badges.pendingUsers;
 
+  const roleFn = useServerFn(getMyStaffRole);
+  const roleQ = useQuery({
+    queryKey: ["mgmt-role"],
+    queryFn: () => withSession(() => roleFn({})),
+    enabled: hasSession === true,
+    staleTime: 30_000,
+  });
+  const isSuper = roleQ.data?.role === "super_admin";
+
   const currentItem =
     GROUPS.flatMap((g) => g.items).find((i) =>
       i.exact
@@ -191,6 +201,33 @@ function AdminLayout() {
   function NavList({ onPick }: { onPick?: () => void }) {
     return (
       <nav className="space-y-6 px-3 py-4">
+        <div>
+          <div className="mb-1 px-3 text-[11px] font-medium text-[var(--mgmt-muted)]">Consoles</div>
+          <ul className="space-y-0.5">
+            <li>
+              <Link
+                to="/management/support"
+                onClick={onPick}
+                className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-[#3c4043] transition-colors hover:bg-[#F1F3F4]"
+              >
+                <MessageSquare className="h-4 w-4 shrink-0 opacity-80" />
+                <span className="flex-1 truncate">Staff console</span>
+              </Link>
+            </li>
+            {isSuper && (
+              <li>
+                <Link
+                  to="/management/super-admin"
+                  onClick={onPick}
+                  className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium text-[#3c4043] transition-colors hover:bg-[#F1F3F4]"
+                >
+                  <Shield className="h-4 w-4 shrink-0 opacity-80" />
+                  <span className="flex-1 truncate">Super admin</span>
+                </Link>
+              </li>
+            )}
+          </ul>
+        </div>
         {GROUPS.map((group) => (
           <div key={group.label}>
             <div className="mb-1 px-3 text-[11px] font-medium text-[var(--mgmt-muted)]">{group.label}</div>

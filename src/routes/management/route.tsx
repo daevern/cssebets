@@ -28,7 +28,9 @@ function ManagementLayout() {
 
   const isPublicRoute = path === "/management/login" || path === "/management/access-denied";
   const isChangePwRoute = path === "/management/change-password";
-  const isAdminArea = path.startsWith("/management/admin") || path.startsWith("/management/super-admin");
+  // Only the Ops area ships its own sidebar; every other area (including
+  // Super) keeps the top nav so staff can switch between consoles.
+  const isAdminArea = path.startsWith("/management/admin");
 
   const [hasSession, setHasSession] = useState<boolean | null>(null);
   useEffect(() => {
