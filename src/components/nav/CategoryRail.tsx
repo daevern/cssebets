@@ -53,12 +53,12 @@ export function CategoryRail() {
   return (
     <nav
       aria-label="Market categories"
-      className="relative h-11 w-full overflow-hidden border-b border-[var(--color-surface-border)]/60 bg-[var(--surface)]/95 backdrop-blur-md"
+      className="relative h-12 w-full overflow-hidden bg-[var(--surface)]"
     >
       {/* Edge fades */}
       <div
         aria-hidden
-        className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-10 bg-gradient-to-r from-[var(--surface)] to-transparent"
+        className="pointer-events-none absolute left-0 top-0 bottom-0 z-10 w-6 bg-gradient-to-r from-[var(--surface)] to-transparent"
       />
       <div
         aria-hidden
@@ -66,13 +66,13 @@ export function CategoryRail() {
       />
 
       <div
-        className="flex h-full items-center gap-1 overflow-x-auto px-4 sm:px-6 md:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex h-full items-center gap-6 overflow-x-auto px-4 sm:px-6 md:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
 
         {resolved.map((c) => {
           const active = isActive(c);
           const base =
-            "flex-shrink-0 flex items-center h-full px-3.5 gap-2 border-b-2 whitespace-nowrap transition-colors";
+            "flex-shrink-0 flex items-center whitespace-nowrap transition-colors text-[15px] leading-none";
 
           if (c.soon) {
             return (
@@ -81,16 +81,10 @@ export function CategoryRail() {
                 type="button"
                 disabled
                 aria-label={`${c.label} — coming soon`}
-                className={`${base} cursor-not-allowed border-transparent opacity-70`}
+                className={`${base} cursor-not-allowed gap-1.5 font-medium text-[var(--ink-muted)]/50`}
               >
-                <span
-                  aria-hidden
-                  className="h-1.5 w-1.5 rounded-full bg-[#2a2a2a]"
-                />
-                <span className="text-[13px] font-medium tracking-tight text-[var(--ink-muted)]">
-                  {c.label}
-                </span>
-                <span className="rounded-[2px] bg-[var(--neon)]/10 px-1 py-[1px] text-[8px] font-bold uppercase tracking-tight text-[var(--neon)]">
+                <span>{c.label}</span>
+                <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--ink-muted)]/60">
                   Soon
                 </span>
               </button>
@@ -106,27 +100,11 @@ export function CategoryRail() {
               aria-current={active ? "page" : undefined}
               className={`${base} ${
                 active
-                  ? "border-[var(--neon)]"
-                  : "border-transparent hover:bg-white/[0.03]"
+                  ? "font-bold text-[var(--ink)]"
+                  : "font-medium text-[var(--ink-muted)]/70 hover:text-[var(--ink)]"
               }`}
             >
-              <span
-                aria-hidden
-                className={
-                  active
-                    ? "h-1.5 w-1.5 rounded-full bg-[var(--neon)] shadow-[0_0_8px_rgba(34,224,107,0.6)]"
-                    : "h-1.5 w-1.5 rounded-full bg-[#333]"
-                }
-              />
-              <span
-                className={`text-[13px] tracking-tight ${
-                  active
-                    ? "font-semibold text-[var(--ink)]"
-                    : "font-medium text-[var(--ink-muted)]"
-                }`}
-              >
-                {c.label}
-              </span>
+              {c.label}
             </Link>
           );
         })}
