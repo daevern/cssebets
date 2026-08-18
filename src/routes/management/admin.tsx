@@ -181,6 +181,15 @@ function AdminLayout() {
   } as const;
   const totalBadges = badges.pendingPointRequests + badges.pendingPayouts + badges.pendingUsers;
 
+  const roleFn = useServerFn(getMyStaffRole);
+  const roleQ = useQuery({
+    queryKey: ["mgmt-role"],
+    queryFn: () => withSession(() => roleFn({})),
+    enabled: hasSession === true,
+    staleTime: 30_000,
+  });
+  const isSuper = roleQ.data?.role === "super_admin";
+
   const currentItem =
     GROUPS.flatMap((g) => g.items).find((i) =>
       i.exact
