@@ -194,7 +194,7 @@ function HomePage() {
   return (
     <div className="flex flex-col gap-8 px-4 pt-5">
       {/* Header — stencil greeting matching wallet/payout/picks */}
-      <header className="space-y-2">
+      <header className="space-y-3">
         <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-tight text-[var(--ink)] md:text-4xl">
           {(user as any)?.is_anonymous === true ? (
             <>Welcome to <span className="text-[var(--neon)]">cssebets</span></>
@@ -202,6 +202,20 @@ function HomePage() {
             <>Welcome, <span className="text-[var(--neon)]">{displayName}</span></>
           )}
         </h1>
+        {(user as any)?.is_anonymous === true && (
+          <p className="max-w-md text-[13px] leading-relaxed text-[var(--ink-muted)]">
+            A community points club for sports prediction markets and house arcade games.
+            This demo account starts with{" "}
+            <span className="font-semibold text-[var(--ink)]">1,000 practice points</span> —
+            use them to test football, F1 and UFC betting, or try the arcade originals.
+            Find out more on the{" "}
+            <Link to="/about" className="text-[var(--neon)] hover:underline">About</Link>,{" "}
+            <Link to="/community" className="text-[var(--neon)] hover:underline">Community</Link>{" "}
+            and{" "}
+            <Link to="/performance" className="text-[var(--neon)] hover:underline">Performance</Link>{" "}
+            pages.
+          </p>
+        )}
       </header>
 
 
