@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { cn } from "@/lib/utils";
 import { rankLabel, suitSymbol, isRedSuit } from "@/lib/arcade/blackjack-math";
 import { PlayingCard } from "@/components/arcade/PlayingCard";
