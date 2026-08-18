@@ -192,12 +192,16 @@ export async function runLiveOddsSync(): Promise<LiveOddsSyncResult> {
 export async function runMarketHeartbeat(nowIso: string) {
   const now = Date.now();
   const from = new Date(now - 4 * 60 * 60 * 1000).toISOString();
-  const to = new Date(now + 12 * 60 * 60 * 1000).toISOString();
+  const to = new Date(now + 72 * 60 * 60 * 1000).toISOString();
   // Near/in-play events tick every poll (~15s); events further out tick once a
   // minute so upcoming markets still draw a live-looking line without bloat.
-  const activeUntil = now + 2 * 60 * 60 * 1000;
-  const staleFor = (startsAt: string | null | undefined) =>
-    startsAt && new Date(startsAt).getTime() <= activeUntil ? 20_000 : 60_000;
+  const staleFor = (startsAt: string | null | undefined) => {
+    const t = startsAt ? new Date(startsAt).getTime() : now;
+    const ahead = t - now;
+    if (ahead <= 2 * 60 * 60 * 1000) return 20_000; // live / imminent
+    if (ahead <= 12 * 60 * 60 * 1000) return 60_000; // same-day
+    return 300_000; // further out
+  };
   const out = { football: 0, ufc: 0, f1: 0 };
 
   const fresh = (t: string | null | undefined, startsAt?: string | null) =>
