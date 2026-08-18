@@ -10184,6 +10184,7 @@ export type Database = {
         }
         Returns: number
       }
+      prune_ops_history: { Args: { p_batch_size?: number }; Returns: Json }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
@@ -10272,6 +10273,7 @@ export type Database = {
         }
         Returns: Json
       }
+      reschedule_cron_hooks_with_vault: { Args: never; Returns: Json }
       reset_simulation_data: { Args: { p_admin_id: string }; Returns: Json }
       resolve_correlated_exposure_alert: {
         Args: { p_alert_id: string; p_resolution_note: string }
