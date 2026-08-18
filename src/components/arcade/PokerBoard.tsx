@@ -99,39 +99,51 @@ export function PokerBoard({
         })}
       </div>
 
-      {isFinal && dealt && dealt.length === 5 ? (
-        <div
-          className="relative z-10 mb-3 flex items-center justify-center gap-2 rounded-[6px] border px-2 py-1"
-          style={{ background: T.stageBg, borderColor: "rgba(255,255,255,.08)" }}
-        >
-          <span className="text-[8px] font-black uppercase tracking-[0.16em] text-white/35">
-            Dealt
-          </span>
-          {dealt.map((c, i) => {
-            const f = pokerCardFace(c);
-            const kept = holds.includes(i);
-            return (
-              <span
-                key={`${i}-${c}`}
-                className="font-mono text-[11px] font-bold tabular-nums"
-                style={{
-                  color: kept
-                    ? isRedSuit(f.suit)
-                      ? "#ff8a8a"
-                      : "rgba(255,255,255,.8)"
-                    : "rgba(255,255,255,.28)",
-                  textDecoration: kept ? "none" : "line-through",
-                }}
-              >
-                {rankLabel(f.rank)}
-                {suitSymbol(f.suit)}
-              </span>
-            );
-          })}
-        </div>
-      ) : null}
+      {/* Height is reserved from the first deal so the stage never rescales
+          mid-reveal; the row only fades in once the hand is settled. */}
+      <div
+        className="relative z-10 mb-3 flex h-[26px] items-center justify-center gap-2 rounded-[6px] border px-2 transition-opacity duration-200"
+        style={{
+          background: T.stageBg,
+          borderColor: "rgba(255,255,255,.08)",
+          opacity: isFinal && dealt && dealt.length === 5 ? 1 : 0,
+        }}
+        aria-hidden={!isFinal}
+      >
+        <span className="text-[8px] font-black uppercase tracking-[0.16em] text-white/35">
+          Dealt
+        </span>
+        {(dealt && dealt.length === 5 ? dealt : []).map((c, i) => {
+          const f = pokerCardFace(c);
+          const kept = holds.includes(i);
+          return (
+            <span
+              key={`${i}-${c}`}
+              className="font-mono text-[11px] font-bold tabular-nums"
+              style={{
+                color: kept
+                  ? isRedSuit(f.suit)
+                    ? "#ff8a8a"
+                    : "rgba(255,255,255,.8)"
+                  : "rgba(255,255,255,.28)",
+                textDecoration: kept ? "none" : "line-through",
+              }}
+            >
+              {rankLabel(f.rank)}
+              {suitSymbol(f.suit)}
+            </span>
+          );
+        })}
+      </div>
 
-      <div className="relative z-10 flex items-end justify-center gap-2 px-1">
+      {/* Deck marker — the fixed point every card slides out of. */}
+      <div
+        ref={deckRef}
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-[46%] h-[84px] w-[59px] -translate-x-1/2 opacity-0"
+      />
+
+      <div className="relative z-10 flex h-[104px] items-end justify-center gap-2 px-1">
         {Array.from({ length: 5 }, (_, i) => {
           const card = hand[i];
           const face = card == null ? null : pokerCardFace(card);
@@ -149,39 +161,40 @@ export function PokerBoard({
                 aria-pressed={held}
                 aria-label={`Card ${i + 1}${held ? " held" : ""}`}
                 className={cn(
-                  "w-full rounded-[6px] transition-transform",
-                  canHold && "active:scale-95",
-                  held && !isFinal && "-translate-y-1",
+                  "w-full rounded-[6px] transition-[box-shadow,margin] duration-150",
+                  canHold && "active:opacity-80",
                 )}
                 style={{
+                  marginBottom: held && !isFinal ? 4 : 0,
                   boxShadow: held && !isFinal ? `0 0 0 2px ${T.accent}` : "none",
                   borderRadius: 8,
                 }}
               >
+                {/* Single animation owner: PlayingCard handles slide + flip.
+                    A replaced card remounts (new key) and re-deals; a held
+                    card keeps its key and stays perfectly still. */}
                 <div
                   key={`${i}-${card ?? "x"}-${roundKey ?? ""}`}
-                  style={{
-                    perspective: 700,
-                    borderRadius: 8,
-                    ...(isDraw
-                      ? {
-                          animation: `pokerDrawFlip 420ms ${flipAt}ms cubic-bezier(.2,.7,.3,1) both, pokerNewPulse 900ms ${flipAt + 260}ms ease-out`,
-                          animationFillMode: "forwards, none",
-                        }
-                      : null),
-                  }}
+                  className="rounded-[8px]"
+                  style={
+                    isDraw
+                      ? { boxShadow: `0 0 0 2px rgba(255,183,3,.55)` }
+                      : undefined
+                  }
                 >
                   <PlayingCard
                     rank={face?.rank ?? null}
                     suit={face?.suit ?? null}
                     faceUp={face != null}
                     height={84}
+                    dealFrom={deckRef}
                     dealDelay={dealDelay}
                     flipDelay={flipAt}
                     className="mx-auto"
                   />
                 </div>
               </button>
+
 
               <span
                 className="w-full rounded-[4px] py-0.5 text-center text-[8px] font-black uppercase tracking-[0.18em]"
