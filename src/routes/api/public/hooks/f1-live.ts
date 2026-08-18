@@ -46,8 +46,8 @@ export const Route = createFileRoute("/api/public/hooks/f1-live")({
               // best-effort per race
             }
           }
-          // Dense odds samples for the Kalshi market-movement chart.
-          const sampled = await sampleF1OpenMarketSnapshots({ withinHours: 72 });
+          // Near-term odds samples only (change-gated) for market-movement charts.
+          const sampled = await sampleF1OpenMarketSnapshots({ withinHours: 6 });
           return new Response(
             JSON.stringify({ ok: true, races: races?.length ?? 0, refreshed, sampled }),
             { headers: { "content-type": "application/json" } },

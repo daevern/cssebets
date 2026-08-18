@@ -185,13 +185,7 @@ export async function runOddsSync(opts: { force?: boolean } = {}) {
     updated++;
   }
 
-  await supabaseAdmin.from("audit_log").insert({
-    user_id: null,
-    action: "odds.sync",
-    entity: "matches",
-    entity_id: null,
-    metadata: { updated, events: events.length, matches: matches?.length ?? 0 },
-  });
+  // Skip audit_log for routine provider syncs — high volume, low audit value.
 
   return { updated, skipped: false, events: events.length };
 }

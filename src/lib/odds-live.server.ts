@@ -154,19 +154,7 @@ export async function runLiveOddsSync(): Promise<LiveOddsSyncResult> {
     if (ok) footballUpdated++;
   }
 
-  await (supabaseAdmin as any).from("audit_log").insert({
-    user_id: null,
-    action: "odds.live_sync",
-    entity: "matches",
-    entity_id: null,
-    metadata: {
-      updated,
-      football_updated: footballUpdated,
-      live_count: (liveWc ?? []).length,
-      football_live_count: footballEvents.length,
-      fallback_attempted: fallbackAttempted,
-    },
-  });
+  // Skip audit_log here — this runs every minute and was a top write amplifier.
 
   const heartbeat = await runMarketHeartbeat(nowIso);
 

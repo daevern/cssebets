@@ -1030,13 +1030,7 @@ async function syncEventCard(event: UfcEventRow): Promise<{ fights: number; mark
     }
   }
 
-  await (supabaseAdmin as any).from("audit_log").insert({
-    user_id: null,
-    action: "ufc.odds_sync",
-    entity: "ufc_events",
-    entity_id: event.id,
-    metadata: { event: event.name, fights: targets.length, markets: totalMarkets, provider: "api-mma" },
-  });
+  // Skip routine odds-sync audit rows — fight-night can fire every minute.
 
   return { fights: targets.length, markets: totalMarkets };
 }

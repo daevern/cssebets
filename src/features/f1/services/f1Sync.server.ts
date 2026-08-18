@@ -337,9 +337,31 @@ export async function syncF1Odds(seasonPref = currentSeason()) {
       for (const m of upserted ?? []) snapshots.push({ market_id: m.id, odds: Number(m.odds) });
       marketsUpserted += upserted?.length ?? 0;
     }
-    for (const snapshotChunk of chunk(snapshots, 500)) {
-      const { error } = await (supabaseAdmin as any).from("f1_race_odds_snapshots").insert(snapshotChunk);
-      if (error) throw new Error(`f1 odds snapshot failed: ${error.message}`);
+    // Only append tape rows when odds moved — full re-insert every sync was ~millions of IO.
+    if (snapshots.length) {
+      const ids = snapshots.map((s) => s.market_id);
+      const latestByMarket = new Map<string, number>();
+      const lookbackIso = new Date(Date.now() - 30 * 60_000).toISOString();
+      for (const idChunk of chunk(ids, 200)) {
+        const { data: recent } = await (supabaseAdmin as any)
+          .from("f1_race_odds_snapshots")
+          .select("market_id, odds, snapshot_at")
+          .in("market_id", idChunk)
+          .gte("snapshot_at", lookbackIso)
+          .order("snapshot_at", { ascending: false })
+          .limit(idChunk.length * 3);
+        for (const s of (recent ?? []) as Array<{ market_id: string; odds: number }>) {
+          if (!latestByMarket.has(s.market_id)) latestByMarket.set(s.market_id, Number(s.odds));
+        }
+      }
+      const changed = snapshots.filter((s) => {
+        const prev = latestByMarket.get(s.market_id);
+        return prev == null || Math.abs(prev - s.odds) >= 0.01;
+      });
+      for (const snapshotChunk of chunk(changed, 500)) {
+        const { error } = await (supabaseAdmin as any).from("f1_race_odds_snapshots").insert(snapshotChunk);
+        if (error) throw new Error(`f1 odds snapshot failed: ${error.message}`);
+      }
     }
 
     // Championship outrights

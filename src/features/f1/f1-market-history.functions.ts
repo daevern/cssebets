@@ -73,13 +73,16 @@ export const getF1CardMarketHistory = createServerFn({ method: "POST" })
     }
 
     const marketIds = rows.map((m) => m.id);
+    // Bound the tape read — full-table sort across millions of rows was a top IO sink.
+    const sinceIso = new Date(Date.now() - 7 * 24 * 3600_000).toISOString();
     const { data: snaps } = marketIds.length
       ? await supabaseAdmin
           .from("f1_race_odds_snapshots")
           .select("market_id, odds, snapshot_at")
           .in("market_id", marketIds)
+          .gte("snapshot_at", sinceIso)
           .order("snapshot_at", { ascending: false })
-          .limit(8000)
+          .limit(4000)
       : { data: [] as Array<{ market_id: string; odds: number; snapshot_at: string }> };
 
     const snapRows = ((snaps ?? []) as Array<{
