@@ -59,6 +59,7 @@ export function PokerBoard({
   /** False while the draw flip is still playing — hides the outcome. */
   revealed?: boolean;
 }) {
+  const deckRef = useRef<HTMLDivElement | null>(null);
   const paying =
     revealed && category && POKER_PAYTABLE[category] > 0 ? category : null;
 
