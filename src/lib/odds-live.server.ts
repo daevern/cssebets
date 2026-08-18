@@ -193,6 +193,8 @@ export async function runMarketHeartbeat(nowIso: string) {
   const now = Date.now();
   const from = new Date(now - 4 * 60 * 60 * 1000).toISOString();
   const to = new Date(now + 72 * 60 * 60 * 1000).toISOString();
+  // UFC cards / GPs are weekly events — look a full week ahead for those.
+  const toWeek = new Date(now + 7 * 24 * 60 * 60 * 1000).toISOString();
   // Near/in-play events tick every poll (~15s); events further out tick once a
   // minute so upcoming markets still draw a live-looking line without bloat.
   const staleFor = (startsAt: string | null | undefined) => {
@@ -264,7 +266,7 @@ export async function runMarketHeartbeat(nowIso: string) {
       .neq("status", "finished")
       .neq("status", "cancelled")
       .gt("commence_time", from)
-      .lt("commence_time", to)
+      .lt("commence_time", toWeek)
       .limit(30);
 
     for (const f of (fights ?? []) as any[]) {
@@ -309,7 +311,7 @@ export async function runMarketHeartbeat(nowIso: string) {
       .select("id, starts_at")
       .neq("status", "finished")
       .gt("starts_at", from)
-      .lt("starts_at", to)
+      .lt("starts_at", toWeek)
       .limit(5);
 
     for (const r of (races ?? []) as any[]) {
