@@ -3,9 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Gamepad2, Loader2, RefreshCw, ShieldAlert } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Loader2, RefreshCw, ShieldAlert } from "lucide-react";
 import { useHasSession } from "@/hooks/use-staff-session";
 import {
   arcadeAdminConfigs,
@@ -18,28 +16,53 @@ import {
   type ArcadeGame,
   type MiniAdminProduct,
 } from "@/lib/arcade/arcade-admin.functions";
+import {
+  MgmtBtn,
+  MgmtField,
+  MgmtKpi,
+  MgmtPageHeader,
+  MgmtPanel,
+  MgmtStatus,
+  MgmtTable,
+  MgmtTabs,
+  MgmtTd,
+  MgmtTh,
+  MgmtAlert,
+  MgmtAlertStack,
+  mgmtInputClass,
+} from "@/components/management/ops-ui";
 
 export const Route = createFileRoute("/management/admin/arcade")({
   head: () => ({
     meta: [
-      { title: "Arcade control centre — Admin | cssebets" },
+      { title: "Arcade control — CSSEBets Operator" },
       {
         name: "description",
         content:
-          "Live arcade oversight: players in play, stake at risk, house margin per game and versioned config controls.",
+          "Casino floor control: live exposure, per-game risk limits, kill-switches and round audit.",
       },
     ],
   }),
   component: AdminArcadePage,
 });
 
-const GAMES: { id: ArcadeGame; label: string }[] = [
+const CORE_GAMES: { id: ArcadeGame; label: string }[] = [
   { id: "plinko", label: "Plinko" },
-  { id: "roulette", label: "Mini Roulette" },
-  { id: "treasure", label: "Treasure Grid" },
+  { id: "roulette", label: "Roulette" },
+  { id: "treasure", label: "Treasure" },
   { id: "blackjack", label: "Blackjack" },
-  { id: "rps", label: "Rock–Paper–Scissors" },
+  { id: "rps", label: "RPS" },
 ];
+
+const MINI_LABELS: Record<MiniAdminProduct, string> = {
+  hilo: "Hi-Lo",
+  dice: "Dice",
+  wheel: "Wheel",
+  keno: "Keno",
+  crash: "Crash",
+  towers: "Towers",
+  poker: "Poker",
+};
 
 const WINDOWS = [
   { h: 24, label: "24h" },
@@ -48,39 +71,11 @@ const WINDOWS = [
 ];
 
 const fmt = (n: number | null | undefined, d = 0) =>
-  n === null || n === undefined ? "—" : Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
+  n === null || n === undefined
+    ? "—"
+    : Number(n).toLocaleString(undefined, { maximumFractionDigits: d });
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" }) {
-  return (
-    <div className="border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-3 py-2">
-      <div className="text-[9px] font-bold uppercase tracking-[0.24em] text-[var(--color-ink-muted)]">
-        {label}
-      </div>
-      <div
-        className={`font-mono text-lg font-bold tabular-nums ${
-          tone === "good"
-            ? "text-emerald-400"
-            : tone === "bad"
-              ? "text-red-400"
-              : "text-[var(--color-ink)]"
-        }`}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="space-y-2">
-      <h2 className="text-[10px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
+type FloorTab = "floor" | ArcadeGame | MiniAdminProduct;
 
 function AdminArcadePage() {
   const hasSession = useHasSession();
@@ -91,9 +86,11 @@ function AdminArcadePage() {
   const configsFn = useServerFn(arcadeAdminConfigs);
   const roundsFn = useServerFn(arcadeAdminRounds);
   const publishFn = useServerFn(arcadeAdminPublishConfig);
+  const miniOverviewFn = useServerFn(miniAdminOverview);
+  const miniPublishFn = useServerFn(miniAdminPublishConfig);
 
   const [windowHours, setWindowHours] = useState(24);
-  const [tab, setTab] = useState<"overview" | ArcadeGame>("overview");
+  const [tab, setTab] = useState<FloorTab>("floor");
 
   const snap = useQuery({
     queryKey: ["arcade-admin", "snapshot", windowHours],
@@ -108,211 +105,340 @@ function AdminArcadePage() {
     enabled,
   });
 
+  const mini = useQuery({
+    queryKey: ["arcade-admin", "mini", windowHours],
+    queryFn: () => miniOverviewFn({ data: { windowHours } }),
+    enabled,
+    refetchInterval: 8000,
+  });
+
+  const isCore = CORE_GAMES.some((g) => g.id === tab);
+  const isMini = (MINI_PRODUCTS as readonly string[]).includes(tab);
+
   const rounds = useQuery({
     queryKey: ["arcade-admin", "rounds", tab],
     queryFn: () => roundsFn({ data: { game: tab as ArcadeGame, limit: 50 } }),
-    enabled: enabled && tab !== "overview",
+    enabled: enabled && isCore,
     refetchInterval: 10000,
   });
 
   const totals = useMemo(() => {
     const g = snap.data?.games ?? [];
+    const m = mini.data?.stats ?? [];
     return {
-      livePlayers: g.reduce((a, x) => a + x.livePlayers, 0),
-      liveRounds: g.reduce((a, x) => a + x.liveRounds, 0),
-      liveStake: g.reduce((a, x) => a + x.liveStake, 0),
+      livePlayers:
+        g.reduce((a, x) => a + x.livePlayers, 0) + m.reduce((a, x) => a + x.livePlayers, 0),
+      liveRounds:
+        g.reduce((a, x) => a + x.liveRounds, 0) + m.reduce((a, x) => a + x.liveRounds, 0),
+      liveStake: g.reduce((a, x) => a + x.liveStake, 0) + m.reduce((a, x) => a + x.liveStake, 0),
       reserved: g.reduce((a, x) => a + x.reserved, 0),
-      staked: g.reduce((a, x) => a + x.staked, 0),
-      paid: g.reduce((a, x) => a + x.paid, 0),
+      staked: g.reduce((a, x) => a + x.staked, 0) + m.reduce((a, x) => a + x.staked, 0),
+      paid: g.reduce((a, x) => a + x.paid, 0) + m.reduce((a, x) => a + x.paid, 0),
     };
-  }, [snap.data]);
+  }, [snap.data, mini.data]);
+
+  const pausedCount = useMemo(() => {
+    let n = 0;
+    if (configs.data?.roulette?.maintenance_mode) n++;
+    if (configs.data?.rps?.maintenance_mode) n++;
+    for (const t of configs.data?.treasure ?? []) if (t.maintenance_mode) n++;
+    for (const c of mini.data?.configs ?? []) if (c.maintenance_mode) n++;
+    return n;
+  }, [configs.data, mini.data]);
 
   if (hasSession === false) {
     return (
-      <div className="flex items-center gap-2 p-6 text-sm text-[var(--color-ink-muted)]">
+      <div className="flex items-center gap-2 p-6 text-sm text-[var(--mgmt-muted)]">
         <ShieldAlert className="h-4 w-4" /> Staff session required.
       </div>
     );
   }
 
-  const margin = totals.staked > 0 ? ((totals.staked - totals.paid) / totals.staked) * 100 : null;
+  const houseNet = totals.staked - totals.paid;
+  const margin = totals.staked > 0 ? (houseNet / totals.staked) * 100 : null;
+
+  const tabs = [
+    { id: "floor", label: "Floor" },
+    ...CORE_GAMES.map((g) => ({ id: g.id, label: g.label })),
+    ...MINI_PRODUCTS.map((p) => ({ id: p, label: MINI_LABELS[p] })),
+  ];
 
   return (
-    <div className="space-y-6 p-3 sm:p-6">
-      <header className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <Gamepad2 className="h-5 w-5 text-[var(--color-accent,#22d3ee)]" />
-          <h1 className="text-lg font-bold text-[var(--color-ink)]">Arcade control centre</h1>
-        </div>
-        <div className="flex items-center gap-1">
-          {WINDOWS.map((w) => (
-            <Button
-              key={w.h}
-              size="sm"
-              variant={windowHours === w.h ? "default" : "outline"}
-              onClick={() => setWindowHours(w.h)}
+    <div className="space-y-6">
+      <MgmtPageHeader
+        eyebrow="Casino floor"
+        title="Arcade control"
+        description="Live exposure, table kill-switches, stake limits and round audit across all CSSE Originals."
+        actions={
+          <>
+            <div className="flex rounded-md border border-[var(--mgmt-border)] bg-[var(--mgmt-panel)] p-0.5">
+              {WINDOWS.map((w) => (
+                <MgmtBtn
+                  key={w.h}
+                  variant={windowHours === w.h ? "primary" : "ghost"}
+                  onClick={() => setWindowHours(w.h)}
+                >
+                  {w.label}
+                </MgmtBtn>
+              ))}
+            </div>
+            <MgmtBtn
+              variant="secondary"
+              onClick={() => qc.invalidateQueries({ queryKey: ["arcade-admin"] })}
             >
-              {w.label}
-            </Button>
-          ))}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => qc.invalidateQueries({ queryKey: ["arcade-admin"] })}
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </header>
+              <RefreshCw className="h-3.5 w-3.5" />
+              Refresh
+            </MgmtBtn>
+          </>
+        }
+      />
 
-      <Section title="Live now (refreshes every 5s)">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-          <Stat label="Players in play" value={fmt(totals.livePlayers)} />
-          <Stat label="Open rounds" value={fmt(totals.liveRounds)} />
-          <Stat label="Stake at risk" value={fmt(totals.liveStake)} />
-          <Stat label="Reserved liability" value={fmt(totals.reserved)} />
-          <Stat
-            label="Available reserve"
-            value={fmt(snap.data?.availableReserve ?? null)}
-            tone={(snap.data?.availableReserve ?? 1) <= 0 ? "bad" : undefined}
-          />
-        </div>
-      </Section>
-
-      <div className="flex flex-wrap gap-1 border-b border-[var(--color-surface-border)] pb-2">
-        <Button
-          size="sm"
-          variant={tab === "overview" ? "default" : "ghost"}
-          onClick={() => setTab("overview")}
-        >
-          Overview
-        </Button>
-        {GAMES.map((g) => (
-          <Button
-            key={g.id}
-            size="sm"
-            variant={tab === g.id ? "default" : "ghost"}
-            onClick={() => setTab(g.id)}
-          >
-            {g.label}
-          </Button>
-        ))}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
+        <MgmtKpi label="Players in play" value={fmt(totals.livePlayers)} />
+        <MgmtKpi label="Open rounds" value={fmt(totals.liveRounds)} />
+        <MgmtKpi label="Stake at risk" value={fmt(totals.liveStake, 0)} />
+        <MgmtKpi label="Reserved liability" value={fmt(totals.reserved, 0)} />
+        <MgmtKpi
+          label="Available reserve"
+          value={fmt(snap.data?.availableReserve ?? null)}
+          tone={(snap.data?.availableReserve ?? 1) <= 0 ? "bad" : "ok"}
+        />
+        <MgmtKpi
+          label="Tables paused"
+          value={fmt(pausedCount)}
+          tone={pausedCount > 0 ? "warn" : "ok"}
+        />
       </div>
 
-      {tab === "overview" ? (
-        <>
-          <Section title={`Per game — last ${snap.data?.windowHours ?? windowHours}h`}>
-            <div className="overflow-x-auto border border-[var(--color-surface-border)]">
-              <table className="w-full min-w-[720px] text-xs">
-                <thead className="bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]">
-                  <tr className="text-left">
-                    <th className="px-2 py-2">Game</th>
-                    <th className="px-2 py-2">Live players</th>
-                    <th className="px-2 py-2">Open rounds</th>
-                    <th className="px-2 py-2">Stake at risk</th>
-                    <th className="px-2 py-2">Reserved</th>
-                    <th className="px-2 py-2">Rounds</th>
-                    <th className="px-2 py-2">Players</th>
-                    <th className="px-2 py-2">Staked</th>
-                    <th className="px-2 py-2">Paid</th>
-                    <th className="px-2 py-2">House net</th>
-                    <th className="px-2 py-2">Margin</th>
-                  </tr>
-                </thead>
-                <tbody className="font-mono tabular-nums">
-                  {(snap.data?.games ?? []).map((g) => (
-                    <tr key={g.game} className="border-t border-[var(--color-surface-border)]">
-                      <td className="px-2 py-2 font-sans font-semibold text-[var(--color-ink)]">
-                        {GAMES.find((x) => x.id === g.game)?.label ?? g.game}
-                      </td>
-                      <td className="px-2 py-2">{fmt(g.livePlayers)}</td>
-                      <td className="px-2 py-2">{fmt(g.liveRounds)}</td>
-                      <td className="px-2 py-2">{fmt(g.liveStake)}</td>
-                      <td className="px-2 py-2">{fmt(g.reserved)}</td>
-                      <td className="px-2 py-2">{fmt(g.rounds)}</td>
-                      <td className="px-2 py-2">{fmt(g.players)}</td>
-                      <td className="px-2 py-2">{fmt(g.staked)}</td>
-                      <td className="px-2 py-2">{fmt(g.paid)}</td>
-                      <td
-                        className={`px-2 py-2 ${g.houseNet >= 0 ? "text-emerald-400" : "text-red-400"}`}
-                      >
-                        {fmt(g.houseNet)}
-                      </td>
-                      <td className="px-2 py-2">{g.margin === null ? "—" : `${g.margin}%`}</td>
-                    </tr>
-                  ))}
-                  <tr className="border-t border-[var(--color-surface-border)] bg-[var(--color-surface-2)]">
-                    <td className="px-2 py-2 font-sans font-bold text-[var(--color-ink)]">Total</td>
-                    <td className="px-2 py-2">{fmt(totals.livePlayers)}</td>
-                    <td className="px-2 py-2">{fmt(totals.liveRounds)}</td>
-                    <td className="px-2 py-2">{fmt(totals.liveStake)}</td>
-                    <td className="px-2 py-2">{fmt(totals.reserved)}</td>
-                    <td className="px-2 py-2" colSpan={2} />
-                    <td className="px-2 py-2">{fmt(totals.staked)}</td>
-                    <td className="px-2 py-2">{fmt(totals.paid)}</td>
-                    <td
-                      className={`px-2 py-2 ${totals.staked - totals.paid >= 0 ? "text-emerald-400" : "text-red-400"}`}
-                    >
-                      {fmt(totals.staked - totals.paid)}
-                    </td>
-                    <td className="px-2 py-2">{margin === null ? "—" : `${margin.toFixed(2)}%`}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </Section>
+      <MgmtAlertStack>
+        {(snap.data?.availableReserve ?? 1) <= 0 ? (
+          <MgmtAlert tone="bad" title="Arcade reserve exhausted">
+            Available liability reserve is at or below zero. Pause high-variance tables until treasury tops up.
+          </MgmtAlert>
+        ) : null}
+        {pausedCount > 0 ? (
+          <MgmtAlert tone="warn" title={`${pausedCount} table${pausedCount === 1 ? "" : "s"} paused`}>
+            Kill-switches are active. Players cannot open new rounds on paused products.
+          </MgmtAlert>
+        ) : null}
+      </MgmtAlertStack>
 
-          <Section title="Recent activity">
-            <div className="overflow-x-auto border border-[var(--color-surface-border)]">
-              <table className="w-full min-w-[560px] text-xs">
-                <thead className="bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]">
-                  <tr className="text-left">
-                    <th className="px-2 py-2">When</th>
-                    <th className="px-2 py-2">Game</th>
-                    <th className="px-2 py-2">Player</th>
-                    <th className="px-2 py-2">Stake</th>
-                    <th className="px-2 py-2">Payout</th>
-                    <th className="px-2 py-2">Net</th>
-                    <th className="px-2 py-2">Result</th>
-                  </tr>
-                </thead>
-                <tbody className="font-mono tabular-nums">
-                  {(snap.data?.activity ?? []).map((a) => (
-                    <tr key={`${a.game}-${a.id}`} className="border-t border-[var(--color-surface-border)]">
-                      <td className="px-2 py-1.5">{new Date(a.createdAt).toLocaleTimeString()}</td>
-                      <td className="px-2 py-1.5 font-sans">{a.game}</td>
-                      <td className="px-2 py-1.5 font-sans">{a.username ?? a.userId.slice(0, 8)}</td>
-                      <td className="px-2 py-1.5">{fmt(a.stake)}</td>
-                      <td className="px-2 py-1.5">{fmt(a.payout)}</td>
-                      <td
-                        className={`px-2 py-1.5 ${a.payout - a.stake >= 0 ? "text-emerald-400" : "text-red-400"}`}
-                      >
-                        {fmt(a.payout - a.stake)}
-                      </td>
-                      <td className="px-2 py-1.5 font-sans">{a.result ?? "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Section>
+      <MgmtTabs items={tabs} value={tab} onChange={(id) => setTab(id as FloorTab)} />
 
-          <MiniEngineSection windowHours={windowHours} enabled={enabled} />
-        </>
-
+      {tab === "floor" ? (
+        <FloorOverview
+          windowHours={snap.data?.windowHours ?? windowHours}
+          coreGames={snap.data?.games ?? []}
+          miniStats={mini.data?.stats ?? []}
+          miniConfigs={mini.data?.configs ?? []}
+          coreConfigs={configs.data}
+          activity={snap.data?.activity ?? []}
+          houseNet={houseNet}
+          margin={margin}
+          totals={totals}
+        />
+      ) : isMini ? (
+        <MiniGameDesk
+          product={tab as MiniAdminProduct}
+          overview={mini.data}
+          loading={mini.isLoading}
+          onPublish={async (patch, reason) => {
+            await miniPublishFn({ data: { product: tab as MiniAdminProduct, patch, reason } });
+            toast.success("Config published");
+            qc.invalidateQueries({ queryKey: ["arcade-admin"] });
+          }}
+        />
       ) : (
-        <GameTab
-          game={tab}
+        <CoreGameDesk
+          game={tab as ArcadeGame}
           configs={configs.data}
           rounds={rounds.data ?? []}
           loading={rounds.isLoading || configs.isLoading}
           onPublish={async (payload) => {
             await publishFn({ data: payload });
-            toast.success("New config version published");
+            toast.success("Config published");
             qc.invalidateQueries({ queryKey: ["arcade-admin"] });
           }}
         />
       )}
+    </div>
+  );
+}
+
+function FloorOverview({
+  windowHours,
+  coreGames,
+  miniStats,
+  miniConfigs,
+  coreConfigs,
+  activity,
+  houseNet,
+  margin,
+  totals,
+}: {
+  windowHours: number;
+  coreGames: any[];
+  miniStats: any[];
+  miniConfigs: any[];
+  coreConfigs: any;
+  activity: any[];
+  houseNet: number;
+  margin: number | null;
+  totals: { livePlayers: number; liveRounds: number; liveStake: number; reserved: number; staked: number; paid: number };
+}) {
+  const rows = [
+    ...coreGames.map((g) => {
+      let state = "Live";
+      let tone: "ok" | "warn" | "idle" = "ok";
+      if (g.game === "roulette" && coreConfigs?.roulette?.maintenance_mode) {
+        state = "Paused";
+        tone = "warn";
+      }
+      if (g.game === "rps" && coreConfigs?.rps?.maintenance_mode) {
+        state = "Paused";
+        tone = "warn";
+      }
+      if (g.game === "treasure" && (coreConfigs?.treasure ?? []).some((t: any) => t.maintenance_mode)) {
+        state = "Paused";
+        tone = "warn";
+      }
+      return {
+        key: g.game,
+        label: CORE_GAMES.find((x) => x.id === g.game)?.label ?? g.game,
+        ...g,
+        state,
+        tone,
+      };
+    }),
+    ...miniStats.map((s) => {
+      const c = miniConfigs.find((x: any) => x.product === s.product);
+      const paused = !!c?.maintenance_mode;
+      return {
+        key: s.product,
+        label: MINI_LABELS[s.product as MiniAdminProduct] ?? s.product,
+        livePlayers: s.livePlayers,
+        liveRounds: s.liveRounds,
+        liveStake: s.liveStake,
+        reserved: 0,
+        rounds: s.rounds,
+        players: s.players,
+        staked: s.staked,
+        paid: s.paid,
+        houseNet: s.houseNet,
+        margin: s.margin == null ? null : s.margin * 100,
+        state: paused ? "Paused" : `Live · v${c?.version ?? "—"}`,
+        tone: paused ? ("warn" as const) : ("ok" as const),
+      };
+    }),
+  ];
+
+  return (
+    <div className="space-y-4">
+      <MgmtPanel
+        title={`Floor performance · last ${windowHours}h`}
+        description="All tables. House net is stake minus payouts over the selected window."
+      >
+        <MgmtTable minWidth="900px">
+          <thead>
+            <tr>
+              <MgmtTh>Table</MgmtTh>
+              <MgmtTh>Live</MgmtTh>
+              <MgmtTh>Open</MgmtTh>
+              <MgmtTh>At risk</MgmtTh>
+              <MgmtTh>Rounds</MgmtTh>
+              <MgmtTh>Staked</MgmtTh>
+              <MgmtTh>Paid</MgmtTh>
+              <MgmtTh>House net</MgmtTh>
+              <MgmtTh>Margin</MgmtTh>
+              <MgmtTh>State</MgmtTh>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.key}>
+                <MgmtTd className="font-medium">{r.label}</MgmtTd>
+                <MgmtTd mono>{fmt(r.livePlayers)}</MgmtTd>
+                <MgmtTd mono>{fmt(r.liveRounds)}</MgmtTd>
+                <MgmtTd mono>{fmt(r.liveStake)}</MgmtTd>
+                <MgmtTd mono>{fmt(r.rounds)}</MgmtTd>
+                <MgmtTd mono>{fmt(r.staked)}</MgmtTd>
+                <MgmtTd mono>{fmt(r.paid)}</MgmtTd>
+                <MgmtTd
+                  mono
+                  className={r.houseNet >= 0 ? "text-[var(--mgmt-ok)]" : "text-[var(--mgmt-danger)]"}
+                >
+                  {fmt(r.houseNet)}
+                </MgmtTd>
+                <MgmtTd mono>
+                  {r.margin === null || r.margin === undefined ? "—" : `${Number(r.margin).toFixed(2)}%`}
+                </MgmtTd>
+                <MgmtTd>
+                  <MgmtStatus tone={r.tone}>{r.state}</MgmtStatus>
+                </MgmtTd>
+              </tr>
+            ))}
+            <tr className="bg-[var(--mgmt-panel-2)]">
+              <MgmtTd className="font-semibold">Floor total</MgmtTd>
+              <MgmtTd mono>{fmt(totals.livePlayers)}</MgmtTd>
+              <MgmtTd mono>{fmt(totals.liveRounds)}</MgmtTd>
+              <MgmtTd mono>{fmt(totals.liveStake)}</MgmtTd>
+              <MgmtTd mono>—</MgmtTd>
+              <MgmtTd mono>{fmt(totals.staked)}</MgmtTd>
+              <MgmtTd mono>{fmt(totals.paid)}</MgmtTd>
+              <MgmtTd
+                mono
+                className={houseNet >= 0 ? "text-[var(--mgmt-ok)]" : "text-[var(--mgmt-danger)]"}
+              >
+                {fmt(houseNet)}
+              </MgmtTd>
+              <MgmtTd mono>{margin === null ? "—" : `${margin.toFixed(2)}%`}</MgmtTd>
+              <MgmtTd>{""}</MgmtTd>
+            </tr>
+          </tbody>
+        </MgmtTable>
+      </MgmtPanel>
+
+      <MgmtPanel title="Recent floor activity" description="Latest settled or open rounds across core tables.">
+        <MgmtTable minWidth="640px">
+          <thead>
+            <tr>
+              <MgmtTh>When</MgmtTh>
+              <MgmtTh>Table</MgmtTh>
+              <MgmtTh>Player</MgmtTh>
+              <MgmtTh>Stake</MgmtTh>
+              <MgmtTh>Payout</MgmtTh>
+              <MgmtTh>Net</MgmtTh>
+              <MgmtTh>Result</MgmtTh>
+            </tr>
+          </thead>
+          <tbody>
+            {activity.length === 0 ? (
+              <tr>
+                <MgmtTd className="text-[var(--mgmt-muted)]">
+                  No recent activity.
+                </MgmtTd>
+              </tr>
+            ) : (
+              activity.map((a) => (
+                <tr key={`${a.game}-${a.id}`}>
+                  <MgmtTd mono>{new Date(a.createdAt).toLocaleTimeString()}</MgmtTd>
+                  <MgmtTd>{a.game}</MgmtTd>
+                  <MgmtTd>{a.username ?? a.userId.slice(0, 8)}</MgmtTd>
+                  <MgmtTd mono>{fmt(a.stake)}</MgmtTd>
+                  <MgmtTd mono>{fmt(a.payout)}</MgmtTd>
+                  <MgmtTd
+                    mono
+                    className={a.payout - a.stake >= 0 ? "text-[var(--mgmt-ok)]" : "text-[var(--mgmt-danger)]"}
+                  >
+                    {fmt(a.payout - a.stake)}
+                  </MgmtTd>
+                  <MgmtTd>{a.result ?? "—"}</MgmtTd>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </MgmtTable>
+      </MgmtPanel>
     </div>
   );
 }
@@ -324,7 +450,7 @@ type PublishPayload = {
   reason: string;
 };
 
-function GameTab({
+function CoreGameDesk({
   game,
   configs,
   rounds,
@@ -338,42 +464,48 @@ function GameTab({
   onPublish: (p: PublishPayload) => Promise<void>;
 }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {game === "blackjack" ? (
-        <div className="border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-3 text-xs text-[var(--color-ink-muted)]">
-          Blackjack rules, scoring and hand resolution live on the dedicated page.{" "}
-          <Link
-            to="/management/admin/blackjack"
-            className="font-semibold text-[var(--color-accent,#22d3ee)] underline"
-          >
-            Open Blackjack admin
-          </Link>
-        </div>
+        <MgmtPanel title="Blackjack desk">
+          <p className="text-sm text-[var(--mgmt-muted)]">
+            Hand voiding, maintenance and suspicious win-rate review live on the dedicated blackjack desk.
+          </p>
+          <div className="mt-3">
+            <Link to="/management/admin/blackjack">
+              <MgmtBtn variant="primary">Open blackjack desk</MgmtBtn>
+            </Link>
+          </div>
+        </MgmtPanel>
       ) : null}
 
       {game === "plinko" ? (
-        <Section title="Active score profiles">
+        <MgmtPanel
+          title="Plinko payout profiles"
+          description="Active score tables by rows / risk. Promotion stays in the config registry."
+        >
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {(configs?.plinkoProfiles ?? []).map((p: any) => (
-              <Stat key={p.id} label={`${p.rows} rows · ${p.risk_mode}`} value={`v${p.version}`} />
+              <MgmtKpi
+                key={p.id}
+                label={`${p.rows} rows · ${p.risk_mode}`}
+                value={`v${p.version}`}
+              />
             ))}
           </div>
-          <p className="text-[11px] text-[var(--color-ink-muted)]">
-            Plinko payout tables are versioned per rows/risk profile and promoted through the config
-            registry — they are read-only here by design.
-          </p>
-        </Section>
+        </MgmtPanel>
       ) : null}
 
       {game === "roulette" && configs?.roulette ? (
-        <ConfigEditor
-          title={`Mini Roulette — active v${configs.roulette.version}`}
+        <RiskConfigEditor
+          title={`Roulette · active v${configs.roulette.version}`}
+          maintenance={!!configs.roulette.maintenance_mode}
+          announcement={configs.roulette.announcement ?? ""}
           fields={[
             { key: "min_total_stake", label: "Min total stake", value: configs.roulette.min_total_stake },
             { key: "max_total_stake", label: "Max total stake", value: configs.roulette.max_total_stake },
             {
               key: "max_stake_per_position",
-              label: "Max stake / position",
+              label: "Max / position",
               value: configs.roulette.max_stake_per_position,
             },
             { key: "max_positions", label: "Max positions", value: configs.roulette.max_positions },
@@ -381,115 +513,246 @@ function GameTab({
             { key: "cooldown_seconds", label: "Cooldown (s)", value: configs.roulette.cooldown_seconds },
           ]}
           onSubmit={(patch, reason) => onPublish({ game: "roulette", patch, reason })}
+          onToggleMaintenance={(on, reason) =>
+            onPublish({ game: "roulette", patch: { maintenance_mode: on }, reason })
+          }
         />
       ) : null}
 
       {game === "rps" && configs?.rps ? (
-        <ConfigEditor
-          title={`Rock–Paper–Scissors — active v${configs.rps.version}`}
+        <RiskConfigEditor
+          title={`Rock–Paper–Scissors · active v${configs.rps.version}`}
+          maintenance={!!configs.rps.maintenance_mode}
+          announcement={configs.rps.announcement ?? ""}
+          note={`Ladder ${(configs.rps.ladder_multipliers ?? []).join(" → ")} then ×${configs.rps.ladder_tail_multiplier}`}
           fields={[
             { key: "min_stake", label: "Min stake", value: configs.rps.min_stake },
             { key: "max_stake", label: "Max stake", value: configs.rps.max_stake },
-            { key: "win_multiplier", label: "Win multiplier", value: configs.rps.win_multiplier },
-            { key: "draw_multiplier", label: "Draw multiplier", value: configs.rps.draw_multiplier },
+            { key: "win_multiplier", label: "Win mult", value: configs.rps.win_multiplier },
+            { key: "draw_multiplier", label: "Draw mult", value: configs.rps.draw_multiplier },
             {
               key: "ladder_tail_multiplier",
-              label: "Ladder tail multiplier",
+              label: "Ladder tail",
               value: configs.rps.ladder_tail_multiplier,
             },
-            { key: "daily_round_limit", label: "Daily round limit", value: configs.rps.daily_round_limit },
+            { key: "daily_round_limit", label: "Daily rounds", value: configs.rps.daily_round_limit },
+            { key: "cooldown_seconds", label: "Cooldown (s)", value: configs.rps.cooldown_seconds },
+            { key: "round_ttl_seconds", label: "Round TTL (s)", value: configs.rps.round_ttl_seconds },
           ]}
-          note={`Ladder: ${(configs.rps.ladder_multipliers ?? []).join(" → ")} then ×${configs.rps.ladder_tail_multiplier}`}
           onSubmit={(patch, reason) => onPublish({ game: "rps", patch, reason })}
+          onToggleMaintenance={(on, reason) =>
+            onPublish({ game: "rps", patch: { maintenance_mode: on }, reason })
+          }
         />
       ) : null}
 
       {game === "treasure"
         ? (configs?.treasure ?? []).map((c: any) => (
-            <ConfigEditor
+            <RiskConfigEditor
               key={c.id}
-              title={`Treasure — ${c.label ?? c.difficulty} (v${c.version})`}
+              title={`Treasure · ${c.label ?? c.difficulty} (v${c.version})`}
+              maintenance={!!c.maintenance_mode}
+              note={`House edge ${(100 - Number(c.target_rtp) * 100).toFixed(2)}% · grid ${c.grid_rows}×${c.grid_cols} · max ×${c.max_multiplier}`}
               fields={[
-                { key: "target_rtp", label: "Target RTP (0-1)", value: c.target_rtp },
-                { key: "trap_count", label: "Trap count", value: c.trap_count },
+                { key: "target_rtp", label: "Target RTP", value: c.target_rtp },
+                { key: "trap_count", label: "Traps", value: c.trap_count },
                 { key: "min_stake", label: "Min stake", value: c.min_stake },
                 { key: "max_stake", label: "Max stake", value: c.max_stake },
                 { key: "max_return", label: "Max return", value: c.max_return },
-                { key: "daily_round_limit", label: "Daily round limit", value: c.daily_round_limit },
+                { key: "daily_round_limit", label: "Daily rounds", value: c.daily_round_limit },
+                { key: "cooldown_seconds", label: "Cooldown (s)", value: c.cooldown_seconds },
+                { key: "round_timeout_seconds", label: "Timeout (s)", value: c.round_timeout_seconds },
               ]}
-              note={`House edge ${(100 - Number(c.target_rtp) * 100).toFixed(2)}% · grid ${c.grid_rows}×${c.grid_cols} · max ×${c.max_multiplier}`}
               onSubmit={(patch, reason) =>
                 onPublish({ game: "treasure", difficulty: c.difficulty, patch, reason })
+              }
+              onToggleMaintenance={(on, reason) =>
+                onPublish({
+                  game: "treasure",
+                  difficulty: c.difficulty,
+                  patch: { maintenance_mode: on },
+                  reason,
+                })
               }
             />
           ))
         : null}
 
-      <Section title="Recent rounds">
+      <MgmtPanel title="Recent rounds">
         {loading ? (
-          <div className="flex items-center gap-2 p-3 text-xs text-[var(--color-ink-muted)]">
+          <div className="flex items-center gap-2 text-[12px] text-[var(--mgmt-muted)]">
             <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…
           </div>
         ) : (
-          <div className="overflow-x-auto border border-[var(--color-surface-border)]">
-            <table className="w-full min-w-[520px] text-xs">
-              <thead className="bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]">
-                <tr className="text-left">
-                  <th className="px-2 py-2">When</th>
-                  <th className="px-2 py-2">Player</th>
-                  <th className="px-2 py-2">Stake</th>
-                  <th className="px-2 py-2">Payout</th>
-                  <th className="px-2 py-2">Net</th>
-                  <th className="px-2 py-2">Result</th>
-                </tr>
-              </thead>
-              <tbody className="font-mono tabular-nums">
-                {rounds.map((r) => (
-                  <tr key={r.id} className="border-t border-[var(--color-surface-border)]">
-                    <td className="px-2 py-1.5">{new Date(r.createdAt).toLocaleString()}</td>
-                    <td className="px-2 py-1.5 font-sans">{r.username ?? r.userId.slice(0, 8)}</td>
-                    <td className="px-2 py-1.5">{fmt(r.stake)}</td>
-                    <td className="px-2 py-1.5">{fmt(r.payout)}</td>
-                    <td
-                      className={`px-2 py-1.5 ${r.payout - r.stake >= 0 ? "text-emerald-400" : "text-red-400"}`}
-                    >
-                      {fmt(r.payout - r.stake)}
-                    </td>
-                    <td className="px-2 py-1.5 font-sans">{r.result ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <RoundsTable rows={rounds} />
         )}
-      </Section>
+      </MgmtPanel>
     </div>
   );
 }
 
-function ConfigEditor({
+function MiniGameDesk({
+  product,
+  overview,
+  loading,
+  onPublish,
+}: {
+  product: MiniAdminProduct;
+  overview: any;
+  loading: boolean;
+  onPublish: (patch: Record<string, string | number | boolean>, reason: string) => Promise<void>;
+}) {
+  const cfg = (overview?.configs ?? []).find((c: any) => c.product === product) ?? null;
+  const recent = (overview?.recent ?? []).filter((r: any) => r.product === product);
+  const stats = (overview?.stats ?? []).find((s: any) => s.product === product);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <MgmtKpi label="Live players" value={fmt(stats?.livePlayers)} />
+        <MgmtKpi label="Open rounds" value={fmt(stats?.liveRounds)} />
+        <MgmtKpi label="Stake at risk" value={fmt(stats?.liveStake, 2)} />
+        <MgmtKpi
+          label="House net"
+          value={fmt(stats?.houseNet, 2)}
+          tone={(stats?.houseNet ?? 0) >= 0 ? "ok" : "bad"}
+        />
+        <MgmtKpi
+          label="Margin"
+          value={stats?.margin == null ? "—" : `${(stats.margin * 100).toFixed(2)}%`}
+        />
+      </div>
+
+      {!cfg ? (
+        <MgmtPanel title={`${MINI_LABELS[product]} risk`}>
+          <p className="text-sm text-[var(--mgmt-muted)]">No active config published.</p>
+        </MgmtPanel>
+      ) : (
+        <RiskConfigEditor
+          title={`${MINI_LABELS[product]} · active v${cfg.version}`}
+          maintenance={!!cfg.maintenance_mode}
+          announcement={cfg.announcement ?? ""}
+          note={`Target RTP ${(Number(cfg.target_rtp) * 100).toFixed(2)}%`}
+          fields={[
+            { key: "min_stake", label: "Min stake", value: cfg.min_stake },
+            { key: "max_stake", label: "Max stake", value: cfg.max_stake },
+            { key: "max_multiplier", label: "Max multiplier", value: cfg.max_multiplier },
+            { key: "daily_round_limit", label: "Daily rounds", value: cfg.daily_round_limit },
+            { key: "cooldown_seconds", label: "Cooldown (s)", value: cfg.cooldown_seconds },
+            { key: "round_ttl_seconds", label: "Round TTL (s)", value: cfg.round_ttl_seconds },
+            { key: "target_rtp", label: "Target RTP", value: cfg.target_rtp },
+          ]}
+          onSubmit={onPublish}
+          onToggleMaintenance={(on, reason) => onPublish({ maintenance_mode: on }, reason)}
+        />
+      )}
+
+      <MgmtPanel title={`${MINI_LABELS[product]} · recent rounds`}>
+        {loading ? (
+          <div className="flex items-center gap-2 text-[12px] text-[var(--mgmt-muted)]">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" /> Loading…
+          </div>
+        ) : (
+          <RoundsTable
+            rows={recent.map((r: any) => ({
+              id: r.id,
+              createdAt: r.createdAt,
+              username: r.username,
+              userId: r.userId,
+              stake: r.stake,
+              payout: r.payout,
+              result: r.result,
+            }))}
+          />
+        )}
+      </MgmtPanel>
+    </div>
+  );
+}
+
+function RoundsTable({
+  rows,
+}: {
+  rows: Array<{
+    id: string;
+    createdAt: string;
+    username: string | null;
+    userId: string;
+    stake: number;
+    payout: number;
+    result: string | null;
+  }>;
+}) {
+  return (
+    <MgmtTable minWidth="560px">
+      <thead>
+        <tr>
+          <MgmtTh>When</MgmtTh>
+          <MgmtTh>Player</MgmtTh>
+          <MgmtTh>Stake</MgmtTh>
+          <MgmtTh>Payout</MgmtTh>
+          <MgmtTh>Net</MgmtTh>
+          <MgmtTh>Result</MgmtTh>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.length === 0 ? (
+          <tr>
+            <MgmtTd className="text-[var(--mgmt-muted)]">No rounds yet.</MgmtTd>
+          </tr>
+        ) : (
+          rows.map((r) => (
+            <tr key={r.id}>
+              <MgmtTd mono>{new Date(r.createdAt).toLocaleString()}</MgmtTd>
+              <MgmtTd>{r.username ?? r.userId.slice(0, 8)}</MgmtTd>
+              <MgmtTd mono>{fmt(r.stake, 2)}</MgmtTd>
+              <MgmtTd mono>{fmt(r.payout, 2)}</MgmtTd>
+              <MgmtTd
+                mono
+                className={r.payout - r.stake >= 0 ? "text-[var(--mgmt-ok)]" : "text-[var(--mgmt-danger)]"}
+              >
+                {fmt(r.payout - r.stake, 2)}
+              </MgmtTd>
+              <MgmtTd>{r.result ?? "—"}</MgmtTd>
+            </tr>
+          ))
+        )}
+      </tbody>
+    </MgmtTable>
+  );
+}
+
+function RiskConfigEditor({
   title,
   fields,
   note,
+  maintenance,
+  announcement,
   onSubmit,
+  onToggleMaintenance,
 }: {
   title: string;
   fields: { key: string; label: string; value: number | null }[];
   note?: string;
-  onSubmit: (patch: Record<string, number>, reason: string) => Promise<void>;
+  maintenance: boolean;
+  announcement?: string;
+  onSubmit: (patch: Record<string, number | string | boolean>, reason: string) => Promise<void>;
+  onToggleMaintenance: (on: boolean, reason: string) => Promise<void>;
 }) {
   const [draft, setDraft] = useState<Record<string, string>>({});
+  const [ann, setAnn] = useState(announcement ?? "");
   const [reason, setReason] = useState("");
 
   const publish = useMutation({
     mutationFn: async () => {
-      const patch: Record<string, number> = {};
+      const patch: Record<string, number | string | boolean> = {};
       for (const f of fields) {
         const v = draft[f.key];
         if (v !== undefined && v !== "" && Number(v) !== Number(f.value)) patch[f.key] = Number(v);
       }
+      if (announcement !== undefined && ann !== (announcement ?? "")) patch.announcement = ann;
       if (Object.keys(patch).length === 0) throw new Error("No changes to publish");
-      if (reason.trim().length < 4) throw new Error("A reason of at least 4 characters is required");
+      if (reason.trim().length < 4) throw new Error("Reason required (min 4 chars)");
       await onSubmit(patch, reason.trim());
       setDraft({});
       setReason("");
@@ -497,240 +760,73 @@ function ConfigEditor({
     onError: (e: any) => toast.error(e?.message ?? "Publish failed"),
   });
 
+  const kill = useMutation({
+    mutationFn: async () => {
+      const r = maintenance ? "Admin resumed table" : "Admin paused table — kill switch";
+      await onToggleMaintenance(!maintenance, r);
+    },
+    onSuccess: () => toast.success(maintenance ? "Table resumed" : "Table paused"),
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
+
   return (
-    <Section title={title}>
-      {note ? <p className="text-[11px] text-[var(--color-ink-muted)]">{note}</p> : null}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+    <MgmtPanel
+      title={title}
+      description={note}
+      actions={
+        <div className="flex items-center gap-2">
+          <MgmtStatus tone={maintenance ? "warn" : "ok"}>
+            {maintenance ? "Paused" : "Live"}
+          </MgmtStatus>
+          <MgmtBtn
+            variant={maintenance ? "primary" : "danger"}
+            disabled={kill.isPending}
+            onClick={() => kill.mutate()}
+          >
+            {kill.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            {maintenance ? "Resume table" : "Pause table"}
+          </MgmtBtn>
+        </div>
+      }
+    >
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {fields.map((f) => (
-          <label key={f.key} className="space-y-1">
-            <span className="block text-[9px] font-bold uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-              {f.label}
-            </span>
-            <Input
+          <MgmtField key={f.key} label={f.label}>
+            <input
+              className={mgmtInputClass}
               inputMode="decimal"
               value={draft[f.key] ?? String(f.value ?? "")}
               onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
-              className="font-mono"
             />
-          </label>
+          </MgmtField>
         ))}
       </div>
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <Input
-          placeholder="Reason for this change (audited)"
+
+      {announcement !== undefined ? (
+        <div className="mt-3">
+          <MgmtField label="Player announcement">
+            <input
+              className={mgmtInputClass}
+              value={ann}
+              onChange={(e) => setAnn(e.target.value)}
+              placeholder="Shown on table when set"
+            />
+          </MgmtField>
+        </div>
+      ) : null}
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <input
+          className={`${mgmtInputClass} flex-1`}
+          placeholder="Audit reason for this change"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
         />
-        <Button onClick={() => publish.mutate()} disabled={publish.isPending}>
-          {publish.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Publish new version"}
-        </Button>
+        <MgmtBtn variant="primary" disabled={publish.isPending} onClick={() => publish.mutate()}>
+          {publish.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+          Publish version
+        </MgmtBtn>
       </div>
-    </Section>
-  );
-}
-
-const MINI_LABELS: Record<MiniAdminProduct, string> = {
-  hilo: "Hi-Lo",
-  dice: "Dice",
-  wheel: "Fortune Wheel",
-  keno: "Keno",
-  crash: "Crash",
-  towers: "Dragon Towers",
-  poker: "Video Poker",
-};
-
-const MINI_FIELDS: { key: string; label: string }[] = [
-  { key: "min_stake", label: "Min stake" },
-  { key: "max_stake", label: "Max stake" },
-  { key: "max_multiplier", label: "Max multiplier" },
-  { key: "daily_round_limit", label: "Daily rounds" },
-  { key: "cooldown_seconds", label: "Cooldown (s)" },
-  { key: "round_ttl_seconds", label: "Round TTL (s)" },
-];
-
-/** CSSE Originals mini engine — Hi-Lo, Dice, Wheel, Keno, Crash, Towers, Poker. */
-function MiniEngineSection({ windowHours, enabled }: { windowHours: number; enabled: boolean }) {
-  const qc = useQueryClient();
-  const overviewFn = useServerFn(miniAdminOverview);
-  const publishFn = useServerFn(miniAdminPublishConfig);
-  const [product, setProduct] = useState<MiniAdminProduct>("towers");
-
-  const q = useQuery({
-    queryKey: ["arcade-admin", "mini", windowHours],
-    queryFn: () => overviewFn({ data: { windowHours } }),
-    enabled,
-    refetchInterval: 8000,
-  });
-
-  const configs = (q.data?.configs ?? []) as any[];
-  const cfg = configs.find((c) => c.product === product) ?? null;
-  const recent = (q.data?.recent ?? []).filter((r) => r.product === product);
-
-  const setMaintenance = useMutation({
-    mutationFn: async (on: boolean) => {
-      await publishFn({
-        data: {
-          product,
-          patch: { maintenance_mode: on },
-          reason: on ? "Admin paused the table" : "Admin resumed the table",
-        },
-      });
-    },
-    onSuccess: () => {
-      toast.success("Published");
-      qc.invalidateQueries({ queryKey: ["arcade-admin", "mini"] });
-    },
-    onError: (e: any) => toast.error(e?.message ?? "Publish failed"),
-  });
-
-  return (
-    <>
-      <Section title={`CSSE Originals — last ${q.data?.windowHours ?? windowHours}h`}>
-        <div className="overflow-x-auto border border-[var(--color-surface-border)]">
-          <table className="w-full min-w-[720px] text-xs">
-            <thead className="bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]">
-              <tr className="text-left">
-                <th className="px-2 py-2">Game</th>
-                <th className="px-2 py-2">Live players</th>
-                <th className="px-2 py-2">Open rounds</th>
-                <th className="px-2 py-2">Stake at risk</th>
-                <th className="px-2 py-2">Rounds</th>
-                <th className="px-2 py-2">Players</th>
-                <th className="px-2 py-2">Staked</th>
-                <th className="px-2 py-2">Paid</th>
-                <th className="px-2 py-2">House net</th>
-                <th className="px-2 py-2">Margin</th>
-                <th className="px-2 py-2">State</th>
-              </tr>
-            </thead>
-            <tbody className="font-mono tabular-nums">
-              {(q.data?.stats ?? []).map((s) => {
-                const c = configs.find((x) => x.product === s.product);
-                return (
-                  <tr key={s.product} className="border-t border-[var(--color-surface-border)]">
-                    <td className="px-2 py-2 font-sans font-semibold text-[var(--color-ink)]">
-                      {MINI_LABELS[s.product]}
-                    </td>
-                    <td className="px-2 py-2">{fmt(s.livePlayers)}</td>
-                    <td className="px-2 py-2">{fmt(s.liveRounds)}</td>
-                    <td className="px-2 py-2">{fmt(s.liveStake, 2)}</td>
-                    <td className="px-2 py-2">{fmt(s.rounds)}</td>
-                    <td className="px-2 py-2">{fmt(s.players)}</td>
-                    <td className="px-2 py-2">{fmt(s.staked, 2)}</td>
-                    <td className="px-2 py-2">{fmt(s.paid, 2)}</td>
-                    <td className={`px-2 py-2 ${s.houseNet >= 0 ? "text-emerald-400" : "text-red-400"}`}>
-                      {fmt(s.houseNet, 2)}
-                    </td>
-                    <td className="px-2 py-2">
-                      {s.margin === null ? "—" : `${(s.margin * 100).toFixed(2)}%`}
-                    </td>
-                    <td className="px-2 py-2 font-sans">
-                      {c?.maintenance_mode ? (
-                        <span className="text-amber-400">Paused</span>
-                      ) : (
-                        <span className="text-emerald-400">Live · v{c?.version ?? "—"}</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </Section>
-
-      <Section title="Originals risk controls">
-        <div className="flex flex-wrap gap-1">
-          {MINI_PRODUCTS.map((p) => (
-            <Button
-              key={p}
-              size="sm"
-              variant={product === p ? "default" : "ghost"}
-              onClick={() => setProduct(p)}
-            >
-              {MINI_LABELS[p]}
-            </Button>
-          ))}
-        </div>
-
-        {!cfg ? (
-          <p className="text-[11px] text-[var(--color-ink-muted)]">No active config published.</p>
-        ) : (
-          <>
-            <div className="flex flex-wrap items-center gap-2 text-[11px] text-[var(--color-ink-muted)]">
-              <span>
-                Active v{cfg.version} · target RTP {(Number(cfg.target_rtp) * 100).toFixed(2)}%
-              </span>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={setMaintenance.isPending}
-                onClick={() => setMaintenance.mutate(!cfg.maintenance_mode)}
-              >
-                {cfg.maintenance_mode ? "Resume table" : "Pause table"}
-              </Button>
-            </div>
-
-            <ConfigEditor
-              title={`${MINI_LABELS[product]} limits`}
-              note="Publishing retires the current version and activates a new one. Every change is audited."
-              fields={MINI_FIELDS.map((f) => ({
-                key: f.key,
-                label: f.label,
-                value: cfg[f.key] === null || cfg[f.key] === undefined ? null : Number(cfg[f.key]),
-              }))}
-              onSubmit={async (patch, reason) => {
-                await publishFn({ data: { product, patch, reason } });
-                toast.success("Published");
-                qc.invalidateQueries({ queryKey: ["arcade-admin", "mini"] });
-              }}
-            />
-          </>
-        )}
-      </Section>
-
-      <Section title={`${MINI_LABELS[product]} — recent rounds`}>
-        <div className="overflow-x-auto border border-[var(--color-surface-border)]">
-          <table className="w-full min-w-[560px] text-xs">
-            <thead className="bg-[var(--color-surface-2)] text-[var(--color-ink-muted)]">
-              <tr className="text-left">
-                <th className="px-2 py-2">When</th>
-                <th className="px-2 py-2">Player</th>
-                <th className="px-2 py-2">Stake</th>
-                <th className="px-2 py-2">Payout</th>
-                <th className="px-2 py-2">Net</th>
-                <th className="px-2 py-2">Multiplier</th>
-                <th className="px-2 py-2">Result</th>
-              </tr>
-            </thead>
-            <tbody className="font-mono tabular-nums">
-              {recent.length === 0 ? (
-                <tr>
-                  <td className="px-2 py-3 font-sans text-[var(--color-ink-muted)]" colSpan={7}>
-                    No rounds yet.
-                  </td>
-                </tr>
-              ) : (
-                recent.map((r) => (
-                  <tr key={r.id} className="border-t border-[var(--color-surface-border)]">
-                    <td className="px-2 py-1.5">{new Date(r.createdAt).toLocaleTimeString()}</td>
-                    <td className="px-2 py-1.5 font-sans">{r.username ?? r.userId.slice(0, 8)}</td>
-                    <td className="px-2 py-1.5">{fmt(r.stake, 2)}</td>
-                    <td className="px-2 py-1.5">{fmt(r.payout, 2)}</td>
-                    <td
-                      className={`px-2 py-1.5 ${r.payout - r.stake >= 0 ? "text-emerald-400" : "text-red-400"}`}
-                    >
-                      {fmt(r.payout - r.stake, 2)}
-                    </td>
-                    <td className="px-2 py-1.5">{fmt(r.multiplier, 2)}×</td>
-                    <td className="px-2 py-1.5 font-sans">{r.result ?? "—"}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Section>
-    </>
+    </MgmtPanel>
   );
 }

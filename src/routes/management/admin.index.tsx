@@ -27,10 +27,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useHasSession, withSession } from "@/hooks/use-staff-session";
+import { MgmtAlert, MgmtAlertStack, MgmtBtn, MgmtPageHeader } from "@/components/management/ops-ui";
 
 
 export const Route = createFileRoute("/management/admin/")({
-  head: () => ({ meta: [{ title: "Risk overview — cssebets admin" }] }),
+  head: () => ({ meta: [{ title: "Overview — CSSEBets Operator" }] }),
   component: AdminOverview,
 });
 
@@ -115,34 +116,49 @@ function AdminOverview() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-dashed border-[var(--color-surface-border)] pb-3">
-        <div>
-          <h1 className="text-[13px] font-bold uppercase tracking-[0.28em] text-[var(--color-ink)]">
-            Risk overview
-          </h1>
-          <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)] mt-0.5">
-            Phase 12 · live bankroll · scenario exposure · correlated alerts · maker-checker
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-[var(--color-ink-muted)]">
-          <span>updated {new Date(d.generatedAt).toLocaleTimeString()}</span>
-          <button
-            onClick={() => q.refetch()}
-            className="inline-flex items-center gap-1 border border-[var(--color-surface-border)] px-2 py-1 hover:text-[var(--color-neon)]"
-          >
-            <RefreshCw className="h-3 w-3" /> refresh
-          </button>
-        </div>
-      </header>
+      <MgmtPageHeader
+        eyebrow="Command"
+        title="Risk overview"
+        description="Live bankroll, scenario exposure, correlated alerts and maker-checker queue."
+        actions={
+          <>
+            <span className="text-[11px] text-[var(--mgmt-muted)]">
+              Updated {new Date(d.generatedAt).toLocaleTimeString()}
+            </span>
+            <MgmtBtn
+              variant="secondary"
+              disabled={bulk.isPending}
+              onClick={() => bulk.mutate()}
+            >
+              {bulk.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              Recalc stale
+            </MgmtBtn>
+          </>
+        }
+      />
+
+      <MgmtAlertStack>
+        {!d.bankroll.available ? (
+          <MgmtAlert tone="bad" title="Live bankroll not configured">
+            platform_bankroll (id=1, kind=live) is missing or inactive. Treasury risk figures may be incomplete.
+          </MgmtAlert>
+        ) : null}
+        {shortfall ? (
+          <MgmtAlert tone="bad" title="Bankroll shortfall">
+            Worst-case net liability exceeds available live bankroll. Review exposure before opening more markets.
+          </MgmtAlert>
+        ) : null}
+        {(d.makerChecker.pendingPayouts + d.makerChecker.pendingWalletAdjustments) > 0 ? (
+          <MgmtAlert tone="warn" title="Approvals waiting">
+            {d.makerChecker.pendingPayouts} payout{d.makerChecker.pendingPayouts === 1 ? "" : "s"} and{" "}
+            {d.makerChecker.pendingWalletAdjustments} wallet adjustment
+            {d.makerChecker.pendingWalletAdjustments === 1 ? "" : "s"} need review.
+          </MgmtAlert>
+        ) : null}
+      </MgmtAlertStack>
 
       {/* 1. Risk overview KPIs */}
       <Section title="Risk overview" icon={ShieldAlert}>
-        {!d.bankroll.available && (
-          <div className="border border-red-500/40 bg-red-500/5 p-3 text-[11px] text-red-300 mb-3">
-            Live bankroll (platform_bankroll id=1, kind=live, is_active=true) not configured.
-          </div>
-        )}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <KPI label="Live bankroll" value={fmt(d.bankroll.balance)} tone="neon" />
           <KPI label="Pending stake" value={fmt(d.risk.pendingStake)} />

@@ -8,12 +8,21 @@ import {
   regradePredictionAdmin,
 } from "@/lib/admin-dashboard.functions";
 import { voidUfcBetAdmin, regradeUfcBetAdmin } from "@/lib/ufc.functions";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Flag } from "lucide-react";
+import {
+  MgmtAlert,
+  MgmtAlertStack,
+  MgmtBtn,
+  MgmtField,
+  MgmtKpi,
+  MgmtPageHeader,
+  MgmtPanel,
+  MgmtStatus,
+  MgmtTable,
+  MgmtTd,
+  MgmtTh,
+  mgmtInputClass,
+} from "@/components/management/ops-ui";
+import { Flag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useHasSession } from "@/hooks/use-staff-session";
@@ -22,27 +31,100 @@ export const Route = createFileRoute("/management/admin/predictions")({
   component: AdminPredictionsPage,
 });
 
-const FOOTBALL_MARKETS = ["result", "correct_score", "total_goals", "btts", "first_scorer", "group_winner", "tournament_winner"];
+const FOOTBALL_MARKETS = [
+  "result",
+  "correct_score",
+  "total_goals",
+  "btts",
+  "first_scorer",
+  "group_winner",
+  "tournament_winner",
+];
 const UFC_MARKETS = ["moneyline", "three_way", "method", "round", "total_rounds", "distance", "handicap"];
-const F1_MARKETS = ["race_winner", "podium_finish", "top_5_finish", "top_10_finish", "fastest_lap", "top_constructor_race", "teammate_h2h", "drivers_champion", "constructors_champion"];
-const STATUSES = ["", "pending", "won", "lost", "void"];
+const F1_MARKETS = [
+  "race_winner",
+  "podium_finish",
+  "top_5_finish",
+  "top_10_finish",
+  "fastest_lap",
+  "top_constructor_race",
+  "teammate_h2h",
+  "drivers_champion",
+  "constructors_champion",
+];
+const STATUSES = ["", "pending", "won", "lost", "void"] as const;
 const SPORTS = [
   { value: "all", label: "All sports" },
-  { value: "football", label: "Football" },
+  { value: "football", label: "World Cup / football" },
   { value: "ufc", label: "UFC" },
   { value: "f1", label: "Formula 1" },
 ] as const;
 const REGRADE_TARGETS = ["won", "lost", "void", "pending"] as const;
 
+type Sport = "all" | "football" | "ufc" | "f1";
+
+function fixtureDateKey(iso: string | null | undefined): string {
+  if (!iso) return "unknown";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "unknown";
+  // Local calendar day for ops review
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function formatDateHeading(key: string): string {
+  if (key === "unknown") return "No fixture date";
+  const [y, m, d] = key.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString(undefined, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function statusTone(status: string): "ok" | "warn" | "bad" | "idle" | "info" {
+  if (status === "won") return "ok";
+  if (status === "pending") return "info";
+  if (status === "void") return "warn";
+  if (status === "lost") return "idle";
+  return "idle";
+}
+
+function sportLabel(sport: string): string {
+  if (sport === "football") return "Football";
+  if (sport === "ufc") return "UFC";
+  if (sport === "f1") return "F1";
+  return sport;
+}
+
 function AdminPredictionsPage() {
   const qc = useQueryClient();
   const { isViewer } = useAuth();
-  const [sport, setSport] = useState<"all" | "football" | "ufc" | "f1">("all");
+  const [sport, setSport] = useState<Sport>("all");
   const [market, setMarket] = useState("");
   const [status, setStatus] = useState("");
   const [reason, setReason] = useState("");
   const [flaggedOnly, setFlaggedOnly] = useState(false);
-  const [groupByFixture, setGroupByFixture] = useState(true);
+  const [pendingOnly, setPendingOnly] = useState(false);
+  const [search, setSearch] = useState("");
+  const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
 
   const listFn = useServerFn(listPredictionsAdmin);
   const voidFn = useServerFn(voidPredictionAdmin);
@@ -56,7 +138,6 @@ function AdminPredictionsPage() {
     if (sport === "f1") return ["", ...F1_MARKETS];
     return ["", ...FOOTBALL_MARKETS, ...UFC_MARKETS, ...F1_MARKETS];
   }, [sport]);
-
 
   const hasSession = useHasSession();
   const q = useQuery({
@@ -94,220 +175,472 @@ function AdminPredictionsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const filtered = useMemo(() => {
+    const needle = search.trim().toLowerCase();
+    return (q.data?.predictions ?? []).filter((p: any) => {
+      if (flaggedOnly && !p.flagged_for_review) return false;
+      if (pendingOnly && p.status !== "pending") return false;
+      if (!needle) return true;
+      const hay = [
+        p.display_name,
+        p.user_id,
+        p.id,
+        p.fixture_label,
+        p.fixture_id,
+        p.market,
+        p.outcome,
+        p.selection_key,
+        p.status,
+        p.sport,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(needle);
+    });
+  }, [q.data?.predictions, flaggedOnly, pendingOnly, search]);
 
-  const filtered = (q.data?.predictions ?? []).filter((p: any) => !flaggedOnly || p.flagged_for_review);
-
-  // Group by fixture for the "categorised by fixture" view.
-  const groups = useMemo(() => {
-    if (!groupByFixture) return null;
-    const byFixture = new Map<string, { sport: string; label: string; rows: any[] }>();
-    for (const r of filtered) {
-      const key = `${r.sport}:${r.fixture_id ?? "unknown"}`;
-      const g = byFixture.get(key) ?? { sport: r.sport, label: r.fixture_label ?? "—", rows: [] as any[] };
-
-      g.rows.push(r);
-      byFixture.set(key, g);
+  const kpis = useMemo(() => {
+    let pending = 0;
+    let pendingStake = 0;
+    let pendingLiability = 0;
+    let flagged = 0;
+    let voided = 0;
+    for (const p of filtered) {
+      const stake = Number(p.virtual_stake) || 0;
+      const odds = Number(p.reference_odds) || 0;
+      if (p.status === "pending") {
+        pending += 1;
+        pendingStake += stake;
+        pendingLiability += stake * odds;
+      }
+      if (p.flagged_for_review) flagged += 1;
+      if (p.status === "void") voided += 1;
     }
-    return Array.from(byFixture.entries()).map(([key, g]) => ({ key, ...g }));
-  }, [filtered, groupByFixture]);
+    return { pending, pendingStake, pendingLiability, flagged, voided, total: filtered.length };
+  }, [filtered]);
+
+  /** Date → fixtures → bets */
+  const dateGroups = useMemo(() => {
+    type FixtureGroup = {
+      key: string;
+      sport: string;
+      label: string;
+      fixtureAt: string | null;
+      fixtureStatus: string | null;
+      fixtureMeta: string | null;
+      rows: any[];
+      pendingStake: number;
+    };
+    type DateGroup = {
+      dateKey: string;
+      sortAt: number;
+      fixtures: FixtureGroup[];
+      betCount: number;
+      pendingCount: number;
+    };
+
+    const byDate = new Map<string, Map<string, FixtureGroup>>();
+
+    for (const r of filtered) {
+      const dateKey = fixtureDateKey(r.fixture_at);
+      if (!byDate.has(dateKey)) byDate.set(dateKey, new Map());
+      const fixtures = byDate.get(dateKey)!;
+      const fixtureKey = `${r.sport}:${r.fixture_id ?? r.fixture_label ?? "unknown"}`;
+      let g = fixtures.get(fixtureKey);
+      if (!g) {
+        g = {
+          key: fixtureKey,
+          sport: r.sport,
+          label: r.fixture_label ?? "—",
+          fixtureAt: r.fixture_at ?? null,
+          fixtureStatus: r.fixture_status ?? null,
+          fixtureMeta: r.fixture_meta ?? null,
+          rows: [],
+          pendingStake: 0,
+        };
+        fixtures.set(fixtureKey, g);
+      }
+      g.rows.push(r);
+      if (r.status === "pending") g.pendingStake += Number(r.virtual_stake) || 0;
+    }
+
+    const groups: DateGroup[] = Array.from(byDate.entries()).map(([dateKey, fixturesMap]) => {
+      const fixtures = Array.from(fixturesMap.values()).sort((a, b) => {
+        const ta = a.fixtureAt ? new Date(a.fixtureAt).getTime() : Number.POSITIVE_INFINITY;
+        const tb = b.fixtureAt ? new Date(b.fixtureAt).getTime() : Number.POSITIVE_INFINITY;
+        if (ta !== tb) return ta - tb;
+        return a.label.localeCompare(b.label);
+      });
+      for (const f of fixtures) {
+        f.rows.sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+      }
+      const betCount = fixtures.reduce((n, f) => n + f.rows.length, 0);
+      const pendingCount = fixtures.reduce(
+        (n, f) => n + f.rows.filter((r) => r.status === "pending").length,
+        0,
+      );
+      const sortAt =
+        dateKey === "unknown"
+          ? Number.POSITIVE_INFINITY
+          : new Date(`${dateKey}T12:00:00`).getTime();
+      return { dateKey, sortAt, fixtures, betCount, pendingCount };
+    });
+
+    groups.sort((a, b) => a.sortAt - b.sortAt);
+    return groups;
+  }, [filtered]);
+
+  function isDateOpen(dateKey: string): boolean {
+    if (dateKey in expandedDates) return expandedDates[dateKey];
+    // Default: expand today + unknown + any date with pending bets
+    const today = fixtureDateKey(new Date().toISOString());
+    const g = dateGroups.find((d) => d.dateKey === dateKey);
+    return dateKey === today || dateKey === "unknown" || (g?.pendingCount ?? 0) > 0;
+  }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">Predictions</h1>
-        <p className="text-sm text-muted-foreground">
-          Unified view of football, UFC and F1 bets. Filter by sport, void or regrade with wallet auto-adjustment (football/UFC only).
-        </p>
+    <div className="space-y-6">
+      <MgmtPageHeader
+        eyebrow="Sportsbook · Audit"
+        title="Predictions & bets"
+        description="Track every user ticket by fixture date. Void pending bets or regrade settled ones with a required reason (football & UFC). Wallet adjusts automatically."
+      />
+
+      <MgmtAlertStack>
+        {!reason.trim() ? (
+          <MgmtAlert tone="warn" title="Audit reason required">
+            Enter a void/regrade reason below before taking action. Reasons are recorded for audit.
+          </MgmtAlert>
+        ) : null}
+        {kpis.flagged > 0 ? (
+          <MgmtAlert tone="bad" title={`${kpis.flagged} flagged bet${kpis.flagged === 1 ? "" : "s"}`}>
+            Review flagged tickets — filter with “Flagged only”.
+          </MgmtAlert>
+        ) : null}
+      </MgmtAlertStack>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <MgmtKpi label="Tickets shown" value={kpis.total.toLocaleString()} />
+        <MgmtKpi
+          label="Open / pending"
+          value={kpis.pending.toLocaleString()}
+          tone={kpis.pending > 0 ? "warn" : "neutral"}
+          hint="Voidable while pending"
+        />
+        <MgmtKpi
+          label="Pending stake"
+          value={kpis.pendingStake.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          hint="Points at risk"
+        />
+        <MgmtKpi
+          label="Gross liability"
+          value={kpis.pendingLiability.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+          tone="warn"
+          hint="Stake × odds if all win"
+        />
+        <MgmtKpi label="Already voided" value={kpis.voided.toLocaleString()} tone="neutral" />
       </div>
 
-      <Card className="p-4 space-y-3">
-        <div className="flex flex-col md:flex-row gap-2 flex-wrap">
-          <select
-            value={sport}
-            onChange={(e) => { setSport(e.target.value as any); setMarket(""); }}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            {SPORTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
-          <select
-            value={market}
-            onChange={(e) => setMarket(e.target.value)}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            {marketOptions.map((m) => <option key={m} value={m}>{m || "All markets"}</option>)}
-          </select>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="h-9 rounded-md border bg-background px-2 text-sm"
-          >
-            {STATUSES.map((s) => <option key={s} value={s}>{s || "All statuses"}</option>)}
-          </select>
-          <Input
-            placeholder="Reason (required to void / regrade)"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            className="md:max-w-sm"
-          />
-          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <input type="checkbox" checked={flaggedOnly} onChange={(e) => setFlaggedOnly(e.target.checked)} />
-            Flagged only
-          </label>
-          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <input type="checkbox" checked={groupByFixture} onChange={(e) => setGroupByFixture(e.target.checked)} />
-            Group by fixture
-          </label>
-        </div>
-        <div className="text-xs text-muted-foreground">
-          Showing {filtered.length.toLocaleString()} bets.
+      <MgmtPanel title="Filters & actions" description="Narrow the ledger, then void or regrade from each fixture section.">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <MgmtField label="Sport">
+            <select
+              value={sport}
+              onChange={(e) => {
+                setSport(e.target.value as Sport);
+                setMarket("");
+              }}
+              className={mgmtInputClass}
+            >
+              {SPORTS.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </MgmtField>
+          <MgmtField label="Market">
+            <select value={market} onChange={(e) => setMarket(e.target.value)} className={mgmtInputClass}>
+              {marketOptions.map((m) => (
+                <option key={m || "all"} value={m}>
+                  {m || "All markets"}
+                </option>
+              ))}
+            </select>
+          </MgmtField>
+          <MgmtField label="Status">
+            <select value={status} onChange={(e) => setStatus(e.target.value)} className={mgmtInputClass}>
+              {STATUSES.map((s) => (
+                <option key={s || "all"} value={s}>
+                  {s || "All statuses"}
+                </option>
+              ))}
+            </select>
+          </MgmtField>
+          <MgmtField label="Search">
+            <input
+              className={mgmtInputClass}
+              placeholder="User, bet ID, fixture, selection…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </MgmtField>
         </div>
 
-        {q.isLoading ? (
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        ) : groupByFixture && groups ? (
-          <div className="space-y-4">
-            {groups.map((g) => (
-              <div key={g.key} className="rounded border border-border">
-                <div className="flex items-center justify-between px-3 py-2 bg-muted/40">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={g.sport === "ufc" ? "default" : "secondary"} className="uppercase text-[10px]">
-                      {g.sport}
-                    </Badge>
-                    <span className="text-sm font-semibold">{g.label}</span>
+        <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-end">
+          <div className="min-w-0 flex-1">
+            <MgmtField label="Void / regrade reason (required)">
+              <input
+                className={mgmtInputClass}
+                placeholder="e.g. Wrong result posted · customer goodwill · fixture postponed"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </MgmtField>
+          </div>
+          <div className="flex flex-wrap items-center gap-4 pb-1 text-[12px] text-[var(--mgmt-muted)]">
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" checked={pendingOnly} onChange={(e) => setPendingOnly(e.target.checked)} />
+              Pending only
+            </label>
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" checked={flaggedOnly} onChange={(e) => setFlaggedOnly(e.target.checked)} />
+              Flagged only
+            </label>
+          </div>
+        </div>
+      </MgmtPanel>
+
+      {q.isLoading ? (
+        <div className="flex items-center gap-2 text-[13px] text-[var(--mgmt-muted)]">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading tickets…
+        </div>
+      ) : dateGroups.length === 0 ? (
+        <MgmtPanel>
+          <div className="py-10 text-center text-[13px] text-[var(--mgmt-muted)]">No bets match these filters.</div>
+        </MgmtPanel>
+      ) : (
+        <div className="space-y-4">
+          {dateGroups.map((dg) => {
+            const open = isDateOpen(dg.dateKey);
+            return (
+              <MgmtPanel
+                key={dg.dateKey}
+                flush
+                title={formatDateHeading(dg.dateKey)}
+                description={`${dg.betCount} ticket${dg.betCount === 1 ? "" : "s"} · ${dg.fixtures.length} fixture${dg.fixtures.length === 1 ? "" : "s"}${dg.pendingCount ? ` · ${dg.pendingCount} pending` : ""}`}
+                actions={
+                  <MgmtBtn
+                    variant="ghost"
+                    onClick={() =>
+                      setExpandedDates((prev) => ({
+                        ...prev,
+                        [dg.dateKey]: !open,
+                      }))
+                    }
+                  >
+                    {open ? "Collapse" : "Expand"}
+                  </MgmtBtn>
+                }
+              >
+                {open ? (
+                  <div className="divide-y divide-[var(--mgmt-border)]">
+                    {dg.fixtures.map((fx) => (
+                      <div key={fx.key} className="bg-white">
+                        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--mgmt-border)] bg-[#FAFBFC] px-5 py-3">
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <MgmtStatus tone="info">{sportLabel(fx.sport)}</MgmtStatus>
+                              {fx.fixtureStatus ? (
+                                <MgmtStatus
+                                  tone={
+                                    fx.fixtureStatus === "live" || fx.fixtureStatus === "in_progress"
+                                      ? "warn"
+                                      : fx.fixtureStatus === "finished" || fx.fixtureStatus === "completed"
+                                        ? "ok"
+                                        : "idle"
+                                  }
+                                >
+                                  {fx.fixtureStatus}
+                                </MgmtStatus>
+                              ) : null}
+                              <span className="text-[14px] font-medium text-[var(--mgmt-ink)]">{fx.label}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[11px] text-[var(--mgmt-muted)]">
+                              <span>Kickoff / start: {formatDateTime(fx.fixtureAt)}</span>
+                              {fx.fixtureMeta ? <span>{fx.fixtureMeta}</span> : null}
+                              <span className="font-mono">{fx.rows[0]?.fixture_id ?? "—"}</span>
+                              <span>
+                                {fx.rows.length} bet{fx.rows.length === 1 ? "" : "s"}
+                                {fx.pendingStake > 0
+                                  ? ` · pending stake ${fx.pendingStake.toLocaleString()}`
+                                  : ""}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <BetsTable
+                          rows={fx.rows}
+                          isViewer={isViewer}
+                          reason={reason}
+                          voidMut={voidMut}
+                          regradeMut={regradeMut}
+                        />
+                      </div>
+                    ))}
                   </div>
-                  <span className="text-xs text-muted-foreground">{g.rows.length} bets</span>
-                </div>
-                <div className="overflow-x-auto">
-                  <BetsTable
-                    rows={g.rows}
-                    isViewer={isViewer}
-                    reason={reason}
-                    voidMut={voidMut}
-                    regradeMut={regradeMut}
-                    hideFixture
-                  />
-                </div>
-              </div>
-            ))}
-            {groups.length === 0 && (
-              <div className="text-center text-sm text-muted-foreground py-6">No bets.</div>
-            )}
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <BetsTable
-              rows={filtered}
-              isViewer={isViewer}
-              reason={reason}
-              voidMut={voidMut}
-              regradeMut={regradeMut}
-            />
-          </div>
-        )}
-      </Card>
+                ) : (
+                  <div className="px-5 py-4 text-[12px] text-[var(--mgmt-muted)]">Collapsed — expand to audit tickets.</div>
+                )}
+              </MgmtPanel>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
 
-function BetsTable({ rows, isViewer, reason, voidMut, regradeMut, hideFixture = false }: {
+function BetsTable({
+  rows,
+  isViewer,
+  reason,
+  voidMut,
+  regradeMut,
+}: {
   rows: any[];
   isViewer: boolean;
   reason: string;
   voidMut: any;
   regradeMut: any;
-  hideFixture?: boolean;
 }) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Sport</TableHead>
-          <TableHead>User</TableHead>
-          {!hideFixture && <TableHead>Fixture</TableHead>}
-          <TableHead>Market</TableHead>
-          <TableHead>Selection</TableHead>
-          <TableHead className="text-right">Stake</TableHead>
-          <TableHead className="text-right">Odds</TableHead>
-          <TableHead className="text-right">Payout</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Placed</TableHead>
-          <TableHead>Regrade</TableHead>
-          <TableHead></TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
+    <MgmtTable minWidth="1100px">
+      <thead>
+        <tr>
+          <MgmtTh>User</MgmtTh>
+          <MgmtTh>Ticket</MgmtTh>
+          <MgmtTh>Market / selection</MgmtTh>
+          <MgmtTh className="text-right">Stake</MgmtTh>
+          <MgmtTh className="text-right">Odds</MgmtTh>
+          <MgmtTh className="text-right">Payout</MgmtTh>
+          <MgmtTh>Status</MgmtTh>
+          <MgmtTh>Placed / settled</MgmtTh>
+          <MgmtTh>Actions</MgmtTh>
+        </tr>
+      </thead>
+      <tbody>
         {rows.map((p: any) => {
-          const stake = Number(p.virtual_stake);
-          const odds = Number(p.reference_odds);
-          const payout = stake * odds;
+          const stake = Number(p.virtual_stake) || 0;
+          const odds = Number(p.reference_odds) || 0;
+          const payout = Number(p.potential_return) || stake * odds;
           const flagged = !!p.flagged_for_review;
+          const canMutate = !isViewer && !!reason.trim() && p.sport !== "f1";
           return (
-            <TableRow key={`${p.sport}:${p.id}`} className={flagged ? "bg-yellow-500/5" : undefined}>
-              <TableCell>
-                <Badge variant={p.sport === "ufc" ? "default" : "secondary"} className="uppercase text-[10px]">
-                  {p.sport}
-                </Badge>
-              </TableCell>
-              <TableCell className="font-medium text-sm">
-                <div className="flex items-center gap-1.5">
-                  {flagged && <Flag className="h-3 w-3 text-yellow-500 shrink-0" aria-label="Flagged" />}
+            <tr key={`${p.sport}:${p.id}`} className={flagged ? "bg-[#FEF7E0]/60" : undefined}>
+              <MgmtTd>
+                <div className="flex items-center gap-1.5 font-medium">
+                  {flagged ? <Flag className="h-3 w-3 shrink-0 text-[#B06000]" aria-label="Flagged" /> : null}
                   {p.display_name}
                 </div>
-                {flagged && p.flagged_reason && (
-                  <div className="text-[10px] text-yellow-600 mt-0.5 max-w-[200px]" title={p.flagged_reason}>
+                <div className="mt-0.5 font-mono text-[10px] text-[var(--mgmt-muted)]">{p.user_id}</div>
+                {flagged && p.flagged_reason ? (
+                  <div className="mt-1 max-w-[220px] text-[10px] text-[#B06000]" title={p.flagged_reason}>
                     {p.flagged_reason}
                   </div>
-                )}
-              </TableCell>
-              {!hideFixture && <TableCell className="text-xs">{p.fixture_label}</TableCell>}
-              <TableCell className="text-xs">{p.market}</TableCell>
-              <TableCell className="text-xs">{p.outcome}</TableCell>
-              <TableCell className="text-right text-xs tabular-nums">{stake.toLocaleString()}</TableCell>
-              <TableCell className="text-right text-xs tabular-nums">{odds.toFixed(2)}</TableCell>
-              <TableCell className="text-right text-xs font-semibold text-primary tabular-nums">
+                ) : null}
+              </MgmtTd>
+              <MgmtTd mono>
+                <div className="text-[11px]">{p.id}</div>
+                <div className="mt-0.5 text-[10px] uppercase text-[var(--mgmt-muted)]">{sportLabel(p.sport)}</div>
+              </MgmtTd>
+              <MgmtTd>
+                <div className="font-medium">{p.market}</div>
+                <div className="mt-0.5 text-[12px]">{p.outcome}</div>
+                {p.selection_key ? (
+                  <div className="mt-0.5 font-mono text-[10px] text-[var(--mgmt-muted)]">{p.selection_key}</div>
+                ) : null}
+              </MgmtTd>
+              <MgmtTd mono className="text-right">
+                {stake.toLocaleString()}
+              </MgmtTd>
+              <MgmtTd mono className="text-right">
+                {odds.toFixed(2)}
+              </MgmtTd>
+              <MgmtTd mono className="text-right font-medium">
                 {payout.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-              </TableCell>
-              <TableCell><Badge variant="outline" className="uppercase text-[10px]">{p.status}</Badge></TableCell>
-              <TableCell className="text-[10px] text-muted-foreground">{new Date(p.created_at).toLocaleString()}</TableCell>
-              <TableCell>
-                <select
-                  className="h-7 rounded border bg-background px-1 text-[11px]"
-                  disabled={isViewer || !reason || regradeMut.isPending || p.sport === "f1"}
-                  defaultValue=""
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (!v) return;
-                    if (v === p.status) { toast.error("Already that status"); e.currentTarget.value = ""; return; }
-                    if (!window.confirm(`Regrade this bet ${p.status} → ${v}? Wallet will be adjusted atomically.`)) {
-                      e.currentTarget.value = ""; return;
-                    }
-                    regradeMut.mutate({ row: p, newStatus: v });
-                    e.currentTarget.value = "";
-                  }}
-                >
-                  <option value="">→ …</option>
-                  {REGRADE_TARGETS.filter((t) => t !== p.status).map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </TableCell>
-              <TableCell className="text-right">
-                <Button
-                  size="sm" variant="outline"
-                  disabled={isViewer || p.status !== "pending" || !reason || voidMut.isPending || p.sport === "f1"}
-                  onClick={() => voidMut.mutate(p)}
-                >
-                  Void
-                </Button>
-              </TableCell>
-            </TableRow>
+              </MgmtTd>
+              <MgmtTd>
+                <MgmtStatus tone={statusTone(p.status)}>{p.status}</MgmtStatus>
+              </MgmtTd>
+              <MgmtTd>
+                <div className="text-[11px]">{formatDateTime(p.created_at)}</div>
+                <div className="mt-0.5 text-[10px] text-[var(--mgmt-muted)]">
+                  Settled: {formatDateTime(p.settled_at)}
+                </div>
+              </MgmtTd>
+              <MgmtTd>
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    className="h-8 rounded-lg border border-[var(--mgmt-border)] bg-white px-2 text-[11px]"
+                    disabled={!canMutate || regradeMut.isPending}
+                    defaultValue=""
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (!v) return;
+                      if (v === p.status) {
+                        toast.error("Already that status");
+                        e.currentTarget.value = "";
+                        return;
+                      }
+                      if (
+                        !window.confirm(
+                          `Regrade ticket ${p.id.slice(0, 8)}… ${p.status} → ${v}?\nWallet will be adjusted atomically.`,
+                        )
+                      ) {
+                        e.currentTarget.value = "";
+                        return;
+                      }
+                      regradeMut.mutate({ row: p, newStatus: v });
+                      e.currentTarget.value = "";
+                    }}
+                  >
+                    <option value="">Regrade…</option>
+                    {REGRADE_TARGETS.filter((t) => t !== p.status).map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                  <MgmtBtn
+                    variant="danger"
+                    disabled={!canMutate || p.status !== "pending" || voidMut.isPending}
+                    onClick={() => {
+                      if (
+                        !window.confirm(
+                          `Void & refund ticket ${p.id.slice(0, 8)}… for ${p.display_name}?\nStake ${stake.toLocaleString()} will be returned.`,
+                        )
+                      ) {
+                        return;
+                      }
+                      voidMut.mutate(p);
+                    }}
+                  >
+                    Void
+                  </MgmtBtn>
+                </div>
+                {p.sport === "f1" ? (
+                  <div className="mt-1 text-[10px] text-[var(--mgmt-muted)]">F1 void/regrade not available yet</div>
+                ) : null}
+              </MgmtTd>
+            </tr>
           );
         })}
-
-        {!rows.length && (
-          <TableRow><TableCell colSpan={hideFixture ? 11 : 12} className="text-center text-muted-foreground">No bets.</TableCell></TableRow>
-        )}
-      </TableBody>
-    </Table>
+      </tbody>
+    </MgmtTable>
   );
 }

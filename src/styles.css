@@ -421,3 +421,67 @@ html[data-arcade-table] [data-arcade-console] {
   0%, 100% { opacity: .45; }
   50%      { opacity: 1; }
 }
+
+/* ------------------------------------------------------------------ */
+/* Management operator console — Analytics / Power BI style            */
+/* Light, spacious, industry ops aesthetic. Scoped to .mgmt-ops.       */
+/* Also remaps player-app CSS vars so legacy admin pages inherit look. */
+/* ------------------------------------------------------------------ */
+.mgmt-ops {
+  /* Core ops tokens */
+  --mgmt-bg: #f6f8fa;
+  --mgmt-panel: #ffffff;
+  --mgmt-panel-2: #fafbfc;
+  --mgmt-border: #e5e7eb;
+  --mgmt-ink: #202124;
+  --mgmt-muted: #5f6368;
+  --mgmt-accent: #1a73e8;
+  --mgmt-ok: #137333;
+  --mgmt-warn: #b06000;
+  --mgmt-danger: #c5221f;
+  --mgmt-shadow: 0 1px 2px rgba(60, 64, 67, 0.08), 0 1px 3px 1px rgba(60, 64, 67, 0.06);
+  --font-mgmt: "IBM Plex Sans", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+
+  /* Remap legacy tokens used by older admin pages */
+  --color-surface: var(--mgmt-bg);
+  --color-surface-2: var(--mgmt-panel);
+  --color-surface-border: var(--mgmt-border);
+  --color-ink: var(--mgmt-ink);
+  --color-ink-muted: var(--mgmt-muted);
+  --color-neon: var(--mgmt-accent);
+  --surface: var(--mgmt-bg);
+  --surface-2: var(--mgmt-panel);
+  --surface-border: var(--mgmt-border);
+  --ink: var(--mgmt-ink);
+  --ink-muted: var(--mgmt-muted);
+  --neon: var(--mgmt-accent);
+  --background: var(--mgmt-bg);
+  --foreground: var(--mgmt-ink);
+  --card: var(--mgmt-panel);
+  --card-foreground: var(--mgmt-ink);
+  --muted: #f1f3f4;
+  --muted-foreground: var(--mgmt-muted);
+  --border: var(--mgmt-border);
+  --primary: var(--mgmt-accent);
+  --primary-foreground: #ffffff;
+
+  background: var(--mgmt-bg);
+  color: var(--mgmt-ink);
+  font-family: var(--font-mgmt);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.mgmt-ops .font-mono {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+/* Soften dense uppercase micro-labels from the old console */
+.mgmt-ops [class*="tracking-[0.2"],
+.mgmt-ops [class*="tracking-[0.24"],
+.mgmt-ops [class*="tracking-[0.28"],
+.mgmt-ops [class*="tracking-[0.32"] {
+  letter-spacing: 0.04em;
+  font-weight: 500;
+  text-transform: none;
+  font-size: 12px;
+  color: var(--mgmt-muted);
+}

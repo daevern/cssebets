@@ -492,21 +492,28 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       }),
       ...chunkArray(mids).map(async (ids) => {
         if (!ids.length) return;
-        const { data: page, error } = await supabaseAdmin.from("matches").select("id, home_team, away_team").in("id", ids);
+        const { data: page, error } = await supabaseAdmin
+          .from("matches")
+          .select("id, home_team, away_team, kickoff_at, status, stage")
+          .in("id", ids);
         if (error) throw new Error(error.message);
         matches.push(...(page ?? []));
       }),
       ...chunkArray(fids).map(async (ids) => {
         if (!ids.length) return;
         const { data: page, error } = await (supabaseAdmin as any)
-          .from("ufc_fights").select("id, fighter_a, fighter_b").in("id", ids);
+          .from("ufc_fights")
+          .select("id, fighter_a, fighter_b, commence_time, status")
+          .in("id", ids);
         if (error) throw new Error(error.message);
         fights.push(...(page ?? []));
       }),
       ...chunkArray(rids).map(async (ids) => {
         if (!ids.length) return;
         const { data: page, error } = await (supabaseAdmin as any)
-          .from("f1_races").select("id, name, season, round").in("id", ids);
+          .from("f1_races")
+          .select("id, name, season, round, starts_at, status")
+          .in("id", ids);
         if (error) throw new Error(error.message);
         races.push(...(page ?? []));
       }),
@@ -526,6 +533,9 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
         sport: "football" as const,
         fixture_id: r.match_id,
         fixture_label: label,
+        fixture_at: match?.kickoff_at ?? null,
+        fixture_status: match?.status ?? null,
+        fixture_meta: match?.stage ?? null,
         display_name: profileById.get(r.user_id)?.display_name ?? r.user_id.slice(0, 8),
         match: label,
       };
@@ -541,9 +551,13 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
         sport: "ufc" as const,
         fixture_id: r.fight_id,
         fixture_label: label,
+        fixture_at: fight?.commence_time ?? null,
+        fixture_status: fight?.status ?? null,
+        fixture_meta: null,
         match: label,
         market: r.market_type,
         outcome: r.selection_label,
+        selection_key: r.selection_key ?? null,
         virtual_stake: r.stake,
         reference_odds: r.odds_locked,
         potential_return: r.potential_payout,
@@ -560,13 +574,20 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
     const normalizedF1 = f1Rows.map((r: any) => {
       let label = "—";
       let fixtureId: string | null = null;
+      let fixtureAt: string | null = null;
+      let fixtureStatus: string | null = null;
+      let fixtureMeta: string | null = null;
       if (r._kind === "race") {
         const race = raceById.get(r.race_id);
         label = race ? `${race.name} (R${race.round}, ${race.season})` : "Race";
         fixtureId = r.race_id;
+        fixtureAt = race?.starts_at ?? null;
+        fixtureStatus = race?.status ?? null;
+        fixtureMeta = race ? `R${race.round} · ${race.season}` : null;
       } else {
         label = `Championship ${r.season}`;
         fixtureId = null;
+        fixtureMeta = String(r.season ?? "");
       }
       return {
         id: r.id,
@@ -576,9 +597,13 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
         f1_kind: r._kind as "race" | "championship",
         fixture_id: fixtureId,
         fixture_label: label,
+        fixture_at: fixtureAt,
+        fixture_status: fixtureStatus,
+        fixture_meta: fixtureMeta,
         match: label,
         market: r.market_type,
         outcome: r.selection_label,
+        selection_key: r.selection_key ?? null,
         virtual_stake: r.stake,
         reference_odds: r.odds_locked,
         potential_return: r.potential_payout,
