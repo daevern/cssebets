@@ -318,7 +318,6 @@ export async function syncFootballOddsBatch(opts: {
   if (skipped) return { processed: 0, errors: ["skipped: already running"] };
   const errors: string[] = [];
 
-  const staleBefore = new Date(Date.now() - freshness * 60_000).toISOString();
   const horizon = new Date(Date.now() + 7 * 86400_000).toISOString();
 
   // Pick scheduled events in the next 7 days whose latest odds snapshot is stale
@@ -337,12 +336,33 @@ export async function syncFootballOddsBatch(opts: {
 
   let processed = 0;
   for (const ev of events ?? []) {
-    // Skip if we have very recent odds snapshot for this event
+    const startsAt = new Date((ev as any).scheduled_at).getTime();
+    const untilKickoff = startsAt - Date.now();
+    const status = String((ev as any).status ?? "").toLowerCase();
+    // Real bookmaker refreshes are intentionally much denser around kickoff.
+    // The zero-quota heartbeat must never satisfy this freshness check: it only
+    // advances the chart clock and does not contain a newly fetched market price.
+    const providerFreshnessMinutes =
+      status === "live" || status === "in_play" || untilKickoff <= 0
+        ? 1
+        : untilKickoff <= 12 * 3600_000
+          ? 5
+          : untilKickoff <= 48 * 3600_000
+            ? 15
+            : freshness;
+    const providerStaleBefore = new Date(
+      Date.now() - providerFreshnessMinutes * 60_000,
+    ).toISOString();
+
+    // Only genuine API-Football snapshots can defer the next provider pull.
+    // Previously heartbeat rows kept this count non-zero forever, leaving the
+    // graph flat even though the paid provider sync cron was running.
     const { count } = await supabaseAdmin
       .from("sports_odds_snapshots" as any)
       .select("*", { count: "exact", head: true })
       .eq("sports_event_id", (ev as any).id)
-      .gt("fetched_at", staleBefore);
+      .eq("provider", "api-football")
+      .gt("fetched_at", providerStaleBefore);
     if ((count ?? 0) > 0) continue;
 
     const r = await syncFootballOddsForEvent((ev as any).id);
