@@ -192,18 +192,22 @@ export async function runLiveOddsSync(): Promise<LiveOddsSyncResult> {
 export async function runMarketHeartbeat(nowIso: string) {
   const now = Date.now();
   const from = new Date(now - 4 * 60 * 60 * 1000).toISOString();
-  const to = new Date(now + 2 * 60 * 60 * 1000).toISOString();
-  const staleMs = 20_000;
+  const to = new Date(now + 12 * 60 * 60 * 1000).toISOString();
+  // Near/in-play events tick every poll (~15s); events further out tick once a
+  // minute so upcoming markets still draw a live-looking line without bloat.
+  const activeUntil = now + 2 * 60 * 60 * 1000;
+  const staleFor = (startsAt: string | null | undefined) =>
+    startsAt && new Date(startsAt).getTime() <= activeUntil ? 20_000 : 60_000;
   const out = { football: 0, ufc: 0, f1: 0 };
 
-  const fresh = (t: string | null | undefined) =>
-    !!t && now - new Date(t).getTime() < staleMs;
+  const fresh = (t: string | null | undefined, startsAt?: string | null) =>
+    !!t && now - new Date(t).getTime() < staleFor(startsAt);
 
   try {
     // ---- club football (sports_markets) ----
     const { data: events } = await (supabaseAdmin as any)
       .from("sports_events")
-      .select("id")
+      .select("id, scheduled_at")
       .eq("sport_code", "football")
       .not("status", "in", '("finished","postponed","cancelled")')
       .gt("scheduled_at", from)
@@ -229,7 +233,7 @@ export async function runMarketHeartbeat(nowIso: string) {
         .order("fetched_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (fresh(last?.fetched_at)) continue;
+      if (fresh(last?.fetched_at, ev.scheduled_at)) continue;
 
       await (supabaseAdmin as any).from("sports_odds_snapshots").insert(
         sels.map((s: any) => ({
@@ -252,7 +256,7 @@ export async function runMarketHeartbeat(nowIso: string) {
     // ---- UFC (moneyline) ----
     const { data: fights } = await (supabaseAdmin as any)
       .from("ufc_fights")
-      .select("id")
+      .select("id, commence_time")
       .neq("status", "finished")
       .neq("status", "cancelled")
       .gt("commence_time", from)
@@ -277,7 +281,7 @@ export async function runMarketHeartbeat(nowIso: string) {
         .order("sampled_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (fresh(last?.sampled_at)) continue;
+      if (fresh(last?.sampled_at, f.commence_time)) continue;
 
       await (supabaseAdmin as any).from("ufc_market_snapshots").insert(
         rows.map((m) => ({
@@ -298,7 +302,7 @@ export async function runMarketHeartbeat(nowIso: string) {
     // ---- F1 (race winner) ----
     const { data: races } = await (supabaseAdmin as any)
       .from("f1_races")
-      .select("id")
+      .select("id, starts_at")
       .neq("status", "finished")
       .gt("starts_at", from)
       .lt("starts_at", to)
@@ -322,7 +326,7 @@ export async function runMarketHeartbeat(nowIso: string) {
         .order("snapshot_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (fresh(last?.snapshot_at)) continue;
+      if (fresh(last?.snapshot_at, r.starts_at)) continue;
 
       await (supabaseAdmin as any).from("f1_race_odds_snapshots").insert(
         rows.map((m) => ({ market_id: m.id, odds: Number(m.odds), snapshot_at: nowIso })),
