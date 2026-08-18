@@ -49,6 +49,7 @@ export type LiveOddsSyncResult = {
   processed?: number;
   updated?: number;
   footballUpdated?: number;
+  heartbeat?: { football: number; ufc: number; f1: number };
   fallbackAttempted?: number;
   quota?: any;
 };
@@ -93,7 +94,8 @@ export async function runLiveOddsSync(): Promise<LiveOddsSyncResult> {
   const footballEvents = [...footballById.values()];
 
   if (!liveWc?.length && !footballEvents.length) {
-    return { ok: true, skipped: "no live fixtures" };
+    const heartbeat = await runMarketHeartbeat(nowIso);
+    return { ok: true, skipped: "no live fixtures", heartbeat };
   }
 
   // Resolve api-football fixture ids for club events.
