@@ -20,7 +20,7 @@ export function FootballMatchDetailsPage({ matchId }: { matchId: string }) {
       analyticsFn={getFootballEventAnalytics}
       queryKey="football-analytics"
       breadcrumbLabel="Football"
-      realtime={false}
+      realtime
       analyticsCard={
         <MarketAnalyticsCard
           matchId={matchId}

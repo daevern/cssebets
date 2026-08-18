@@ -111,7 +111,9 @@ function useNowTick(intervalMs = 1000): number {
 }
 
 function pctFromPoint(p: { odds: number; prob: number }): number {
-  return Math.round(p.prob * 100);
+  // Keep tenths of a percent so small but genuine bookmaker moves remain
+  // visible instead of being flattened by whole-number rounding.
+  return Math.round(p.prob * 1000) / 10;
 }
 function pointTime(p: { t: string }): number { return new Date(p.t).getTime(); }
 
@@ -459,7 +461,7 @@ export function MarketAnalyticsCard({
                 <span className="h-2 w-2 rounded-full" style={{ background: color }} />
                 <span className="font-medium tracking-tight text-white/85">{s.label}</span>
                 {typeof v === "number" && (
-                  <span className="font-mono text-white/60">{Math.round(v)}%</span>
+                  <span className="font-mono text-white/60">{v.toFixed(1)}%</span>
                 )}
               </button>
             );
@@ -607,7 +609,7 @@ export function MarketAnalyticsCard({
                               fontWeight={800}
                               style={{ letterSpacing: "-0.01em" }}
                             >
-                              {`${Math.round(v)}%`}
+                              {`${v.toFixed(1)}%`}
                             </text>
                           </g>
                         );
