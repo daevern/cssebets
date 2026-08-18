@@ -97,7 +97,8 @@ export function PlayingCard({
       dy = b.top + b.height / 2 - (a.top + a.height / 2);
     }
     // Guard against a bad/zero measurement so the card never just "appears".
-    if (Math.abs(dx) + Math.abs(dy) < 40) {
+    // Only used when no explicit origin was supplied.
+    if (!shoe && Math.abs(dx) + Math.abs(dy) < 40) {
       dx = Math.max(160, (boxRef.current?.ownerDocument?.defaultView?.innerWidth ?? 400) * 0.35);
       dy = 0;
     }
