@@ -48,10 +48,10 @@ export const getApiFootballStatus = createServerFn({ method: "GET" })
       marketsFromProvider: usingProvider ?? 0,
       recent: recent ?? [],
     };
-  },
-);
+  });
 
 export const triggerApiFootballSync = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { maxMatches?: number; hoursAhead?: number; freshnessHours?: number }) => d ?? {})
   .handler(async (ctx) => {
     await assertAdmin(ctx);
