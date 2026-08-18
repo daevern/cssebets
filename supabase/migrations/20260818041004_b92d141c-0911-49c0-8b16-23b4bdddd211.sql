@@ -1,0 +1,1 @@
+select cron.alter_job((select jobid from cron.job where jobname='f1-odds-30min'), schedule => '*/10 * * * *');
