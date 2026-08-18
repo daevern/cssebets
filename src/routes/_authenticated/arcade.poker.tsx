@@ -251,7 +251,9 @@ function PokerPage() {
 
       <div className="relative isolate">
         <ArcadeGlow game="poker" />
-        <ArcadeStage game="poker" className="relative z-10">
+        {/* Board is width-bound: never scale past 1 or the five cards
+            overflow the stage horizontally. */}
+        <ArcadeStage game="poker" className="relative z-10" maxScale={1}>
           <ArcadeEntrance game="poker" className="relative">
             <MiniCabinetTitle game="poker" title="Video Poker" />
             <SettlePlaque
