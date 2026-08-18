@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, redirect, Link, useRouter, useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useHasAccessToken } from "@/hooks/use-access-token";
+import { useAccessToken } from "@/hooks/use-access-token";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -49,7 +49,8 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthedLayout() {
   const { isAdmin, isAdminTier, isMember, isPending, loading, user } = useAuth();
-  const hasToken = useHasAccessToken();
+  const accessToken = useAccessToken();
+  const hasToken = accessToken !== null;
   const router = useRouter();
   const queryClient = useQueryClient();
   const location = useLocation();
@@ -58,7 +59,7 @@ function AuthedLayout() {
   const walletFn = useServerFn(getMyWallet);
   const wallet = useQuery({
     queryKey: ["my-wallet", user?.id],
-    queryFn: () => walletFn({}),
+    queryFn: () => walletFn({ headers: { Authorization: `Bearer ${accessToken}` } }),
     enabled: showBalance && !!user?.id && hasToken,
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
@@ -73,28 +74,28 @@ function AuthedLayout() {
 
   const pendingPoints = useQuery({
     queryKey: ["pending-point-request-count"],
-    queryFn: () => pointReqFn({}),
+    queryFn: () => pointReqFn({ headers: { Authorization: `Bearer ${accessToken}` } }),
     enabled: isAdmin && hasToken,
     retry: false,
     refetchInterval: 20000,
   });
   const pendingPayouts = useQuery({
     queryKey: ["pending-payout-count"],
-    queryFn: () => payoutAdminFn({}),
+    queryFn: () => payoutAdminFn({ headers: { Authorization: `Bearer ${accessToken}` } }),
     enabled: isAdmin && hasToken,
     retry: false,
     refetchInterval: 20000,
   });
   const pendingUsers = useQuery({
     queryKey: ["pending-user-count"],
-    queryFn: () => pendingUserFn({}),
+    queryFn: () => pendingUserFn({ headers: { Authorization: `Bearer ${accessToken}` } }),
     enabled: isAdmin && hasToken,
     retry: false,
     refetchInterval: 20000,
   });
   const myPayoutAction = useQuery({
     queryKey: ["my-payout-action-count", user?.id],
-    queryFn: () => myPayoutActionFn({}),
+    queryFn: () => myPayoutActionFn({ headers: { Authorization: `Bearer ${accessToken}` } }),
     enabled: !!user?.id && hasToken,
     retry: false,
     refetchInterval: 20000,
@@ -102,7 +103,7 @@ function AuthedLayout() {
   const supportUnreadFn = useServerFn(getMyUnreadSupportCount);
   const supportUnread = useQuery({
     queryKey: ["my-support-unread", user?.id],
-    queryFn: () => supportUnreadFn({}),
+    queryFn: () => supportUnreadFn({ headers: { Authorization: `Bearer ${accessToken}` } }),
     enabled: !!user?.id && hasToken,
     retry: false,
     refetchInterval: 20000,

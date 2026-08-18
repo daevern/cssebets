@@ -7,19 +7,23 @@ import { supabase } from "@/integrations/supabase/client";
  * before this is true, otherwise the RPC 500s with
  * "Unauthorized: No authorization header provided".
  */
-export function useHasAccessToken() {
-  const [hasToken, setHasToken] = useState(false);
+export function useAccessToken() {
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (active) setHasToken(!!session?.access_token);
+      if (active) setAccessToken(session?.access_token ?? null);
     });
     supabase.auth.getSession().then(({ data }) => {
-      if (active) setHasToken(!!data.session?.access_token);
+      if (active) setAccessToken(data.session?.access_token ?? null);
     });
     return () => { active = false; subscription.unsubscribe(); };
   }, []);
 
-  return hasToken;
+  return accessToken;
+}
+
+export function useHasAccessToken() {
+  return useAccessToken() !== null;
 }
