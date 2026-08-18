@@ -60,6 +60,7 @@ export const triggerApiFootballSync = createServerFn({ method: "POST" })
   });
 
 export const syncOneMatchApiFootball = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: { matchId: string }) => {
     if (!d?.matchId) throw new Error("matchId required");
     return d;
