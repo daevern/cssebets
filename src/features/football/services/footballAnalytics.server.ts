@@ -161,9 +161,20 @@ export async function fetchFootballEventAnalytics(
     .eq("sports_event_id", eventId)
     .maybeSingle();
 
-  if (cached?.payload && now - new Date(cached.fetched_at).getTime() < ttl) {
-    return { ...(cached.payload as AnalyticsBundle), match: { ...base, ...(cached.payload as any).matchExtras }, phase };
+  if (cached?.payload) {
+    const p = cached.payload as any;
+    const fresh = now - new Date(cached.fetched_at).getTime() < ttl;
+    // A bundle cached in an earlier phase (e.g. pre-match) holds no events,
+    // stats or lineups — never serve it once the match is live/finished.
+    const samePhase = p.phase === phase;
+    const hasReport =
+      (p.events?.length ?? 0) > 0 || !!p.stats?.home || !!p.stats?.away || !!p.lineups?.home;
+    const usable = fresh && samePhase && (phase === "pre" || hasReport);
+    if (usable) {
+      return { ...(p as AnalyticsBundle), phase, match: { ...base, ...p.matchExtras } };
+    }
   }
+
 
   const fixtureId = await resolveFixtureId(ev);
   if (!fixtureId) {
