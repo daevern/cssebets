@@ -49,6 +49,7 @@ export type LiveOddsSyncResult = {
   processed?: number;
   updated?: number;
   footballUpdated?: number;
+  heartbeat?: { football: number; ufc: number; f1: number };
   fallbackAttempted?: number;
   quota?: any;
 };
@@ -93,7 +94,8 @@ export async function runLiveOddsSync(): Promise<LiveOddsSyncResult> {
   const footballEvents = [...footballById.values()];
 
   if (!liveWc?.length && !footballEvents.length) {
-    return { ok: true, skipped: "no live fixtures" };
+    const heartbeat = await runMarketHeartbeat(nowIso);
+    return { ok: true, skipped: "no live fixtures", heartbeat };
   }
 
   // Resolve api-football fixture ids for club events.
@@ -166,15 +168,184 @@ export async function runLiveOddsSync(): Promise<LiveOddsSyncResult> {
     },
   });
 
+  const heartbeat = await runMarketHeartbeat(nowIso);
+
   return {
     ok: true,
     processed: (liveWc ?? []).length + footballEvents.length,
     updated,
     footballUpdated,
     fallbackAttempted,
+    heartbeat,
     quota: "quota" in resp ? resp.quota : undefined,
   };
 }
+
+/**
+ * Zero-quota heartbeat: for club-football, UFC and F1 events inside their
+ * active window, append a snapshot point from the CURRENT stored market prices
+ * whenever the newest snapshot is older than ~20s. Provider syncs still supply
+ * real price moves (a goal / finish repriced by the book); the heartbeat keeps
+ * the Kalshi LIVE chart advancing every tick instead of flat-lining between
+ * provider polls, exactly like World Cup match_odds_snapshots.
+ */
+export async function runMarketHeartbeat(nowIso: string) {
+  const now = Date.now();
+  const from = new Date(now - 4 * 60 * 60 * 1000).toISOString();
+  const to = new Date(now + 72 * 60 * 60 * 1000).toISOString();
+  // UFC cards / GPs are weekly events — look a full week ahead for those.
+  const toWeek = new Date(now + 7 * 24 * 60 * 60 * 1000).toISOString();
+  // Near/in-play events tick every poll (~15s); events further out tick once a
+  // minute so upcoming markets still draw a live-looking line without bloat.
+  const staleFor = (startsAt: string | null | undefined) => {
+    const t = startsAt ? new Date(startsAt).getTime() : now;
+    const ahead = t - now;
+    if (ahead <= 2 * 60 * 60 * 1000) return 20_000; // live / imminent
+    if (ahead <= 12 * 60 * 60 * 1000) return 60_000; // same-day
+    return 300_000; // further out
+  };
+  const out = { football: 0, ufc: 0, f1: 0 };
+
+  const fresh = (t: string | null | undefined, startsAt?: string | null) =>
+    !!t && now - new Date(t).getTime() < staleFor(startsAt);
+
+  try {
+    // ---- club football (sports_markets) ----
+    const { data: events } = await (supabaseAdmin as any)
+      .from("sports_events")
+      .select("id, scheduled_at")
+      .eq("sport_code", "football")
+      .not("status", "in", '("finished","postponed","cancelled")')
+      .gt("scheduled_at", from)
+      .lt("scheduled_at", to)
+      .limit(40);
+
+    for (const ev of (events ?? []) as any[]) {
+      const { data: market } = await (supabaseAdmin as any)
+        .from("sports_markets")
+        .select("id, market_key, status, sports_market_selections (selection_key, decimal_odds)")
+        .eq("sports_event_id", ev.id)
+        .eq("market_key", "match_result")
+        .maybeSingle();
+      const sels = (market?.sports_market_selections ?? []).filter(
+        (s: any) => Number(s.decimal_odds) > 1,
+      );
+      if (!market?.id || sels.length === 0) continue;
+
+      const { data: last } = await (supabaseAdmin as any)
+        .from("sports_odds_snapshots")
+        .select("fetched_at")
+        .eq("sports_market_id", market.id)
+        .order("fetched_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (fresh(last?.fetched_at, ev.scheduled_at)) continue;
+
+      await (supabaseAdmin as any).from("sports_odds_snapshots").insert(
+        sels.map((s: any) => ({
+          sports_event_id: ev.id,
+          sports_market_id: market.id,
+          market_key: "match_result",
+          selection_key: s.selection_key,
+          provider: "heartbeat",
+          decimal_odds: Number(s.decimal_odds),
+          provider_ts: nowIso,
+        })),
+      );
+      out.football++;
+    }
+  } catch (e) {
+    console.log(`[heartbeat] football failed: ${(e as Error).message}`);
+  }
+
+  try {
+    // ---- UFC (moneyline) ----
+    const { data: fights } = await (supabaseAdmin as any)
+      .from("ufc_fights")
+      .select("id, commence_time")
+      .neq("status", "finished")
+      .neq("status", "cancelled")
+      .gt("commence_time", from)
+      .lt("commence_time", toWeek)
+      .limit(30);
+
+    for (const f of (fights ?? []) as any[]) {
+      const { data: mk } = await (supabaseAdmin as any)
+        .from("ufc_fight_markets")
+        .select("selection_key, odds")
+        .eq("fight_id", f.id)
+        .eq("market_type", "moneyline")
+        .eq("is_active", true);
+      const rows = ((mk ?? []) as any[]).filter((m) => Number(m.odds) > 1);
+      if (!rows.length) continue;
+
+      const { data: last } = await (supabaseAdmin as any)
+        .from("ufc_market_snapshots")
+        .select("sampled_at")
+        .eq("fight_id", f.id)
+        .eq("market_type", "moneyline")
+        .order("sampled_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (fresh(last?.sampled_at, f.commence_time)) continue;
+
+      await (supabaseAdmin as any).from("ufc_market_snapshots").insert(
+        rows.map((m) => ({
+          fight_id: f.id,
+          market_type: "moneyline",
+          selection_key: m.selection_key,
+          odds: Number(m.odds),
+          sampled_at: nowIso,
+        })),
+      );
+      out.ufc++;
+    }
+  } catch (e) {
+    console.log(`[heartbeat] ufc failed: ${(e as Error).message}`);
+  }
+
+  try {
+    // ---- F1 (race winner) ----
+    const { data: races } = await (supabaseAdmin as any)
+      .from("f1_races")
+      .select("id, starts_at")
+      .neq("status", "finished")
+      .gt("starts_at", from)
+      .lt("starts_at", toWeek)
+      .limit(5);
+
+    for (const r of (races ?? []) as any[]) {
+      const { data: mk } = await (supabaseAdmin as any)
+        .from("f1_race_markets")
+        .select("id, odds")
+        .eq("race_id", r.id)
+        .eq("market_type", "race_winner")
+        .eq("status", "open")
+        .limit(30);
+      const rows = ((mk ?? []) as any[]).filter((m) => Number(m.odds) > 1);
+      if (!rows.length) continue;
+
+      const { data: last } = await (supabaseAdmin as any)
+        .from("f1_race_odds_snapshots")
+        .select("snapshot_at")
+        .in("market_id", rows.map((m) => m.id))
+        .order("snapshot_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (fresh(last?.snapshot_at, r.starts_at)) continue;
+
+      await (supabaseAdmin as any).from("f1_race_odds_snapshots").insert(
+        rows.map((m) => ({ market_id: m.id, odds: Number(m.odds), snapshot_at: nowIso })),
+      );
+      out.f1++;
+    }
+  } catch (e) {
+    console.log(`[heartbeat] f1 failed: ${(e as Error).message}`);
+  }
+
+  return out;
+}
+
 
 async function persistWcOdds(
   match: { id: string; margin_disabled?: boolean | null },
