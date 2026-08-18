@@ -100,8 +100,8 @@ export function CategoryRail() {
               aria-current={active ? "page" : undefined}
               className={`${base} ${
                 active
-                  ? "font-bold text-[var(--ink)]"
-                  : "font-medium text-[var(--ink-muted)]/70 hover:text-[var(--ink)]"
+                  ? "font-bold text-white"
+                  : "font-medium text-[var(--ink-muted)]/90 hover:text-white"
               }`}
             >
               {c.label}
