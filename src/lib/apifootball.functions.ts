@@ -1,16 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // Admin-only server fns for API-Football integration.
-// Auth is enforced via the same SECURITY DEFINER admin check as other tools:
-// the underlying RPCs / table policies allow only role=admin to read state,
-// but the sync functions themselves run with the service-role client. We
-// guard execution by checking the caller's role here.
+// The auth middleware injects an RLS-scoped client + userId; we then verify
+// the caller holds the admin role before running any service-role work.
 async function assertAdmin(ctx: any) {
   const supabase = ctx.context?.supabase;
-  if (!supabase) throw new Error("no supabase context");
-  const { data: u } = await supabase.auth.getUser();
-  const uid = u?.user?.id;
-  if (!uid) throw new Error("not authenticated");
+  const uid = ctx.context?.userId;
+  if (!supabase || !uid) throw new Error("not authenticated");
   const { data: roles } = await supabase
     .from("user_roles")
     .select("role")
@@ -19,9 +16,11 @@ async function assertAdmin(ctx: any) {
   if (!isAdmin) throw new Error("admin only");
 }
 
-export const getApiFootballStatus = createServerFn({ method: "GET" }).handler(
-  async (ctx) => {
+export const getApiFootballStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (ctx) => {
     await assertAdmin(ctx);
+
     const { getQuotaStatus } = await import("./apifootball.server");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const quota = await getQuotaStatus();
