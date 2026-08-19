@@ -81,9 +81,42 @@ export const getOperationsDashboard = createServerFn({ method: "GET" })
         .order("settled_at", { ascending: false }).limit(1),
     ]);
 
-    const stakeDaySum = (stakesDay.data ?? []).reduce((s: number, r: any) => s + Number(r.virtual_stake || 0), 0);
-    const stakeWeekSum = (stakesWeek.data ?? []).reduce((s: number, r: any) => s + Number(r.virtual_stake || 0), 0);
-    const activeUsers = new Set((activeRowsDay.data ?? []).map((r: any) => r.user_id)).size;
+    // Modern engines: football sports_bets, UFC and F1 live in their own tables.
+    const [sportsWeek, ufcWeek, f1Week, sportsLastSettle, sportsStuck] = await Promise.all([
+      (supabaseAdmin as any).from("sports_bets")
+        .select("user_id, stake, created_at").gte("created_at", sinceWeek),
+      (supabaseAdmin as any).from("ufc_bets")
+        .select("user_id, stake, placed_at").gte("placed_at", sinceWeek),
+      (supabaseAdmin as any).from("f1_bets")
+        .select("user_id, stake, created_at").gte("created_at", sinceWeek),
+      (supabaseAdmin as any).from("sports_bets").select("settled_at")
+        .not("settled_at", "is", null).order("settled_at", { ascending: false }).limit(1),
+      (supabaseAdmin as any).from("sports_bets")
+        .select("id, sports_events!inner(status)", { count: "exact", head: true })
+        .eq("status", "pending").eq("sports_events.status", "finished"),
+    ]);
+
+    type Row = { user_id: string; stake: number; at: string };
+    const modernRows: Row[] = [
+      ...((sportsWeek.data ?? []) as any[]).map((r) => ({ user_id: r.user_id, stake: Number(r.stake || 0), at: r.created_at })),
+      ...((ufcWeek.data ?? []) as any[]).map((r) => ({ user_id: r.user_id, stake: Number(r.stake || 0), at: r.placed_at })),
+      ...((f1Week.data ?? []) as any[]).map((r) => ({ user_id: r.user_id, stake: Number(r.stake || 0), at: r.created_at })),
+    ].filter((r) => !!r.at);
+    const modernDay = modernRows.filter((r) => r.at >= sinceDay);
+
+    const stakeDaySum =
+      (stakesDay.data ?? []).reduce((s: number, r: any) => s + Number(r.virtual_stake || 0), 0) +
+      modernDay.reduce((s, r) => s + r.stake, 0);
+    const stakeWeekSum =
+      (stakesWeek.data ?? []).reduce((s: number, r: any) => s + Number(r.virtual_stake || 0), 0) +
+      modernRows.reduce((s, r) => s + r.stake, 0);
+    const activeUsers = new Set([
+      ...(activeRowsDay.data ?? []).map((r: any) => r.user_id),
+      ...modernDay.map((r) => r.user_id),
+    ]).size;
+    const betsDayTotal = (betsDay.count ?? 0) + modernDay.length;
+    const betsWeekTotal = (betsWeek.count ?? 0) + modernRows.length;
+    const failedSettlementsTotal = (failedSettlements.count ?? 0) + (sportsStuck.count ?? 0);
 
     const s: any = settings.data ?? {};
     // Bankroll figures come from the accounting journal, not platform_bankroll.
@@ -92,13 +125,18 @@ export const getOperationsDashboard = createServerFn({ method: "GET" })
     const b: any = authBankroll.ok
       ? { ...(bankroll.data ?? {}), balance: authBankroll.balance, updated_at: authBankroll.generatedAt }
       : (bankroll.data ?? {});
-    const lastSettleAt = (lastSettleRows.data ?? [])[0]?.settled_at ?? null;
+    const legacySettleAt = (lastSettleRows.data ?? [])[0]?.settled_at ?? null;
+    const sportsSettleAt = ((sportsLastSettle.data ?? []) as any[])[0]?.settled_at ?? null;
+    const lastSettleAt =
+      legacySettleAt && sportsSettleAt
+        ? (legacySettleAt > sportsSettleAt ? legacySettleAt : sportsSettleAt)
+        : (sportsSettleAt ?? legacySettleAt);
 
     return {
       health: {
         platform: s.bets_paused ? "warning" : "ok",
         betting: s.bets_paused ? "warning" : "ok",
-        settlement: (failedSettlements.count ?? 0) > 0 ? "warning" : "ok",
+        settlement: failedSettlementsTotal > 0 ? "warning" : "ok",
         oddsSync: "ok", // no failure store exists; surface ok unless we add one
         support: (openSupport.count ?? 0) > 20 ? "warning" : "ok",
         reconciliation: (auditAlerts.count ?? 0) > 0 ? "warning" : "ok",
@@ -106,14 +144,14 @@ export const getOperationsDashboard = createServerFn({ method: "GET" })
       metrics: {
         registeredUsers: regUsers.count ?? 0,
         activeUsersDay: activeUsers,
-        betsDay: betsDay.count ?? 0,
-        betsWeek: betsWeek.count ?? 0,
+        betsDay: betsDayTotal,
+        betsWeek: betsWeekTotal,
         stakeDay: stakeDaySum,
         stakeWeek: stakeWeekSum,
         pendingPoints: pendingPoints.count ?? 0,
         pendingPayouts: pendingPayouts.count ?? 0,
         openSupport: openSupport.count ?? 0,
-        failedSettlements: failedSettlements.count ?? 0,
+        failedSettlements: failedSettlementsTotal,
         rateLimitHits24h: rateHits.count ?? 0,
         auditAlerts24h: auditAlerts.count ?? 0,
         openIncidents: openIncidents.count ?? 0,
@@ -149,18 +187,52 @@ export const getSettlementMonitor = createServerFn({ method: "GET" })
         .eq("status", "void").gte("settled_at", sinceDay),
     ]);
 
-    return {
-      pending: pending.count ?? 0,
-      completed24h: completedDay.count ?? 0,
-      voided24h: voided.count ?? 0,
-      failedCount: failed.data?.length ?? 0,
-      failedRows: (failed.data ?? []).map((r: any) => ({
+    // New football engine (sports_bets).
+    const [sPending, sCompleted, sVoided, sFailed, sLast] = await Promise.all([
+      (supabaseAdmin as any).from("sports_bets").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      (supabaseAdmin as any).from("sports_bets").select("id", { count: "exact", head: true })
+        .in("status", ["won", "lost"]).gte("settled_at", sinceDay),
+      (supabaseAdmin as any).from("sports_bets").select("id", { count: "exact", head: true })
+        .eq("status", "void").gte("settled_at", sinceDay),
+      (supabaseAdmin as any).from("sports_bets")
+        .select("id, sports_event_id, created_at, sports_events!inner(home_name, away_name, event_name, status)")
+        .eq("status", "pending").eq("sports_events.status", "finished").limit(50),
+      (supabaseAdmin as any).from("sports_bets").select("settled_at").not("settled_at", "is", null)
+        .order("settled_at", { ascending: false }).limit(1),
+    ]);
+
+    const legacyLast = (last.data ?? [])[0]?.settled_at ?? null;
+    const sportsLast = ((sLast.data ?? []) as any[])[0]?.settled_at ?? null;
+
+    const failedRows = [
+      ...(failed.data ?? []).map((r: any) => ({
         id: r.id,
         match_id: r.match_id,
         match: r.matches ? `${r.matches.home_team} vs ${r.matches.away_team}` : "—",
         created_at: r.created_at,
+        source: "predictions" as const,
       })),
-      lastSettleAt: (last.data ?? [])[0]?.settled_at ?? null,
+      ...(((sFailed.data ?? []) as any[]).map((r: any) => ({
+        id: r.id,
+        match_id: r.sports_event_id,
+        match: r.sports_events
+          ? (r.sports_events.home_name && r.sports_events.away_name
+              ? `${r.sports_events.home_name} vs ${r.sports_events.away_name}`
+              : r.sports_events.event_name ?? "—")
+          : "—",
+        created_at: r.created_at,
+        source: "sports_bets" as const,
+      }))),
+    ];
+
+    return {
+      pending: (pending.count ?? 0) + (sPending.count ?? 0),
+      completed24h: (completedDay.count ?? 0) + (sCompleted.count ?? 0),
+      voided24h: (voided.count ?? 0) + (sVoided.count ?? 0),
+      failedCount: failedRows.length,
+      failedRows,
+      lastSettleAt:
+        legacyLast && sportsLast ? (legacyLast > sportsLast ? legacyLast : sportsLast) : (sportsLast ?? legacyLast),
     };
   });
 
