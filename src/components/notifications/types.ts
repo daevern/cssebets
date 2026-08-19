@@ -10,9 +10,11 @@ export type NotifKind =
   | "deposit_submitted"
   | "deposit_approved"
   | "deposit_rejected"
+  | "comment_reply"
+  | "comment_like"
   | "system";
 
-export type NotifCategory = "all" | "bets" | "payouts" | "wins" | "system";
+export type NotifCategory = "all" | "bets" | "payouts" | "wins" | "social" | "system";
 
 export type Notif = {
   id: string;                    // stable across refetches (source table + row id + event)

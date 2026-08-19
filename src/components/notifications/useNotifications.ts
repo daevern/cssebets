@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import type { Notif } from "./types";
+import { listMySocialNotifications } from "@/lib/social-notifications.functions";
 
 const LAST_READ_KEY = "notif:lastReadAt";
 
@@ -201,7 +202,7 @@ export function useNotifications() {
     refetchOnWindowFocus: true,
     queryFn: async (): Promise<Notif[]> => {
       const since = new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString();
-      const [preds, payouts, pointReqs] = await Promise.all([
+      const [preds, payouts, pointReqs, social] = await Promise.all([
         supabase
           .from("predictions")
           .select("id, market, outcome, reference_odds, virtual_stake, potential_return, gross_payout, status, settled_at, created_at, selection_label, market_label, matches:match_id(home_team, away_team)")
@@ -223,12 +224,24 @@ export function useNotifications() {
           .gte("requested_at", since)
           .order("requested_at", { ascending: false })
           .limit(30),
+        listMySocialNotifications().catch(() => []),
       ]);
 
       const list: Notif[] = [];
       (preds.data ?? []).forEach((p: any) => list.push(...buildFromPrediction(p)));
       (payouts.data ?? []).forEach((p: any) => list.push(...buildFromPayout(p)));
       (pointReqs.data ?? []).forEach((p: any) => list.push(...buildFromPointRequest(p)));
+      (social ?? []).forEach((s: any) =>
+        list.push({
+          id: s.id,
+          kind: s.kind,
+          category: "social",
+          title: s.title,
+          subtitle: s.subtitle,
+          timestamp: s.timestamp,
+          href: s.href,
+        }),
+      );
 
 
 

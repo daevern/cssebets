@@ -29,6 +29,7 @@ const TABS: { key: NotifCategory; label: string }[] = [
   { key: "bets", label: "Bets" },
   { key: "wins", label: "Wins" },
   { key: "payouts", label: "Payouts" },
+  { key: "social", label: "Social" },
   { key: "system", label: "System" },
 ];
 
