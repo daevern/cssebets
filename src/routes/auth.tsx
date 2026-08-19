@@ -113,9 +113,11 @@ function LoginPage() {
       title="Sign in"
       footer={
         <p className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-center text-sm text-[var(--color-ink-muted)]">
-          <span>New to</span>
-          <CsseWordmark size={15} />
-          <span>?</span>
+          <span className="inline-flex items-center gap-1.5">
+            New to
+            <CsseWordmark size={15} />
+            <span className="-ml-1">?</span>
+          </span>
           <Link to="/register" className="font-medium text-[var(--color-neon)] hover:underline">
             Create an account
           </Link>
