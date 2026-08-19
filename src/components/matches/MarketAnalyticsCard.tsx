@@ -442,32 +442,31 @@ export function MarketAnalyticsCard({
             : data.marketLabel}
         </h2>
 
-        {/* Legend — minimal */}
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
-          {filteredSeries.map((s, idx) => {
-            const color = colorForSeries(s.key, idx);
-            const v = latestByKey.get(s.key);
-            const off = !!hidden[s.key];
-            return (
-              <button
-                key={s.key}
-                type="button"
-                onClick={() => setHidden((h) => ({ ...h, [s.key]: !h[s.key] }))}
-                className={`inline-flex items-center gap-1.5 bg-transparent p-0 transition-opacity ${
-                  off ? "opacity-40" : "opacity-100 hover:opacity-80"
-                }`}
-                aria-pressed={!off}
-              >
-                <span className="h-2 w-2 rounded-full" style={{ background: color }} />
-                <span className="font-medium tracking-tight text-white/85">{s.label}</span>
-                {typeof v === "number" && (
-                  <span className="font-mono text-white/60">{v.toFixed(1)}%</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {/* Kalshi keeps the chart label-free — outcomes are labelled at the end
+            of each line. Hidden series get a small restore row. */}
+        {filteredSeries.some((s) => hidden[s.key]) && (
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px]">
+            {filteredSeries
+              .filter((s) => hidden[s.key])
+              .map((s, idx) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setHidden((h) => ({ ...h, [s.key]: false }))}
+                  className="inline-flex items-center gap-1.5 bg-transparent p-0 text-white/45 transition-colors hover:text-white/80"
+                  aria-pressed={false}
+                >
+                  <span
+                    className="h-2 w-2 rounded-full opacity-50"
+                    style={{ background: colorForSeries(s.key, idx) }}
+                  />
+                  <span className="font-medium tracking-tight">{s.label}</span>
+                </button>
+              ))}
+          </div>
+        )}
       </div>
+
 
       {/* Chart — full width, starts at left edge */}
       <div className="relative mt-3 h-[340px] w-full sm:h-[380px] md:h-[420px]">
