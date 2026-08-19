@@ -128,7 +128,10 @@ function ManagementLayout() {
     );
   }
 
-  if (roleQ.isLoading) {
+  // Do not mount child routes until the Supabase session is resolved and the
+  // staff role has loaded — otherwise their queries fire without a bearer token
+  // and every page 401s on first load.
+  if (hasSession === null || (hasSession && (roleQ.isLoading || roleQ.isPending))) {
     return (
       <div className="mgmt-ops grid min-h-screen place-items-center">
         {fontLink}
