@@ -8,6 +8,9 @@ type Row = {
   user_id: string;
   parent_id: string | null;
   like_count: number;
+  media_url: string | null;
+  media_width: number | null;
+  media_height: number | null;
 };
 
 async function loadPositions(kind: EventKind, eventId: string, userIds: string[]) {
@@ -79,7 +82,7 @@ export async function listCommentsForEvent(
   const db = supabaseAdmin as any;
   const { data, error } = await db
     .from("event_comments")
-    .select("id, body, created_at, user_id, parent_id, like_count")
+    .select("id, body, created_at, user_id, parent_id, like_count, media_url, media_width, media_height")
     .eq("event_kind", kind)
     .eq("event_id", eventId)
     .is("deleted_at", null)
@@ -118,6 +121,9 @@ export async function listCommentsForEvent(
     likeCount: r.like_count ?? 0,
     likedByMe: (likedIds as Set<string>).has(r.id),
     position: positions.get(r.user_id) ?? null,
+    mediaUrl: r.media_url ?? null,
+    mediaWidth: r.media_width ?? null,
+    mediaHeight: r.media_height ?? null,
     replies: [],
   });
 
