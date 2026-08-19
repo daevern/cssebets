@@ -95,7 +95,7 @@ export async function listCommentsForEvent(
 
   const userIds = Array.from(new Set(rows.map((r) => r.user_id)));
   const [{ data: profiles }, positions, likedIds] = await Promise.all([
-    db.from("profiles").select("id, display_name").in("id", userIds),
+    db.from("profiles").select("id, display_name, avatar_url").in("id", userIds),
     loadPositions(kind, eventId, userIds),
     viewerId
       ? db
@@ -111,6 +111,9 @@ export async function listCommentsForEvent(
   ]);
 
   const names = new Map(((profiles ?? []) as any[]).map((p) => [p.id, p.display_name as string]));
+  const avatars = new Map(
+    ((profiles ?? []) as any[]).map((p) => [p.id, (p.avatar_url ?? null) as string | null]),
+  );
 
   const toNode = (r: Row): CommentNode => ({
     id: r.id,
@@ -118,6 +121,7 @@ export async function listCommentsForEvent(
     createdAt: r.created_at,
     userId: r.user_id,
     displayName: names.get(r.user_id) ?? "Member",
+    avatarPath: avatars.get(r.user_id) ?? null,
     likeCount: r.like_count ?? 0,
     likedByMe: (likedIds as Set<string>).has(r.id),
     position: positions.get(r.user_id) ?? null,

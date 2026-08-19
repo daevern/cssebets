@@ -10,6 +10,7 @@ export type CommentNode = {
   createdAt: string;
   userId: string;
   displayName: string;
+  avatarPath: string | null;
   likeCount: number;
   likedByMe: boolean;
   position: string | null;
@@ -163,12 +164,13 @@ export const getMyCommentStatus = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data } = await (context.supabase as any)
       .from("profiles")
-      .select("display_name, comments_banned_at")
+      .select("display_name, avatar_url, comments_banned_at")
       .eq("id", context.userId)
       .maybeSingle();
     return {
       userId: context.userId,
       displayName: data?.display_name ?? "You",
+      avatarPath: (data?.avatar_url ?? null) as string | null,
       banned: !!data?.comments_banned_at,
     };
   });
