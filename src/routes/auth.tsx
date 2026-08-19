@@ -12,6 +12,7 @@ import {
   AuthSubmit,
   authInputClass,
 } from "@/components/auth/AuthShell";
+import { CsseWordmark } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
