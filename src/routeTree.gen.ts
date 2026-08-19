@@ -93,6 +93,7 @@ import { Route as ManagementAdminHealthRouteImport } from './routes/management/a
 import { Route as ManagementAdminFootballRouteImport } from './routes/management/admin.football'
 import { Route as ManagementAdminF1RouteImport } from './routes/management/admin.f1'
 import { Route as ManagementAdminCorrelatedRiskRouteImport } from './routes/management/admin.correlated-risk'
+import { Route as ManagementAdminCommentsRouteImport } from './routes/management/admin.comments'
 import { Route as ManagementAdminBlackjackRouteImport } from './routes/management/admin.blackjack'
 import { Route as ManagementAdminBankrollRouteImport } from './routes/management/admin.bankroll'
 import { Route as ManagementAdminAuditSuiteRouteImport } from './routes/management/admin.audit-suite'
@@ -598,6 +599,11 @@ const ManagementAdminCorrelatedRiskRoute =
     path: '/correlated-risk',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminCommentsRoute = ManagementAdminCommentsRouteImport.update({
+  id: '/comments',
+  path: '/comments',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
 const ManagementAdminBlackjackRoute =
   ManagementAdminBlackjackRouteImport.update({
     id: '/blackjack',
@@ -990,6 +996,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/audit-suite': typeof ManagementAdminAuditSuiteRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
   '/management/admin/blackjack': typeof ManagementAdminBlackjackRoute
+  '/management/admin/comments': typeof ManagementAdminCommentsRoute
   '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
   '/management/admin/f1': typeof ManagementAdminF1Route
   '/management/admin/football': typeof ManagementAdminFootballRoute
@@ -1126,6 +1133,7 @@ export interface FileRoutesByTo {
   '/management/admin/audit-suite': typeof ManagementAdminAuditSuiteRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
   '/management/admin/blackjack': typeof ManagementAdminBlackjackRoute
+  '/management/admin/comments': typeof ManagementAdminCommentsRoute
   '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
   '/management/admin/f1': typeof ManagementAdminF1Route
   '/management/admin/football': typeof ManagementAdminFootballRoute
@@ -1269,6 +1277,7 @@ export interface FileRoutesById {
   '/management/admin/audit-suite': typeof ManagementAdminAuditSuiteRoute
   '/management/admin/bankroll': typeof ManagementAdminBankrollRoute
   '/management/admin/blackjack': typeof ManagementAdminBlackjackRoute
+  '/management/admin/comments': typeof ManagementAdminCommentsRoute
   '/management/admin/correlated-risk': typeof ManagementAdminCorrelatedRiskRoute
   '/management/admin/f1': typeof ManagementAdminF1Route
   '/management/admin/football': typeof ManagementAdminFootballRoute
@@ -1412,6 +1421,7 @@ export interface FileRouteTypes {
     | '/management/admin/audit-suite'
     | '/management/admin/bankroll'
     | '/management/admin/blackjack'
+    | '/management/admin/comments'
     | '/management/admin/correlated-risk'
     | '/management/admin/f1'
     | '/management/admin/football'
@@ -1548,6 +1558,7 @@ export interface FileRouteTypes {
     | '/management/admin/audit-suite'
     | '/management/admin/bankroll'
     | '/management/admin/blackjack'
+    | '/management/admin/comments'
     | '/management/admin/correlated-risk'
     | '/management/admin/f1'
     | '/management/admin/football'
@@ -1690,6 +1701,7 @@ export interface FileRouteTypes {
     | '/management/admin/audit-suite'
     | '/management/admin/bankroll'
     | '/management/admin/blackjack'
+    | '/management/admin/comments'
     | '/management/admin/correlated-risk'
     | '/management/admin/f1'
     | '/management/admin/football'
@@ -2391,6 +2403,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagementAdminCorrelatedRiskRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
+    '/management/admin/comments': {
+      id: '/management/admin/comments'
+      path: '/comments'
+      fullPath: '/management/admin/comments'
+      preLoaderRoute: typeof ManagementAdminCommentsRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
     '/management/admin/blackjack': {
       id: '/management/admin/blackjack'
       path: '/blackjack'
@@ -2949,6 +2968,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminAuditSuiteRoute: typeof ManagementAdminAuditSuiteRoute
   ManagementAdminBankrollRoute: typeof ManagementAdminBankrollRoute
   ManagementAdminBlackjackRoute: typeof ManagementAdminBlackjackRoute
+  ManagementAdminCommentsRoute: typeof ManagementAdminCommentsRoute
   ManagementAdminCorrelatedRiskRoute: typeof ManagementAdminCorrelatedRiskRoute
   ManagementAdminF1Route: typeof ManagementAdminF1Route
   ManagementAdminFootballRoute: typeof ManagementAdminFootballRoute
@@ -2995,6 +3015,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminAuditSuiteRoute: ManagementAdminAuditSuiteRoute,
   ManagementAdminBankrollRoute: ManagementAdminBankrollRoute,
   ManagementAdminBlackjackRoute: ManagementAdminBlackjackRoute,
+  ManagementAdminCommentsRoute: ManagementAdminCommentsRoute,
   ManagementAdminCorrelatedRiskRoute: ManagementAdminCorrelatedRiskRoute,
   ManagementAdminF1Route: ManagementAdminF1Route,
   ManagementAdminFootballRoute: ManagementAdminFootballRoute,

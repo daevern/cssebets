@@ -44,6 +44,7 @@ export function MatchAnalyticsScreen({
   marketsSlot,
   analyticsCard,
   realtime = true,
+  commentEventKind = "wc",
 }: {
   matchId: string;
   publicMode?: boolean;
@@ -56,6 +57,8 @@ export function MatchAnalyticsScreen({
   /** Replaces the built-in market-movement chart. */
   analyticsCard?: ReactNode;
   realtime?: boolean;
+  /** Which comment thread this screen shows (World Cup vs club football). */
+  commentEventKind?: "wc" | "football";
 }) {
   const fn = useServerFn(analyticsFn ?? (publicMode ? getMatchAnalyticsPublic : getMatchAnalytics));
   const qc = useQueryClient();
@@ -105,6 +108,7 @@ export function MatchAnalyticsScreen({
             breadcrumbLabel={breadcrumbLabel}
             marketsSlot={marketsSlot}
             analyticsCard={analyticsCard}
+            commentEventKind={commentEventKind}
           />
 
         )}
@@ -130,12 +134,14 @@ function Analytics({
   breadcrumbLabel = "World Cup 2026",
   marketsSlot,
   analyticsCard,
+  commentEventKind = "wc",
 }: {
   bundle: AnalyticsBundle;
   publicMode?: boolean;
   breadcrumbLabel?: string;
   marketsSlot?: ReactNode;
   analyticsCard?: ReactNode;
+  commentEventKind?: "wc" | "football";
 }) {
 
   const { match, phase, lineups, events, stats, ratings, h2h, injuries } = bundle;
@@ -288,6 +294,8 @@ function Analytics({
           </p>
         </StencilPanel>
       )}
+
+      <CommentThread eventKind={commentEventKind} eventId={match.id} />
     </>
   );
 }

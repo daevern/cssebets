@@ -60,6 +60,7 @@ const GROUPS: NavGroup[] = [
       { to: "/management/admin/incidents", label: "Incidents", icon: GitBranch },
       { to: "/management/admin/health", label: "Health", icon: Stethoscope },
       { to: "/management/admin/analytics", label: "Analytics", icon: BarChart3 },
+      { to: "/management/admin/comments", label: "Comments", icon: MessageSquare },
     ],
   },
   {
