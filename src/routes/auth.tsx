@@ -3,7 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { checkAuthRateLimit } from "@/lib/rate-limit.functions";
-import { validateRealEmail, normalizeEmail } from "@/lib/email-validation";
+import { validateLoginEmail, normalizeEmail } from "@/lib/email-validation";
 import { toast } from "sonner";
 import {
   AuthShell,
@@ -79,7 +79,7 @@ function LoginPage() {
     setLoading(true);
     try {
       if (channel === "email") {
-        const emailError = validateRealEmail(email);
+        const emailError = validateLoginEmail(email);
         if (emailError) throw new Error(emailError);
         const authEmail = normalizeEmail(email);
         await checkAuthRateLimit({ data: { email: authEmail } });

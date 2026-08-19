@@ -42,6 +42,19 @@ export function normalizeEmail(input: string): string {
 /**
  * Returns an error message when the address is not acceptable, otherwise null.
  */
+/**
+ * Sign-in validation: format only. Existing accounts (including internal
+ * addresses like *.local) must not be blocked at login — whether the account
+ * exists is decided by the auth server.
+ */
+export function validateLoginEmail(input: string): string | null {
+  const email = normalizeEmail(input);
+  if (!email) return "Please enter your email address";
+  if (email.length > 254) return "That email address is too long";
+  if (!EMAIL_RE.test(email)) return "Please enter a valid email address";
+  return null;
+}
+
 export function validateRealEmail(input: string): string | null {
   const email = normalizeEmail(input);
   if (!email) return "Please enter your email address";
