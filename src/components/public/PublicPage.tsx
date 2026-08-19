@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
+import { CsseLogo, CsseWordmark } from "@/components/brand/CsseMark";
 
 const NAV = [
   { to: "/about", label: "About" },
