@@ -194,10 +194,52 @@ export async function runMarketHeartbeat(nowIso: string) {
     if (ahead <= 12 * 60 * 60 * 1000) return 600_000; // same-day: 10 min
     return 3_600_000; // further out: hourly — keeps history without disk bloat
   };
-  const out = { football: 0, ufc: 0, f1: 0 };
+  const out = { wc: 0, football: 0, ufc: 0, f1: 0 };
 
   const fresh = (t: string | null | undefined, startsAt?: string | null) =>
     !!t && now - new Date(t).getTime() < staleFor(startsAt);
+
+  try {
+    // ---- World Cup / legacy `matches` (1X2 reference odds) ----
+    const { data: wcMatches } = await (supabaseAdmin as any)
+      .from("matches")
+      .select("id, kickoff_at, reference_odds")
+      .in("status", ["scheduled", "live"])
+      .gt("kickoff_at", from)
+      .lt("kickoff_at", to)
+      .limit(40);
+
+    for (const m of (wcMatches ?? []) as any[]) {
+      const ref = m.reference_odds ?? null;
+      const home = Number(ref?.home);
+      const draw = Number(ref?.draw);
+      const away = Number(ref?.away);
+      if (!(home > 1) || !(away > 1)) continue;
+
+      const { data: last } = await (supabaseAdmin as any)
+        .from("match_odds_snapshots")
+        .select("sampled_at")
+        .eq("match_id", m.id)
+        .order("sampled_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (fresh(last?.sampled_at, m.kickoff_at)) continue;
+
+      await (supabaseAdmin as any).from("match_odds_snapshots").insert({
+        match_id: m.id,
+        source: "heartbeat",
+        home_odds: home,
+        draw_odds: Number.isFinite(draw) ? draw : null,
+        away_odds: away,
+        raw_bookmaker_count: null,
+        sampled_at: nowIso,
+      });
+      out.wc++;
+    }
+  } catch (e) {
+    console.log(`[heartbeat] world cup failed: ${(e as Error).message}`);
+  }
+
 
   try {
     // ---- club football (sports_markets) ----
