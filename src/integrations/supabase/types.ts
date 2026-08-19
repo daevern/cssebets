@@ -3586,6 +3586,85 @@ export type Database = {
         }
         Relationships: []
       }
+      event_comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_comment_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "event_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_comments: {
+        Row: {
+          body: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          event_id: string
+          event_kind: string
+          id: string
+          like_count: number
+          parent_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          event_id: string
+          event_kind: string
+          id?: string
+          like_count?: number
+          parent_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          event_id?: string
+          event_kind?: string
+          id?: string
+          like_count?: number
+          parent_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "event_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       f1_bets: {
         Row: {
           created_at: string
@@ -5789,6 +5868,8 @@ export type Database = {
         Row: {
           auth_provider: string | null
           avatar_url: string | null
+          comments_banned_at: string | null
+          comments_banned_by: string | null
           created_at: string
           display_name: string
           force_password_change: boolean
@@ -5810,6 +5891,8 @@ export type Database = {
         Insert: {
           auth_provider?: string | null
           avatar_url?: string | null
+          comments_banned_at?: string | null
+          comments_banned_by?: string | null
           created_at?: string
           display_name: string
           force_password_change?: boolean
@@ -5831,6 +5914,8 @@ export type Database = {
         Update: {
           auth_provider?: string | null
           avatar_url?: string | null
+          comments_banned_at?: string | null
+          comments_banned_by?: string | null
           created_at?: string
           display_name?: string
           force_password_change?: boolean

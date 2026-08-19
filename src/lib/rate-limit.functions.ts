@@ -13,6 +13,7 @@ export const RATE_LIMITS = {
   arcade_treasure: { max: 60, windowSeconds: 60 },
   blackjack_action: { max: 90, windowSeconds: 60 },
   arcade_rps: { max: 90, windowSeconds: 60 },
+  comment_post: { max: 5, windowSeconds: 60 },
 } as const;
 
 export type RateLimitAction = keyof typeof RATE_LIMITS;

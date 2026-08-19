@@ -145,6 +145,7 @@ function FightAnalytics({ data }: { data: any }) {
       {/* H2H + recent form */}
       <H2HSection h2h={h2h} fight={fight} />
 
+      <CommentThread eventKind="ufc" eventId={fight.id} />
     </>
   );
 }
