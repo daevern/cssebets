@@ -12,6 +12,7 @@ import {
   AuthSubmit,
   authInputClass,
 } from "@/components/auth/AuthShell";
+import { CsseWordmark } from "@/components/brand/CsseMark";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -111,8 +112,12 @@ function LoginPage() {
     <AuthShell
       title="Sign in"
       footer={
-        <p className="text-center text-sm text-[var(--color-ink-muted)]">
-          New to CSSEBets?{" "}
+        <p className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-center text-sm text-[var(--color-ink-muted)]">
+          <span className="inline-flex items-center gap-1.5">
+            New to
+            <CsseWordmark size={15} />
+            <span className="-ml-1">?</span>
+          </span>
           <Link to="/register" className="font-medium text-[var(--color-neon)] hover:underline">
             Create an account
           </Link>
