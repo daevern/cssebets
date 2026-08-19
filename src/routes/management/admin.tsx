@@ -55,6 +55,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { to: "/management/admin", label: "Overview", icon: LayoutDashboard, exact: true },
       { to: "/management/admin/operations", label: "Live ops", icon: Activity },
+      { to: "/management/admin/pulse", label: "Live pulse", icon: Activity },
       { to: "/management/admin/alerts", label: "Alerts", icon: Bell },
       { to: "/management/admin/incidents", label: "Incidents", icon: GitBranch },
       { to: "/management/admin/health", label: "Health", icon: Stethoscope },
