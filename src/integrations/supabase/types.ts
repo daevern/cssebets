@@ -10184,7 +10184,9 @@ export type Database = {
         }
         Returns: number
       }
+      prune_cron_history: { Args: { p_batch_size?: number }; Returns: Json }
       prune_ops_history: { Args: { p_batch_size?: number }; Returns: Json }
+      prune_sync_runs: { Args: { p_batch_size?: number }; Returns: Json }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
