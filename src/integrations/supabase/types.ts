@@ -10090,6 +10090,7 @@ export type Database = {
         }
         Returns: number
       }
+      ops_noop_write_test: { Args: never; Returns: Json }
       payout_approve_atomic: {
         Args: { p_admin_id: string; p_payout_id: string }
         Returns: string
