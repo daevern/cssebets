@@ -533,8 +533,8 @@ export function MarketAnalyticsCard({
                     type="linear"
                     dataKey={`${s.key}__d`}
                     stroke={color}
-                    strokeOpacity={0.22}
-                    strokeWidth={2.25}
+                    strokeOpacity={0.25}
+                    strokeWidth={1.5}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     dot={false}
@@ -553,7 +553,7 @@ export function MarketAnalyticsCard({
                     dataKey={`${s.key}__a`}
                     name={s.label}
                     stroke={color}
-                    strokeWidth={2.25}
+                    strokeWidth={1.5}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     dot={false}
