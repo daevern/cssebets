@@ -62,7 +62,9 @@ export async function runLiveOddsSync(): Promise<LiveOddsSyncResult> {
   const [{ data: liveWc }, { data: liveFootball }] = await Promise.all([
     (supabaseAdmin as any)
       .from("matches")
-      .select("id, apifootball_fixture_id, home_team, away_team, margin_disabled, kickoff_at")
+      .select(
+        "id, apifootball_fixture_id, home_team, away_team, margin_disabled, kickoff_at, reference_odds",
+      )
       .neq("status", "finished")
       .gt("kickoff_at", start)
       .lt("kickoff_at", nowIso),
@@ -189,8 +191,8 @@ export async function runMarketHeartbeat(nowIso: string) {
     const t = startsAt ? new Date(startsAt).getTime() : now;
     const ahead = t - now;
     if (ahead <= 2 * 60 * 60 * 1000) return 20_000; // live / imminent
-    if (ahead <= 12 * 60 * 60 * 1000) return 300_000; // same-day: 5 min
-    return 1_800_000; // further out: 30 min — keeps history without disk bloat
+    if (ahead <= 12 * 60 * 60 * 1000) return 600_000; // same-day: 10 min
+    return 3_600_000; // further out: hourly — keeps history without disk bloat
   };
   const out = { football: 0, ufc: 0, f1: 0 };
 
@@ -309,7 +311,10 @@ export async function runMarketHeartbeat(nowIso: string) {
         .eq("race_id", r.id)
         .eq("market_type", "race_winner")
         .eq("status", "open")
-        .limit(30);
+        // Cap the F1 tape: 12 favourites are enough for the movement chart and
+        // keep f1_race_odds_snapshots from dominating disk IO.
+        .order("odds", { ascending: true })
+        .limit(12);
       const rows = ((mk ?? []) as any[]).filter((m) => Number(m.odds) > 1);
       if (!rows.length) continue;
 
@@ -336,7 +341,7 @@ export async function runMarketHeartbeat(nowIso: string) {
 
 
 async function persistWcOdds(
-  match: { id: string; margin_disabled?: boolean | null },
+  match: { id: string; margin_disabled?: boolean | null; reference_odds?: any },
   raw: { home: number; draw: number; away: number },
   nowIso: string,
   source: string,
@@ -354,6 +359,17 @@ async function persistWcOdds(
     raw_bookmaker_count: null,
     sampled_at: nowIso,
   });
+
+  // Only touch the match row / regenerate derived markets when the price
+  // actually moved. Repeating identical writes every poll was the single
+  // biggest source of WAL churn.
+  const prev = match.reference_odds ?? null;
+  const same =
+    prev &&
+    Number(prev.home) === Number(reference_odds.home) &&
+    Number(prev.draw) === Number(reference_odds.draw) &&
+    Number(prev.away) === Number(reference_odds.away);
+  if (same) return;
 
   await (supabaseAdmin as any)
     .from("matches")
