@@ -35,7 +35,7 @@ function AdminWalletPage() {
   const proofFn = useServerFn(adminGetProofSignedUrl);
   const qc = useQueryClient();
 
-  const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "all">("pending");
+  const [status, setStatus] = useState<"pending" | "pending_upload" | "approved" | "rejected" | "all">("pending");
   const [proof, setProof] = useState<{ url: string; type: string; name: string } | null>(null);
   const [rejectFor, setRejectFor] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState("");
