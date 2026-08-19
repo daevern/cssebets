@@ -338,7 +338,7 @@ export async function runMarketHeartbeat(nowIso: string) {
 
 
 async function persistWcOdds(
-  match: { id: string; margin_disabled?: boolean | null },
+  match: { id: string; margin_disabled?: boolean | null; reference_odds?: any },
   raw: { home: number; draw: number; away: number },
   nowIso: string,
   source: string,
@@ -356,6 +356,17 @@ async function persistWcOdds(
     raw_bookmaker_count: null,
     sampled_at: nowIso,
   });
+
+  // Only touch the match row / regenerate derived markets when the price
+  // actually moved. Repeating identical writes every poll was the single
+  // biggest source of WAL churn.
+  const prev = match.reference_odds ?? null;
+  const same =
+    prev &&
+    Number(prev.home) === Number(reference_odds.home) &&
+    Number(prev.draw) === Number(reference_odds.draw) &&
+    Number(prev.away) === Number(reference_odds.away);
+  if (same) return;
 
   await (supabaseAdmin as any)
     .from("matches")
