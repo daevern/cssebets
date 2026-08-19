@@ -34,6 +34,7 @@ export function FootballMatchDetailsPage({ matchId }: { matchId: string }) {
         />
       }
       marketsSlot={<FootballMarketTabs matchId={matchId} />}
+      commentEventKind="football"
     />
   );
 }
