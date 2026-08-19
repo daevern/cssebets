@@ -209,7 +209,9 @@ export const getPendingPointRequestCount = createServerFn({ method: "GET" })
 export const adminListRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) =>
-    z.object({ status: z.enum(["pending", "approved", "rejected", "all"]).default("pending") }).parse(i ?? {}),
+    z.object({
+      status: z.enum(["pending", "approved", "rejected", "pending_upload", "all"]).default("pending"),
+    }).parse(i ?? {}),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
@@ -218,10 +220,10 @@ export const adminListRequests = createServerFn({ method: "GET" })
     let q = supabaseAdmin
       .from("point_requests")
       .select("*")
-      .neq("status", "pending_upload")
       .order("requested_at", { ascending: false })
       .limit(200);
-    if (data.status !== "all") q = q.eq("status", data.status);
+    if (data.status === "all") q = q.neq("status", "pending_upload");
+    else q = q.eq("status", data.status);
     const { data: reqs, error } = await q;
     if (error) throw new Error(error.message);
     const ids = Array.from(new Set((reqs ?? []).map((r) => r.user_id)));
