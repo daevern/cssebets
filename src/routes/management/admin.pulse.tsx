@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/management/admin/pulse")({
   head: () => ({ meta: [{ title: "Live pulse — Admin" }] }),
-  component: PulsePage;
+  component: PulsePage,
 });
 
 function fmtBytes(n: number | null | undefined) {
