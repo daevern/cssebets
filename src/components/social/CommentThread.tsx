@@ -12,6 +12,7 @@ import {
   listEventComments,
   postEventComment,
   toggleCommentLike,
+  getMyCommentStatus,
   deleteMyComment,
   type CommentNode,
   type EventKind,
@@ -96,6 +97,20 @@ export function CommentThread({
   const post = useServerFn(postEventComment);
   const like = useServerFn(toggleCommentLike);
   const remove = useServerFn(deleteMyComment);
+  const status = useServerFn(getMyCommentStatus);
+
+  const me = useQuery({
+    queryKey: ["my-comment-status", user?.id ?? "anon"],
+    queryFn: () => status() as Promise<{ userId: string; displayName: string; avatarPath: string | null; banned: boolean }>,
+    enabled: !isGuest,
+    staleTime: 60_000,
+  });
+  const myAvatarPath = me.data?.avatarPath ?? null;
+
+  const [highlightId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return new URLSearchParams(window.location.search).get("comment");
+  });
 
   const queryKey = ["event-comments", eventKind, eventId, user?.id ?? "anon"];
 
@@ -283,6 +298,7 @@ export function CommentThread({
             <CommentItem
               key={c.id}
               node={c}
+              highlightId={highlightId}
               meId={isGuest ? null : (user?.id ?? null)}
               onLike={(id) => (isGuest ? toast.info("Sign in to like comments.") : likeMut.mutate(id))}
               onDelete={(id) => deleteMut.mutate(id)}
@@ -378,6 +394,7 @@ function CommentItem({
   replyOpen,
   replySlot,
   nested = false,
+  highlightId = null,
 }: {
   node: CommentNode;
   meId: string | null;
@@ -387,11 +404,26 @@ function CommentItem({
   replyOpen?: boolean;
   replySlot?: React.ReactNode;
   nested?: boolean;
+  highlightId?: string | null;
 }) {
-  const [showReplies, setShowReplies] = useState(false);
+  const hasHighlightedReply = !!highlightId && node.replies.some((r) => r.id === highlightId);
+  const [showReplies, setShowReplies] = useState(hasHighlightedReply);
+  const ref = useRef<HTMLElement | null>(null);
+  const isTarget = !!highlightId && highlightId === node.id;
+
+  useEffect(() => {
+    if (isTarget && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [isTarget]);
 
   return (
-    <article className={`flex gap-3 py-3 ${nested ? "" : ""}`}>
+    <article
+      ref={ref as any}
+      className={`flex gap-3 py-3 ${
+        isTarget ? "rounded-xl bg-[var(--color-neon)]/[0.07] px-2 ring-1 ring-[var(--color-neon)]/30" : ""
+      }`}
+    >
       <Avatar name={node.displayName} userId={node.userId} avatarPath={node.avatarPath} />
       <div className="min-w-0 flex-1">
         <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -463,6 +495,7 @@ function CommentItem({
                     onLike={onLike}
                     onDelete={onDelete}
                     onReply={onReply}
+                    highlightId={highlightId}
                     nested
                   />
                 ))}
