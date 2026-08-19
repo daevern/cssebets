@@ -91,9 +91,9 @@ function AdminWalletPage() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-semibold">Requests</h2>
           <div className="flex gap-1">
-            {(["pending", "approved", "rejected", "all"] as const).map((s) => (
+            {(["pending", "pending_upload", "approved", "rejected", "all"] as const).map((s) => (
               <Button key={s} size="sm" variant={status === s ? "default" : "outline"} onClick={() => setStatus(s)}>
-                {s}
+                {s === "pending_upload" ? "incomplete" : s}
               </Button>
             ))}
           </div>
