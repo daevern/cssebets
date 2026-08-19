@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { CsseLogo, BrandText } from "@/components/brand/CsseMark";
+import { CsseLogo, CsseWordmark } from "@/components/brand/CsseMark";
 
 const NAV = [
   { to: "/about", label: "About" },
@@ -119,44 +119,61 @@ function PublicHeader() {
 export function PublicFooter() {
   return (
     <footer className="border-t border-[var(--surface-border)] bg-[var(--surface-2)]">
-      <div className="mx-auto grid w-full max-w-5xl grid-cols-3 gap-6 px-4 py-10 md:px-6">
-        <FooterCol
-          title="Platform"
-          links={[
-            { to: "/about", label: "About" },
-            { to: "/community", label: "Community" },
-            { to: "/performance", label: "Performance" },
-          ]}
-        />
-        <FooterCol
-          title="Get started"
-          links={[
-            { to: "/faq", label: "Help & FAQ" },
-            { to: "/register", label: "Create account" },
-            { to: "/auth", label: "Log in" },
-          ]}
-        />
-        <FooterCol
-          title="Legal"
-          links={[
-            { to: "/terms", label: "Terms of Service" },
-            { to: "/privacy", label: "Privacy Policy" },
-            { to: "/responsible-gambling", label: "Responsible Gambling" },
-          ]}
-        />
-      </div>
-
-      <div className="border-t border-[var(--surface-border)]">
-        <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-4 font-mono text-[10px] uppercase tracking-[0.24em] text-[var(--ink-dim)] md:px-6">
-          <span>
-            © {new Date().getFullYear()} <BrandText />
+      <div className="mx-auto w-full max-w-5xl px-4 py-10 md:px-6 md:py-14">
+        {/* Top row: wordmark + 18+ pill */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <span className="uppercase">
+            <CsseWordmark size={30} />
           </span>
-          <span>18+ · Play responsibly</span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--surface-border)] px-4 py-2 font-mono text-[10px] uppercase tracking-[0.24em] text-[var(--ink-muted)]">
+            <span className="font-sans text-[13px] font-bold tracking-normal text-[var(--ink)]">18+</span>
+            <span className="text-[var(--ink-dim)]">·</span>
+            Play responsibly
+          </span>
+        </div>
+
+        <div className="my-8 h-px bg-[var(--surface-border)]" />
+
+        <div className="grid grid-cols-3 gap-6">
+          <FooterCol
+            title="Platform"
+            links={[
+              { to: "/about", label: "About" },
+              { to: "/community", label: "Community" },
+              { to: "/performance", label: "Performance" },
+            ]}
+          />
+          <FooterCol
+            title="Get started"
+            links={[
+              { to: "/faq", label: "Help & FAQ" },
+              { to: "/register", label: "Create account" },
+              { to: "/auth", label: "Log in" },
+            ]}
+          />
+          <FooterCol
+            title="Legal"
+            links={[
+              { to: "/terms", label: "Terms of Service" },
+              { to: "/privacy", label: "Privacy Policy" },
+              { to: "/responsible-gambling", label: "Responsible Gambling" },
+            ]}
+          />
+        </div>
+
+        <div className="my-8 h-px bg-[var(--surface-border)]" />
+
+        <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.24em] text-[var(--ink-dim)]">
+          © {new Date().getFullYear()}
+          <span className="uppercase">
+            <CsseWordmark size={14} />
+          </span>
         </div>
       </div>
     </footer>
   );
 }
+
 
 function FooterCol({
   title,
