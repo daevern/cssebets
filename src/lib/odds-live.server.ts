@@ -62,7 +62,9 @@ export async function runLiveOddsSync(): Promise<LiveOddsSyncResult> {
   const [{ data: liveWc }, { data: liveFootball }] = await Promise.all([
     (supabaseAdmin as any)
       .from("matches")
-      .select("id, apifootball_fixture_id, home_team, away_team, margin_disabled, kickoff_at")
+      .select(
+        "id, apifootball_fixture_id, home_team, away_team, margin_disabled, kickoff_at, reference_odds",
+      )
       .neq("status", "finished")
       .gt("kickoff_at", start)
       .lt("kickoff_at", nowIso),
