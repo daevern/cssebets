@@ -15,7 +15,15 @@ export function initialOf(name: string | null | undefined) {
   return (name || "?").trim().charAt(0).toUpperCase();
 }
 
-/** Crop + downscale an image file to a square JPEG data blob for upload. */
+function clamp(v: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, v));
+}
+
+/**
+ * Crop + downscale an image to a square JPEG for upload.
+ * `zoom` is >= 1, `offsetX/offsetY` are drag offsets in viewport pixels,
+ * `viewport` is the on-screen editor size in pixels.
+ */
 export async function cropToSquareJpeg(
   image: HTMLImageElement,
   opts: { zoom: number; offsetX: number; offsetY: number; viewport: number; size?: number },
@@ -28,15 +36,9 @@ export async function cropToSquareJpeg(
   if (!ctx) throw new Error("Canvas unsupported");
 
   const base = Math.min(image.naturalWidth, image.naturalHeight);
-  // Scale factor mapping viewport pixels -> source pixels
-  const drawn = base * opts.zoom;
-  const scale = size / (opts.viewport / (drawn / opts.viewport) || 1);
-  void scale;
+  const sourceSize = base / Math.max(1, opts.zoom);
+  const ratio = sourceSize / opts.viewport; // source px per viewport px
 
-  const sourceSize = base / opts.zoom;
-  const maxOffsetX = (image.naturalWidth - sourceSize) / 2;
-  const maxOffsetY = (image.naturalHeight - sourceSize) / 2;
-  const ratio = sourceSize / opts.viewport;
   const sx = clamp(
     (image.naturalWidth - sourceSize) / 2 - opts.offsetX * ratio,
     0,
@@ -47,8 +49,6 @@ export async function cropToSquareJpeg(
     0,
     Math.max(0, image.naturalHeight - sourceSize),
   );
-  void maxOffsetX;
-  void maxOffsetY;
 
   ctx.fillStyle = "#0b0f0d";
   ctx.fillRect(0, 0, size, size);
@@ -61,8 +61,4 @@ export async function cropToSquareJpeg(
       0.86,
     ),
   );
-}
-
-function clamp(v: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, v));
 }
