@@ -442,32 +442,31 @@ export function MarketAnalyticsCard({
             : data.marketLabel}
         </h2>
 
-        {/* Legend — minimal */}
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
-          {filteredSeries.map((s, idx) => {
-            const color = colorForSeries(s.key, idx);
-            const v = latestByKey.get(s.key);
-            const off = !!hidden[s.key];
-            return (
-              <button
-                key={s.key}
-                type="button"
-                onClick={() => setHidden((h) => ({ ...h, [s.key]: !h[s.key] }))}
-                className={`inline-flex items-center gap-1.5 bg-transparent p-0 transition-opacity ${
-                  off ? "opacity-40" : "opacity-100 hover:opacity-80"
-                }`}
-                aria-pressed={!off}
-              >
-                <span className="h-2 w-2 rounded-full" style={{ background: color }} />
-                <span className="font-medium tracking-tight text-white/85">{s.label}</span>
-                {typeof v === "number" && (
-                  <span className="font-mono text-white/60">{v.toFixed(1)}%</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {/* Kalshi keeps the chart label-free — outcomes are labelled at the end
+            of each line. Hidden series get a small restore row. */}
+        {filteredSeries.some((s) => hidden[s.key]) && (
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px]">
+            {filteredSeries
+              .filter((s) => hidden[s.key])
+              .map((s, idx) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setHidden((h) => ({ ...h, [s.key]: false }))}
+                  className="inline-flex items-center gap-1.5 bg-transparent p-0 text-white/45 transition-colors hover:text-white/80"
+                  aria-pressed={false}
+                >
+                  <span
+                    className="h-2 w-2 rounded-full opacity-50"
+                    style={{ background: colorForSeries(s.key, idx) }}
+                  />
+                  <span className="font-medium tracking-tight">{s.label}</span>
+                </button>
+              ))}
+          </div>
+        )}
       </div>
+
 
       {/* Chart — full width, starts at left edge */}
       <div className="relative mt-3 h-[340px] w-full sm:h-[380px] md:h-[420px]">
@@ -505,9 +504,9 @@ export function MarketAnalyticsCard({
                 onMouseLeave={() => setActiveIndex(null)}
               >
               <CartesianGrid
-                strokeDasharray="3 6"
+                strokeDasharray="1 5"
                 stroke="#ffffff"
-                strokeOpacity={0.28}
+                strokeOpacity={0.14}
                 vertical={false}
               />
               <XAxis
@@ -515,13 +514,12 @@ export function MarketAnalyticsCard({
                 type={xDomain ? "number" : "category"}
                 domain={xDomain ?? undefined}
                 allowDataOverflow={!!xDomain}
-                stroke="#ffffff"
-                strokeOpacity={0.15}
                 tick={false}
                 tickLine={false}
-                axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
+                axisLine={false}
                 minTickGap={48}
               />
+
               <YAxis hide domain={yDomain} width={0} padding={{ top: 0, bottom: 0 }} />
               <Tooltip
                 content={() => null}
@@ -535,8 +533,8 @@ export function MarketAnalyticsCard({
                     type="linear"
                     dataKey={`${s.key}__d`}
                     stroke={color}
-                    strokeOpacity={0.22}
-                    strokeWidth={2.25}
+                    strokeOpacity={0.25}
+                    strokeWidth={1.5}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     dot={false}
@@ -555,7 +553,7 @@ export function MarketAnalyticsCard({
                     dataKey={`${s.key}__a`}
                     name={s.label}
                     stroke={color}
-                    strokeWidth={2.25}
+                    strokeWidth={1.5}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     dot={false}
@@ -588,31 +586,36 @@ export function MarketAnalyticsCard({
                         const xKey = xDomain ? row.tMs : row.t;
                         const cx = xScale ? xScale(xKey) : rightX;
                         return (
-                          <g key={`ep-${s.key}`}>
-                            <circle cx={cx} cy={y} r={4.5} fill={color} />
-                            <circle cx={cx} cy={y} r={9} fill={color} opacity={0.18} />
+                          <g
+                            key={`ep-${s.key}`}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => setHidden((h) => ({ ...h, [s.key]: true }))}
+                          >
+                            <circle cx={cx} cy={y} r={4} fill={color} />
+                            <circle cx={cx} cy={y} r={9} fill={color} opacity={0.16} />
                             <text
-                              x={rightX + 6}
-                              y={y - 4}
-                              fill={color}
-                              fontSize={13}
-                              fontWeight={800}
-                              style={{ letterSpacing: "0.02em" }}
+                              x={rightX + 8}
+                              y={y - 3}
+                              fill="rgba(255,255,255,0.55)"
+                              fontSize={11}
+                              fontWeight={600}
+                              style={{ letterSpacing: "0.01em" }}
                             >
                               {abbrevLabel(s.label)}
                             </text>
                             <text
-                              x={rightX + 6}
-                              y={y + 12}
+                              x={rightX + 8}
+                              y={y + 15}
                               fill={color}
-                              fontSize={15}
-                              fontWeight={800}
-                              style={{ letterSpacing: "-0.01em" }}
+                              fontSize={17}
+                              fontWeight={700}
+                              style={{ letterSpacing: "-0.02em" }}
                             >
-                              {`${v.toFixed(1)}%`}
+                              {`${Math.round(v)}%`}
                             </text>
                           </g>
                         );
+
                       })}
                     </g>
                   );
@@ -625,31 +628,38 @@ export function MarketAnalyticsCard({
         )}
       </div>
 
-      {/* Range selector + volume — borderless, spans the x-axis length */}
-      <div className="mt-2 w-full pl-0 pr-[84px]">
-        <div className="flex items-center justify-between">
-          {RANGES.map((r) => {
-            const active = r === range;
-            return (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setRange(r)}
-                aria-pressed={active}
-                className={`inline-flex items-center gap-1.5 text-[12px] font-medium tracking-tight transition-colors ${
-                  active ? "text-white" : "text-white/50 hover:text-white/80"
-                }`}
-              >
-                {r === "LIVE" && (
-                  <span className={`h-2 w-2 rounded-full ${isFinished ? "bg-white/30" : "bg-emerald-500"}`} />
-                )}
-                {r}
-              </button>
-            );
-          })}
+      {/* Kalshi control row — volume on the left, ranges right-aligned */}
+      <div className="mt-3 w-full px-4 md:px-6">
+        <div className="flex items-center justify-between gap-3">
+          <VolumeBadge label={volumeLabel} isFinished={isFinished} />
+          <div className="flex items-center gap-3.5">
+            {RANGES.map((r) => {
+              const active = r === range;
+              return (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRange(r)}
+                  aria-pressed={active}
+                  className={`inline-flex items-center gap-1.5 text-[12px] font-medium tracking-tight transition-colors ${
+                    active ? "text-white" : "text-white/40 hover:text-white/70"
+                  }`}
+                >
+                  {r === "LIVE" && (
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        isFinished ? "bg-white/25" : "bg-emerald-500"
+                      }`}
+                    />
+                  )}
+                  {r}
+                </button>
+              );
+            })}
+          </div>
         </div>
         {range === "LIVE" && !isFinished && (
-          <div className="mt-2 flex items-center gap-1.5">
+          <div className="mt-2 flex items-center justify-end gap-1.5">
             {LIVE_WINDOW_OPTIONS.map(({ value, label }) => {
               const active = value === liveSeconds;
               return (
@@ -661,7 +671,7 @@ export function MarketAnalyticsCard({
                   className={`rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums tracking-tight transition-colors ${
                     active
                       ? "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/40"
-                      : "text-white/50 hover:text-white/80"
+                      : "text-white/45 hover:text-white/75"
                   }`}
                 >
                   {label}
@@ -672,10 +682,6 @@ export function MarketAnalyticsCard({
         )}
       </div>
 
-      {/* Volume badge below the graph */}
-      <div className="px-4 pb-2 pt-3 md:px-6">
-        <VolumeBadge label={volumeLabel} isFinished={isFinished} />
-      </div>
 
       {/* Divider above the betting surface */}
       <div className="mt-3 h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
