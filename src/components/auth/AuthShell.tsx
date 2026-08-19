@@ -135,7 +135,15 @@ export function AuthShell({
         </div>
 
         <p className="mx-auto mt-4 w-full max-w-[400px] shrink-0 text-xs text-[var(--color-ink-muted)]">
-          By continuing you agree to our terms. Markets involve risk — play responsibly.
+          By continuing you agree to our{" "}
+          <Link to="/terms" className="font-medium text-[var(--color-ink)] underline underline-offset-2 hover:text-[var(--color-neon)]">
+            terms
+          </Link>
+          . Markets involve risk — play{" "}
+          <Link to="/responsible-gambling" className="font-medium text-[var(--color-ink)] underline underline-offset-2 hover:text-[var(--color-neon)]">
+            responsibly
+          </Link>
+          .
         </p>
       </main>
 
