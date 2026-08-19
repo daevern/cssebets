@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { CommentThread } from "@/components/social/CommentThread";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
@@ -406,6 +407,10 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       />
 
       {race.status === "finished" && <F1PostRaceAnalytics raceId={raceId} />}
+
+      <div className="mt-8">
+        <CommentThread eventKind="f1" eventId={raceId} />
+      </div>
 
       <PageFooter />
     </div>

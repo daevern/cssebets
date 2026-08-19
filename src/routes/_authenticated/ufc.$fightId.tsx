@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { CommentThread } from "@/components/social/CommentThread";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type ReactNode } from "react";
@@ -145,6 +146,7 @@ function FightAnalytics({ data }: { data: any }) {
       {/* H2H + recent form */}
       <H2HSection h2h={h2h} fight={fight} />
 
+      <CommentThread eventKind="ufc" eventId={fight.id} />
     </>
   );
 }
