@@ -3625,6 +3625,11 @@ export type Database = {
           event_kind: string
           id: string
           like_count: number
+          media_height: number | null
+          media_preview_url: string | null
+          media_provider: string | null
+          media_url: string | null
+          media_width: number | null
           parent_id: string | null
           updated_at: string
           user_id: string
@@ -3638,6 +3643,11 @@ export type Database = {
           event_kind: string
           id?: string
           like_count?: number
+          media_height?: number | null
+          media_preview_url?: string | null
+          media_provider?: string | null
+          media_url?: string | null
+          media_width?: number | null
           parent_id?: string | null
           updated_at?: string
           user_id: string
@@ -3651,6 +3661,11 @@ export type Database = {
           event_kind?: string
           id?: string
           like_count?: number
+          media_height?: number | null
+          media_preview_url?: string | null
+          media_provider?: string | null
+          media_url?: string | null
+          media_width?: number | null
           parent_id?: string | null
           updated_at?: string
           user_id?: string

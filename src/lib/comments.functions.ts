@@ -13,6 +13,9 @@ export type CommentNode = {
   likeCount: number;
   likedByMe: boolean;
   position: string | null;
+  mediaUrl: string | null;
+  mediaWidth: number | null;
+  mediaHeight: number | null;
   replies: CommentNode[];
 };
 
@@ -37,14 +40,23 @@ export const postEventComment = createServerFn({ method: "POST" })
       .object({
         eventKind: z.enum(["wc", "football", "f1", "ufc"]),
         eventId: z.string().min(1).max(120),
-        body: z.string().trim().min(1).max(500),
+        body: z.string().trim().max(500),
         parentId: z.string().uuid().nullable().optional(),
+        media: z
+          .object({
+            url: z.string().url().max(600),
+            width: z.number().int().positive().max(4000).optional(),
+            height: z.number().int().positive().max(4000).optional(),
+          })
+          .nullable()
+          .optional(),
       })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { screenComment } = await import("@/lib/comments-filter");
+    const { isAllowedGifUrl } = await import("@/lib/gifs.functions");
     const { enforceRateLimit, isRateLimitError } = await import("@/lib/rate-limit.functions");
 
     const { data: profile } = await (supabase as any)
@@ -54,7 +66,13 @@ export const postEventComment = createServerFn({ method: "POST" })
       .maybeSingle();
     if (profile?.comments_banned_at) throw new Error("You're not allowed to comment.");
 
-    const verdict = screenComment(data.body);
+    const media = data.media ?? null;
+    if (media && !isAllowedGifUrl(media.url)) throw new Error("That media isn't allowed.");
+    if (!data.body.trim() && !media) throw new Error("Comment can't be empty.");
+
+    const verdict = data.body.trim()
+      ? screenComment(data.body)
+      : ({ ok: true, body: "" } as const);
     if (!verdict.ok) throw new Error(verdict.reason);
 
     try {
@@ -75,7 +93,7 @@ export const postEventComment = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (last?.body && String(last.body).trim() === verdict.body) {
+    if (!media && last?.body && String(last.body).trim() === verdict.body) {
       throw new Error("You already posted that.");
     }
 
@@ -87,6 +105,11 @@ export const postEventComment = createServerFn({ method: "POST" })
         user_id: userId,
         body: verdict.body,
         parent_id: data.parentId ?? null,
+        media_url: media?.url ?? null,
+        media_preview_url: media?.url ?? null,
+        media_width: media?.width ?? null,
+        media_height: media?.height ?? null,
+        media_provider: media ? "klipy" : null,
       })
       .select("id")
       .single();
