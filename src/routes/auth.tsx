@@ -111,8 +111,10 @@ function LoginPage() {
     <AuthShell
       title="Sign in"
       footer={
-        <p className="text-center text-sm text-[var(--color-ink-muted)]">
-          New to CSSEBets?{" "}
+        <p className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-center text-sm text-[var(--color-ink-muted)]">
+          <span>New to</span>
+          <CsseWordmark size={15} />
+          <span>?</span>
           <Link to="/register" className="font-medium text-[var(--color-neon)] hover:underline">
             Create an account
           </Link>
