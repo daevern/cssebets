@@ -303,7 +303,7 @@ function HomePage() {
 
       
 
-      <PageFooter />
+      {(user as any)?.is_anonymous === true || !user ? <PublicFooter /> : <PageFooter />}
     </div>
   );
 }
