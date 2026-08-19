@@ -132,6 +132,9 @@ export function CommentThread({
   const [replyBody, setReplyBody] = useState("");
   const [replyGif, setReplyGif] = useState<GifResult | null>(null);
   const [showAll, setShowAll] = useState(false);
+  useEffect(() => {
+    if (highlightId) setShowAll(true);
+  }, [highlightId]);
   const [sort, setSort] = useState<Sort>("new");
 
   const refresh = () => qc.invalidateQueries({ queryKey });
