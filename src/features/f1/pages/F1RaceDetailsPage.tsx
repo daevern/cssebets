@@ -408,6 +408,10 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
 
       {race.status === "finished" && <F1PostRaceAnalytics raceId={raceId} />}
 
+      <div className="mt-8">
+        <CommentThread eventKind="f1" eventId={raceId} />
+      </div>
+
       <PageFooter />
     </div>
   );
