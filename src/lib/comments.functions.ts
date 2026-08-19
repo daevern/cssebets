@@ -115,8 +115,34 @@ export const postEventComment = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+
+    // Notify the parent comment's author about the reply (never yourself).
+    if (data.parentId) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: parent } = await (supabaseAdmin as any)
+          .from("event_comments")
+          .select("user_id")
+          .eq("id", data.parentId)
+          .maybeSingle();
+        if (parent?.user_id && parent.user_id !== userId) {
+          const { dispatchNotification } = await import("@/lib/notifications.server");
+          await dispatchNotification({
+            eventType: "comment_reply",
+            recipientUserId: parent.user_id,
+            relatedRecordType: "event_comment",
+            relatedRecordId: row.id,
+            pushOnly: true,
+          });
+        }
+      } catch {
+        // notifications must never break posting
+      }
+    }
+
     return { id: row.id as string };
   });
+
 
 export const toggleCommentLike = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
