@@ -60,8 +60,14 @@ export const getFootballMarketHistory = createServerFn({ method: "POST" })
       counts.set(s.sports_market_id, (counts.get(s.sports_market_id) ?? 0) + 1);
     }
 
+    const matchResultRow = rows.find((m) => m.market_key === "match_result");
     const withHistory = rows.filter((m) => (counts.get(m.id) ?? 0) > 0);
-    const pool = withHistory.length > 0 ? withHistory : rows;
+    let pool = withHistory.length > 0 ? withHistory : rows;
+    // Match Result must always be offered/defaulted, even before it has
+    // snapshot history (live odds seed the chart).
+    if (matchResultRow && !pool.some((m) => m.market_key === "match_result")) {
+      pool = [matchResultRow, ...pool];
+    }
 
     const availableMarkets = pool.slice(0, 30).map((m) => ({
       key: m.market_key as string,
@@ -73,6 +79,7 @@ export const getFootballMarketHistory = createServerFn({ method: "POST" })
       pool.find((m) => m.market_key === data.market) ??
       pool.find((m) => m.market_key === "match_result") ??
       pool[0];
+
 
     const labels: Record<string, string> = {};
     for (const s of chosenRow.sports_market_selections ?? []) {
