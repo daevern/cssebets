@@ -87,9 +87,36 @@ export const getAdminMetrics = createServerFn({ method: "GET" })
     ]);
 
     const sinceActive = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-    const { data: activeRows } = await supabaseAdmin
-      .from("predictions").select("user_id").gte("created_at", sinceActive);
-    const activeUsers = new Set((activeRows ?? []).map((r: any) => r.user_id)).size;
+    const [{ data: activeRows }, { data: activeSportsRows }, { data: sportsAll }] = await Promise.all([
+      supabaseAdmin.from("predictions").select("user_id").gte("created_at", sinceActive),
+      (supabaseAdmin as any).from("sports_bets").select("user_id").gte("created_at", sinceActive),
+      (supabaseAdmin as any).from("sports_bets")
+        .select("user_id, stake, potential_payout, actual_payout, status"),
+    ]);
+    const activeUsers = new Set([
+      ...(activeRows ?? []).map((r: any) => r.user_id),
+      ...((activeSportsRows ?? []) as any[]).map((r: any) => r.user_id),
+    ]).size;
+
+    // New football engine totals folded into the same headline numbers.
+    const sportsBetRows = (sportsAll ?? []) as any[];
+    const sportsStake = sportsBetRows.reduce((s: number, r: any) => s + Number(r.stake || 0), 0);
+    const sportsPayouts = sportsBetRows.filter((r) => r.status === "won")
+      .reduce((s: number, r: any) => s + Number(r.actual_payout || r.potential_payout || 0), 0);
+    const sportsRefunds = sportsBetRows.filter((r) => r.status === "void")
+      .reduce((s: number, r: any) => s + Number(r.actual_payout || r.stake || 0), 0);
+    const sportsPendingStake = sportsBetRows.filter((r) => r.status === "pending")
+      .reduce((s: number, r: any) => s + Number(r.stake || 0), 0);
+    const sportsOpenExposure = sportsBetRows.filter((r) => r.status === "pending")
+      .reduce((s: number, r: any) => s + Number(r.potential_payout || 0), 0);
+    const sportsHousePl = sportsBetRows
+      .filter((r) => r.status === "won" || r.status === "lost")
+      .reduce((s: number, r: any) =>
+        s + (r.status === "lost"
+          ? Number(r.stake || 0)
+          : Number(r.stake || 0) - Number(r.actual_payout || r.potential_payout || 0)), 0);
+    const sportsUnsettled = sportsBetRows.filter((r) => r.status === "pending").length;
+    const sportsVoided = sportsBetRows.filter((r) => r.status === "void").length;
 
     // Betting accounting (from settled predictions, NOT from all wallet credits).
     const totalStake = (preds ?? []).reduce((s: number, p: any) => s + Number(p.virtual_stake || 0), 0);
@@ -127,17 +154,17 @@ export const getAdminMetrics = createServerFn({ method: "GET" })
     return {
       totalUsers: totalUsers ?? 0,
       activeUsers,
-      totalPredictions: totalPredictions ?? 0,
-      totalStake,
-      totalPayouts: totalGrossPayouts,
-      totalRefunds,
-      houseProfitLoss,
-      pendingStake,
-      openGrossExposure,
-      netMovement: totalGrossPayouts - totalStake,
+      totalPredictions: (totalPredictions ?? 0) + sportsBetRows.length,
+      totalStake: totalStake + sportsStake,
+      totalPayouts: totalGrossPayouts + sportsPayouts,
+      totalRefunds: totalRefunds + sportsRefunds,
+      houseProfitLoss: houseProfitLoss + sportsHousePl,
+      pendingStake: pendingStake + sportsPendingStake,
+      openGrossExposure: openGrossExposure + sportsOpenExposure,
+      netMovement: (totalGrossPayouts + sportsPayouts) - (totalStake + sportsStake),
       walletByCategory: Object.fromEntries(walletByCategory),
-      unsettled: unsettled ?? 0,
-      voided: voided ?? 0,
+      unsettled: (unsettled ?? 0) + sportsUnsettled,
+      voided: (voided ?? 0) + sportsVoided,
       topWinners,
       topLosers,
     };
@@ -361,6 +388,38 @@ export const getUserDetail = createServerFn({ method: "GET" })
       if (page.length < ADMIN_PAGE_SIZE) break;
     }
 
+    // New football engine bets (sports_bets) — normalized into the same row shape.
+    const { data: sportsBetRows } = await (supabaseAdmin as any)
+      .from("sports_bets")
+      .select("id, sports_event_id, competition_code, market_key, selection_key, stake, accepted_odds, potential_payout, actual_payout, status, created_at, settled_at")
+      .eq("user_id", data.userId)
+      .order("created_at", { ascending: false })
+      .limit(ADMIN_PAGE_SIZE);
+    const sbEventIds = Array.from(new Set((sportsBetRows ?? []).map((r: any) => r.sports_event_id).filter(Boolean)));
+    const { data: sbEvents } = sbEventIds.length
+      ? await (supabaseAdmin as any).from("sports_events").select("id, home_name, away_name, event_name").in("id", sbEventIds)
+      : { data: [] as any[] };
+    const sbEventById = new Map<string, any>((sbEvents ?? []).map((e: any) => [e.id, e]));
+    for (const r of sportsBetRows ?? []) {
+      const ev = sbEventById.get(r.sports_event_id);
+      predictionRows.push({
+        id: r.id,
+        match_id: r.sports_event_id,
+        match_label: ev ? (ev.home_name && ev.away_name ? `${ev.home_name} vs ${ev.away_name}` : ev.event_name) : null,
+        market: r.market_key,
+        outcome: r.selection_key,
+        virtual_stake: Number(r.stake ?? 0),
+        reference_odds: Number(r.accepted_odds ?? 0),
+        potential_return: Number(r.potential_payout ?? 0),
+        points: Number(r.actual_payout ?? 0),
+        status: r.status,
+        created_at: r.created_at,
+        settled_at: r.settled_at,
+        source: "sports_bets",
+      });
+    }
+    predictionRows.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
     const [{ data: profile }, { data: wallet }, { data: roleRows }, authResult] =
       await Promise.all([
         supabaseAdmin.from("profiles").select("*").eq("id", data.userId).maybeSingle(),
@@ -418,6 +477,24 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
     }
 
 
+    // --- Football sports_bets (new engine: EPL / La Liga / Serie A / UCL) ---
+    const sportsRows: any[] = [];
+    if (data.sport === "all" || data.sport === "football") {
+      let sq = (supabaseAdmin as any)
+        .from("sports_bets")
+        .select("id, user_id, sports_event_id, sport_code, competition_code, market_key, selection_key, stake, accepted_odds, potential_payout, actual_payout, status, placed_at, created_at, settled_at")
+        .eq("sport_code", "football")
+        .order("created_at", { ascending: false })
+        .limit(ADMIN_PAGE_SIZE);
+      if (data.userId) sq = sq.eq("user_id", data.userId);
+      if (data.fixtureId) sq = sq.eq("sports_event_id", data.fixtureId);
+      if (data.market) sq = sq.eq("market_key", data.market);
+      if (data.status) sq = sq.eq("status", data.status);
+      const { data: sBets, error: sErr } = await sq;
+      if (sErr) throw new Error(sErr.message);
+      sportsRows.push(...(sBets ?? []));
+    }
+
     // --- UFC bets (normalized to prediction row shape) ---
     const ufcRows: any[] = [];
     if (data.sport === "all" || data.sport === "ufc") {
@@ -473,8 +550,10 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
         ...footballRows.map((r: any) => r.user_id),
         ...ufcRows.map((r: any) => r.user_id),
         ...f1Rows.map((r: any) => r.user_id),
+        ...sportsRows.map((r: any) => r.user_id),
       ].filter(Boolean),
     ));
+    const eids = Array.from(new Set(sportsRows.map((r: any) => r.sports_event_id).filter(Boolean)));
     const mids = Array.from(new Set(footballRows.map((r: any) => r.match_id).filter(Boolean)));
     const fids = Array.from(new Set(ufcRows.map((r: any) => r.fight_id).filter(Boolean)));
     const rids = Array.from(new Set(f1Rows.map((r: any) => r.race_id).filter(Boolean)));
@@ -483,7 +562,17 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
     const matches: any[] = [];
     const fights: any[] = [];
     const races: any[] = [];
+    const sportsEvents: any[] = [];
     await Promise.all([
+      ...chunkArray(eids).map(async (ids) => {
+        if (!ids.length) return;
+        const { data: page, error } = await (supabaseAdmin as any)
+          .from("sports_events")
+          .select("id, event_name, home_name, away_name, competition_code, scheduled_at, status")
+          .in("id", ids);
+        if (error) throw new Error(error.message);
+        sportsEvents.push(...(page ?? []));
+      }),
       ...chunkArray(uids).map(async (ids) => {
         if (!ids.length) return;
         const { data: page, error } = await supabaseAdmin.from("profiles").select("id, display_name").in("id", ids);
@@ -522,8 +611,42 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
     const matchById = new Map(matches.map((m: any) => [m.id, m]));
     const fightById = new Map(fights.map((f: any) => [f.id, f]));
     const raceById = new Map(races.map((r: any) => [r.id, r]));
+    const eventById = new Map(sportsEvents.map((e: any) => [e.id, e]));
 
     const ufcStatusForUi: Record<string, string> = { open: "pending", won: "won", lost: "lost", void: "void" };
+
+    const normalizedSports = sportsRows.map((r: any) => {
+      const ev = eventById.get(r.sports_event_id);
+      const label = ev
+        ? (ev.home_name && ev.away_name ? `${ev.home_name} vs ${ev.away_name}` : ev.event_name ?? "—")
+        : "—";
+      return {
+        id: r.id,
+        user_id: r.user_id,
+        match_id: null,
+        sport: "football" as const,
+        fixture_id: r.sports_event_id,
+        fixture_label: label,
+        fixture_at: ev?.scheduled_at ?? null,
+        fixture_status: ev?.status ?? null,
+        fixture_meta: r.competition_code ?? ev?.competition_code ?? null,
+        match: label,
+        market: r.market_key,
+        outcome: r.selection_key,
+        selection_key: r.selection_key ?? null,
+        virtual_stake: Number(r.stake ?? 0),
+        reference_odds: Number(r.accepted_odds ?? 0),
+        potential_return: Number(r.potential_payout ?? 0),
+        points: Number(r.actual_payout ?? 0),
+        status: r.status,
+        created_at: r.created_at ?? r.placed_at,
+        settled_at: r.settled_at,
+        flagged_for_review: false,
+        flagged_reason: null,
+        source: "sports_bets" as const,
+        display_name: profileById.get(r.user_id)?.display_name ?? String(r.user_id).slice(0, 8),
+      };
+    });
 
     const normalizedFootball = footballRows.map((r: any) => {
       const match = matchById.get(r.match_id);
@@ -617,7 +740,7 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       };
     });
 
-    const combined = [...normalizedFootball, ...normalizedUfc, ...normalizedF1]
+    const combined = [...normalizedFootball, ...normalizedSports, ...normalizedUfc, ...normalizedF1]
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     return { total: combined.length, predictions: combined };
