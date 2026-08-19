@@ -5235,6 +5235,57 @@ export type Database = {
         }
         Relationships: []
       }
+      ops_pulse_samples: {
+        Row: {
+          active_users: number
+          captured_at: string
+          checkpoints_total: number
+          db_connections: number
+          id: number
+          total_balance: number
+          wal_bytes: number
+        }
+        Insert: {
+          active_users?: number
+          captured_at?: string
+          checkpoints_total: number
+          db_connections?: number
+          id?: number
+          total_balance?: number
+          wal_bytes: number
+        }
+        Update: {
+          active_users?: number
+          captured_at?: string
+          checkpoints_total?: number
+          db_connections?: number
+          id?: number
+          total_balance?: number
+          wal_bytes?: number
+        }
+        Relationships: []
+      }
+      ops_selftest_results: {
+        Row: {
+          created_at: string
+          id: number
+          result: Json
+          test_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          result: Json
+          test_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          result?: Json
+          test_name?: string
+        }
+        Relationships: []
+      }
       page_views: {
         Row: {
           created_at: string
@@ -8456,6 +8507,7 @@ export type Database = {
         Args: { p_amount: number; p_reason: string; p_user_id: string }
         Returns: number
       }
+      admin_live_pulse: { Args: never; Returns: Json }
       admin_reset_onboarding: {
         Args: { p_user_id: string }
         Returns: undefined
@@ -10059,6 +10111,7 @@ export type Database = {
         }
         Returns: number
       }
+      ops_noop_write_test: { Args: never; Returns: Json }
       payout_approve_atomic: {
         Args: { p_admin_id: string; p_payout_id: string }
         Returns: string

@@ -75,6 +75,7 @@ import { Route as ManagementAdminReviewRouteImport } from './routes/management/a
 import { Route as ManagementAdminReferredUsersRouteImport } from './routes/management/admin.referred-users'
 import { Route as ManagementAdminReferralsRouteImport } from './routes/management/admin.referrals'
 import { Route as ManagementAdminReconciliationRouteImport } from './routes/management/admin.reconciliation'
+import { Route as ManagementAdminPulseRouteImport } from './routes/management/admin.pulse'
 import { Route as ManagementAdminPricingBreakdownRouteImport } from './routes/management/admin.pricing-breakdown'
 import { Route as ManagementAdminPredictionsRouteImport } from './routes/management/admin.predictions'
 import { Route as ManagementAdminPointsRouteImport } from './routes/management/admin.points'
@@ -497,6 +498,11 @@ const ManagementAdminReconciliationRoute =
     path: '/reconciliation',
     getParentRoute: () => ManagementAdminRoute,
   } as any)
+const ManagementAdminPulseRoute = ManagementAdminPulseRouteImport.update({
+  id: '/pulse',
+  path: '/pulse',
+  getParentRoute: () => ManagementAdminRoute,
+} as any)
 const ManagementAdminPricingBreakdownRoute =
   ManagementAdminPricingBreakdownRouteImport.update({
     id: '/pricing-breakdown',
@@ -1001,6 +1007,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
+  '/management/admin/pulse': typeof ManagementAdminPulseRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/referrals': typeof ManagementAdminReferralsRoute
   '/management/admin/referred-users': typeof ManagementAdminReferredUsersRoute
@@ -1136,6 +1143,7 @@ export interface FileRoutesByTo {
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
+  '/management/admin/pulse': typeof ManagementAdminPulseRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/referrals': typeof ManagementAdminReferralsRoute
   '/management/admin/referred-users': typeof ManagementAdminReferredUsersRoute
@@ -1278,6 +1286,7 @@ export interface FileRoutesById {
   '/management/admin/points': typeof ManagementAdminPointsRoute
   '/management/admin/predictions': typeof ManagementAdminPredictionsRoute
   '/management/admin/pricing-breakdown': typeof ManagementAdminPricingBreakdownRoute
+  '/management/admin/pulse': typeof ManagementAdminPulseRoute
   '/management/admin/reconciliation': typeof ManagementAdminReconciliationRoute
   '/management/admin/referrals': typeof ManagementAdminReferralsRoute
   '/management/admin/referred-users': typeof ManagementAdminReferredUsersRoute
@@ -1420,6 +1429,7 @@ export interface FileRouteTypes {
     | '/management/admin/points'
     | '/management/admin/predictions'
     | '/management/admin/pricing-breakdown'
+    | '/management/admin/pulse'
     | '/management/admin/reconciliation'
     | '/management/admin/referrals'
     | '/management/admin/referred-users'
@@ -1555,6 +1565,7 @@ export interface FileRouteTypes {
     | '/management/admin/points'
     | '/management/admin/predictions'
     | '/management/admin/pricing-breakdown'
+    | '/management/admin/pulse'
     | '/management/admin/reconciliation'
     | '/management/admin/referrals'
     | '/management/admin/referred-users'
@@ -1696,6 +1707,7 @@ export interface FileRouteTypes {
     | '/management/admin/points'
     | '/management/admin/predictions'
     | '/management/admin/pricing-breakdown'
+    | '/management/admin/pulse'
     | '/management/admin/reconciliation'
     | '/management/admin/referrals'
     | '/management/admin/referred-users'
@@ -2251,6 +2263,13 @@ declare module '@tanstack/react-router' {
       path: '/reconciliation'
       fullPath: '/management/admin/reconciliation'
       preLoaderRoute: typeof ManagementAdminReconciliationRouteImport
+      parentRoute: typeof ManagementAdminRoute
+    }
+    '/management/admin/pulse': {
+      id: '/management/admin/pulse'
+      path: '/pulse'
+      fullPath: '/management/admin/pulse'
+      preLoaderRoute: typeof ManagementAdminPulseRouteImport
       parentRoute: typeof ManagementAdminRoute
     }
     '/management/admin/pricing-breakdown': {
@@ -2947,6 +2966,7 @@ interface ManagementAdminRouteChildren {
   ManagementAdminPointsRoute: typeof ManagementAdminPointsRoute
   ManagementAdminPredictionsRoute: typeof ManagementAdminPredictionsRoute
   ManagementAdminPricingBreakdownRoute: typeof ManagementAdminPricingBreakdownRoute
+  ManagementAdminPulseRoute: typeof ManagementAdminPulseRoute
   ManagementAdminReconciliationRoute: typeof ManagementAdminReconciliationRoute
   ManagementAdminReferralsRoute: typeof ManagementAdminReferralsRoute
   ManagementAdminReferredUsersRoute: typeof ManagementAdminReferredUsersRoute
@@ -2992,6 +3012,7 @@ const ManagementAdminRouteChildren: ManagementAdminRouteChildren = {
   ManagementAdminPointsRoute: ManagementAdminPointsRoute,
   ManagementAdminPredictionsRoute: ManagementAdminPredictionsRoute,
   ManagementAdminPricingBreakdownRoute: ManagementAdminPricingBreakdownRoute,
+  ManagementAdminPulseRoute: ManagementAdminPulseRoute,
   ManagementAdminReconciliationRoute: ManagementAdminReconciliationRoute,
   ManagementAdminReferralsRoute: ManagementAdminReferralsRoute,
   ManagementAdminReferredUsersRoute: ManagementAdminReferredUsersRoute,
