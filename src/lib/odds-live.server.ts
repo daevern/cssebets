@@ -191,8 +191,8 @@ export async function runMarketHeartbeat(nowIso: string) {
     const t = startsAt ? new Date(startsAt).getTime() : now;
     const ahead = t - now;
     if (ahead <= 2 * 60 * 60 * 1000) return 20_000; // live / imminent
-    if (ahead <= 12 * 60 * 60 * 1000) return 300_000; // same-day: 5 min
-    return 1_800_000; // further out: 30 min — keeps history without disk bloat
+    if (ahead <= 12 * 60 * 60 * 1000) return 600_000; // same-day: 10 min
+    return 3_600_000; // further out: hourly — keeps history without disk bloat
   };
   const out = { football: 0, ufc: 0, f1: 0 };
 
