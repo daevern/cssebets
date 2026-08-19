@@ -1,16 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Heart, MessageSquare, Trash2, Loader2, ImagePlay, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { avatarSrc, initialOf } from "@/lib/avatar";
 import { GifPicker } from "@/components/social/GifPicker";
 import type { GifResult } from "@/lib/gifs.functions";
 import {
   listEventComments,
   postEventComment,
   toggleCommentLike,
+  getMyCommentStatus,
   deleteMyComment,
   type CommentNode,
   type EventKind,
@@ -31,10 +33,29 @@ function relTime(iso: string) {
 const MAX = 500;
 type Sort = "top" | "new";
 
-function Avatar({ name }: { name: string }) {
+function Avatar({
+  name,
+  userId,
+  avatarPath,
+}: {
+  name: string;
+  userId?: string | null;
+  avatarPath?: string | null;
+}) {
+  const src = avatarSrc(userId, avatarPath);
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt={name}
+        loading="lazy"
+        className="h-9 w-9 shrink-0 rounded-full object-cover"
+      />
+    );
+  }
   return (
     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--color-neon)]/15 text-sm font-semibold uppercase text-[var(--color-neon)]">
-      {(name || "?").trim().charAt(0)}
+      {initialOf(name)}
     </span>
   );
 }
@@ -76,6 +97,20 @@ export function CommentThread({
   const post = useServerFn(postEventComment);
   const like = useServerFn(toggleCommentLike);
   const remove = useServerFn(deleteMyComment);
+  const status = useServerFn(getMyCommentStatus);
+
+  const me = useQuery({
+    queryKey: ["my-comment-status", user?.id ?? "anon"],
+    queryFn: () => status() as Promise<{ userId: string; displayName: string; avatarPath: string | null; banned: boolean }>,
+    enabled: !isGuest,
+    staleTime: 60_000,
+  });
+  const myAvatarPath = me.data?.avatarPath ?? null;
+
+  const [highlightId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return new URLSearchParams(window.location.search).get("comment");
+  });
 
   const queryKey = ["event-comments", eventKind, eventId, user?.id ?? "anon"];
 
@@ -97,6 +132,9 @@ export function CommentThread({
   const [replyBody, setReplyBody] = useState("");
   const [replyGif, setReplyGif] = useState<GifResult | null>(null);
   const [showAll, setShowAll] = useState(false);
+  useEffect(() => {
+    if (highlightId) setShowAll(true);
+  }, [highlightId]);
   const [sort, setSort] = useState<Sort>("new");
 
   const refresh = () => qc.invalidateQueries({ queryKey });
@@ -191,7 +229,11 @@ export function CommentThread({
       ) : (
         <div className="rounded-2xl bg-white/[0.03] p-3">
           <div className="flex items-start gap-3">
-            <Avatar name={(user as any)?.user_metadata?.display_name ?? "You"} />
+            <Avatar
+              name={(user as any)?.user_metadata?.display_name ?? "You"}
+              userId={user?.id}
+              avatarPath={myAvatarPath}
+            />
             <div className="min-w-0 flex-1">
               <textarea
                 value={body}
@@ -259,6 +301,7 @@ export function CommentThread({
             <CommentItem
               key={c.id}
               node={c}
+              highlightId={highlightId}
               meId={isGuest ? null : (user?.id ?? null)}
               onLike={(id) => (isGuest ? toast.info("Sign in to like comments.") : likeMut.mutate(id))}
               onDelete={(id) => deleteMut.mutate(id)}
@@ -354,6 +397,7 @@ function CommentItem({
   replyOpen,
   replySlot,
   nested = false,
+  highlightId = null,
 }: {
   node: CommentNode;
   meId: string | null;
@@ -363,12 +407,27 @@ function CommentItem({
   replyOpen?: boolean;
   replySlot?: React.ReactNode;
   nested?: boolean;
+  highlightId?: string | null;
 }) {
-  const [showReplies, setShowReplies] = useState(false);
+  const hasHighlightedReply = !!highlightId && node.replies.some((r) => r.id === highlightId);
+  const [showReplies, setShowReplies] = useState(hasHighlightedReply);
+  const ref = useRef<HTMLElement | null>(null);
+  const isTarget = !!highlightId && highlightId === node.id;
+
+  useEffect(() => {
+    if (isTarget && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [isTarget]);
 
   return (
-    <article className={`flex gap-3 py-3 ${nested ? "" : ""}`}>
-      <Avatar name={node.displayName} />
+    <article
+      ref={ref as any}
+      className={`flex gap-3 py-3 ${
+        isTarget ? "rounded-xl bg-[var(--color-neon)]/[0.07] px-2 ring-1 ring-[var(--color-neon)]/30" : ""
+      }`}
+    >
+      <Avatar name={node.displayName} userId={node.userId} avatarPath={node.avatarPath} />
       <div className="min-w-0 flex-1">
         <header className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-sm font-semibold text-[var(--color-ink)]">{node.displayName}</span>
@@ -439,6 +498,7 @@ function CommentItem({
                     onLike={onLike}
                     onDelete={onDelete}
                     onReply={onReply}
+                    highlightId={highlightId}
                     nested
                   />
                 ))}

@@ -4,18 +4,31 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, User as UserIcon, Mail, Phone, KeyRound, Save, LogOut } from "lucide-react";
+import { Loader2, ChevronRight, Check, X, LogOut } from "lucide-react";
 import { toast } from "sonner";
-import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { BadgeGrid } from "@/components/trust/BadgeGrid";
 import { ReferralPanel } from "@/components/engagement/ReferralPanel";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
-
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   ssr: false,
-  head: () => ({ meta: [{ title: "Settings — cssebets" }] }),
+  head: () => ({
+    meta: [
+      { title: "Profile & settings — CSSEBets" },
+      {
+        name: "description",
+        content: "Manage your CSSEBets profile photo, display name, contact details and notifications.",
+      },
+      { property: "og:title", content: "Profile & settings — CSSEBets" },
+      {
+        property: "og:description",
+        content: "Manage your CSSEBets profile photo, display name, contact details and notifications.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: SettingsPage,
 });
 
@@ -42,65 +55,88 @@ function SettingsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("display_name, phone_number, public_reference, auth_provider")
+        .select("display_name, phone_number, public_reference, auth_provider, avatar_url")
         .eq("id", uid!)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return data as any;
     },
     enabled: !!uid,
   });
 
   const currentEmail = isSyntheticPhoneEmail(user?.email) ? "" : (user?.email ?? "");
   const currentPhone = profile.data?.phone_number ?? "";
+  const currentName = profile.data?.display_name ?? "";
 
+  const [name, setName] = useState(currentName);
   const [email, setEmail] = useState(currentEmail);
   const [phone, setPhone] = useState(currentPhone);
   const [pw1, setPw1] = useState("");
   const [pw2, setPw2] = useState("");
+  const [saving, setSaving] = useState<string | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
 
-  const [savingEmail, setSavingEmail] = useState(false);
-  const [savingPhone, setSavingPhone] = useState(false);
-  const [savingPw, setSavingPw] = useState(false);
-
+  useEffect(() => { setName(currentName); }, [currentName]);
   useEffect(() => { if (currentEmail) setEmail(currentEmail); }, [currentEmail]);
-  useEffect(() => { if (currentPhone) setPhone(currentPhone); }, [currentPhone]);
+  useEffect(() => { setPhone(currentPhone); }, [currentPhone]);
+
+  function refresh() {
+    qc.invalidateQueries({ queryKey: ["my-profile-settings", uid] });
+    qc.invalidateQueries({ queryKey: ["my-comment-status"] });
+  }
+
+  async function saveName() {
+    const v = name.trim();
+    if (v.length < 2) return toast.error("Display name must be at least 2 characters.");
+    if (v.length > 32) return toast.error("Keep your display name under 32 characters.");
+    setSaving("name");
+    try {
+      const { error } = await supabase.from("profiles").update({ display_name: v }).eq("id", uid!);
+      if (error) throw error;
+      toast.success("Display name updated.");
+      setOpen(null);
+      refresh();
+    } catch (e) { toast.error((e as Error).message); }
+    finally { setSaving(null); }
+  }
 
   async function saveEmail() {
-    if (!email || !email.includes("@")) { toast.error("Enter a valid email address"); return; }
-    setSavingEmail(true);
+    if (!email || !email.includes("@")) return toast.error("Enter a valid email address.");
+    setSaving("email");
     try {
       const { error } = await supabase.auth.updateUser({ email });
       if (error) throw error;
-      toast.success("Email update requested. Check your inbox to confirm.");
+      toast.success("Check your inbox to confirm the new address.");
+      setOpen(null);
     } catch (e) { toast.error((e as Error).message); }
-    finally { setSavingEmail(false); }
+    finally { setSaving(null); }
   }
 
   async function savePhone() {
     const p = phone.trim();
-    if (p && !isValidPhone(p)) { toast.error("Phone must be in international format, e.g. +60123456789"); return; }
-    if (!uid) return;
-    setSavingPhone(true);
+    if (p && !isValidPhone(p)) return toast.error("Use international format, e.g. +60123456789.");
+    setSaving("phone");
     try {
-      const { error } = await supabase.from("profiles").update({ phone_number: p || null }).eq("id", uid);
+      const { error } = await supabase.from("profiles").update({ phone_number: p || null }).eq("id", uid!);
       if (error) throw error;
       toast.success("Phone number updated.");
-      qc.invalidateQueries({ queryKey: ["my-profile-settings", uid] });
+      setOpen(null);
+      refresh();
     } catch (e) { toast.error((e as Error).message); }
-    finally { setSavingPhone(false); }
+    finally { setSaving(null); }
   }
+
   async function savePassword() {
-    if (pw1.length < 8) { toast.error("Password must be at least 8 characters"); return; }
-    if (pw1 !== pw2) { toast.error("Passwords do not match"); return; }
-    setSavingPw(true);
+    if (pw1.length < 8) return toast.error("Password must be at least 8 characters.");
+    if (pw1 !== pw2) return toast.error("Passwords do not match.");
+    setSaving("password");
     try {
       const { error } = await supabase.auth.updateUser({ password: pw1 });
       if (error) throw error;
       toast.success("Password updated.");
-      setPw1(""); setPw2("");
+      setPw1(""); setPw2(""); setOpen(null);
     } catch (e) { toast.error((e as Error).message); }
-    finally { setSavingPw(false); }
+    finally { setSaving(null); }
   }
 
   async function signOut() {
@@ -111,102 +147,194 @@ function SettingsPage() {
     navigate({ to: "/auth", replace: true });
   }
 
-
-
   return (
-    <PageShell kicker="Locker Room · Profile" title="Your" titleAccent="kit.">
-      <StencilPanel kicker={<><UserIcon className="h-3 w-3" /> Profile</>} accent>
+    <main className="mx-auto w-full max-w-2xl px-4 pb-24 pt-6">
+      <h1 className="text-[26px] font-semibold tracking-tight text-[var(--color-ink)]">Profile</h1>
+      <p className="mt-1 text-[13px] text-[var(--color-ink-muted)]">
+        How you appear across markets, comments and leaderboards.
+      </p>
+
+      <section className="mt-6 rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface)] p-5">
         {profile.isLoading ? (
           <Loader2 className="h-4 w-4 animate-spin text-[var(--color-ink-muted)]" />
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 text-sm">
-            <Field label="Display name" value={profile.data?.display_name ?? "—"} />
-            <Field label="Reference ID" value={profile.data?.public_reference ?? "—"} mono />
-            <Field label="Sign-in method" value={profile.data?.auth_provider ?? "—"} capitalize />
-          </div>
+          <AvatarUpload
+            userId={uid!}
+            displayName={currentName || "Member"}
+            avatarPath={profile.data?.avatar_url ?? null}
+            onChanged={refresh}
+          />
         )}
-      </StencilPanel>
+      </section>
 
+      <SectionLabel>Account</SectionLabel>
+      <div className="overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface)]">
+        <Row
+          label="Display name"
+          value={currentName || "Not set"}
+          expanded={open === "name"}
+          onToggle={() => setOpen(open === "name" ? null : "name")}
+        >
+          <Field label="Display name">
+            <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={32} className="bg-[#070D0A] border-[var(--color-surface-border)] text-base" />
+          </Field>
+          <RowActions onCancel={() => setOpen(null)} onSave={saveName} loading={saving === "name"} disabled={name.trim() === currentName} />
+        </Row>
+
+        <Row
+          label="Email"
+          value={currentEmail || "Not set"}
+          expanded={open === "email"}
+          onToggle={() => setOpen(open === "email" ? null : "email")}
+        >
+          <Field label="Email address" hint="You'll need to confirm the new address from your inbox.">
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="bg-[#070D0A] border-[var(--color-surface-border)] text-base" />
+          </Field>
+          <RowActions onCancel={() => setOpen(null)} onSave={saveEmail} loading={saving === "email"} disabled={email === currentEmail} />
+        </Row>
+
+        <Row
+          label="Phone"
+          value={currentPhone || "Not set"}
+          expanded={open === "phone"}
+          onToggle={() => setOpen(open === "phone" ? null : "phone")}
+        >
+          <Field label="Phone number" hint="International format, e.g. +60123456789.">
+            <Input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+60123456789" className="bg-[#070D0A] border-[var(--color-surface-border)] text-base" />
+          </Field>
+          <RowActions onCancel={() => setOpen(null)} onSave={savePhone} loading={saving === "phone"} disabled={phone === currentPhone} />
+        </Row>
+
+        <Row
+          label="Password"
+          value="••••••••"
+          expanded={open === "password"}
+          onToggle={() => setOpen(open === "password" ? null : "password")}
+        >
+          <Field label="New password">
+            <Input type="password" value={pw1} onChange={(e) => setPw1(e.target.value)} className="bg-[#070D0A] border-[var(--color-surface-border)] text-base" />
+          </Field>
+          <Field label="Confirm password">
+            <Input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} className="bg-[#070D0A] border-[var(--color-surface-border)] text-base" />
+          </Field>
+          <RowActions onCancel={() => setOpen(null)} onSave={savePassword} loading={saving === "password"} disabled={!pw1 || !pw2} />
+        </Row>
+
+        <StaticRow label="Reference ID" value={profile.data?.public_reference ?? "—"} mono />
+        <StaticRow label="Sign-in method" value={profile.data?.auth_provider ?? "—"} capitalize />
+      </div>
+
+      <SectionLabel>Invite</SectionLabel>
       <ReferralPanel />
 
-
-
-      <StencilPanel kicker={<><Mail className="h-3 w-3" /> Email</>}>
-        <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Email address</Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            className="bg-[#070D0A] border-[var(--color-surface-border)]"
-          />
-          <p className="text-[11px] text-[var(--color-ink-muted)]">
-            Changing email requires confirming the new address from your inbox.
-          </p>
-        </div>
-        <SaveBtn onClick={saveEmail} disabled={savingEmail || email === currentEmail} loading={savingEmail} label="Update email" />
-      </StencilPanel>
-
-      <StencilPanel kicker={<><Phone className="h-3 w-3" /> Phone</>}>
-        <div className="space-y-1.5">
-          <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">Phone number</Label>
-          <Input
-            id="phone"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+60123456789"
-            className="bg-[#070D0A] border-[var(--color-surface-border)]"
-          />
-          <p className="text-[11px] text-[var(--color-ink-muted)]">International format, e.g. +60123456789.</p>
-        </div>
-        <SaveBtn onClick={savePhone} disabled={savingPhone || phone === currentPhone} loading={savingPhone} label="Update phone" />
-      </StencilPanel>
-
+      <SectionLabel>Notifications</SectionLabel>
       <NotificationSettings />
 
-
-
-      <StencilPanel kicker={<><LogOut className="h-3 w-3" /> Session</>}>
-        <p className="text-sm text-[var(--color-ink-muted)]">
-          Sign out of cssebets on this device.
-        </p>
-        <button
-          type="button"
-          onClick={signOut}
-          disabled={signingOut}
-          className="mt-4 inline-flex items-center gap-2 rounded-full border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] px-5 py-3 text-xs font-bold uppercase tracking-[0.22em] text-[var(--color-ink)] transition-all hover:border-[var(--color-neon)]/40 hover:text-[var(--color-neon)] active:scale-[0.99] disabled:opacity-40"
-        >
-          {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
-          Sign out
-        </button>
-      </StencilPanel>
+      <SectionLabel>Trust</SectionLabel>
       <BadgeGrid />
-    </PageShell>
+
+      <button
+        type="button"
+        onClick={signOut}
+        disabled={signingOut}
+        className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[var(--color-surface-border)] bg-[var(--color-surface)] px-5 py-4 text-[13px] font-semibold text-[var(--color-ink)] transition-colors hover:text-red-400 disabled:opacity-40"
+      >
+        {signingOut ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+        Sign out
+      </button>
+    </main>
   );
 }
 
-function Field({ label, value, mono, capitalize }: { label: string; value: string; mono?: boolean; capitalize?: boolean }) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="border border-[var(--color-surface-border)] bg-[#070D0A] p-3">
-      <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">{label}</div>
-      <div className={`mt-1 font-semibold ${mono ? "font-mono text-[var(--color-neon)]" : ""} ${capitalize ? "capitalize" : ""}`}>{value}</div>
+    <h2 className="mb-2 mt-8 px-1 text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--color-ink-muted)]">
+      {children}
+    </h2>
+  );
+}
+
+function Row({
+  label,
+  value,
+  expanded,
+  onToggle,
+  children,
+}: {
+  label: string;
+  value: string;
+  expanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border-b border-[var(--color-surface-border)] last:border-b-0">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+      >
+        <span className="text-[14px] font-medium text-[var(--color-ink)]">{label}</span>
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-[13px] text-[var(--color-ink-muted)]">{value}</span>
+          <ChevronRight className={`h-4 w-4 shrink-0 text-[var(--color-ink-muted)] transition-transform ${expanded ? "rotate-90" : ""}`} />
+        </span>
+      </button>
+      {expanded && <div className="space-y-4 border-t border-[var(--color-surface-border)] px-5 py-4">{children}</div>}
     </div>
   );
 }
 
-function SaveBtn({ onClick, disabled, loading, label }: { onClick: () => void; disabled?: boolean; loading?: boolean; label: string }) {
+function StaticRow({ label, value, mono, capitalize }: { label: string; value: string; mono?: boolean; capitalize?: boolean }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="mt-4 inline-flex items-center gap-2 rounded-full bg-[var(--color-neon)] px-5 py-3 text-xs font-bold uppercase tracking-[0.22em] text-black shadow-[0_0_24px_var(--color-neon-glow)] transition-all hover:brightness-110 active:scale-[0.99] disabled:opacity-40 disabled:shadow-none"
-    >
-      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-      {label}
-    </button>
+    <div className="flex items-center justify-between gap-3 border-b border-[var(--color-surface-border)] px-5 py-4 last:border-b-0">
+      <span className="text-[14px] font-medium text-[var(--color-ink)]">{label}</span>
+      <span className={`truncate text-[13px] text-[var(--color-ink-muted)] ${mono ? "font-mono text-[var(--color-neon)]" : ""} ${capitalize ? "capitalize" : ""}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">{label}</div>
+      {children}
+      {hint && <p className="text-[11px] text-[var(--color-ink-muted)]">{hint}</p>}
+    </div>
+  );
+}
+
+function RowActions({
+  onCancel,
+  onSave,
+  loading,
+  disabled,
+}: {
+  onCancel: () => void;
+  onSave: () => void;
+  loading?: boolean;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-end gap-2">
+      <button
+        type="button"
+        onClick={onCancel}
+        className="inline-flex items-center gap-1.5 rounded-full px-4 py-2.5 text-[12px] font-semibold text-[var(--color-ink-muted)]"
+      >
+        <X className="h-3.5 w-3.5" /> Cancel
+      </button>
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={loading || disabled}
+        className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-neon)] px-5 py-2.5 text-[12px] font-bold text-black disabled:opacity-40"
+      >
+        {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+        Save
+      </button>
+    </div>
   );
 }

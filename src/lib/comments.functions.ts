@@ -10,6 +10,7 @@ export type CommentNode = {
   createdAt: string;
   userId: string;
   displayName: string;
+  avatarPath: string | null;
   likeCount: number;
   likedByMe: boolean;
   position: string | null;
@@ -114,8 +115,34 @@ export const postEventComment = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
+
+    // Notify the parent comment's author about the reply (never yourself).
+    if (data.parentId) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { data: parent } = await (supabaseAdmin as any)
+          .from("event_comments")
+          .select("user_id")
+          .eq("id", data.parentId)
+          .maybeSingle();
+        if (parent?.user_id && parent.user_id !== userId) {
+          const { dispatchNotification } = await import("@/lib/notifications.server");
+          await dispatchNotification({
+            eventType: "comment_reply",
+            recipientUserId: parent.user_id,
+            relatedRecordType: "event_comment",
+            relatedRecordId: row.id,
+            pushOnly: true,
+          });
+        }
+      } catch {
+        // notifications must never break posting
+      }
+    }
+
     return { id: row.id as string };
   });
+
 
 export const toggleCommentLike = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -163,12 +190,13 @@ export const getMyCommentStatus = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data } = await (context.supabase as any)
       .from("profiles")
-      .select("display_name, comments_banned_at")
+      .select("display_name, avatar_url, comments_banned_at")
       .eq("id", context.userId)
       .maybeSingle();
     return {
       userId: context.userId,
       displayName: data?.display_name ?? "You",
+      avatarPath: (data?.avatar_url ?? null) as string | null,
       banned: !!data?.comments_banned_at,
     };
   });

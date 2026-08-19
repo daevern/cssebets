@@ -17,6 +17,7 @@ type EventType =
   | "cashout_rejected"
   | "cashout_completed"
   | "support_reply"
+  | "comment_reply"
   // admin-facing
   | "admin_new_registration"
   | "admin_new_topup"
@@ -41,6 +42,14 @@ function copyFor(event: EventType): CopyEntry {
         url: "/dashboard",
         subject: "Your CSSEBets Account Has Been Approved",
         emailHtml: "Great news — your CSSEBets account has been approved. You can now sign in and start playing.",
+      };
+    case "comment_reply":
+      return {
+        title: "New reply",
+        body: "Someone replied to your comment.",
+        url: "/notifications",
+        subject: "Someone replied to your comment",
+        emailHtml: "Someone replied to your comment on CSSEBets.",
       };
     case "account_rejected":
       return {
@@ -307,6 +316,8 @@ export type DispatchInput = {
   recipientUserId?: string | null;
   relatedRecordType?: string | null;
   relatedRecordId?: string | null;
+  /** Skip email fan-out (used for low-signal social events). */
+  pushOnly?: boolean;
 };
 
 export async function dispatchNotification(input: DispatchInput): Promise<void> {
@@ -393,7 +404,7 @@ export async function dispatchNotification(input: DispatchInput): Promise<void> 
       }
 
       // Email
-      if (emailEnabled) {
+      if (emailEnabled && !input.pushOnly) {
         try {
           const { data: user } = await supabaseAdmin.auth.admin.getUserById(uid);
           const email = user?.user?.email;
@@ -409,7 +420,7 @@ export async function dispatchNotification(input: DispatchInput): Promise<void> 
           results.email = { ok: false, error: String(e?.message || e) };
         }
       } else {
-        results.email = { skipped: "disabled" };
+        results.email = { skipped: input.pushOnly ? "push_only" : "disabled" };
       }
 
       const pushOk = !results.push?.skipped && (results.push?.ok ?? 0) > 0;
