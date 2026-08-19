@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CsseLogoLoader } from "@/components/brand/CsseLogoAnimated";
+import { PublicFooter } from "@/components/public/PublicPage";
 
 export const Route = createFileRoute("/")({
   ssr: false,

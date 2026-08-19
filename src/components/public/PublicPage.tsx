@@ -116,7 +116,7 @@ function PublicHeader() {
   );
 }
 
-function PublicFooter() {
+export function PublicFooter() {
   return (
     <footer className="border-t border-[var(--surface-border)] bg-[var(--surface-2)]">
       <div className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-10 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:px-6">
