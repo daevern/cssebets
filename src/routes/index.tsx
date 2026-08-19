@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CsseLogoLoader } from "@/components/brand/CsseLogoAnimated";
+import { PublicFooter } from "@/components/public/PublicPage";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -98,8 +99,8 @@ function GuestGate() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--surface)] px-4 text-[var(--ink)]">
-      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center gap-7 py-10 text-center">
+    <div className="min-h-screen bg-[var(--surface)] text-[var(--ink)]">
+      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center justify-center gap-7 px-4 py-10 text-center">
         {status === "loading" ? <CsseLogoLoader /> : <div className="text-3xl font-black tracking-tight">CSSEBETS</div>}
         <div className="space-y-3">
           <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[var(--color-neon)]">
@@ -136,6 +137,7 @@ function GuestGate() {
           </p>
         ) : null}
       </div>
+      <PublicFooter />
     </div>
   );
 }
