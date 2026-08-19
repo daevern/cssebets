@@ -311,7 +311,10 @@ export async function runMarketHeartbeat(nowIso: string) {
         .eq("race_id", r.id)
         .eq("market_type", "race_winner")
         .eq("status", "open")
-        .limit(30);
+        // Cap the F1 tape: 12 favourites are enough for the movement chart and
+        // keep f1_race_odds_snapshots from dominating disk IO.
+        .order("odds", { ascending: true })
+        .limit(12);
       const rows = ((mk ?? []) as any[]).filter((m) => Number(m.odds) > 1);
       if (!rows.length) continue;
 
