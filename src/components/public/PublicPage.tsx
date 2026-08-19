@@ -120,20 +120,6 @@ export function PublicFooter() {
   return (
     <footer className="border-t border-[var(--surface-border)] bg-[var(--surface-2)]">
       <div className="mx-auto w-full max-w-5xl px-4 py-8 md:px-6 md:py-10">
-        {/* Top block: small wordmark + 18+ pill */}
-        <div className="flex flex-col items-start gap-3">
-          <span className="uppercase">
-            <CsseWordmark size={18} />
-          </span>
-          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--surface-border)] px-3 py-1.5 font-mono text-[8px] uppercase tracking-[0.22em] text-[var(--ink-muted)]">
-            <span className="font-sans text-[10px] font-bold tracking-normal text-[var(--ink)]">18+</span>
-            <span className="text-[var(--ink-dim)]">·</span>
-            Play responsibly
-          </span>
-        </div>
-
-        <div className="my-6 h-px bg-[var(--surface-border)]" />
-
         <div className="grid grid-cols-3 gap-4">
           <FooterCol
             title="Platform"
@@ -163,10 +149,17 @@ export function PublicFooter() {
 
         <div className="my-6 h-px bg-[var(--surface-border)]" />
 
-        <div className="flex items-center gap-2 font-mono text-[9px] uppercase tracking-[0.22em] text-[var(--ink-dim)]">
-          © {new Date().getFullYear()}
-          <span className="uppercase">
-            <CsseWordmark size={10} />
+        <div className="flex flex-wrap items-center gap-3 font-mono text-[9px] uppercase tracking-[0.22em] text-[var(--ink-dim)]">
+          <span className="inline-flex items-center gap-2">
+            © {new Date().getFullYear()}
+            <span className="uppercase">
+              <CsseWordmark size={10} />
+            </span>
+          </span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--surface-border)] px-3 py-1.5 text-[8px] text-[var(--ink-muted)]">
+            <span className="font-sans text-[10px] font-bold tracking-normal text-[var(--ink)]">18+</span>
+            <span className="text-[var(--ink-dim)]">·</span>
+            Play responsibly
           </span>
         </div>
       </div>
