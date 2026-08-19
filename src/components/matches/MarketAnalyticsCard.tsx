@@ -586,31 +586,36 @@ export function MarketAnalyticsCard({
                         const xKey = xDomain ? row.tMs : row.t;
                         const cx = xScale ? xScale(xKey) : rightX;
                         return (
-                          <g key={`ep-${s.key}`}>
-                            <circle cx={cx} cy={y} r={4.5} fill={color} />
-                            <circle cx={cx} cy={y} r={9} fill={color} opacity={0.18} />
+                          <g
+                            key={`ep-${s.key}`}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => setHidden((h) => ({ ...h, [s.key]: true }))}
+                          >
+                            <circle cx={cx} cy={y} r={4} fill={color} />
+                            <circle cx={cx} cy={y} r={9} fill={color} opacity={0.16} />
                             <text
-                              x={rightX + 6}
-                              y={y - 4}
-                              fill={color}
-                              fontSize={13}
-                              fontWeight={800}
-                              style={{ letterSpacing: "0.02em" }}
+                              x={rightX + 8}
+                              y={y - 3}
+                              fill="rgba(255,255,255,0.55)"
+                              fontSize={11}
+                              fontWeight={600}
+                              style={{ letterSpacing: "0.01em" }}
                             >
                               {abbrevLabel(s.label)}
                             </text>
                             <text
-                              x={rightX + 6}
-                              y={y + 12}
+                              x={rightX + 8}
+                              y={y + 15}
                               fill={color}
-                              fontSize={15}
-                              fontWeight={800}
-                              style={{ letterSpacing: "-0.01em" }}
+                              fontSize={17}
+                              fontWeight={700}
+                              style={{ letterSpacing: "-0.02em" }}
                             >
-                              {`${v.toFixed(1)}%`}
+                              {`${Math.round(v)}%`}
                             </text>
                           </g>
                         );
+
                       })}
                     </g>
                   );
