@@ -119,7 +119,7 @@ function PublicHeader() {
 function PublicFooter() {
   return (
     <footer className="border-t border-[var(--surface-border)] bg-[var(--surface-2)]">
-      <div className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-10 md:grid-cols-[1.4fr_1fr_1fr] md:px-6">
+      <div className="mx-auto grid w-full max-w-5xl gap-6 px-4 py-10 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:px-6">
         <div>
           <CsseLogo size={20} />
           <p className="mt-3 max-w-xs text-[13px] leading-relaxed text-[var(--ink-muted)]">
@@ -143,7 +143,16 @@ function PublicFooter() {
             { to: "/auth", label: "Log in" },
           ]}
         />
+        <FooterCol
+          title="Legal"
+          links={[
+            { to: "/terms", label: "Terms of Service" },
+            { to: "/privacy", label: "Privacy Policy" },
+            { to: "/responsible-gambling", label: "Responsible Gambling" },
+          ]}
+        />
       </div>
+
       <div className="border-t border-[var(--surface-border)]">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3 px-4 py-4 font-mono text-[10px] uppercase tracking-[0.24em] text-[var(--ink-dim)] md:px-6">
           <span>
