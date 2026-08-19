@@ -14,6 +14,8 @@ import {
   ShieldAlert,
   Loader2,
   Bell,
+  MessageSquare,
+  Heart,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/notifications")({
@@ -186,6 +188,13 @@ function NotifRow({ n, unread }: { n: Notif; unread: boolean }) {
         </Link>
       );
     }
+    if (n.href.includes("?")) {
+      return (
+        <a href={n.href} className="block">
+          {body}
+        </a>
+      );
+    }
     return (
       <Link to={n.href as any} className="block">
         {body}
@@ -204,6 +213,10 @@ function NotifIcon({ n }: { n: Notif }) {
       return <XCircle className={`${cls} text-[var(--ink-muted)]`} />;
     case "bet_void":
       return <Clock className={`${cls} text-[var(--ink-muted)]`} />;
+    case "comment_reply":
+      return <MessageSquare className={`${cls} text-[var(--ink)]`} />;
+    case "comment_like":
+      return <Heart className={`${cls} text-[var(--neon)]`} />;
     case "bet_placed":
       return <Ticket className={`${cls} text-[var(--ink)]`} />;
     case "payout_approved":
