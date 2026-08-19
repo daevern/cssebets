@@ -184,15 +184,15 @@ function FooterCol({
 }) {
   return (
     <div>
-      <div className="mb-3 font-mono text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--ink-dim)]">
+      <div className="mb-2 font-mono text-[8px] font-bold uppercase tracking-[0.22em] text-[var(--ink-dim)]">
         {title}
       </div>
-      <ul className="space-y-2">
+      <ul className="space-y-1.5">
         {links.map((l) => (
           <li key={l.to}>
             <Link
               to={l.to as never}
-              className="text-[13px] text-[var(--ink-muted)] hover:text-[var(--color-neon)]"
+              className="text-[11px] text-[var(--ink-muted)] hover:text-[var(--color-neon)]"
             >
               {l.label}
             </Link>
