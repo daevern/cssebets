@@ -56,10 +56,20 @@ function AuthedLayout() {
   const location = useLocation();
 
   const showBalance = isMember || isAdmin;
+  // Always read a live token at call time — a token captured in render can be
+  // stale/null by the time a refetch fires, which 500s the protected fn with
+  // "Unauthorized: No authorization header provided".
+  async function withAuth<T>(fn: (opts: any) => Promise<T>): Promise<T | null> {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return null;
+    return fn({ headers: { Authorization: `Bearer ${token}` } });
+  }
+
   const walletFn = useServerFn(getMyWallet);
   const wallet = useQuery({
     queryKey: ["my-wallet", user?.id],
-    queryFn: () => walletFn({ headers: { Authorization: `Bearer ${accessToken}` } }),
+    queryFn: () => withAuth(walletFn),
     enabled: showBalance && !!user?.id && hasToken,
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
@@ -74,28 +84,28 @@ function AuthedLayout() {
 
   const pendingPoints = useQuery({
     queryKey: ["pending-point-request-count"],
-    queryFn: () => pointReqFn({ headers: { Authorization: `Bearer ${accessToken}` } }),
+    queryFn: () => withAuth(pointReqFn),
     enabled: isAdmin && hasToken,
     retry: false,
     refetchInterval: 20000,
   });
   const pendingPayouts = useQuery({
     queryKey: ["pending-payout-count"],
-    queryFn: () => payoutAdminFn({ headers: { Authorization: `Bearer ${accessToken}` } }),
+    queryFn: () => withAuth(payoutAdminFn),
     enabled: isAdmin && hasToken,
     retry: false,
     refetchInterval: 20000,
   });
   const pendingUsers = useQuery({
     queryKey: ["pending-user-count"],
-    queryFn: () => pendingUserFn({ headers: { Authorization: `Bearer ${accessToken}` } }),
+    queryFn: () => withAuth(pendingUserFn),
     enabled: isAdmin && hasToken,
     retry: false,
     refetchInterval: 20000,
   });
   const myPayoutAction = useQuery({
     queryKey: ["my-payout-action-count", user?.id],
-    queryFn: () => myPayoutActionFn({ headers: { Authorization: `Bearer ${accessToken}` } }),
+    queryFn: () => withAuth(myPayoutActionFn),
     enabled: !!user?.id && hasToken,
     retry: false,
     refetchInterval: 20000,
@@ -103,11 +113,12 @@ function AuthedLayout() {
   const supportUnreadFn = useServerFn(getMyUnreadSupportCount);
   const supportUnread = useQuery({
     queryKey: ["my-support-unread", user?.id],
-    queryFn: () => supportUnreadFn({ headers: { Authorization: `Bearer ${accessToken}` } }),
+    queryFn: () => withAuth(supportUnreadFn),
     enabled: !!user?.id && hasToken,
     retry: false,
     refetchInterval: 20000,
   });
+
 
 
   const adminBadge =
