@@ -13,6 +13,9 @@ export type CommentNode = {
   likeCount: number;
   likedByMe: boolean;
   position: string | null;
+  mediaUrl: string | null;
+  mediaWidth: number | null;
+  mediaHeight: number | null;
   replies: CommentNode[];
 };
 
