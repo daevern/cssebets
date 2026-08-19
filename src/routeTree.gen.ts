@@ -9,8 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ResponsibleGamblingRouteImport } from './routes/responsible-gambling'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PerformanceRouteImport } from './routes/performance'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as CommunityRouteImport } from './routes/community'
@@ -146,14 +149,29 @@ import { Route as ApiPublicHooksApifootballFulltimeRouteImport } from './routes/
 import { Route as AuthenticatedFootballMatchesMatchIdRouteImport } from './routes/_authenticated/football/matches.$matchId'
 import { Route as AuthenticatedF1RacesRaceIdRouteImport } from './routes/_authenticated/f1.races.$raceId'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResponsibleGamblingRoute = ResponsibleGamblingRouteImport.update({
+  id: '/responsible-gambling',
+  path: '/responsible-gambling',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PerformanceRoute = PerformanceRouteImport.update({
@@ -902,8 +920,11 @@ export interface FileRoutesByFullPath {
   '/community': typeof CommunityRoute
   '/faq': typeof FaqRoute
   '/performance': typeof PerformanceRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/responsible-gambling': typeof ResponsibleGamblingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/arcade': typeof AuthenticatedArcadeRouteWithChildren
   '/bets': typeof AuthenticatedBetsRoute
   '/changelog': typeof AuthenticatedChangelogRoute
@@ -1039,8 +1060,11 @@ export interface FileRoutesByTo {
   '/community': typeof CommunityRoute
   '/faq': typeof FaqRoute
   '/performance': typeof PerformanceRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/responsible-gambling': typeof ResponsibleGamblingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/bets': typeof AuthenticatedBetsRoute
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -1173,8 +1197,11 @@ export interface FileRoutesById {
   '/community': typeof CommunityRoute
   '/faq': typeof FaqRoute
   '/performance': typeof PerformanceRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/responsible-gambling': typeof ResponsibleGamblingRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/arcade': typeof AuthenticatedArcadeRouteWithChildren
   '/_authenticated/bets': typeof AuthenticatedBetsRoute
   '/_authenticated/changelog': typeof AuthenticatedChangelogRoute
@@ -1312,8 +1339,11 @@ export interface FileRouteTypes {
     | '/community'
     | '/faq'
     | '/performance'
+    | '/privacy'
     | '/register'
+    | '/responsible-gambling'
     | '/sitemap.xml'
+    | '/terms'
     | '/arcade'
     | '/bets'
     | '/changelog'
@@ -1449,8 +1479,11 @@ export interface FileRouteTypes {
     | '/community'
     | '/faq'
     | '/performance'
+    | '/privacy'
     | '/register'
+    | '/responsible-gambling'
     | '/sitemap.xml'
+    | '/terms'
     | '/bets'
     | '/changelog'
     | '/dashboard'
@@ -1582,8 +1615,11 @@ export interface FileRouteTypes {
     | '/community'
     | '/faq'
     | '/performance'
+    | '/privacy'
     | '/register'
+    | '/responsible-gambling'
     | '/sitemap.xml'
+    | '/terms'
     | '/_authenticated/arcade'
     | '/_authenticated/bets'
     | '/_authenticated/changelog'
@@ -1721,8 +1757,11 @@ export interface RootRouteChildren {
   CommunityRoute: typeof CommunityRoute
   FaqRoute: typeof FaqRoute
   PerformanceRoute: typeof PerformanceRoute
+  PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
+  ResponsibleGamblingRoute: typeof ResponsibleGamblingRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksApifootballFulltimeRoute: typeof ApiPublicHooksApifootballFulltimeRoute
@@ -1752,6 +1791,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -1759,11 +1805,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/responsible-gambling': {
+      id: '/responsible-gambling'
+      path: '/responsible-gambling'
+      fullPath: '/responsible-gambling'
+      preLoaderRoute: typeof ResponsibleGamblingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/performance': {
@@ -2994,8 +3054,11 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityRoute: CommunityRoute,
   FaqRoute: FaqRoute,
   PerformanceRoute: PerformanceRoute,
+  PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
+  ResponsibleGamblingRoute: ResponsibleGamblingRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksApifootballFulltimeRoute:
