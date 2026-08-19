@@ -504,9 +504,9 @@ export function MarketAnalyticsCard({
                 onMouseLeave={() => setActiveIndex(null)}
               >
               <CartesianGrid
-                strokeDasharray="3 6"
+                strokeDasharray="1 5"
                 stroke="#ffffff"
-                strokeOpacity={0.28}
+                strokeOpacity={0.14}
                 vertical={false}
               />
               <XAxis
@@ -514,13 +514,12 @@ export function MarketAnalyticsCard({
                 type={xDomain ? "number" : "category"}
                 domain={xDomain ?? undefined}
                 allowDataOverflow={!!xDomain}
-                stroke="#ffffff"
-                strokeOpacity={0.15}
                 tick={false}
                 tickLine={false}
-                axisLine={{ stroke: "rgba(255,255,255,0.12)" }}
+                axisLine={false}
                 minTickGap={48}
               />
+
               <YAxis hide domain={yDomain} width={0} padding={{ top: 0, bottom: 0 }} />
               <Tooltip
                 content={() => null}
