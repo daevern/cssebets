@@ -294,6 +294,8 @@ function Analytics({
           </p>
         </StencilPanel>
       )}
+
+      <CommentThread eventKind={commentEventKind} eventId={match.id} />
     </>
   );
 }
