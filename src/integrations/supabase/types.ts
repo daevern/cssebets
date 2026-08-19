@@ -5265,6 +5265,27 @@ export type Database = {
         }
         Relationships: []
       }
+      ops_selftest_results: {
+        Row: {
+          created_at: string
+          id: number
+          result: Json
+          test_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          result: Json
+          test_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          result?: Json
+          test_name?: string
+        }
+        Relationships: []
+      }
       page_views: {
         Row: {
           created_at: string
