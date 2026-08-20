@@ -249,6 +249,30 @@
   70% { transform: translateX(-6%) scale(1.05); }
 }
 
+/* ---- Bonus popup FOMO motion ---- */
+@keyframes bonus-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(var(--neon-glow-rgb), 0.35); }
+  50% { box-shadow: 0 0 24px 4px rgba(var(--neon-glow-rgb), 0.12); }
+}
+@keyframes bonus-shimmer {
+  0% { transform: translateX(-120%) skewX(-18deg); }
+  100% { transform: translateX(220%) skewX(-18deg); }
+}
+@keyframes bonus-claim-flash {
+  0% { opacity: 0; transform: translateY(4px); }
+  15% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-4px); }
+}
+@keyframes bonus-live-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.35); }
+}
+@keyframes bonus-scarcity-bar {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
 
 /* Immersive arcade table mode: sportsbook chrome hidden.
    Rail owns the top edge; HUD sits just under it; dock drops BottomNav padding. */
