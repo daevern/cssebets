@@ -454,6 +454,9 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       market: z.string().max(40).optional(),
       status: z.string().max(20).optional(),
       sport: z.enum(["all", "football", "ufc", "f1"]).optional().default("all"),
+      // Demo (anonymous guest) bets live in the same tables but in the
+      // simulation environment — hidden from admin lists by default.
+      includeDemo: z.boolean().optional().default(false),
     }).parse(i ?? {}),
   )
   .handler(async ({ data, context }) => {
