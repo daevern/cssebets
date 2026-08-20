@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { listMyFreeBets, placeFreeBet } from "@/lib/freebets.functions";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { ArrowLeft } from "lucide-react";
+import { useHasSession, withSession } from "@/hooks/use-staff-session";
 
 const SearchSchema = z.object({ fb: z.string().uuid().optional() });
 
