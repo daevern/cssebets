@@ -3681,6 +3681,7 @@ export type Database = {
       csse_token_wallets: {
         Row: {
           balance: number
+          last_daily_claim_on: string | null
           lifetime_earned: number
           lifetime_spent: number
           updated_at: string
@@ -3688,6 +3689,7 @@ export type Database = {
         }
         Insert: {
           balance?: number
+          last_daily_claim_on?: string | null
           lifetime_earned?: number
           lifetime_spent?: number
           updated_at?: string
@@ -3695,6 +3697,7 @@ export type Database = {
         }
         Update: {
           balance?: number
+          last_daily_claim_on?: string | null
           lifetime_earned?: number
           lifetime_spent?: number
           updated_at?: string
@@ -10324,6 +10327,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      claim_daily_csse_tokens: { Args: never; Returns: Json }
       classify_correlation_groups: {
         Args: { p_market: string; p_selection: string }
         Returns: string[]
