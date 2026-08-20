@@ -4,7 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { Dialog } from "@/components/ui/dialog";
 import { StencilDialogContent } from "@/components/wallet/StencilDialog";
-import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { getCampaignStatus, type CampaignStatus } from "@/lib/bonus.functions";
 
 const SEEN_KEY = "csse:bonus-slots-popup:v1";
@@ -46,7 +45,6 @@ export function BonusSlotsPopup() {
 
   const s = q.data;
   const live = !!s?.active && (s.slotsRemaining ?? 0) > 0;
-  const remaining = s?.slotsRemaining ?? 0;
   const amount = s?.bonusAmount ?? 100;
 
   useEffect(() => {
@@ -83,27 +81,16 @@ export function BonusSlotsPopup() {
             Launch bonus
           </div>
 
-          <div className="mt-4 flex items-end justify-between gap-4">
-            <div className="min-w-0">
-              <div className="font-display text-[40px] font-semibold leading-none tracking-tight text-[var(--ink)]">
-                {amount}
-                <span className="ml-1.5 align-baseline text-[15px] font-medium text-[var(--ink-muted)]">
-                  points
-                </span>
-              </div>
-              <p className="mt-2 text-[13px] leading-snug text-[var(--ink-muted)]">
-                Free on your first account. No deposit.
-              </p>
+          <div className="mt-4">
+            <div className="font-display text-[40px] font-semibold leading-none tracking-tight text-[var(--ink)]">
+              {amount}
+              <span className="ml-1.5 align-baseline text-[15px] font-medium text-[var(--ink-muted)]">
+                points
+              </span>
             </div>
-
-            <div className="shrink-0 text-right">
-              <div className="font-display text-[22px] font-semibold leading-none tabular-nums text-[var(--neon)]">
-                <AnimatedBalance value={remaining} maximumFractionDigits={0} />
-              </div>
-              <div className="mt-1 text-[10px] uppercase tracking-[0.2em] text-[var(--ink-muted)]">
-                remaining
-              </div>
-            </div>
+            <p className="mt-2 text-[13px] leading-snug text-[var(--ink-muted)]">
+              Free on your first account. No deposit.
+            </p>
           </div>
 
           <div className="mt-5 h-px w-full bg-[var(--color-surface-border)]" />
@@ -126,7 +113,7 @@ export function BonusSlotsPopup() {
         <StencilDialogContent
           kicker="Launch bonus"
           title={`${amount} points, on the house`}
-          description={`${remaining} accounts left before the offer closes.`}
+          description="Limited launch offer — claim while it lasts."
           size="md"
           footer={
             <div className="flex w-full flex-col gap-3">
