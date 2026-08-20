@@ -277,56 +277,17 @@ export function BonusSlotsPopup() {
                   {urgencyLabel}
                 </span>
 
-                {/* Hero countdown orb */}
-                <div
-                  className="relative mt-5 grid h-[140px] w-[140px] place-items-center rounded-full border-2"
-                  style={{
-                    borderColor: `rgba(${glowColor}, 0.35)`,
-                    background: `conic-gradient(rgba(${glowColor}, 0.22) ${(100 - scarcity) * 3.6}deg, transparent 0deg), radial-gradient(circle at 50% 0%, rgba(${glowColor}, 0.12), transparent 60%)`,
-                    boxShadow: `inset 0 0 40px rgba(${glowColor}, 0.10), 0 0 ${urgency === "critical" ? 40 : 24}px rgba(${glowColor}, 0.15)`,
-                  }}
-                >
-                  {/* Orb graphic: depleting radial ring + glowing dot */}
-                  <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 140 140">
-                    <circle
-                      cx="70"
-                      cy="70"
-                      r="62"
-                      fill="none"
-                      stroke="rgba(255,255,255,0.06)"
-                      strokeWidth="6"
-                    />
-                    <circle
-                      cx="70"
-                      cy="70"
-                      r="62"
-                      fill="none"
-                      stroke={`rgb(${glowColor})`}
-                      strokeWidth="6"
-                      strokeLinecap="round"
-                      strokeDasharray={389}
-                      strokeDashoffset={389 * (scarcity / 100)}
-                      className="transition-all duration-700 ease-out"
-                      style={{
-                        filter: `drop-shadow(0 0 8px rgb(${glowColor}))`,
-                      }}
-                    />
-                  </svg>
-
-                  <div className="relative flex flex-col items-center leading-none">
-                    <span
-                      className={`font-display text-[48px] font-bold tracking-tighter tabular-nums text-[var(--color-ink)] sm:text-[54px] ${urgency === "critical" ? "animate-[bonus-countdown-pulse_1.1s_ease-in-out_infinite]" : ""}`}
-                    >
-                      <AnimatedBalance value={remaining} maximumFractionDigits={0} />
-                    </span>
-                    <span
-                      className="mt-1 h-2 w-2 rounded-full"
-                      style={{
-                        background: `rgb(${glowColor})`,
-                        boxShadow: `0 0 12px rgb(${glowColor})`,
-                      }}
-                    />
-                  </div>
+                {/* Big countdown number */}
+                <div className="relative mt-5 flex flex-col items-center leading-none">
+                  <span
+                    className={`font-display text-[64px] font-bold tracking-tighter tabular-nums text-[var(--color-ink)] sm:text-[72px] ${urgency === "critical" ? "animate-[bonus-countdown-pulse_1.1s_ease-in-out_infinite]" : ""}`}
+                    style={{ textShadow: `0 0 24px rgba(${glowColor}, 0.35)` }}
+                  >
+                    <AnimatedBalance value={remaining} maximumFractionDigits={0} />
+                  </span>
+                  <span className="mt-1 text-[13px] font-bold uppercase tracking-wider" style={{ color: `rgb(${glowColor})` }}>
+                    left
+                  </span>
                 </div>
 
                 <p className="mt-3 text-[13px] font-medium text-[var(--color-ink)]">
