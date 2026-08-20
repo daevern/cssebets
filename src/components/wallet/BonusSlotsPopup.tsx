@@ -286,15 +286,46 @@ export function BonusSlotsPopup() {
                     boxShadow: `inset 0 0 40px rgba(${glowColor}, 0.10), 0 0 ${urgency === "critical" ? 40 : 24}px rgba(${glowColor}, 0.15)`,
                   }}
                 >
-                  <div className="flex flex-col items-center leading-none">
+                  {/* Orb graphic: depleting radial ring + glowing dot */}
+                  <svg className="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 140 140">
+                    <circle
+                      cx="70"
+                      cy="70"
+                      r="62"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.06)"
+                      strokeWidth="6"
+                    />
+                    <circle
+                      cx="70"
+                      cy="70"
+                      r="62"
+                      fill="none"
+                      stroke={`rgb(${glowColor})`}
+                      strokeWidth="6"
+                      strokeLinecap="round"
+                      strokeDasharray={389}
+                      strokeDashoffset={389 * (scarcity / 100)}
+                      className="transition-all duration-700 ease-out"
+                      style={{
+                        filter: `drop-shadow(0 0 8px rgb(${glowColor}))`,
+                      }}
+                    />
+                  </svg>
+
+                  <div className="relative flex flex-col items-center leading-none">
                     <span
-                      className={`font-display text-[56px] font-bold tracking-tighter tabular-nums text-[var(--color-ink)] sm:text-[64px] ${urgency === "critical" ? "animate-[bonus-countdown-pulse_1.1s_ease-in-out_infinite]" : ""}`}
+                      className={`font-display text-[48px] font-bold tracking-tighter tabular-nums text-[var(--color-ink)] sm:text-[54px] ${urgency === "critical" ? "animate-[bonus-countdown-pulse_1.1s_ease-in-out_infinite]" : ""}`}
                     >
                       <AnimatedBalance value={remaining} maximumFractionDigits={0} />
                     </span>
-                    <span className="mt-1 text-[13px] font-semibold uppercase tracking-widest text-[var(--color-ink-muted)]">
-                      left
-                    </span>
+                    <span
+                      className="mt-1 h-2 w-2 rounded-full"
+                      style={{
+                        background: `rgb(${glowColor})`,
+                        boxShadow: `0 0 12px rgb(${glowColor})`,
+                      }}
+                    />
                   </div>
                 </div>
 
