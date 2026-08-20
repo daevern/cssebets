@@ -13,6 +13,7 @@ import {
 } from "@/lib/payout.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { StencilDialogContent } from "@/components/wallet/StencilDialog";
+import { useWalletBreakdown } from "@/components/wallet/WalletBreakdown";
 
 type Props = {
   open: boolean;
