@@ -553,6 +553,11 @@ function BetsTable({
                 <div className="flex items-center gap-1.5 font-medium">
                   {flagged ? <Flag className="h-3 w-3 shrink-0 text-[#B06000]" aria-label="Flagged" /> : null}
                   {p.display_name}
+                  {(p as any).is_demo ? (
+                    <span className="rounded-full border border-[var(--mgmt-border)] px-1.5 py-px text-[9px] uppercase tracking-wide text-[var(--mgmt-muted)]">
+                      Demo
+                    </span>
+                  ) : null}
                 </div>
                 <div className="mt-0.5 font-mono text-[10px] text-[var(--mgmt-muted)]">{p.user_id}</div>
                 {flagged && p.flagged_reason ? (
