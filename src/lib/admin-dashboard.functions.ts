@@ -77,7 +77,11 @@ export const getAdminMetrics = createServerFn({ method: "GET" })
       { data: txns },
       { data: profiles },
     ] = await Promise.all([
-      supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
+      supabaseAdmin
+        .from("profiles")
+        .select("id", { count: "exact", head: true })
+        // Exclude anonymous demo guests from the member count.
+        .or("auth_provider.is.null,auth_provider.neq.anonymous"),
       supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }),
       supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "pending"),
       supabaseAdmin.from("predictions").select("id", { count: "exact", head: true }).eq("status", "void"),
@@ -242,6 +246,8 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
         let q = supabaseAdmin
           .from("profiles")
           .select("id, display_name, suspended, created_at")
+          // Anonymous demo guests are disposable sessions, not members.
+          .or("auth_provider.is.null,auth_provider.neq.anonymous")
           .order("display_name", { ascending: true })
           .range(from, from + PAGE - 1);
         if (data.search) q = q.ilike("display_name", `%${data.search}%`);

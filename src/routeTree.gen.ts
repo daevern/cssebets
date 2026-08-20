@@ -133,6 +133,7 @@ import { Route as ApiPublicHooksUfcOddsRouteImport } from './routes/api/public/h
 import { Route as ApiPublicHooksUfcDiscoveryRouteImport } from './routes/api/public/hooks/ufc-discovery'
 import { Route as ApiPublicHooksSyncFixturesRouteImport } from './routes/api/public/hooks/sync-fixtures'
 import { Route as ApiPublicHooksReconciliationRouteImport } from './routes/api/public/hooks/reconciliation'
+import { Route as ApiPublicHooksPurgeGuestsRouteImport } from './routes/api/public/hooks/purge-guests'
 import { Route as ApiPublicHooksPruneHistoryRouteImport } from './routes/api/public/hooks/prune-history'
 import { Route as ApiPublicHooksOddsLiveRouteImport } from './routes/api/public/hooks/odds-live'
 import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/public/hooks/health-check'
@@ -826,6 +827,12 @@ const ApiPublicHooksReconciliationRoute =
     path: '/api/public/hooks/reconciliation',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksPurgeGuestsRoute =
+  ApiPublicHooksPurgeGuestsRouteImport.update({
+    id: '/api/public/hooks/purge-guests',
+    path: '/api/public/hooks/purge-guests',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksPruneHistoryRoute =
   ApiPublicHooksPruneHistoryRouteImport.update({
     id: '/api/public/hooks/prune-history',
@@ -1062,6 +1069,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
   '/api/public/hooks/prune-history': typeof ApiPublicHooksPruneHistoryRoute
+  '/api/public/hooks/purge-guests': typeof ApiPublicHooksPurgeGuestsRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/api/public/hooks/ufc-discovery': typeof ApiPublicHooksUfcDiscoveryRoute
@@ -1200,6 +1208,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
   '/api/public/hooks/prune-history': typeof ApiPublicHooksPruneHistoryRoute
+  '/api/public/hooks/purge-guests': typeof ApiPublicHooksPurgeGuestsRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/api/public/hooks/ufc-discovery': typeof ApiPublicHooksUfcDiscoveryRoute
@@ -1345,6 +1354,7 @@ export interface FileRoutesById {
   '/api/public/hooks/health-check': typeof ApiPublicHooksHealthCheckRoute
   '/api/public/hooks/odds-live': typeof ApiPublicHooksOddsLiveRoute
   '/api/public/hooks/prune-history': typeof ApiPublicHooksPruneHistoryRoute
+  '/api/public/hooks/purge-guests': typeof ApiPublicHooksPurgeGuestsRoute
   '/api/public/hooks/reconciliation': typeof ApiPublicHooksReconciliationRoute
   '/api/public/hooks/sync-fixtures': typeof ApiPublicHooksSyncFixturesRoute
   '/api/public/hooks/ufc-discovery': typeof ApiPublicHooksUfcDiscoveryRoute
@@ -1490,6 +1500,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/odds-live'
     | '/api/public/hooks/prune-history'
+    | '/api/public/hooks/purge-guests'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
     | '/api/public/hooks/ufc-discovery'
@@ -1628,6 +1639,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/odds-live'
     | '/api/public/hooks/prune-history'
+    | '/api/public/hooks/purge-guests'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
     | '/api/public/hooks/ufc-discovery'
@@ -1772,6 +1784,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/health-check'
     | '/api/public/hooks/odds-live'
     | '/api/public/hooks/prune-history'
+    | '/api/public/hooks/purge-guests'
     | '/api/public/hooks/reconciliation'
     | '/api/public/hooks/sync-fixtures'
     | '/api/public/hooks/ufc-discovery'
@@ -1816,6 +1829,7 @@ export interface RootRouteChildren {
   ApiPublicHooksHealthCheckRoute: typeof ApiPublicHooksHealthCheckRoute
   ApiPublicHooksOddsLiveRoute: typeof ApiPublicHooksOddsLiveRoute
   ApiPublicHooksPruneHistoryRoute: typeof ApiPublicHooksPruneHistoryRoute
+  ApiPublicHooksPurgeGuestsRoute: typeof ApiPublicHooksPurgeGuestsRoute
   ApiPublicHooksReconciliationRoute: typeof ApiPublicHooksReconciliationRoute
   ApiPublicHooksSyncFixturesRoute: typeof ApiPublicHooksSyncFixturesRoute
   ApiPublicHooksUfcDiscoveryRoute: typeof ApiPublicHooksUfcDiscoveryRoute
@@ -2696,6 +2710,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksReconciliationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/purge-guests': {
+      id: '/api/public/hooks/purge-guests'
+      path: '/api/public/hooks/purge-guests'
+      fullPath: '/api/public/hooks/purge-guests'
+      preLoaderRoute: typeof ApiPublicHooksPurgeGuestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/prune-history': {
       id: '/api/public/hooks/prune-history'
       path: '/api/public/hooks/prune-history'
@@ -3141,6 +3162,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksHealthCheckRoute: ApiPublicHooksHealthCheckRoute,
   ApiPublicHooksOddsLiveRoute: ApiPublicHooksOddsLiveRoute,
   ApiPublicHooksPruneHistoryRoute: ApiPublicHooksPruneHistoryRoute,
+  ApiPublicHooksPurgeGuestsRoute: ApiPublicHooksPurgeGuestsRoute,
   ApiPublicHooksReconciliationRoute: ApiPublicHooksReconciliationRoute,
   ApiPublicHooksSyncFixturesRoute: ApiPublicHooksSyncFixturesRoute,
   ApiPublicHooksUfcDiscoveryRoute: ApiPublicHooksUfcDiscoveryRoute,
