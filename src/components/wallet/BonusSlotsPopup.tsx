@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { StencilDialogContent } from "@/components/wallet/StencilDialog";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { getCampaignStatus, type CampaignStatus } from "@/lib/bonus.functions";
-import { Flame, Gift, Users, Zap } from "lucide-react";
+import { Gift, Users, Zap } from "lucide-react";
 
 const SEEN_KEY = "csse:bonus-slots-popup:v1";
 
@@ -72,22 +72,98 @@ export function BonusSlotsPopup() {
 
   return (
     <>
-      {/* Re-entry pill — sticky, glowing, impossible to miss */}
-      <button
-        type="button"
+      {/* Inline fixture-style card — matches the "Next on the card" fixtures */}
+      <section
+        role="button"
+        tabIndex={0}
         onClick={() => setOpen(true)}
-        className="fixed bottom-20 right-3 z-40 inline-flex items-center gap-2 rounded-full border border-[var(--color-neon)]/30 bg-[var(--color-surface-2)]/95 py-1.5 pl-2 pr-3 text-[11px] font-bold tracking-tight text-[var(--color-ink)] shadow-[0_0_18px_rgba(var(--neon-glow-rgb),0.18)] backdrop-blur-xl transition-all hover:scale-105 hover:border-[var(--color-neon)]/60 hover:shadow-[0_0_26px_rgba(var(--neon-glow-rgb),0.28)] md:bottom-6"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen(true);
+          }
+        }}
+        className="group relative block cursor-pointer overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] text-left transition-colors hover:border-[var(--neon)]/40 next-fixture-corner"
       >
-        <span className="relative flex h-2 w-2">
-          <span className="absolute inline-flex h-full w-full animate-[bonus-live-dot_1.4s_ease-in-out_infinite] rounded-full bg-[var(--color-neon)] opacity-75" />
-          <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--color-neon)]" />
-        </span>
-        <Flame className="h-3 w-3 text-[var(--color-neon)]" />
-        <span className="tabular-nums text-[var(--color-neon)]">
-          <AnimatedBalance value={remaining} maximumFractionDigits={0} />
-        </span>
-        <span className="text-[var(--color-ink-muted)]">bonus slots left</span>
-      </button>
+        <div className="relative p-4">
+          <div className="flex items-center justify-between text-[11px] font-semibold">
+            <span className="flex items-center gap-1.5 text-[var(--ink-muted)]">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-[bonus-live-dot_1.4s_ease-in-out_infinite] rounded-full bg-[var(--color-neon)] opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--color-neon)]" />
+              </span>
+              {urgencyLabel}
+            </span>
+            <span className="text-[var(--ink-muted)]">Launch bonus</span>
+          </div>
+
+          <div className="mt-4 flex items-end justify-between">
+            <div>
+              <div className="font-display text-[26px] font-bold leading-none tracking-tight text-[var(--ink)]">
+                {amount} points
+              </div>
+              <p className="mt-1.5 text-[12px] text-[var(--ink-muted)]">
+                Free for the next 100 accounts
+              </p>
+            </div>
+            <div className="text-right">
+              <span className="font-display text-[30px] font-bold leading-none tracking-tight tabular-nums text-[var(--neon)]">
+                <AnimatedBalance value={remaining} maximumFractionDigits={0} />
+              </span>
+              <span className="ml-1 text-[12px] font-medium text-[var(--ink-muted)]">/ {cap}</span>
+              <p className="mt-1.5 text-[11px] font-semibold text-[var(--ink-muted)]">Slots left</p>
+            </div>
+          </div>
+
+          <div className="relative mt-3 h-2 w-full overflow-hidden rounded-full bg-[var(--surface-3)]">
+            <div
+              className="h-full rounded-full transition-all duration-700 ease-out"
+              style={{
+                width: `${scarcity}%`,
+                background:
+                  scarcity > 75
+                    ? "linear-gradient(90deg, #f59e0b, #ef4444)"
+                    : scarcity > 40
+                      ? "linear-gradient(90deg, var(--neon), #f59e0b)"
+                      : "linear-gradient(90deg, var(--neon), #4ade80)",
+              }}
+            />
+          </div>
+
+          <div className="mt-2 flex items-center justify-between text-[11px]">
+            <span className="inline-flex items-center gap-1 font-medium text-[var(--ink-muted)]">
+              {taken > 0 ? (
+                <>
+                  <Users className="h-3 w-3" />
+                  {taken.toLocaleString()} already claimed
+                </>
+              ) : (
+                <>
+                  <Gift className="h-3 w-3" />
+                  Be the first to claim
+                </>
+              )}
+            </span>
+            <span className="font-bold tabular-nums text-[var(--neon)]">
+              {Math.round(scarcity)}% claimed
+            </span>
+          </div>
+
+          <Link
+            to="/register"
+            onClick={(e) => e.stopPropagation()}
+            className="mt-4 flex items-center justify-center gap-2 rounded-xl border border-[var(--neon)]/50 bg-[var(--neon)]/5 py-3.5 text-[14px] font-bold tracking-tight text-[var(--neon)] transition-transform group-hover:translate-y-[-1px] group-hover:bg-[var(--neon)]/10"
+          >
+            <Zap className="h-4 w-4 fill-current" />
+            Claim {amount} points
+          </Link>
+
+          <p className="mt-2 text-center text-[10.5px] text-[var(--ink-muted)]">
+            Tap the card for full bonus details
+          </p>
+        </div>
+      </section>
+
 
       <Dialog open={open} onOpenChange={(v) => (v ? setOpen(true) : dismiss())}>
         <StencilDialogContent
