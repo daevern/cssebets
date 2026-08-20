@@ -115,7 +115,7 @@ export function BonusSlotsPopup() {
         <StencilDialogContent
           kicker="Launch bonus"
           title={`${amount} points, on the house`}
-          description={`${remaining} accounts left before the offer closes.`}
+          description="Limited launch offer — claim while it lasts."
           size="md"
           footer={
             <div className="flex w-full flex-col gap-3">
