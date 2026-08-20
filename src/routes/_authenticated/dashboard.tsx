@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getDashboardMotorAndUfc, type NextF1Race, type NextUfcFight, type NextFootballMatch } from "@/lib/dashboard-extras.functions";
 import { competitionLogoForCode } from "@/features/football/config/footballCompetitions";
 import { F1Badge, UfcBadge } from "@/components/brand/SportBadge";
+import { BonusSlotsPopup } from "@/components/wallet/BonusSlotsPopup";
 
 
 
