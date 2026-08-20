@@ -14,7 +14,10 @@ export function BonusOfferBanner({ className = "" }: { className?: string }) {
     queryFn: () => fn() as Promise<CampaignStatus>,
     staleTime: 30_000,
     refetchInterval: 60_000,
+    retry: 2,
+    retryDelay: 400,
   });
+
 
   const s = q.data;
   if (!s?.active || !s.slotsRemaining || s.slotsRemaining <= 0) return null;
