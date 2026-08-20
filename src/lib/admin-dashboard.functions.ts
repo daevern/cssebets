@@ -584,7 +584,7 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       }),
       ...chunkArray(uids).map(async (ids) => {
         if (!ids.length) return;
-        const { data: page, error } = await supabaseAdmin.from("profiles").select("id, display_name").in("id", ids);
+        const { data: page, error } = await supabaseAdmin.from("profiles").select("id, display_name, auth_provider").in("id", ids);
         if (error) throw new Error(error.message);
         profiles.push(...(page ?? []));
       }),
