@@ -179,7 +179,7 @@ export const getSettlementMonitor = createServerFn({ method: "GET" })
       supabaseAdmin.from("predictions").select("id", { count: "exact", head: true })
         .in("status", ["won", "lost"]).gte("settled_at", sinceDay),
       supabaseAdmin.from("predictions")
-        .select("id, match_id, created_at, matches!inner(home_team, away_team, status)")
+        .select("id, user_id, match_id, created_at, matches!inner(home_team, away_team, status)")
         .eq("status", "pending").eq("matches.status", "finished").limit(50),
       supabaseAdmin.from("predictions").select("settled_at").not("settled_at", "is", null)
         .order("settled_at", { ascending: false }).limit(1),
@@ -195,7 +195,7 @@ export const getSettlementMonitor = createServerFn({ method: "GET" })
       (supabaseAdmin as any).from("sports_bets").select("id", { count: "exact", head: true })
         .eq("status", "void").gte("settled_at", sinceDay),
       (supabaseAdmin as any).from("sports_bets")
-        .select("id, sports_event_id, created_at, sports_events!inner(home_name, away_name, event_name, status)")
+        .select("id, user_id, sports_event_id, created_at, sports_events!inner(home_name, away_name, event_name, status)")
         .eq("status", "pending").eq("sports_events.status", "finished").limit(50),
       (supabaseAdmin as any).from("sports_bets").select("settled_at").not("settled_at", "is", null)
         .order("settled_at", { ascending: false }).limit(1),
