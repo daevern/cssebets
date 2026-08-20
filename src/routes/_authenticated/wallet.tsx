@@ -132,6 +132,8 @@ function WalletPage() {
         <WalletActions />
       </div>
 
+      <WalletBreakdownPanel />
+
 
 
       
