@@ -410,6 +410,11 @@ function AdminPredictionsPage() {
               <input type="checkbox" checked={flaggedOnly} onChange={(e) => setFlaggedOnly(e.target.checked)} />
               Flagged only
             </label>
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" checked={includeDemo} onChange={(e) => setIncludeDemo(e.target.checked)} />
+              Include demo (guest) bets
+              {typeof q.data?.demoCount === "number" && q.data.demoCount > 0 ? ` · ${q.data.demoCount}` : ""}
+            </label>
           </div>
         </div>
       </MgmtPanel>
