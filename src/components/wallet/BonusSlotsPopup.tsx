@@ -76,7 +76,7 @@ export function BonusSlotsPopup() {
             setOpen(true);
           }
         }}
-        className="group relative block cursor-pointer overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] text-left transition-colors hover:border-[var(--neon)]/30"
+        className="bonus-card-shimmer group relative block cursor-pointer overflow-hidden rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] text-left transition-colors hover:border-[var(--neon)]/30"
       >
         <div className="px-5 py-5">
           <div className="text-[10px] font-medium uppercase tracking-[0.28em] text-[var(--ink-muted)]">
