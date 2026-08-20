@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { listMyFreeBets, placeFreeBet } from "@/lib/freebets.functions";
 import { listMatchesForUsers } from "@/lib/matches.functions";
 import { ArrowLeft } from "lucide-react";
+import { useHasSession, withSession } from "@/hooks/use-staff-session";
 
 const SearchSchema = z.object({ fb: z.string().uuid().optional() });
 
@@ -26,8 +27,17 @@ function PlaceFreeBetPage() {
   const matchesFn = useServerFn(listMatchesForUsers);
   const placeFn = useServerFn(placeFreeBet);
 
-  const myFbs = useQuery({ queryKey: ["my-free-bets"], queryFn: () => myFbFn() });
-  const matches = useQuery({ queryKey: ["matches-for-users"], queryFn: () => matchesFn() });
+  const hasSession = useHasSession();
+  const myFbs = useQuery({
+    queryKey: ["my-free-bets"],
+    queryFn: async () => await withSession(() => myFbFn()),
+    enabled: hasSession === true,
+  });
+  const matches = useQuery({
+    queryKey: ["matches-for-users"],
+    queryFn: async () => await withSession(() => matchesFn()),
+    enabled: hasSession === true,
+  });
 
   const freeBet = (myFbs.data?.available ?? []).find((f: any) => f.id === fb);
   const [selMatch, setSelMatch] = useState<string | null>(null);
