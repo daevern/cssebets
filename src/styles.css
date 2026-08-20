@@ -273,6 +273,21 @@
   100% { background-position: 200% 50%; }
 }
 
+.bonus-shimmer-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 45%,
+    rgba(255, 255, 255, 0.35) 55%,
+    transparent 100%
+  );
+  transform: translateX(-120%) skewX(-18deg);
+  animation: bonus-shimmer 2.6s ease-in-out infinite;
+}
+
 
 /* Immersive arcade table mode: sportsbook chrome hidden.
    Rail owns the top edge; HUD sits just under it; dock drops BottomNav padding. */
