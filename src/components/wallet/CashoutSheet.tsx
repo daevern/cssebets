@@ -220,6 +220,39 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     );
   }
 
+  /* ---------- Not yet eligible (server-side rules) ---------- */
+  if (open && !loading && !success && breakdown.data && !breakdown.data.canWithdraw) {
+    const b = breakdown.data;
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <StencilDialogContent
+          kicker="Cashout · Not yet eligible"
+          title="You can't withdraw yet"
+          description={b.blockReason ?? undefined}
+          footer={<GhostBtn onClick={() => onOpenChange(false)}>Close</GhostBtn>}
+        >
+          <div className="space-y-2 py-2 text-[12px]">
+            <div className="flex justify-between text-[var(--color-ink-muted)]">
+              <span>Withdrawable</span>
+              <span className="tabular-nums text-[var(--color-ink)]">{b.withdrawable.toLocaleString()} / 100</span>
+            </div>
+            <div className="flex justify-between text-[var(--color-ink-muted)]">
+              <span>Total balance</span>
+              <span className="tabular-nums text-[var(--color-ink)]">{b.total.toLocaleString()} / 200</span>
+            </div>
+            <div className="flex justify-between text-[var(--color-ink-muted)]">
+              <span>Locked bonus</span>
+              <span className="tabular-nums text-[var(--color-ink)]">{b.lockedBonus.toLocaleString()}</span>
+            </div>
+            <p className="pt-2 text-[11px] leading-relaxed text-[var(--color-ink-muted)]">
+              Bonus points cannot be withdrawn or transferred. Only profit earned from bonus wagers becomes withdrawable.
+            </p>
+          </div>
+        </StencilDialogContent>
+      </Dialog>
+    );
+  }
+
   /* ---------- No saved bank ---------- */
   if (open && !loading && !hasBank && !success) {
     return (
