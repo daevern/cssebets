@@ -292,6 +292,31 @@
   animation: bonus-shimmer 2.6s ease-in-out infinite;
 }
 
+/* Subtle, slow-moving sheen across the launch-bonus card.
+   Keeps the card alive without breaking the minimal aesthetic. */
+.bonus-card-shimmer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 40%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 60%,
+    transparent 100%
+  );
+  transform: translateX(-120%) skewX(-16deg);
+  animation: bonus-shimmer 5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bonus-card-shimmer::before {
+    animation: none;
+  }
+}
+
 
 /* Immersive arcade table mode: sportsbook chrome hidden.
    Rail owns the top edge; HUD sits just under it; dock drops BottomNav padding. */
