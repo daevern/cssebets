@@ -201,20 +201,43 @@ export const getSettlementMonitor = createServerFn({ method: "GET" })
         .order("settled_at", { ascending: false }).limit(1),
     ]);
 
+    // F1 and UFC use "open" for unsettled bets.
+    const [fPending, fFailed, fLast, uPending, uFailed, uLast] = await Promise.all([
+      (supabaseAdmin as any).from("f1_bets").select("id", { count: "exact", head: true }).eq("status", "open"),
+      (supabaseAdmin as any).from("f1_bets")
+        .select("id, user_id, race_id, created_at, f1_races!inner(name, season, round, status)")
+        .eq("status", "open").eq("f1_races.status", "finished").limit(50),
+      (supabaseAdmin as any).from("f1_bets").select("settled_at").not("settled_at", "is", null)
+        .order("settled_at", { ascending: false }).limit(1),
+      (supabaseAdmin as any).from("ufc_bets").select("id", { count: "exact", head: true }).eq("status", "open"),
+      (supabaseAdmin as any).from("ufc_bets")
+        .select("id, user_id, fight_id, placed_at, ufc_fights!inner(fighter_a, fighter_b, status)")
+        .eq("status", "open").eq("ufc_fights.status", "finished").limit(50),
+      (supabaseAdmin as any).from("ufc_bets").select("settled_at").not("settled_at", "is", null)
+        .order("settled_at", { ascending: false }).limit(1),
+    ]);
+
     const legacyLast = (last.data ?? [])[0]?.settled_at ?? null;
     const sportsLast = ((sLast.data ?? []) as any[])[0]?.settled_at ?? null;
+    const f1Last = ((fLast.data ?? []) as any[])[0]?.settled_at ?? null;
+    const ufcLast = ((uLast.data ?? []) as any[])[0]?.settled_at ?? null;
 
-    const failedRows = [
+    const rawFailedRows = [
       ...(failed.data ?? []).map((r: any) => ({
         id: r.id,
+        user_id: r.user_id ?? null,
         match_id: r.match_id,
+        sport: "football" as const,
         match: r.matches ? `${r.matches.home_team} vs ${r.matches.away_team}` : "—",
         created_at: r.created_at,
         source: "predictions" as const,
+        retryable: true,
       })),
       ...(((sFailed.data ?? []) as any[]).map((r: any) => ({
         id: r.id,
+        user_id: r.user_id ?? null,
         match_id: r.sports_event_id,
+        sport: "football" as const,
         match: r.sports_events
           ? (r.sports_events.home_name && r.sports_events.away_name
               ? `${r.sports_events.home_name} vs ${r.sports_events.away_name}`
@@ -222,17 +245,68 @@ export const getSettlementMonitor = createServerFn({ method: "GET" })
           : "—",
         created_at: r.created_at,
         source: "sports_bets" as const,
+        retryable: false,
+      }))),
+      ...(((fFailed.data ?? []) as any[]).map((r: any) => ({
+        id: r.id,
+        user_id: r.user_id ?? null,
+        match_id: r.race_id,
+        sport: "f1" as const,
+        match: r.f1_races ? `${r.f1_races.name} (R${r.f1_races.round}, ${r.f1_races.season})` : "—",
+        created_at: r.created_at,
+        source: "f1_bets" as const,
+        retryable: false,
+      }))),
+      ...(((uFailed.data ?? []) as any[]).map((r: any) => ({
+        id: r.id,
+        user_id: r.user_id ?? null,
+        match_id: r.fight_id,
+        sport: "ufc" as const,
+        match: r.ufc_fights ? `${r.ufc_fights.fighter_a} vs ${r.ufc_fights.fighter_b}` : "—",
+        created_at: r.placed_at,
+        source: "ufc_bets" as const,
+        retryable: false,
       }))),
     ];
 
+    // Flag rows belonging to anonymous demo guests so admins can tell demo
+    // noise apart from real stuck settlements.
+    const stuckUserIds = Array.from(new Set(rawFailedRows.map((r) => r.user_id).filter(Boolean)));
+    const demoIds = new Set<string>();
+    if (stuckUserIds.length) {
+      const { data: profs } = await supabaseAdmin
+        .from("profiles")
+        .select("id, auth_provider")
+        .in("id", stuckUserIds as string[]);
+      for (const p of (profs ?? []) as any[]) {
+        if (p.auth_provider === "anonymous") demoIds.add(p.id);
+      }
+    }
+    const failedRows = rawFailedRows.map((r) => ({
+      ...r,
+      is_demo: r.user_id ? demoIds.has(r.user_id) : false,
+      age_hours: Math.max(0, Math.round((Date.now() - new Date(r.created_at).getTime()) / 3600_000)),
+    }));
+
+    const lastSettleAt = [legacyLast, sportsLast, f1Last, ufcLast]
+      .filter(Boolean)
+      .sort()
+      .pop() ?? null;
+
     return {
-      pending: (pending.count ?? 0) + (sPending.count ?? 0),
+      pending:
+        (pending.count ?? 0) + (sPending.count ?? 0) + (fPending.count ?? 0) + (uPending.count ?? 0),
+      pendingBySport: {
+        football: (pending.count ?? 0) + (sPending.count ?? 0),
+        f1: fPending.count ?? 0,
+        ufc: uPending.count ?? 0,
+      },
       completed24h: (completedDay.count ?? 0) + (sCompleted.count ?? 0),
       voided24h: (voided.count ?? 0) + (sVoided.count ?? 0),
       failedCount: failedRows.length,
+      demoFailedCount: failedRows.filter((r) => r.is_demo).length,
       failedRows,
-      lastSettleAt:
-        legacyLast && sportsLast ? (legacyLast > sportsLast ? legacyLast : sportsLast) : (sportsLast ?? legacyLast),
+      lastSettleAt,
     };
   });
 
