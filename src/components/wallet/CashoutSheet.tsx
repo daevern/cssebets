@@ -119,9 +119,12 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     if (open && list.length && !selectedId) setSelectedId(list[0].id);
   }, [banks.data, open, selectedId]);
 
-  const balance = Number(wallet.data?.balance ?? 0);
+  // Only withdrawable funds can be cashed out — locked bonus and reserved
+  // (pending payout) amounts are excluded server-side too.
+  const breakdown = useWalletBreakdown();
+  const balance = Number(breakdown.data?.withdrawable ?? wallet.data?.balance ?? 0);
   const accounts = banks.data?.accounts ?? [];
-  const loading = wallet.isLoading || banks.isLoading || payouts.isLoading;
+  const loading = wallet.isLoading || banks.isLoading || payouts.isLoading || breakdown.isLoading;
   const hasBank = accounts.length > 0;
   const activePayout = payouts.data?.active ?? null;
 
