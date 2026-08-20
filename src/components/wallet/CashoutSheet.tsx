@@ -152,7 +152,7 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
   });
 
   const amt = Number(amount);
-  const amountValid = amount !== "" && amt > 0 && amt <= balance;
+  const amountValid = amount !== "" && amt >= 100 && amt <= balance;
   const canSubmit = hasBank && !!selectedId && amountValid && !submit.isPending;
 
   const selectedAcc = useMemo(
