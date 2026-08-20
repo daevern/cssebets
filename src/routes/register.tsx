@@ -18,6 +18,7 @@ import {
   AuthSubmit,
   authInputClass,
 } from "@/components/auth/AuthShell";
+import { BonusOfferBanner } from "@/components/wallet/BonusOfferBanner";
 
 const REFERRAL_CODE_RE = /^[A-Z0-9]{4,12}$/;
 
