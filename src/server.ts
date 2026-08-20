@@ -1,5 +1,12 @@
 import "./lib/error-capture";
 
+// Dev only: registers every server-function ID with the dev module runner so
+// client RPCs from `ssr: false` routes don't 500 with "Invalid server function ID".
+if (import.meta.env.DEV) {
+  await import("./lib/dev-serverfn-warmup");
+}
+
+
 import * as Sentry from "@sentry/cloudflare";
 import { wrapFetchWithSentry } from "@sentry/tanstackstart-react";
 
