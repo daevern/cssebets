@@ -123,6 +123,7 @@ function AdminPredictionsPage() {
   const [reason, setReason] = useState("");
   const [flaggedOnly, setFlaggedOnly] = useState(false);
   const [pendingOnly, setPendingOnly] = useState(false);
+  const [includeDemo, setIncludeDemo] = useState(false);
   const [search, setSearch] = useState("");
   const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
 
