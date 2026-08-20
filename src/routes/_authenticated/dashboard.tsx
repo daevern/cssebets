@@ -217,6 +217,8 @@ function HomePage() {
         )}
       </header>
 
+      {((user as any)?.is_anonymous === true || !user) && <BonusSlotsPopup />}
+
 
 
 
