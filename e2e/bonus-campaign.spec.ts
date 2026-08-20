@@ -25,7 +25,15 @@ async function makeUser(opts: { member?: boolean; admin?: boolean; simulation?: 
   const id = data.user!.id;
   created.push(id);
 
-  await sb.from("profiles").upsert({ id, auth_provider: "email", is_simulation: !!opts.simulation }, { onConflict: "id" });
+  // is_simulation is admin-controlled and blocked on UPDATE, so re-create the row.
+  await sb.from("profiles").delete().eq("id", id);
+  const { error: profErr } = await sb.from("profiles").insert({
+    id,
+    display_name: `E2E ${id.slice(0, 8)}`,
+    auth_provider: "email",
+    is_simulation: !!opts.simulation,
+  });
+  if (profErr) throw new Error(`profile: ${profErr.message}`);
   await sb.from("wallets").upsert({ user_id: id, balance: 0 }, { onConflict: "user_id" });
   if (opts.member !== false) await sb.from("user_roles").upsert({ user_id: id, role: "member" }, { onConflict: "user_id,role" });
   if (opts.admin) await sb.from("user_roles").upsert({ user_id: id, role: "admin" }, { onConflict: "user_id,role" });
@@ -34,6 +42,8 @@ async function makeUser(opts: { member?: boolean; admin?: boolean; simulation?: 
 
 /** A short-lived campaign that shadows the live one (latest starts_at wins). */
 async function makeCampaign(cap: number, startsAt: Date) {
+  // Only one campaign may be active at a time; retire the previous test's.
+  for (const c of tempCampaigns) await sb.from("bonus_campaigns").update({ enabled: false }).eq("id", c);
   const id = randomUUID();
   const { error } = await sb.from("bonus_campaigns").insert({
     id,
