@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PageShell, StencilPanel } from "@/components/ui/page-shell";
 import { WalletCreditCard, WalletActions } from "@/components/wallet/WalletCard";
+import { WalletBreakdownPanel } from "@/components/wallet/WalletBreakdown";
 
 
 export const Route = createFileRoute("/_authenticated/wallet")({
