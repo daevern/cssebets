@@ -139,6 +139,10 @@ export const createPayoutRequest = createServerFn({ method: "POST" })
     if (error) {
       const m = error.message || "";
       if (m.includes("ACTIVE_PAYOUT_EXISTS")) throw new Error("You already have an active payout request.");
+      if (m.includes("MIN_WITHDRAWAL_100")) throw new Error("The minimum withdrawal is 100 points.");
+      if (m.includes("INSUFFICIENT_WITHDRAWABLE")) throw new Error("You need at least 100 withdrawable points.");
+      if (m.includes("INSUFFICIENT_TOTAL")) throw new Error("Your total wallet balance must be at least 200 points before withdrawing.");
+      if (m.includes("BONUS_NOT_WITHDRAWABLE")) throw new Error("Bonus points cannot be withdrawn or transferred.");
       if (m.includes("INSUFFICIENT_BALANCE")) throw new Error("Insufficient balance.");
       if (m.includes("INVALID_AMOUNT")) throw new Error("Invalid payout amount.");
       throw new Error(m || "Could not create payout request.");

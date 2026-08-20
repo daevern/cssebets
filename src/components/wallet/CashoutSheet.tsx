@@ -13,6 +13,7 @@ import {
 } from "@/lib/payout.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { StencilDialogContent } from "@/components/wallet/StencilDialog";
+import { useWalletBreakdown } from "@/components/wallet/WalletBreakdown";
 
 type Props = {
   open: boolean;
@@ -119,9 +120,12 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
     if (open && list.length && !selectedId) setSelectedId(list[0].id);
   }, [banks.data, open, selectedId]);
 
-  const balance = Number(wallet.data?.balance ?? 0);
+  // Only withdrawable funds can be cashed out — locked bonus and reserved
+  // (pending payout) amounts are excluded server-side too.
+  const breakdown = useWalletBreakdown();
+  const balance = Number(breakdown.data?.withdrawable ?? wallet.data?.balance ?? 0);
   const accounts = banks.data?.accounts ?? [];
-  const loading = wallet.isLoading || banks.isLoading || payouts.isLoading;
+  const loading = wallet.isLoading || banks.isLoading || payouts.isLoading || breakdown.isLoading;
   const hasBank = accounts.length > 0;
   const activePayout = payouts.data?.active ?? null;
 
@@ -148,7 +152,7 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
   });
 
   const amt = Number(amount);
-  const amountValid = amount !== "" && amt > 0 && amt <= balance;
+  const amountValid = amount !== "" && amt >= 100 && amt <= balance;
   const canSubmit = hasBank && !!selectedId && amountValid && !submit.isPending;
 
   const selectedAcc = useMemo(
@@ -212,6 +216,39 @@ export function CashoutSheet({ open, onOpenChange, onNavigateAway }: Props) {
             </>
           }
         />
+      </Dialog>
+    );
+  }
+
+  /* ---------- Not yet eligible (server-side rules) ---------- */
+  if (open && !loading && !success && breakdown.data && !breakdown.data.canWithdraw) {
+    const b = breakdown.data;
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <StencilDialogContent
+          kicker="Cashout · Not yet eligible"
+          title="You can't withdraw yet"
+          description={b.blockReason ?? undefined}
+          footer={<GhostBtn onClick={() => onOpenChange(false)}>Close</GhostBtn>}
+        >
+          <div className="space-y-2 py-2 text-[12px]">
+            <div className="flex justify-between text-[var(--color-ink-muted)]">
+              <span>Withdrawable</span>
+              <span className="tabular-nums text-[var(--color-ink)]">{b.withdrawable.toLocaleString()} / 100</span>
+            </div>
+            <div className="flex justify-between text-[var(--color-ink-muted)]">
+              <span>Total balance</span>
+              <span className="tabular-nums text-[var(--color-ink)]">{b.total.toLocaleString()} / 200</span>
+            </div>
+            <div className="flex justify-between text-[var(--color-ink-muted)]">
+              <span>Locked bonus</span>
+              <span className="tabular-nums text-[var(--color-ink)]">{b.lockedBonus.toLocaleString()}</span>
+            </div>
+            <p className="pt-2 text-[11px] leading-relaxed text-[var(--color-ink-muted)]">
+              Bonus points cannot be withdrawn or transferred. Only profit earned from bonus wagers becomes withdrawable.
+            </p>
+          </div>
+        </StencilDialogContent>
       </Dialog>
     );
   }

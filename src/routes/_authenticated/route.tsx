@@ -22,6 +22,7 @@ import { useEffect, useState, useRef } from "react";
 import { TopBar } from "@/components/nav/TopBar";
 import { BottomNav } from "@/components/nav/BottomNav";
 import { WinDetector } from "@/components/notifications/WinDetector";
+import { BonusAwardModal } from "@/components/wallet/BonusAwardModal";
 import { PendingApproval } from "@/components/auth/PendingApproval";
 
 
@@ -310,6 +311,7 @@ function AuthedLayout() {
 
         {!tableMode && <BottomNav />}
         <WinDetector />
+        <BonusAwardModal />
         <FirstVisitWalkthroughs />
       </div>
     </TourProvider>

@@ -18,6 +18,7 @@ import {
   AuthSubmit,
   authInputClass,
 } from "@/components/auth/AuthShell";
+import { BonusOfferBanner } from "@/components/wallet/BonusOfferBanner";
 
 const REFERRAL_CODE_RE = /^[A-Z0-9]{4,12}$/;
 
@@ -291,6 +292,7 @@ function RegisterPage() {
     >
       <form onSubmit={step === STEPS.length - 1 ? finish : next} className="flex h-full flex-col">
         <div className="flex-1 space-y-4 overflow-y-auto pr-1">
+          {step === 0 && <BonusOfferBanner />}
           {step === 0 && (
             <AuthField label="Name" htmlFor="name">
               <input
