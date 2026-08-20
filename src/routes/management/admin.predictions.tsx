@@ -123,6 +123,7 @@ function AdminPredictionsPage() {
   const [reason, setReason] = useState("");
   const [flaggedOnly, setFlaggedOnly] = useState(false);
   const [pendingOnly, setPendingOnly] = useState(false);
+  const [includeDemo, setIncludeDemo] = useState(false);
   const [search, setSearch] = useState("");
   const [expandedDates, setExpandedDates] = useState<Record<string, boolean>>({});
 
@@ -141,8 +142,9 @@ function AdminPredictionsPage() {
 
   const hasSession = useHasSession();
   const q = useQuery({
-    queryKey: ["admin-predictions", sport, market, status],
-    queryFn: () => listFn({ data: { sport, market: market || undefined, status: status || undefined } }),
+    queryKey: ["admin-predictions", sport, market, status, includeDemo],
+    queryFn: () =>
+      listFn({ data: { sport, market: market || undefined, status: status || undefined, includeDemo } }),
     enabled: hasSession === true,
   });
 
@@ -410,6 +412,11 @@ function AdminPredictionsPage() {
               <input type="checkbox" checked={flaggedOnly} onChange={(e) => setFlaggedOnly(e.target.checked)} />
               Flagged only
             </label>
+            <label className="inline-flex items-center gap-2">
+              <input type="checkbox" checked={includeDemo} onChange={(e) => setIncludeDemo(e.target.checked)} />
+              Include demo (guest) bets
+              {typeof q.data?.demoCount === "number" && q.data.demoCount > 0 ? ` · ${q.data.demoCount}` : ""}
+            </label>
           </div>
         </div>
       </MgmtPanel>
@@ -546,6 +553,11 @@ function BetsTable({
                 <div className="flex items-center gap-1.5 font-medium">
                   {flagged ? <Flag className="h-3 w-3 shrink-0 text-[#B06000]" aria-label="Flagged" /> : null}
                   {p.display_name}
+                  {(p as any).is_demo ? (
+                    <span className="rounded-full border border-[var(--mgmt-border)] px-1.5 py-px text-[9px] uppercase tracking-wide text-[var(--mgmt-muted)]">
+                      Demo
+                    </span>
+                  ) : null}
                 </div>
                 <div className="mt-0.5 font-mono text-[10px] text-[var(--mgmt-muted)]">{p.user_id}</div>
                 {flagged && p.flagged_reason ? (

@@ -454,6 +454,9 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       market: z.string().max(40).optional(),
       status: z.string().max(20).optional(),
       sport: z.enum(["all", "football", "ufc", "f1"]).optional().default("all"),
+      // Demo (anonymous guest) bets live in the same tables but in the
+      // simulation environment — hidden from admin lists by default.
+      includeDemo: z.boolean().optional().default(false),
     }).parse(i ?? {}),
   )
   .handler(async ({ data, context }) => {
@@ -581,7 +584,7 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       }),
       ...chunkArray(uids).map(async (ids) => {
         if (!ids.length) return;
-        const { data: page, error } = await supabaseAdmin.from("profiles").select("id, display_name").in("id", ids);
+        const { data: page, error } = await supabaseAdmin.from("profiles").select("id, display_name, auth_provider").in("id", ids);
         if (error) throw new Error(error.message);
         profiles.push(...(page ?? []));
       }),
@@ -746,10 +749,16 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       };
     });
 
+    const isDemoUser = (id: string) => profileById.get(id)?.auth_provider === "anonymous";
+
     const combined = [...normalizedFootball, ...normalizedSports, ...normalizedUfc, ...normalizedF1]
+      .map((r: any) => ({ ...r, is_demo: isDemoUser(r.user_id) }))
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    return { total: combined.length, predictions: combined };
+    const demoCount = combined.filter((r: any) => r.is_demo).length;
+    const visible = data.includeDemo ? combined : combined.filter((r: any) => !r.is_demo);
+
+    return { total: visible.length, demoCount, predictions: visible };
   });
 
 
