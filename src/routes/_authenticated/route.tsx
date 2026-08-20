@@ -310,6 +310,7 @@ function AuthedLayout() {
 
         {!tableMode && <BottomNav />}
         <WinDetector />
+        <BonusAwardModal />
         <FirstVisitWalkthroughs />
       </div>
     </TourProvider>
