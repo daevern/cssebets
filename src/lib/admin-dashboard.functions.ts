@@ -242,6 +242,8 @@ export const listUsersAdmin = createServerFn({ method: "GET" })
         let q = supabaseAdmin
           .from("profiles")
           .select("id, display_name, suspended, created_at")
+          // Anonymous demo guests are disposable sessions, not members.
+          .or("auth_provider.is.null,auth_provider.neq.anonymous")
           .order("display_name", { ascending: true })
           .range(from, from + PAGE - 1);
         if (data.search) q = q.ilike("display_name", `%${data.search}%`);
