@@ -83,27 +83,16 @@ export function BonusSlotsPopup() {
             Launch bonus
           </div>
 
-          <div className="mt-4 flex items-end justify-between gap-4">
-            <div className="min-w-0">
-              <div className="font-display text-[40px] font-semibold leading-none tracking-tight text-[var(--ink)]">
-                {amount}
-                <span className="ml-1.5 align-baseline text-[15px] font-medium text-[var(--ink-muted)]">
-                  points
-                </span>
-              </div>
-              <p className="mt-2 text-[13px] leading-snug text-[var(--ink-muted)]">
-                Free on your first account. No deposit.
-              </p>
+          <div className="mt-4">
+            <div className="font-display text-[40px] font-semibold leading-none tracking-tight text-[var(--ink)]">
+              {amount}
+              <span className="ml-1.5 align-baseline text-[15px] font-medium text-[var(--ink-muted)]">
+                points
+              </span>
             </div>
-
-            <div className="shrink-0 text-right">
-              <div className="font-display text-[22px] font-semibold leading-none tabular-nums text-[var(--neon)]">
-                <AnimatedBalance value={remaining} maximumFractionDigits={0} />
-              </div>
-              <div className="mt-1 text-[10px] uppercase tracking-[0.2em] text-[var(--ink-muted)]">
-                remaining
-              </div>
-            </div>
+            <p className="mt-2 text-[13px] leading-snug text-[var(--ink-muted)]">
+              Free on your first account. No deposit.
+            </p>
           </div>
 
           <div className="mt-5 h-px w-full bg-[var(--color-surface-border)]" />
