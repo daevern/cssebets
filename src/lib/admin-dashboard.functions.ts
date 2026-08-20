@@ -749,10 +749,16 @@ export const listPredictionsAdmin = createServerFn({ method: "GET" })
       };
     });
 
+    const isDemoUser = (id: string) => profileById.get(id)?.auth_provider === "anonymous";
+
     const combined = [...normalizedFootball, ...normalizedSports, ...normalizedUfc, ...normalizedF1]
+      .map((r: any) => ({ ...r, is_demo: isDemoUser(r.user_id) }))
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    return { total: combined.length, predictions: combined };
+    const demoCount = combined.filter((r: any) => r.is_demo).length;
+    const visible = data.includeDemo ? combined : combined.filter((r: any) => !r.is_demo);
+
+    return { total: visible.length, demoCount, predictions: visible };
   });
 
 
