@@ -142,8 +142,9 @@ function AdminPredictionsPage() {
 
   const hasSession = useHasSession();
   const q = useQuery({
-    queryKey: ["admin-predictions", sport, market, status],
-    queryFn: () => listFn({ data: { sport, market: market || undefined, status: status || undefined } }),
+    queryKey: ["admin-predictions", sport, market, status, includeDemo],
+    queryFn: () =>
+      listFn({ data: { sport, market: market || undefined, status: status || undefined, includeDemo } }),
     enabled: hasSession === true,
   });
 
