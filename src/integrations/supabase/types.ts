@@ -3276,6 +3276,209 @@ export type Database = {
         }
         Relationships: []
       }
+      bonus_campaign_enrolments: {
+        Row: {
+          account_created_at: string | null
+          awarded_at: string | null
+          bonus_amount: number
+          campaign_id: string
+          created_at: string
+          eligibility_group: Database["public"]["Enums"]["bonus_group"]
+          forfeit_reason: string | null
+          forfeited_at: string | null
+          id: string
+          idempotency_key: string
+          journal_transaction_id: string | null
+          remaining_locked_bonus: number
+          slot_number: number | null
+          slot_reserved_at: string | null
+          status: Database["public"]["Enums"]["bonus_enrolment_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_created_at?: string | null
+          awarded_at?: string | null
+          bonus_amount?: number
+          campaign_id: string
+          created_at?: string
+          eligibility_group: Database["public"]["Enums"]["bonus_group"]
+          forfeit_reason?: string | null
+          forfeited_at?: string | null
+          id?: string
+          idempotency_key: string
+          journal_transaction_id?: string | null
+          remaining_locked_bonus?: number
+          slot_number?: number | null
+          slot_reserved_at?: string | null
+          status?: Database["public"]["Enums"]["bonus_enrolment_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_created_at?: string | null
+          awarded_at?: string | null
+          bonus_amount?: number
+          campaign_id?: string
+          created_at?: string
+          eligibility_group?: Database["public"]["Enums"]["bonus_group"]
+          forfeit_reason?: string | null
+          forfeited_at?: string | null
+          id?: string
+          idempotency_key?: string
+          journal_transaction_id?: string | null
+          remaining_locked_bonus?: number
+          slot_number?: number | null
+          slot_reserved_at?: string | null
+          status?: Database["public"]["Enums"]["bonus_enrolment_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bonus_campaign_enrolments_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "bonus_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bonus_campaigns: {
+        Row: {
+          bonus_amount: number
+          code: string
+          created_at: string
+          enabled: boolean
+          ends_at: string | null
+          id: string
+          include_admin_accounts: boolean
+          include_internal_accounts: boolean
+          include_simulation_accounts: boolean
+          new_user_cap: number
+          reassign_forfeited_slots: boolean
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          bonus_amount?: number
+          code: string
+          created_at?: string
+          enabled?: boolean
+          ends_at?: string | null
+          id?: string
+          include_admin_accounts?: boolean
+          include_internal_accounts?: boolean
+          include_simulation_accounts?: boolean
+          new_user_cap?: number
+          reassign_forfeited_slots?: boolean
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          bonus_amount?: number
+          code?: string
+          created_at?: string
+          enabled?: boolean
+          ends_at?: string | null
+          id?: string
+          include_admin_accounts?: boolean
+          include_internal_accounts?: boolean
+          include_simulation_accounts?: boolean
+          new_user_cap?: number
+          reassign_forfeited_slots?: boolean
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bonus_slot_audit: {
+        Row: {
+          actor: string | null
+          campaign_id: string | null
+          created_at: string
+          event: string
+          id: string
+          metadata: Json
+          reason: string | null
+          slot_number: number | null
+          user_id: string | null
+        }
+        Insert: {
+          actor?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          event: string
+          id?: string
+          metadata?: Json
+          reason?: string | null
+          slot_number?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          actor?: string | null
+          campaign_id?: string | null
+          created_at?: string
+          event?: string
+          id?: string
+          metadata?: Json
+          reason?: string | null
+          slot_number?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      bonus_wager_funding: {
+        Row: {
+          bonus_funded: number
+          closed_at: string | null
+          created_at: string
+          id: string
+          profit: number
+          reference_id: string | null
+          reference_type: string | null
+          remaining: number
+          returned_bonus: number
+          returned_withdrawable: number
+          stake: number
+          status: string
+          user_id: string
+          withdrawable_funded: number
+        }
+        Insert: {
+          bonus_funded?: number
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          profit?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          remaining?: number
+          returned_bonus?: number
+          returned_withdrawable?: number
+          stake: number
+          status?: string
+          user_id: string
+          withdrawable_funded?: number
+        }
+        Update: {
+          bonus_funded?: number
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          profit?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          remaining?: number
+          returned_bonus?: number
+          returned_withdrawable?: number
+          stake?: number
+          status?: string
+          user_id?: string
+          withdrawable_funded?: number
+        }
+        Relationships: []
+      }
       correlated_exposure_alerts: {
         Row: {
           bet_ids: string[]
@@ -7848,6 +8051,7 @@ export type Database = {
           balance: number
           created_at: string
           is_simulation: boolean
+          locked_bonus_balance: number
           updated_at: string
           user_id: string
         }
@@ -7855,6 +8059,7 @@ export type Database = {
           balance?: number
           created_at?: string
           is_simulation?: boolean
+          locked_bonus_balance?: number
           updated_at?: string
           user_id: string
         }
@@ -7862,6 +8067,7 @@ export type Database = {
           balance?: number
           created_at?: string
           is_simulation?: boolean
+          locked_bonus_balance?: number
           updated_at?: string
           user_id?: string
         }
@@ -10054,6 +10260,45 @@ export type Database = {
         Args: { p_referred_user_id: string }
         Returns: undefined
       }
+      bonus_active_campaign: {
+        Args: never
+        Returns: {
+          bonus_amount: number
+          code: string
+          created_at: string
+          enabled: boolean
+          ends_at: string | null
+          id: string
+          include_admin_accounts: boolean
+          include_internal_accounts: boolean
+          include_simulation_accounts: boolean
+          new_user_cap: number
+          reassign_forfeited_slots: boolean
+          starts_at: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bonus_campaigns"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      bonus_campaign_status: { Args: never; Returns: Json }
+      bonus_claim_for_user: { Args: { p_user: string }; Returns: Json }
+      bonus_forfeit_slot: {
+        Args: { p_reason?: string; p_user: string }
+        Returns: boolean
+      }
+      bonus_reserve_new_user_slot: { Args: { p_user: string }; Returns: number }
+      bonus_user_is_approved: { Args: { p_user: string }; Returns: boolean }
+      bonus_user_is_valid: {
+        Args: {
+          p_campaign: Database["public"]["Tables"]["bonus_campaigns"]["Row"]
+          p_user: string
+        }
+        Returns: boolean
+      }
       cancel_pending_bet: {
         Args: { p_prediction_id: string; p_user_id: string }
         Returns: string
@@ -10214,6 +10459,15 @@ export type Database = {
       ops_noop_write_test: { Args: never; Returns: Json }
       payout_approve_atomic: {
         Args: { p_admin_id: string; p_payout_id: string }
+        Returns: string
+      }
+      payout_create_atomic: {
+        Args: {
+          p_amount: number
+          p_bank_account_number: string
+          p_bank_name: string
+          p_user_id: string
+        }
         Returns: string
       }
       payout_user_confirm: {
@@ -10739,6 +10993,7 @@ export type Database = {
         Args: { p_admin_id: string; p_note?: string; p_request_id: string }
         Returns: number
       }
+      wallet_ctx: { Args: never; Returns: string }
       wallet_reject_request: {
         Args: { p_admin_id: string; p_note?: string; p_request_id: string }
         Returns: undefined
@@ -10900,6 +11155,14 @@ export type Database = {
         | "VERIFIED"
         | "VERIFICATION_FAILED"
         | "SUSPENDED"
+      bonus_enrolment_status:
+        | "ELIGIBLE"
+        | "SLOT_RESERVED"
+        | "AWARDED"
+        | "FORFEITED"
+        | "EXPIRED"
+        | "INELIGIBLE"
+      bonus_group: "EXISTING_USER" | "NEW_USER"
       match_status:
         | "scheduled"
         | "live"
@@ -11266,6 +11529,15 @@ export const Constants = {
         "VERIFICATION_FAILED",
         "SUSPENDED",
       ],
+      bonus_enrolment_status: [
+        "ELIGIBLE",
+        "SLOT_RESERVED",
+        "AWARDED",
+        "FORFEITED",
+        "EXPIRED",
+        "INELIGIBLE",
+      ],
+      bonus_group: ["EXISTING_USER", "NEW_USER"],
       match_status: ["scheduled", "live", "finished", "postponed", "cancelled"],
       payout_request_status: [
         "pending",
