@@ -45,7 +45,6 @@ export function BonusSlotsPopup() {
 
   const s = q.data;
   const live = !!s?.active && (s.slotsRemaining ?? 0) > 0;
-  const remaining = s?.slotsRemaining ?? 0;
   const amount = s?.bonusAmount ?? 100;
 
   useEffect(() => {
