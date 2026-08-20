@@ -272,6 +272,10 @@
   0% { background-position: 0% 50%; }
   100% { background-position: 200% 50%; }
 }
+@keyframes bonus-countdown-pulse {
+  0%, 100% { transform: scale(1); text-shadow: 0 0 0 rgba(var(--neon-glow-rgb), 0); }
+  50% { transform: scale(1.04); text-shadow: 0 0 18px rgba(var(--neon-glow-rgb), 0.45); }
+}
 
 .bonus-shimmer-button::before {
   content: "";
