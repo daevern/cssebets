@@ -4,7 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { Link } from "@tanstack/react-router";
 import { Dialog } from "@/components/ui/dialog";
 import { StencilDialogContent } from "@/components/wallet/StencilDialog";
-import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { getCampaignStatus, type CampaignStatus } from "@/lib/bonus.functions";
 
 const SEEN_KEY = "csse:bonus-slots-popup:v1";
