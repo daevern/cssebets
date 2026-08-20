@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { StencilDialogContent } from "@/components/wallet/StencilDialog";
 import { AnimatedBalance } from "@/components/AnimatedBalance";
 import { getCampaignStatus, type CampaignStatus } from "@/lib/bonus.functions";
-import { Flame, Gift, Users, Zap } from "lucide-react";
+import { Gift, Users, Zap } from "lucide-react";
 
 const SEEN_KEY = "csse:bonus-slots-popup:v1";
 
