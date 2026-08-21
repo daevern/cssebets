@@ -249,6 +249,16 @@ export async function runUfcOddsApiSync(
           .insert({ fight_id: fightRow.id, market_type: "moneyline", selection_key, odds });
         marketsWritten++;
       }
+
+      // The Odds API plan only serves h2h for MMA, so derive Method / Round /
+      // Total Rounds from the fresh moneyline. If API-Sports later prices the
+      // same bout, its real numbers overwrite these rows.
+      try {
+        const derived = await deriveUfcSecondaryMarkets(fightRow.id);
+        if (derived.ok) marketsWritten += derived.rows;
+      } catch (e) {
+        console.warn("[ufc-oddsapi] derive secondary markets failed", fightRow.id, (e as Error).message);
+      }
     }
   }
 
