@@ -604,17 +604,9 @@ async function syncOddsForFight(fightRow: {
   //      4.5 only on 5-round fights). Too many O/U lines crowd the page. ----
   const totalLines = scheduledRounds === 5 ? [2, 4] : [2];
   for (const k of totalLines) {
-    let over = median(ouOverPrices[k]);
-    let under = median(ouUnderPrices[k]);
-    // Fallback: if only one side is priced, derive the other from the fair
-    // probability we already computed so users never see a half-market.
-    // This is why "Under 4.5" used to disappear on some feeds.
-    if ((!over || over <= 1) && fairUnder[k] !== undefined && under > 1) {
-      over = 1 / Math.max(0.01, 1 - fairUnder[k]);
-    }
-    if ((!under || under <= 1) && fairUnder[k] !== undefined && over > 1) {
-      under = 1 / Math.max(0.01, fairUnder[k]);
-    }
+    // Both sides must be quoted by the books — no derived counter-price.
+    const over = median(ouOverPrices[k]);
+    const under = median(ouUnderPrices[k]);
     if (over > 1 && under > 1) {
       const priced = await apply2WayMargin(over, under);
       const line = `${k}_5`;
