@@ -321,7 +321,11 @@ function ScoreFighter({ name, logo, country, record }: { name: string; logo?: st
 
 const MARKET_TABS: Array<{ id: MarketType; label: string }> = [
   { id: "moneyline", label: "Fight Winner" },
+  { id: "method", label: "Method" },
+  { id: "round", label: "Round" },
+  { id: "total_rounds", label: "Total Rounds" },
 ];
+
 
 
 
