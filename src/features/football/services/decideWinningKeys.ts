@@ -7,7 +7,15 @@ export type MarketContext = {
   awayScore: number;   // regulation FT away
   htHomeScore: number | null;
   htAwayScore: number | null;
+  // Match statistics (API-Football fixture statistics). Null when the
+  // provider did not return them — dependent markets then void.
+  homeCorners?: number | null;
+  awayCorners?: number | null;
+  homeCards?: number | null;   // yellows + reds for that team
+  awayCards?: number | null;
+  redCards?: number | null;    // reds across both teams
 };
+
 
 export type MarketSpec = {
   marketKey: string;
@@ -168,5 +176,62 @@ export function decideWinningKeys(
     return { status: "settled", winningKeys: [yes ? "yes" : "no"], reason: `home scored ${h}` };
   }
 
+  // --- Correct score ---
+  // Returns the exact score key; the settlement layer falls back to the
+  // "other" bucket when the exact score wasn't offered.
+  if (key === "correct_score") {
+    return { status: "settled", winningKeys: [`${h}-${a}`], reason: `FT ${h}-${a}` };
+  }
+
+  // --- Half-time / full-time ---
+  if (key === "half_time_full_time") {
+    if (ctx.htHomeScore == null || ctx.htAwayScore == null) {
+      return { status: "void", reason: "half-time score unavailable" };
+    }
+    const res = (x: number, y: number) => (x > y ? "home" : x < y ? "away" : "draw");
+    const first = res(ctx.htHomeScore, ctx.htAwayScore);
+    const full = res(h, a);
+    return {
+      status: "settled",
+      winningKeys: [`${first}_${full}`],
+      reason: `HT ${ctx.htHomeScore}-${ctx.htAwayScore}, FT ${h}-${a}`,
+    };
+  }
+
+  // --- Corners (need match statistics) ---
+  if (key.startsWith("total_corners_") || key.startsWith("home_corners_") || key.startsWith("away_corners_")) {
+    const line = market.line;
+    if (line == null) return { status: "void", reason: "missing line" };
+    const hc = ctx.homeCorners;
+    const ac = ctx.awayCorners;
+    if (hc == null || ac == null) return { status: "void", reason: "corner statistics unavailable" };
+    if (key.startsWith("home_corners_")) return ouDecision(hc, line, "home corners");
+    if (key.startsWith("away_corners_")) return ouDecision(ac, line, "away corners");
+    return ouDecision(hc + ac, line, "corners");
+  }
+
+  // --- Cards (need match statistics) ---
+  if (key.startsWith("total_cards_") || key.startsWith("home_cards_") || key.startsWith("away_cards_")) {
+    const line = market.line;
+    if (line == null) return { status: "void", reason: "missing line" };
+    const hcd = ctx.homeCards;
+    const acd = ctx.awayCards;
+    if (hcd == null || acd == null) return { status: "void", reason: "card statistics unavailable" };
+    if (key.startsWith("home_cards_")) return ouDecision(hcd, line, "home cards");
+    if (key.startsWith("away_cards_")) return ouDecision(acd, line, "away cards");
+    return ouDecision(hcd + acd, line, "cards");
+  }
+
+  if (key === "red_card_match") {
+    if (ctx.redCards == null) return { status: "void", reason: "card statistics unavailable" };
+    const yes = ctx.redCards > 0;
+    return {
+      status: "settled",
+      winningKeys: [yes ? "yes" : "no"],
+      reason: `${ctx.redCards} red card(s)`,
+    };
+  }
+
   return { status: "void", reason: `unsupported market_key=${key}` };
+
 }

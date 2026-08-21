@@ -134,10 +134,78 @@ describe("decideWinningKeys — team totals / clean sheets", () => {
   });
 });
 
+const statsCtx = (
+  h: number,
+  a: number,
+  s: Partial<MarketContext>,
+  ht: [number, number] | null = null,
+): MarketContext => ({ ...ctx(h, a, ht), ...s });
+
+describe("decideWinningKeys — correct score & HT/FT", () => {
+  it("returns exact score key", () => {
+    expect(keys(decideWinningKeys(mk("correct_score"), ctx(2, 1)))).toEqual(["2-1"]);
+  });
+  it("HT/FT combines both results", () => {
+    expect(keys(decideWinningKeys(mk("half_time_full_time"), ctx(2, 1, [0, 1])))).toEqual([
+      "away_home",
+    ]);
+  });
+  it("HT/FT voids without half-time score", () => {
+    expect(decideWinningKeys(mk("half_time_full_time"), ctx(2, 1)).status).toBe("void");
+  });
+});
+
+describe("decideWinningKeys — corners & cards", () => {
+  it("total corners over", () => {
+    expect(
+      keys(
+        decideWinningKeys(
+          mk("total_corners_9_5", 9.5),
+          statsCtx(1, 0, { homeCorners: 7, awayCorners: 4 }),
+        ),
+      ),
+    ).toEqual(["over_9_5"]);
+  });
+  it("team corners under", () => {
+    expect(
+      keys(
+        decideWinningKeys(
+          mk("home_corners_4_5", 4.5),
+          statsCtx(1, 0, { homeCorners: 3, awayCorners: 8 }),
+        ),
+      ),
+    ).toEqual(["under_4_5"]);
+  });
+  it("total cards over", () => {
+    expect(
+      keys(
+        decideWinningKeys(
+          mk("total_cards_3_5", 3.5),
+          statsCtx(1, 0, { homeCards: 2, awayCards: 3 }),
+        ),
+      ),
+    ).toEqual(["over_3_5"]);
+  });
+  it("red card market", () => {
+    expect(keys(decideWinningKeys(mk("red_card_match"), statsCtx(1, 0, { redCards: 1 })))).toEqual([
+      "yes",
+    ]);
+    expect(keys(decideWinningKeys(mk("red_card_match"), statsCtx(1, 0, { redCards: 0 })))).toEqual([
+      "no",
+    ]);
+  });
+  it("voids when statistics are unavailable", () => {
+    expect(decideWinningKeys(mk("total_corners_9_5", 9.5), ctx(1, 0)).status).toBe("void");
+    expect(decideWinningKeys(mk("total_cards_3_5", 3.5), ctx(1, 0)).status).toBe("void");
+    expect(decideWinningKeys(mk("red_card_match"), ctx(1, 0)).status).toBe("void");
+  });
+});
+
 describe("decideWinningKeys — unsupported / edge", () => {
   it("unknown key → void with reason", () => {
-    const d = decideWinningKeys(mk("correct_score"), ctx(2, 1));
+    const d = decideWinningKeys(mk("first_goalscorer"), ctx(2, 1));
     expect(d.status).toBe("void");
     if (d.status === "void") expect(d.reason).toMatch(/unsupported/);
   });
 });
+

@@ -147,6 +147,19 @@ export async function afFetchLiveFixtures(
   return apiGet<AfFixture[]>(`/fixtures?live=all&league=${leagueId}`);
 }
 
+export type AfFixtureStatistics = Array<{
+  team: { id: number; name: string };
+  statistics: Array<{ type: string; value: number | string | null }>;
+}>;
+
+// Per-team match statistics (corners, cards, shots ...) for a finished fixture.
+export async function afFetchFixtureStatistics(
+  fixtureId: number,
+): Promise<ApiFootballResult<AfFixtureStatistics>> {
+  return apiGet<AfFixtureStatistics>(`/fixtures/statistics?fixture=${fixtureId}`);
+}
+
+
 export function afStatusToInternal(short: string): {
   status: "scheduled" | "live" | "halftime" | "finished" | "postponed" | "cancelled" | "abandoned";
   isLive: boolean;

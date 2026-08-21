@@ -236,11 +236,13 @@ export const placeUfcBet = createServerFn({ method: "POST" })
       throw e;
     }
 
-    // Method / round / totals are admin-grade only — the MMA feed does not
-    // return finish method or round, so public betting is disabled.
-    if (data.marketType !== "moneyline") {
-      throw new Error("Only Fight Winner markets are open for betting right now.");
+    // Distance / handicap / three-way are retired product-side; the remaining
+    // types (moneyline, method, round, total_rounds) are open for betting and
+    // graded by settle_ufc_fight_atomic.
+    if (!["moneyline", "method", "round", "total_rounds"].includes(data.marketType)) {
+      throw new Error("This market is not open for betting.");
     }
+
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 

@@ -32,9 +32,12 @@ function mapMarketKey(key: string): string | null {
   if (corners) return `corners_over_under_${corners[1]}`;
   if (key === "home_corners_4_5") return "home_corners_over_under_4_5";
   if (key === "away_corners_4_5") return "away_corners_over_under_4_5";
+  if (key === "home_cards_1_5") return "home_cards_over_under_1_5";
+  if (key === "away_cards_1_5") return "away_cards_over_under_1_5";
   if (key === "red_card_match") return "red_card_match";
   return null;
 }
+
 
 function mapSelectionKey(catalogMarket: string, key: string): string | null {
   const k = key.toLowerCase();
