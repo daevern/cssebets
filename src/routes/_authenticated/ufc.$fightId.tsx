@@ -390,8 +390,12 @@ function OddsButton({
 }
 
 function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
-  const availableTypes = new Set(markets.filter((m) => m.is_active).map((m) => m.market_type));
+  // A tab shows whenever the fight has priced rows of that type. Rows that are
+  // no longer active render as suspended tiles instead of vanishing, so a
+  // locked Method market doesn't make the whole tab disappear mid-session.
+  const availableTypes = new Set(markets.map((m) => m.market_type));
   const visibleTabs = MARKET_TABS.filter((t) => availableTypes.has(t.id));
+
   const firstAvailable = visibleTabs[0]?.id ?? "moneyline";
   const [tab, setTab] = useState<MarketType>(firstAvailable);
   useEffect(() => {
