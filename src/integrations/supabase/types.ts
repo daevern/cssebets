@@ -7596,6 +7596,7 @@ export type Database = {
           label: string
           market_type: string
           odds: number
+          odds_source: string | null
           selection_key: string
           updated_at: string
         }
@@ -7606,6 +7607,7 @@ export type Database = {
           label: string
           market_type: string
           odds: number
+          odds_source?: string | null
           selection_key: string
           updated_at?: string
         }
@@ -7616,6 +7618,7 @@ export type Database = {
           label?: string
           market_type?: string
           odds?: number
+          odds_source?: string | null
           selection_key?: string
           updated_at?: string
         }
