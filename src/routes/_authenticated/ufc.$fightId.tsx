@@ -509,23 +509,33 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
             No {tab.replace("_", " ")} odds available yet.
           </div>
         ) : (
-          <div className={`grid gap-2 ${tab === "moneyline" ? "grid-cols-2" : "grid-cols-3"}`}>
-
-
+          <div
+            className={`grid gap-2 ${
+              tab === "moneyline" || tab === "total_rounds" ? "grid-cols-2" : "grid-cols-3"
+            }`}
+          >
             {filtered.map((m) => {
               const isTaken = takenKeys.has(`${m.market_type}:${m.selection_key}`);
+              const suspended = !m.is_active;
               return (
                 <OddsButton
                   key={`${m.market_type}:${m.selection_key}`}
-                  label={isTaken ? `${m.label} · Bet placed` : m.label}
+                  label={
+                    suspended
+                      ? `${m.label} · Suspended`
+                      : isTaken
+                        ? `${m.label} · Bet placed`
+                        : m.label
+                  }
                   price={Number(m.odds)}
                   selected={pick?.selection_key === m.selection_key && pick?.market_type === m.market_type}
-                  disabled={!m.is_active || finished || isTaken}
+                  disabled={suspended || finished || isTaken}
                   variant={classifyUfc(m.selection_key)}
                   onClick={() => setPick(m)}
                 />
               );
             })}
+
           </div>
         )}
       </div>
