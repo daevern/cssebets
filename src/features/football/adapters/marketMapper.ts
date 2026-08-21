@@ -147,6 +147,51 @@ function mapHighestScoringHalf(v: string): Mapped | null {
   return null;
 }
 
+// Correct score: providers return "1:0", "1-0" or "1 - 0". Anything outside
+// the offered grid is dropped (the "other" bucket is graded at settlement).
+const CORRECT_SCORE_GRID = new Set([
+  "0-0", "1-0", "0-1", "1-1", "2-0", "0-2", "2-1", "1-2", "2-2",
+  "3-0", "0-3", "3-1", "1-3", "3-2", "2-3", "3-3",
+  "4-0", "0-4", "4-1", "1-4", "4-2", "2-4",
+]);
+
+function mapCorrectScore(v: string): Mapped | null {
+  const s = v.trim().toLowerCase();
+  if (s === "other" || s === "any other" || s === "any other score")
+    return { key: "other", display: "Other score", sort: 999 };
+  const m = /^(\d+)\s*[:\-x]\s*(\d+)$/.exec(s);
+  if (!m) return null;
+  const key = `${Number(m[1])}-${Number(m[2])}`;
+  if (!CORRECT_SCORE_GRID.has(key)) return null;
+  const total = Number(m[1]) + Number(m[2]);
+  return { key, display: key.replace("-", " - "), sort: total * 10 + Number(m[2]) };
+}
+
+function sideToken(s: string): "home" | "draw" | "away" | null {
+  const t = s.trim().toLowerCase();
+  if (t === "home" || t === "1") return "home";
+  if (t === "draw" || t === "x" || t === "d") return "draw";
+  if (t === "away" || t === "2") return "away";
+  return null;
+}
+
+// Half-time / full-time: "Home/Home", "1/1", "1/X" ...
+function mapHtFt(v: string): Mapped | null {
+  const parts = v.split("/");
+  if (parts.length !== 2) return null;
+  const a = sideToken(parts[0]);
+  const b = sideToken(parts[1]);
+  if (!a || !b) return null;
+  const cap = (x: string) => x[0].toUpperCase() + x.slice(1);
+  const order = { home: 0, draw: 1, away: 2 } as const;
+  return {
+    key: `${a}_${b}`,
+    display: `${cap(a)} / ${cap(b)}`,
+    sort: order[a] * 3 + order[b],
+  };
+}
+
+
 // ---- spec table ----
 
 function ouSpecs(config: {
@@ -356,7 +401,108 @@ const SPECS: Spec[] = [
     sortOrder: 101,
     map: mapYesNo,
   },
+
+  // ---- Correct score & HT/FT ----
+  {
+    betIds: [10],
+    betNamePatterns: [/^correct score$/i, /^exact score$/i],
+    marketKey: "correct_score",
+    displayName: "Correct Score",
+    category: "Goals",
+    period: "full",
+    sortOrder: 48,
+    map: mapCorrectScore,
+  },
+  {
+    betIds: [7],
+    betNamePatterns: [/^ht\/?ft(\s*double)?$/i, /half\s*time\s*\/?\s*full\s*time/i, /^double result$/i],
+    marketKey: "half_time_full_time",
+    displayName: "Half-Time / Full-Time",
+    category: "Halves",
+    period: "full",
+    sortOrder: 55,
+    map: mapHtFt,
+  },
+
+  // ---- Corners ----
+  ...ouSpecs({
+    marketKeyBase: "total_corners",
+    displayBase: "Total Corners",
+    category: "Corners",
+    period: "full",
+    betIds: [45],
+    betNamePatterns: [
+      /^corners over\/?under$/i,
+      /^total corners$/i,
+      /^corners o\/?u$/i,
+      /^corners\s*over\s*under$/i,
+    ],
+    sortStart: 200,
+    lines: [8.5, 9.5, 10.5, 11.5],
+  }),
+  ...ouSpecs({
+    marketKeyBase: "home_corners",
+    displayBase: "Home Team Corners",
+    category: "Corners",
+    period: "full",
+    betNamePatterns: [/home.*corners/i, /corners\s*-\s*home/i],
+    sortStart: 210,
+    lines: [4.5],
+  }),
+  ...ouSpecs({
+    marketKeyBase: "away_corners",
+    displayBase: "Away Team Corners",
+    category: "Corners",
+    period: "full",
+    betNamePatterns: [/away.*corners/i, /corners\s*-\s*away/i],
+    sortStart: 215,
+    lines: [4.5],
+  }),
+
+  // ---- Cards ----
+  ...ouSpecs({
+    marketKeyBase: "total_cards",
+    displayBase: "Total Cards",
+    category: "Cards",
+    period: "full",
+    betNamePatterns: [
+      /^cards over\/?under$/i,
+      /^total cards$/i,
+      /^cards o\/?u$/i,
+      /^total booking(s)?$/i,
+    ],
+    sortStart: 300,
+    lines: [2.5, 3.5, 4.5, 5.5],
+  }),
+  ...ouSpecs({
+    marketKeyBase: "home_cards",
+    displayBase: "Home Team Cards",
+    category: "Cards",
+    period: "full",
+    betNamePatterns: [/home.*cards/i, /cards\s*-\s*home/i],
+    sortStart: 310,
+    lines: [1.5],
+  }),
+  ...ouSpecs({
+    marketKeyBase: "away_cards",
+    displayBase: "Away Team Cards",
+    category: "Cards",
+    period: "full",
+    betNamePatterns: [/away.*cards/i, /cards\s*-\s*away/i],
+    sortStart: 315,
+    lines: [1.5],
+  }),
+  {
+    betNamePatterns: [/^red card$/i, /red card in( the)? match/i, /^sending off$/i],
+    marketKey: "red_card_match",
+    displayName: "Red Card in Match",
+    category: "Cards",
+    period: "full",
+    sortOrder: 320,
+    map: mapYesNo,
+  },
 ];
+
 
 // Take median odds across bookmakers to reduce single-book bias.
 function median(nums: number[]): number {
@@ -403,8 +549,14 @@ export function normalizeOdds(payload: AfOddsResponse): NormalizedMarket[] {
 
     // Sanity guard: some markets need a minimum number of selections to be safe.
     // e.g. a 1X2 market with only one price is almost certainly a partial feed.
-    const minSelections = spec.marketKey === "exact_goals" ? 3 : 2;
+    const minSelections =
+      spec.marketKey === "correct_score" || spec.marketKey === "half_time_full_time"
+        ? 4
+        : spec.marketKey === "exact_goals"
+          ? 3
+          : 2;
     if (perSelection.size < minSelections) continue;
+
 
     out.push({
       marketKey: spec.marketKey,

@@ -321,7 +321,11 @@ function ScoreFighter({ name, logo, country, record }: { name: string; logo?: st
 
 const MARKET_TABS: Array<{ id: MarketType; label: string }> = [
   { id: "moneyline", label: "Fight Winner" },
+  { id: "method", label: "Method" },
+  { id: "round", label: "Round" },
+  { id: "total_rounds", label: "Total Rounds" },
 ];
+
 
 
 
@@ -386,8 +390,12 @@ function OddsButton({
 }
 
 function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
-  const availableTypes = new Set(markets.filter((m) => m.is_active).map((m) => m.market_type));
+  // A tab shows whenever the fight has priced rows of that type. Rows that are
+  // no longer active render as suspended tiles instead of vanishing, so a
+  // locked Method market doesn't make the whole tab disappear mid-session.
+  const availableTypes = new Set(markets.map((m) => m.market_type));
   const visibleTabs = MARKET_TABS.filter((t) => availableTypes.has(t.id));
+
   const firstAvailable = visibleTabs[0]?.id ?? "moneyline";
   const [tab, setTab] = useState<MarketType>(firstAvailable);
   useEffect(() => {
@@ -491,8 +499,18 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
             <p className="text-[11px] text-[var(--color-ink-muted)]">Draw, technical draw or no-contest voids both selections.</p>
           )}
           {tab === "method" && (
-            <p className="text-[11px] text-[var(--color-ink-muted)]">Model-derived from the live market. Closes 30 minutes before walk-outs.</p>
+            <p className="text-[11px] text-[var(--color-ink-muted)]">
+              Prices track the live market and suspend 30 minutes before walk-outs.
+            </p>
           )}
+
+          {(tab === "round" || tab === "total_rounds") && (
+            <p className="text-[11px] text-[var(--color-ink-muted)]">
+              Graded on the official finish. Stakes are refunded if the result feed never confirms
+              the finishing round.
+            </p>
+          )}
+
 
         </div>
 
@@ -501,23 +519,33 @@ function MarketsBoard({ markets, fight }: { markets: Market[]; fight: any }) {
             No {tab.replace("_", " ")} odds available yet.
           </div>
         ) : (
-          <div className={`grid gap-2 ${tab === "moneyline" ? "grid-cols-2" : "grid-cols-3"}`}>
-
-
+          <div
+            className={`grid gap-2 ${
+              tab === "moneyline" || tab === "total_rounds" ? "grid-cols-2" : "grid-cols-3"
+            }`}
+          >
             {filtered.map((m) => {
               const isTaken = takenKeys.has(`${m.market_type}:${m.selection_key}`);
+              const suspended = !m.is_active;
               return (
                 <OddsButton
                   key={`${m.market_type}:${m.selection_key}`}
-                  label={isTaken ? `${m.label} · Bet placed` : m.label}
+                  label={
+                    suspended
+                      ? `${m.label} · Suspended`
+                      : isTaken
+                        ? `${m.label} · Bet placed`
+                        : m.label
+                  }
                   price={Number(m.odds)}
                   selected={pick?.selection_key === m.selection_key && pick?.market_type === m.market_type}
-                  disabled={!m.is_active || finished || isTaken}
+                  disabled={suspended || finished || isTaken}
                   variant={classifyUfc(m.selection_key)}
                   onClick={() => setPick(m)}
                 />
               );
             })}
+
           </div>
         )}
       </div>

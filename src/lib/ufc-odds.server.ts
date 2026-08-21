@@ -677,7 +677,7 @@ async function syncOddsForFight(fightRow: {
       const fighter = slot === "a" ? fightRow.fighter_a : fightRow.fighter_b;
       const label = `${fighter} by ${m === "ko_tko" ? "KO/TKO" : m === "submission" ? "Submission" : "Decision"}`;
       const capped = Math.min(METHOD_MAX_ODDS, Number(p.odds));
-      upserts.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, label, odds: capped, is_active: false, updated_at: nowIso });
+      upserts.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, label, odds: capped, is_active: true, updated_at: nowIso });
       snapshots.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, odds: capped });
     }
   }
@@ -693,7 +693,7 @@ async function syncOddsForFight(fightRow: {
     const priced = await applyOutrightMargin(roundEntries);
     for (const p of priced) {
       const label = p.team === "distance" ? "Goes the distance" : `Round ${p.team.slice(1)}`;
-      upserts.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, label, odds: p.odds, is_active: false, updated_at: nowIso });
+      upserts.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, label, odds: p.odds, is_active: true, updated_at: nowIso });
       snapshots.push({ fight_id: fightRow.id, market_type: "round", selection_key: p.team, odds: p.odds });
     }
   }
@@ -718,8 +718,8 @@ async function syncOddsForFight(fightRow: {
       const line = `${k}_5`;
       const lineLabel = `${k}.5`;
       upserts.push(
-        { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `over_${line}`, label: `Over ${lineLabel} rounds`, odds: priced.a, is_active: false, updated_at: nowIso },
-        { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `under_${line}`, label: `Under ${lineLabel} rounds`, odds: priced.b, is_active: false, updated_at: nowIso },
+        { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `over_${line}`, label: `Over ${lineLabel} rounds`, odds: priced.a, is_active: true, updated_at: nowIso },
+        { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `under_${line}`, label: `Under ${lineLabel} rounds`, odds: priced.b, is_active: true, updated_at: nowIso },
       );
       snapshots.push(
         { fight_id: fightRow.id, market_type: "total_rounds", selection_key: `over_${line}`, odds: priced.a },
@@ -742,7 +742,7 @@ async function syncOddsForFight(fightRow: {
     .from("ufc_fight_markets")
     .update({ is_active: false })
     .eq("fight_id", fightRow.id)
-    .in("market_type", ["three_way", "handicap", "distance", "method", "round", "total_rounds"]);
+    .in("market_type", ["three_way", "handicap", "distance"]);
 
 
   // Also deactivate any total_rounds lines we no longer surface (only 2.5
