@@ -529,53 +529,10 @@ async function syncOddsForFight(fightRow: {
   }
 
 
-  // ---- Derive round-finish odds from Over/Under totals ----
-  // Fair prob at each boundary: pUnder_k = (1/oddU_k) / (1/oddU_k + 1/oddO_k)
-  //   r1 = pU_1
-  //   r2 = pU_2 - pU_1
-  //   r3 = pU_3 - pU_2
-  //   r4 = pU_4 - pU_3         (5-round fights only)
-  //   distance = 1 - pU_{last}
+  // No modelling here: every published market must come from bookmaker prices
+  // in the feed. Round / method markets exist only when the books quote them.
   const scheduledRounds = fightRow.scheduled_rounds ?? 3;
-  const maxLine = scheduledRounds === 5 ? 4 : 2;
-  const fairUnder: Record<number, number> = {};
-  for (let k = 1; k <= maxLine; k++) {
-    const u = median(ouUnderPrices[k]);
-    const o = median(ouOverPrices[k]);
-    if (u > 1 && o > 1) {
-      const invU = 1 / u, invO = 1 / o;
-      fairUnder[k] = invU / (invU + invO);
-    }
-  }
-  const availableLines = Object.keys(fairUnder).map(Number).sort((a, b) => a - b);
-  if (availableLines.length >= 1 && Object.keys(roundPrices).length === 0) {
-    const roundProbs: Record<string, number> = {};
-    let prev = 0;
-    for (const k of availableLines) {
-      const cur = fairUnder[k];
-      const p = Math.max(0.001, cur - prev);
-      roundProbs[`r${k}`] = p;
-      prev = cur;
-    }
-    const lastLine = availableLines[availableLines.length - 1];
-    // "distance" = fight goes past the last measured boundary. For 3-round =
-    // Over 2.5, for 5-round = Over 4.5.
-    const distanceProb = Math.max(0.001, 1 - fairUnder[lastLine]);
-    roundProbs["distance"] = distanceProb;
-    for (const [key, p] of Object.entries(roundProbs)) {
-      roundPrices[key] = [1 / p];
-    }
-  }
 
-  const distanceLine = scheduledRounds === 5 ? 4 : 2;
-  if (!distancePrices.yes.length && !distancePrices.no.length) {
-    const overDistance = median(ouOverPrices[distanceLine]);
-    const underDistance = median(ouUnderPrices[distanceLine]);
-    if (overDistance > 1 && underDistance > 1) {
-      distancePrices.yes.push(overDistance);
-      distancePrices.no.push(underDistance);
-    }
-  }
 
   // ---- Persist Moneyline ----
   if (mlPrices.a.length && mlPrices.b.length) {
