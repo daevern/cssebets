@@ -529,53 +529,10 @@ async function syncOddsForFight(fightRow: {
   }
 
 
-  // ---- Derive round-finish odds from Over/Under totals ----
-  // Fair prob at each boundary: pUnder_k = (1/oddU_k) / (1/oddU_k + 1/oddO_k)
-  //   r1 = pU_1
-  //   r2 = pU_2 - pU_1
-  //   r3 = pU_3 - pU_2
-  //   r4 = pU_4 - pU_3         (5-round fights only)
-  //   distance = 1 - pU_{last}
+  // No modelling here: every published market must come from bookmaker prices
+  // in the feed. Round / method markets exist only when the books quote them.
   const scheduledRounds = fightRow.scheduled_rounds ?? 3;
-  const maxLine = scheduledRounds === 5 ? 4 : 2;
-  const fairUnder: Record<number, number> = {};
-  for (let k = 1; k <= maxLine; k++) {
-    const u = median(ouUnderPrices[k]);
-    const o = median(ouOverPrices[k]);
-    if (u > 1 && o > 1) {
-      const invU = 1 / u, invO = 1 / o;
-      fairUnder[k] = invU / (invU + invO);
-    }
-  }
-  const availableLines = Object.keys(fairUnder).map(Number).sort((a, b) => a - b);
-  if (availableLines.length >= 1 && Object.keys(roundPrices).length === 0) {
-    const roundProbs: Record<string, number> = {};
-    let prev = 0;
-    for (const k of availableLines) {
-      const cur = fairUnder[k];
-      const p = Math.max(0.001, cur - prev);
-      roundProbs[`r${k}`] = p;
-      prev = cur;
-    }
-    const lastLine = availableLines[availableLines.length - 1];
-    // "distance" = fight goes past the last measured boundary. For 3-round =
-    // Over 2.5, for 5-round = Over 4.5.
-    const distanceProb = Math.max(0.001, 1 - fairUnder[lastLine]);
-    roundProbs["distance"] = distanceProb;
-    for (const [key, p] of Object.entries(roundProbs)) {
-      roundPrices[key] = [1 / p];
-    }
-  }
 
-  const distanceLine = scheduledRounds === 5 ? 4 : 2;
-  if (!distancePrices.yes.length && !distancePrices.no.length) {
-    const overDistance = median(ouOverPrices[distanceLine]);
-    const underDistance = median(ouUnderPrices[distanceLine]);
-    if (overDistance > 1 && underDistance > 1) {
-      distancePrices.yes.push(overDistance);
-      distancePrices.no.push(underDistance);
-    }
-  }
 
   // ---- Persist Moneyline ----
   if (mlPrices.a.length && mlPrices.b.length) {
@@ -595,12 +552,10 @@ async function syncOddsForFight(fightRow: {
   // moneyline anyway) and MMA scorecard handicaps confuse users. Aggregation
   // above still runs cheaply so we can revisit later without a schema change.
 
-  // ---- Persist Method of Victory ----
-  // Prefer real bookmaker prices when present. Otherwise synthesise from the
-  // live moneyline + distance/total-rounds market so the tile always tracks
-  // reality (recomputed every sync). To avoid quoting stale prices right at
-  // walk-outs, freeze the market 30 minutes before commence_time — we stop
-  // recomputing and deactivate any existing method rows for the fight.
+  // ---- Persist Method of Victory (bookmaker-priced only) ----
+  // No synthesis: if the books don't quote method for this bout, the market
+  // does not exist. Freeze 30 minutes before commence so we never publish a
+  // stale line at walk-outs.
   const METHOD_LOCK_MS = 30 * 60 * 1000;
   const { data: fightMeta } = await (supabaseAdmin as any)
     .from("ufc_fights")
@@ -614,73 +569,20 @@ async function syncOddsForFight(fightRow: {
   for (const [key, prices] of Object.entries(methodPrices)) {
     if (prices.length) methodEntries.push({ team: key, odds: median(prices) });
   }
-  const feedProvidedMethod = methodEntries.length >= 2;
-
-  // Synthesise when feed is silent AND market isn't locked.
-  if (!feedProvidedMethod && !methodLocked && mlPrices.a.length && mlPrices.b.length) {
-    // Fair win probs from moneyline.
-    const mA = median(mlPrices.a), mB = median(mlPrices.b);
-    const invA = 1 / mA, invB = 1 / mB;
-    const sumM = invA + invB;
-    const pA = invA / sumM, pB = invB / sumM;
-    // Fair distance prob: prefer explicit distance market, else derive from
-    // total_rounds boundary.
-    let pDistance = 0;
-    const yesD = median(distancePrices.yes), noD = median(distancePrices.no);
-    if (yesD > 1 && noD > 1) {
-      const iy = 1 / yesD, ino = 1 / noD;
-      pDistance = iy / (iy + ino);
-    } else if (fairUnder[distanceLine] !== undefined) {
-      pDistance = Math.max(0.001, 1 - fairUnder[distanceLine]);
-    }
-    if (pDistance > 0.02 && pDistance < 0.98) {
-      const pFinish = 1 - pDistance;
-      // KO/TKO vs Submission per-fighter split from career mix.
-      const { data: fA_rec } = await (supabaseAdmin as any)
-        .from("ufc_fighters").select("ko_w, sub_w").eq("apimma_id", fightRow.apimma_fighter_a_id).maybeSingle();
-      const { data: fB_rec } = await (supabaseAdmin as any)
-        .from("ufc_fighters").select("ko_w, sub_w").eq("apimma_id", fightRow.apimma_fighter_b_id).maybeSingle();
-      // KO/Sub split per fighter with Bayesian smoothing toward a UFC-wide
-      // prior (~65% KO / 35% Sub among finishes). Prevents absurd odds for
-      // fighters whose historical mix is lopsided (e.g. Conor McGregor has
-      // essentially zero submissions → raw mix gives 78x for "by Submission").
-      const PRIOR_KO = 6.5, PRIOR_SUB = 3.5; // 10 pseudo-finishes @ 65/35
-      const finishMix = (rec: any): { ko: number; sub: number } => {
-        const ko = Number(rec?.ko_w ?? 0), sub = Number(rec?.sub_w ?? 0);
-        const t = ko + sub + PRIOR_KO + PRIOR_SUB;
-        return { ko: (ko + PRIOR_KO) / t, sub: (sub + PRIOR_SUB) / t };
-      };
-      const mixA = finishMix(fA_rec);
-      const mixB = finishMix(fB_rec);
-      const pA_finish = pFinish * pA;
-      const pB_finish = pFinish * pB;
-      const probs: Record<string, number> = {
-        a_ko_tko: Math.max(0.01, pA_finish * mixA.ko),
-        a_submission: Math.max(0.01, pA_finish * mixA.sub),
-        a_decision: Math.max(0.01, pDistance * pA),
-        b_ko_tko: Math.max(0.01, pB_finish * mixB.ko),
-        b_submission: Math.max(0.01, pB_finish * mixB.sub),
-        b_decision: Math.max(0.01, pDistance * pB),
-      };
-      for (const [k, p] of Object.entries(probs)) methodEntries.push({ team: k, odds: 1 / p });
-    }
-  }
 
   if (methodEntries.length >= 2 && !methodLocked) {
     const priced = await applyOutrightMargin(methodEntries);
-    // Cap at 40x — real bookmakers rarely quote method-of-victory above this,
-    // and it protects the platform from long-tail synthesis noise.
-    const METHOD_MAX_ODDS = 40;
     for (const p of priced) {
       const [slot, ...rest] = p.team.split("_");
       const m = rest.join("_");
       const fighter = slot === "a" ? fightRow.fighter_a : fightRow.fighter_b;
       const label = `${fighter} by ${m === "ko_tko" ? "KO/TKO" : m === "submission" ? "Submission" : "Decision"}`;
-      const capped = Math.min(METHOD_MAX_ODDS, Number(p.odds));
-      upserts.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, label, odds: capped, is_active: true, updated_at: nowIso });
-      snapshots.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, odds: capped });
+      const odds = Number(p.odds);
+      upserts.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, label, odds, is_active: true, updated_at: nowIso });
+      snapshots.push({ fight_id: fightRow.id, market_type: "method", selection_key: p.team, odds });
     }
   }
+
 
 
 
@@ -702,17 +604,9 @@ async function syncOddsForFight(fightRow: {
   //      4.5 only on 5-round fights). Too many O/U lines crowd the page. ----
   const totalLines = scheduledRounds === 5 ? [2, 4] : [2];
   for (const k of totalLines) {
-    let over = median(ouOverPrices[k]);
-    let under = median(ouUnderPrices[k]);
-    // Fallback: if only one side is priced, derive the other from the fair
-    // probability we already computed so users never see a half-market.
-    // This is why "Under 4.5" used to disappear on some feeds.
-    if ((!over || over <= 1) && fairUnder[k] !== undefined && under > 1) {
-      over = 1 / Math.max(0.01, 1 - fairUnder[k]);
-    }
-    if ((!under || under <= 1) && fairUnder[k] !== undefined && over > 1) {
-      under = 1 / Math.max(0.01, fairUnder[k]);
-    }
+    // Both sides must be quoted by the books — no derived counter-price.
+    const over = median(ouOverPrices[k]);
+    const under = median(ouUnderPrices[k]);
     if (over > 1 && under > 1) {
       const priced = await apply2WayMargin(over, under);
       const line = `${k}_5`;
@@ -768,9 +662,11 @@ async function syncOddsForFight(fightRow: {
 
 
   if (!upserts.length) return 0;
+  // Provenance: every row here comes from API-Sports MMA bookmaker prices.
+  const rows = upserts.map((u) => ({ ...u, odds_source: "api-sports-mma" }));
   const { error: mErr } = await (supabaseAdmin as any)
     .from("ufc_fight_markets")
-    .upsert(upserts, { onConflict: "fight_id,market_type,selection_key" });
+    .upsert(rows, { onConflict: "fight_id,market_type,selection_key" });
   if (mErr) throw new Error(`market save failed: ${mErr.message}`);
 
 

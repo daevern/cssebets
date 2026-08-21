@@ -11,7 +11,6 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { applyOutrightMargin } from "@/lib/odds-margin.server";
-import { deriveUfcSecondaryMarkets } from "@/lib/ufc-derived-markets.server";
 
 const SPORT = "mma_mixed_martial_arts";
 const BASE = "https://api.the-odds-api.com/v4";
@@ -241,6 +240,7 @@ export async function runUfcOddsApiSync(
               odds,
               is_active: true,
               updated_at: nowIso,
+              odds_source: "the-odds-api",
             },
             { onConflict: "fight_id,market_type,selection_key" },
           );
@@ -250,15 +250,9 @@ export async function runUfcOddsApiSync(
         marketsWritten++;
       }
 
-      // The Odds API plan only serves h2h for MMA, so derive Method / Round /
-      // Total Rounds from the fresh moneyline. If API-Sports later prices the
-      // same bout, its real numbers overwrite these rows.
-      try {
-        const derived = await deriveUfcSecondaryMarkets(fightRow.id);
-        if (derived.ok) marketsWritten += derived.rows;
-      } catch (e) {
-        console.warn("[ufc-oddsapi] derive secondary markets failed", fightRow.id, (e as Error).message);
-      }
+      // The Odds API MMA feed only carries h2h. Secondary markets (method,
+      // round, totals) come from API-Sports MMA once it prices the bout — we
+      // never invent them here.
     }
   }
 
