@@ -204,10 +204,9 @@ export const F1_ODDS_SUSPENDED = true;
 export async function syncF1Odds(seasonPref = currentSeason()) {
   const start = Date.now();
   if (F1_ODDS_SUSPENDED) {
-    await (supabaseAdmin as any)
-      .from("f1_race_markets")
-      .update({ status: "suspended" })
-      .eq("status", "open");
+    for (const table of ["f1_race_markets", "f1_championship_markets"]) {
+      await (supabaseAdmin as any).from(table).update({ status: "suspended" }).eq("status", "open");
+    }
     return { ok: true, skipped: "f1 odds suspended (no bookmaker feed)" };
   }
   const run = await startRun("odds");
