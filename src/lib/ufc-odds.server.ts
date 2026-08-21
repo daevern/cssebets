@@ -662,9 +662,11 @@ async function syncOddsForFight(fightRow: {
 
 
   if (!upserts.length) return 0;
+  // Provenance: every row here comes from API-Sports MMA bookmaker prices.
+  const rows = upserts.map((u) => ({ ...u, odds_source: "api-sports-mma" }));
   const { error: mErr } = await (supabaseAdmin as any)
     .from("ufc_fight_markets")
-    .upsert(upserts, { onConflict: "fight_id,market_type,selection_key" });
+    .upsert(rows, { onConflict: "fight_id,market_type,selection_key" });
   if (mErr) throw new Error(`market save failed: ${mErr.message}`);
 
 
