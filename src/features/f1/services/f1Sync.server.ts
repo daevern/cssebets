@@ -195,9 +195,21 @@ export async function syncF1DriversAndTeams(seasonPref = currentSeason()) {
   }
 }
 
+// F1 betting is suspended: API-Sports Formula-1 has no odds endpoint (even on
+// Pro), and we only publish prices sourced from real bookmakers. Race, driver
+// and constructor data keeps syncing; only market building is off.
+export const F1_ODDS_SUSPENDED = true;
+
 // ---- Build markets for upcoming races ----
 export async function syncF1Odds(seasonPref = currentSeason()) {
   const start = Date.now();
+  if (F1_ODDS_SUSPENDED) {
+    await (supabaseAdmin as any)
+      .from("f1_race_markets")
+      .update({ status: "suspended" })
+      .eq("status", "open");
+    return { ok: true, skipped: "f1 odds suspended (no bookmaker feed)" };
+  }
   const run = await startRun("odds");
   if (run.skipped) return { ok: true, skipped: "already running" };
   try {
