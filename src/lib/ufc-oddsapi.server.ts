@@ -11,6 +11,7 @@
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { applyOutrightMargin } from "@/lib/odds-margin.server";
+import { deriveUfcSecondaryMarkets } from "@/lib/ufc-derived-markets.server";
 
 const SPORT = "mma_mixed_martial_arts";
 const BASE = "https://api.the-odds-api.com/v4";
