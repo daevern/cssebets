@@ -661,7 +661,7 @@ function F1YourPicksSummary({ raceId, raceName, finished }: { raceId: string; ra
                       {p.selection_label ?? p.selection_key}
                     </div>
                     <div className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
-                      {p.market_type?.replace(/_/g, " ")} · @{Number(p.odds).toFixed(2)}
+                      {p.market_type?.replace(/_/g, " ")} · @{Number(p.odds_locked || 0).toFixed(2)}
                     </div>
                   </div>
                   <div className="text-right">
