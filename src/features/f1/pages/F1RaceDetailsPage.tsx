@@ -651,8 +651,8 @@ function F1YourPicksSummary({ raceId, raceName, finished }: { raceId: string; ra
           )}
           <div className="divide-y divide-[var(--color-surface-border)]/60">
             {picks.map((p) => {
-              const stake = Number(p.virtual_stake || 0);
-              const payout = Number(p.actual_payout || 0);
+              const stake = Number(p.stake || 0);
+              const payout = returnedFor(p);
               const tone = p.status === "won" ? "text-[var(--color-neon)]" : p.status === "lost" ? "text-destructive" : "text-[var(--color-ink-muted)]";
               return (
                 <div key={p.id} className="flex items-center justify-between gap-3 py-2.5">
