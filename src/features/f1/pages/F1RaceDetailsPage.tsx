@@ -205,7 +205,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
 
       {bettingClosed ? (
         <F1YourPicksSummary raceId={raceId} raceName={race.name} finished={race.status === "finished"} />
-      ) : (<>�PLACEHOLDER
+      ) : (<>
       {/* Top tabs */}
       <div className="mb-4 flex items-baseline gap-6">
         {(
