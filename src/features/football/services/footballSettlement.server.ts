@@ -196,12 +196,21 @@ export async function settleFootballEvent(
 
     // Unresolvable → void with reason
     if (decision.status === "void") {
-      const { data: res } = await (supabaseAdmin as any).rpc("settle_sports_market_atomic", {
-        p_market_id: m.id,
-        p_winning_selection_ids: [],
-        p_void: true,
-        p_run_id: runId,
-      });
+      const { data: res, error: voidErr } = await (supabaseAdmin as any).rpc(
+        "settle_sports_market_atomic",
+        {
+          p_market_id: m.id,
+          p_winning_selection_ids: [],
+          p_void: true,
+          p_run_id: runId,
+        },
+      );
+      if (voidErr) {
+        const msg = `${m.market_key}: ${voidErr.message ?? String(voidErr)}`;
+        console.warn("[football-settle] void failed", msg);
+        failures.push(msg);
+        continue;
+      }
       const row = Array.isArray(res) ? res[0] : res;
       marketsSettled++;
       betsSettled += Number(row?.bets_updated ?? 0);
