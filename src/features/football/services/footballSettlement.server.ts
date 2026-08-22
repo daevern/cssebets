@@ -276,7 +276,12 @@ export async function settleFootballEvent(
         p_run_id: runId,
       },
     );
-    if (error) continue;
+    if (error) {
+      const msg = `${m.market_key}: ${error.message ?? String(error)}`;
+      console.warn("[football-settle] settle failed", msg);
+      failures.push(msg);
+      continue;
+    }
     const row = Array.isArray(res) ? res[0] : res;
     marketsSettled++;
     betsSettled += Number(row?.bets_updated ?? 0);
