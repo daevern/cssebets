@@ -164,6 +164,7 @@ export async function settleFootballEvent(
   let marketsSettled = 0;
   let totalPayout = 0;
   let betsSettled = 0;
+  const failures: string[] = [];
   const nowIso = new Date().toISOString();
 
   // Only spend an API call when a corner/card market is actually pending.
@@ -195,12 +196,21 @@ export async function settleFootballEvent(
 
     // Unresolvable → void with reason
     if (decision.status === "void") {
-      const { data: res } = await (supabaseAdmin as any).rpc("settle_sports_market_atomic", {
-        p_market_id: m.id,
-        p_winning_selection_ids: [],
-        p_void: true,
-        p_run_id: runId,
-      });
+      const { data: res, error: voidErr } = await (supabaseAdmin as any).rpc(
+        "settle_sports_market_atomic",
+        {
+          p_market_id: m.id,
+          p_winning_selection_ids: [],
+          p_void: true,
+          p_run_id: runId,
+        },
+      );
+      if (voidErr) {
+        const msg = `${m.market_key}: ${voidErr.message ?? String(voidErr)}`;
+        console.warn("[football-settle] void failed", msg);
+        failures.push(msg);
+        continue;
+      }
       const row = Array.isArray(res) ? res[0] : res;
       marketsSettled++;
       betsSettled += Number(row?.bets_updated ?? 0);
@@ -229,12 +239,21 @@ export async function settleFootballEvent(
     // (mapper drift, provider variance), void rather than pay nothing.
     if (winningIds.length === 0) {
 
-      const { data: res } = await (supabaseAdmin as any).rpc("settle_sports_market_atomic", {
-        p_market_id: m.id,
-        p_winning_selection_ids: [],
-        p_void: true,
-        p_run_id: runId,
-      });
+      const { data: res, error: missErr } = await (supabaseAdmin as any).rpc(
+        "settle_sports_market_atomic",
+        {
+          p_market_id: m.id,
+          p_winning_selection_ids: [],
+          p_void: true,
+          p_run_id: runId,
+        },
+      );
+      if (missErr) {
+        const msg = `${m.market_key}: ${missErr.message ?? String(missErr)}`;
+        console.warn("[football-settle] void (no selection) failed", msg);
+        failures.push(msg);
+        continue;
+      }
       const row = Array.isArray(res) ? res[0] : res;
       marketsSettled++;
       betsSettled += Number(row?.bets_updated ?? 0);
@@ -257,7 +276,12 @@ export async function settleFootballEvent(
         p_run_id: runId,
       },
     );
-    if (error) continue;
+    if (error) {
+      const msg = `${m.market_key}: ${error.message ?? String(error)}`;
+      console.warn("[football-settle] settle failed", msg);
+      failures.push(msg);
+      continue;
+    }
     const row = Array.isArray(res) ? res[0] : res;
     marketsSettled++;
     betsSettled += Number(row?.bets_updated ?? 0);
@@ -274,7 +298,8 @@ export async function settleFootballEvent(
   await supabaseAdmin
     .from("sports_settlement_runs" as any)
     .update({
-      status: "success",
+      status: failures.length > 0 ? "failed" : "success",
+      notes: failures.length > 0 ? failures.slice(0, 20).join(" | ") : null,
       finished_at: new Date().toISOString(),
       markets_settled: marketsSettled,
       bets_settled: betsSettled,
@@ -303,7 +328,7 @@ export async function settleFootballEvent(
     );
 
 
-  return { runId, marketsSettled, betsSettled, totalPayout };
+  return { runId, marketsSettled, betsSettled, totalPayout, failures };
 }
 
 export async function settleFinishedFootballEvents(opts: { max?: number } = {}) {
