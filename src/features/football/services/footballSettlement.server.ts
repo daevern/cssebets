@@ -239,12 +239,21 @@ export async function settleFootballEvent(
     // (mapper drift, provider variance), void rather than pay nothing.
     if (winningIds.length === 0) {
 
-      const { data: res } = await (supabaseAdmin as any).rpc("settle_sports_market_atomic", {
-        p_market_id: m.id,
-        p_winning_selection_ids: [],
-        p_void: true,
-        p_run_id: runId,
-      });
+      const { data: res, error: missErr } = await (supabaseAdmin as any).rpc(
+        "settle_sports_market_atomic",
+        {
+          p_market_id: m.id,
+          p_winning_selection_ids: [],
+          p_void: true,
+          p_run_id: runId,
+        },
+      );
+      if (missErr) {
+        const msg = `${m.market_key}: ${missErr.message ?? String(missErr)}`;
+        console.warn("[football-settle] void (no selection) failed", msg);
+        failures.push(msg);
+        continue;
+      }
       const row = Array.isArray(res) ? res[0] : res;
       marketsSettled++;
       betsSettled += Number(row?.bets_updated ?? 0);
