@@ -191,9 +191,21 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
       <div className="mb-4 mt-3 h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
 
 
+      {marketsSuspended && (
+        <div className="mb-4 border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-4">
+          <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+            Markets suspended
+          </div>
+          <p className="mt-2 text-[12px] text-[var(--color-ink-muted)]">
+            F1 betting is paused while we connect a verified odds provider. Race data, standings and
+            results stay live, and any bets you already placed settle as normal.
+          </p>
+        </div>
+      )}
+
       {bettingClosed ? (
         <F1YourPicksSummary raceId={raceId} raceName={race.name} finished={race.status === "finished"} />
-      ) : (<>
+      ) : (<>�PLACEHOLDER
       {/* Top tabs */}
       <div className="mb-4 flex items-baseline gap-6">
         {(
