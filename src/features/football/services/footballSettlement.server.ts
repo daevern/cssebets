@@ -298,7 +298,8 @@ export async function settleFootballEvent(
   await supabaseAdmin
     .from("sports_settlement_runs" as any)
     .update({
-      status: "success",
+      status: failures.length > 0 ? "failed" : "success",
+      notes: failures.length > 0 ? failures.slice(0, 20).join(" | ") : null,
       finished_at: new Date().toISOString(),
       markets_settled: marketsSettled,
       bets_settled: betsSettled,
