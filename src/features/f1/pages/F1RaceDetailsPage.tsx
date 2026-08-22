@@ -576,7 +576,7 @@ function F1YourPicksSummary({ raceId, raceName, finished }: { raceId: string; ra
       const { supabase } = await import("@/integrations/supabase/client");
       const { data, error } = await supabase
         .from("f1_bets")
-        .select("id, market_type, selection_label, selection_key, virtual_stake, potential_payout, actual_payout, status, odds")
+        .select("id, market_type, selection_label, selection_key, stake, potential_payout, odds_locked, status, created_at")
         .eq("user_id", uid!)
         .eq("race_id", raceId)
         .order("created_at", { ascending: false });
@@ -586,8 +586,14 @@ function F1YourPicksSummary({ raceId, raceName, finished }: { raceId: string; ra
   });
 
   const picks = data ?? [];
-  const totalStake = picks.reduce((s, p) => s + Number(p.virtual_stake || 0), 0);
-  const totalPayout = picks.reduce((s, p) => s + Number(p.actual_payout || 0), 0);
+  const returnedFor = (p: any) =>
+    p.status === "won"
+      ? Number(p.potential_payout || 0)
+      : p.status === "void" || p.status === "cancelled" || p.status === "refunded"
+        ? Number(p.stake || 0)
+        : 0;
+  const totalStake = picks.reduce((s, p) => s + Number(p.stake || 0), 0);
+  const totalPayout = picks.reduce((s, p) => s + returnedFor(p), 0);
   const wins = picks.filter((p) => p.status === "won").length;
   const losses = picks.filter((p) => p.status === "lost").length;
   const voids = picks.filter((p) => p.status === "void" || p.status === "cancelled" || p.status === "refunded").length;
