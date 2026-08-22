@@ -143,6 +143,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   if (!race) return <div className="p-6 text-center text-sm">Race not found.</div>;
 
   const bettingClosed: boolean = !!q.data?.bettingClosed;
+  const marketsSuspended: boolean = !!(q.data as any)?.marketsSuspended;
   const isLive: boolean = !!q.data?.isLive;
   const effectiveSelectedId = bettingClosed ? null : selectedId;
   const selectedMarket = currentMarkets.find((x) => x.id === effectiveSelectedId) ?? null;
