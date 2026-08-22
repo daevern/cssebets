@@ -45,11 +45,14 @@ export const getF1Race = createServerFn({ method: "GET" })
       sb.from("f1_drivers").select("driver_key, name, abbr, team_key, photo_url").eq("active", true),
       sb.from("f1_constructors").select("team_key, name, logo_url"),
     ]);
-    if (!race) return { race: null, markets: [] as any[], drivers: [] as any[], teams: [] as any[], bettingClosed: false, isLive: false };
+    if (!race) return { race: null, markets: [] as any[], drivers: [] as any[], teams: [] as any[], bettingClosed: false, isLive: false, marketsSuspended: false };
     const started = new Date(race.starts_at).getTime() <= Date.now();
     const isLive = race.status === "in_progress" || (started && race.status !== "finished" && race.status !== "cancelled");
-    const bettingClosed = started || race.status === "in_progress" || race.status === "finished" || race.status === "cancelled";
-    return { race, markets: markets ?? [], drivers: drivers ?? [], teams: teams ?? [], bettingClosed, isLive };
+    const rows = markets ?? [];
+    // No priced (open) market means betting is not offered — e.g. while F1 odds are suspended.
+    const marketsSuspended = rows.length > 0 && !rows.some((m: any) => m.status === "open");
+    const bettingClosed = started || marketsSuspended || race.status === "in_progress" || race.status === "finished" || race.status === "cancelled";
+    return { race, markets: rows, drivers: drivers ?? [], teams: teams ?? [], bettingClosed, isLive, marketsSuspended };
   });
 
 export const getF1LiveRaceState = createServerFn({ method: "GET" })

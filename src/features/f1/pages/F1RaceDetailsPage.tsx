@@ -143,6 +143,7 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
   if (!race) return <div className="p-6 text-center text-sm">Race not found.</div>;
 
   const bettingClosed: boolean = !!q.data?.bettingClosed;
+  const marketsSuspended: boolean = !!(q.data as any)?.marketsSuspended;
   const isLive: boolean = !!q.data?.isLive;
   const effectiveSelectedId = bettingClosed ? null : selectedId;
   const selectedMarket = currentMarkets.find((x) => x.id === effectiveSelectedId) ?? null;
@@ -190,6 +191,18 @@ export function F1RaceDetailsPage({ raceId }: { raceId: string }) {
 
       <div className="mb-4 mt-3 h-px w-full bg-gradient-to-r from-transparent via-[var(--color-surface-border)] to-transparent" />
 
+
+      {marketsSuspended && (
+        <div className="mb-4 border border-[var(--color-surface-border)] bg-[var(--color-surface-2)] p-4">
+          <div className="text-[10px] font-black uppercase tracking-[0.28em] text-[var(--color-ink-muted)]">
+            Markets suspended
+          </div>
+          <p className="mt-2 text-[12px] text-[var(--color-ink-muted)]">
+            F1 betting is paused while we connect a verified odds provider. Race data, standings and
+            results stay live, and any bets you already placed settle as normal.
+          </p>
+        </div>
+      )}
 
       {bettingClosed ? (
         <F1YourPicksSummary raceId={raceId} raceName={race.name} finished={race.status === "finished"} />
@@ -576,7 +589,7 @@ function F1YourPicksSummary({ raceId, raceName, finished }: { raceId: string; ra
       const { supabase } = await import("@/integrations/supabase/client");
       const { data, error } = await supabase
         .from("f1_bets")
-        .select("id, market_type, selection_label, selection_key, virtual_stake, potential_payout, actual_payout, status, odds")
+        .select("id, market_type, selection_label, selection_key, stake, potential_payout, odds_locked, status, created_at")
         .eq("user_id", uid!)
         .eq("race_id", raceId)
         .order("created_at", { ascending: false });
@@ -586,8 +599,14 @@ function F1YourPicksSummary({ raceId, raceName, finished }: { raceId: string; ra
   });
 
   const picks = data ?? [];
-  const totalStake = picks.reduce((s, p) => s + Number(p.virtual_stake || 0), 0);
-  const totalPayout = picks.reduce((s, p) => s + Number(p.actual_payout || 0), 0);
+  const returnedFor = (p: any) =>
+    p.status === "won"
+      ? Number(p.potential_payout || 0)
+      : p.status === "void" || p.status === "cancelled" || p.status === "refunded"
+        ? Number(p.stake || 0)
+        : 0;
+  const totalStake = picks.reduce((s, p) => s + Number(p.stake || 0), 0);
+  const totalPayout = picks.reduce((s, p) => s + returnedFor(p), 0);
   const wins = picks.filter((p) => p.status === "won").length;
   const losses = picks.filter((p) => p.status === "lost").length;
   const voids = picks.filter((p) => p.status === "void" || p.status === "cancelled" || p.status === "refunded").length;
@@ -645,8 +664,8 @@ function F1YourPicksSummary({ raceId, raceName, finished }: { raceId: string; ra
           )}
           <div className="divide-y divide-[var(--color-surface-border)]/60">
             {picks.map((p) => {
-              const stake = Number(p.virtual_stake || 0);
-              const payout = Number(p.actual_payout || 0);
+              const stake = Number(p.stake || 0);
+              const payout = returnedFor(p);
               const tone = p.status === "won" ? "text-[var(--color-neon)]" : p.status === "lost" ? "text-destructive" : "text-[var(--color-ink-muted)]";
               return (
                 <div key={p.id} className="flex items-center justify-between gap-3 py-2.5">
@@ -655,7 +674,7 @@ function F1YourPicksSummary({ raceId, raceName, finished }: { raceId: string; ra
                       {p.selection_label ?? p.selection_key}
                     </div>
                     <div className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-[var(--color-ink-muted)]">
-                      {p.market_type?.replace(/_/g, " ")} · @{Number(p.odds).toFixed(2)}
+                      {p.market_type?.replace(/_/g, " ")} · @{Number(p.odds_locked || 0).toFixed(2)}
                     </div>
                   </div>
                   <div className="text-right">
