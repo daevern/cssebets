@@ -164,6 +164,7 @@ export async function settleFootballEvent(
   let marketsSettled = 0;
   let totalPayout = 0;
   let betsSettled = 0;
+  const failures: string[] = [];
   const nowIso = new Date().toISOString();
 
   // Only spend an API call when a corner/card market is actually pending.
