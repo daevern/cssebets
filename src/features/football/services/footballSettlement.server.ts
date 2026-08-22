@@ -328,7 +328,7 @@ export async function settleFootballEvent(
     );
 
 
-  return { runId, marketsSettled, betsSettled, totalPayout };
+  return { runId, marketsSettled, betsSettled, totalPayout, failures };
 }
 
 export async function settleFinishedFootballEvents(opts: { max?: number } = {}) {
