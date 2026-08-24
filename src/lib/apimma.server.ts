@@ -160,9 +160,44 @@ export async function fetchMmaStatus(): Promise<ApiMmaAccountStatus | null> {
   }
 }
 
+export function isMmaQuotaError(e: unknown): boolean {
+  return e instanceof ApiMmaPlanError && (e.kind === "quota" || e.kind === "plan");
+}
+
+// Provider quota is per-minute; once we trip it, further calls in the same
+// window only burn budget and fail. Park all api-mma reads until the cooldown
+// expires instead of hammering the feed on every cron tick.
+let quotaCooldownUntil = 0;
+const QUOTA_COOLDOWN_MS = 60_000;
+
+export function mmaQuotaCoolingDown(): boolean {
+  return Date.now() < quotaCooldownUntil;
+}
+
+// Short-lived cache of the daily /fights response. Settlement, discovery and
+// odds passes all ask for the same handful of dates every couple of minutes.
+const FIGHTS_TTL_MS = 5 * 60_000;
+const fightsCache = new Map<string, { at: number; rows: ApiMmaFight[] }>();
+
 export async function fetchFightsByDate(date: string) {
-  const r = await apiMmaGet<ApiMmaFight[]>("/fights", { date });
-  return r.response ?? [];
+  const cached = fightsCache.get(date);
+  if (cached && Date.now() - cached.at < FIGHTS_TTL_MS) return cached.rows;
+  if (mmaQuotaCoolingDown()) {
+    if (cached) return cached.rows;
+    throw new ApiMmaPlanError("api-mma /fights: rateLimit cooldown active", "quota");
+  }
+  try {
+    const r = await apiMmaGet<ApiMmaFight[]>("/fights", { date });
+    const rows = r.response ?? [];
+    fightsCache.set(date, { at: Date.now(), rows });
+    return rows;
+  } catch (e) {
+    if (isMmaQuotaError(e)) {
+      quotaCooldownUntil = Date.now() + QUOTA_COOLDOWN_MS;
+      if (cached) return cached.rows;
+    }
+    throw e;
+  }
 }
 
 
