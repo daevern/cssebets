@@ -24,6 +24,7 @@ import {
   parseCm,
   parseLbs,
   ApiMmaPlanError,
+  isMmaQuotaError,
   type ApiMmaFight,
 } from "@/lib/apimma.server";
 
@@ -1040,20 +1041,31 @@ export async function runUfcAutoSettle(): Promise<UfcAutoSettleResult> {
     }
   }
   const byId = new Map<number, ApiMmaFight>();
+  let quotaBlocked = false;
   const fetchDate = async (day: string) => {
+    if (quotaBlocked) return;
     try {
       const list = await fetchFightsByDate(day);
       for (const f of list) byId.set(f.id, f);
     } catch (e) {
+      // Rate limit / plan denial: stop the whole pass so we don't spend the
+      // rest of the per-minute budget on calls that will also fail. The next
+      // cron tick retries after the provider window resets.
+      if (isMmaQuotaError(e)) {
+        quotaBlocked = true;
+        console.warn("[ufc-auto-settle] provider quota hit, deferring to next run", day);
+        return;
+      }
       console.warn("[ufc-auto-settle] fetch failed", day, (e as Error).message);
     }
   };
   for (const day of primaryDates) await fetchDate(day);
   const missingAfterPrimary = rows.some((r) => !byId.has(r.apimma_fight_id as number));
-  if (missingAfterPrimary) {
+  if (missingAfterPrimary && !quotaBlocked) {
     for (const day of fallbackDates) {
       if (primaryDates.has(day)) continue;
       await fetchDate(day);
+      if (quotaBlocked) break;
       if (rows.every((r) => byId.has(r.apimma_fight_id as number))) break;
     }
   }
