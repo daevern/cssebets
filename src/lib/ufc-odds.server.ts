@@ -1027,19 +1027,20 @@ export async function runUfcAutoSettle(): Promise<UfcAutoSettleResult> {
   const rows = (fights ?? []) as Array<any>;
   if (rows.length === 0) return { ok: true, checked: 0, settledFights: 0, settledBets: 0 };
 
-  // Batch feed lookups by UTC date. Try the actual commence date first, then
-  // adjacent dates only if needed for timezone drift. This keeps settlement
-  // from burning quota with three calls every cron tick.
+  // The provider's per-minute allowance is shared with discovery and odds.
+  // Fetch exactly one result date per cron run and rotate through outstanding
+  // dates on the same two-minute cadence as the scheduler. This bounds every
+  // settlement invocation to one API request, while stale fights cannot starve
+  // newer cards. API fight timestamps are ISO values, so their UTC date is the
+  // canonical lookup date and the old +/- one-day fan-out is unnecessary.
   const primaryDates = new Set<string>();
-  const fallbackDates = new Set<string>();
   for (const r of rows) {
     const t = new Date(r.commence_time as string);
     primaryDates.add(t.toISOString().slice(0, 10));
-    for (let d = -1; d <= 1; d++) {
-      const dt = new Date(t.getTime() + d * 24 * 60 * 60 * 1000);
-      fallbackDates.add(dt.toISOString().slice(0, 10));
-    }
   }
+  const dates = [...primaryDates].sort();
+  const rotationIndex = Math.floor(Date.now() / (2 * 60_000)) % dates.length;
+  const dateForThisRun = dates[rotationIndex];
   const byId = new Map<number, ApiMmaFight>();
   let quotaBlocked = false;
   const fetchDate = async (day: string) => {
@@ -1059,16 +1060,7 @@ export async function runUfcAutoSettle(): Promise<UfcAutoSettleResult> {
       console.warn("[ufc-auto-settle] fetch failed", day, (e as Error).message);
     }
   };
-  for (const day of primaryDates) await fetchDate(day);
-  const missingAfterPrimary = rows.some((r) => !byId.has(r.apimma_fight_id as number));
-  if (missingAfterPrimary && !quotaBlocked) {
-    for (const day of fallbackDates) {
-      if (primaryDates.has(day)) continue;
-      await fetchDate(day);
-      if (quotaBlocked) break;
-      if (rows.every((r) => byId.has(r.apimma_fight_id as number))) break;
-    }
-  }
+  if (dateForThisRun) await fetchDate(dateForThisRun);
 
   let settledFights = 0;
   let settledBets = 0;
