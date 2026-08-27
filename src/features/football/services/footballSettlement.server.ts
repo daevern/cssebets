@@ -335,9 +335,10 @@ export async function settleFinishedFootballEvents(opts: { max?: number } = {}) 
   const max = opts.max ?? 20;
   const { data: events } = await supabaseAdmin
     .from("sports_events" as any)
-    .select("id")
+    .select("id, sports_markets!inner(id)")
     .eq("sport_code", "football")
     .eq("status", "finished")
+    .not("sports_markets.status", "in", "(settled,void)")
     .order("scheduled_at", { ascending: true })
     .limit(max);
 
