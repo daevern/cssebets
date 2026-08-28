@@ -1027,19 +1027,22 @@ export async function runUfcAutoSettle(): Promise<UfcAutoSettleResult> {
   const rows = (fights ?? []) as Array<any>;
   if (rows.length === 0) return { ok: true, checked: 0, settledFights: 0, settledBets: 0 };
 
-  // The provider's per-minute allowance is shared with discovery and odds.
-  // Fetch exactly one result date per cron run and rotate through outstanding
-  // dates on the same two-minute cadence as the scheduler. This bounds every
-  // settlement invocation to one API request, while stale fights cannot starve
-  // newer cards. API fight timestamps are ISO values, so their UTC date is the
-  // canonical lookup date and the old +/- one-day fan-out is unnecessary.
-  const primaryDates = new Set<string>();
+  // The provider's per-minute allowance is shared with discovery and odds, so
+  // each cron run fetches exactly one result date and rotates through the
+  // outstanding dates on the same two-minute cadence as the scheduler.
+  // Candidates include each fight's commence date plus the neighbouring days:
+  // the provider can file a late US card under the previous/next calendar day,
+  // and without those neighbours such a fight would never be matched.
+  const candidateDates = new Set<string>();
   for (const r of rows) {
-    const t = new Date(r.commence_time as string);
-    primaryDates.add(t.toISOString().slice(0, 10));
+    const t = new Date(r.commence_time as string).getTime();
+    if (!Number.isFinite(t)) continue;
+    for (const offset of [-1, 0, 1]) {
+      candidateDates.add(new Date(t + offset * 86_400_000).toISOString().slice(0, 10));
+    }
   }
-  const dates = [...primaryDates].sort();
-  const rotationIndex = Math.floor(Date.now() / (2 * 60_000)) % dates.length;
+  const dates = [...candidateDates].sort();
+  const rotationIndex = dates.length ? Math.floor(Date.now() / (2 * 60_000)) % dates.length : 0;
   const dateForThisRun = dates[rotationIndex];
   const byId = new Map<number, ApiMmaFight>();
   let quotaBlocked = false;
