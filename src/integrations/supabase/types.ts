@@ -4518,23 +4518,58 @@ export type Database = {
           },
         ]
       }
+      league_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          league_id: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          league_id: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          league_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_messages_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leagues: {
         Row: {
           created_at: string
           created_by: string | null
           id: string
+          invite_code: string
           name: string
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           id?: string
+          invite_code: string
           name: string
         }
         Update: {
           created_at?: string
           created_by?: string | null
           id?: string
+          invite_code?: string
           name?: string
         }
         Relationships: []
@@ -10336,6 +10371,10 @@ export type Database = {
         Returns: string[]
       }
       close_started_f1_race_markets: { Args: never; Returns: number }
+      convert_guest_account: {
+        Args: { p_display_name?: string }
+        Returns: Json
+      }
       create_audit_log: {
         Args: {
           p_action: string
