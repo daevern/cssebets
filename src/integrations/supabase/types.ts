@@ -7536,6 +7536,8 @@ export type Database = {
       }
       ufc_feed_state: {
         Row: {
+          api_request_count: number
+          api_request_window_started_at: string | null
           created_at: string
           id: boolean
           last_discovery_at: string | null
@@ -7546,6 +7548,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          api_request_count?: number
+          api_request_window_started_at?: string | null
           created_at?: string
           id?: boolean
           last_discovery_at?: string | null
@@ -7556,6 +7560,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          api_request_count?: number
+          api_request_window_started_at?: string | null
           created_at?: string
           id?: boolean
           last_discovery_at?: string | null
@@ -10365,6 +10371,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      claim_api_mma_request: { Args: { p_limit?: number }; Returns: boolean }
       claim_daily_csse_tokens: { Args: never; Returns: Json }
       classify_correlation_groups: {
         Args: { p_market: string; p_selection: string }
