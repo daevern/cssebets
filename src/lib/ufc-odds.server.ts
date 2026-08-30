@@ -65,32 +65,24 @@ async function apply2WayMargin(a: number, b: number) {
   };
 }
 
-// Try to find UFC fights near a target timestamp. Returns fights sorted by
-// commence time; caller filters main + co-main.
+// Event start times originate from API-MMA, so their UTC date is the provider's
+// canonical lookup date. Keep this to one request: this path runs as often as
+// every minute on fight night and a ±1 day fan-out quickly exhausts the shared
+// per-minute allowance before settlement gets a chance to run.
 async function findEventFights(targetIso: string): Promise<ApiMmaFight[]> {
   const target = new Date(targetIso);
-  const days: string[] = [];
-  // Search ±1 day window to handle timezone crossing (Malaysia = UTC+8).
-  for (let d = -1; d <= 1; d++) {
-    const dt = new Date(target.getTime() + d * 24 * 60 * 60 * 1000);
-    days.push(dt.toISOString().slice(0, 10));
-  }
+  if (!Number.isFinite(target.getTime())) return [];
+  const day = target.toISOString().slice(0, 10);
   const seen = new Map<number, ApiMmaFight>();
-  for (const day of days) {
-    try {
-      const fights = await fetchFightsByDate(day);
-      for (const f of fights) {
-        // Only UFC events (slug starts with "UFC")
-        if (!f.slug?.toUpperCase().startsWith("UFC")) continue;
-        if (f.status.short === "CANC") continue;
-        // Skip TBA placeholder cards
-        const nm = `${f.fighters.first.name} ${f.fighters.second.name}`.toLowerCase();
-        if (nm.includes("tba") || nm.includes("opponent")) continue;
-        seen.set(f.id, f);
-      }
-    } catch (e) {
-      console.error("api-mma date fetch failed", day, e);
-    }
+  const fights = await fetchFightsByDate(day);
+  for (const f of fights) {
+    // Only UFC events (slug starts with "UFC")
+    if (!f.slug?.toUpperCase().startsWith("UFC")) continue;
+    if (f.status.short === "CANC") continue;
+    // Skip TBA placeholder cards
+    const nm = `${f.fighters.first.name} ${f.fighters.second.name}`.toLowerCase();
+    if (nm.includes("tba") || nm.includes("opponent")) continue;
+    seen.set(f.id, f);
   }
   return Array.from(seen.values()).sort((a, b) => a.timestamp - b.timestamp);
 }
@@ -1170,7 +1162,6 @@ function slugifyEventKey(slug: string) {
 }
 
 const DISCOVERY_WINDOW_DAYS = 45;
-const DISCOVERY_MAX_CALLS = 46;
 const DISCOVERY_BACKFILL_DAYS = 2;
 const DISCOVERY_THROTTLE_MS = 25 * 60 * 1000;
 
@@ -1208,7 +1199,13 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
     else if (dow === 6 || dow === 0) weekends.push(iso);
     else weekdays.push(iso);
   }
-  const schedule = [...near, ...weekends, ...weekdays].slice(0, DISCOVERY_MAX_CALLS);
+  const schedule = [...near, ...weekends, ...weekdays];
+
+  // Discovery shares the provider's minute budget with odds and settlement.
+  // Probe one date per invocation and rotate deterministically through the
+  // complete window. This keeps coverage without a 46-request burst.
+  const discoverySlot = Math.floor(now / DISCOVERY_THROTTLE_MS) % schedule.length;
+  const discoveryDate = schedule[discoverySlot];
 
 
 
@@ -1223,7 +1220,7 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
   let allowedFrom: string | null = null;
   let allowedTo: string | null = null;
 
-  const queue = [...schedule];
+  const queue = discoveryDate ? [discoveryDate] : [];
   for (let i = 0; i < queue.length; i++) {
     const day = queue[i]!;
     if (allowedFrom && allowedTo && (day < allowedFrom || day > allowedTo)) continue;

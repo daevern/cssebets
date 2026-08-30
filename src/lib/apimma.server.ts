@@ -87,6 +87,7 @@ export type ApiMmaFighterRecordSummary = {
 };
 
 import { withRetry } from "@/features/football/services/retry";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 /**
  * API-Sports answers plan/quota problems with HTTP 200 + a populated `errors`
@@ -127,6 +128,16 @@ export async function apiMmaGet<T>(
     if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v));
   }
   return withRetry(async () => {
+    // All UFC cron routes share this database-backed minute budget. A local
+    // counter is insufficient because production requests run in independent
+    // workers and discovery, odds, and settlement can overlap.
+    const { data: allowed, error: budgetError } = await (supabaseAdmin as any)
+      .rpc("claim_api_mma_request", { p_limit: 20 });
+    if (budgetError) throw new Error(`api-mma request budget failed: ${budgetError.message}`);
+    if (!allowed) {
+      throw new ApiMmaPlanError(`api-mma ${path}: shared rate-limit cooldown active`, "quota");
+    }
+
     const res = await fetch(url.toString(), {
       headers: { "x-apisports-key": key, Accept: "application/json" },
     });
