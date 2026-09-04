@@ -1060,9 +1060,9 @@ export async function runUfcAutoSettle(): Promise<UfcAutoSettleResult> {
       // Rate limit / plan denial: stop the whole pass so we don't spend the
       // rest of the per-minute budget on calls that will also fail. The next
       // cron tick retries after the provider window resets.
-      if (isMmaQuotaError(e)) {
+      if (isMmaQuotaError(e) || isMmaBudgetError(e)) {
         quotaBlocked = true;
-        console.warn("[ufc-auto-settle] provider quota hit, deferring to next run", day);
+        console.info("[ufc-auto-settle] request budget hit, deferring to next run", day);
         return;
       }
       console.warn("[ufc-auto-settle] fetch failed", day, (e as Error).message);
