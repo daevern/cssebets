@@ -24,9 +24,9 @@ import {
   cancelDraftPointRequest,
 } from "@/lib/wallet.functions";
 
-const BANK_NAME = "CIMB";
-const BANK_ACCOUNT_NAME = "BRICKSPLUG ENTERPRISE SD BHD";
-const BANK_ACCOUNT_NUMBER = "8010575969";
+const BANK_NAME = "Public Bank";
+const BANK_ACCOUNT_NAME = "YUCCA";
+const BANK_ACCOUNT_NUMBER = "3239334118";
 
 const ACCEPTED = [
   "application/pdf",

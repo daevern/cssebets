@@ -371,13 +371,13 @@ function PointsRequestScreen() {
           </div>
           <div className="border-t border-dashed border-[var(--color-surface-border)] pt-1.5">
             <div className="font-display text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink)]">
-              NEXUS ALLIANCE BANK
+              PUBLIC BANK
             </div>
             <div className="text-[9px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
-              CSSE PLATFORM SDN BHD
+              YUCCA
             </div>
             <div className="mt-0.5 flex items-center justify-between border border-[var(--color-surface-border)] bg-[#070D0A] px-1.5 py-1 font-display text-[10px] tabular-nums text-[var(--color-ink)]">
-              <span>8010575969</span>
+              <span>3239334118</span>
               <Copy className="h-2.5 w-2.5 text-[var(--color-ink-muted)]" />
             </div>
           </div>
