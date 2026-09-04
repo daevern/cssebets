@@ -1032,15 +1032,21 @@ export async function runUfcAutoSettle(): Promise<UfcAutoSettleResult> {
   // Candidates include each fight's commence date plus the neighbouring days:
   // the provider can file a late US card under the previous/next calendar day,
   // and without those neighbours such a fight would never be matched.
-  const candidateDates = new Set<string>();
+  // Primary dates (each fight's own commence date) come first in the rotation
+  // so the common case settles within a couple of ticks; the ±1 neighbours are
+  // probed afterwards for cards the provider files on an adjacent day.
+  const primary = new Set<string>();
+  const neighbours = new Set<string>();
   for (const r of rows) {
     const t = new Date(r.commence_time as string).getTime();
     if (!Number.isFinite(t)) continue;
-    for (const offset of [-1, 0, 1]) {
-      candidateDates.add(new Date(t + offset * 86_400_000).toISOString().slice(0, 10));
+    primary.add(new Date(t).toISOString().slice(0, 10));
+    for (const offset of [-1, 1]) {
+      neighbours.add(new Date(t + offset * 86_400_000).toISOString().slice(0, 10));
     }
   }
-  const dates = [...candidateDates].sort();
+  for (const d of primary) neighbours.delete(d);
+  const dates = [...[...primary].sort(), ...[...neighbours].sort()];
   const rotationIndex = dates.length ? Math.floor(Date.now() / (2 * 60_000)) % dates.length : 0;
   const dateForThisRun = dates[rotationIndex];
   const byId = new Map<number, ApiMmaFight>();
