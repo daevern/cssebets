@@ -25,6 +25,7 @@ import {
   parseLbs,
   ApiMmaPlanError,
   isMmaQuotaError,
+  isMmaBudgetError,
   type ApiMmaFight,
 } from "@/lib/apimma.server";
 
@@ -969,6 +970,12 @@ export async function runUfcOddsSync(
         .eq("id", event.id);
     } catch (e) {
       const message = (e as Error).message;
+      // Our own shared budget said "later" — transient back-pressure, not a
+      // provider refusal. Leave the event untouched and retry next tick.
+      if (isMmaBudgetError(e)) {
+        console.info("[ufc-odds] deferring remaining cards (internal budget)", event.name);
+        break;
+      }
       if (e instanceof ApiMmaPlanError) planMessage = message;
       console.warn("[ufc-odds] event sync failed", event.name, message);
       await (supabaseAdmin as any)
@@ -1025,15 +1032,21 @@ export async function runUfcAutoSettle(): Promise<UfcAutoSettleResult> {
   // Candidates include each fight's commence date plus the neighbouring days:
   // the provider can file a late US card under the previous/next calendar day,
   // and without those neighbours such a fight would never be matched.
-  const candidateDates = new Set<string>();
+  // Primary dates (each fight's own commence date) come first in the rotation
+  // so the common case settles within a couple of ticks; the ±1 neighbours are
+  // probed afterwards for cards the provider files on an adjacent day.
+  const primary = new Set<string>();
+  const neighbours = new Set<string>();
   for (const r of rows) {
     const t = new Date(r.commence_time as string).getTime();
     if (!Number.isFinite(t)) continue;
-    for (const offset of [-1, 0, 1]) {
-      candidateDates.add(new Date(t + offset * 86_400_000).toISOString().slice(0, 10));
+    primary.add(new Date(t).toISOString().slice(0, 10));
+    for (const offset of [-1, 1]) {
+      neighbours.add(new Date(t + offset * 86_400_000).toISOString().slice(0, 10));
     }
   }
-  const dates = [...candidateDates].sort();
+  for (const d of primary) neighbours.delete(d);
+  const dates = [...[...primary].sort(), ...[...neighbours].sort()];
   const rotationIndex = dates.length ? Math.floor(Date.now() / (2 * 60_000)) % dates.length : 0;
   const dateForThisRun = dates[rotationIndex];
   const byId = new Map<number, ApiMmaFight>();
@@ -1047,9 +1060,9 @@ export async function runUfcAutoSettle(): Promise<UfcAutoSettleResult> {
       // Rate limit / plan denial: stop the whole pass so we don't spend the
       // rest of the per-minute budget on calls that will also fail. The next
       // cron tick retries after the provider window resets.
-      if (isMmaQuotaError(e)) {
+      if (isMmaQuotaError(e) || isMmaBudgetError(e)) {
         quotaBlocked = true;
-        console.warn("[ufc-auto-settle] provider quota hit, deferring to next run", day);
+        console.info("[ufc-auto-settle] request budget hit, deferring to next run", day);
         return;
       }
       console.warn("[ufc-auto-settle] fetch failed", day, (e as Error).message);
@@ -1201,11 +1214,18 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
   }
   const schedule = [...near, ...weekends, ...weekdays];
 
-  // Discovery shares the provider's minute budget with odds and settlement.
-  // Probe one date per invocation and rotate deterministically through the
-  // complete window. This keeps coverage without a 46-request burst.
-  const discoverySlot = Math.floor(now / DISCOVERY_THROTTLE_MS) % schedule.length;
-  const discoveryDate = schedule[discoverySlot];
+  // Discovery shares the provider's minute budget with odds and settlement, so
+  // it never bursts the whole window. Instead every run probes the NEAR dates
+  // (yesterday..tomorrow — where a live or imminent card would appear) plus a
+  // few rotating far dates, so the full window is swept in a few hours while a
+  // card starting today is always picked up on the next run.
+  const far = schedule.filter((d) => !near.includes(d));
+  const FAR_PER_RUN = 4;
+  const rotationBase = Math.floor(now / DISCOVERY_THROTTLE_MS) * FAR_PER_RUN;
+  const farForThisRun = far.length
+    ? Array.from({ length: Math.min(FAR_PER_RUN, far.length) }, (_, i) => far[(rotationBase + i) % far.length]!)
+    : [];
+  const discoveryDates = [...near, ...farForThisRun];
 
 
 
@@ -1220,7 +1240,7 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
   let allowedFrom: string | null = null;
   let allowedTo: string | null = null;
 
-  const queue = discoveryDate ? [discoveryDate] : [];
+  const queue = discoveryDates;
   for (let i = 0; i < queue.length; i++) {
     const day = queue[i]!;
     if (allowedFrom && allowedTo && (day < allowedFrom || day > allowedTo)) continue;
@@ -1242,6 +1262,12 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
       }
     } catch (e) {
       const message = (e as Error).message;
+      // Internal budget back-pressure: pause this run, but never report the
+      // provider as plan-limited.
+      if (isMmaBudgetError(e)) {
+        console.info("[ufc-discovery] internal budget hit, deferring", day);
+        break;
+      }
       if (e instanceof ApiMmaPlanError) {
         planLimited = true;
         planMessage = message;

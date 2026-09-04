@@ -117,6 +117,24 @@ function assertNoFeedError(path: string, body: ApiMmaResponse<unknown>) {
   throw new ApiMmaPlanError(`api-mma ${path}: ${field}: ${message}`, kind);
 }
 
+/**
+ * Our own shared minute budget refused this call. This is NOT a provider
+ * plan/quota refusal — it is transient back-pressure, so callers must not
+ * flag the feed as plan-limited or store it as a sync error.
+ */
+export class ApiMmaBudgetError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ApiMmaBudgetError";
+  }
+}
+
+export function isMmaBudgetError(e: unknown): boolean {
+  return e instanceof ApiMmaBudgetError;
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export async function apiMmaGet<T>(
   path: string,
   params: Record<string, string | number | undefined> = {},
@@ -131,12 +149,18 @@ export async function apiMmaGet<T>(
     // All UFC cron routes share this database-backed minute budget. A local
     // counter is insufficient because production requests run in independent
     // workers and discovery, odds, and settlement can overlap.
-    const { data: allowed, error: budgetError } = await (supabaseAdmin as any)
-      .rpc("claim_api_mma_request", { p_limit: 20 });
-    if (budgetError) throw new Error(`api-mma request budget failed: ${budgetError.message}`);
-    if (!allowed) {
-      throw new ApiMmaPlanError(`api-mma ${path}: shared rate-limit cooldown active`, "quota");
+    let allowedClaim = false;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { data: allowed, error: budgetError } = await (supabaseAdmin as any)
+        .rpc("claim_api_mma_request", { p_limit: 20 });
+      if (budgetError) throw new Error(`api-mma request budget failed: ${budgetError.message}`);
+      if (allowed) { allowedClaim = true; break; }
+      if (attempt < 2) await sleep(1500);
     }
+    if (!allowedClaim) {
+      throw new ApiMmaBudgetError(`api-mma ${path}: shared request budget exhausted`);
+    }
+
 
     const res = await fetch(url.toString(), {
       headers: { "x-apisports-key": key, Accept: "application/json" },
@@ -207,6 +231,8 @@ export async function fetchFightsByDate(date: string) {
       quotaCooldownUntil = Date.now() + QUOTA_COOLDOWN_MS;
       if (cached) return cached.rows;
     }
+    // Internal budget back-pressure: never trips the provider cooldown.
+    if (isMmaBudgetError(e) && cached) return cached.rows;
     throw e;
   }
 }
