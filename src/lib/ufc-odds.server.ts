@@ -25,6 +25,7 @@ import {
   parseLbs,
   ApiMmaPlanError,
   isMmaQuotaError,
+  isMmaBudgetError,
   type ApiMmaFight,
 } from "@/lib/apimma.server";
 
