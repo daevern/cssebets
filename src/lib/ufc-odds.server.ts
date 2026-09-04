@@ -970,6 +970,12 @@ export async function runUfcOddsSync(
         .eq("id", event.id);
     } catch (e) {
       const message = (e as Error).message;
+      // Our own shared budget said "later" — transient back-pressure, not a
+      // provider refusal. Leave the event untouched and retry next tick.
+      if (isMmaBudgetError(e)) {
+        console.info("[ufc-odds] deferring remaining cards (internal budget)", event.name);
+        break;
+      }
       if (e instanceof ApiMmaPlanError) planMessage = message;
       console.warn("[ufc-odds] event sync failed", event.name, message);
       await (supabaseAdmin as any)
