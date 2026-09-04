@@ -1240,7 +1240,7 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
   let allowedFrom: string | null = null;
   let allowedTo: string | null = null;
 
-  const queue = discoveryDate ? [discoveryDate] : [];
+  const queue = discoveryDates;
   for (let i = 0; i < queue.length; i++) {
     const day = queue[i]!;
     if (allowedFrom && allowedTo && (day < allowedFrom || day > allowedTo)) continue;
