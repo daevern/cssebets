@@ -1262,6 +1262,12 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
       }
     } catch (e) {
       const message = (e as Error).message;
+      // Internal budget back-pressure: pause this run, but never report the
+      // provider as plan-limited.
+      if (isMmaBudgetError(e)) {
+        console.info("[ufc-discovery] internal budget hit, deferring", day);
+        break;
+      }
       if (e instanceof ApiMmaPlanError) {
         planLimited = true;
         planMessage = message;
