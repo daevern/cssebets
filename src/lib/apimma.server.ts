@@ -231,6 +231,8 @@ export async function fetchFightsByDate(date: string) {
       quotaCooldownUntil = Date.now() + QUOTA_COOLDOWN_MS;
       if (cached) return cached.rows;
     }
+    // Internal budget back-pressure: never trips the provider cooldown.
+    if (isMmaBudgetError(e) && cached) return cached.rows;
     throw e;
   }
 }
