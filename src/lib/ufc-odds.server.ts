@@ -1214,11 +1214,18 @@ export async function runUfcEventDiscovery(opts: { force?: boolean } = {}): Prom
   }
   const schedule = [...near, ...weekends, ...weekdays];
 
-  // Discovery shares the provider's minute budget with odds and settlement.
-  // Probe one date per invocation and rotate deterministically through the
-  // complete window. This keeps coverage without a 46-request burst.
-  const discoverySlot = Math.floor(now / DISCOVERY_THROTTLE_MS) % schedule.length;
-  const discoveryDate = schedule[discoverySlot];
+  // Discovery shares the provider's minute budget with odds and settlement, so
+  // it never bursts the whole window. Instead every run probes the NEAR dates
+  // (yesterday..tomorrow — where a live or imminent card would appear) plus a
+  // few rotating far dates, so the full window is swept in a few hours while a
+  // card starting today is always picked up on the next run.
+  const far = schedule.filter((d) => !near.includes(d));
+  const FAR_PER_RUN = 4;
+  const rotationBase = Math.floor(now / DISCOVERY_THROTTLE_MS) * FAR_PER_RUN;
+  const farForThisRun = far.length
+    ? Array.from({ length: Math.min(FAR_PER_RUN, far.length) }, (_, i) => far[(rotationBase + i) % far.length]!)
+    : [];
+  const discoveryDates = [...near, ...farForThisRun];
 
 
 
