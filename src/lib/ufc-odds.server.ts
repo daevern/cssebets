@@ -158,10 +158,14 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
   let detail: Awaited<ReturnType<typeof fetchFighter>> | null = null;
   let recordSummary: Awaited<ReturnType<typeof fetchFighterRecordSummary>> | null = null;
   try {
-    [detail, recordSummary] = await Promise.all([
-      fetchFighter(apimmaId),
-      fetchFighterRecordSummary(apimmaId).catch(() => null),
-    ]);
+    // Keep these sequential: concurrent requests caused short bursts that hit
+    // the provider before the shared minute budget could protect later work.
+    detail = await fetchFighter(apimmaId);
+    try {
+      recordSummary = await fetchFighterRecordSummary(apimmaId);
+    } catch (error) {
+      if (isMmaBudgetError(error) || isMmaQuotaError(error)) throw error;
+    }
   } catch (e) {
     if (isMmaBudgetError(e) || isMmaQuotaError(e)) throw e;
     console.warn("fetchFighter failed", apimmaId, (e as Error).message);
@@ -739,10 +743,10 @@ async function syncH2H(fightRowId: string, aId: number, bId: number, currentApim
       : 0;
     if (lastAt && Date.now() - lastAt < 24 * 60 * 60 * 1000) return;
 
-    const [recA, recB] = await Promise.all([
-      fetchFighterFightHistory(aId, 3).catch(() => []),
-      fetchFighterFightHistory(bId, 3).catch(() => []),
-    ]);
+    // Sequential history reads avoid a burst and preserve the quota signal so
+    // the card pauses rather than continuing through every remaining fighter.
+    const recA = await fetchFighterFightHistory(aId, 3);
+    const recB = await fetchFighterFightHistory(bId, 3);
 
     const rows: any[] = [];
 

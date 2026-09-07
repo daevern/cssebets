@@ -262,7 +262,8 @@ export async function searchFighter(name: string) {
     const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
     const target = norm(name);
     return list.find((f) => norm(f.name) === target) ?? list.find((f) => norm(f.name).includes(target)) ?? list[0];
-  } catch {
+  } catch (error) {
+    if (isMmaBudgetError(error) || isMmaQuotaError(error)) throw error;
     return null;
   }
 }
