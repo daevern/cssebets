@@ -163,6 +163,7 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
       fetchFighterRecordSummary(apimmaId).catch(() => null),
     ]);
   } catch (e) {
+    if (isMmaBudgetError(e) || isMmaQuotaError(e)) throw e;
     console.warn("fetchFighter failed", apimmaId, (e as Error).message);
   }
   if (!detail || (!detail.record && !detail.reach && !detail.height)) {
@@ -170,6 +171,7 @@ async function upsertFighter(apimmaId: number, name: string, logo?: string) {
       const found = await searchFighter(name);
       if (found) detail = { ...(detail ?? {} as any), ...found };
     } catch (e) {
+      if (isMmaBudgetError(e) || isMmaQuotaError(e)) throw e;
       console.warn("searchFighter failed", name, (e as Error).message);
     }
   }
@@ -299,6 +301,7 @@ async function syncOddsForFight(fightRow: {
   try {
     odds = await fetchOddsForFight(apimmaFightId);
   } catch (e) {
+    if (isMmaBudgetError(e) || isMmaQuotaError(e)) throw e;
     console.warn("fetchOdds failed", apimmaFightId, (e as Error).message);
     return 0;
   }
@@ -714,6 +717,7 @@ async function syncFightStats(fightRowId: string, apimmaFightId: number) {
         .upsert(payload, { onConflict: "fight_id,fighter_slot" });
     }
   } catch (e) {
+    if (isMmaBudgetError(e) || isMmaQuotaError(e)) throw e;
     console.warn("syncFightStats failed", apimmaFightId, (e as Error).message);
   }
 }
@@ -802,6 +806,7 @@ async function syncH2H(fightRowId: string, aId: number, bId: number, currentApim
         .upsert(rows, { onConflict: "fight_id,record_type,past_fight_apimma_id" });
     }
   } catch (e) {
+    if (isMmaBudgetError(e) || isMmaQuotaError(e)) throw e;
     console.warn("syncH2H failed", (e as Error).message);
   }
 }
