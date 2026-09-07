@@ -6,6 +6,9 @@
 // stats. Callers still gate hot loops (see runUfcOddsSync freshness guards)
 // so we don't burn quota re-fetching data that doesn't change tick-to-tick.
 const BASE = "https://v1.mma.api-sports.io";
+// Keep a conservative ceiling below the provider limit so clock-window skew
+// and concurrent workers cannot consume the subscription's final slots.
+const API_MMA_REQUESTS_PER_MINUTE = 8;
 
 export type ApiMmaResponse<T> = {
   get: string;
@@ -152,7 +155,7 @@ export async function apiMmaGet<T>(
     let allowedClaim = false;
     for (let attempt = 0; attempt < 3; attempt++) {
       const { data: allowed, error: budgetError } = await (supabaseAdmin as any)
-        .rpc("claim_api_mma_request", { p_limit: 20 });
+        .rpc("claim_api_mma_request", { p_limit: API_MMA_REQUESTS_PER_MINUTE });
       if (budgetError) throw new Error(`api-mma request budget failed: ${budgetError.message}`);
       if (allowed) { allowedClaim = true; break; }
       if (attempt < 2) await sleep(1500);
@@ -259,7 +262,8 @@ export async function searchFighter(name: string) {
     const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
     const target = norm(name);
     return list.find((f) => norm(f.name) === target) ?? list.find((f) => norm(f.name).includes(target)) ?? list[0];
-  } catch {
+  } catch (error) {
+    if (isMmaBudgetError(error) || isMmaQuotaError(error)) throw error;
     return null;
   }
 }
@@ -286,7 +290,10 @@ export async function fetchFighterFightHistory(id: number, seasonsBack = 8) {
         seen.add(row.id);
         out.push(row);
       }
-    } catch {
+    } catch (error) {
+      // Stop the parent card sync when the shared/provider budget is exhausted.
+      // Swallowing this here made every remaining season retry in the same run.
+      if (isMmaBudgetError(error) || isMmaQuotaError(error)) throw error;
       // Keep enrichment best-effort; paid API plans still return sparse years.
     }
   }
