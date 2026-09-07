@@ -6,8 +6,8 @@
 // stats. Callers still gate hot loops (see runUfcOddsSync freshness guards)
 // so we don't burn quota re-fetching data that doesn't change tick-to-tick.
 const BASE = "https://v1.mma.api-sports.io";
-// API-Sports rejects this subscription at 10 requests/minute. Keep two calls
-// in reserve for provider-window skew and diagnostics shared by other workers.
+// Keep a conservative ceiling below the provider limit so clock-window skew
+// and concurrent workers cannot consume the subscription's final slots.
 const API_MMA_REQUESTS_PER_MINUTE = 8;
 
 export type ApiMmaResponse<T> = {
