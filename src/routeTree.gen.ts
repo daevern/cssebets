@@ -47,6 +47,7 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
 import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
 import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
+import { Route as AuthenticatedFantasyRouteImport } from './routes/_authenticated/fantasy'
 import { Route as AuthenticatedF1RouteImport } from './routes/_authenticated/f1'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChangelogRouteImport } from './routes/_authenticated/changelog'
@@ -56,6 +57,7 @@ import { Route as ManagementAdminIndexRouteImport } from './routes/management/ad
 import { Route as AuthenticatedUfcIndexRouteImport } from './routes/_authenticated/ufc.index'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
 import { Route as AuthenticatedLeaguesIndexRouteImport } from './routes/_authenticated/leagues.index'
+import { Route as AuthenticatedFantasyIndexRouteImport } from './routes/_authenticated/fantasy.index'
 import { Route as AuthenticatedF1IndexRouteImport } from './routes/_authenticated/f1.index'
 import { Route as AuthenticatedArcadeIndexRouteImport } from './routes/_authenticated/arcade.index'
 import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
@@ -348,6 +350,11 @@ const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
   path: '/help',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFantasyRoute = AuthenticatedFantasyRouteImport.update({
+  id: '/fantasy',
+  path: '/fantasy',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedF1Route = AuthenticatedF1RouteImport.update({
   id: '/f1',
   path: '/f1',
@@ -394,6 +401,12 @@ const AuthenticatedLeaguesIndexRoute =
     id: '/leagues/',
     path: '/leagues/',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFantasyIndexRoute =
+  AuthenticatedFantasyIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedFantasyRoute,
   } as any)
 const AuthenticatedF1IndexRoute = AuthenticatedF1IndexRouteImport.update({
   id: '/',
@@ -962,6 +975,7 @@ export interface FileRoutesByFullPath {
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/f1': typeof AuthenticatedF1RouteWithChildren
+  '/fantasy': typeof AuthenticatedFantasyRouteWithChildren
   '/help': typeof AuthenticatedHelpRoute
   '/matches': typeof AuthenticatedMatchesRouteWithChildren
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
@@ -1054,6 +1068,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/arcade/': typeof AuthenticatedArcadeIndexRoute
   '/f1/': typeof AuthenticatedF1IndexRoute
+  '/fantasy/': typeof AuthenticatedFantasyIndexRoute
   '/leagues/': typeof AuthenticatedLeaguesIndexRoute
   '/matches/': typeof AuthenticatedMatchesIndexRoute
   '/ufc/': typeof AuthenticatedUfcIndexRoute
@@ -1194,6 +1209,7 @@ export interface FileRoutesByTo {
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/arcade': typeof AuthenticatedArcadeIndexRoute
   '/f1': typeof AuthenticatedF1IndexRoute
+  '/fantasy': typeof AuthenticatedFantasyIndexRoute
   '/leagues': typeof AuthenticatedLeaguesIndexRoute
   '/matches': typeof AuthenticatedMatchesIndexRoute
   '/ufc': typeof AuthenticatedUfcIndexRoute
@@ -1249,6 +1265,7 @@ export interface FileRoutesById {
   '/_authenticated/changelog': typeof AuthenticatedChangelogRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/f1': typeof AuthenticatedF1RouteWithChildren
+  '/_authenticated/fantasy': typeof AuthenticatedFantasyRouteWithChildren
   '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/matches': typeof AuthenticatedMatchesRouteWithChildren
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
@@ -1341,6 +1358,7 @@ export interface FileRoutesById {
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/_authenticated/arcade/': typeof AuthenticatedArcadeIndexRoute
   '/_authenticated/f1/': typeof AuthenticatedF1IndexRoute
+  '/_authenticated/fantasy/': typeof AuthenticatedFantasyIndexRoute
   '/_authenticated/leagues/': typeof AuthenticatedLeaguesIndexRoute
   '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
   '/_authenticated/ufc/': typeof AuthenticatedUfcIndexRoute
@@ -1396,6 +1414,7 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/dashboard'
     | '/f1'
+    | '/fantasy'
     | '/help'
     | '/matches'
     | '/my-predictions'
@@ -1488,6 +1507,7 @@ export interface FileRouteTypes {
     | '/management/admin/wallet-ledger'
     | '/arcade/'
     | '/f1/'
+    | '/fantasy/'
     | '/leagues/'
     | '/matches/'
     | '/ufc/'
@@ -1628,6 +1648,7 @@ export interface FileRouteTypes {
     | '/management/admin/wallet-ledger'
     | '/arcade'
     | '/f1'
+    | '/fantasy'
     | '/leagues'
     | '/matches'
     | '/ufc'
@@ -1682,6 +1703,7 @@ export interface FileRouteTypes {
     | '/_authenticated/changelog'
     | '/_authenticated/dashboard'
     | '/_authenticated/f1'
+    | '/_authenticated/fantasy'
     | '/_authenticated/help'
     | '/_authenticated/matches'
     | '/_authenticated/my-predictions'
@@ -1774,6 +1796,7 @@ export interface FileRouteTypes {
     | '/management/admin/wallet-ledger'
     | '/_authenticated/arcade/'
     | '/_authenticated/f1/'
+    | '/_authenticated/fantasy/'
     | '/_authenticated/leagues/'
     | '/_authenticated/matches/'
     | '/_authenticated/ufc/'
@@ -2122,6 +2145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHelpRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fantasy': {
+      id: '/_authenticated/fantasy'
+      path: '/fantasy'
+      fullPath: '/fantasy'
+      preLoaderRoute: typeof AuthenticatedFantasyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/f1': {
       id: '/_authenticated/f1'
       path: '/f1'
@@ -2184,6 +2214,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/leagues/'
       preLoaderRoute: typeof AuthenticatedLeaguesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fantasy/': {
+      id: '/_authenticated/fantasy/'
+      path: '/'
+      fullPath: '/fantasy/'
+      preLoaderRoute: typeof AuthenticatedFantasyIndexRouteImport
+      parentRoute: typeof AuthenticatedFantasyRoute
     }
     '/_authenticated/f1/': {
       id: '/_authenticated/f1/'
@@ -2918,6 +2955,17 @@ const AuthenticatedF1RouteWithChildren = AuthenticatedF1Route._addFileChildren(
   AuthenticatedF1RouteChildren,
 )
 
+interface AuthenticatedFantasyRouteChildren {
+  AuthenticatedFantasyIndexRoute: typeof AuthenticatedFantasyIndexRoute
+}
+
+const AuthenticatedFantasyRouteChildren: AuthenticatedFantasyRouteChildren = {
+  AuthenticatedFantasyIndexRoute: AuthenticatedFantasyIndexRoute,
+}
+
+const AuthenticatedFantasyRouteWithChildren =
+  AuthenticatedFantasyRoute._addFileChildren(AuthenticatedFantasyRouteChildren)
+
 interface AuthenticatedMatchesRouteChildren {
   AuthenticatedMatchesMatchIdRoute: typeof AuthenticatedMatchesMatchIdRoute
   AuthenticatedMatchesIndexRoute: typeof AuthenticatedMatchesIndexRoute
@@ -2964,6 +3012,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChangelogRoute: typeof AuthenticatedChangelogRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedF1Route: typeof AuthenticatedF1RouteWithChildren
+  AuthenticatedFantasyRoute: typeof AuthenticatedFantasyRouteWithChildren
   AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
   AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRouteWithChildren
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
@@ -2994,6 +3043,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChangelogRoute: AuthenticatedChangelogRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedF1Route: AuthenticatedF1RouteWithChildren,
+  AuthenticatedFantasyRoute: AuthenticatedFantasyRouteWithChildren,
   AuthenticatedHelpRoute: AuthenticatedHelpRoute,
   AuthenticatedMatchesRoute: AuthenticatedMatchesRouteWithChildren,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
