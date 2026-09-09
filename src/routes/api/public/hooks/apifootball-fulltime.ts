@@ -9,19 +9,38 @@ import { requireCronAuth } from "@/lib/cron-auth.server";
 // - Matches finished in the last 12 hours: refresh stats + events, then re-grade cards/corners.
 //   API-Football commonly revises corner and shot totals for a few hours after full time.
 // Also supports ?matchId=<uuid> for a one-off manual refresh.
+const CARDS_CORNERS_MARKETS = [
+  "cards_over_under_2_5", "cards_over_under_3_5", "cards_over_under_4_5", "cards_over_under_5_5",
+  "home_cards_over_under_1_5", "away_cards_over_under_1_5",
+  "corners_over_under_8_5", "corners_over_under_9_5", "corners_over_under_10_5", "corners_over_under_11_5",
+  "home_corners_over_under_4_5", "away_corners_over_under_4_5",
+];
+
+/** Cheap indexed pre-check: only call the heavy regrade when it can do work. */
+async function hasRegradableBets(supabaseAdmin: any, matchId: string): Promise<boolean> {
+  const { count } = await supabaseAdmin
+    .from("predictions")
+    .select("id", { count: "exact", head: true })
+    .eq("match_id", matchId)
+    .in("status", ["won", "lost"])
+    .in("market", CARDS_CORNERS_MARKETS);
+  return (count ?? 0) > 0;
+}
+
 async function regradeCardsCorners(
   supabaseAdmin: any,
   matchId: string,
-): Promise<{ prediction_id: string; old_status: string; new_status: string; delta: number }[]> {
+): Promise<{ rows: { prediction_id: string; old_status: string; new_status: string; delta: number }[]; error?: string }> {
   const { data, error } = await supabaseAdmin.rpc("regrade_cards_corners_for_match", {
     p_match_id: matchId,
   });
   if (error) {
     console.error("[apifootball-fulltime] regrade failed", matchId, error);
-    return [];
+    return { rows: [], error: error.message ?? String(error) };
   }
-  return (data as any[]) ?? [];
+  return { rows: (data as any[]) ?? [] };
 }
+
 
 export const Route = createFileRoute("/api/public/hooks/apifootball-fulltime")({
   server: {
