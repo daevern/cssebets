@@ -1022,10 +1022,17 @@ export async function runUfcOddsSync(
       const res = await syncEventCard(event);
       fights += res.fights;
       markets += res.markets;
+      if (res.partial) {
+        // Budget ran out mid-card: keep the event due so the next tick picks up
+        // the remaining (now stalest) fights instead of redoing the headliners.
+        console.info("[ufc-odds] partial card sync, resuming next tick", event.name);
+        break;
+      }
       await (supabaseAdmin as any)
         .from("ufc_events")
         .update({ last_synced_at: new Date().toISOString(), last_sync_error: res.skipped ?? null })
         .eq("id", event.id);
+
     } catch (e) {
       const message = (e as Error).message;
       // Our own shared budget said "later" — transient back-pressure, not a
