@@ -61,9 +61,9 @@ function SquadPicker() {
   if (!hydrated && existing && players.length) {
     setHydrated(true);
     setFormation(existing.formation);
-    setSelected(existing.picks.map((p) => p.player.id));
-    setCaptainId(existing.picks.find((p) => p.role === "captain")?.player.id ?? null);
-    setViceId(existing.picks.find((p) => p.role === "vice")?.player.id ?? null);
+    setSelected(existing.picks.map((p: any) => p.player.id));
+    setCaptainId(existing.picks.find((p: any) => p.role === "captain")?.player.id ?? null);
+    setViceId(existing.picks.find((p: any) => p.role === "vice")?.player.id ?? null);
   }
 
   const picks = selected.map((id) => byId.get(id)).filter(Boolean) as FantasyPlayerRow[];

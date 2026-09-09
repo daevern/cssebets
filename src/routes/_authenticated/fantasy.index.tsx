@@ -114,7 +114,7 @@ function FantasyLobby() {
           <section className="rounded-2xl border border-[var(--color-surface-border)] bg-[var(--surface-2)] p-4">
             <h3 className="text-sm font-semibold">Your eleven</h3>
             <ul className="mt-3 space-y-2">
-              {entry.picks.map((p) => (
+              {entry.picks.map((p: any) => (
                 <li key={p.player.id} className="flex items-center gap-3 rounded-xl bg-[var(--surface-3,rgba(255,255,255,0.03))] px-3 py-2">
                   <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${POS_TONE[p.player.position]}`}>
                     {p.player.position}
