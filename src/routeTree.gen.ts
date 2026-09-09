@@ -114,6 +114,7 @@ import { Route as AuthenticatedFootballUclRouteImport } from './routes/_authenti
 import { Route as AuthenticatedFootballSerieARouteImport } from './routes/_authenticated/football/serie-a'
 import { Route as AuthenticatedFootballLaLigaRouteImport } from './routes/_authenticated/football/la-liga'
 import { Route as AuthenticatedFootballEplRouteImport } from './routes/_authenticated/football/epl'
+import { Route as AuthenticatedFantasySquadRouteImport } from './routes/_authenticated/fantasy.squad'
 import { Route as AuthenticatedArcadeWheelRouteImport } from './routes/_authenticated/arcade.wheel'
 import { Route as AuthenticatedArcadeTreasureRouteImport } from './routes/_authenticated/arcade.treasure'
 import { Route as AuthenticatedArcadeTowersRouteImport } from './routes/_authenticated/arcade.towers'
@@ -721,6 +722,12 @@ const AuthenticatedFootballEplRoute =
     path: '/football/epl',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFantasySquadRoute =
+  AuthenticatedFantasySquadRouteImport.update({
+    id: '/squad',
+    path: '/squad',
+    getParentRoute: () => AuthenticatedFantasyRoute,
+  } as any)
 const AuthenticatedArcadeWheelRoute =
   AuthenticatedArcadeWheelRouteImport.update({
     id: '/wheel',
@@ -1012,6 +1019,7 @@ export interface FileRoutesByFullPath {
   '/arcade/towers': typeof AuthenticatedArcadeTowersRoute
   '/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
   '/arcade/wheel': typeof AuthenticatedArcadeWheelRoute
+  '/fantasy/squad': typeof AuthenticatedFantasySquadRoute
   '/football/epl': typeof AuthenticatedFootballEplRoute
   '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -1153,6 +1161,7 @@ export interface FileRoutesByTo {
   '/arcade/towers': typeof AuthenticatedArcadeTowersRoute
   '/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
   '/arcade/wheel': typeof AuthenticatedArcadeWheelRoute
+  '/fantasy/squad': typeof AuthenticatedFantasySquadRoute
   '/football/epl': typeof AuthenticatedFootballEplRoute
   '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -1302,6 +1311,7 @@ export interface FileRoutesById {
   '/_authenticated/arcade/towers': typeof AuthenticatedArcadeTowersRoute
   '/_authenticated/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
   '/_authenticated/arcade/wheel': typeof AuthenticatedArcadeWheelRoute
+  '/_authenticated/fantasy/squad': typeof AuthenticatedFantasySquadRoute
   '/_authenticated/football/epl': typeof AuthenticatedFootballEplRoute
   '/_authenticated/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/_authenticated/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -1451,6 +1461,7 @@ export interface FileRouteTypes {
     | '/arcade/towers'
     | '/arcade/treasure'
     | '/arcade/wheel'
+    | '/fantasy/squad'
     | '/football/epl'
     | '/football/la-liga'
     | '/football/serie-a'
@@ -1592,6 +1603,7 @@ export interface FileRouteTypes {
     | '/arcade/towers'
     | '/arcade/treasure'
     | '/arcade/wheel'
+    | '/fantasy/squad'
     | '/football/epl'
     | '/football/la-liga'
     | '/football/serie-a'
@@ -1740,6 +1752,7 @@ export interface FileRouteTypes {
     | '/_authenticated/arcade/towers'
     | '/_authenticated/arcade/treasure'
     | '/_authenticated/arcade/wheel'
+    | '/_authenticated/fantasy/squad'
     | '/_authenticated/football/epl'
     | '/_authenticated/football/la-liga'
     | '/_authenticated/football/serie-a'
@@ -2614,6 +2627,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFootballEplRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fantasy/squad': {
+      id: '/_authenticated/fantasy/squad'
+      path: '/squad'
+      fullPath: '/fantasy/squad'
+      preLoaderRoute: typeof AuthenticatedFantasySquadRouteImport
+      parentRoute: typeof AuthenticatedFantasyRoute
+    }
     '/_authenticated/arcade/wheel': {
       id: '/_authenticated/arcade/wheel'
       path: '/wheel'
@@ -2956,10 +2976,12 @@ const AuthenticatedF1RouteWithChildren = AuthenticatedF1Route._addFileChildren(
 )
 
 interface AuthenticatedFantasyRouteChildren {
+  AuthenticatedFantasySquadRoute: typeof AuthenticatedFantasySquadRoute
   AuthenticatedFantasyIndexRoute: typeof AuthenticatedFantasyIndexRoute
 }
 
 const AuthenticatedFantasyRouteChildren: AuthenticatedFantasyRouteChildren = {
+  AuthenticatedFantasySquadRoute: AuthenticatedFantasySquadRoute,
   AuthenticatedFantasyIndexRoute: AuthenticatedFantasyIndexRoute,
 }
 
