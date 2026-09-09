@@ -856,7 +856,7 @@ function oddsFreshnessMsFor(startsAtIso: string) {
 type UfcEventRow = { id: string; event_key: string; name: string; starts_at: string; last_synced_at?: string | null };
 
 /** Sync one event's card: fighters, fights, odds, H2H, live stats. */
-async function syncEventCard(event: UfcEventRow): Promise<{ fights: number; markets: number; skipped?: string }> {
+async function syncEventCard(event: UfcEventRow): Promise<{ fights: number; markets: number; skipped?: string; partial?: boolean }> {
   const allFights = await findEventFights(event.starts_at);
   if (!allFights.length) return { fights: 0, markets: 0, skipped: "no UFC fights found near event date" };
 
