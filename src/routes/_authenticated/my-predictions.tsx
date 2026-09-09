@@ -1244,6 +1244,25 @@ function SportsBetRow({ b }: { b: any }) {
             <div className="text-[10px] text-[var(--color-ink-muted)] tabular-nums">+{profit} profit</div>
           </div>
         </div>
+
+        <TicketActions
+          betId={b.id}
+          stake={stakeN}
+          canModify={
+            ["open", "pending"].includes(String(b.status ?? "pending")) &&
+            !!ev?.scheduled_at &&
+            new Date(ev.scheduled_at).getTime() > Date.now() &&
+            (ev?.status ?? "scheduled") === "scheduled"
+          }
+          locked={
+            ["open", "pending"].includes(String(b.status ?? "pending")) &&
+            (!ev?.scheduled_at || new Date(ev.scheduled_at).getTime() <= Date.now())
+          }
+          editServerFn={editPendingSportsBetStake}
+          cancelServerFn={cancelPendingSportsBet}
+          invalidateKeys={["my-sports-bets"]}
+          label={String(b.competition_code ?? "Match").toUpperCase()}
+        />
       </div>
     </StencilPanel>
   );
