@@ -214,3 +214,28 @@ export async function afFetchFixturePlayers(
 ): Promise<ApiFootballResult<AfFixturePlayers>> {
   return apiGet<AfFixturePlayers>(`/fixtures/players?fixture=${fixtureId}`);
 }
+
+export type AfTeamPlayers = Array<{
+  player: {
+    id: number;
+    name: string;
+    firstname: string | null;
+    lastname: string | null;
+    photo: string | null;
+  };
+  statistics: Array<{
+    team: { id: number; name: string; logo: string | null };
+    league: { id: number; season: number };
+    games: { appearences: number | null; minutes: number | null; position: string | null; rating: string | null };
+    goals: { total: number | null; assists: number | null };
+  }>;
+}>;
+
+/** Season player list for a club, with headline stats used to price the pool. */
+export async function afFetchTeamPlayers(
+  teamId: number,
+  season: number,
+  page = 1,
+): Promise<ApiFootballResult<AfTeamPlayers>> {
+  return apiGet<AfTeamPlayers>(`/players?team=${teamId}&season=${season}&page=${page}`);
+}
