@@ -4,7 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Bell, User, ShoppingBag, X, Copy, Check, LogOut, Info, Users, Activity, HelpCircle, Gamepad2 } from "lucide-react";
+import { Bell, User, ShoppingBag, X, Copy, Check, LogOut, Info, Users, Activity, HelpCircle, Gamepad2 , Trophy } from "lucide-react";
 import { TokenVaultSheet } from "@/components/engagement/TokenVault";
 import { CsseMark, CsseWordmark } from "@/components/brand/CsseMark";
 import { useAuth } from "@/hooks/use-auth";
@@ -111,6 +111,7 @@ export function HamburgerMenu() {
   const items = [
     { key: "store", label: "Store", Icon: ShoppingBag, onClick: () => pick(() => navigate({ to: "/store" })) },
     { key: "arcade", label: "Arcade", Icon: Gamepad2, onClick: () => pick(() => navigate({ to: "/arcade" })) },
+    { key: "fantasy", label: "Fantasy XI", Icon: Trophy, onClick: () => pick(() => navigate({ to: "/fantasy" })) },
     { key: "leagues", label: "Leagues", Icon: Users, onClick: () => pick(() => navigate({ to: "/leagues", search: { join: undefined } })) },
     { key: "tokens", label: "Tokens", Icon: TokenMark, onClick: () => pick(() => setTokensOpen(true)) },
     { key: "notifications", label: "Alerts", Icon: Bell, onClick: () => pick(() => navigate({ to: "/notifications", search: { win: undefined } })) },

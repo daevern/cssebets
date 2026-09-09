@@ -47,6 +47,7 @@ import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authen
 import { Route as AuthenticatedMyPredictionsRouteImport } from './routes/_authenticated/my-predictions'
 import { Route as AuthenticatedMatchesRouteImport } from './routes/_authenticated/matches'
 import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
+import { Route as AuthenticatedFantasyRouteImport } from './routes/_authenticated/fantasy'
 import { Route as AuthenticatedF1RouteImport } from './routes/_authenticated/f1'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChangelogRouteImport } from './routes/_authenticated/changelog'
@@ -56,6 +57,7 @@ import { Route as ManagementAdminIndexRouteImport } from './routes/management/ad
 import { Route as AuthenticatedUfcIndexRouteImport } from './routes/_authenticated/ufc.index'
 import { Route as AuthenticatedMatchesIndexRouteImport } from './routes/_authenticated/matches.index'
 import { Route as AuthenticatedLeaguesIndexRouteImport } from './routes/_authenticated/leagues.index'
+import { Route as AuthenticatedFantasyIndexRouteImport } from './routes/_authenticated/fantasy.index'
 import { Route as AuthenticatedF1IndexRouteImport } from './routes/_authenticated/f1.index'
 import { Route as AuthenticatedArcadeIndexRouteImport } from './routes/_authenticated/arcade.index'
 import { Route as ManagementAdminWalletLedgerRouteImport } from './routes/management/admin.wallet-ledger'
@@ -112,6 +114,7 @@ import { Route as AuthenticatedFootballUclRouteImport } from './routes/_authenti
 import { Route as AuthenticatedFootballSerieARouteImport } from './routes/_authenticated/football/serie-a'
 import { Route as AuthenticatedFootballLaLigaRouteImport } from './routes/_authenticated/football/la-liga'
 import { Route as AuthenticatedFootballEplRouteImport } from './routes/_authenticated/football/epl'
+import { Route as AuthenticatedFantasySquadRouteImport } from './routes/_authenticated/fantasy.squad'
 import { Route as AuthenticatedArcadeWheelRouteImport } from './routes/_authenticated/arcade.wheel'
 import { Route as AuthenticatedArcadeTreasureRouteImport } from './routes/_authenticated/arcade.treasure'
 import { Route as AuthenticatedArcadeTowersRouteImport } from './routes/_authenticated/arcade.towers'
@@ -140,6 +143,7 @@ import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/publ
 import { Route as ApiPublicHooksFootballSyncRouteImport } from './routes/api/public/hooks/football-sync'
 import { Route as ApiPublicHooksFootballSettleRouteImport } from './routes/api/public/hooks/football-settle'
 import { Route as ApiPublicHooksFootballLiveRouteImport } from './routes/api/public/hooks/football-live'
+import { Route as ApiPublicHooksFantasySyncRouteImport } from './routes/api/public/hooks/fantasy-sync'
 import { Route as ApiPublicHooksF1SyncRouteImport } from './routes/api/public/hooks/f1-sync'
 import { Route as ApiPublicHooksF1SettleRouteImport } from './routes/api/public/hooks/f1-settle'
 import { Route as ApiPublicHooksF1OddsRouteImport } from './routes/api/public/hooks/f1-odds'
@@ -347,6 +351,11 @@ const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
   path: '/help',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFantasyRoute = AuthenticatedFantasyRouteImport.update({
+  id: '/fantasy',
+  path: '/fantasy',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedF1Route = AuthenticatedF1RouteImport.update({
   id: '/f1',
   path: '/f1',
@@ -393,6 +402,12 @@ const AuthenticatedLeaguesIndexRoute =
     id: '/leagues/',
     path: '/leagues/',
     getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFantasyIndexRoute =
+  AuthenticatedFantasyIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedFantasyRoute,
   } as any)
 const AuthenticatedF1IndexRoute = AuthenticatedF1IndexRouteImport.update({
   id: '/',
@@ -707,6 +722,12 @@ const AuthenticatedFootballEplRoute =
     path: '/football/epl',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFantasySquadRoute =
+  AuthenticatedFantasySquadRouteImport.update({
+    id: '/squad',
+    path: '/squad',
+    getParentRoute: () => AuthenticatedFantasyRoute,
+  } as any)
 const AuthenticatedArcadeWheelRoute =
   AuthenticatedArcadeWheelRouteImport.update({
     id: '/wheel',
@@ -868,6 +889,12 @@ const ApiPublicHooksFootballLiveRoute =
     path: '/api/public/hooks/football-live',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksFantasySyncRoute =
+  ApiPublicHooksFantasySyncRouteImport.update({
+    id: '/api/public/hooks/fantasy-sync',
+    path: '/api/public/hooks/fantasy-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksF1SyncRoute = ApiPublicHooksF1SyncRouteImport.update({
   id: '/api/public/hooks/f1-sync',
   path: '/api/public/hooks/f1-sync',
@@ -955,6 +982,7 @@ export interface FileRoutesByFullPath {
   '/changelog': typeof AuthenticatedChangelogRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/f1': typeof AuthenticatedF1RouteWithChildren
+  '/fantasy': typeof AuthenticatedFantasyRouteWithChildren
   '/help': typeof AuthenticatedHelpRoute
   '/matches': typeof AuthenticatedMatchesRouteWithChildren
   '/my-predictions': typeof AuthenticatedMyPredictionsRoute
@@ -991,6 +1019,7 @@ export interface FileRoutesByFullPath {
   '/arcade/towers': typeof AuthenticatedArcadeTowersRoute
   '/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
   '/arcade/wheel': typeof AuthenticatedArcadeWheelRoute
+  '/fantasy/squad': typeof AuthenticatedFantasySquadRoute
   '/football/epl': typeof AuthenticatedFootballEplRoute
   '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -1047,6 +1076,7 @@ export interface FileRoutesByFullPath {
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/arcade/': typeof AuthenticatedArcadeIndexRoute
   '/f1/': typeof AuthenticatedF1IndexRoute
+  '/fantasy/': typeof AuthenticatedFantasyIndexRoute
   '/leagues/': typeof AuthenticatedLeaguesIndexRoute
   '/matches/': typeof AuthenticatedMatchesIndexRoute
   '/ufc/': typeof AuthenticatedUfcIndexRoute
@@ -1063,6 +1093,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/f1-odds': typeof ApiPublicHooksF1OddsRoute
   '/api/public/hooks/f1-settle': typeof ApiPublicHooksF1SettleRoute
   '/api/public/hooks/f1-sync': typeof ApiPublicHooksF1SyncRoute
+  '/api/public/hooks/fantasy-sync': typeof ApiPublicHooksFantasySyncRoute
   '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
   '/api/public/hooks/football-settle': typeof ApiPublicHooksFootballSettleRoute
   '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
@@ -1130,6 +1161,7 @@ export interface FileRoutesByTo {
   '/arcade/towers': typeof AuthenticatedArcadeTowersRoute
   '/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
   '/arcade/wheel': typeof AuthenticatedArcadeWheelRoute
+  '/fantasy/squad': typeof AuthenticatedFantasySquadRoute
   '/football/epl': typeof AuthenticatedFootballEplRoute
   '/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -1186,6 +1218,7 @@ export interface FileRoutesByTo {
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/arcade': typeof AuthenticatedArcadeIndexRoute
   '/f1': typeof AuthenticatedF1IndexRoute
+  '/fantasy': typeof AuthenticatedFantasyIndexRoute
   '/leagues': typeof AuthenticatedLeaguesIndexRoute
   '/matches': typeof AuthenticatedMatchesIndexRoute
   '/ufc': typeof AuthenticatedUfcIndexRoute
@@ -1202,6 +1235,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/f1-odds': typeof ApiPublicHooksF1OddsRoute
   '/api/public/hooks/f1-settle': typeof ApiPublicHooksF1SettleRoute
   '/api/public/hooks/f1-sync': typeof ApiPublicHooksF1SyncRoute
+  '/api/public/hooks/fantasy-sync': typeof ApiPublicHooksFantasySyncRoute
   '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
   '/api/public/hooks/football-settle': typeof ApiPublicHooksFootballSettleRoute
   '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
@@ -1240,6 +1274,7 @@ export interface FileRoutesById {
   '/_authenticated/changelog': typeof AuthenticatedChangelogRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/f1': typeof AuthenticatedF1RouteWithChildren
+  '/_authenticated/fantasy': typeof AuthenticatedFantasyRouteWithChildren
   '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/matches': typeof AuthenticatedMatchesRouteWithChildren
   '/_authenticated/my-predictions': typeof AuthenticatedMyPredictionsRoute
@@ -1276,6 +1311,7 @@ export interface FileRoutesById {
   '/_authenticated/arcade/towers': typeof AuthenticatedArcadeTowersRoute
   '/_authenticated/arcade/treasure': typeof AuthenticatedArcadeTreasureRoute
   '/_authenticated/arcade/wheel': typeof AuthenticatedArcadeWheelRoute
+  '/_authenticated/fantasy/squad': typeof AuthenticatedFantasySquadRoute
   '/_authenticated/football/epl': typeof AuthenticatedFootballEplRoute
   '/_authenticated/football/la-liga': typeof AuthenticatedFootballLaLigaRoute
   '/_authenticated/football/serie-a': typeof AuthenticatedFootballSerieARoute
@@ -1332,6 +1368,7 @@ export interface FileRoutesById {
   '/management/admin/wallet-ledger': typeof ManagementAdminWalletLedgerRoute
   '/_authenticated/arcade/': typeof AuthenticatedArcadeIndexRoute
   '/_authenticated/f1/': typeof AuthenticatedF1IndexRoute
+  '/_authenticated/fantasy/': typeof AuthenticatedFantasyIndexRoute
   '/_authenticated/leagues/': typeof AuthenticatedLeaguesIndexRoute
   '/_authenticated/matches/': typeof AuthenticatedMatchesIndexRoute
   '/_authenticated/ufc/': typeof AuthenticatedUfcIndexRoute
@@ -1348,6 +1385,7 @@ export interface FileRoutesById {
   '/api/public/hooks/f1-odds': typeof ApiPublicHooksF1OddsRoute
   '/api/public/hooks/f1-settle': typeof ApiPublicHooksF1SettleRoute
   '/api/public/hooks/f1-sync': typeof ApiPublicHooksF1SyncRoute
+  '/api/public/hooks/fantasy-sync': typeof ApiPublicHooksFantasySyncRoute
   '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
   '/api/public/hooks/football-settle': typeof ApiPublicHooksFootballSettleRoute
   '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
@@ -1386,6 +1424,7 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/dashboard'
     | '/f1'
+    | '/fantasy'
     | '/help'
     | '/matches'
     | '/my-predictions'
@@ -1422,6 +1461,7 @@ export interface FileRouteTypes {
     | '/arcade/towers'
     | '/arcade/treasure'
     | '/arcade/wheel'
+    | '/fantasy/squad'
     | '/football/epl'
     | '/football/la-liga'
     | '/football/serie-a'
@@ -1478,6 +1518,7 @@ export interface FileRouteTypes {
     | '/management/admin/wallet-ledger'
     | '/arcade/'
     | '/f1/'
+    | '/fantasy/'
     | '/leagues/'
     | '/matches/'
     | '/ufc/'
@@ -1494,6 +1535,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/f1-odds'
     | '/api/public/hooks/f1-settle'
     | '/api/public/hooks/f1-sync'
+    | '/api/public/hooks/fantasy-sync'
     | '/api/public/hooks/football-live'
     | '/api/public/hooks/football-settle'
     | '/api/public/hooks/football-sync'
@@ -1561,6 +1603,7 @@ export interface FileRouteTypes {
     | '/arcade/towers'
     | '/arcade/treasure'
     | '/arcade/wheel'
+    | '/fantasy/squad'
     | '/football/epl'
     | '/football/la-liga'
     | '/football/serie-a'
@@ -1617,6 +1660,7 @@ export interface FileRouteTypes {
     | '/management/admin/wallet-ledger'
     | '/arcade'
     | '/f1'
+    | '/fantasy'
     | '/leagues'
     | '/matches'
     | '/ufc'
@@ -1633,6 +1677,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/f1-odds'
     | '/api/public/hooks/f1-settle'
     | '/api/public/hooks/f1-sync'
+    | '/api/public/hooks/fantasy-sync'
     | '/api/public/hooks/football-live'
     | '/api/public/hooks/football-settle'
     | '/api/public/hooks/football-sync'
@@ -1670,6 +1715,7 @@ export interface FileRouteTypes {
     | '/_authenticated/changelog'
     | '/_authenticated/dashboard'
     | '/_authenticated/f1'
+    | '/_authenticated/fantasy'
     | '/_authenticated/help'
     | '/_authenticated/matches'
     | '/_authenticated/my-predictions'
@@ -1706,6 +1752,7 @@ export interface FileRouteTypes {
     | '/_authenticated/arcade/towers'
     | '/_authenticated/arcade/treasure'
     | '/_authenticated/arcade/wheel'
+    | '/_authenticated/fantasy/squad'
     | '/_authenticated/football/epl'
     | '/_authenticated/football/la-liga'
     | '/_authenticated/football/serie-a'
@@ -1762,6 +1809,7 @@ export interface FileRouteTypes {
     | '/management/admin/wallet-ledger'
     | '/_authenticated/arcade/'
     | '/_authenticated/f1/'
+    | '/_authenticated/fantasy/'
     | '/_authenticated/leagues/'
     | '/_authenticated/matches/'
     | '/_authenticated/ufc/'
@@ -1778,6 +1826,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/f1-odds'
     | '/api/public/hooks/f1-settle'
     | '/api/public/hooks/f1-sync'
+    | '/api/public/hooks/fantasy-sync'
     | '/api/public/hooks/football-live'
     | '/api/public/hooks/football-settle'
     | '/api/public/hooks/football-sync'
@@ -1823,6 +1872,7 @@ export interface RootRouteChildren {
   ApiPublicHooksF1OddsRoute: typeof ApiPublicHooksF1OddsRoute
   ApiPublicHooksF1SettleRoute: typeof ApiPublicHooksF1SettleRoute
   ApiPublicHooksF1SyncRoute: typeof ApiPublicHooksF1SyncRoute
+  ApiPublicHooksFantasySyncRoute: typeof ApiPublicHooksFantasySyncRoute
   ApiPublicHooksFootballLiveRoute: typeof ApiPublicHooksFootballLiveRoute
   ApiPublicHooksFootballSettleRoute: typeof ApiPublicHooksFootballSettleRoute
   ApiPublicHooksFootballSyncRoute: typeof ApiPublicHooksFootballSyncRoute
@@ -2108,6 +2158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHelpRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fantasy': {
+      id: '/_authenticated/fantasy'
+      path: '/fantasy'
+      fullPath: '/fantasy'
+      preLoaderRoute: typeof AuthenticatedFantasyRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/f1': {
       id: '/_authenticated/f1'
       path: '/f1'
@@ -2170,6 +2227,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/leagues/'
       preLoaderRoute: typeof AuthenticatedLeaguesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/fantasy/': {
+      id: '/_authenticated/fantasy/'
+      path: '/'
+      fullPath: '/fantasy/'
+      preLoaderRoute: typeof AuthenticatedFantasyIndexRouteImport
+      parentRoute: typeof AuthenticatedFantasyRoute
     }
     '/_authenticated/f1/': {
       id: '/_authenticated/f1/'
@@ -2563,6 +2627,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFootballEplRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/fantasy/squad': {
+      id: '/_authenticated/fantasy/squad'
+      path: '/squad'
+      fullPath: '/fantasy/squad'
+      preLoaderRoute: typeof AuthenticatedFantasySquadRouteImport
+      parentRoute: typeof AuthenticatedFantasyRoute
+    }
     '/_authenticated/arcade/wheel': {
       id: '/_authenticated/arcade/wheel'
       path: '/wheel'
@@ -2759,6 +2830,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFootballLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/fantasy-sync': {
+      id: '/api/public/hooks/fantasy-sync'
+      path: '/api/public/hooks/fantasy-sync'
+      fullPath: '/api/public/hooks/fantasy-sync'
+      preLoaderRoute: typeof ApiPublicHooksFantasySyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/f1-sync': {
       id: '/api/public/hooks/f1-sync'
       path: '/api/public/hooks/f1-sync'
@@ -2897,6 +2975,19 @@ const AuthenticatedF1RouteWithChildren = AuthenticatedF1Route._addFileChildren(
   AuthenticatedF1RouteChildren,
 )
 
+interface AuthenticatedFantasyRouteChildren {
+  AuthenticatedFantasySquadRoute: typeof AuthenticatedFantasySquadRoute
+  AuthenticatedFantasyIndexRoute: typeof AuthenticatedFantasyIndexRoute
+}
+
+const AuthenticatedFantasyRouteChildren: AuthenticatedFantasyRouteChildren = {
+  AuthenticatedFantasySquadRoute: AuthenticatedFantasySquadRoute,
+  AuthenticatedFantasyIndexRoute: AuthenticatedFantasyIndexRoute,
+}
+
+const AuthenticatedFantasyRouteWithChildren =
+  AuthenticatedFantasyRoute._addFileChildren(AuthenticatedFantasyRouteChildren)
+
 interface AuthenticatedMatchesRouteChildren {
   AuthenticatedMatchesMatchIdRoute: typeof AuthenticatedMatchesMatchIdRoute
   AuthenticatedMatchesIndexRoute: typeof AuthenticatedMatchesIndexRoute
@@ -2943,6 +3034,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChangelogRoute: typeof AuthenticatedChangelogRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedF1Route: typeof AuthenticatedF1RouteWithChildren
+  AuthenticatedFantasyRoute: typeof AuthenticatedFantasyRouteWithChildren
   AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
   AuthenticatedMatchesRoute: typeof AuthenticatedMatchesRouteWithChildren
   AuthenticatedMyPredictionsRoute: typeof AuthenticatedMyPredictionsRoute
@@ -2973,6 +3065,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChangelogRoute: AuthenticatedChangelogRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedF1Route: AuthenticatedF1RouteWithChildren,
+  AuthenticatedFantasyRoute: AuthenticatedFantasyRouteWithChildren,
   AuthenticatedHelpRoute: AuthenticatedHelpRoute,
   AuthenticatedMatchesRoute: AuthenticatedMatchesRouteWithChildren,
   AuthenticatedMyPredictionsRoute: AuthenticatedMyPredictionsRoute,
@@ -3156,6 +3249,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksF1OddsRoute: ApiPublicHooksF1OddsRoute,
   ApiPublicHooksF1SettleRoute: ApiPublicHooksF1SettleRoute,
   ApiPublicHooksF1SyncRoute: ApiPublicHooksF1SyncRoute,
+  ApiPublicHooksFantasySyncRoute: ApiPublicHooksFantasySyncRoute,
   ApiPublicHooksFootballLiveRoute: ApiPublicHooksFootballLiveRoute,
   ApiPublicHooksFootballSettleRoute: ApiPublicHooksFootballSettleRoute,
   ApiPublicHooksFootballSyncRoute: ApiPublicHooksFootballSyncRoute,

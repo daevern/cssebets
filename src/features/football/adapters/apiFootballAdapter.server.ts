@@ -177,3 +177,65 @@ export function afStatusToInternal(short: string): {
   if (s === "ABD") return { status: "abandoned", isLive: false };
   return { status: "scheduled", isLive: false };
 }
+
+export type AfSquad = Array<{
+  team: { id: number; name: string; logo: string | null };
+  players: Array<{
+    id: number;
+    name: string;
+    age: number | null;
+    number: number | null;
+    position: string | null;
+    photo: string | null;
+  }>;
+}>;
+
+/** Current squad list for a club (used by the Fantasy XI player pool). */
+export async function afFetchSquad(teamId: number): Promise<ApiFootballResult<AfSquad>> {
+  return apiGet<AfSquad>(`/players/squads?team=${teamId}`);
+}
+
+export type AfFixturePlayers = Array<{
+  team: { id: number; name: string; logo: string | null };
+  players: Array<{
+    player: { id: number; name: string; photo: string | null };
+    statistics: Array<{
+      games: { minutes: number | null; position: string | null; rating: string | null };
+      goals: { total: number | null; conceded: number | null; assists: number | null; saves: number | null };
+      cards: { yellow: number | null; red: number | null };
+      penalty: { won: number | null; scored: number | null; missed: number | null; saved: number | null };
+    }>;
+  }>;
+}>;
+
+/** Per-player match statistics for a finished fixture (fantasy scoring source). */
+export async function afFetchFixturePlayers(
+  fixtureId: number,
+): Promise<ApiFootballResult<AfFixturePlayers>> {
+  return apiGet<AfFixturePlayers>(`/fixtures/players?fixture=${fixtureId}`);
+}
+
+export type AfTeamPlayers = Array<{
+  player: {
+    id: number;
+    name: string;
+    firstname: string | null;
+    lastname: string | null;
+    photo: string | null;
+  };
+  statistics: Array<{
+    team: { id: number; name: string; logo: string | null };
+    league: { id: number; season: number };
+    games: { appearences: number | null; minutes: number | null; position: string | null; rating: string | null };
+    goals: { total: number | null; assists: number | null };
+  }>;
+}>;
+
+/** Season player list for a club, with headline stats used to price the pool. */
+export async function afFetchTeamPlayers(
+  teamId: number,
+  season: number,
+  page = 1,
+): Promise<ApiFootballResult<AfTeamPlayers>> {
+  return apiGet<AfTeamPlayers>(`/players?team=${teamId}&season=${season}&page=${page}`);
+}

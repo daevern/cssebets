@@ -4391,6 +4391,320 @@ export type Database = {
         }
         Relationships: []
       }
+      fantasy_entries: {
+        Row: {
+          budget_used: number
+          created_at: string
+          entry_fee: number
+          formation: string
+          gameweek_id: string
+          id: string
+          points: number
+          prize: number
+          rank: number | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          budget_used?: number
+          created_at?: string
+          entry_fee?: number
+          formation?: string
+          gameweek_id: string
+          id?: string
+          points?: number
+          prize?: number
+          rank?: number | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          budget_used?: number
+          created_at?: string
+          entry_fee?: number
+          formation?: string
+          gameweek_id?: string
+          id?: string
+          points?: number
+          prize?: number
+          rank?: number | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_entries_gameweek_id_fkey"
+            columns: ["gameweek_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_gameweeks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fantasy_entry_players: {
+        Row: {
+          created_at: string
+          entry_id: string
+          id: string
+          player_id: string
+          points: number
+          price: number
+          role: string | null
+          slot: number
+        }
+        Insert: {
+          created_at?: string
+          entry_id: string
+          id?: string
+          player_id: string
+          points?: number
+          price?: number
+          role?: string | null
+          slot: number
+        }
+        Update: {
+          created_at?: string
+          entry_id?: string
+          id?: string
+          player_id?: string
+          points?: number
+          price?: number
+          role?: string | null
+          slot?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_entry_players_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fantasy_entry_players_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fantasy_gameweeks: {
+        Row: {
+          competitions: string[]
+          created_at: string
+          deadline_at: string
+          ends_at: string
+          entry_fee: number
+          id: string
+          name: string
+          number: number
+          prize_pool: number
+          season: string
+          settled_at: string | null
+          starts_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          competitions?: string[]
+          created_at?: string
+          deadline_at: string
+          ends_at: string
+          entry_fee?: number
+          id?: string
+          name: string
+          number: number
+          prize_pool?: number
+          season: string
+          settled_at?: string | null
+          starts_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          competitions?: string[]
+          created_at?: string
+          deadline_at?: string
+          ends_at?: string
+          entry_fee?: number
+          id?: string
+          name?: string
+          number?: number
+          prize_pool?: number
+          season?: string
+          settled_at?: string | null
+          starts_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fantasy_player_scores: {
+        Row: {
+          assists: number
+          clean_sheet: boolean
+          created_at: string
+          event_id: string
+          gameweek_id: string
+          goals: number
+          goals_conceded: number
+          id: string
+          minutes: number
+          own_goals: number
+          penalties_missed: number
+          penalties_saved: number
+          player_id: string
+          points: number
+          rating: number | null
+          red_cards: number
+          saves: number
+          updated_at: string
+          yellow_cards: number
+        }
+        Insert: {
+          assists?: number
+          clean_sheet?: boolean
+          created_at?: string
+          event_id: string
+          gameweek_id: string
+          goals?: number
+          goals_conceded?: number
+          id?: string
+          minutes?: number
+          own_goals?: number
+          penalties_missed?: number
+          penalties_saved?: number
+          player_id: string
+          points?: number
+          rating?: number | null
+          red_cards?: number
+          saves?: number
+          updated_at?: string
+          yellow_cards?: number
+        }
+        Update: {
+          assists?: number
+          clean_sheet?: boolean
+          created_at?: string
+          event_id?: string
+          gameweek_id?: string
+          goals?: number
+          goals_conceded?: number
+          id?: string
+          minutes?: number
+          own_goals?: number
+          penalties_missed?: number
+          penalties_saved?: number
+          player_id?: string
+          points?: number
+          rating?: number | null
+          red_cards?: number
+          saves?: number
+          updated_at?: string
+          yellow_cards?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_player_scores_gameweek_id_fkey"
+            columns: ["gameweek_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_gameweeks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fantasy_player_scores_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fantasy_players: {
+        Row: {
+          competition_code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          photo: string | null
+          position: string
+          price: number
+          provider_player_id: number
+          team_logo: string | null
+          team_name: string
+          team_provider_id: number
+          total_points: number
+          updated_at: string
+        }
+        Insert: {
+          competition_code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          photo?: string | null
+          position: string
+          price?: number
+          provider_player_id: number
+          team_logo?: string | null
+          team_name: string
+          team_provider_id: number
+          total_points?: number
+          updated_at?: string
+        }
+        Update: {
+          competition_code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          photo?: string | null
+          position?: string
+          price?: number
+          provider_player_id?: number
+          team_logo?: string | null
+          team_name?: string
+          team_provider_id?: number
+          total_points?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      fantasy_season_standings: {
+        Row: {
+          entries: number
+          id: string
+          points: number
+          prize_total: number
+          season: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          entries?: number
+          id?: string
+          points?: number
+          prize_total?: number
+          season: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          entries?: number
+          id?: string
+          points?: number
+          prize_total?: number
+          season?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       football_event_analytics: {
         Row: {
           fetched_at: string
@@ -11290,6 +11604,8 @@ export type Database = {
         | "admin_adjustment"
         | "house_bankroll"
         | "payout"
+        | "fantasy_entry"
+        | "fantasy_prize"
       wallet_txn_type: "credit" | "debit" | "refund" | "adjustment"
     }
     CompositeTypes: {
@@ -11664,6 +11980,8 @@ export const Constants = {
         "admin_adjustment",
         "house_bankroll",
         "payout",
+        "fantasy_entry",
+        "fantasy_prize",
       ],
       wallet_txn_type: ["credit", "debit", "refund", "adjustment"],
     },
