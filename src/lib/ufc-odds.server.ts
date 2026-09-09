@@ -882,24 +882,73 @@ async function syncEventCard(event: UfcEventRow): Promise<{ fights: number; mark
     targets.push({ f, pos: "other", rounds: 3 });
   }
 
-  let totalMarkets = 0;
-  for (const t of targets) {
-    await upsertFighter(t.f.fighters.first.id, t.f.fighters.first.name, t.f.fighters.first.logo);
-    await upsertFighter(t.f.fighters.second.id, t.f.fighters.second.name, t.f.fighters.second.logo);
-
-    const fightRow = await saveFight({
-      eventId: event.id,
-      apimmaFight: t.f,
-      cardPosition: t.pos,
-      scheduledRounds: t.rounds,
-    });
-
-    totalMarkets += await syncOddsForFight(fightRow, t.f.id, t.f.date);
-    await syncH2H(fightRow.id, t.f.fighters.first.id, t.f.fighters.second.id, t.f.id);
-    if (t.f.status.short === "LIVE") {
-      await syncFightStats(fightRow.id, t.f.id);
+  // The shared per-minute feed budget can run out mid-card. Refresh the fights
+  // whose prices are stalest first so the tail of a long card can never be
+  // starved by repeatedly restarting from the headline bout.
+  const { data: existingFights } = await (supabaseAdmin as any)
+    .from("ufc_fights")
+    .select("id, apimma_fight_id")
+    .eq("event_id", event.id);
+  const rowIdByApimma = new Map<number, string>(
+    ((existingFights ?? []) as any[])
+      .filter((r) => r.apimma_fight_id != null)
+      .map((r) => [Number(r.apimma_fight_id), String(r.id)]),
+  );
+  const freshestByRowId = new Map<string, number>();
+  if (rowIdByApimma.size) {
+    const { data: mkts } = await (supabaseAdmin as any)
+      .from("ufc_fight_markets")
+      .select("fight_id, updated_at")
+      .in("fight_id", [...rowIdByApimma.values()]);
+    for (const m of (mkts ?? []) as any[]) {
+      const at = m.updated_at ? new Date(m.updated_at).getTime() : 0;
+      const prev = freshestByRowId.get(String(m.fight_id)) ?? 0;
+      if (at > prev) freshestByRowId.set(String(m.fight_id), at);
     }
   }
+  const posRank = { main: 0, co_main: 1, other: 2 } as const;
+  const stalenessOf = (apimmaId: number) => {
+    const rowId = rowIdByApimma.get(apimmaId);
+    return rowId ? (freshestByRowId.get(rowId) ?? 0) : 0;
+  };
+  targets.sort((a, b) => {
+    const d = stalenessOf(a.f.id) - stalenessOf(b.f.id);
+    if (d !== 0) return d;
+    return posRank[a.pos] - posRank[b.pos];
+  });
+
+  let totalMarkets = 0;
+  let partial = false;
+  let synced = 0;
+  for (const t of targets) {
+    try {
+      await upsertFighter(t.f.fighters.first.id, t.f.fighters.first.name, t.f.fighters.first.logo);
+      await upsertFighter(t.f.fighters.second.id, t.f.fighters.second.name, t.f.fighters.second.logo);
+
+      const fightRow = await saveFight({
+        eventId: event.id,
+        apimmaFight: t.f,
+        cardPosition: t.pos,
+        scheduledRounds: t.rounds,
+      });
+
+      totalMarkets += await syncOddsForFight(fightRow, t.f.id, t.f.date);
+      await syncH2H(fightRow.id, t.f.fighters.first.id, t.f.fighters.second.id, t.f.id);
+      if (t.f.status.short === "LIVE") {
+        await syncFightStats(fightRow.id, t.f.id);
+      }
+      synced++;
+    } catch (e) {
+      // Internal back-pressure: keep the work already done on this card and
+      // resume with the remaining fights on the next tick.
+      if (isMmaBudgetError(e)) {
+        partial = true;
+        break;
+      }
+      throw e;
+    }
+  }
+
 
   // Demote fights on this event that aren't on the current card (stale seed
   // data, cancelled fights, replaced cards) and close their markets.
