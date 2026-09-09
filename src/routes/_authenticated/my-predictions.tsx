@@ -851,7 +851,7 @@ function F1TicketShell({
   avatarUrl?: string | null;
   avatarAlt?: string;
   avatarKind?: "driver" | "team";
-  footer?: React.ReactNode;
+  footer?: ReactNode;
 }) {
   const displayStatus = status === "open" ? "pending" : status;
   const profit = (payoutN - stakeN).toFixed(2);
