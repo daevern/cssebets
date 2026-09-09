@@ -57,23 +57,29 @@ export const Route = createFileRoute("/api/public/hooks/apifootball-fulltime")({
           const manualId = url.searchParams.get("matchId");
 
           const results: any[] = [];
+          const failures: any[] = [];
 
           if (manualId) {
             const r = await syncPlayerRatings(manualId);
             const s = await syncStats(manualId);
             const e = await syncEvents(manualId);
             const regraded = await regradeCardsCorners(supabaseAdmin, manualId);
-            results.push({ matchId: manualId, ratings: r, stats: s, events: e, regraded });
+            if (regraded.error) failures.push({ matchId: manualId, error: regraded.error });
+            results.push({ matchId: manualId, ratings: r, stats: s, events: e, regraded: regraded.rows });
           } else {
             const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
             const twelveHoursAgo = new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString();
 
             // Matches finished recently — refresh stats + events (API revises them).
+            // Bounded per run so one tick can't hold long transactions open for
+            // dozens of fixtures and trip the database statement timeout.
             const { data: recent } = await (supabaseAdmin as any)
               .from("matches")
               .select("id, updated_at")
               .eq("status", "finished")
-              .gt("updated_at", twelveHoursAgo);
+              .gt("updated_at", twelveHoursAgo)
+              .order("updated_at", { ascending: false })
+              .limit(15);
 
             for (const m of recent ?? []) {
               const id = (m as any).id;
@@ -92,15 +98,29 @@ export const Route = createFileRoute("/api/public/hooks/apifootball-fulltime")({
               // then re-grade cards/corners in case totals moved.
               await syncStats(id);
               await syncEvents(id);
-              const regraded = await regradeCardsCorners(supabaseAdmin, id);
-              if (regraded.length > 0) entry.regraded = regraded;
+              if (await hasRegradableBets(supabaseAdmin, id)) {
+                const regraded = await regradeCardsCorners(supabaseAdmin, id);
+                if (regraded.error) {
+                  failures.push({ matchId: id, error: regraded.error });
+                  entry.regradeError = regraded.error;
+                }
+                if (regraded.rows.length > 0) entry.regraded = regraded.rows;
+              }
               if (Object.keys(entry).length > 1) results.push(entry);
             }
           }
 
-          return new Response(JSON.stringify({ ok: true, processed: results.length, quota: await getQuotaStatus(), results }), {
+          return new Response(JSON.stringify({
+            ok: failures.length === 0,
+            processed: results.length,
+            failures,
+            quota: await getQuotaStatus(),
+            results,
+          }), {
+            status: failures.length ? 207 : 200,
             headers: { "content-type": "application/json" },
           });
+
         } catch (e) {
           return new Response(JSON.stringify({ ok: false, error: (e as Error).message }), {
             status: 500, headers: { "content-type": "application/json" },
