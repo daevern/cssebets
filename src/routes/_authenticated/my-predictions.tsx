@@ -10,6 +10,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import { editPendingBetStake, cancelPendingBet } from "@/lib/bet-edit.functions";
 import { editPendingUfcBetStake, cancelPendingUfcBet } from "@/lib/ufc-bet-edit.functions";
+import { editPendingSportsBetStake, cancelPendingSportsBet } from "@/lib/sports-bet-edit.functions";
+import {
+  editPendingF1RaceBetStake,
+  cancelPendingF1RaceBet,
+  editPendingF1ChampBetStake,
+  cancelPendingF1ChampBet,
+} from "@/lib/f1-bet-edit.functions";
 import { settleFinishedPending } from "@/lib/settle-catchup.functions";
 import { flagPredictionForReview } from "@/lib/predictions-flag.functions";
 import { toast } from "sonner";
