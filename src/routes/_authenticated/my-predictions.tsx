@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import type { SVGProps } from "react";
+import type { ReactNode, SVGProps } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import { editPendingBetStake, cancelPendingBet } from "@/lib/bet-edit.functions";
 import { editPendingUfcBetStake, cancelPendingUfcBet } from "@/lib/ufc-bet-edit.functions";
+import { editPendingSportsBetStake, cancelPendingSportsBet } from "@/lib/sports-bet-edit.functions";
+import {
+  editPendingF1RaceBetStake,
+  cancelPendingF1RaceBet,
+  editPendingF1ChampBetStake,
+  cancelPendingF1ChampBet,
+} from "@/lib/f1-bet-edit.functions";
 import { settleFinishedPending } from "@/lib/settle-catchup.functions";
 import { flagPredictionForReview } from "@/lib/predictions-flag.functions";
 import { toast } from "sonner";
@@ -828,6 +835,7 @@ function F1TicketShell({
   avatarUrl,
   avatarAlt,
   avatarKind,
+  footer,
 }: {
   kicker: string;
   ticketId: string;
@@ -843,6 +851,7 @@ function F1TicketShell({
   avatarUrl?: string | null;
   avatarAlt?: string;
   avatarKind?: "driver" | "team";
+  footer?: ReactNode;
 }) {
   const displayStatus = status === "open" ? "pending" : status;
   const profit = (payoutN - stakeN).toFixed(2);
@@ -911,6 +920,8 @@ function F1TicketShell({
             <div className="text-[10px] text-[var(--color-ink-muted)] tabular-nums">+{profit} profit</div>
           </div>
         </div>
+
+        {footer}
       </div>
     </StencilPanel>
   );
@@ -952,6 +963,25 @@ function F1BetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Record<str
       avatarUrl={avatarUrl}
       avatarAlt={avatarAlt}
       avatarKind={isConstructor ? "team" : "driver"}
+      footer={
+        <TicketActions
+          betId={b.id}
+          stake={stakeN}
+          canModify={
+            ["open", "pending"].includes(String(b.status ?? "open")) &&
+            !!race?.starts_at &&
+            new Date(race.starts_at).getTime() > Date.now()
+          }
+          locked={
+            ["open", "pending"].includes(String(b.status ?? "open")) &&
+            (!race?.starts_at || new Date(race.starts_at).getTime() <= Date.now())
+          }
+          editServerFn={editPendingF1RaceBetStake}
+          cancelServerFn={cancelPendingF1RaceBet}
+          invalidateKeys={["my-f1-bets"]}
+          label="F1 Race"
+        />
+      }
     />
   );
 }
@@ -984,11 +1014,153 @@ function F1ChampBetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Recor
       avatarUrl={avatarUrl}
       avatarAlt={avatarAlt}
       avatarKind={isConstructor ? "team" : "driver"}
+      footer={
+        <TicketActions
+          betId={b.id}
+          stake={stakeN}
+          canModify={["open", "pending"].includes(String(b.status ?? "open"))}
+          locked={false}
+          editServerFn={editPendingF1ChampBetStake}
+          cancelServerFn={cancelPendingF1ChampBet}
+          invalidateKeys={["my-f1-champ-bets"]}
+          label="F1 Championship"
+        />
+      }
     />
   );
 }
 
+/**
+ * Inline stake edit / void controls shared by sportsbook and F1 tickets.
+ * Server-side rules (ownership, pending status, pre-start lock, stake bounds,
+ * wallet + liability adjustments) are enforced in the database routines.
+ */
+function TicketActions({
+  betId,
+  stake,
+  canModify,
+  locked,
+  editServerFn,
+  cancelServerFn,
+  invalidateKeys,
+  label,
+}: {
+  betId: string;
+  stake: number;
+  canModify: boolean;
+  locked: boolean;
+  editServerFn: any;
+  cancelServerFn: any;
+  invalidateKeys: string[];
+  label: string;
+}) {
+  const qc = useQueryClient();
+  const editFn = useServerFn(editServerFn);
+  const cancelFn = useServerFn(cancelServerFn);
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(String(stake));
 
+  const refresh = () => {
+    for (const k of invalidateKeys) qc.invalidateQueries({ queryKey: [k] });
+    qc.invalidateQueries({ queryKey: ["wallet"] });
+    qc.invalidateQueries({ queryKey: ["wallet-balance"] });
+  };
+
+  const editMut = useMutation({
+    mutationFn: async (newStake: number) => (editFn as any)({ data: { betId, newStake } }),
+    onSuccess: () => {
+      toast.success("Bet updated");
+      setEditing(false);
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const cancelMut = useMutation({
+    mutationFn: async () => (cancelFn as any)({ data: { betId } }),
+    onSuccess: () => {
+      toast.success("Bet voided — stake refunded");
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const n = Number(value);
+  const invalid = !Number.isFinite(n) || n < MIN_STAKE || n > MAX_STAKE;
+  const unchanged = n === Number(stake);
+
+  return (
+    <div className="flex items-center justify-between gap-2 border-t border-dashed border-[var(--color-surface-border)] pt-3">
+      <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+        {label}
+      </div>
+      {canModify ? (
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          {editing ? (
+            <>
+              <Input
+                type="number"
+                min={MIN_STAKE}
+                max={MAX_STAKE}
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="h-8 w-24"
+                placeholder={`${MIN_STAKE}-${MAX_STAKE}`}
+              />
+              <Button
+                size="sm"
+                className="h-8"
+                disabled={editMut.isPending || invalid || unchanged}
+                onClick={() => editMut.mutate(n)}
+              >
+                <Check className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8"
+                disabled={editMut.isPending}
+                onClick={() => { setEditing(false); setValue(String(stake)); }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+              {invalid && (
+                <span className="w-full text-right text-[10px] text-destructive">
+                  Stake must be {MIN_STAKE}-{MAX_STAKE.toLocaleString()}.
+                </span>
+              )}
+            </>
+          ) : (
+            <>
+              <Button size="sm" variant="outline" className="h-8" onClick={() => setEditing(true)}>
+                <Pencil className="mr-1 h-3.5 w-3.5" /> Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="h-8"
+                disabled={cancelMut.isPending}
+                onClick={() => {
+                  if (window.confirm("Void this bet and refund the stake?")) cancelMut.mutate();
+                }}
+              >
+                <Trash2 className="mr-1 h-3.5 w-3.5" /> Void
+              </Button>
+            </>
+          )}
+        </div>
+      ) : locked ? (
+        <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--color-ink-muted)]">
+          Locked · started
+        </div>
+      ) : (
+        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--color-ink-muted)]">
+          Settled
+        </span>
+      )}
+    </div>
+  );
+}
 
 
 /**
@@ -1072,6 +1244,25 @@ function SportsBetRow({ b }: { b: any }) {
             <div className="text-[10px] text-[var(--color-ink-muted)] tabular-nums">+{profit} profit</div>
           </div>
         </div>
+
+        <TicketActions
+          betId={b.id}
+          stake={stakeN}
+          canModify={
+            ["open", "pending"].includes(String(b.status ?? "pending")) &&
+            !!ev?.scheduled_at &&
+            new Date(ev.scheduled_at).getTime() > Date.now() &&
+            (ev?.status ?? "scheduled") === "scheduled"
+          }
+          locked={
+            ["open", "pending"].includes(String(b.status ?? "pending")) &&
+            (!ev?.scheduled_at || new Date(ev.scheduled_at).getTime() <= Date.now())
+          }
+          editServerFn={editPendingSportsBetStake}
+          cancelServerFn={cancelPendingSportsBet}
+          invalidateKeys={["my-sports-bets"]}
+          label={String(b.competition_code ?? "Match").toUpperCase()}
+        />
       </div>
     </StencilPanel>
   );

@@ -10660,8 +10660,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      cancel_f1_championship_bet: {
+        Args: { p_bet_id: string; p_user_id: string }
+        Returns: string
+      }
+      cancel_f1_race_bet: {
+        Args: { p_bet_id: string; p_user_id: string }
+        Returns: string
+      }
       cancel_pending_bet: {
         Args: { p_prediction_id: string; p_user_id: string }
+        Returns: string
+      }
+      cancel_sports_bet: {
+        Args: { p_bet_id: string; p_user_id: string }
         Returns: string
       }
       cancel_ufc_bet: {
@@ -10739,12 +10751,24 @@ export type Database = {
         Returns: boolean
       }
       demo_guest_reset: { Args: never; Returns: number }
+      edit_f1_championship_bet_stake: {
+        Args: { p_bet_id: string; p_new_stake: number; p_user_id: string }
+        Returns: number
+      }
+      edit_f1_race_bet_stake: {
+        Args: { p_bet_id: string; p_new_stake: number; p_user_id: string }
+        Returns: number
+      }
       edit_pending_bet_stake: {
         Args: {
           p_new_stake: number
           p_prediction_id: string
           p_user_id: string
         }
+        Returns: number
+      }
+      edit_sports_bet_stake: {
+        Args: { p_bet_id: string; p_new_stake: number; p_user_id: string }
         Returns: number
       }
       edit_ufc_bet_stake: {
