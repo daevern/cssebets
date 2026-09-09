@@ -999,7 +999,137 @@ function F1ChampBetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Recor
   );
 }
 
+/**
+ * Inline stake edit / void controls shared by sportsbook and F1 tickets.
+ * Server-side rules (ownership, pending status, pre-start lock, stake bounds,
+ * wallet + liability adjustments) are enforced in the database routines.
+ */
+function TicketActions({
+  betId,
+  stake,
+  canModify,
+  locked,
+  editServerFn,
+  cancelServerFn,
+  invalidateKeys,
+  label,
+}: {
+  betId: string;
+  stake: number;
+  canModify: boolean;
+  locked: boolean;
+  editServerFn: any;
+  cancelServerFn: any;
+  invalidateKeys: string[];
+  label: string;
+}) {
+  const qc = useQueryClient();
+  const editFn = useServerFn(editServerFn);
+  const cancelFn = useServerFn(cancelServerFn);
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(String(stake));
 
+  const refresh = () => {
+    for (const k of invalidateKeys) qc.invalidateQueries({ queryKey: [k] });
+    qc.invalidateQueries({ queryKey: ["wallet"] });
+    qc.invalidateQueries({ queryKey: ["wallet-balance"] });
+  };
+
+  const editMut = useMutation({
+    mutationFn: async (newStake: number) => (editFn as any)({ data: { betId, newStake } }),
+    onSuccess: () => {
+      toast.success("Bet updated");
+      setEditing(false);
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const cancelMut = useMutation({
+    mutationFn: async () => (cancelFn as any)({ data: { betId } }),
+    onSuccess: () => {
+      toast.success("Bet voided — stake refunded");
+      refresh();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const n = Number(value);
+  const invalid = !Number.isFinite(n) || n < MIN_STAKE || n > MAX_STAKE;
+  const unchanged = n === Number(stake);
+
+  return (
+    <div className="flex items-center justify-between gap-2 border-t border-dashed border-[var(--color-surface-border)] pt-3">
+      <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+        {label}
+      </div>
+      {canModify ? (
+        <div className="flex flex-wrap items-center justify-end gap-1.5">
+          {editing ? (
+            <>
+              <Input
+                type="number"
+                min={MIN_STAKE}
+                max={MAX_STAKE}
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                className="h-8 w-24"
+                placeholder={`${MIN_STAKE}-${MAX_STAKE}`}
+              />
+              <Button
+                size="sm"
+                className="h-8"
+                disabled={editMut.isPending || invalid || unchanged}
+                onClick={() => editMut.mutate(n)}
+              >
+                <Check className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8"
+                disabled={editMut.isPending}
+                onClick={() => { setEditing(false); setValue(String(stake)); }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+              {invalid && (
+                <span className="w-full text-right text-[10px] text-destructive">
+                  Stake must be {MIN_STAKE}-{MAX_STAKE.toLocaleString()}.
+                </span>
+              )}
+            </>
+          ) : (
+            <>
+              <Button size="sm" variant="outline" className="h-8" onClick={() => setEditing(true)}>
+                <Pencil className="mr-1 h-3.5 w-3.5" /> Edit
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="h-8"
+                disabled={cancelMut.isPending}
+                onClick={() => {
+                  if (window.confirm("Void this bet and refund the stake?")) cancelMut.mutate();
+                }}
+              >
+                <Trash2 className="mr-1 h-3.5 w-3.5" /> Void
+              </Button>
+            </>
+          )}
+        </div>
+      ) : locked ? (
+        <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--color-ink-muted)]">
+          Locked · started
+        </div>
+      ) : (
+        <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--color-ink-muted)]">
+          Settled
+        </span>
+      )}
+    </div>
+  );
+}
 
 
 /**
