@@ -140,6 +140,7 @@ import { Route as ApiPublicHooksHealthCheckRouteImport } from './routes/api/publ
 import { Route as ApiPublicHooksFootballSyncRouteImport } from './routes/api/public/hooks/football-sync'
 import { Route as ApiPublicHooksFootballSettleRouteImport } from './routes/api/public/hooks/football-settle'
 import { Route as ApiPublicHooksFootballLiveRouteImport } from './routes/api/public/hooks/football-live'
+import { Route as ApiPublicHooksFantasySyncRouteImport } from './routes/api/public/hooks/fantasy-sync'
 import { Route as ApiPublicHooksF1SyncRouteImport } from './routes/api/public/hooks/f1-sync'
 import { Route as ApiPublicHooksF1SettleRouteImport } from './routes/api/public/hooks/f1-settle'
 import { Route as ApiPublicHooksF1OddsRouteImport } from './routes/api/public/hooks/f1-odds'
@@ -868,6 +869,12 @@ const ApiPublicHooksFootballLiveRoute =
     path: '/api/public/hooks/football-live',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksFantasySyncRoute =
+  ApiPublicHooksFantasySyncRouteImport.update({
+    id: '/api/public/hooks/fantasy-sync',
+    path: '/api/public/hooks/fantasy-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksF1SyncRoute = ApiPublicHooksF1SyncRouteImport.update({
   id: '/api/public/hooks/f1-sync',
   path: '/api/public/hooks/f1-sync',
@@ -1063,6 +1070,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/f1-odds': typeof ApiPublicHooksF1OddsRoute
   '/api/public/hooks/f1-settle': typeof ApiPublicHooksF1SettleRoute
   '/api/public/hooks/f1-sync': typeof ApiPublicHooksF1SyncRoute
+  '/api/public/hooks/fantasy-sync': typeof ApiPublicHooksFantasySyncRoute
   '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
   '/api/public/hooks/football-settle': typeof ApiPublicHooksFootballSettleRoute
   '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
@@ -1202,6 +1210,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/f1-odds': typeof ApiPublicHooksF1OddsRoute
   '/api/public/hooks/f1-settle': typeof ApiPublicHooksF1SettleRoute
   '/api/public/hooks/f1-sync': typeof ApiPublicHooksF1SyncRoute
+  '/api/public/hooks/fantasy-sync': typeof ApiPublicHooksFantasySyncRoute
   '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
   '/api/public/hooks/football-settle': typeof ApiPublicHooksFootballSettleRoute
   '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
@@ -1348,6 +1357,7 @@ export interface FileRoutesById {
   '/api/public/hooks/f1-odds': typeof ApiPublicHooksF1OddsRoute
   '/api/public/hooks/f1-settle': typeof ApiPublicHooksF1SettleRoute
   '/api/public/hooks/f1-sync': typeof ApiPublicHooksF1SyncRoute
+  '/api/public/hooks/fantasy-sync': typeof ApiPublicHooksFantasySyncRoute
   '/api/public/hooks/football-live': typeof ApiPublicHooksFootballLiveRoute
   '/api/public/hooks/football-settle': typeof ApiPublicHooksFootballSettleRoute
   '/api/public/hooks/football-sync': typeof ApiPublicHooksFootballSyncRoute
@@ -1494,6 +1504,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/f1-odds'
     | '/api/public/hooks/f1-settle'
     | '/api/public/hooks/f1-sync'
+    | '/api/public/hooks/fantasy-sync'
     | '/api/public/hooks/football-live'
     | '/api/public/hooks/football-settle'
     | '/api/public/hooks/football-sync'
@@ -1633,6 +1644,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/f1-odds'
     | '/api/public/hooks/f1-settle'
     | '/api/public/hooks/f1-sync'
+    | '/api/public/hooks/fantasy-sync'
     | '/api/public/hooks/football-live'
     | '/api/public/hooks/football-settle'
     | '/api/public/hooks/football-sync'
@@ -1778,6 +1790,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/f1-odds'
     | '/api/public/hooks/f1-settle'
     | '/api/public/hooks/f1-sync'
+    | '/api/public/hooks/fantasy-sync'
     | '/api/public/hooks/football-live'
     | '/api/public/hooks/football-settle'
     | '/api/public/hooks/football-sync'
@@ -1823,6 +1836,7 @@ export interface RootRouteChildren {
   ApiPublicHooksF1OddsRoute: typeof ApiPublicHooksF1OddsRoute
   ApiPublicHooksF1SettleRoute: typeof ApiPublicHooksF1SettleRoute
   ApiPublicHooksF1SyncRoute: typeof ApiPublicHooksF1SyncRoute
+  ApiPublicHooksFantasySyncRoute: typeof ApiPublicHooksFantasySyncRoute
   ApiPublicHooksFootballLiveRoute: typeof ApiPublicHooksFootballLiveRoute
   ApiPublicHooksFootballSettleRoute: typeof ApiPublicHooksFootballSettleRoute
   ApiPublicHooksFootballSyncRoute: typeof ApiPublicHooksFootballSyncRoute
@@ -2759,6 +2773,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFootballLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/fantasy-sync': {
+      id: '/api/public/hooks/fantasy-sync'
+      path: '/api/public/hooks/fantasy-sync'
+      fullPath: '/api/public/hooks/fantasy-sync'
+      preLoaderRoute: typeof ApiPublicHooksFantasySyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/f1-sync': {
       id: '/api/public/hooks/f1-sync'
       path: '/api/public/hooks/f1-sync'
@@ -3156,6 +3177,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksF1OddsRoute: ApiPublicHooksF1OddsRoute,
   ApiPublicHooksF1SettleRoute: ApiPublicHooksF1SettleRoute,
   ApiPublicHooksF1SyncRoute: ApiPublicHooksF1SyncRoute,
+  ApiPublicHooksFantasySyncRoute: ApiPublicHooksFantasySyncRoute,
   ApiPublicHooksFootballLiveRoute: ApiPublicHooksFootballLiveRoute,
   ApiPublicHooksFootballSettleRoute: ApiPublicHooksFootballSettleRoute,
   ApiPublicHooksFootballSyncRoute: ApiPublicHooksFootballSyncRoute,
