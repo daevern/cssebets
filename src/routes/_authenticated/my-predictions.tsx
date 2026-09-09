@@ -963,6 +963,25 @@ function F1BetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Record<str
       avatarUrl={avatarUrl}
       avatarAlt={avatarAlt}
       avatarKind={isConstructor ? "team" : "driver"}
+      footer={
+        <TicketActions
+          betId={b.id}
+          stake={stakeN}
+          canModify={
+            ["open", "pending"].includes(String(b.status ?? "open")) &&
+            !!race?.starts_at &&
+            new Date(race.starts_at).getTime() > Date.now()
+          }
+          locked={
+            ["open", "pending"].includes(String(b.status ?? "open")) &&
+            (!race?.starts_at || new Date(race.starts_at).getTime() <= Date.now())
+          }
+          editServerFn={editPendingF1RaceBetStake}
+          cancelServerFn={cancelPendingF1RaceBet}
+          invalidateKeys={["my-f1-bets"]}
+          label="F1 Race"
+        />
+      }
     />
   );
 }
