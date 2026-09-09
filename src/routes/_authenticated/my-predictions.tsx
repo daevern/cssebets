@@ -1014,6 +1014,18 @@ function F1ChampBetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Recor
       avatarUrl={avatarUrl}
       avatarAlt={avatarAlt}
       avatarKind={isConstructor ? "team" : "driver"}
+      footer={
+        <TicketActions
+          betId={b.id}
+          stake={stakeN}
+          canModify={["open", "pending"].includes(String(b.status ?? "open"))}
+          locked={false}
+          editServerFn={editPendingF1ChampBetStake}
+          cancelServerFn={cancelPendingF1ChampBet}
+          invalidateKeys={["my-f1-champ-bets"]}
+          label="F1 Championship"
+        />
+      }
     />
   );
 }
