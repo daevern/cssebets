@@ -980,7 +980,7 @@ async function syncEventCard(event: UfcEventRow): Promise<{ fights: number; mark
 
   // Skip routine odds-sync audit rows — fight-night can fire every minute.
 
-  return { fights: targets.length, markets: totalMarkets };
+  return { fights: synced, markets: totalMarkets, partial };
 }
 
 /**
