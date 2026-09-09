@@ -920,6 +920,8 @@ function F1TicketShell({
             <div className="text-[10px] text-[var(--color-ink-muted)] tabular-nums">+{profit} profit</div>
           </div>
         </div>
+
+        {footer}
       </div>
     </StencilPanel>
   );
