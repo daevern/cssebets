@@ -353,8 +353,17 @@ export async function settleGameweek(gw: any) {
   const entrants = (entries ?? []).length;
   const pool = Number(gw.prize_pool ?? 0);
 
+  // How many entries share each finishing position (ties split the combined pot).
+  const tiedByRank = new Map<number, number>();
+  for (const e of (entries ?? []) as any[]) {
+    const r = Number(e.rank ?? 0);
+    if (r > 0) tiedByRank.set(r, (tiedByRank.get(r) ?? 0) + 1);
+  }
+
   for (const e of list) {
-    const prize = prizeFor(Number(e.rank ?? 0), pool, entrants);
+    const rank = Number(e.rank ?? 0);
+    const prize = prizeFor(rank, pool, entrants, tiedByRank.get(rank) ?? 1);
+
     if (prize > 0) {
       const { error } = await rpcWalletApplyChange({
         p_user_id: e.user_id,

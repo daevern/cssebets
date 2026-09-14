@@ -188,6 +188,24 @@ function MyPredictionsPage() {
   });
 
 
+  // Earliest race start per season — season outright picks lock once the
+  // season is under way, so they can't be voided mid-season.
+  const { data: f1SeasonStart } = useQuery({
+    queryKey: ["my-f1-season-start"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("f1_races").select("season, starts_at");
+      const m: Record<number, number> = {};
+      for (const r of (data ?? []) as any[]) {
+        const t = new Date(r.starts_at).getTime();
+        if (!Number.isFinite(t)) continue;
+        const s = Number(r.season);
+        if (m[s] === undefined || t < m[s]!) m[s] = t;
+      }
+      return m;
+    },
+  });
+
 
   const { data: f1DriversMap } = useQuery({
     queryKey: ["my-f1-drivers-map"],
@@ -292,7 +310,7 @@ function MyPredictionsPage() {
         <div className="space-y-3">
           {visibleSports.map((b) => <SportsBetRow key={b.id} b={b} />)}
           {visibleF1.map((b) => <F1BetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
-          {visibleF1Champ.map((b) => <F1ChampBetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
+          {visibleF1Champ.map((b) => <F1ChampBetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} seasonStart={f1SeasonStart?.[Number(b.season)] ?? null} />)}
           {visibleUfc.map((b) => <UfcBetRow key={b.id} b={b} />)}
           {visiblePredictions.map((p) => <PredictionRow key={p.id} p={p} />)}
         </div>
@@ -986,7 +1004,8 @@ function F1BetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Record<str
   );
 }
 
-function F1ChampBetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Record<string, { name: string; photo_url: string | null }>; teamsMap?: Record<string, { name: string; logo_url: string | null }> }) {
+function F1ChampBetRow({ b, driversMap, teamsMap, seasonStart }: { b: any; driversMap?: Record<string, { name: string; photo_url: string | null }>; teamsMap?: Record<string, { name: string; logo_url: string | null }>; seasonStart?: number | null }) {
+  const seasonLocked = seasonStart !== null && seasonStart !== undefined ? seasonStart <= Date.now() : true;
   const stakeN = Number(b.stake);
   const oddsN = Number(b.odds_locked);
   const payoutN = Number(b.potential_payout ?? stakeN * oddsN);
@@ -1018,8 +1037,8 @@ function F1ChampBetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Recor
         <TicketActions
           betId={b.id}
           stake={stakeN}
-          canModify={["open", "pending"].includes(String(b.status ?? "open"))}
-          locked={false}
+          canModify={["open", "pending"].includes(String(b.status ?? "open")) && !seasonLocked}
+          locked={seasonLocked}
           editServerFn={editPendingF1ChampBetStake}
           cancelServerFn={cancelPendingF1ChampBet}
           invalidateKeys={["my-f1-champ-bets"]}
