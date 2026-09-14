@@ -87,6 +87,12 @@ export async function apiFootballGet<T = any>(
       if (json.errors.rateLimit) {
         return { skipped: true, reason: "per-minute rate limit", quota };
       }
+      // Provider-side daily plan limit ("requests": "You have reached the
+      // request limit for the day"). Also a soft skip, never a 500.
+      if (json.errors.requests || /request limit/i.test(msg)) {
+        return { skipped: true, reason: "provider daily request limit", quota };
+      }
+
       throw new Error(`api-football error: ${msg}`);
     }
   }
