@@ -188,6 +188,24 @@ function MyPredictionsPage() {
   });
 
 
+  // Earliest race start per season — season outright picks lock once the
+  // season is under way, so they can't be voided mid-season.
+  const { data: f1SeasonStart } = useQuery({
+    queryKey: ["my-f1-season-start"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data } = await supabase.from("f1_races").select("season, starts_at");
+      const m: Record<number, number> = {};
+      for (const r of (data ?? []) as any[]) {
+        const t = new Date(r.starts_at).getTime();
+        if (!Number.isFinite(t)) continue;
+        const s = Number(r.season);
+        if (m[s] === undefined || t < m[s]!) m[s] = t;
+      }
+      return m;
+    },
+  });
+
 
   const { data: f1DriversMap } = useQuery({
     queryKey: ["my-f1-drivers-map"],
