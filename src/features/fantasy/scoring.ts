@@ -76,13 +76,26 @@ export function scorePlayer(position: FantasyPosition, s: FantasyStatLine): numb
 /** Prize split of the round pool, top three. */
 export const PRIZE_SPLIT = [0.5, 0.3, 0.2];
 
-export function prizeFor(rank: number, pool: number, entrants: number): number {
-  if (pool <= 0 || rank < 1) return 0;
-  if (entrants === 1) return rank === 1 ? pool : 0;
-  if (entrants === 2) return rank === 1 ? pool * 0.7 : rank === 2 ? pool * 0.3 : 0;
-  const share = PRIZE_SPLIT[rank - 1] ?? 0;
-  return Math.round(pool * share * 100) / 100;
+/** Share of the pool for a single finishing position (no tie handling). */
+function shareForRank(rank: number, entrants: number): number {
+  if (rank < 1) return 0;
+  if (entrants === 1) return rank === 1 ? 1 : 0;
+  if (entrants === 2) return rank === 1 ? 0.7 : rank === 2 ? 0.3 : 0;
+  return PRIZE_SPLIT[rank - 1] ?? 0;
 }
+
+/**
+ * Prize for one entry. Tied entries share the combined pot of the positions
+ * they occupy, so the total paid never exceeds the pool.
+ */
+export function prizeFor(rank: number, pool: number, entrants: number, tiedCount = 1): number {
+  if (pool <= 0 || rank < 1) return 0;
+  const tied = Math.max(1, Math.floor(tiedCount));
+  let share = 0;
+  for (let r = rank; r < rank + tied; r += 1) share += shareForRank(r, entrants);
+  return Math.round((pool * share * 100) / tied) / 100;
+}
+
 
 export type SquadPickInput = {
   playerId: string;
