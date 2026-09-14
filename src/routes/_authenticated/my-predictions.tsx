@@ -1004,7 +1004,8 @@ function F1BetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Record<str
   );
 }
 
-function F1ChampBetRow({ b, driversMap, teamsMap }: { b: any; driversMap?: Record<string, { name: string; photo_url: string | null }>; teamsMap?: Record<string, { name: string; logo_url: string | null }> }) {
+function F1ChampBetRow({ b, driversMap, teamsMap, seasonStart }: { b: any; driversMap?: Record<string, { name: string; photo_url: string | null }>; teamsMap?: Record<string, { name: string; logo_url: string | null }>; seasonStart?: number | null }) {
+  const seasonLocked = seasonStart !== null && seasonStart !== undefined ? seasonStart <= Date.now() : true;
   const stakeN = Number(b.stake);
   const oddsN = Number(b.odds_locked);
   const payoutN = Number(b.potential_payout ?? stakeN * oddsN);
