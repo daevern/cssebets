@@ -1037,8 +1037,8 @@ function F1ChampBetRow({ b, driversMap, teamsMap, seasonStart }: { b: any; drive
         <TicketActions
           betId={b.id}
           stake={stakeN}
-          canModify={["open", "pending"].includes(String(b.status ?? "open"))}
-          locked={false}
+          canModify={["open", "pending"].includes(String(b.status ?? "open")) && !seasonLocked}
+          locked={seasonLocked}
           editServerFn={editPendingF1ChampBetStake}
           cancelServerFn={cancelPendingF1ChampBet}
           invalidateKeys={["my-f1-champ-bets"]}
