@@ -10781,6 +10781,10 @@ export type Database = {
         Returns: number
       }
       ensure_my_profile: { Args: never; Returns: string }
+      f1_championship_season_locked: {
+        Args: { p_season: number }
+        Returns: boolean
+      }
       finalize_ufc_fight_void_remaining: {
         Args: { p_fight_id: string; p_reason?: string }
         Returns: number
