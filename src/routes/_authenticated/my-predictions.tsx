@@ -310,7 +310,7 @@ function MyPredictionsPage() {
         <div className="space-y-3">
           {visibleSports.map((b) => <SportsBetRow key={b.id} b={b} />)}
           {visibleF1.map((b) => <F1BetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
-          {visibleF1Champ.map((b) => <F1ChampBetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} />)}
+          {visibleF1Champ.map((b) => <F1ChampBetRow key={b.id} b={b} driversMap={f1DriversMap} teamsMap={f1TeamsMap} seasonStart={f1SeasonStart?.[Number(b.season)] ?? null} />)}
           {visibleUfc.map((b) => <UfcBetRow key={b.id} b={b} />)}
           {visiblePredictions.map((p) => <PredictionRow key={p.id} p={p} />)}
         </div>
