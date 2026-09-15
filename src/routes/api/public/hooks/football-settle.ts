@@ -13,8 +13,14 @@ export const Route = createFileRoute("/api/public/hooks/football-settle")({
           const { settleFinishedFootballEvents } = await import(
             "@/features/football/services/footballSettlement.server"
           );
+          const { backfillFinishedFootballResults } = await import(
+            "@/features/football/services/footballResultFallback.server"
+          );
+          // If the primary feed is down/out of quota, pull final scores from
+          // the backup results feed so settlement isn't blocked.
+          const backfill = await backfillFinishedFootballResults();
           const settled = await settleFinishedFootballEvents({ max: 25 });
-          return new Response(JSON.stringify({ ok: true, settled }), {
+          return new Response(JSON.stringify({ ok: true, backfill, settled }), {
             headers: { "content-type": "application/json" },
           });
         } catch (error) {
